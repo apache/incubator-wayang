@@ -89,5 +89,6 @@
     </dependencyManagement>
     <modules>
         <!-- Nothing here so far. -->
+        <module>rheem-core</module>
     </modules>
 </project>
