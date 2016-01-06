@@ -90,5 +90,6 @@
     <modules>
         <!-- Nothing here so far. -->
         <module>rheem-core</module>
+        <module>rheem-basic</module>
     </modules>
 </project>
