@@ -37,10 +37,11 @@ public class OperatorPattern<T extends Operator> implements Operator {
 
     /**
      * Test whether this pattern matches a given operator.
-     * @param operator the operator to match
+     * @param operator the operator to match or {@code null}, which represents the absence of an operator to match
      * @return whether the operator matches
      */
     public OperatorMatch match(Operator operator) {
+        if (operator == null) return null;
         if (this.isMatchSubclasses ?
                 this.operatorClass.isAssignableFrom(operator.getClass()) :
                 this.operatorClass.equals(operator.getClass())) {

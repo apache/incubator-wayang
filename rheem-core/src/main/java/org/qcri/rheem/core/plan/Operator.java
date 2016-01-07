@@ -47,4 +47,27 @@ public interface Operator {
         throw new IllegalArgumentException(String.format("No slot with such name: %s", name));
     }
 
+    /**
+     * Connect an output of this operator to the input of a second operator.
+     *
+     * @param thisOutputIndex index of the output slot to connect to
+     * @param that            operator to connect to
+     * @param thatInputIndex  index of the input slot to connect from
+     */
+    default void connectTo(int thisOutputIndex, Operator that, int thatInputIndex) {
+        that.getInput(thatInputIndex).setOccupant(this.getOutput(thisOutputIndex));
+    }
+
+
+    /**
+     * Retrieve the operator that is connected to the input at the given index.
+     *
+     * @param inputIndex the index of the input to consider
+     * @return the input operator or {@code null} if no such operator exists
+     */
+    default Operator getInputOperator(int inputIndex) {
+        final OutputSlot occupant = getInput(inputIndex).getOccupant();
+        return occupant == null ? null : occupant.getOwner();
+    }
+
 }

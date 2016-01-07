@@ -37,4 +37,51 @@ public class SubplanPatternTest {
         Assert.assertEquals(sink, match.getOperatorMatches().get("sink").getOperator());
     }
 
+    @Test
+    public void testMatchSourcePattern() {
+        // Build the plan.
+        Source source = new TestSource();
+        Sink sink = new TestSink();
+        sink.getInput(0).setOccupant(source.getOutput(0));
+        PhysicalPlan plan = new PhysicalPlan();
+        plan.addSink(sink);
+
+        // Build the pattern.
+        OperatorPattern sourcePattern = new OperatorPattern("source", new TestSource(), false);
+        SubplanPattern subplanPattern = SubplanPattern.createSingleton(sourcePattern);
+
+        // Match the pattern against the plan.
+        final List<SubplanMatch> matches = subplanPattern.match(plan);
+
+        // Evaluate the matches.
+        Assert.assertEquals(1, matches.size());
+        final SubplanMatch match = matches.get(0);
+        Assert.assertEquals(source, match.getOperatorMatches().get("source").getOperator());
+    }
+
+    @Test
+    public void testMatchChainedPattern() {
+        // Build the plan.
+        Source source = new TestSource();
+        Sink sink = new TestSink();
+        sink.getInput(0).setOccupant(source.getOutput(0));
+        PhysicalPlan plan = new PhysicalPlan();
+        plan.addSink(sink);
+
+        // Build the pattern.
+        OperatorPattern sourcePattern = new OperatorPattern("source", new TestSource(), false);
+        OperatorPattern sinkPattern = new OperatorPattern("sink", new TestSink(), false);
+        sourcePattern.connectTo(0, sinkPattern, 0);
+        SubplanPattern subplanPattern = SubplanPattern.fromOperatorPatterns(sourcePattern, sinkPattern);
+
+        // Match the pattern against the plan.
+        final List<SubplanMatch> matches = subplanPattern.match(plan);
+
+        // Evaluate the matches.
+        Assert.assertEquals(1, matches.size());
+        final SubplanMatch match = matches.get(0);
+        Assert.assertEquals(source, match.getOperatorMatches().get("source").getOperator());
+        Assert.assertEquals(sink, match.getOperatorMatches().get("sink").getOperator());
+    }
+
 }

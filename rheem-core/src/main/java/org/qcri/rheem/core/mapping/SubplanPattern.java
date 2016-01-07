@@ -3,19 +3,38 @@ package org.qcri.rheem.core.mapping;
 import org.qcri.rheem.core.plan.*;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 /**
  * A subplan pattern describes a class of subplans in a {@link org.qcri.rheem.core.plan.PhysicalPlan}.
+ * <p><i>NB: Currently, only such patterns are tested and supported that form a chain of operators, i.e., no DAGs
+ * are allowed and at most one input and one output operator.</i></p>
  */
 public class SubplanPattern implements Operator {
 
     private OperatorPattern inputOperator, outputOperator;
 
+    /**
+     * Creates a new instance that matches only a single operator.
+     *
+     * @param operatorPattern the only operator pattern
+     * @return the new instance
+     */
     public static final SubplanPattern createSingleton(OperatorPattern operatorPattern) {
+        return fromOperatorPatterns(operatorPattern, operatorPattern);
+    }
+
+    /**
+     * Creates a new instance that matches a graph of operator patterns.
+     *
+     * @param inputOperatorPattern  the only operator pattern that has inputs wrt. the subplan pattern
+     * @param outputOperatorPattern the only operator pattern that has outputs wrt. the subplan pattern
+     * @return the new instance
+     */
+    public static final SubplanPattern fromOperatorPatterns(OperatorPattern inputOperatorPattern,
+                                                            OperatorPattern outputOperatorPattern) {
         final SubplanPattern subplanPattern = new SubplanPattern();
-        subplanPattern.inputOperator = operatorPattern;
-        subplanPattern.outputOperator = operatorPattern;
+        subplanPattern.inputOperator = inputOperatorPattern;
+        subplanPattern.outputOperator = outputOperatorPattern;
         return subplanPattern;
     }
 
@@ -56,6 +75,7 @@ public class SubplanPattern implements Operator {
 
         /**
          * Try to match the given operator pattern..
+         *
          * @param operator the operator that should be matched with the operator pattern
          */
         private void matchOutputPattern(Operator operator) {
@@ -75,10 +95,16 @@ public class SubplanPattern implements Operator {
             // Wander down the input plan and match.
             Arrays.stream(operator.getAllInputs())
                     .map(input -> input.getOccupant())
-                    .filter(occupant -> occupant == null)
+                    .filter(occupant -> occupant != null)
                     .forEach(occupant -> this.matchOutputPattern(occupant.getOwner()));
         }
 
+        /**
+         * Recursively match the given operator pattern and operator including their input operators, thereby building
+         * recording the matches in {@link #currentSubplanMatch}.
+         *
+         * @return whether the recursive match was successful
+         */
         private boolean match(OperatorPattern pattern, Operator operator) {
             final OperatorMatch operatorMatch = pattern.match(operator);
             if (operatorMatch != null) {
@@ -86,17 +112,18 @@ public class SubplanPattern implements Operator {
 
                 // Now we need to try to match all the input operator patterns.
                 for (int inputIndex = 0; inputIndex < operator.getNumInputs(); inputIndex++) {
-                    final OutputSlot patternInput = pattern.getInput(inputIndex).getOccupant();
-                    if (patternInput != null) {
-                        final InputSlot operatorInput = operator.getInput(inputIndex);
-                        if (!match((OperatorPattern) patternInput.getOwner(), operatorInput.getOwner())) {
+                    final OperatorPattern inputOperatorPattern = (OperatorPattern) pattern.getInputOperator(inputIndex);
+                    if (inputOperatorPattern != null) {
+                        final Operator inputOperator = operator.getInputOperator(inputIndex);
+                        if (!match(inputOperatorPattern, inputOperator)) {
                             return false;
                         }
                     }
                 }
+                return true;
             }
 
-            return true;
+            return false;
         }
     }
 }
