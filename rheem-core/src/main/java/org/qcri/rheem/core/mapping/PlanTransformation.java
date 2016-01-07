@@ -3,6 +3,7 @@ package org.qcri.rheem.core.mapping;
 import org.qcri.rheem.core.plan.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -25,7 +26,7 @@ public class PlanTransformation {
         List<SubplanMatch> matches;
         while (!(matches = pattern.match(plan)).isEmpty()) {
             final SubplanMatch match = matches.get(0);
-            final Subplan replacement = this.replacementFactory.createReplacementSubplan(match);
+            final Operator replacement = this.replacementFactory.createReplacementSubplan(match);
             replace(plan, match, replacement);
             numTransformations++;
         }
@@ -33,7 +34,7 @@ public class PlanTransformation {
         return numTransformations;
     }
 
-    private void replace(PhysicalPlan plan, SubplanMatch match, Subplan replacement) {
+    private void replace(PhysicalPlan plan, SubplanMatch match, Operator replacement) {
         // Disconnect the original input operator and insert the replacement input operator.
         final Operator originalInputOperator = match.getInputMatch().getOperator();
         for (int inputIndex = 0; inputIndex < originalInputOperator.getNumInputs(); inputIndex++) {
@@ -58,7 +59,10 @@ public class PlanTransformation {
         // If the originalOutputOperator was a sink, we need to update the sink in the plan accordingly.
         if (originalOutputOperator.isSink()) {
             plan.getSinks().remove(originalOutputOperator);
-            for (Operator sink : replacement.getReachableSinks()) {
+            final Collection<Operator> sinks = new PlanTraversal()
+                    .traverse(replacement)
+                    .getTraversedNodesWith(Operator::isSink);
+            for (Operator sink : sinks) {
                 plan.addSink((Sink) sink);
             }
         }

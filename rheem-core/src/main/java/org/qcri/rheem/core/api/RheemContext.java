@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.api;
 
+import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.plan.PhysicalPlan;
@@ -26,6 +27,17 @@ public class RheemContext {
      */
     public void register(PlanTransformation transformation) {
         this.transformations.add(transformation);
+    }
+
+    /**
+     * Register a mapping that Rheem will then consider when translating Rheem plans into executable plans.
+     *
+     * @param mapping a {@link Mapping} that comprises a collection of {@link PlanTransformation}s
+     */
+    public void register(Mapping mapping) {
+        for (PlanTransformation planTransformation : mapping.getTransformations()) {
+            register(planTransformation);
+        }
     }
 
     /**

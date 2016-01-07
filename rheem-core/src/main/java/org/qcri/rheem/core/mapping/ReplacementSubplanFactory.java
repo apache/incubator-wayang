@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.mapping;
 
+import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.Subplan;
 
 /**
@@ -7,13 +8,13 @@ import org.qcri.rheem.core.plan.Subplan;
  */
 public abstract class ReplacementSubplanFactory {
 
-    public Subplan createReplacementSubplan(SubplanMatch subplanMatch) {
-        final Subplan replacementSubplan = translate(subplanMatch);
+    public Operator createReplacementSubplan(SubplanMatch subplanMatch) {
+        final Operator replacementSubplan = translate(subplanMatch);
         checkSanity(subplanMatch, replacementSubplan);
         return replacementSubplan;
     }
 
-    protected void checkSanity(SubplanMatch subplanMatch, Subplan replacementSubplan) {
+    protected void checkSanity(SubplanMatch subplanMatch, Operator replacementSubplan) {
         if (replacementSubplan.getNumInputs() != subplanMatch.getPattern().getNumInputs()) {
             throw new IllegalStateException("Incorrect number of inputs in the replacement subplan.");
         }
@@ -22,6 +23,6 @@ public abstract class ReplacementSubplanFactory {
         }
     }
 
-    protected abstract Subplan translate(SubplanMatch subplanMatch);
+    protected abstract Operator translate(SubplanMatch subplanMatch);
 
 }

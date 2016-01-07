@@ -1,5 +1,9 @@
 package org.qcri.rheem.core.plan;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * An operator is any node that within a data flow plan.
  */
@@ -13,11 +17,11 @@ public interface Operator {
         return getAllOutputs().length;
     }
 
-    InputSlot[] getAllInputs();
+    InputSlot<?>[] getAllInputs();
 
-    OutputSlot[] getAllOutputs();
+    OutputSlot<?>[] getAllOutputs();
 
-    default InputSlot getInput(int index) {
+    default InputSlot<?> getInput(int index) {
         final InputSlot[] allInputs = getAllInputs();
         if (index < 0 || index >= allInputs.length) {
             throw new IllegalArgumentException(String.format("Illegal input index: %d.", index));
@@ -25,7 +29,7 @@ public interface Operator {
         return allInputs[index];
     }
 
-    default OutputSlot getOutput(int index) {
+    default OutputSlot<?> getOutput(int index) {
         final OutputSlot[] allOutputs = getAllOutputs();
         if (index < 0 || index >= allOutputs.length) {
             throw new IllegalArgumentException(String.format("Illegal output index: %d.", index));
@@ -33,14 +37,14 @@ public interface Operator {
         return allOutputs[index];
     }
 
-    default InputSlot getInput(String name) {
+    default InputSlot<?> getInput(String name) {
         for (InputSlot inputSlot : getAllInputs()) {
             if (inputSlot.getName().equals(name)) return inputSlot;
         }
         throw new IllegalArgumentException(String.format("No slot with such name: %s", name));
     }
 
-    default OutputSlot getOutput(String name) {
+    default OutputSlot<?> getOutput(String name) {
         for (OutputSlot outputSlot : getAllOutputs()) {
             if (outputSlot.getName().equals(name)) return outputSlot;
         }
@@ -54,13 +58,13 @@ public interface Operator {
      * @param that            operator to connect to
      * @param thatInputIndex  index of the input slot to connect from
      */
-    default void connectTo(int thisOutputIndex, Operator that, int thatInputIndex) {
-        final InputSlot inputSlot = that.getInput(thatInputIndex);
-        final OutputSlot outputSlot = this.getOutput(thisOutputIndex);
+    default <T> void connectTo(int thisOutputIndex, Operator that, int thatInputIndex) {
+        final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputIndex);
+        final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputIndex);
         if (!inputSlot.getType().equals(outputSlot.getType())) {
             throw new IllegalArgumentException("Cannot connect slots: mismatching types");
         }
-        inputSlot.setOccupant(outputSlot);
+        outputSlot.connectTo(inputSlot);
     }
 
 
@@ -92,4 +96,6 @@ public interface Operator {
     default boolean isSource() {
         return this.getNumInputs() == 0;
     }
+
+
 }

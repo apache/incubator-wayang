@@ -29,41 +29,4 @@ public class Subplan implements Operator {
         return this.outputOperator.getAllOutputs();
     }
 
-    /**
-     * Traverse the plan that this subplan is part of for sinks.
-     *
-     * @return all sinks that are reachable from this subplan
-     */
-    public Collection<Operator> getReachableSinks() {
-        Set<Operator> allOperators = new HashSet<>();
-        for (InputSlot inputSlot : getAllInputs()) {
-            collectOperators(inputSlot.getOwner(), allOperators);
-        }
-
-        for (OutputSlot outputSlot : getAllOutputs()) {
-            collectOperators(outputSlot.getOwner(), allOperators);
-        }
-
-        allOperators.removeIf(operator -> !operator.isSink());
-
-        return allOperators;
-    }
-
-    /**
-     * Collect the given operator and all operators that are reachable from it.
-     *
-     * @param operator     the operator to spread out the collecting from
-     * @param allOperators a collector for any encountered operator
-     */
-    private void collectOperators(Operator operator, Set<Operator> allOperators) {
-        if (operator == null || !allOperators.add(operator)) return;
-
-        for (InputSlot inputSlot : operator.getAllInputs()) {
-            collectOperators(inputSlot.getOwner(), allOperators);
-        }
-
-        for (OutputSlot outputSlot : operator.getAllOutputs()) {
-            collectOperators(outputSlot.getOwner(), allOperators);
-        }
-    }
 }

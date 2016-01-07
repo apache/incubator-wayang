@@ -50,4 +50,8 @@ public class SubplanMatch {
         final String name = this.pattern.getOutputPattern().getName();
         return this.operatorMatches.get(name);
     }
+
+    public OperatorMatch getMatch(String name) {
+        return this.operatorMatches.get(name);
+    }
 }
