@@ -12,8 +12,18 @@ public class TextFileSource implements Source {
 
     private final OutputSlot<String>[] outputSlots = new OutputSlot[] { outputSlot };
 
+    private final String inputUrl;
+
+    public TextFileSource(String inputUrl) {
+        this.inputUrl = inputUrl;
+    }
+
     @Override
     public OutputSlot[] getAllOutputs() {
         return outputSlots;
+    }
+
+    public String getInputUrl() {
+        return inputUrl;
     }
 }

@@ -2,6 +2,8 @@ package org.qcri.rheem.java.plugin;
 
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.java.mapping.StdoutSinkToJavaStdoutSinkMapping;
+import org.qcri.rheem.java.mapping.TextFileSourceToJavaTextFileSourceMapping;
 import org.qcri.rheem.java.platform.JavaExecutor;
 
 /**
@@ -12,7 +14,8 @@ public class Activator {
     public static final Platform PLATFORM = new Platform("java", JavaExecutor.FACTORY);
 
     public static void registerTo(RheemContext rheemContext) {
-        // TODO: register mappings
+        rheemContext.register(new TextFileSourceToJavaTextFileSourceMapping());
+        rheemContext.register(new StdoutSinkToJavaStdoutSinkMapping());
     }
 
 }
