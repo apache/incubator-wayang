@@ -55,7 +55,12 @@ public interface Operator {
      * @param thatInputIndex  index of the input slot to connect from
      */
     default void connectTo(int thisOutputIndex, Operator that, int thatInputIndex) {
-        that.getInput(thatInputIndex).setOccupant(this.getOutput(thisOutputIndex));
+        final InputSlot inputSlot = that.getInput(thatInputIndex);
+        final OutputSlot outputSlot = this.getOutput(thisOutputIndex);
+        if (!inputSlot.getType().equals(outputSlot.getType())) {
+            throw new IllegalArgumentException("Cannot connect slots: mismatching types");
+        }
+        inputSlot.setOccupant(outputSlot);
     }
 
 
@@ -70,4 +75,21 @@ public interface Operator {
         return occupant == null ? null : occupant.getOwner();
     }
 
+    /**
+     * Tells whether this operator is a sink, i.e., it has no outputs.
+     *
+     * @return whether this operator is a sink
+     */
+    default boolean isSink() {
+        return this.getNumOutputs() == 0;
+    }
+
+    /**
+     * Tells whether this operator is a source, i.e., it has no inputs.
+     *
+     * @return whether this operator is a source
+     */
+    default boolean isSource() {
+        return this.getNumInputs() == 0;
+    }
 }

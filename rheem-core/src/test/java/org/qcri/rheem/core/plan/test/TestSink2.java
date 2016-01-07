@@ -4,13 +4,13 @@ import org.qcri.rheem.core.plan.InputSlot;
 import org.qcri.rheem.core.plan.Sink;
 
 /**
- * Dummy sink for testing purposes.
+ * Another dummy sink for testing purposes.
  */
-public class TestSink<T> implements Sink {
+public class TestSink2<T> implements Sink {
 
     private final InputSlot[] inputSlots;
 
-    public TestSink(Class<T> inputType) {
+    public TestSink2(Class<T> inputType) {
         this.inputSlots =  new InputSlot[]{new InputSlot<>("input", this, inputType)};
     }
 

@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.Sink;
 import org.qcri.rheem.core.plan.Source;
 import org.qcri.rheem.core.plan.test.TestSink;
 import org.qcri.rheem.core.plan.test.TestSource;
+import org.qcri.rheem.core.test.TestDataUnit;
 
 import java.util.List;
 
@@ -18,14 +19,14 @@ public class SubplanPatternTest {
     @Test
     public void testMatchSinkPattern() {
         // Build the plan.
-        Source source = new TestSource();
-        Sink sink = new TestSink();
-        sink.getInput(0).setOccupant(source.getOutput(0));
+        Source source = new TestSource(TestDataUnit.class);
+        Sink sink = new TestSink(TestDataUnit.class);
+        source.connectTo(0, sink, 0);
         PhysicalPlan plan = new PhysicalPlan();
         plan.addSink(sink);
 
         // Build the pattern.
-        OperatorPattern sinkPattern = new OperatorPattern("sink", new TestSink(), false);
+        OperatorPattern sinkPattern = new OperatorPattern("sink", new TestSink(TestDataUnit.class), false);
         SubplanPattern subplanPattern = SubplanPattern.createSingleton(sinkPattern);
 
         // Match the pattern against the plan.
@@ -40,14 +41,14 @@ public class SubplanPatternTest {
     @Test
     public void testMatchSourcePattern() {
         // Build the plan.
-        Source source = new TestSource();
-        Sink sink = new TestSink();
-        sink.getInput(0).setOccupant(source.getOutput(0));
+        Source source = new TestSource(TestDataUnit.class);
+        Sink sink = new TestSink(TestDataUnit.class);
+        source.connectTo(0, sink, 0);
         PhysicalPlan plan = new PhysicalPlan();
         plan.addSink(sink);
 
         // Build the pattern.
-        OperatorPattern sourcePattern = new OperatorPattern("source", new TestSource(), false);
+        OperatorPattern sourcePattern = new OperatorPattern("source", new TestSource(TestDataUnit.class), false);
         SubplanPattern subplanPattern = SubplanPattern.createSingleton(sourcePattern);
 
         // Match the pattern against the plan.
@@ -62,15 +63,15 @@ public class SubplanPatternTest {
     @Test
     public void testMatchChainedPattern() {
         // Build the plan.
-        Source source = new TestSource();
-        Sink sink = new TestSink();
-        sink.getInput(0).setOccupant(source.getOutput(0));
+        Source source = new TestSource(TestDataUnit.class);
+        Sink sink = new TestSink(TestDataUnit.class);
+        source.connectTo(0, sink, 0);
         PhysicalPlan plan = new PhysicalPlan();
         plan.addSink(sink);
 
         // Build the pattern.
-        OperatorPattern sourcePattern = new OperatorPattern("source", new TestSource(), false);
-        OperatorPattern sinkPattern = new OperatorPattern("sink", new TestSink(), false);
+        OperatorPattern sourcePattern = new OperatorPattern("source", new TestSource(TestDataUnit.class), false);
+        OperatorPattern sinkPattern = new OperatorPattern("sink", new TestSink(TestDataUnit.class), false);
         sourcePattern.connectTo(0, sinkPattern, 0);
         SubplanPattern subplanPattern = SubplanPattern.fromOperatorPatterns(sourcePattern, sinkPattern);
 

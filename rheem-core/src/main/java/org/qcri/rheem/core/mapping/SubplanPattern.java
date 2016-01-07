@@ -11,7 +11,7 @@ import java.util.*;
  */
 public class SubplanPattern implements Operator {
 
-    private OperatorPattern inputOperator, outputOperator;
+    private OperatorPattern inputPattern, outputPattern;
 
     /**
      * Creates a new instance that matches only a single operator.
@@ -33,25 +33,36 @@ public class SubplanPattern implements Operator {
     public static final SubplanPattern fromOperatorPatterns(OperatorPattern inputOperatorPattern,
                                                             OperatorPattern outputOperatorPattern) {
         final SubplanPattern subplanPattern = new SubplanPattern();
-        subplanPattern.inputOperator = inputOperatorPattern;
-        subplanPattern.outputOperator = outputOperatorPattern;
+        subplanPattern.inputPattern = inputOperatorPattern;
+        subplanPattern.outputPattern = outputOperatorPattern;
         return subplanPattern;
     }
 
     @Override
     public InputSlot[] getAllInputs() {
-        return this.inputOperator.getAllInputs();
+        return this.inputPattern.getAllInputs();
     }
 
     @Override
     public OutputSlot[] getAllOutputs() {
-        return this.outputOperator.getAllOutputs();
+        return this.outputPattern.getAllOutputs();
     }
 
     public List<SubplanMatch> match(PhysicalPlan plan) {
         return new Matcher().match(plan);
     }
 
+    public OperatorPattern getInputPattern() {
+        return inputPattern;
+    }
+
+    public OperatorPattern getOutputPattern() {
+        return outputPattern;
+    }
+
+    /**
+     * This class encapsulates the functionality to match a subplan pattern against a plan.
+     */
     private class Matcher {
 
         /**
@@ -87,7 +98,7 @@ public class SubplanPattern implements Operator {
 
             // Try to make a match starting from the currently visited operator.
             this.currentSubplanMatch = new SubplanMatch(SubplanPattern.this);
-            if (match(SubplanPattern.this.outputOperator, operator)) {
+            if (match(SubplanPattern.this.outputPattern, operator)) {
                 this.matches.add(this.currentSubplanMatch);
             }
             this.currentSubplanMatch = null;

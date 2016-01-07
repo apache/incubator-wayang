@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.mapping;
 
+import org.qcri.rheem.core.plan.Operator;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,5 +35,19 @@ public class SubplanMatch {
 
     public Map<String, OperatorMatch> getOperatorMatches() {
         return operatorMatches;
+    }
+
+    public SubplanPattern getPattern() {
+        return pattern;
+    }
+
+    public OperatorMatch getInputMatch() {
+        final String name = this.pattern.getInputPattern().getName();
+        return this.operatorMatches.get(name);
+    }
+
+    public OperatorMatch getOutputMatch() {
+        final String name = this.pattern.getOutputPattern().getName();
+        return this.operatorMatches.get(name);
     }
 }

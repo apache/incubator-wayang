@@ -4,11 +4,15 @@ import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.Source;
 
 /**
- * Dummy sink for testing purposes.
+ * Dummy source for testing purposes.
  */
-public class TestSource implements Source {
+public class TestSource<T> implements Source {
 
-    private final OutputSlot[] outputSlots = new OutputSlot[]{new OutputSlot("output", this)};
+    private final OutputSlot[] outputSlots;
+
+    public TestSource(Class<T> outputType) {
+        this.outputSlots = new OutputSlot[]{new OutputSlot<>("output", this, outputType)};
+    }
 
     @Override
     public OutputSlot[] getAllOutputs() {

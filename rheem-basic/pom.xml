@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rheem-base</artifactId>
+    <artifactId>rheem-basic</artifactId>
     <description>This modules represents the base Rheem package with the default operators and functions.</description>
 
 
