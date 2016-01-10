@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.StdoutSink;
+import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.stream.Stream;
 
@@ -14,7 +15,7 @@ public class JavaStdoutSink<T> extends StdoutSink<T> implements JavaExecutionOpe
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams) {
+    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
         inputStreams[0].forEach(System.out::println);
         return new Stream[0];
     }
