@@ -4,6 +4,7 @@ import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.Source;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.plugin.Activator;
 
 import java.io.File;
@@ -33,7 +34,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams) {
+    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
         URL url;
         try {
             url = new URL(getInputUrl());
