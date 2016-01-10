@@ -2,6 +2,7 @@ package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.basic.function.MapFunctionDescriptor;
 import org.qcri.rheem.core.plan.OneToOneOperator;
+import org.qcri.rheem.core.types.DataSet;
 
 /**
  * A map operator represents semantics as they are known from frameworks, such as Spark and Flink. It pulls each
@@ -16,13 +17,10 @@ public class MapOperator<InputType, OutputType> extends OneToOneOperator<InputTy
 
     /**
      * Creates a new instance.
-     *
-     * @param inputTypeClass  class of the input types (i.e., type of {@link #getInput()}
-     * @param outputTypeClass class of the output types (i.e., type of {@link #getOutput()}
      */
-    public MapOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass,
+    public MapOperator(DataSet inputType, DataSet outputType,
                        MapFunctionDescriptor<InputType, OutputType> functionDescriptor) {
-        super(inputTypeClass, outputTypeClass);
+        super(inputType, outputType);
         this.functionDescriptor = functionDescriptor;
     }
 

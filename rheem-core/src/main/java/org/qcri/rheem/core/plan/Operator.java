@@ -61,7 +61,7 @@ public interface Operator {
     default <T> void connectTo(int thisOutputIndex, Operator that, int thatInputIndex) {
         final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputIndex);
         final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputIndex);
-        if (!inputSlot.getType().equals(outputSlot.getType())) {
+        if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
             throw new IllegalArgumentException("Cannot connect slots: mismatching types");
         }
         outputSlot.connectTo(inputSlot);

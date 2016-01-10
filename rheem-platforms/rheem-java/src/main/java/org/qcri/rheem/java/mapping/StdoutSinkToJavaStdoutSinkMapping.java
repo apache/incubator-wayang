@@ -4,6 +4,7 @@ import org.qcri.rheem.basic.operators.StdoutSink;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
+import org.qcri.rheem.core.types.DataSet;
 import org.qcri.rheem.java.operators.JavaStdoutSink;
 import org.qcri.rheem.java.operators.JavaTextFileSource;
 
@@ -22,7 +23,7 @@ public class StdoutSinkToJavaStdoutSinkMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "sink", new StdoutSink<>(Void.class), false);
+                "sink", new StdoutSink<>(DataSet.flatAndBasic(Void.class)), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

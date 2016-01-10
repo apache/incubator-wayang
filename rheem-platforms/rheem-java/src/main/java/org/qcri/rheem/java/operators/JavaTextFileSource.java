@@ -1,8 +1,6 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.TextFileSource;
-import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.Source;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.plugin.Activator;
@@ -19,10 +17,6 @@ import java.util.stream.Stream;
  * This is execution operator implements the {@link TextFileSource}.
  */
 public class JavaTextFileSource extends TextFileSource implements JavaExecutionOperator {
-
-    private final OutputSlot<String> outputSlot = new OutputSlot<>("output", this, String.class);
-
-    private final OutputSlot<String>[] outputSlots = new OutputSlot[]{this.outputSlot};
 
     public JavaTextFileSource(String inputUrl) {
         super(inputUrl);
@@ -52,11 +46,6 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
             throw new RuntimeException(String.format("Unsupported URL: %s", url));
         }
 
-    }
-
-    @Override
-    public OutputSlot[] getAllOutputs() {
-        return this.outputSlots;
     }
 
 }

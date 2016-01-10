@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.plan;
 
+import org.qcri.rheem.core.types.DataSet;
+
 /**
  * An input slot declares an input of an {@link Operator}.
  *
@@ -17,7 +19,7 @@ public class InputSlot<T> extends Slot<T> {
         this(blueprint.getName(), owner, blueprint.getType());
     }
 
-    public InputSlot(String name, Operator owner, Class<T> type) {
+    public InputSlot(String name, Operator owner, DataSet type) {
         super(name, owner, type);
     }
 
