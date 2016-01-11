@@ -1,9 +1,10 @@
 package org.qcri.rheem.java.compiler;
 
-import org.qcri.rheem.basic.function.MapFunctionDescriptor;
+import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
 /**
@@ -11,22 +12,28 @@ import java.util.function.Function;
  */
 public class FunctionCompiler {
 
-    private final Map<Class<? extends MapFunctionDescriptor<?, ?>>, Function<?, ?>> implementations
-            = new HashMap<>();
-
-    public <InputType, OutputType> void registerMapFunction(
-            Class<? extends MapFunctionDescriptor<InputType, OutputType>> mapFunctionDescriptorClass,
-            Function<InputType, OutputType> implementation) {
-        this.implementations.put(mapFunctionDescriptorClass, implementation);
+    /**
+     * Compile a transformation.
+     *
+     * @param descriptor describes the transformation
+     * @param <I>        input type of the transformation
+     * @param <O>        output type of the transformation
+     * @return a compiled function
+     */
+    public <I, O> Function<I, O> compile(TransformationDescriptor<I, O> descriptor) {
+        // This is a dummy method but shows the intention of having something compilable in the descriptors.
+        return descriptor.getJavaImplementation();
     }
 
-    public <InputType, OutputType> Function<InputType, OutputType> compile(
-            MapFunctionDescriptor<InputType, OutputType> functionDescriptor) {
-        final Function<?, ?> function = this.implementations.get(functionDescriptor.getClass());
-        if (function == null) {
-            throw new IllegalArgumentException("Cannot compile the given descriptor.");
-        }
-        return (Function<InputType, OutputType>) function;
+    /**
+     * Compile a reduction.
+     *
+     * @param descriptor describes the transformation
+     * @param <Type>        input/output type of the transformation
+     * @return a compiled function
+     */
+    public <Type> BinaryOperator<Type> compile(ReduceDescriptor descriptor) {
+        // This is a dummy method but shows the intention of having something compilable in the descriptors.
+        return descriptor.getJavaImplementation();
     }
-
 }

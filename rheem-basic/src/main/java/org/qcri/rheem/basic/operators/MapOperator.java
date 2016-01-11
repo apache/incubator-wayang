@@ -1,7 +1,8 @@
 package org.qcri.rheem.basic.operators;
 
-import org.qcri.rheem.basic.function.MapFunctionDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.OneToOneOperator;
+import org.qcri.rheem.core.types.DataSet;
 
 /**
  * A map operator represents semantics as they are known from frameworks, such as Spark and Flink. It pulls each
@@ -12,21 +13,18 @@ public class MapOperator<InputType, OutputType> extends OneToOneOperator<InputTy
     /**
      * Function that this operator applies to the input elements.
      */
-    private final MapFunctionDescriptor<InputType, OutputType> functionDescriptor;
+    protected final TransformationDescriptor<InputType, OutputType> functionDescriptor;
 
     /**
      * Creates a new instance.
-     *
-     * @param inputTypeClass  class of the input types (i.e., type of {@link #getInput()}
-     * @param outputTypeClass class of the output types (i.e., type of {@link #getOutput()}
      */
-    public MapOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass,
-                       MapFunctionDescriptor<InputType, OutputType> functionDescriptor) {
-        super(inputTypeClass, outputTypeClass);
+    public MapOperator(DataSet inputType, DataSet outputType,
+                       TransformationDescriptor<InputType, OutputType> functionDescriptor) {
+        super(inputType, outputType);
         this.functionDescriptor = functionDescriptor;
     }
 
-    public MapFunctionDescriptor<InputType, OutputType> getFunctionDescriptor() {
+    public TransformationDescriptor<InputType, OutputType> getFunctionDescriptor() {
         return functionDescriptor;
     }
 }

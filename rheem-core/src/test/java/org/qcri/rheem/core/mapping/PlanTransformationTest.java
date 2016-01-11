@@ -10,6 +10,7 @@ import org.qcri.rheem.core.plan.test.TestSink;
 import org.qcri.rheem.core.plan.test.TestSink2;
 import org.qcri.rheem.core.plan.test.TestSource;
 import org.qcri.rheem.core.test.TestDataUnit;
+import org.qcri.rheem.core.types.DataSet;
 
 /**
  * Test suite for the {@link org.qcri.rheem.core.mapping.PlanTransformation} class.
@@ -19,14 +20,14 @@ public class PlanTransformationTest {
     @Test
     public void testReplace() {
         // Build the plan.
-        Source source = new TestSource(TestDataUnit.class);
-        Sink sink = new TestSink(TestDataUnit.class);
+        Source source = new TestSource(DataSet.flatAndBasic(TestDataUnit.class));
+        Sink sink = new TestSink(DataSet.flatAndBasic(TestDataUnit.class));
         source.connectTo(0, sink, 0);
         PhysicalPlan plan = new PhysicalPlan();
         plan.addSink(sink);
 
         // Build the pattern.
-        OperatorPattern sinkPattern = new OperatorPattern("sink", new TestSink(TestDataUnit.class), false);
+        OperatorPattern sinkPattern = new OperatorPattern("sink", new TestSink(DataSet.flatAndBasic(TestDataUnit.class)), false);
         SubplanPattern subplanPattern = SubplanPattern.createSingleton(sinkPattern);
 
         // Build the replacement strategy.

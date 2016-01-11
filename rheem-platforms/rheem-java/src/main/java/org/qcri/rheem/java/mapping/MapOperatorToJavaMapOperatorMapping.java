@@ -31,7 +31,7 @@ public class MapOperatorToJavaMapOperatorMapping implements Mapping {
         @Override
         protected Operator translate(SubplanMatch subplanMatch) {
             final MapOperator<?, ?> originalOperator = (MapOperator<?, ?>) subplanMatch.getMatch("map").getOperator();
-            return JavaMapOperator.createUnchecked(originalOperator.getInputType(),
+            return new JavaMapOperator(originalOperator.getInputType(),
                     originalOperator.getOutputType(),
                     originalOperator.getFunctionDescriptor());
         }

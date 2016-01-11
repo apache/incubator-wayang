@@ -2,6 +2,7 @@ package org.qcri.rheem.core.plan.test;
 
 import org.qcri.rheem.core.plan.InputSlot;
 import org.qcri.rheem.core.plan.Sink;
+import org.qcri.rheem.core.types.FlatDataSet;
 
 /**
  * Dummy sink for testing purposes.
@@ -10,7 +11,7 @@ public class TestSink<T> implements Sink {
 
     private final InputSlot[] inputSlots;
 
-    public TestSink(Class<T> inputType) {
+    public TestSink(FlatDataSet inputType) {
         this.inputSlots =  new InputSlot[]{new InputSlot<>("input", this, inputType)};
     }
 
@@ -19,7 +20,7 @@ public class TestSink<T> implements Sink {
         return this.inputSlots;
     }
 
-    public Class<T> getType() {
-        return this.inputSlots[0].getType();
+    public FlatDataSet getType() {
+        return (FlatDataSet) this.inputSlots[0].getType();
     }
 }

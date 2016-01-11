@@ -1,12 +1,12 @@
 package org.qcri.rheem.core.plan;
 
+import org.qcri.rheem.core.types.DataSet;
+
 import java.util.LinkedList;
 import java.util.List;
 
 /**
  * An output slot declares an output of an {@link Operator}.
- *
- * @param <T> see {@link Slot}
  */
 public class OutputSlot<T> extends Slot<T> {
 
@@ -16,7 +16,7 @@ public class OutputSlot<T> extends Slot<T> {
         this(blueprint.getName(), owner, blueprint.getType());
     }
 
-    public OutputSlot(String name, Operator owner, Class<T> type) {
+    public OutputSlot(String name, Operator owner, DataSet type) {
         super(name, owner, type);
     }
 

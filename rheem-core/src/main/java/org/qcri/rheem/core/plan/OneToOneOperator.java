@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.plan;
 
+import org.qcri.rheem.core.types.DataSet;
+
 /**
  * This operator has a single input and a single output.
  */
@@ -15,14 +17,11 @@ public abstract class OneToOneOperator<InputType, OutputType> implements Operato
 
     /**
      * Creates a new instance.
-     *
-     * @param inputTypeClass  class of the input types (i.e., type of {@link #getInput()}
-     * @param outputTypeClass class of the output types (i.e., type of {@link #getOutput()}
      */
-    public OneToOneOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass) {
-        this.inputSlot = new InputSlot<>("input", this, inputTypeClass);
+    public OneToOneOperator(DataSet inputType, DataSet outputType) {
+        this.inputSlot = new InputSlot<>("input", this, inputType);
         this.inputSlots = new InputSlot[]{this.inputSlot};
-        this.outputSlot = new OutputSlot<>("output", this, outputTypeClass);
+        this.outputSlot = new OutputSlot<>("output", this, outputType);
         this.outputSlots = new OutputSlot[]{this.outputSlot};
     }
 
@@ -44,11 +43,11 @@ public abstract class OneToOneOperator<InputType, OutputType> implements Operato
         return this.outputSlot;
     }
 
-    public Class<InputType> getInputType() {
+    public DataSet getInputType() {
         return this.inputSlot.getType();
     }
 
-    public Class<OutputType> getOutputType() {
+    public DataSet getOutputType() {
         return this.outputSlot.getType();
     }
 }

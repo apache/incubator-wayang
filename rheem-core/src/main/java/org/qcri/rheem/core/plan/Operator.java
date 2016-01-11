@@ -1,9 +1,5 @@
 package org.qcri.rheem.core.plan;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * An operator is any node that within a data flow plan.
  */
@@ -61,7 +57,7 @@ public interface Operator {
     default <T> void connectTo(int thisOutputIndex, Operator that, int thatInputIndex) {
         final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputIndex);
         final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputIndex);
-        if (!inputSlot.getType().equals(outputSlot.getType())) {
+        if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
             throw new IllegalArgumentException("Cannot connect slots: mismatching types");
         }
         outputSlot.connectTo(inputSlot);

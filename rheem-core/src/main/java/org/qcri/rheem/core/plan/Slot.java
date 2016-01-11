@@ -1,9 +1,9 @@
 package org.qcri.rheem.core.plan;
 
+import org.qcri.rheem.core.types.DataSet;
+
 /**
  * Abstract class for inputs and outputs to operators.
- *
- * @param <T> type of elements that can be passed through this slot
  */
 abstract public class Slot<T> {
 
@@ -18,11 +18,12 @@ abstract public class Slot<T> {
     private final Operator owner;
 
     /**
-     * Class of {@link T}.
+     * Type of data passed through this slot, expressed as a {@link DataSet} so as to define not only the types of
+     * elements that are passed but also capture their structure (e.g., flat, grouped, sorted, ...).
      */
-    private final Class<T> type;
+    private final DataSet type;
 
-    protected Slot(String name, Operator owner, Class<T> type) {
+    protected Slot(String name, Operator owner, DataSet type) {
         this.name = name;
         this.owner = owner;
         this.type = type;
@@ -36,7 +37,7 @@ abstract public class Slot<T> {
         return owner;
     }
 
-    public Class<T> getType() {
+    public DataSet getType() {
         return this.type;
     }
 }
