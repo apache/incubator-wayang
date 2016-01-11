@@ -1,7 +1,7 @@
 package org.qcri.rheem.java.operators;
 
-import org.qcri.rheem.basic.function.MapFunctionDescriptor;
 import org.qcri.rheem.basic.operators.MapOperator;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.types.DataSet;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -15,18 +15,12 @@ public class JavaMapOperator<InputType, OutputType>
         implements JavaExecutionOperator {
 
     /**
-     * Function carried by this operator.
-     */
-    private final MapFunctionDescriptor<InputType, OutputType> functionDescriptor;
-
-    /**
      * Creates a new instance.
      *
      * @param functionDescriptor
      */
-    public JavaMapOperator(DataSet inputType, DataSet outputType, MapFunctionDescriptor<InputType, OutputType> functionDescriptor) {
+    public JavaMapOperator(DataSet inputType, DataSet outputType, TransformationDescriptor<InputType, OutputType> functionDescriptor) {
         super(inputType, outputType, functionDescriptor);
-        this.functionDescriptor = functionDescriptor;
     }
 
     @Override

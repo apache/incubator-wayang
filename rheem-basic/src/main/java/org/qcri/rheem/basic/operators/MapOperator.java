@@ -1,6 +1,6 @@
 package org.qcri.rheem.basic.operators;
 
-import org.qcri.rheem.basic.function.MapFunctionDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.OneToOneOperator;
 import org.qcri.rheem.core.types.DataSet;
 
@@ -13,18 +13,18 @@ public class MapOperator<InputType, OutputType> extends OneToOneOperator<InputTy
     /**
      * Function that this operator applies to the input elements.
      */
-    private final MapFunctionDescriptor<InputType, OutputType> functionDescriptor;
+    protected final TransformationDescriptor<InputType, OutputType> functionDescriptor;
 
     /**
      * Creates a new instance.
      */
     public MapOperator(DataSet inputType, DataSet outputType,
-                       MapFunctionDescriptor<InputType, OutputType> functionDescriptor) {
+                       TransformationDescriptor<InputType, OutputType> functionDescriptor) {
         super(inputType, outputType);
         this.functionDescriptor = functionDescriptor;
     }
 
-    public MapFunctionDescriptor<InputType, OutputType> getFunctionDescriptor() {
+    public TransformationDescriptor<InputType, OutputType> getFunctionDescriptor() {
         return functionDescriptor;
     }
 }

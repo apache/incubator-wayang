@@ -35,4 +35,8 @@ public class BasicDataUnitType extends DataUnitType {
     public String toString() {
         return String.format("%s[%s]", this.getClass().getSimpleName(), this.typeClass.getSimpleName());
     }
+
+    public Class<?> getTypeClass() {
+        return typeClass;
+    }
 }
