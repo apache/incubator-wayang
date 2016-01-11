@@ -18,7 +18,7 @@ import java.util.stream.Stream;
 /**
  * Test suite for {@link JavaReduceByOperator}.
  */
-public class JavaReduceByTest {
+public class JavaReduceByOperatorTest {
 
     @Test
     public void testExecution() {

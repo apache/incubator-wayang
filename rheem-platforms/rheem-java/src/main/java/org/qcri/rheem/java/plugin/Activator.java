@@ -19,6 +19,8 @@ public class Activator {
         rheemContext.register(new ReduceByOperatorToJavaReduceByOperatorMapping());
         rheemContext.register(new JavaCollectionSourceMapping());
         rheemContext.register(new JavaLocalCallbackSinkMapping());
+        rheemContext.register(new JavaGlobalReduceOperatorMapping());
+        rheemContext.register(new JavaCollocateByOperatorMapping());
     }
 
 }
