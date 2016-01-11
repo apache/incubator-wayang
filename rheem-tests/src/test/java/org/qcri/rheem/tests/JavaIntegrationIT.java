@@ -30,7 +30,7 @@ public class JavaIntegrationIT {
     public void testReadAndWrite() throws URISyntaxException, IOException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.registerTo(rheemContext);
+        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
 
         // Build a Rheem plan.
         final URL inputUrl = getClass().getResource("/some-lines.txt");
@@ -53,7 +53,7 @@ public class JavaIntegrationIT {
     public void testReadAndTransformAndWrite() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.registerTo(rheemContext);
+        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
 
         // Build a Rheem plan.
         final URL inputUrl = getClass().getResource("/some-lines.txt");

@@ -12,7 +12,7 @@ public class Activator {
 
     public static final Platform PLATFORM = new Platform("java", JavaExecutor.FACTORY);
 
-    public static void registerTo(RheemContext rheemContext) {
+    public static void activate(RheemContext rheemContext) {
         rheemContext.register(new TextFileSourceToJavaTextFileSourceMapping());
         rheemContext.register(new StdoutSinkToJavaStdoutSinkMapping());
         rheemContext.register(new MapOperatorToJavaMapOperatorMapping());
