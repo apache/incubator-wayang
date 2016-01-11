@@ -2,10 +2,7 @@ package org.qcri.rheem.java.plugin;
 
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.java.mapping.MapOperatorToJavaMapOperatorMapping;
-import org.qcri.rheem.java.mapping.ReduceByOperatorToJavaReduceByOperatorMapping;
-import org.qcri.rheem.java.mapping.StdoutSinkToJavaStdoutSinkMapping;
-import org.qcri.rheem.java.mapping.TextFileSourceToJavaTextFileSourceMapping;
+import org.qcri.rheem.java.mapping.*;
 import org.qcri.rheem.java.platform.JavaExecutor;
 
 /**
@@ -20,6 +17,8 @@ public class Activator {
         rheemContext.register(new StdoutSinkToJavaStdoutSinkMapping());
         rheemContext.register(new MapOperatorToJavaMapOperatorMapping());
         rheemContext.register(new ReduceByOperatorToJavaReduceByOperatorMapping());
+        rheemContext.register(new JavaCollectionSourceMapping());
+        rheemContext.register(new JavaLocalCallbackSinkMapping());
     }
 
 }
