@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Test suite for {@link JavaLocalCallbackSink}.
+ * Test suite for {@link JavaReduceByOperator}.
  */
 public class JavaReduceByTest {
 
