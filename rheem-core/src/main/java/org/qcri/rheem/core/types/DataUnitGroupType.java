@@ -5,16 +5,16 @@ import java.util.Objects;
 /**
  * A grouped data unit type describes just the structure of data units within a grouped dataset.
  */
-public class GroupedDataUnitType extends DataUnitType {
+public class DataUnitGroupType extends DataUnitType {
 
     private final DataUnitType baseType;
 
-    public GroupedDataUnitType(DataUnitType baseType) {
+    public DataUnitGroupType(DataUnitType baseType) {
         this.baseType = baseType;
     }
 
     @Override
-    public boolean isGrouped() {
+    public boolean isGroup() {
         return true;
     }
 
@@ -26,7 +26,7 @@ public class GroupedDataUnitType extends DataUnitType {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        GroupedDataUnitType that = (GroupedDataUnitType) o;
+        DataUnitGroupType that = (DataUnitGroupType) o;
         return Objects.equals(baseType, that.baseType);
     }
 

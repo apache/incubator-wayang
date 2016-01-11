@@ -1,9 +1,5 @@
 package org.qcri.rheem.core.plan;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * An operator is any node that within a data flow plan.
  */

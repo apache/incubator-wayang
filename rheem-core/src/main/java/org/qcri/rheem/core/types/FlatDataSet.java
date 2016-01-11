@@ -17,9 +17,9 @@ public class FlatDataSet extends DataSet {
     @Override
     protected boolean isCompatibleToGroupedDataSet(GroupedDataSet groupedDataSet) {
         // A flat data set can be compatible to grouped one, if it contains grouped data units.
-        if (this.getDataUnitType().isGrouped()) {
-            GroupedDataUnitType groupedDataUnitType = (GroupedDataUnitType) this.getDataUnitType();
-            return groupedDataUnitType.getBaseType().equals(groupedDataSet.getDataUnitType());
+        if (this.getDataUnitType().isGroup()) {
+            DataUnitGroupType dataUnitGroupType = (DataUnitGroupType) this.getDataUnitType();
+            return dataUnitGroupType.getBaseType().equals(groupedDataSet.getDataUnitType());
         }
         return false;
     }

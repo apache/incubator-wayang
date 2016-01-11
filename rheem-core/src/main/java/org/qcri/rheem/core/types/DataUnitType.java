@@ -19,13 +19,13 @@ public abstract class DataUnitType {
     /**
      * Tells whether this data unit type represents groups of data units.
      */
-    public abstract boolean isGrouped();
+    public abstract boolean isGroup();
 
     /**
      * Tells whether this is a normal data unit type.
      */
     public boolean isPlain() {
-        return !isGrouped();
+        return !isGroup();
     }
 
 }

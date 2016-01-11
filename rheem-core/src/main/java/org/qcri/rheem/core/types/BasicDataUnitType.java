@@ -14,7 +14,7 @@ public class BasicDataUnitType extends DataUnitType {
     }
 
     @Override
-    public boolean isGrouped() {
+    public boolean isGroup() {
         return false;
     }
 
