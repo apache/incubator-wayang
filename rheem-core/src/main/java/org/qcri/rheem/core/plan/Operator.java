@@ -93,5 +93,23 @@ public interface Operator {
         return this.getNumInputs() == 0;
     }
 
+    /**
+     * todo
+     */
+    void accept(PlanVisitor visitor);
+
+    /**
+     * Operators can be nested in other operators, e.g., in a {@link Subplan} or a {@link OperatorAlternative}.
+     *
+     * @return the parent of this operator or {@code null} if this is a top-level operator
+     */
+    Operator getParent();
+
+    /**
+     * Operators can be nested in other operators, e.g., in a {@link Subplan} or a {@link OperatorAlternative}.
+     *
+     * @param newParent the new parent of this operator or {@code null} to declare it top-level
+     */
+    void setParent(Operator newParent);
 
 }

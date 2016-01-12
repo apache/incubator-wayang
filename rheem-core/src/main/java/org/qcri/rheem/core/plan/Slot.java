@@ -40,4 +40,22 @@ abstract public class Slot<T> {
     public DataSet getType() {
         return this.type;
     }
+
+    /**
+     * @return whether this is an {@link OutputSlot}
+     */
+    public boolean isOutputSlot() {
+        return this instanceof OutputSlot;
+    }
+
+    /**
+     * @return whether this is an input slot
+     */
+    public boolean isInputSlot() {
+        return this instanceof InputSlot;
+    }
+
+    public boolean isCompatibleWith(Slot<?> that) {
+        return this.type.equals(that.type);
+    }
 }

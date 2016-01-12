@@ -3,8 +3,8 @@ package org.qcri.rheem.core.mapping;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.plan.PhysicalPlan;
-import org.qcri.rheem.core.plan.Sink;
-import org.qcri.rheem.core.plan.Source;
+import org.qcri.rheem.core.plan.UnarySink;
+import org.qcri.rheem.core.plan.UnarySource;
 import org.qcri.rheem.core.plan.test.TestSink;
 import org.qcri.rheem.core.plan.test.TestSource;
 import org.qcri.rheem.core.test.TestDataUnit;
@@ -20,8 +20,8 @@ public class SubplanPatternTest {
     @Test
     public void testMatchSinkPattern() {
         // Build the plan.
-        Source source = new TestSource(DataSet.flatAndBasic(TestDataUnit.class));
-        Sink sink = new TestSink(DataSet.flatAndBasic(TestDataUnit.class));
+        UnarySource source = new TestSource(DataSet.flatAndBasic(TestDataUnit.class));
+        UnarySink sink = new TestSink(DataSet.flatAndBasic(TestDataUnit.class));
         source.connectTo(0, sink, 0);
         PhysicalPlan plan = new PhysicalPlan();
         plan.addSink(sink);
@@ -42,8 +42,8 @@ public class SubplanPatternTest {
     @Test
     public void testMatchSourcePattern() {
         // Build the plan.
-        Source source = new TestSource(DataSet.flatAndBasic(TestDataUnit.class));
-        Sink sink = new TestSink(DataSet.flatAndBasic(TestDataUnit.class));
+        UnarySource source = new TestSource(DataSet.flatAndBasic(TestDataUnit.class));
+        UnarySink sink = new TestSink(DataSet.flatAndBasic(TestDataUnit.class));
         source.connectTo(0, sink, 0);
         PhysicalPlan plan = new PhysicalPlan();
         plan.addSink(sink);
@@ -64,8 +64,8 @@ public class SubplanPatternTest {
     @Test
     public void testMatchChainedPattern() {
         // Build the plan.
-        Source source = new TestSource(DataSet.flatAndBasic(TestDataUnit.class));
-        Sink sink = new TestSink(DataSet.flatAndBasic(TestDataUnit.class));
+        UnarySource source = new TestSource(DataSet.flatAndBasic(TestDataUnit.class));
+        UnarySink sink = new TestSink(DataSet.flatAndBasic(TestDataUnit.class));
         source.connectTo(0, sink, 0);
         PhysicalPlan plan = new PhysicalPlan();
         plan.addSink(sink);

@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,20 @@ public class PlanTraversal {
 
     public Set<Operator> visitedOperators = new HashSet<>();
 
+    private final boolean isFollowInputs, isFollowOutputs;
+
+    private Consumer<Operator> traversalCallback = null;
+
+    public PlanTraversal(boolean isFollowInputs, boolean isFollowOutputs) {
+        this.isFollowInputs = isFollowInputs;
+        this.isFollowOutputs = isFollowOutputs;
+    }
+
+    public PlanTraversal withCallback(Consumer<Operator> traversalCallback) {
+        this.traversalCallback = traversalCallback;
+        return this;
+    }
+
     /**
      * Traverse the plan by following any connected operators.
      *
@@ -22,8 +37,12 @@ public class PlanTraversal {
      */
     public PlanTraversal traverse(Operator operator) {
         if (visitedOperators.add(operator)) {
-            traverseInputs(operator);
-            traverseOutputs(operator);
+            if (this.isFollowInputs) followInputs(operator);
+            if (this.isFollowOutputs) followOutputs(operator);
+
+            if (this.traversalCallback != null) {
+                this.traversalCallback.accept(operator);
+            }
         }
 
         return this;
@@ -32,7 +51,7 @@ public class PlanTraversal {
     /**
      * Override to control the traversal behavior.
      */
-    protected void traverseInputs(Operator operator) {
+    protected void followInputs(Operator operator) {
         Arrays.stream(operator.getAllInputs())
                 .map(InputSlot::getOccupant)
                 .filter(outputSlot -> outputSlot != null)
@@ -43,9 +62,9 @@ public class PlanTraversal {
     /**
      * Override to control the traversal behavior.
      */
-    protected void traverseOutputs(Operator operator) {
+    protected void followOutputs(Operator operator) {
         Arrays.stream(operator.getAllOutputs())
-                .map(OutputSlot::getOccupiedSlots)
+                .map(outputSlot -> ((OutputSlot<Object>) outputSlot).getOccupiedSlots())
                 .flatMap(Collection::stream)
                 .filter(inputSlot -> inputSlot != null)
                 .map(InputSlot::getOwner)

@@ -3,9 +3,10 @@ package org.qcri.rheem.core.mapping;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.mapping.test.TestSinkToTestSink2Factory;
+import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.PhysicalPlan;
-import org.qcri.rheem.core.plan.Sink;
-import org.qcri.rheem.core.plan.Source;
+import org.qcri.rheem.core.plan.UnarySink;
+import org.qcri.rheem.core.plan.UnarySource;
 import org.qcri.rheem.core.plan.test.TestSink;
 import org.qcri.rheem.core.plan.test.TestSink2;
 import org.qcri.rheem.core.plan.test.TestSource;
@@ -20,8 +21,8 @@ public class PlanTransformationTest {
     @Test
     public void testReplace() {
         // Build the plan.
-        Source source = new TestSource(DataSet.flatAndBasic(TestDataUnit.class));
-        Sink sink = new TestSink(DataSet.flatAndBasic(TestDataUnit.class));
+        UnarySource source = new TestSource(DataSet.flatAndBasic(TestDataUnit.class));
+        UnarySink sink = new TestSink(DataSet.flatAndBasic(TestDataUnit.class));
         source.connectTo(0, sink, 0);
         PhysicalPlan plan = new PhysicalPlan();
         plan.addSink(sink);
@@ -39,7 +40,7 @@ public class PlanTransformationTest {
 
         // Check the correctness of the transformation.
         Assert.assertEquals(1, plan.getSinks().size());
-        final Sink replacedSink = plan.getSinks().iterator().next();
+        final Operator replacedSink = plan.getSinks().iterator().next();
         Assert.assertTrue(replacedSink instanceof TestSink2);
         Assert.assertEquals(source, replacedSink.getInputOperator(0));
     }

@@ -1,19 +1,13 @@
 package org.qcri.rheem.core.mapping;
 
-import org.qcri.rheem.core.plan.InputSlot;
-import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.plan.OutputSlot;
+import org.qcri.rheem.core.plan.*;
 
 /**
  * An operator pattern matches to a class of operator instances.
  */
-public class OperatorPattern<T extends Operator> implements Operator {
+public class OperatorPattern<T extends Operator> extends OperatorBase {
 
     private final String name;
-
-    private final InputSlot[] inputs;
-
-    private final OutputSlot[] outputs;
 
     private final Class<T> operatorClass;
 
@@ -22,15 +16,13 @@ public class OperatorPattern<T extends Operator> implements Operator {
     public OperatorPattern(String name,
                            T exampleOperator,
                            boolean isMatchSubclasses) {
+
+        super(exampleOperator.getNumInputs(), exampleOperator.getNumOutputs(), null);
+
         this.name = name;
-        this.inputs = new InputSlot[exampleOperator.getNumInputs()];
-        for (int i = 0; i < this.inputs.length; i++) {
-            this.inputs[i] = exampleOperator.getInput(i).copyFor(this);
-        }
-        this.outputs = new OutputSlot[exampleOperator.getNumOutputs()];
-        for (int i = 0; i < this.outputs.length; i++) {
-            this.outputs[i] = exampleOperator.getOutput(i).copyFor(this);
-        }
+        InputSlot.mock(exampleOperator, this);
+        OutputSlot.mock(exampleOperator, this);
+
         this.operatorClass = (Class<T>) exampleOperator.getClass();
         this.isMatchSubclasses = isMatchSubclasses;
     }
@@ -61,18 +53,13 @@ public class OperatorPattern<T extends Operator> implements Operator {
         }
     }
 
-    @Override
-    public InputSlot[] getAllInputs() {
-        return inputs;
-    }
-
-    @Override
-    public OutputSlot[] getAllOutputs() {
-        return outputs;
-    }
 
     public String getName() {
-
         return name;
+    }
+
+    @Override
+    public void accept(PlanVisitor visitor) {
+        throw new RuntimeException("Pattern does not accept visitors.");
     }
 }

@@ -59,11 +59,11 @@ public class PlanTransformation {
         // If the originalOutputOperator was a sink, we need to update the sink in the plan accordingly.
         if (originalOutputOperator.isSink()) {
             plan.getSinks().remove(originalOutputOperator);
-            final Collection<Operator> sinks = new PlanTraversal()
+            final Collection<Operator> sinks = new PlanTraversal(true, true)
                     .traverse(replacement)
                     .getTraversedNodesWith(Operator::isSink);
             for (Operator sink : sinks) {
-                plan.addSink((Sink) sink);
+                plan.addSink(sink);
             }
         }
     }

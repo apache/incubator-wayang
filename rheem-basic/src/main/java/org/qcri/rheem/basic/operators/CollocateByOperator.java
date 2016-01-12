@@ -1,7 +1,8 @@
 package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.OneToOneOperator;
+import org.qcri.rheem.core.plan.ActualOperator;
+import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.FlatDataSet;
 
 import java.util.Iterator;
@@ -9,7 +10,7 @@ import java.util.Iterator;
 /**
  * This operator collocates the data units in a data set w.r.t. a key function.
  */
-public class CollocateByOperator<Type, Key> extends OneToOneOperator<Type, Iterator<Type>> {
+public class CollocateByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Iterator<Type>> {
 
     protected final TransformationDescriptor keyDescriptor;
 
@@ -21,7 +22,7 @@ public class CollocateByOperator<Type, Key> extends OneToOneOperator<Type, Itera
      */
     public CollocateByOperator(FlatDataSet type,
                                TransformationDescriptor keyDescriptor) {
-        super(type, type);
+        super(type, type, null);
         this.keyDescriptor = keyDescriptor;
     }
 

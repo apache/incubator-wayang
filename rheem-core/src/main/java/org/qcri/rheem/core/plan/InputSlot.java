@@ -15,6 +15,37 @@ public class InputSlot<T> extends Slot<T> {
      */
     private OutputSlot occupant;
 
+    /**
+     * Copy the {@link InputSlot}s of a given {@link Operator}.
+     */
+    public static void mock(Operator template, Operator mock) {
+        if (template.getNumInputs() != mock.getNumInputs()) {
+            throw new IllegalArgumentException("Cannot mock inputs: Mismatching number of inputs.");
+        }
+
+        InputSlot[] mockSlots = mock.getAllInputs();
+        for (int i = 0; i < template.getNumInputs(); i++) {
+            mockSlots[i] = template.getInput(i).copyFor(mock);
+        }
+    }
+
+    /**
+     * Take the input connections away from one operator and give them to another one.
+     */
+    public static void stealConnections(Operator victim, Operator thief) {
+        if (victim.getNumInputs() != thief.getNumInputs()) {
+            throw new IllegalArgumentException("Cannot steal inputs: Mismatching number of inputs.");
+        }
+
+        for (int i = 0; i < victim.getNumInputs(); i++) {
+            final OutputSlot occupant = victim.getInput(i).getOccupant();
+            if (occupant != null) {
+                occupant.disconnectFrom(victim.getInput(i));
+                occupant.connectTo(thief.getInput(i));
+            }
+        }
+    }
+
     public InputSlot(InputSlot blueprint, Operator owner) {
         this(blueprint.getName(), owner, blueprint.getType());
     }

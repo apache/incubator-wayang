@@ -3,8 +3,8 @@ package org.qcri.rheem.core.api;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.PhysicalPlan;
-import org.qcri.rheem.core.plan.Sink;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.lang.reflect.InvocationTargetException;
@@ -84,7 +84,7 @@ public class RheemContext {
             transformation.transform(physicalPlan);
         }
 
-        for (Sink sink : physicalPlan.getSinks()) {
+        for (Operator sink : physicalPlan.getSinks()) {
             final ExecutionOperator executableSink = (ExecutionOperator) sink;
             final Platform platform = ((ExecutionOperator) sink).getPlatform();
             platform.evaluate(executableSink);

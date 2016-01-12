@@ -5,7 +5,7 @@ import org.qcri.rheem.core.platform.Platform;
 /**
  * An execution operator is handled by a certain platform.
  */
-public interface ExecutionOperator extends Operator {
+public interface ExecutionOperator extends ActualOperator {
 
     /**
      * @return the platform that can run this operator

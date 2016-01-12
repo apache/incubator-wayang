@@ -9,9 +9,15 @@ import java.util.*;
  * <p><i>NB: Currently, only such patterns are tested and supported that form a chain of operators, i.e., no DAGs
  * are allowed and at most one input and one output operator.</i></p>
  */
-public class SubplanPattern implements Operator {
+public class SubplanPattern extends OperatorBase {
 
-    private OperatorPattern inputPattern, outputPattern;
+    private final OperatorPattern inputPattern, outputPattern;
+
+    public SubplanPattern(OperatorPattern inputPattern, OperatorPattern outputPattern) {
+        super(inputPattern.getAllInputs(), outputPattern.getAllOutputs(), null);
+        this.inputPattern = inputPattern;
+        this.outputPattern = outputPattern;
+    }
 
     /**
      * Creates a new instance that matches only a single operator.
@@ -32,20 +38,7 @@ public class SubplanPattern implements Operator {
      */
     public static final SubplanPattern fromOperatorPatterns(OperatorPattern inputOperatorPattern,
                                                             OperatorPattern outputOperatorPattern) {
-        final SubplanPattern subplanPattern = new SubplanPattern();
-        subplanPattern.inputPattern = inputOperatorPattern;
-        subplanPattern.outputPattern = outputOperatorPattern;
-        return subplanPattern;
-    }
-
-    @Override
-    public InputSlot[] getAllInputs() {
-        return this.inputPattern.getAllInputs();
-    }
-
-    @Override
-    public OutputSlot[] getAllOutputs() {
-        return this.outputPattern.getAllOutputs();
+        return new SubplanPattern(inputOperatorPattern, outputOperatorPattern);
     }
 
     public List<SubplanMatch> match(PhysicalPlan plan) {
@@ -53,11 +46,16 @@ public class SubplanPattern implements Operator {
     }
 
     public OperatorPattern getInputPattern() {
-        return inputPattern;
+        return this.inputPattern;
     }
 
     public OperatorPattern getOutputPattern() {
-        return outputPattern;
+        return this.outputPattern;
+    }
+
+    @Override
+    public void accept(PlanVisitor visitor) {
+        throw new RuntimeException("Pattern does not accept visitors.");
     }
 
     /**
@@ -70,6 +68,11 @@ public class SubplanPattern implements Operator {
          */
         final Set<Operator> visitedOutputOperators = new HashSet<>();
 
+        /**
+         * This stack keeps track of the currently visited {@link Subplan}s.
+         */
+        final Stack<Subplan> subplanStack = new Stack<>();
+
         final List<SubplanMatch> matches = new LinkedList<>();
 
         /**
@@ -78,8 +81,8 @@ public class SubplanPattern implements Operator {
         SubplanMatch currentSubplanMatch = null;
 
         public List<SubplanMatch> match(PhysicalPlan plan) {
-            for (Sink sink : plan.getSinks()) {
-                matchOutputPattern(sink);
+            for (Operator sink : plan.getSinks()) {
+                matchOutputPattern(sink, null);
             }
             return this.matches;
         }
@@ -89,25 +92,47 @@ public class SubplanPattern implements Operator {
          *
          * @param operator the operator that should be matched with the operator pattern
          */
-        private void matchOutputPattern(Operator operator) {
+        private void matchOutputPattern(Operator operator, OutputSlot<?> fromSlot) {
             // We might run over the same operator twice in DAGs and trees coming from the sinks. Therefore, keep track
             // of the operators, we have visited so far.
             if (!this.visitedOutputOperators.add(operator)) {
                 return;
             }
 
-            // Try to make a match starting from the currently visited operator.
-            this.currentSubplanMatch = new SubplanMatch(SubplanPattern.this);
-            if (match(SubplanPattern.this.outputPattern, operator)) {
-                this.matches.add(this.currentSubplanMatch);
-            }
-            this.currentSubplanMatch = null;
+            if (operator instanceof Subplan) {
+                final Subplan subplan = (Subplan) operator;
+                if (fromSlot == null) {
+                    matchOutputPattern(subplan.enter(), null);
+                } else {
+                    final OutputSlot<?> innerOutputSlot = subplan.enter(fromSlot);
+                    if (innerOutputSlot != null) {
+                        matchOutputPattern(innerOutputSlot.getOwner(), innerOutputSlot);
+                    }
+                }
 
-            // Wander down the input plan and match.
-            Arrays.stream(operator.getAllInputs())
-                    .map(input -> input.getOccupant())
-                    .filter(occupant -> occupant != null)
-                    .forEach(occupant -> this.matchOutputPattern(occupant.getOwner()));
+            } else {
+
+                // Try to make a match starting from the currently visited operator.
+                this.currentSubplanMatch = new SubplanMatch(SubplanPattern.this);
+                if (match(SubplanPattern.this.outputPattern, operator)) {
+                    this.matches.add(this.currentSubplanMatch);
+                }
+                this.currentSubplanMatch = null;
+
+                // Wander down the input plan and match.
+                Arrays.stream(operator.getAllInputs())
+                        .map(input -> {
+                            final Operator parent = input.getOwner().getParent();
+                            if (parent != null && parent instanceof Subplan) {
+                                final InputSlot<?> outerInput = ((Subplan) parent).exit(input);
+                                if (outerInput == null) return outerInput;
+                            }
+                            return input;
+                        })
+                        .map(InputSlot::getOccupant)
+                        .filter(occupant -> occupant != null)
+                        .forEach(occupant -> this.matchOutputPattern(occupant.getOwner(), occupant));
+            }
         }
 
         /**

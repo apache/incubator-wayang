@@ -32,7 +32,7 @@ public class StdoutSinkToJavaStdoutSinkMapping implements Mapping {
         @Override
         protected Operator translate(SubplanMatch subplanMatch) {
             final StdoutSink originalSink = (StdoutSink) subplanMatch.getMatch("sink").getOperator();
-            return new JavaStdoutSink<>(originalSink.getType());
+            return new JavaStdoutSink<>(originalSink.getInput().getType());
         }
     }
 }

@@ -32,7 +32,7 @@ public class JavaCollectionSourceMapping implements Mapping {
         @Override
         protected Operator translate(SubplanMatch subplanMatch) {
             final CollectionSource originalSource = (CollectionSource) subplanMatch.getMatch("source").getOperator();
-            return new JavaCollectionSource(originalSource.getCollection(), originalSource.getType());
+            return new JavaCollectionSource(originalSource.getCollection(), originalSource.getOutput().getType());
         }
     }
 }

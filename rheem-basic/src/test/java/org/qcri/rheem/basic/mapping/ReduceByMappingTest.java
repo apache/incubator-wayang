@@ -14,8 +14,8 @@ import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.PhysicalPlan;
-import org.qcri.rheem.core.plan.Sink;
-import org.qcri.rheem.core.plan.Source;
+import org.qcri.rheem.core.plan.UnarySink;
+import org.qcri.rheem.core.plan.UnarySource;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSet;
 import org.qcri.rheem.core.types.DataUnitGroupType;
@@ -29,7 +29,7 @@ public class ReduceByMappingTest {
     @Test
     public void testMapping() {
         // Construct a plan: source -> groupBy -> reduce -> sink.
-        Source source = new TestSource<>(DataSet.flatAndBasic(Tuple2.class));
+        UnarySource source = new TestSource<>(DataSet.flatAndBasic(Tuple2.class));
 
         final ProjectionDescriptor keyDescriptor = new ProjectionDescriptor(
                 new BasicDataUnitType(Tuple2.class), new BasicDataUnitType(String.class), "field0");
@@ -50,7 +50,7 @@ public class ReduceByMappingTest {
         );
         groupBy.connectTo(0, reduce, 0);
 
-        Sink sink = new TestSink<>(DataSet.flatAndBasic(Tuple2.class));
+        UnarySink sink = new TestSink<>(DataSet.flatAndBasic(Tuple2.class));
         reduce.connectTo(0, sink, 0);
         PhysicalPlan plan = new PhysicalPlan();
         plan.addSink(sink);
@@ -62,7 +62,7 @@ public class ReduceByMappingTest {
         }
 
         // Check that now we have this plan: source -> reduceBy -> sink.
-        final Sink finalSink = plan.getSinks().iterator().next();
+        final Operator finalSink = plan.getSinks().iterator().next();
         final Operator inputOperator = finalSink.getInputOperator(0);
         Assert.assertTrue(inputOperator instanceof ReduceByOperator);
         ReduceByOperator reduceBy = (ReduceByOperator) inputOperator;

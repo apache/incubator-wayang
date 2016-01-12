@@ -2,13 +2,13 @@ package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.OneToOneOperator;
+import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.FlatDataSet;
 
 /**
  * This operator groups the elements of a data set and aggregates the groups.
  */
-public class ReduceByOperator<Type, Key> extends OneToOneOperator<Type, Type> {
+public class ReduceByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Type> {
 
     protected final TransformationDescriptor keyDescriptor;
 
@@ -24,7 +24,7 @@ public class ReduceByOperator<Type, Key> extends OneToOneOperator<Type, Type> {
     public ReduceByOperator(FlatDataSet type,
                             TransformationDescriptor keyDescriptor,
                             ReduceDescriptor reduceDescriptor) {
-        super(type, type);
+        super(type, type, null);
         this.keyDescriptor = keyDescriptor;
         this.reduceDescriptor = reduceDescriptor;
     }

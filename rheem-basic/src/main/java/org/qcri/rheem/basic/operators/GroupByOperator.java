@@ -1,7 +1,7 @@
 package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.OneToOneOperator;
+import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.FlatDataSet;
 import org.qcri.rheem.core.types.GroupedDataSet;
 
@@ -15,7 +15,7 @@ import java.util.Iterator;
  * @see CollocateByOperator
  * @see ReduceOperator
  */
-public class GroupByOperator<Input, Key> extends OneToOneOperator<Input, Iterator<Input>> {
+public class GroupByOperator<Input, Key> extends UnaryToUnaryOperator<Input, Iterator<Input>> {
 
     protected final TransformationDescriptor<Input, Key> keyDescriptor;
 
@@ -28,7 +28,7 @@ public class GroupByOperator<Input, Key> extends OneToOneOperator<Input, Iterato
      */
     public GroupByOperator(TransformationDescriptor<Input, Key> keyDescriptor,
                            FlatDataSet inputType, GroupedDataSet outputType) {
-        super(inputType, outputType);
+        super(inputType, outputType, null);
         this.keyDescriptor = keyDescriptor;
     }
 

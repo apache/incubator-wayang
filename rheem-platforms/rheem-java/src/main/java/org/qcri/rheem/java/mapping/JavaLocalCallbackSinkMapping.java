@@ -29,7 +29,7 @@ public class JavaLocalCallbackSinkMapping implements Mapping {
         @Override
         protected Operator translate(SubplanMatch subplanMatch) {
             final LocalCallbackSink originalSink = (LocalCallbackSink) subplanMatch.getMatch("sink").getOperator();
-            return new JavaLocalCallbackSink<>(originalSink.getCallback(), originalSink.getType());
+            return new JavaLocalCallbackSink<>(originalSink.getCallback(), originalSink.getInput().getType());
         }
     }
 }

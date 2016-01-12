@@ -1,7 +1,6 @@
 package org.qcri.rheem.basic.operators;
 
-import org.qcri.rheem.core.plan.InputSlot;
-import org.qcri.rheem.core.plan.Sink;
+import org.qcri.rheem.core.plan.UnarySink;
 import org.qcri.rheem.core.types.DataSet;
 
 import java.util.Collection;
@@ -10,11 +9,7 @@ import java.util.function.Consumer;
 /**
  * This sink executes a callback on each received data unit into a Java {@link Collection}.
  */
-public class LocalCallbackSink<T> implements Sink {
-
-    private final InputSlot<T> inputSlot;
-
-    private final InputSlot<T>[] inputSlots;
+public class LocalCallbackSink<T> extends UnarySink<T> {
 
     protected final Consumer<T> callback;
 
@@ -30,25 +25,12 @@ public class LocalCallbackSink<T> implements Sink {
      * @param type     type of the incoming elements
      */
     public LocalCallbackSink(Consumer<T> callback, DataSet type) {
-        this.inputSlot = new InputSlot<>("elements", this, type);
-        this.inputSlots = new InputSlot[]{this.inputSlot};
+        super(type, null);
         this.callback = callback;
-    }
-
-    @Override
-    public InputSlot<?>[] getAllInputs() {
-        return this.inputSlots;
-    }
-
-    public InputSlot<T> getInput() {
-        return this.inputSlot;
     }
 
     public Consumer<T> getCallback() {
         return callback;
     }
 
-    public DataSet getType() {
-        return this.inputSlot.getType();
-    }
 }
