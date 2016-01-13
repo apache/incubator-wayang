@@ -1,9 +1,8 @@
 package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.ActualOperator;
 import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
-import org.qcri.rheem.core.types.FlatDataSet;
+import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Iterator;
 
@@ -20,17 +19,17 @@ public class CollocateByOperator<Type, Key> extends UnaryToUnaryOperator<Type, I
      * @param type        type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
      * @param keyDescriptor    describes how to extract the key from data units
      */
-    public CollocateByOperator(FlatDataSet type,
-                               TransformationDescriptor keyDescriptor) {
+    public CollocateByOperator(DataSetType<Type> type,
+                               TransformationDescriptor<Type, Key> keyDescriptor) {
         super(type, type, null);
         this.keyDescriptor = keyDescriptor;
     }
 
-    public FlatDataSet getType() {
-        return (FlatDataSet) this.getInputType();
+    public DataSetType<Type> getType() {
+        return this.getInputType();
     }
 
-    public TransformationDescriptor getKeyDescriptor() {
+    public TransformationDescriptor<Type, Key> getKeyDescriptor() {
         return keyDescriptor;
     }
 

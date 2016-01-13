@@ -1,9 +1,8 @@
 package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.plan.ActualOperator;
-import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.UnarySource;
-import org.qcri.rheem.core.types.DataSet;
+import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Collection;
 
@@ -14,7 +13,7 @@ public class CollectionSource<T> extends UnarySource<T> implements ActualOperato
 
     protected final Collection<T> collection;
 
-    public CollectionSource(Collection<T> collection, DataSet type) {
+    public CollectionSource(Collection<T> collection, DataSetType<T> type) {
         super(type, null);
         this.collection = collection;
     }

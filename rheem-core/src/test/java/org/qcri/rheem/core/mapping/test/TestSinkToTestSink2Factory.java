@@ -6,7 +6,6 @@ import org.qcri.rheem.core.mapping.SubplanMatch;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.test.TestSink;
 import org.qcri.rheem.core.plan.test.TestSink2;
-import org.qcri.rheem.core.types.FlatDataSet;
 
 /**
  * This factory replaces a {@link org.qcri.rheem.core.plan.test.TestSink} by a
@@ -21,7 +20,7 @@ public class TestSinkToTestSink2Factory extends ReplacementSubplanFactory {
         final TestSink testSink = (TestSink) sinkMatch.getOperator();
 
         // Translate the TestSink to a TestSink2.
-        return new TestSink2<>((FlatDataSet) testSink.getInput().getType());
+        return new TestSink2<>(testSink.getInput().getType());
     }
 
 }

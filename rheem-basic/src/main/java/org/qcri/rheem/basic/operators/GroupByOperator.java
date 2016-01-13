@@ -2,8 +2,7 @@ package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
-import org.qcri.rheem.core.types.FlatDataSet;
-import org.qcri.rheem.core.types.GroupedDataSet;
+import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Iterator;
 
@@ -27,7 +26,7 @@ public class GroupByOperator<Input, Key> extends UnaryToUnaryOperator<Input, Ite
      * @param outputType    class of the output types (i.e., type of {@link #getOutput()}
      */
     public GroupByOperator(TransformationDescriptor<Input, Key> keyDescriptor,
-                           FlatDataSet inputType, GroupedDataSet outputType) {
+                           DataSetType<Input> inputType, DataSetType<Iterator<Input>> outputType) {
         super(inputType, outputType, null);
         this.keyDescriptor = keyDescriptor;
     }

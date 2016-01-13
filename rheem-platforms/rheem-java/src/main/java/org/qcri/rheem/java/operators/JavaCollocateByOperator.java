@@ -3,7 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.CollocateByOperator;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.types.FlatDataSet;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class JavaCollocateByOperator<Type, KeyType>
      * @param type          type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
      * @param keyDescriptor describes how to extract the key from data units
      */
-    public JavaCollocateByOperator(FlatDataSet type, TransformationDescriptor keyDescriptor) {
+    public JavaCollocateByOperator(DataSetType<Type> type, TransformationDescriptor<Type, KeyType> keyDescriptor) {
         super(type, keyDescriptor);
     }
 

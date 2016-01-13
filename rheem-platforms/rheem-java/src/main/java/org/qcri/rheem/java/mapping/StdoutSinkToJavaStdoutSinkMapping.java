@@ -1,12 +1,10 @@
 package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.StdoutSink;
-import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.types.DataSet;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaStdoutSink;
-import org.qcri.rheem.java.operators.JavaTextFileSource;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -23,7 +21,7 @@ public class StdoutSinkToJavaStdoutSinkMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "sink", new StdoutSink<>(DataSet.flatAndBasic(Void.class)), false);
+                "sink", new StdoutSink<>(DataSetType.createDefault(Void.class)), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

@@ -5,4 +5,5 @@ package org.qcri.rheem.core.function;
  */
 public abstract class FunctionDescriptor {
 
+
 }

@@ -1,15 +1,16 @@
 package org.qcri.rheem.core.types;
 
+import java.util.Iterator;
 import java.util.Objects;
 
 /**
  * A grouped data unit type describes just the structure of data units within a grouped dataset.
  */
-public class DataUnitGroupType extends DataUnitType {
+public class DataUnitGroupType<T> extends DataUnitType<Iterator<T>> {
 
-    private final DataUnitType baseType;
+    private final DataUnitType<T> baseType;
 
-    public DataUnitGroupType(DataUnitType baseType) {
+    protected DataUnitGroupType(DataUnitType baseType) {
         this.baseType = baseType;
     }
 

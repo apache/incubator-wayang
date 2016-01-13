@@ -6,10 +6,7 @@ import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.basic.operators.ReduceOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.types.BasicDataUnitType;
-import org.qcri.rheem.core.types.DataSet;
-import org.qcri.rheem.core.types.FlatDataSet;
-import org.qcri.rheem.core.types.GroupedDataSet;
+import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,21 +23,27 @@ public class GlobalReduceMapping implements Mapping {
         return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory()));
     }
 
+    @SuppressWarnings("unchecked")
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern reducePattern = new OperatorPattern(
-                "reduce", new ReduceOperator<>(null, new GroupedDataSet(new BasicDataUnitType(Void.class)),
-                DataSet.flatAndBasic(Void.class)), false);
+                "reduce",
+                new ReduceOperator<>(
+                        null,
+                        DataSetType.createDefault(Void.class),
+                        DataSetType.createDefault(Void.class)),
+                false);
         return SubplanPattern.createSingleton(reducePattern);
     }
 
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
+        @SuppressWarnings("unchecked")
         protected Operator translate(SubplanMatch subplanMatch) {
             final ReduceOperator reduce = (ReduceOperator) subplanMatch.getMatch("reduce").getOperator();
 
             return new GlobalReduceOperator<>(
-                    (FlatDataSet) reduce.getInputType(),
+                    reduce.getInputType(),
                     reduce.getReduceDescriptor());
         }
     }

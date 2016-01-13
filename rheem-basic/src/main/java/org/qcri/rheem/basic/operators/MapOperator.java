@@ -2,7 +2,7 @@ package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
-import org.qcri.rheem.core.types.DataSet;
+import org.qcri.rheem.core.types.DataSetType;
 
 /**
  * A map operator represents semantics as they are known from frameworks, such as Spark and Flink. It pulls each
@@ -18,7 +18,7 @@ public class MapOperator<InputType, OutputType> extends UnaryToUnaryOperator<Inp
     /**
      * Creates a new instance.
      */
-    public MapOperator(DataSet inputType, DataSet outputType,
+    public MapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType,
                        TransformationDescriptor<InputType, OutputType> functionDescriptor) {
         super(inputType, outputType, null);
         this.functionDescriptor = functionDescriptor;

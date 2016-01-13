@@ -34,8 +34,10 @@ public class JavaGlobalReduceOperatorMapping implements Mapping {
         @Override
         protected Operator translate(SubplanMatch subplanMatch) {
             final GlobalReduceOperator<?> originalOperator = (GlobalReduceOperator<?>) subplanMatch.getMatch("reduce").getOperator();
-            return new JavaGlobalReduceOperator<>(originalOperator.getType(),
-                    originalOperator.getReduceDescriptor());
+            return new JavaGlobalReduceOperator<>(
+                    originalOperator.getType().unchecked(),
+                    originalOperator.getReduceDescriptor().unchecked()
+            );
         }
     }
 }

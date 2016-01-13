@@ -1,11 +1,9 @@
 package org.qcri.rheem.java.mapping;
 
-import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.java.operators.JavaMapOperator;
 import org.qcri.rheem.java.operators.JavaReduceByOperator;
 import org.qcri.rheem.java.operators.JavaTextFileSource;
 
@@ -33,9 +31,11 @@ public class ReduceByOperatorToJavaReduceByOperatorMapping implements Mapping {
         @Override
         protected Operator translate(SubplanMatch subplanMatch) {
             final ReduceByOperator<?, ?> originalOperator = (ReduceByOperator<?, ?>) subplanMatch.getMatch("reduceBy").getOperator();
-            return new JavaReduceByOperator<>(originalOperator.getType(),
-                    originalOperator.getKeyDescriptor(),
-                    originalOperator.getReduceDescriptor());
+            return new JavaReduceByOperator<>(
+                    originalOperator.getType().unchecked(),
+                    originalOperator.getKeyDescriptor().unchecked(),
+                    originalOperator.getReduceDescriptor().unchecked()
+            );
         }
     }
 }

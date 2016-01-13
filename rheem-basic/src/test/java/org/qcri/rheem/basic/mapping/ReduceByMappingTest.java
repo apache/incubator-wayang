@@ -17,9 +17,8 @@ import org.qcri.rheem.core.plan.PhysicalPlan;
 import org.qcri.rheem.core.plan.UnarySink;
 import org.qcri.rheem.core.plan.UnarySource;
 import org.qcri.rheem.core.types.BasicDataUnitType;
-import org.qcri.rheem.core.types.DataSet;
-import org.qcri.rheem.core.types.DataUnitGroupType;
-import org.qcri.rheem.core.types.GroupedDataSet;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 
 /**
  * Test suite for the {@link ReduceByMapping}.
@@ -29,28 +28,31 @@ public class ReduceByMappingTest {
     @Test
     public void testMapping() {
         // Construct a plan: source -> groupBy -> reduce -> sink.
-        UnarySource source = new TestSource<>(DataSet.flatAndBasic(Tuple2.class));
+        UnarySource<Tuple2<String, Integer>> source = new TestSource<>(DataSetType.createDefault(Tuple2.class));
 
-        final ProjectionDescriptor keyDescriptor = new ProjectionDescriptor(
-                new BasicDataUnitType(Tuple2.class), new BasicDataUnitType(String.class), "field0");
-        GroupByOperator groupBy = new GroupByOperator(
+        final ProjectionDescriptor<Tuple2<String, Integer>, String> keyDescriptor = new ProjectionDescriptor<>(
+                DataUnitType.createBasicUnchecked(Tuple2.class),
+                DataUnitType.createBasic(String.class),
+                "field0");
+        GroupByOperator<Tuple2<String, Integer>, String> groupBy = new GroupByOperator<>(
                 keyDescriptor,
-                DataSet.flatAndBasic(Tuple2.class),
-                new GroupedDataSet(new BasicDataUnitType(Tuple2.class))
+                DataSetType.createDefaultUnchecked(Tuple2.class),
+                DataSetType.createGroupedUnchecked(Tuple2.class)
         );
         source.connectTo(0, groupBy, 0);
 
-        final ReduceDescriptor reduceDescriptor = new ReduceDescriptor(new DataUnitGroupType(new BasicDataUnitType(Tuple2.class)),
-                new BasicDataUnitType(Tuple2.class),
+        final ReduceDescriptor<Tuple2<String, Integer>> reduceDescriptor = new ReduceDescriptor<>(
+                DataUnitType.createGroupedUnchecked(Tuple2.class),
+                DataUnitType.createBasicUnchecked(Tuple2.class),
                 (a, b) -> a);
-        ReduceOperator reduce = new ReduceOperator(
+        ReduceOperator<Tuple2<String, Integer>> reduce = ReduceOperator.createGroupedReduce(
                 reduceDescriptor,
-                new GroupedDataSet(new BasicDataUnitType(Tuple2.class)),
-                DataSet.flatAndBasic(Tuple2.class)
+                DataSetType.createGroupedUnchecked(Tuple2.class),
+                DataSetType.createDefaultUnchecked(Tuple2.class)
         );
         groupBy.connectTo(0, reduce, 0);
 
-        UnarySink sink = new TestSink<>(DataSet.flatAndBasic(Tuple2.class));
+        UnarySink<Tuple2<String, Integer>> sink = new TestSink<>(DataSetType.createDefaultUnchecked(Tuple2.class));
         reduce.connectTo(0, sink, 0);
         PhysicalPlan plan = new PhysicalPlan();
         plan.addSink(sink);

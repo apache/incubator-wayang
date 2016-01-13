@@ -31,8 +31,10 @@ public class JavaCollocateByOperatorMapping implements Mapping {
         @Override
         protected Operator translate(SubplanMatch subplanMatch) {
             final CollocateByOperator<?, ?> originalOperator = (CollocateByOperator<?, ?>) subplanMatch.getMatch("operator").getOperator();
-            return new JavaCollocateByOperator<>(originalOperator.getType(),
-                    originalOperator.getKeyDescriptor());
+            return new JavaCollocateByOperator<>(
+                    originalOperator.getType().unchecked(),
+                    originalOperator.getKeyDescriptor().unchecked()
+            );
         }
     }
 }

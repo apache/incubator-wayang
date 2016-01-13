@@ -4,9 +4,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.types.BasicDataUnitType;
-import org.qcri.rheem.core.types.DataSet;
-import org.qcri.rheem.core.types.DataUnitGroupType;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -26,12 +25,13 @@ public class JavaGlobalReduceOperatorTest {
 
         // Build the reduce operator.
         JavaGlobalReduceOperator<Integer> globalReduce =
-                new JavaGlobalReduceOperator<>(DataSet.flatAndBasic(Tuple2.class),
-                        new ReduceDescriptor<Integer>(new DataUnitGroupType(
-                                new BasicDataUnitType(Integer.class)),
-                                new BasicDataUnitType(Integer.class),
+                new JavaGlobalReduceOperator<>(
+                        DataSetType.createDefaultUnchecked(Tuple2.class),
+                        new ReduceDescriptor<>(
+                                DataUnitType.createGrouped(Integer.class),
+                                DataUnitType.createBasic(Integer.class),
                                 (a, b) -> a + b
-                                )
+                        )
                 );
 
         // Execute the reduce operator.
@@ -53,12 +53,13 @@ public class JavaGlobalReduceOperatorTest {
 
         // Build the reduce operator.
         JavaGlobalReduceOperator<Integer> globalReduce =
-                new JavaGlobalReduceOperator<>(DataSet.flatAndBasic(Tuple2.class),
-                        new ReduceDescriptor<Integer>(new DataUnitGroupType(
-                                new BasicDataUnitType(Integer.class)),
-                                new BasicDataUnitType(Integer.class),
+                new JavaGlobalReduceOperator<>(
+                        DataSetType.createDefaultUnchecked(Tuple2.class),
+                        new ReduceDescriptor<>(
+                                DataUnitType.createGrouped(Integer.class),
+                                DataUnitType.createBasic(Integer.class),
                                 (a, b) -> a + b
-                                )
+                        )
                 );
 
         // Execute the reduce operator.
