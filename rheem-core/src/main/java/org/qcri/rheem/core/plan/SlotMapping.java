@@ -10,6 +10,13 @@ public class SlotMapping {
 
     private final Map<Slot, Slot> mapping = new HashMap<>();
 
+    public static SlotMapping wrap(Operator wrappee, Operator wrapper) {
+        SlotMapping slotMapping = new SlotMapping();
+        slotMapping.mapAll(wrapper.getAllOutputs(), wrappee.getAllOutputs());
+        slotMapping.mapAll(wrappee.getAllInputs(), wrapper.getAllInputs());
+        return slotMapping;
+    }
+
     public void mapAll(InputSlot[] sources, InputSlot[] targets) {
         if (sources.length != targets.length) throw new IllegalArgumentException();
         for (int i = 0; i < sources.length; i++) {

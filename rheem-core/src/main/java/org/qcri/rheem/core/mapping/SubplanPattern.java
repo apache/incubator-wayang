@@ -59,31 +59,30 @@ public class SubplanPattern extends OperatorBase {
     }
 
     /**
-     * This class encapsulates the functionality to match a subplan pattern against a plan.
+     * This class encapsulates the functionality to match a subplan pattern against a plan. It works as follows:
+     * <ol>
+     * <li>for each operator in the plan, start a new match attempt</li>
+     * <li>iterate through the graph pattern</li>
+     * <li>co-iterate the actual graph</li>
+     * <li>if we could co-iterate the two, create a match for the match attempt</li>
+     * </ol>
      */
     private class Matcher {
 
         /**
          * Operators that have been considered to match against this pattern's sink.
          */
-        final Set<Operator> visitedOutputOperators = new HashSet<>();
+        final private Set<Operator> visitedOutputOperators = new HashSet<>();
 
         /**
-         * This stack keeps track of the currently visited {@link Subplan}s.
+         * Collects all the matches.
          */
-        final Stack<Subplan> subplanStack = new Stack<>();
-
-        final List<SubplanMatch> matches = new LinkedList<>();
-
-        /**
-         * Used to construct a match optimistically.
-         */
-        SubplanMatch currentSubplanMatch = null;
+        final private List<SubplanMatch> matches = new LinkedList<>();
 
         public List<SubplanMatch> match(PhysicalPlan plan) {
-            for (Operator sink : plan.getSinks()) {
-                matchOutputPattern(sink, null);
-            }
+            new PlanTraversal(true, false)
+                    .withCallback(this::attemptMatchFrom)
+                    .traverse(plan.getSinks());
             return this.matches;
         }
 
@@ -92,74 +91,77 @@ public class SubplanPattern extends OperatorBase {
          *
          * @param operator the operator that should be matched with the operator pattern
          */
-        private void matchOutputPattern(Operator operator, OutputSlot<?> fromSlot) {
-            // We might run over the same operator twice in DAGs and trees coming from the sinks. Therefore, keep track
-            // of the operators, we have visited so far.
-            if (!this.visitedOutputOperators.add(operator)) {
-                return;
-            }
-
-            if (operator instanceof Subplan) {
-                final Subplan subplan = (Subplan) operator;
-                if (fromSlot == null) {
-                    matchOutputPattern(subplan.enter(), null);
-                } else {
-                    final OutputSlot<?> innerOutputSlot = subplan.enter(fromSlot);
-                    if (innerOutputSlot != null) {
-                        matchOutputPattern(innerOutputSlot.getOwner(), innerOutputSlot);
-                    }
-                }
-
-            } else {
-
-                // Try to make a match starting from the currently visited operator.
-                this.currentSubplanMatch = new SubplanMatch(SubplanPattern.this);
-                if (match(SubplanPattern.this.outputPattern, operator)) {
-                    this.matches.add(this.currentSubplanMatch);
-                }
-                this.currentSubplanMatch = null;
-
-                // Wander down the input plan and match.
-                Arrays.stream(operator.getAllInputs())
-                        .map(input -> {
-                            final Operator parent = input.getOwner().getParent();
-                            if (parent != null && parent instanceof Subplan) {
-                                final InputSlot<?> outerInput = ((Subplan) parent).exit(input);
-                                if (outerInput == null) return outerInput;
-                            }
-                            return input;
-                        })
-                        .map(InputSlot::getOccupant)
-                        .filter(occupant -> occupant != null)
-                        .forEach(occupant -> this.matchOutputPattern(occupant.getOwner(), occupant));
-            }
+        private void attemptMatchFrom(Operator operator) {
+            // Try to make a match starting from the currently visited operator.
+            final SubplanMatch subplanMatch = new SubplanMatch(SubplanPattern.this);
+            match(SubplanPattern.this.outputPattern, operator, null, subplanMatch);
         }
 
         /**
-         * Recursively match the given operator pattern and operator including their input operators, thereby building
-         * recording the matches in {@link #currentSubplanMatch}.
-         *
-         * @return whether the recursive match was successful
+         * Recursively match the given operator pattern and operator including their input operators.
          */
-        private boolean match(OperatorPattern pattern, Operator operator) {
-            final OperatorMatch operatorMatch = pattern.match(operator);
-            if (operatorMatch != null) {
-                this.currentSubplanMatch.addOperatorMatch(operatorMatch);
+        private void match(OperatorPattern pattern,
+                           Operator operator,
+                           OutputSlot<?> trackedOutputSlot,
+                           SubplanMatch subplanMatch) {
 
-                // Now we need to try to match all the input operator patterns.
-                for (int inputIndex = 0; inputIndex < operator.getNumInputs(); inputIndex++) {
-                    final OperatorPattern inputOperatorPattern = (OperatorPattern) pattern.getInputOperator(inputIndex);
-                    if (inputOperatorPattern != null) {
-                        final Operator inputOperator = operator.getInputOperator(inputIndex);
-                        if (!match(inputOperatorPattern, inputOperator)) {
-                            return false;
-                        }
-                    }
-                }
-                return true;
+            if (pattern.getNumInputs() > 1) {
+                throw new RuntimeException("Cannot match pattern: Operator with more than one input not supported, yet.");
             }
 
-            return false;
+            if (operator instanceof Subplan) {
+                if (trackedOutputSlot == null) {
+                    match(pattern, ((Subplan) operator).enter(), trackedOutputSlot, subplanMatch);
+                } else {
+                    final OutputSlot<?> innerOutputSlot = ((Subplan) operator).enter(trackedOutputSlot);
+                    match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatch);
+                }
+
+            } else if (operator instanceof OperatorAlternative) {
+                for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
+                    SubplanMatch subplanMatchCopy = new SubplanMatch(subplanMatch);
+                    if (trackedOutputSlot == null) {
+                        match(pattern, alternative.enter(), trackedOutputSlot, subplanMatchCopy);
+                    } else {
+                        final OutputSlot<?> innerOutputSlot = alternative.enter(trackedOutputSlot);
+                        match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatchCopy);
+                    }
+                }
+
+            } else if (operator instanceof OperatorAlternative.Alternative) {
+                throw new IllegalStateException("Should not match against " +
+                        OperatorAlternative.Alternative.class.getSimpleName());
+
+            } else {
+                // Try to match the co-iterated operator (pattern).
+                final OperatorMatch operatorMatch = pattern.match(operator);
+                if (operatorMatch == null) {
+                    // If match was not successful, abort. NB: This might change if we have, like, real graph patterns.
+                    return;
+                }
+
+                subplanMatch.addOperatorMatch(operatorMatch);
+
+                // Now we need to try to match all the input operator patterns.
+                boolean isTerminalOperator = true;
+                for (int inputIndex = 0; inputIndex < operator.getNumInputs(); inputIndex++) {
+                    final OperatorPattern inputOperatorPattern = (OperatorPattern) pattern.getInputOperator(inputIndex);
+                    if (inputOperatorPattern == null) {
+                        continue;
+                    }
+                    isTerminalOperator = false;
+                    final InputSlot<?> outerInputSlot = operator.getOutermostInputSlot(operator.getInput(inputIndex));
+                    final OutputSlot<?> occupant = outerInputSlot.getOccupant();
+                    if (occupant != null) {
+                        match(inputOperatorPattern, occupant.getOwner(), occupant, subplanMatch);
+                    }
+
+                }
+
+                if (isTerminalOperator) {
+                    this.matches.add(subplanMatch);
+                }
+            }
         }
     }
 }

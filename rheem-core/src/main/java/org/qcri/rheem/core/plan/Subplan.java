@@ -60,7 +60,7 @@ public class Subplan extends OperatorBase implements ActualOperator {
      */
     public <T> OutputSlot<T> enter(OutputSlot<T> subplanOutputSlot) {
         // If this subplan is not a sink, we trace the given output slot via the slot mapping.
-        if (subplanOutputSlot.getOwner() != this) {
+        if (this.isOwnerOf(subplanOutputSlot)) {
             throw new IllegalArgumentException("Cannot enter subplan: Output slot does not belong to this subplan.");
         }
 
@@ -84,6 +84,11 @@ public class Subplan extends OperatorBase implements ActualOperator {
         }
 
         return innerOperator == this.inputOperator ? this : null;
+    }
+
+    @Override
+    public void accept(PlanVisitor visitor) {
+        visitor.visit(this);
     }
 
     // TODO: develop constructors/factory methods to deal with more than one input and output operator

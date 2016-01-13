@@ -65,14 +65,86 @@ public interface Operator {
 
 
     /**
-     * Retrieve the operator that is connected to the input at the given index.
+     * Retrieve the operator that is connected to the input at the given index. If necessary, escape the current
+     * parent.
      *
      * @param inputIndex the index of the input to consider
      * @return the input operator or {@code null} if no such operator exists
+     * @see #getParent()
      */
     default Operator getInputOperator(int inputIndex) {
-        final OutputSlot occupant = getInput(inputIndex).getOccupant();
+        return getInputOperator(getInput(inputIndex));
+    }
+
+    /**
+     * Retrieve the operator that is connected to the given input. If necessary, escape the current parent.
+     *
+     * @param input the index of the input to consider
+     * @return the input operator or {@code null} if no such operator exists
+     * @see #getParent()
+     */
+    default Operator getInputOperator(InputSlot<?> input) {
+        if (!isOwnerOf(input)) {
+            throw new IllegalArgumentException("Slot does not belong to this operator.");
+        }
+
+        // Try to exit through the parent.
+        final Operator parent = this.getParent();
+        if (parent != null) {
+            if (parent instanceof Subplan) {
+                final InputSlot<?> exitInputSlot = ((Subplan) parent).exit(input);
+                if (exitInputSlot != null) {
+                    return parent.getInputOperator(exitInputSlot);
+                }
+
+            } else if (parent instanceof OperatorAlternative.Alternative) {
+                final InputSlot<?> exitInputSlot = ((OperatorAlternative.Alternative) parent).exit(input);
+                if (exitInputSlot != null) {
+                    return parent.getInputOperator(exitInputSlot);
+                }
+            }
+
+        }
+
+        final OutputSlot occupant = input.getOccupant();
         return occupant == null ? null : occupant.getOwner();
+    }
+
+    /**
+     * Retrieve the outermost {@link InputSlot} if this operator is nested in other operators.
+     *
+     * @param input the slot to track
+     * @return the outermost {@link InputSlot}
+     * @see #getParent()
+     */
+    default <T> InputSlot<T> getOutermostInputSlot(InputSlot<T> input) {
+        if (!isOwnerOf(input)) {
+            throw new IllegalArgumentException("Slot does not belong to this operator.");
+        }
+
+        // Try to exit through the parent.
+        final Operator parent = this.getParent();
+        if (parent != null) {
+            if (parent instanceof Subplan) {
+                final InputSlot<T> parentInputSlot = ((Subplan) parent).exit(input);
+                if (parentInputSlot != null) {
+                    return parent.getOutermostInputSlot(parentInputSlot);
+                }
+
+            } else if (parent instanceof OperatorAlternative.Alternative) {
+                final InputSlot<T> parentInputSlot = ((OperatorAlternative.Alternative) parent).exit(input);
+                if (parentInputSlot != null) {
+                    return parent.getOutermostInputSlot(parentInputSlot);
+                }
+            }
+
+        }
+
+        return input;
+    }
+
+    default boolean isOwnerOf(Slot<?> slot) {
+        return slot.getOwner() == this;
     }
 
     /**

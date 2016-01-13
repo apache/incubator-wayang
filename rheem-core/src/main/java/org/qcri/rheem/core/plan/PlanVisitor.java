@@ -11,6 +11,8 @@ public interface PlanVisitor {
      */
     void visit(OperatorAlternative operatorAlternative);
 
+    void visit(Subplan subplan);
+
     /** todo */
     void visit(ActualOperator operator);
 

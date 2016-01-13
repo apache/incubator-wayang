@@ -1,7 +1,5 @@
 package org.qcri.rheem.core.mapping;
 
-import org.qcri.rheem.core.plan.Operator;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,6 +20,14 @@ public class SubplanMatch {
 
     public SubplanMatch(SubplanPattern pattern) {
         this.pattern = pattern;
+    }
+
+    /**
+     * Copy constructor.
+     */
+    public SubplanMatch(SubplanMatch that) {
+        this.pattern = that.pattern;
+        this.operatorMatches.putAll(that.operatorMatches);
     }
 
     public void addOperatorMatch(OperatorMatch operatorMatch) {

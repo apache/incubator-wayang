@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Traverse a plan.
+ * Traverse a plan. In each instance, every operator will be traversed only once.
  */
 public class PlanTraversal {
 
@@ -29,6 +29,7 @@ public class PlanTraversal {
         return this;
     }
 
+
     /**
      * Traverse the plan by following any connected operators.
      *
@@ -45,6 +46,14 @@ public class PlanTraversal {
             }
         }
 
+        return this;
+    }
+
+    /**
+     * Traversing as with {@link #traverse(Operator)} for every operator.
+     */
+    public PlanTraversal traverse(Collection<Operator> operators) {
+        operators.forEach(this::traverse);
         return this;
     }
 
@@ -80,5 +89,4 @@ public class PlanTraversal {
     public Collection<Operator> getTraversedNodesWith(Predicate<Operator> operatorPredicate) {
         return this.visitedOperators.stream().filter(operatorPredicate).collect(Collectors.toList());
     }
-
 }
