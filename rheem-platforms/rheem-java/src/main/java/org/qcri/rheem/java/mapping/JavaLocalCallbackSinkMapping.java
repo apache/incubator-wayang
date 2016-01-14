@@ -27,9 +27,9 @@ public class JavaLocalCallbackSinkMapping implements Mapping {
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final LocalCallbackSink originalSink = (LocalCallbackSink) subplanMatch.getMatch("sink").getOperator();
-            return new JavaLocalCallbackSink<>(originalSink.getCallback(), originalSink.getInput().getType());
+            return new JavaLocalCallbackSink<>(originalSink.getCallback(), originalSink.getInput().getType()).at(epoch);
         }
     }
 }

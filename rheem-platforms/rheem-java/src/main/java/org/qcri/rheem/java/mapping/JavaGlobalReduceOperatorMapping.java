@@ -32,12 +32,12 @@ public class JavaGlobalReduceOperatorMapping implements Mapping {
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final GlobalReduceOperator<?> originalOperator = (GlobalReduceOperator<?>) subplanMatch.getMatch("reduce").getOperator();
             return new JavaGlobalReduceOperator<>(
                     originalOperator.getType().unchecked(),
                     originalOperator.getReduceDescriptor().unchecked()
-            );
+            ).at(epoch);
         }
     }
 }

@@ -9,7 +9,6 @@ import org.qcri.rheem.core.types.DataSetType;
  */
 public class InputSlot<T> extends Slot<T> {
 
-
     /**
      * Output slot of another operator that is connected to this input slot.
      */

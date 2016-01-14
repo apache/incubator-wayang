@@ -29,11 +29,11 @@ public class MapOperatorToJavaMapOperatorMapping implements Mapping {
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final MapOperator<?, ?> originalOperator = (MapOperator<?, ?>) subplanMatch.getMatch("map").getOperator();
             return new JavaMapOperator(originalOperator.getInputType(),
                     originalOperator.getOutputType(),
-                    originalOperator.getFunctionDescriptor());
+                    originalOperator.getFunctionDescriptor()).at(epoch);
         }
     }
 }

@@ -19,20 +19,32 @@ public class OperatorAlternative extends OperatorBase {
      * Wraps an {@link Operator}:
      * <ol>
      * <li>Creates a new instance that mocks the interface (slots) of the given operator,</li>
-     * <li>steals the connections from the given operator.</li>
+     * <li>steals the connections from the given operator,</li>
+     * <li>adapts its parent and becomes its new parent.</li>
      * <li>Moreover, the given operator is set up as the first alternative.</li>
      * </ol>
      *
      * @param operator operator to wrap
-     * @param parent   parent of this operator or {@code null}
      */
-    public OperatorAlternative(Operator operator, Operator parent) {
-        super(operator.getNumInputs(), operator.getNumOutputs(), parent);
-        InputSlot.mock(operator, this);
-        InputSlot.stealConnections(operator, this);
-        OutputSlot.mock(operator, this);
-        OutputSlot.stealConnections(operator, this);
-        addAlternative(operator);
+    public static OperatorAlternative wrap(Operator operator) {
+        OperatorAlternative operatorAlternative = new OperatorAlternative(operator);
+
+        InputSlot.mock(operator, operatorAlternative);
+        InputSlot.stealConnections(operator, operatorAlternative);
+
+        OutputSlot.mock(operator, operatorAlternative);
+        OutputSlot.stealConnections(operator, operatorAlternative);
+
+        operatorAlternative.addAlternative(operator);
+
+        return operatorAlternative;
+    }
+
+    /**
+     * Creates a new instance with the same number of inputs and outputs and the same parent as the given operator.
+     */
+    private OperatorAlternative(Operator operator) {
+        super(operator.getNumInputs(), operator.getNumOutputs(), operator.getParent());
     }
 
     public List<Alternative> getAlternatives() {
@@ -147,6 +159,16 @@ public class OperatorAlternative extends OperatorBase {
         @Override
         public boolean isOwnerOf(Slot<?> slot) {
             return OperatorAlternative.this.isOwnerOf(slot);
+        }
+
+        @Override
+        public void setEpoch(int epoch) {
+            throw new RuntimeException("Epochs not supported for alternatives.");
+        }
+
+        @Override
+        public int getEpoch() {
+            throw new RuntimeException("Epochs not supported for alternatives.");
         }
     }
 

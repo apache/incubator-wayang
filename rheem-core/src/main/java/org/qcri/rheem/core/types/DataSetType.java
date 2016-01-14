@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.types;
 
 import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * A data set is an abstraction of the Rheem programming model. Although never directly materialized, a data set
@@ -64,7 +65,20 @@ public class DataSetType<T> {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DataSetType<?> that = (DataSetType<?>) o;
+        return Objects.equals(dataUnitType, that.dataUnitType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(dataUnitType);
+    }
+
+    @Override
     public String toString() {
-        return String.format("%s[%s]", this.getClass(), this.dataUnitType);
+        return String.format("%s[%s]", this.getClass().getSimpleName(), this.dataUnitType);
     }
 }

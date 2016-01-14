@@ -39,12 +39,12 @@ public class GlobalReduceMapping implements Mapping {
 
         @Override
         @SuppressWarnings("unchecked")
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final ReduceOperator reduce = (ReduceOperator) subplanMatch.getMatch("reduce").getOperator();
 
             return new GlobalReduceOperator<>(
                     reduce.getInputType(),
-                    reduce.getReduceDescriptor());
+                    reduce.getReduceDescriptor()).at(epoch);
         }
     }
 

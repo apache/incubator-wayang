@@ -58,4 +58,12 @@ abstract public class Slot<T> {
     public boolean isCompatibleWith(Slot<?> that) {
         return this.type.equals(that.type);
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s, %s]",
+                getClass().getSimpleName(),
+                this.type,
+                this.owner == null ? "no owner" : this.owner.getClass().getSimpleName());
+    }
 }

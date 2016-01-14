@@ -184,4 +184,28 @@ public interface Operator {
      */
     void setParent(Operator newParent);
 
+
+    /**
+     * Each operator is associated with an epoch, which is a logical timestamp for the operator's creation.
+     * This value is the lowest timestamp and default epoch.
+     */
+    int FIRST_EPOCH = 0;
+
+    /**
+     * <i>Optional operation for non-composite operators.</i>
+     *
+     * @param epoch the operator's new epoch value
+     * @see #FIRST_EPOCH
+     */
+    void setEpoch(int epoch);
+
+    /**
+     * <i>Optional operation for non-composite operators.</i>
+     *
+     * @return the operator's epoch value
+     * @see #FIRST_EPOCH
+     */
+    int getEpoch();
+
+
 }

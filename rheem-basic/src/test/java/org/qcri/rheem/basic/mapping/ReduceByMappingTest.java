@@ -16,7 +16,6 @@ import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.PhysicalPlan;
 import org.qcri.rheem.core.plan.UnarySink;
 import org.qcri.rheem.core.plan.UnarySource;
-import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 
@@ -60,7 +59,7 @@ public class ReduceByMappingTest {
         // Apply our mapping.
         Mapping mapping = new ReduceByMapping();
         for (PlanTransformation planTransformation : mapping.getTransformations()) {
-            planTransformation.transform(plan);
+            planTransformation.transform(plan, Operator.FIRST_EPOCH + 1);
         }
 
         // Check that now we have this plan: source -> reduceBy -> sink.

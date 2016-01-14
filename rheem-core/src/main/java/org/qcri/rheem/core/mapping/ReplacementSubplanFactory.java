@@ -8,8 +8,8 @@ import org.qcri.rheem.core.plan.Subplan;
  */
 public abstract class ReplacementSubplanFactory {
 
-    public Operator createReplacementSubplan(SubplanMatch subplanMatch) {
-        final Operator replacementSubplan = translate(subplanMatch);
+    public Operator createReplacementSubplan(SubplanMatch subplanMatch, int epoch) {
+        final Operator replacementSubplan = translate(subplanMatch, epoch);
         checkSanity(subplanMatch, replacementSubplan);
         return replacementSubplan;
     }
@@ -23,6 +23,6 @@ public abstract class ReplacementSubplanFactory {
         }
     }
 
-    protected abstract Operator translate(SubplanMatch subplanMatch);
+    protected abstract Operator translate(SubplanMatch subplanMatch, int epoch);
 
 }

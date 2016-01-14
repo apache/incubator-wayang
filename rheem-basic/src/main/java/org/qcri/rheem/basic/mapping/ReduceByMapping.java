@@ -46,14 +46,14 @@ public class ReduceByMapping implements Mapping {
 
         @Override
         @SuppressWarnings("unchecked")
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final GroupByOperator groupBy = (GroupByOperator) subplanMatch.getMatch("groupBy").getOperator();
             final ReduceOperator reduce = (ReduceOperator) subplanMatch.getMatch("reduce").getOperator();
 
             return new ReduceByOperator<>(
                     groupBy.getInputType(),
                     groupBy.getKeyDescriptor(),
-                    reduce.getReduceDescriptor());
+                    reduce.getReduceDescriptor()).at(epoch);
         }
     }
 

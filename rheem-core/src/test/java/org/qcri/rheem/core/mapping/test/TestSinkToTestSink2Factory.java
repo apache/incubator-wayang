@@ -14,13 +14,13 @@ import org.qcri.rheem.core.plan.test.TestSink2;
 public class TestSinkToTestSink2Factory extends ReplacementSubplanFactory {
 
     @Override
-    protected Operator translate(SubplanMatch subplanMatch) {
+    protected Operator translate(SubplanMatch subplanMatch, int epoch) {
         // Retrieve the matched TestSink.
         final OperatorMatch sinkMatch = subplanMatch.getOperatorMatches().get("sink");
         final TestSink testSink = (TestSink) sinkMatch.getOperator();
 
         // Translate the TestSink to a TestSink2.
-        return new TestSink2<>(testSink.getInput().getType());
+        return new TestSink2<>(testSink.getInput().getType()).at(epoch);
     }
 
 }

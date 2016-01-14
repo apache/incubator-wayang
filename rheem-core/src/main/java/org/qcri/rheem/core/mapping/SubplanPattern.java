@@ -2,7 +2,10 @@ package org.qcri.rheem.core.mapping;
 
 import org.qcri.rheem.core.plan.*;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A subplan pattern describes a class of subplans in a {@link org.qcri.rheem.core.plan.PhysicalPlan}.
@@ -41,8 +44,15 @@ public class SubplanPattern extends OperatorBase {
         return new SubplanPattern(inputOperatorPattern, outputOperatorPattern);
     }
 
-    public List<SubplanMatch> match(PhysicalPlan plan) {
-        return new Matcher().match(plan);
+    /**
+     * Match this pattern against a plan.
+     *
+     * @param plan     the plan to match against
+     * @param maxEpoch the (exclusive) maximum maxEpoch value for matched operators
+     * @return all matches
+     */
+    public List<SubplanMatch> match(PhysicalPlan plan, int maxEpoch) {
+        return new Matcher(maxEpoch).match(plan);
     }
 
     public OperatorPattern getInputPattern() {
@@ -79,10 +89,20 @@ public class SubplanPattern extends OperatorBase {
          */
         final private List<SubplanMatch> matches = new LinkedList<>();
 
+        /**
+         * The (exclusive) maximum epoch for matched operators.
+         */
+        private final int maxEpoch;
+
+        public Matcher(int maxEpoch) {
+            this.maxEpoch = maxEpoch;
+        }
+
         public List<SubplanMatch> match(PhysicalPlan plan) {
             new PlanTraversal(true, false)
                     .withCallback(this::attemptMatchFrom)
                     .traverse(plan.getSinks());
+            // TODO: Traverse subplans and alternatives correctly!
             return this.matches;
         }
 
@@ -135,7 +155,7 @@ public class SubplanPattern extends OperatorBase {
             } else {
                 // Try to match the co-iterated operator (pattern).
                 final OperatorMatch operatorMatch = pattern.match(operator);
-                if (operatorMatch == null) {
+                if (operatorMatch == null || operator.getEpoch() >= this.maxEpoch) {
                     // If match was not successful, abort. NB: This might change if we have, like, real graph patterns.
                     return;
                 }

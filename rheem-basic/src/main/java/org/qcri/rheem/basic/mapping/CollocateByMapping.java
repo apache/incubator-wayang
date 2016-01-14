@@ -34,12 +34,12 @@ public class CollocateByMapping implements Mapping {
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final GroupByOperator groupBy = (GroupByOperator) subplanMatch.getMatch("groupBy").getOperator();
 
             return new CollocateByOperator<>(
                     groupBy.getInputType(),
-                    groupBy.getKeyDescriptor());
+                    groupBy.getKeyDescriptor()).at(epoch);
         }
     }
 

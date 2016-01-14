@@ -36,7 +36,7 @@ public class PlanTransformationTest {
         PlanTransformation planTransformation = new PlanTransformation(subplanPattern, replacementSubplanFactory);
 
         // Apply the replacement strategy to the graph.
-        planTransformation.transform(plan);
+        planTransformation.transform(plan, Operator.FIRST_EPOCH + 1);
 
         // Check the correctness of the transformation.
         Assert.assertEquals(1, plan.getSinks().size());

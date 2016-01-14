@@ -7,6 +7,8 @@ public abstract class OperatorBase implements Operator {
 
     private Operator parent;
 
+    private int epoch = FIRST_EPOCH;
+
     protected final InputSlot<?>[] inputSlots;
 
     protected final OutputSlot<?>[] outputSlots;
@@ -41,4 +43,21 @@ public abstract class OperatorBase implements Operator {
         this.parent = parent;
     }
 
+    @Override
+    public int getEpoch() {
+        return epoch;
+    }
+
+    @Override
+    public void setEpoch(int epoch) {
+        this.epoch = epoch;
+    }
+
+    /**
+     * Convenience method to set the epoch.
+     */
+    public Operator at(int epoch) {
+        this.setEpoch(epoch);
+        return this;
+    }
 }

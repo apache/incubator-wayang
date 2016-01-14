@@ -29,12 +29,12 @@ public class JavaCollocateByOperatorMapping implements Mapping {
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final CollocateByOperator<?, ?> originalOperator = (CollocateByOperator<?, ?>) subplanMatch.getMatch("operator").getOperator();
             return new JavaCollocateByOperator<>(
                     originalOperator.getType().unchecked(),
                     originalOperator.getKeyDescriptor().unchecked()
-            );
+            ).at(epoch);
         }
     }
 }

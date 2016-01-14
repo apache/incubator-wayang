@@ -80,15 +80,30 @@ public class RheemContext {
      */
     public void execute(PhysicalPlan physicalPlan) {
         // NB: This is a dummy implementation to make the simplest case work.
-        for (PlanTransformation transformation : this.transformations) {
-            transformation.transform(physicalPlan);
-        }
+        boolean isAnyChange;
+        int epoch = Operator.FIRST_EPOCH;
+        do {
+            epoch++;
+            isAnyChange = applyAndCountTransformations(physicalPlan, epoch) > 0;
+        } while (isAnyChange);
 
         for (Operator sink : physicalPlan.getSinks()) {
             final ExecutionOperator executableSink = (ExecutionOperator) sink;
             final Platform platform = ((ExecutionOperator) sink).getPlatform();
             platform.evaluate(executableSink);
         }
+    }
+
+    /**
+     * Apply all {@link #transformations} to the {@code plan}.
+     * @param physicalPlan the plan to transform
+     * @param epoch the new epoch
+     * @return the number of applied transformations
+     */
+    private int applyAndCountTransformations(PhysicalPlan physicalPlan, int epoch) {
+        return this.transformations.stream()
+                .mapToInt(transformation -> transformation.transform(physicalPlan, epoch))
+                .sum();
     }
 
 }

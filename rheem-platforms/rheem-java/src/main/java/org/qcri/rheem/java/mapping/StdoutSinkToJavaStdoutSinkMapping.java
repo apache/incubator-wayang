@@ -28,9 +28,9 @@ public class StdoutSinkToJavaStdoutSinkMapping implements Mapping {
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final StdoutSink originalSink = (StdoutSink) subplanMatch.getMatch("sink").getOperator();
-            return new JavaStdoutSink<>(originalSink.getInput().getType());
+            return new JavaStdoutSink<>(originalSink.getInput().getType()).at(epoch);
         }
     }
 }

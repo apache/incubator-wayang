@@ -2,6 +2,7 @@ package org.qcri.rheem.core.mapping;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.PhysicalPlan;
 import org.qcri.rheem.core.plan.UnarySink;
 import org.qcri.rheem.core.plan.UnarySource;
@@ -31,7 +32,7 @@ public class SubplanPatternTest {
         SubplanPattern subplanPattern = SubplanPattern.createSingleton(sinkPattern);
 
         // Match the pattern against the plan.
-        final List<SubplanMatch> matches = subplanPattern.match(plan);
+        final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH + 1);
 
         // Evaluate the matches.
         Assert.assertEquals(1, matches.size());
@@ -53,7 +54,7 @@ public class SubplanPatternTest {
         SubplanPattern subplanPattern = SubplanPattern.createSingleton(sourcePattern);
 
         // Match the pattern against the plan.
-        final List<SubplanMatch> matches = subplanPattern.match(plan);
+        final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH + 1);
 
         // Evaluate the matches.
         Assert.assertEquals(1, matches.size());
@@ -77,7 +78,7 @@ public class SubplanPatternTest {
         SubplanPattern subplanPattern = SubplanPattern.fromOperatorPatterns(sourcePattern, sinkPattern);
 
         // Match the pattern against the plan.
-        final List<SubplanMatch> matches = subplanPattern.match(plan);
+        final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH + 1);
 
         // Evaluate the matches.
         Assert.assertEquals(1, matches.size());

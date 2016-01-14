@@ -33,7 +33,7 @@ public class SlotMapping {
 
     public void map(InputSlot<?> source, InputSlot<?> target) {
         if (!source.isCompatibleWith(target)) {
-            throw new IllegalArgumentException("Incompatible slots given.");
+            throw new IllegalArgumentException(String.format("Incompatible slots given: %s -> %s", source, target));
         }
 
         this.mapping.put(source, target);
@@ -41,7 +41,7 @@ public class SlotMapping {
 
     public void map(OutputSlot<?> source, OutputSlot<?> target) {
         if (!source.isCompatibleWith(target)) {
-            throw new IllegalArgumentException("Incompatible slots given.");
+            throw new IllegalArgumentException(String.format("Incompatible slots given: %s -> %s", source, target));
         }
 
         this.mapping.put(source, target);

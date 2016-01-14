@@ -12,27 +12,52 @@ public class Subplan extends OperatorBase implements ActualOperator {
 
     private final Operator inputOperator, outputOperator;
 
-    public Subplan(Operator inputOperator, Operator outputOperator, Operator parent) {
+    /**
+     * Wrap the given operators in a new instance (unless its a single operator),
+     * thereby redirecting cut off connections through this subplan.
+     */
+    public static Operator wrap(Operator inputOperator, Operator outputOperator) {
+        if (inputOperator == outputOperator) {
+            return inputOperator;
+        }
+
+        final Operator commonParent = Operators.getCommonParent(inputOperator, outputOperator);
+        // TODO: If the input operator does not have the common parent as parent, then it must be "terminal" in its parent.
+        // TODO: If the output operator does not have the common parent as parent, then it must be "terminal" in its parent.
+
+        Subplan newSubplan = new Subplan(inputOperator, outputOperator, commonParent);
+
+        // Copy the interface of the input operator, steal its connections, and map the slots.
+        InputSlot.mock(inputOperator, newSubplan);
+        InputSlot.stealConnections(inputOperator, newSubplan);
+        newSubplan.slotMapping.mapAll(inputOperator.getAllInputs(), newSubplan.inputSlots);
+
+        // Copy the interface of the output operator, steal its connections, and map the slots.
+        OutputSlot.mock(outputOperator, newSubplan);
+        OutputSlot.stealConnections(outputOperator, newSubplan);
+        newSubplan.slotMapping.mapAll(newSubplan.outputSlots, inputOperator.getAllOutputs());
+
+        // Traverse through the subplan and become the parent of the operators.
+        new PlanTraversal(true, false)
+                .withCallback(operator -> operator.setParent(newSubplan))
+                .traverse(newSubplan.outputOperator);
+
+        return newSubplan;
+    }
+
+
+    /**
+     * Creates a new instance with the given operators.
+     *
+     * @see #wrap(Operator, Operator)
+     */
+    private Subplan(Operator inputOperator, Operator outputOperator, Operator parent) {
         super(inputOperator.getNumInputs(), outputOperator.getNumOutputs(), parent);
 
         this.inputOperator = inputOperator;
         this.outputOperator = outputOperator;
         this.slotMapping = new SlotMapping();
 
-        // Copy the interface of the input operator, steal its connections, and map the slots.
-        InputSlot.mock(inputOperator, this);
-        InputSlot.stealConnections(inputOperator, this);
-        this.slotMapping.mapAll(inputOperator.getAllInputs(), this.inputSlots);
-
-        // Copy the interface of the output operator, steal its connections, and map the slots.
-        OutputSlot.mock(outputOperator, this);
-        OutputSlot.stealConnections(outputOperator, this);
-        this.slotMapping.mapAll(this.outputSlots, inputOperator.getAllOutputs());
-
-        // Traverse through the subplan and become the parent of the operators.
-        new PlanTraversal(true, false)
-                .withCallback(operator -> operator.setParent(this))
-                .traverse(this.outputOperator);
     }
 
     public SlotMapping getSlotMapping() {

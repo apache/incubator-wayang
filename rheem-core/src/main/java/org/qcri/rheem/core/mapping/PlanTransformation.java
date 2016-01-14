@@ -21,19 +21,49 @@ public class PlanTransformation {
         this.replacementFactory = replacementFactory;
     }
 
-    public int transform(PhysicalPlan plan) {
+    /**
+     * Apply this transformation exhaustively on the current plan.
+     *
+     * @param plan  the plan to which the transformation should be applied
+     * @param epoch (i) the epoch for new plan parts and (ii) match only operators whose epoch is less than {@code epoch - 1}
+     * @return the number of applied transformations
+     * @see Operator#getEpoch()
+     */
+    public int transform(PhysicalPlan plan, int epoch) {
         int numTransformations = 0;
         List<SubplanMatch> matches;
-        while (!(matches = pattern.match(plan)).isEmpty()) {
+        while (!(matches = pattern.match(plan, epoch - 1)).isEmpty()) {
             final SubplanMatch match = matches.get(0);
-            final Operator replacement = this.replacementFactory.createReplacementSubplan(match);
-            replace(plan, match, replacement);
+            final Operator replacement = this.replacementFactory.createReplacementSubplan(match, epoch);
+            introduceAlternative(plan, match, replacement);
             numTransformations++;
         }
 
         return numTransformations;
     }
 
+    private void introduceAlternative(PhysicalPlan plan, SubplanMatch match, Operator replacement) {
+
+        // Wrap the match in a subplan.
+        final Operator originalOutputOperator = match.getOutputMatch().getOperator();
+        Operator originalSubplan = Subplan.wrap(match.getInputMatch().getOperator(), originalOutputOperator);
+
+        // Place an alternative: the original subplan and the replacement.
+        // TODO: ensure flat alternatives
+        // TODO: keep track of provenance of alternatives
+        OperatorAlternative operatorAlternative = OperatorAlternative.wrap(originalSubplan);
+        operatorAlternative.addAlternative(replacement);
+
+        // If the originalOutputOperator was a sink, we need to update the sink in the plan accordingly.
+        if (originalOutputOperator.isSink()) {
+            plan.getSinks().remove(originalOutputOperator);
+            plan.addSink(operatorAlternative);
+        }
+    }
+
+    /**
+     * @deprecated use {@link #introduceAlternative(PhysicalPlan, SubplanMatch, Operator)}
+     */
     private void replace(PhysicalPlan plan, SubplanMatch match, Operator replacement) {
         // Disconnect the original input operator and insert the replacement input operator.
         final Operator originalInputOperator = match.getInputMatch().getOperator();

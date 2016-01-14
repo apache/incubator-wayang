@@ -29,13 +29,13 @@ public class ReduceByOperatorToJavaReduceByOperatorMapping implements Mapping {
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final ReduceByOperator<?, ?> originalOperator = (ReduceByOperator<?, ?>) subplanMatch.getMatch("reduceBy").getOperator();
             return new JavaReduceByOperator<>(
                     originalOperator.getType().unchecked(),
                     originalOperator.getKeyDescriptor().unchecked(),
                     originalOperator.getReduceDescriptor().unchecked()
-            );
+            ).at(epoch);
         }
     }
 }

@@ -30,9 +30,9 @@ public class JavaCollectionSourceMapping implements Mapping {
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final CollectionSource originalSource = (CollectionSource) subplanMatch.getMatch("source").getOperator();
-            return new JavaCollectionSource(originalSource.getCollection(), originalSource.getOutput().getType());
+            return new JavaCollectionSource(originalSource.getCollection(), originalSource.getOutput().getType()).at(epoch);
         }
     }
 }
