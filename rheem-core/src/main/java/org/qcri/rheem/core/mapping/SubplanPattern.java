@@ -64,7 +64,7 @@ public class SubplanPattern extends OperatorBase {
     }
 
     @Override
-    public void accept(PlanVisitor visitor) {
+    public <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
         throw new RuntimeException("Pattern does not accept visitors.");
     }
 

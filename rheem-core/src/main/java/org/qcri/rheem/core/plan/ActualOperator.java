@@ -6,7 +6,7 @@ package org.qcri.rheem.core.plan;
 public interface ActualOperator extends Operator {
 
     @Override
-    default void accept(PlanVisitor visitor) {
-        visitor.visit(this);
+    default <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+        return visitor.visit(this, outputSlot, payload);
     }
 }

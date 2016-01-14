@@ -66,8 +66,8 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     }
 
     @Override
-    public void accept(PlanVisitor visitor) {
-        visitor.visit(this);
+    public <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+        return visitor.visit(this, outputSlot, payload);
     }
 
     @Override
@@ -174,55 +174,6 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
             return innerOperator == this.operator ? OperatorAlternative.this : null;
         }
-//
-//        @Override
-//        public InputSlot<?>[] getAllInputs() {
-//            return OperatorAlternative.this.getAllInputs();
-//        }
-//
-//        @Override
-//        public OutputSlot<?>[] getAllOutputs() {
-//            return OperatorAlternative.this.getAllOutputs();
-//        }
-//
-//        @Override
-//        public void accept(PlanVisitor visitor) {
-//            visitor.visit(OperatorAlternative.this);
-//        }
-//
-//        @Override
-//        public Operator getParent() {
-//            return OperatorAlternative.this.getParent();
-//        }
-//
-//        @Override
-//        public void setParent(Operator newParent) {
-//            throw new RuntimeException("Operation not supported. Use enclosing " + OperatorAlternative.class.getSimpleName());
-//        }
-//
-//        @Override
-//        public boolean isOwnerOf(Slot<?> slot) {
-//            return OperatorAlternative.this.isOwnerOf(slot);
-//        }
-//
-//        @Override
-//        public void setEpoch(int epoch) {
-//            throw new RuntimeException("Epochs not supported for alternatives.");
-//        }
-//
-//        @Override
-//        public int getEpoch() {
-//            throw new RuntimeException("Epochs not supported for alternatives.");
-//        }
-//
-//        @Override
-//        public String toString() {
-//            return String.format("%s[%d in, %d out, %s]",
-//                    this.getClass().getSimpleName(),
-//                    this.getNumInputs(),
-//                    this.getNumOutputs(),
-//                    this.getParent() == null ? "top-level" : "nested");
-//        }
 
     }
 

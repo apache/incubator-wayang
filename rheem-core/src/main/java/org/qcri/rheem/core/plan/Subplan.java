@@ -111,11 +111,11 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         return innerOperator == this.inputOperator ? this : null;
     }
 
-    @Override
-    public void accept(PlanVisitor visitor) {
-        visitor.visit(this);
-    }
 
+    @Override
+    public <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+        return visitor.visit(this, outputSlot, payload);
+    }
     // TODO: develop constructors/factory methods to deal with more than one input and output operator
 
 

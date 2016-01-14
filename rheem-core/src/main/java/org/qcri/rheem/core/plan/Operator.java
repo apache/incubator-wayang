@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.plan;
 
+import com.sun.org.apache.bcel.internal.generic.RET;
+
 /**
  * An operator is any node that within a data flow plan.
  */
@@ -168,7 +170,7 @@ public interface Operator {
     /**
      * todo
      */
-    void accept(PlanVisitor visitor);
+    <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload);
 
     /**
      * Operators can be nested in other operators, e.g., in a {@link Subplan} or a {@link OperatorAlternative}.
