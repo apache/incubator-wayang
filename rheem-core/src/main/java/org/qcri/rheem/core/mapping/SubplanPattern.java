@@ -48,11 +48,11 @@ public class SubplanPattern extends OperatorBase {
      * Match this pattern against a plan.
      *
      * @param plan     the plan to match against
-     * @param maxEpoch the (exclusive) maximum maxEpoch value for matched operators
+     * @param minEpoch the (inclusive) minimum epoch value for matched subplans
      * @return all matches
      */
-    public List<SubplanMatch> match(PhysicalPlan plan, int maxEpoch) {
-        return new Matcher(maxEpoch).match(plan);
+    public List<SubplanMatch> match(PhysicalPlan plan, int minEpoch) {
+        return new Matcher(minEpoch).match(plan);
     }
 
     public OperatorPattern getInputPattern() {
@@ -90,12 +90,12 @@ public class SubplanPattern extends OperatorBase {
         final private List<SubplanMatch> matches = new LinkedList<>();
 
         /**
-         * The (exclusive) maximum epoch for matched operators.
+         * @param minEpoch the (inclusive) minimum epoch value for matched subplans
          */
-        private final int maxEpoch;
+        private final int minEpoch;
 
-        public Matcher(int maxEpoch) {
-            this.maxEpoch = maxEpoch;
+        public Matcher(int minEpoch) {
+            this.minEpoch = minEpoch;
         }
 
         public List<SubplanMatch> match(PhysicalPlan plan) {
@@ -111,10 +111,14 @@ public class SubplanPattern extends OperatorBase {
          *
          * @param operator the operator that should be matched with the operator pattern
          */
-        private void attemptMatchFrom(Operator operator) {
+        private void attemptMatchFrom(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
+            if (fromInputSlot != null) {
+                throw new IllegalStateException("Cannot handle downstream traversals.");
+            }
+
             // Try to make a match starting from the currently visited operator.
             final SubplanMatch subplanMatch = new SubplanMatch(SubplanPattern.this);
-            match(SubplanPattern.this.outputPattern, operator, null, subplanMatch);
+            match(SubplanPattern.this.outputPattern, operator, fromOutputSlot, subplanMatch);
         }
 
         /**
@@ -155,7 +159,7 @@ public class SubplanPattern extends OperatorBase {
             } else {
                 // Try to match the co-iterated operator (pattern).
                 final OperatorMatch operatorMatch = pattern.match(operator);
-                if (operatorMatch == null || operator.getEpoch() >= this.maxEpoch) {
+                if (operatorMatch == null) {
                     // If match was not successful, abort. NB: This might change if we have, like, real graph patterns.
                     return;
                 }
@@ -178,7 +182,7 @@ public class SubplanPattern extends OperatorBase {
 
                 }
 
-                if (isTerminalOperator) {
+                if (isTerminalOperator && subplanMatch.getMaximumEpoch() >= this.minEpoch) {
                     this.matches.add(subplanMatch);
                 }
             }

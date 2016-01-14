@@ -2,6 +2,8 @@ package org.qcri.rheem.core.plan;
 
 import org.qcri.rheem.core.types.DataSetType;
 
+import java.util.Objects;
+
 /**
  * An input slot declares an input of an {@link Operator}.
  *
@@ -37,10 +39,10 @@ public class InputSlot<T> extends Slot<T> {
         }
 
         for (int i = 0; i < victim.getNumInputs(); i++) {
-            final OutputSlot occupant = victim.getInput(i).getOccupant();
+            final OutputSlot<Object> occupant = victim.getInput(i).getOccupant().unchecked();
             if (occupant != null) {
-                occupant.disconnectFrom(victim.getInput(i));
-                occupant.connectTo(thief.getInput(i));
+                occupant.disconnectFrom(victim.getInput(i).unchecked());
+                occupant.connectTo(thief.getInput(i).unchecked());
             }
         }
     }
@@ -71,7 +73,21 @@ public class InputSlot<T> extends Slot<T> {
         return this;
     }
 
-    public OutputSlot getOccupant() {
+    public OutputSlot<T> getOccupant() {
         return occupant;
+    }
+
+    @Override
+    public int getIndex() throws IllegalStateException {
+        if (Objects.isNull(getOwner())) throw new IllegalStateException("This slot has no owner.");
+        for (int i = 0; i < getOwner().getNumInputs(); i++) {
+            if (getOwner().getInput(i) == this) return i;
+        }
+        throw new IllegalStateException("Could not find this slot within its owner.");
+    }
+
+    @SuppressWarnings("unchecked")
+    public InputSlot<Object> unchecked() {
+        return (InputSlot<Object>) this;
     }
 }

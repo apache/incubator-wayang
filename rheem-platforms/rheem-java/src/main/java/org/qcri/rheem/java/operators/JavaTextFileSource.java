@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.TextFileSource;
+import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.plugin.Activator;
@@ -48,4 +49,8 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
     }
 
+    @Override
+    public JavaTextFileSource copy() {
+        return new JavaTextFileSource(getInputUrl());
+    }
 }

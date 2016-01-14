@@ -21,9 +21,9 @@ abstract public class Slot<T> {
      * Type of data passed through this slot, expressed as a {@link DataSetType} so as to define not only the types of
      * elements that are passed but also capture their structure (e.g., flat, grouped, sorted, ...).
      */
-    private final DataSetType type;
+    private final DataSetType<T> type;
 
-    protected Slot(String name, Operator owner, DataSetType type) {
+    protected Slot(String name, Operator owner, DataSetType<T> type) {
         this.name = name;
         this.owner = owner;
         this.type = type;
@@ -37,7 +37,7 @@ abstract public class Slot<T> {
         return owner;
     }
 
-    public DataSetType getType() {
+    public DataSetType<T> getType() {
         return this.type;
     }
 
@@ -66,4 +66,11 @@ abstract public class Slot<T> {
                 this.type,
                 this.owner == null ? "no owner" : this.owner.getClass().getSimpleName());
     }
+
+    /**
+     * @return the index of this slot within its owner
+     * @throws IllegalStateException if this slot does not have an owner
+     * @see #getOwner()
+     */
+    public abstract int getIndex() throws IllegalStateException;
 }

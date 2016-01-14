@@ -3,6 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.CollocateByOperator;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -44,5 +45,10 @@ public class JavaCollocateByOperator<Type, KeyType>
                         Collectors.toList())); // Not sure if this is thread-safe... Will we use #parallelStream()?
 
         return new Stream[]{collocation.values().stream()};
+    }
+
+    @Override
+    public ExecutionOperator copy() {
+        return new JavaCollocateByOperator<>(getType(), getKeyDescriptor());
     }
 }

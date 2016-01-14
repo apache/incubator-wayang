@@ -3,14 +3,14 @@ package org.qcri.rheem.core.plan;
 /**
  * A subplan encapsulates connected operators as a single operator.
  */
-public class Subplan extends OperatorBase implements ActualOperator {
+public class Subplan extends OperatorBase implements ActualOperator, CompositeOperator {
 
     /**
      * Maps input and output slots <b>against</b> the direction of the data flow.
      */
     private final SlotMapping slotMapping;
 
-    private final Operator inputOperator, outputOperator;
+    private Operator inputOperator, outputOperator;
 
     /**
      * Wrap the given operators in a new instance (unless its a single operator),
@@ -21,7 +21,7 @@ public class Subplan extends OperatorBase implements ActualOperator {
             return inputOperator;
         }
 
-        final Operator commonParent = Operators.getCommonParent(inputOperator, outputOperator);
+        final CompositeOperator commonParent = Operators.getCommonParent(inputOperator, outputOperator);
         // TODO: If the input operator does not have the common parent as parent, then it must be "terminal" in its parent.
         // TODO: If the output operator does not have the common parent as parent, then it must be "terminal" in its parent.
 
@@ -35,11 +35,11 @@ public class Subplan extends OperatorBase implements ActualOperator {
         // Copy the interface of the output operator, steal its connections, and map the slots.
         OutputSlot.mock(outputOperator, newSubplan);
         OutputSlot.stealConnections(outputOperator, newSubplan);
-        newSubplan.slotMapping.mapAll(newSubplan.outputSlots, inputOperator.getAllOutputs());
+        newSubplan.slotMapping.mapAll(newSubplan.outputSlots, outputOperator.getAllOutputs());
 
         // Traverse through the subplan and become the parent of the operators.
         new PlanTraversal(true, false)
-                .withCallback(operator -> operator.setParent(newSubplan))
+                .withCallback((operator, inputSlot, outputSlot) -> operator.setParent(newSubplan))
                 .traverse(newSubplan.outputOperator);
 
         return newSubplan;
@@ -51,7 +51,7 @@ public class Subplan extends OperatorBase implements ActualOperator {
      *
      * @see #wrap(Operator, Operator)
      */
-    private Subplan(Operator inputOperator, Operator outputOperator, Operator parent) {
+    private Subplan(Operator inputOperator, Operator outputOperator, CompositeOperator parent) {
         super(inputOperator.getNumInputs(), outputOperator.getNumOutputs(), parent);
 
         this.inputOperator = inputOperator;
@@ -117,5 +117,32 @@ public class Subplan extends OperatorBase implements ActualOperator {
     }
 
     // TODO: develop constructors/factory methods to deal with more than one input and output operator
+
+
+    @Override
+    public SlotMapping getSlotMappingFor(Operator child) {
+        if (child.getParent() != this) {
+            throw new IllegalArgumentException("Given operator is not a child of this subplan.");
+        }
+
+        if (child == this.inputOperator || child == this.outputOperator) {
+            return this.slotMapping;
+        }
+
+        return null;
+    }
+
+    @Override
+    public void replace(Operator oldOperator, Operator newOperator) {
+        if (oldOperator == this.inputOperator) {
+            this.slotMapping.replaceInputSlotMappings(oldOperator, newOperator);
+            this.inputOperator = newOperator;
+        }
+
+        if (oldOperator == this.outputOperator) {
+            this.slotMapping.replaceOutputSlotMappings(oldOperator, newOperator);
+            this.outputOperator = newOperator;
+        }
+    }
 
 }

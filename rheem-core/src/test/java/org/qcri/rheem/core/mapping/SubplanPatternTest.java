@@ -32,7 +32,7 @@ public class SubplanPatternTest {
         SubplanPattern subplanPattern = SubplanPattern.createSingleton(sinkPattern);
 
         // Match the pattern against the plan.
-        final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH + 1);
+        final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH);
 
         // Evaluate the matches.
         Assert.assertEquals(1, matches.size());
@@ -54,7 +54,7 @@ public class SubplanPatternTest {
         SubplanPattern subplanPattern = SubplanPattern.createSingleton(sourcePattern);
 
         // Match the pattern against the plan.
-        final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH + 1);
+        final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH);
 
         // Evaluate the matches.
         Assert.assertEquals(1, matches.size());
@@ -78,7 +78,7 @@ public class SubplanPatternTest {
         SubplanPattern subplanPattern = SubplanPattern.fromOperatorPatterns(sourcePattern, sinkPattern);
 
         // Match the pattern against the plan.
-        final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH + 1);
+        final List<SubplanMatch> matches = subplanPattern.match(plan, Operator.FIRST_EPOCH);
 
         // Evaluate the matches.
         Assert.assertEquals(1, matches.size());

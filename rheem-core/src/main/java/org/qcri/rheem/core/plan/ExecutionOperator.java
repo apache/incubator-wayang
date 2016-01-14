@@ -12,4 +12,6 @@ public interface ExecutionOperator extends ActualOperator {
      */
     Platform getPlatform();
 
+    ExecutionOperator copy();
+
 }

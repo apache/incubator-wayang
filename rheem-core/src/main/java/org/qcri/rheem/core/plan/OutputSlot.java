@@ -4,6 +4,7 @@ import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * An output slot declares an output of an {@link Operator}.
@@ -51,6 +52,15 @@ public class OutputSlot<T> extends Slot<T> {
         super(name, owner, type);
     }
 
+    @Override
+    public int getIndex() throws IllegalStateException {
+        if (Objects.isNull(getOwner())) throw new IllegalStateException("This slot has no owner.");
+        for (int i = 0; i < getOwner().getNumOutputs(); i++) {
+            if (getOwner().getOutput(i) == this) return i;
+        }
+        throw new IllegalStateException("Could not find this slot within its owner.");
+    }
+
     public OutputSlot copyFor(Operator owner) {
         return new OutputSlot(this, owner);
     }
@@ -80,5 +90,10 @@ public class OutputSlot<T> extends Slot<T> {
 
     public List<InputSlot<T>> getOccupiedSlots() {
         return occupiedSlots;
+    }
+
+    @SuppressWarnings("unchecked")
+    public OutputSlot<Object> unchecked() {
+        return (OutputSlot<Object>) this;
     }
 }

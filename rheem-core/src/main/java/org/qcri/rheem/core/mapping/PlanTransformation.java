@@ -1,6 +1,8 @@
 package org.qcri.rheem.core.mapping;
 
 import org.qcri.rheem.core.plan.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,7 +14,11 @@ import java.util.List;
  */
 public class PlanTransformation {
 
+    protected final Logger logger = LoggerFactory.getLogger(getClass());
+
     private final SubplanPattern pattern;
+
+    private boolean isReplacing = false;
 
     private final ReplacementSubplanFactory replacementFactory;
 
@@ -22,20 +28,48 @@ public class PlanTransformation {
     }
 
     /**
+     * Make this instance replace on matches instead of introducing alternatives.
+     *
+     * @return this instance
+     */
+    public PlanTransformation thatReplaces() {
+        this.isReplacing = true;
+        return this;
+    }
+
+    /**
      * Apply this transformation exhaustively on the current plan.
      *
      * @param plan  the plan to which the transformation should be applied
-     * @param epoch (i) the epoch for new plan parts and (ii) match only operators whose epoch is less than {@code epoch - 1}
+     * @param epoch (i) the epoch for new plan parts and (ii) match only operators whose epoch is equal to or
+     *              greater than {@code epoch-1}
      * @return the number of applied transformations
      * @see Operator#getEpoch()
      */
     public int transform(PhysicalPlan plan, int epoch) {
         int numTransformations = 0;
-        List<SubplanMatch> matches;
-        while (!(matches = pattern.match(plan, epoch - 1)).isEmpty()) {
-            final SubplanMatch match = matches.get(0);
+        List<SubplanMatch> matches = pattern.match(plan, epoch - 1);
+        for (SubplanMatch match : matches) {
             final Operator replacement = this.replacementFactory.createReplacementSubplan(match, epoch);
-            introduceAlternative(plan, match, replacement);
+
+            if (match.getInputMatch() == match.getOutputMatch()) {
+                logger.info("Replacing {} with {} in epoch {}.",
+                        match.getOutputMatch().getOperator(),
+                        replacement,
+                        epoch);
+            } else {
+                logger.info("Replacing {}..{} with {} in epoch {}.",
+                        match.getInputMatch().getOperator(),
+                        match.getOutputMatch().getOperator(),
+                        replacement,
+                        epoch);
+            }
+
+            if (this.isReplacing) {
+                replace(plan, match, replacement);
+            } else {
+                introduceAlternative(plan, match, replacement);
+            }
             numTransformations++;
         }
 

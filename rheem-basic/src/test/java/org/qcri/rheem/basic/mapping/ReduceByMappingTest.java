@@ -59,7 +59,7 @@ public class ReduceByMappingTest {
         // Apply our mapping.
         Mapping mapping = new ReduceByMapping();
         for (PlanTransformation planTransformation : mapping.getTransformations()) {
-            planTransformation.transform(plan, Operator.FIRST_EPOCH + 1);
+            planTransformation.thatReplaces().transform(plan, Operator.FIRST_EPOCH + 1);
         }
 
         // Check that now we have this plan: source -> reduceBy -> sink.

@@ -2,6 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -39,5 +40,10 @@ public class JavaGlobalReduceOperator<Type>
         final Optional<Type> reduction = inputStream.reduce(reduceFunction);
 
         return new Stream[]{reduction.isPresent() ? Stream.of(reduction.get()) : Stream.empty()};
+    }
+
+    @Override
+    public ExecutionOperator copy() {
+        return new JavaGlobalReduceOperator<>(getInputType(), getReduceDescriptor());
     }
 }

@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.mapping;
 
+import org.qcri.rheem.core.plan.Operator;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,5 +61,17 @@ public class SubplanMatch {
 
     public OperatorMatch getMatch(String name) {
         return this.operatorMatches.get(name);
+    }
+
+    /**
+     * @return the maximum epoch among the matched operators in {@link #operatorMatches}
+     */
+    public int getMaximumEpoch() {
+        return this.operatorMatches.values().stream()
+                .map(OperatorMatch::getOperator)
+                .filter(Operator::isElementary)
+                .mapToInt(Operator::getEpoch)
+                .max()
+                .orElse(Operator.FIRST_EPOCH);
     }
 }

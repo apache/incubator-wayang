@@ -13,8 +13,8 @@ public class Operators {
     /**
      * Find the innermost common parent of two operators.
      */
-    public static Operator getCommonParent(Operator o1, Operator o2) {
-        Operator commonParent = null;
+    public static CompositeOperator getCommonParent(Operator o1, Operator o2) {
+        CompositeOperator commonParent = null;
 
         final Iterator<Operator> i1 = collectParents(o1, false).iterator();
         final Iterator<Operator> i2 = collectParents(o2, false).iterator();
@@ -22,7 +22,7 @@ public class Operators {
         while (i1.hasNext() && i2.hasNext()) {
             final Operator parent1 = i1.next(), parent2 = i2.next();
             if (parent1 != parent2) break;
-            commonParent = parent1;
+            commonParent = (CompositeOperator) parent1;
         }
 
         return commonParent;

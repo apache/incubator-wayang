@@ -175,14 +175,14 @@ public interface Operator {
      *
      * @return the parent of this operator or {@code null} if this is a top-level operator
      */
-    Operator getParent();
+    CompositeOperator getParent();
 
     /**
      * Operators can be nested in other operators, e.g., in a {@link Subplan} or a {@link OperatorAlternative}.
      *
      * @param newParent the new parent of this operator or {@code null} to declare it top-level
      */
-    void setParent(Operator newParent);
+    void setParent(CompositeOperator newParent);
 
 
     /**
@@ -208,4 +208,10 @@ public interface Operator {
     int getEpoch();
 
 
+    /**
+     * @return whether this is an elementary operator
+     */
+    default boolean isElementary() {
+        return true;
+    }
 }

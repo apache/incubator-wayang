@@ -2,10 +2,13 @@ package org.qcri.rheem.core.api;
 
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.optimizer.Optimizer;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.PhysicalPlan;
 import org.qcri.rheem.core.platform.Platform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,10 +20,14 @@ import java.util.LinkedList;
  */
 public class RheemContext {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     /**
      * All registered mappings.
      */
     private final Collection<PlanTransformation> transformations = new LinkedList<>();
+
+    private final Optimizer optimizer = new Optimizer();
 
     public RheemContext() {
         final String activateClassName = "org.qcri.rheem.basic.plugin.Activator";
@@ -84,10 +91,14 @@ public class RheemContext {
         int epoch = Operator.FIRST_EPOCH;
         do {
             epoch++;
-            isAnyChange = applyAndCountTransformations(physicalPlan, epoch) > 0;
+            final int numTransformations = applyAndCountTransformations(physicalPlan, epoch);
+            logger.info("Applied {} transformations in epoch {}.", numTransformations, epoch);
+            isAnyChange = numTransformations > 0;
         } while (isAnyChange);
 
-        for (Operator sink : physicalPlan.getSinks()) {
+        PhysicalPlan executionPlan = this.optimizer.buildExecutionPlan(physicalPlan);
+
+        for (Operator sink : executionPlan.getSinks()) {
             final ExecutionOperator executableSink = (ExecutionOperator) sink;
             final Platform platform = ((ExecutionOperator) sink).getPlatform();
             platform.evaluate(executableSink);

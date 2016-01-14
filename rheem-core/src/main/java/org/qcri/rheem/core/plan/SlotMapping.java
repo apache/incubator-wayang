@@ -2,9 +2,11 @@ package org.qcri.rheem.core.plan;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
- * This mapping can be used to encapsulate subplans by connecting slots (usually <b>against</b> the data flow direction).
+ * This mapping can be used to encapsulate subplans by connecting slots (usually <b>against</b> the data flow direction,
+ * i.e., outer output slot -> inner output slot, inner input slot -> outer input slot).
  */
 public class SlotMapping {
 
@@ -55,4 +57,46 @@ public class SlotMapping {
         return (OutputSlot<T>) this.mapping.get(source);
     }
 
+    /**
+     * Replace the mappings from an old, wrapped operator with a new wrapped operator.
+     * @param oldOperator the old wrapped operator
+     * @param newOperator the new wrapped operator
+     */
+    public void replaceInputSlotMappings(Operator oldOperator, Operator newOperator) {
+        if (oldOperator.getNumInputs() != newOperator.getNumInputs()) {
+            throw new IllegalArgumentException("Operators are not matching.");
+        }
+
+        for (int i = 0; i < oldOperator.getNumInputs(); i++) {
+            final InputSlot<?> oldInput = oldOperator.getInput(i);
+            final InputSlot<?> newInput = newOperator.getInput(i);
+
+            final InputSlot<?> outerInput = resolve(oldInput);
+            if (outerInput != null) {
+                map(newInput, outerInput);
+            }
+        }
+    }
+
+    /**
+     * Replace the mappings from an old, wrapped operator with a new wrapped operator.
+     * @param oldOperator the old wrapped operator
+     * @param newOperator the new wrapped operator
+     */
+    public void replaceOutputSlotMappings(Operator oldOperator, Operator newOperator) {
+        if (oldOperator.getNumOutputs() != newOperator.getNumOutputs()) {
+            throw new IllegalArgumentException("Operators are not matching.");
+        }
+
+        for (int i = 0; i < oldOperator.getNumOutputs(); i++) {
+            final OutputSlot<?> oldOutput = oldOperator.getOutput(i);
+            final OutputSlot<?> newOutput = newOperator.getOutput(i);
+
+            this.mapping.entrySet().stream()
+                    .filter(entry -> entry.getValue() == oldOutput)
+                    .findFirst()
+                    .map(Map.Entry::getKey)
+                    .ifPresent(outerOutput -> this.map((OutputSlot<?>) outerOutput, newOutput));
+        }
+    }
 }

@@ -3,11 +3,12 @@ package org.qcri.rheem.core.plan;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This operator encapsulates operators that are alternative to each other.
  */
-public class OperatorAlternative extends OperatorBase {
+public class OperatorAlternative extends OperatorBase implements CompositeOperator {
 
     /**
      * All alternatives for this operator. Note that we deliberately do not use a {@link SlotMapping} at this point
@@ -34,6 +35,11 @@ public class OperatorAlternative extends OperatorBase {
 
         OutputSlot.mock(operator, operatorAlternative);
         OutputSlot.stealConnections(operator, operatorAlternative);
+
+        final CompositeOperator parent = operator.getParent();
+        if (Objects.nonNull(parent)) {
+            parent.replace(operator, operatorAlternative);
+        }
 
         operatorAlternative.addAlternative(operator);
 
@@ -64,16 +70,47 @@ public class OperatorAlternative extends OperatorBase {
         visitor.visit(this);
     }
 
-    public class Alternative implements Operator {
+    @Override
+    public SlotMapping getSlotMappingFor(Operator child) {
+        if (child.getParent() != this) {
+            throw new IllegalArgumentException("Given operator is not a child of this alternative.");
+        }
 
+        return this.alternatives.stream()
+                .filter(alternative -> alternative.getOperator() == child)
+                .findFirst()
+                .map(Alternative::getSlotMapping)
+                .orElseThrow(() -> new RuntimeException("Could not find alternative for child."));
+    }
+
+    @Override
+    public void replace(Operator oldOperator, Operator newOperator) {
+        final SlotMapping slotMapping = getSlotMappingFor(oldOperator);
+        if (slotMapping != null) {
+            slotMapping.replaceInputSlotMappings(oldOperator, newOperator);
+            slotMapping.replaceOutputSlotMappings(oldOperator, newOperator);
+        }
+    }
+
+    /**
+     * Represents an alternative subplan for the enclosing {@link OperatorAlternative}.
+     */
+    public class Alternative {
+
+        /**
+         * Maps the slots of the enclosing {@link OperatorAlternative} with the enclosed {@link #operator}.
+         */
         private final SlotMapping slotMapping;
 
+        /**
+         * The operator/subplan encapsulated by this {@link OperatorAlternative.Alternative}.
+         */
         private final Operator operator;
 
         private Alternative(Operator operator, SlotMapping slotMapping) {
             this.slotMapping = slotMapping;
             this.operator = operator;
-            operator.setParent(this);
+            operator.setParent(OperatorAlternative.this);
         }
 
         public SlotMapping getSlotMapping() {
@@ -105,13 +142,16 @@ public class OperatorAlternative extends OperatorBase {
          */
         public <T> OutputSlot<T> enter(OutputSlot<T> alternativeOutputSlot) {
             // If this alternative is not a sink, we trace the given output slot via the slot mapping.
-            if (!this.isOwnerOf(alternativeOutputSlot)) {
+            if (!OperatorAlternative.this.isOwnerOf(alternativeOutputSlot)) {
                 throw new IllegalArgumentException("Cannot enter alternative: Output slot does not belong to this alternative.");
             }
 
             final OutputSlot<T> resolvedSlot = this.slotMapping.resolve(alternativeOutputSlot);
-            if (resolvedSlot != null && resolvedSlot.getOwner().getParent() != this) {
-                throw new IllegalStateException("Traced to an output slot whose owner is not a child of this alternative.");
+            if (resolvedSlot != null && resolvedSlot.getOwner().getParent() != OperatorAlternative.this) {
+                final String msg = String.format("Cannot enter through: Owner of inner OutputSlot (%s) is not a child of this alternative (%s).",
+                        Operators.collectParents(resolvedSlot.getOwner(), true),
+                        Operators.collectParents(OperatorAlternative.this, true));
+                throw new IllegalStateException(msg);
             }
             return resolvedSlot;
         }
@@ -123,6 +163,10 @@ public class OperatorAlternative extends OperatorBase {
             return this.slotMapping.resolve(innerInputSlot);
         }
 
+        public OperatorAlternative getOperatorAlternative() {
+            return OperatorAlternative.this;
+        }
+
         public OperatorAlternative exit(Operator innerOperator) {
             if (!isSource()) {
                 throw new IllegalArgumentException("Cannot exit alternative: no input slot given and alternative is not a source.");
@@ -130,46 +174,56 @@ public class OperatorAlternative extends OperatorBase {
 
             return innerOperator == this.operator ? OperatorAlternative.this : null;
         }
+//
+//        @Override
+//        public InputSlot<?>[] getAllInputs() {
+//            return OperatorAlternative.this.getAllInputs();
+//        }
+//
+//        @Override
+//        public OutputSlot<?>[] getAllOutputs() {
+//            return OperatorAlternative.this.getAllOutputs();
+//        }
+//
+//        @Override
+//        public void accept(PlanVisitor visitor) {
+//            visitor.visit(OperatorAlternative.this);
+//        }
+//
+//        @Override
+//        public Operator getParent() {
+//            return OperatorAlternative.this.getParent();
+//        }
+//
+//        @Override
+//        public void setParent(Operator newParent) {
+//            throw new RuntimeException("Operation not supported. Use enclosing " + OperatorAlternative.class.getSimpleName());
+//        }
+//
+//        @Override
+//        public boolean isOwnerOf(Slot<?> slot) {
+//            return OperatorAlternative.this.isOwnerOf(slot);
+//        }
+//
+//        @Override
+//        public void setEpoch(int epoch) {
+//            throw new RuntimeException("Epochs not supported for alternatives.");
+//        }
+//
+//        @Override
+//        public int getEpoch() {
+//            throw new RuntimeException("Epochs not supported for alternatives.");
+//        }
+//
+//        @Override
+//        public String toString() {
+//            return String.format("%s[%d in, %d out, %s]",
+//                    this.getClass().getSimpleName(),
+//                    this.getNumInputs(),
+//                    this.getNumOutputs(),
+//                    this.getParent() == null ? "top-level" : "nested");
+//        }
 
-        @Override
-        public InputSlot<?>[] getAllInputs() {
-            return OperatorAlternative.this.getAllInputs();
-        }
-
-        @Override
-        public OutputSlot<?>[] getAllOutputs() {
-            return OperatorAlternative.this.getAllOutputs();
-        }
-
-        @Override
-        public void accept(PlanVisitor visitor) {
-            visitor.visit(OperatorAlternative.this);
-        }
-
-        @Override
-        public Operator getParent() {
-            return OperatorAlternative.this.getParent();
-        }
-
-        @Override
-        public void setParent(Operator newParent) {
-            throw new RuntimeException("Operation not supported. Use enclosing " + OperatorAlternative.class.getSimpleName());
-        }
-
-        @Override
-        public boolean isOwnerOf(Slot<?> slot) {
-            return OperatorAlternative.this.isOwnerOf(slot);
-        }
-
-        @Override
-        public void setEpoch(int epoch) {
-            throw new RuntimeException("Epochs not supported for alternatives.");
-        }
-
-        @Override
-        public int getEpoch() {
-            throw new RuntimeException("Epochs not supported for alternatives.");
-        }
     }
 
 }

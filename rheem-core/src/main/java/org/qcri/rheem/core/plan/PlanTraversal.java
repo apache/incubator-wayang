@@ -17,18 +17,25 @@ public class PlanTraversal {
 
     private final boolean isFollowInputs, isFollowOutputs;
 
-    private Consumer<Operator> traversalCallback = null;
+    private Callback traversalCallback = null;
 
     public PlanTraversal(boolean isFollowInputs, boolean isFollowOutputs) {
         this.isFollowInputs = isFollowInputs;
         this.isFollowOutputs = isFollowOutputs;
     }
 
-    public PlanTraversal withCallback(Consumer<Operator> traversalCallback) {
+    public PlanTraversal withCallback(Callback traversalCallback) {
         this.traversalCallback = traversalCallback;
         return this;
     }
 
+    /**
+     * Traversing as with {@link #traverse(Operator, InputSlot, OutputSlot)} for every operator.
+     */
+    public PlanTraversal traverse(Collection<Operator> operators) {
+        operators.forEach(this::traverse);
+        return this;
+    }
 
     /**
      * Traverse the plan by following any connected operators.
@@ -37,23 +44,19 @@ public class PlanTraversal {
      * @return this instance
      */
     public PlanTraversal traverse(Operator operator) {
+        return traverse(operator, null, null);
+    }
+
+    private PlanTraversal traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
         if (visitedOperators.add(operator)) {
             if (this.isFollowInputs) followInputs(operator);
             if (this.isFollowOutputs) followOutputs(operator);
 
             if (this.traversalCallback != null) {
-                this.traversalCallback.accept(operator);
+                this.traversalCallback.traverse(operator, fromInputSlot, fromOutputSlot);
             }
         }
 
-        return this;
-    }
-
-    /**
-     * Traversing as with {@link #traverse(Operator)} for every operator.
-     */
-    public PlanTraversal traverse(Collection<Operator> operators) {
-        operators.forEach(this::traverse);
         return this;
     }
 
@@ -64,8 +67,7 @@ public class PlanTraversal {
         Arrays.stream(operator.getAllInputs())
                 .map(InputSlot::getOccupant)
                 .filter(outputSlot -> outputSlot != null)
-                .map(OutputSlot::getOwner)
-                .forEach(this::traverse);
+                .forEach(outputSlot -> traverse(outputSlot.getOwner(), null, outputSlot));
     }
 
     /**
@@ -76,8 +78,7 @@ public class PlanTraversal {
                 .map(outputSlot -> ((OutputSlot<Object>) outputSlot).getOccupiedSlots())
                 .flatMap(Collection::stream)
                 .filter(inputSlot -> inputSlot != null)
-                .map(InputSlot::getOwner)
-                .forEach(this::traverse);
+                .forEach(inputSlot -> traverse(inputSlot.getOwner(), inputSlot, null));
     }
 
     /**
@@ -89,4 +90,21 @@ public class PlanTraversal {
     public Collection<Operator> getTraversedNodesWith(Predicate<Operator> operatorPredicate) {
         return this.visitedOperators.stream().filter(operatorPredicate).collect(Collectors.toList());
     }
+
+    /**
+     * A callback can be invoked during a plan traversal on each traversed node.
+     */
+    @FunctionalInterface
+    public interface Callback {
+
+        /**
+         * Perform some action on a traversed operator.
+         * @param operator the operator that is being traversed
+         * @param fromInputSlot if the operator is being traversed via an input slot, this parameter is that slot, otherwise {@code null}
+         * @param fromOutputSlot if the operator is being traversed via an output slot, this parameter is that slot, otherwise {@code null}
+         */
+        void traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot);
+
+    }
+
 }
