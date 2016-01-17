@@ -1,6 +1,6 @@
 package org.qcri.rheem.java.operators;
 
-import org.qcri.rheem.basic.operators.CollocateByOperator;
+import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.ExecutionOperator;
@@ -16,8 +16,8 @@ import java.util.stream.Stream;
 /**
  * Java implementation of the {@link ReduceByOperator}.
  */
-public class JavaCollocateByOperator<Type, KeyType>
-        extends CollocateByOperator<Type, KeyType>
+public class JavaMaterializedGroupByOperator<Type, KeyType>
+        extends MaterializedGroupByOperator<Type, KeyType>
         implements JavaExecutionOperator {
 
 
@@ -27,7 +27,7 @@ public class JavaCollocateByOperator<Type, KeyType>
      * @param type          type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
      * @param keyDescriptor describes how to extract the key from data units
      */
-    public JavaCollocateByOperator(DataSetType<Type> type, TransformationDescriptor<Type, KeyType> keyDescriptor) {
+    public JavaMaterializedGroupByOperator(DataSetType<Type> type, TransformationDescriptor<Type, KeyType> keyDescriptor) {
         super(type, keyDescriptor);
     }
 
@@ -49,6 +49,6 @@ public class JavaCollocateByOperator<Type, KeyType>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaCollocateByOperator<>(getType(), getKeyDescriptor());
+        return new JavaMaterializedGroupByOperator<>(getType(), getKeyDescriptor());
     }
 }

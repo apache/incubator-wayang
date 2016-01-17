@@ -87,6 +87,9 @@ public class RheemContext {
      */
     public void execute(PhysicalPlan physicalPlan) {
         // NB: This is a dummy implementation to make the simplest case work.
+
+        // TODO: introduce calls only, for example the following block of code should be a simple call to the optimizer
+
         boolean isAnyChange;
         int epoch = Operator.FIRST_EPOCH;
         do {

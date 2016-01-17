@@ -1,6 +1,6 @@
 package org.qcri.rheem.basic.mapping;
 
-import org.qcri.rheem.basic.operators.CollocateByOperator;
+import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.basic.operators.GroupByOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
@@ -10,9 +10,9 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * This mapping translates the {@link GroupByOperator} into the {@link CollocateByOperator}.
+ * This mapping translates the {@link GroupByOperator} into the {@link MaterializedGroupByOperator}.
  */
-public class CollocateByMapping implements Mapping {
+public class MaterializedGroupByMapping implements Mapping {
 
 
     @Override
@@ -37,7 +37,7 @@ public class CollocateByMapping implements Mapping {
         protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final GroupByOperator groupBy = (GroupByOperator) subplanMatch.getMatch("groupBy").getOperator();
 
-            return new CollocateByOperator<>(
+            return new MaterializedGroupByOperator<>(
                     groupBy.getInputType(),
                     groupBy.getKeyDescriptor()).at(epoch);
         }

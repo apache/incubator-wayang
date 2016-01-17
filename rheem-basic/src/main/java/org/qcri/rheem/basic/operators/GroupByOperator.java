@@ -9,9 +9,9 @@ import java.util.Iterator;
 /**
  * This is the auxiliary GroupBy operator, i.e., it behaves differently depending on its context. If it is followed
  * by a {@link ReduceOperator} (and akin), it turns that one into a {@link ReduceByOperator}. Otherwise, it corresponds to a
- * {@link CollocateByOperator}.
+ * {@link MaterializedGroupByOperator}.
  *
- * @see CollocateByOperator
+ * @see MaterializedGroupByOperator
  * @see ReduceOperator
  */
 public class GroupByOperator<Input, Key> extends UnaryToUnaryOperator<Input, Iterator<Input>> {

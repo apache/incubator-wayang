@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
-import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
@@ -19,7 +18,7 @@ import java.util.stream.Stream;
 /**
  * Test suite for {@link JavaReduceByOperator}.
  */
-public class JavaCollocateByOperatorTest {
+public class JavaMaterializedGroupByOperatorTest {
 
     @Test
     public void testExecution() {
@@ -29,8 +28,8 @@ public class JavaCollocateByOperatorTest {
                 .map(string -> new Tuple2<>(string, counter.getAndIncrement()));
 
         // Build the reduce operator.
-        JavaCollocateByOperator<Tuple2<String, Integer>, String> collocateByOperator =
-                new JavaCollocateByOperator<>(
+        JavaMaterializedGroupByOperator<Tuple2<String, Integer>, String> collocateByOperator =
+                new JavaMaterializedGroupByOperator<>(
                         DataSetType.createDefaultUnchecked(Tuple2.class),
                         new ProjectionDescriptor<>(
                                 DataUnitType.createBasicUnchecked(Tuple2.class),

@@ -9,7 +9,7 @@ import java.util.Iterator;
 /**
  * This operator collocates the data units in a data set w.r.t. a key function.
  */
-public class CollocateByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Iterator<Type>> {
+public class MaterializedGroupByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Iterator<Type>> {
 
     protected final TransformationDescriptor keyDescriptor;
 
@@ -19,8 +19,8 @@ public class CollocateByOperator<Type, Key> extends UnaryToUnaryOperator<Type, I
      * @param type        type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
      * @param keyDescriptor    describes how to extract the key from data units
      */
-    public CollocateByOperator(DataSetType<Type> type,
-                               TransformationDescriptor<Type, Key> keyDescriptor) {
+    public MaterializedGroupByOperator(DataSetType<Type> type,
+                                       TransformationDescriptor<Type, Key> keyDescriptor) {
         super(type, type, null);
         this.keyDescriptor = keyDescriptor;
     }
