@@ -1,9 +1,6 @@
 package org.qcri.rheem.core.plan;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Utility class for {@link Operator}s.
@@ -41,6 +38,46 @@ public class Operators {
         }
         Collections.reverse(result);
         return result;
+    }
+
+    /**
+     * Compares the inputs of two operators and passes quietly if they are identical.
+     * @throws IllegalArgumentException if the operators differ in their inputs
+     */
+    public static void assertEqualInputs(Operator o1, Operator o2) throws IllegalArgumentException {
+        if (o1.getNumInputs() != o2.getNumInputs()) {
+            throw new IllegalArgumentException("Operators have different numbers of inputs.");
+        }
+
+        for (int i = 0; i < o1.getNumInputs(); i++) {
+            final InputSlot<?> input1 = o1.getInput(i);
+            final InputSlot<?> input2 = o2.getInput(i);
+            if ((input1 == null && input2 != null) ||
+                    (input1 != null && input2 == null) ||
+                    (input1 != null && input2 != null && !input1.getType().equals(input2.getType()))) {
+                throw new IllegalArgumentException("Operators differ in input " + i + ".");
+            }
+        }
+    }
+
+    /**
+     * Compares the outputs of two operators and passes quietly if they are identical.
+     * @throws IllegalArgumentException if the operators differ in their outputs
+     */
+    public static void assertEqualOutputs(Operator o1, Operator o2) throws IllegalArgumentException {
+        if (o1.getNumOutputs() != o2.getNumOutputs()) {
+            throw new IllegalArgumentException("Operators have different numbers of outputs.");
+        }
+
+        for (int i = 0; i < o1.getNumOutputs(); i++) {
+            final OutputSlot<?> output1 = o1.getOutput(i);
+            final OutputSlot<?> output2 = o2.getOutput(i);
+            if ((output1 == null && output2 != null) ||
+                    (output1 != null && output2 == null) ||
+                    (output1 != null && output2 != null && !output1.getType().equals(output2.getType()))) {
+                throw new IllegalArgumentException("Operators differ in output " + i + ".");
+            }
+        }
     }
 
 }

@@ -85,10 +85,17 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
     @Override
     public void replace(Operator oldOperator, Operator newOperator) {
-        final SlotMapping slotMapping = getSlotMappingFor(oldOperator);
-        if (slotMapping != null) {
-            slotMapping.replaceInputSlotMappings(oldOperator, newOperator);
-            slotMapping.replaceOutputSlotMappings(oldOperator, newOperator);
+        Operators.assertEqualInputs(oldOperator, newOperator);
+        Operators.assertEqualOutputs(oldOperator, newOperator);
+
+        for (int i = 0; i < this.alternatives.size(); i++) {
+            final Alternative alternative = this.alternatives.get(i);
+            if (alternative.getOperator() == oldOperator) {
+                final SlotMapping slotMapping = alternative.getSlotMapping();
+                slotMapping.replaceInputSlotMappings(oldOperator, newOperator);
+                slotMapping.replaceOutputSlotMappings(oldOperator, newOperator);
+                alternative.operator = newOperator;
+            }
         }
     }
 
@@ -105,7 +112,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
         /**
          * The operator/subplan encapsulated by this {@link OperatorAlternative.Alternative}.
          */
-        private final Operator operator;
+        private Operator operator;
 
         private Alternative(Operator operator, SlotMapping slotMapping) {
             this.slotMapping = slotMapping;

@@ -83,16 +83,24 @@ public class PlanTransformation {
         Operator originalSubplan = Subplan.wrap(match.getInputMatch().getOperator(), originalOutputOperator);
 
         // Place an alternative: the original subplan and the replacement.
-        // TODO: ensure flat alternatives
-        // TODO: keep track of provenance of alternatives
-        OperatorAlternative operatorAlternative = OperatorAlternative.wrap(originalSubplan);
-        operatorAlternative.addAlternative(replacement);
+        // Either add an alternative to the existing OperatorAlternative or create a new OperatorAlternative.
+        final CompositeOperator originalParent = originalSubplan.getParent();
+        if (originalParent != null && originalParent instanceof OperatorAlternative) {
+            ((OperatorAlternative) originalParent).addAlternative(replacement);
 
-        // If the originalOutputOperator was a sink, we need to update the sink in the plan accordingly.
-        if (originalOutputOperator.isSink()) {
-            plan.getSinks().remove(originalOutputOperator);
-            plan.addSink(operatorAlternative);
+        } else {
+            OperatorAlternative operatorAlternative = OperatorAlternative.wrap(originalSubplan);
+            operatorAlternative.addAlternative(replacement);
+
+            // If the originalOutputOperator was a sink, we need to update the sink in the plan accordingly.
+            if (originalOutputOperator.isSink()) {
+                plan.getSinks().remove(originalOutputOperator);
+            }
+            if (operatorAlternative.isSink() && operatorAlternative.getParent() == null) {
+                plan.addSink(operatorAlternative);
+            }
         }
+
     }
 
     /**

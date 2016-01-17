@@ -2,7 +2,6 @@ package org.qcri.rheem.core.plan;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * This mapping can be used to encapsulate subplans by connecting slots (usually <b>against</b> the data flow direction,
@@ -59,6 +58,7 @@ public class SlotMapping {
 
     /**
      * Replace the mappings from an old, wrapped operator with a new wrapped operator.
+     *
      * @param oldOperator the old wrapped operator
      * @param newOperator the new wrapped operator
      */
@@ -74,12 +74,32 @@ public class SlotMapping {
             final InputSlot<?> outerInput = resolve(oldInput);
             if (outerInput != null) {
                 map(newInput, outerInput);
+                delete(oldInput);
             }
         }
     }
 
     /**
+     * Removes an existing mapping.
+     *
+     * @param key the key of the mapping to remove
+     */
+    private void delete(InputSlot<?> key) {
+        this.mapping.remove(key);
+    }
+
+    /**
+     * Removes an existing mapping.
+     *
+     * @param key the key of the mapping to remove
+     */
+    private void delete(OutputSlot<?> key) {
+        this.mapping.remove(key);
+    }
+
+    /**
      * Replace the mappings from an old, wrapped operator with a new wrapped operator.
+     *
      * @param oldOperator the old wrapped operator
      * @param newOperator the new wrapped operator
      */
@@ -97,6 +117,7 @@ public class SlotMapping {
                     .findFirst()
                     .map(Map.Entry::getKey)
                     .ifPresent(outerOutput -> this.map((OutputSlot<?>) outerOutput, newOutput));
+            // No need for delete as we are replacing the old mapping.
         }
     }
 }

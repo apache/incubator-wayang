@@ -39,10 +39,10 @@ public class InputSlot<T> extends Slot<T> {
         }
 
         for (int i = 0; i < victim.getNumInputs(); i++) {
-            final OutputSlot<Object> occupant = victim.getInput(i).getOccupant().unchecked();
+            final OutputSlot<?> occupant = victim.getInput(i).getOccupant();
             if (occupant != null) {
-                occupant.disconnectFrom(victim.getInput(i).unchecked());
-                occupant.connectTo(thief.getInput(i).unchecked());
+                occupant.unchecked().disconnectFrom(victim.getInput(i).unchecked());
+                occupant.unchecked().connectTo(thief.getInput(i).unchecked());
             }
         }
     }

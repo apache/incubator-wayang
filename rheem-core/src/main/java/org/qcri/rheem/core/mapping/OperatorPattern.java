@@ -63,4 +63,13 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
         throw new RuntimeException("Pattern does not accept visitors.");
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s[%d->%d, %s, id=%x]",
+                this.getClass().getSimpleName(),
+                this.getNumInputs(),
+                this.getNumOutputs(),
+                this.operatorClass.getSimpleName(),
+                this.hashCode());
+    }
 }
