@@ -6,8 +6,9 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.types.BasicDataUnitType;
-import org.qcri.rheem.core.types.DataSet;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitGroupType;
+import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -28,13 +29,15 @@ public class JavaReduceByOperatorTest {
 
         // Build the reduce operator.
         JavaReduceByOperator<Tuple2<String, Integer>, String> reduceByOperator =
-                new JavaReduceByOperator<>(DataSet.flatAndBasic(Tuple2.class),
-                        new ProjectionDescriptor<>(new BasicDataUnitType(Tuple2.class),
-                                new BasicDataUnitType(String.class),
+                new JavaReduceByOperator<>(
+                        DataSetType.createDefaultUnchecked(Tuple2.class),
+                        new ProjectionDescriptor<>(
+                                DataUnitType.createBasicUnchecked(Tuple2.class),
+                                DataUnitType.createBasic(String.class),
                                 "field0"),
-                        new ReduceDescriptor<Tuple2<String, Integer>>(new DataUnitGroupType(
-                                new BasicDataUnitType(Tuple2.class)),
-                                new BasicDataUnitType(Tuple2.class),
+                        new ReduceDescriptor<>(
+                                DataUnitType.createGroupedUnchecked(Tuple2.class),
+                                DataUnitType.createBasicUnchecked(Tuple2.class),
                                 (a, b) -> {
                                     a.field1 += b.field1;
                                     return a;

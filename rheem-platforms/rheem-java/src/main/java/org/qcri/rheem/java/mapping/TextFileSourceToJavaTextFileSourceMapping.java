@@ -27,9 +27,9 @@ public class TextFileSourceToJavaTextFileSourceMapping implements Mapping {
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final TextFileSource originalSource = (TextFileSource) subplanMatch.getMatch("source").getOperator();
-            return new JavaTextFileSource(originalSource.getInputUrl());
+            return new JavaTextFileSource(originalSource.getInputUrl()).at(epoch);
         }
     }
 }

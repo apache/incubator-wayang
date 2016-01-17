@@ -32,7 +32,7 @@ public class FunctionCompiler {
      * @param <Type>        input/output type of the transformation
      * @return a compiled function
      */
-    public <Type> BinaryOperator<Type> compile(ReduceDescriptor descriptor) {
+    public <Type> BinaryOperator<Type> compile(ReduceDescriptor<Type> descriptor) {
         // This is a dummy method but shows the intention of having something compilable in the descriptors.
         return descriptor.getJavaImplementation();
     }

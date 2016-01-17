@@ -24,6 +24,14 @@ public class SubplanMatch {
         this.pattern = pattern;
     }
 
+    /**
+     * Copy constructor.
+     */
+    public SubplanMatch(SubplanMatch that) {
+        this.pattern = that.pattern;
+        this.operatorMatches.putAll(that.operatorMatches);
+    }
+
     public void addOperatorMatch(OperatorMatch operatorMatch) {
         String name = operatorMatch.getPattern().getName();
         if (this.operatorMatches.containsKey(name)) {
@@ -53,5 +61,17 @@ public class SubplanMatch {
 
     public OperatorMatch getMatch(String name) {
         return this.operatorMatches.get(name);
+    }
+
+    /**
+     * @return the maximum epoch among the matched operators in {@link #operatorMatches}
+     */
+    public int getMaximumEpoch() {
+        return this.operatorMatches.values().stream()
+                .map(OperatorMatch::getOperator)
+                .filter(Operator::isElementary)
+                .mapToInt(Operator::getEpoch)
+                .max()
+                .orElse(Operator.FIRST_EPOCH);
     }
 }

@@ -5,12 +5,15 @@ import java.util.Objects;
 /**
  * A basic data unit type is elementary and not constructed from other data unit types.
  */
-public class BasicDataUnitType extends DataUnitType {
+public class BasicDataUnitType<T> extends DataUnitType<T> {
 
     private final Class<?> typeClass;
 
-    public BasicDataUnitType(Class<?> typeClass) {
+    protected BasicDataUnitType(Class<T> typeClass) {
         this.typeClass = typeClass;
+
+        // TODO: The class might have generics. In that case, this class does currently not fully describe the data
+        // unit type.
     }
 
     @Override

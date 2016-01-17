@@ -2,8 +2,8 @@ package org.qcri.rheem.core.function;
 
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataUnitGroupType;
+import org.qcri.rheem.core.types.DataUnitType;
 
-import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 
 /**
@@ -12,17 +12,25 @@ import java.util.function.BinaryOperator;
  */
 public class ReduceDescriptor<Type> extends FunctionDescriptor {
 
-    private final DataUnitGroupType inputType;
+    private final DataUnitGroupType<Type> inputType;
 
-    private final BasicDataUnitType outputType;
+    private final BasicDataUnitType<Type> outputType;
 
     private final BinaryOperator<Type> javaImplementation;
 
-    public ReduceDescriptor(DataUnitGroupType inputType, BasicDataUnitType outputType,
+    public ReduceDescriptor(DataUnitGroupType<Type> inputType, BasicDataUnitType<Type> outputType,
                             BinaryOperator<Type> javaImplementation) {
         this.inputType = inputType;
         this.outputType = outputType;
         this.javaImplementation = javaImplementation;
+    }
+
+    public ReduceDescriptor(Class<? extends Type> inputType, BinaryOperator<Type> javaImplementation) {
+        this(
+                DataUnitType.createGroupedUnchecked(inputType),
+                DataUnitType.createBasicUnchecked(inputType),
+                javaImplementation
+        );
     }
 
     /**
@@ -35,5 +43,14 @@ public class ReduceDescriptor<Type> extends FunctionDescriptor {
         return this.javaImplementation;
     }
 
+    /**
+     * In generic code, we do not have the type parameter values of operators, functions etc. This method avoids casting issues.
+     *
+     * @return this instance with type parameters set to {@link Object}
+     */
+    @SuppressWarnings("unchecked")
+    public ReduceDescriptor<Object> unchecked() {
+        return (ReduceDescriptor<Object>) this;
+    }
 
 }

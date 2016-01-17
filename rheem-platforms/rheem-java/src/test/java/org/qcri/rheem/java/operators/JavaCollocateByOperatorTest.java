@@ -4,10 +4,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
-import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.types.BasicDataUnitType;
-import org.qcri.rheem.core.types.DataSet;
-import org.qcri.rheem.core.types.DataUnitGroupType;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -31,9 +30,11 @@ public class JavaCollocateByOperatorTest {
 
         // Build the reduce operator.
         JavaCollocateByOperator<Tuple2<String, Integer>, String> collocateByOperator =
-                new JavaCollocateByOperator<>(DataSet.flatAndBasic(Tuple2.class),
-                        new ProjectionDescriptor<>(new BasicDataUnitType(Tuple2.class),
-                                new BasicDataUnitType(String.class),
+                new JavaCollocateByOperator<>(
+                        DataSetType.createDefaultUnchecked(Tuple2.class),
+                        new ProjectionDescriptor<>(
+                                DataUnitType.createBasicUnchecked(Tuple2.class),
+                                DataUnitType.createBasicUnchecked(Tuple2.class),
                                 "field0")
                 );
 

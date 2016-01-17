@@ -35,4 +35,14 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
     public Function<Input, Output> getJavaImplementation() {
         return this.javaImplementation;
     }
+
+    /**
+     * In generic code, we do not have the type parameter values of operators, functions etc. This method avoids casting issues.
+     *
+     * @return this instance with type parameters set to {@link Object}
+     */
+    @SuppressWarnings("unchecked")
+    public TransformationDescriptor<Object, Object> unchecked() {
+        return (TransformationDescriptor<Object, Object>) this;
+    }
 }

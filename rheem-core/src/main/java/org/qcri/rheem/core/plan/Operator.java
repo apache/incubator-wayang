@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.plan;
 
+import com.sun.org.apache.bcel.internal.generic.RET;
+
 /**
  * An operator is any node that within a data flow plan.
  */
@@ -65,14 +67,86 @@ public interface Operator {
 
 
     /**
-     * Retrieve the operator that is connected to the input at the given index.
+     * Retrieve the operator that is connected to the input at the given index. If necessary, escape the current
+     * parent.
      *
      * @param inputIndex the index of the input to consider
      * @return the input operator or {@code null} if no such operator exists
+     * @see #getParent()
      */
     default Operator getInputOperator(int inputIndex) {
-        final OutputSlot occupant = getInput(inputIndex).getOccupant();
+        return getInputOperator(getInput(inputIndex));
+    }
+
+    /**
+     * Retrieve the operator that is connected to the given input. If necessary, escape the current parent.
+     *
+     * @param input the index of the input to consider
+     * @return the input operator or {@code null} if no such operator exists
+     * @see #getParent()
+     */
+    default Operator getInputOperator(InputSlot<?> input) {
+        if (!isOwnerOf(input)) {
+            throw new IllegalArgumentException("Slot does not belong to this operator.");
+        }
+
+        // Try to exit through the parent.
+        final Operator parent = this.getParent();
+        if (parent != null) {
+            if (parent instanceof Subplan) {
+                final InputSlot<?> exitInputSlot = ((Subplan) parent).exit(input);
+                if (exitInputSlot != null) {
+                    return parent.getInputOperator(exitInputSlot);
+                }
+
+            } else if (parent instanceof OperatorAlternative.Alternative) {
+                final InputSlot<?> exitInputSlot = ((OperatorAlternative.Alternative) parent).exit(input);
+                if (exitInputSlot != null) {
+                    return parent.getInputOperator(exitInputSlot);
+                }
+            }
+
+        }
+
+        final OutputSlot occupant = input.getOccupant();
         return occupant == null ? null : occupant.getOwner();
+    }
+
+    /**
+     * Retrieve the outermost {@link InputSlot} if this operator is nested in other operators.
+     *
+     * @param input the slot to track
+     * @return the outermost {@link InputSlot}
+     * @see #getParent()
+     */
+    default <T> InputSlot<T> getOutermostInputSlot(InputSlot<T> input) {
+        if (!isOwnerOf(input)) {
+            throw new IllegalArgumentException("Slot does not belong to this operator.");
+        }
+
+        // Try to exit through the parent.
+        final Operator parent = this.getParent();
+        if (parent != null) {
+            if (parent instanceof Subplan) {
+                final InputSlot<T> parentInputSlot = ((Subplan) parent).exit(input);
+                if (parentInputSlot != null) {
+                    return parent.getOutermostInputSlot(parentInputSlot);
+                }
+
+            } else if (parent instanceof OperatorAlternative.Alternative) {
+                final InputSlot<T> parentInputSlot = ((OperatorAlternative.Alternative) parent).exit(input);
+                if (parentInputSlot != null) {
+                    return parent.getOutermostInputSlot(parentInputSlot);
+                }
+            }
+
+        }
+
+        return input;
+    }
+
+    default boolean isOwnerOf(Slot<?> slot) {
+        return slot.getOwner() == this;
     }
 
     /**
@@ -93,5 +167,53 @@ public interface Operator {
         return this.getNumInputs() == 0;
     }
 
+    /**
+     * todo
+     */
+    <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload);
 
+    /**
+     * Operators can be nested in other operators, e.g., in a {@link Subplan} or a {@link OperatorAlternative}.
+     *
+     * @return the parent of this operator or {@code null} if this is a top-level operator
+     */
+    CompositeOperator getParent();
+
+    /**
+     * Operators can be nested in other operators, e.g., in a {@link Subplan} or a {@link OperatorAlternative}.
+     *
+     * @param newParent the new parent of this operator or {@code null} to declare it top-level
+     */
+    void setParent(CompositeOperator newParent);
+
+
+    /**
+     * Each operator is associated with an epoch, which is a logical timestamp for the operator's creation.
+     * This value is the lowest timestamp and default epoch.
+     */
+    int FIRST_EPOCH = 0;
+
+    /**
+     * <i>Optional operation for non-composite operators.</i>
+     *
+     * @param epoch the operator's new epoch value
+     * @see #FIRST_EPOCH
+     */
+    void setEpoch(int epoch);
+
+    /**
+     * <i>Optional operation for non-composite operators.</i>
+     *
+     * @return the operator's epoch value
+     * @see #FIRST_EPOCH
+     */
+    int getEpoch();
+
+
+    /**
+     * @return whether this is an elementary operator
+     */
+    default boolean isElementary() {
+        return true;
+    }
 }

@@ -2,7 +2,8 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.types.DataSet;
+import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.stream.Stream;
@@ -19,7 +20,7 @@ public class JavaMapOperator<InputType, OutputType>
      *
      * @param functionDescriptor
      */
-    public JavaMapOperator(DataSet inputType, DataSet outputType, TransformationDescriptor<InputType, OutputType> functionDescriptor) {
+    public JavaMapOperator(DataSetType inputType, DataSetType outputType, TransformationDescriptor<InputType, OutputType> functionDescriptor) {
         super(inputType, outputType, functionDescriptor);
     }
 
@@ -33,5 +34,10 @@ public class JavaMapOperator<InputType, OutputType>
         final Stream<OutputType> outputStream = inputStream.map(compiler.compile(this.functionDescriptor));
 
         return new Stream[]{outputStream};
+    }
+
+    @Override
+    public ExecutionOperator copy() {
+        return new JavaMapOperator<>(getInputType(), getOutputType(), getFunctionDescriptor());
     }
 }

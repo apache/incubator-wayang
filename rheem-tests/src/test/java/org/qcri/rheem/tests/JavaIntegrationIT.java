@@ -9,8 +9,8 @@ import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.PhysicalPlan;
-import org.qcri.rheem.core.types.BasicDataUnitType;
-import org.qcri.rheem.core.types.DataSet;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -36,7 +36,7 @@ public class JavaIntegrationIT {
         final URL inputUrl = getClass().getResource("/some-lines.txt");
         TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
         List<String> collector = new LinkedList<>();
-        LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(collector, DataSet.flatAndBasic(String.class));
+        LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(collector, DataSetType.createDefault(String.class));
         textFileSource.connectTo(0, sink, 0);
         PhysicalPlan rheemPlan = new PhysicalPlan();
         rheemPlan.addSink(sink);
@@ -59,13 +59,14 @@ public class JavaIntegrationIT {
         final URL inputUrl = getClass().getResource("/some-lines.txt");
         TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
         MapOperator<String, String> reverseOperator = new MapOperator<>(
-                DataSet.flatAndBasic(String.class),
-                DataSet.flatAndBasic(String.class),
-                new TransformationDescriptor<>(String::toUpperCase,
-                        new BasicDataUnitType(String.class),
-                        new BasicDataUnitType(String.class)));
+                DataSetType.createDefault(String.class),
+                DataSetType.createDefault(String.class),
+                new TransformationDescriptor<>(
+                        String::toUpperCase,
+                        DataUnitType.createBasic(String.class),
+                        DataUnitType.createBasic(String.class)));
         textFileSource.connectTo(0, reverseOperator, 0);
-        StdoutSink<String> stdoutSink = new StdoutSink<>(DataSet.flatAndBasic(String.class));
+        StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
         reverseOperator.connectTo(0, stdoutSink, 0);
         PhysicalPlan rheemPlan = new PhysicalPlan();
         rheemPlan.addSink(stdoutSink);

@@ -5,10 +5,7 @@ import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.basic.operators.ReduceOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.types.BasicDataUnitType;
-import org.qcri.rheem.core.types.DataSet;
-import org.qcri.rheem.core.types.FlatDataSet;
-import org.qcri.rheem.core.types.GroupedDataSet;
+import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -25,13 +22,22 @@ public class ReduceByMapping implements Mapping {
         return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory()));
     }
 
+    @SuppressWarnings("unchecked")
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern groupByPattern = new OperatorPattern(
-                "groupBy", new GroupByOperator<>(null, DataSet.flatAndBasic(Void.class),
-                new GroupedDataSet(new BasicDataUnitType(Void.class))), false);
+                "groupBy",
+                new GroupByOperator<>(
+                        null,
+                        DataSetType.createDefault(Void.class),
+                        DataSetType.createGrouped(Void.class)),
+                false);
         final OperatorPattern reducePattern = new OperatorPattern(
-                "reduce", new ReduceOperator<>(null, new GroupedDataSet(new BasicDataUnitType(Void.class)),
-                DataSet.flatAndBasic(Void.class)), false);
+                "reduce",
+                ReduceOperator.createGroupedReduce(
+                        null,
+                        DataSetType.createGrouped(Void.class),
+                        DataSetType.createDefault(Void.class)),
+                false);
         groupByPattern.connectTo(0, reducePattern, 0);
         return SubplanPattern.fromOperatorPatterns(groupByPattern, reducePattern);
     }
@@ -39,14 +45,15 @@ public class ReduceByMapping implements Mapping {
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
-        protected Operator translate(SubplanMatch subplanMatch) {
+        @SuppressWarnings("unchecked")
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final GroupByOperator groupBy = (GroupByOperator) subplanMatch.getMatch("groupBy").getOperator();
             final ReduceOperator reduce = (ReduceOperator) subplanMatch.getMatch("reduce").getOperator();
 
             return new ReduceByOperator<>(
-                    (FlatDataSet) groupBy.getInputType(),
+                    groupBy.getInputType(),
                     groupBy.getKeyDescriptor(),
-                    reduce.getReduceDescriptor());
+                    reduce.getReduceDescriptor()).at(epoch);
         }
     }
 

@@ -1,22 +1,15 @@
 package org.qcri.rheem.core.plan.test;
 
-import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.Source;
-import org.qcri.rheem.core.types.DataSet;
+import org.qcri.rheem.core.plan.UnarySource;
+import org.qcri.rheem.core.types.DataSetType;
 
 /**
  * Dummy source for testing purposes.
  */
-public class TestSource<T> implements Source {
+public class TestSource<T> extends UnarySource<T> {
 
-    private final OutputSlot[] outputSlots;
-
-    public TestSource(DataSet outputType) {
-        this.outputSlots = new OutputSlot[]{new OutputSlot<>("output", this, outputType)};
+    public TestSource(DataSetType outputType) {
+        super(outputType, null);
     }
 
-    @Override
-    public OutputSlot[] getAllOutputs() {
-        return this.outputSlots;
-    }
 }

@@ -1,38 +1,24 @@
 package org.qcri.rheem.basic.operators;
 
-import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.Source;
-import org.qcri.rheem.core.types.DataSet;
+import org.qcri.rheem.core.plan.ActualOperator;
+import org.qcri.rheem.core.plan.UnarySource;
+import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Collection;
 
 /**
  * This source takes as input a Java {@link java.util.Collection}.
  */
-public class CollectionSource implements Source {
+public class CollectionSource<T> extends UnarySource<T> implements ActualOperator {
 
-    private final OutputSlot outputSlot;
+    protected final Collection<T> collection;
 
-    private final OutputSlot[] outputSlots;
-
-    protected final Collection<?> collection;
-
-    public CollectionSource(Collection<?> collection, DataSet type) {
-        this.outputSlot = new OutputSlot<>("elements", this, type);
-        this.outputSlots = new OutputSlot[] { this.outputSlot };
+    public CollectionSource(Collection<T> collection, DataSetType<T> type) {
+        super(type, null);
         this.collection = collection;
     }
 
-    @Override
-    public OutputSlot[] getAllOutputs() {
-        return outputSlots;
-    }
-
-    public DataSet getType() {
-        return this.outputSlot.getType();
-    }
-
-    public Collection<?> getCollection() {
+    public Collection<T> getCollection() {
         return collection;
     }
 }

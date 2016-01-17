@@ -8,13 +8,16 @@ import java.util.LinkedList;
  */
 public class PhysicalPlan {
 
-    private final Collection<Sink> sinks = new LinkedList<>();
+    private final Collection<Operator> sinks = new LinkedList<>();
 
-    public void addSink(Sink sink) {
+    public void addSink(Operator sink) {
+        if (!sink.isSink()) {
+            throw new IllegalArgumentException("Operator is not a sink.");
+        }
         this.sinks.add(sink);
     }
 
-    public Collection<Sink> getSinks() {
+    public Collection<Operator> getSinks() {
         return sinks;
     }
 }

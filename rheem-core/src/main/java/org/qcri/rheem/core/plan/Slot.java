@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.plan;
 
-import org.qcri.rheem.core.types.DataSet;
+import org.qcri.rheem.core.types.DataSetType;
 
 /**
  * Abstract class for inputs and outputs to operators.
@@ -18,12 +18,12 @@ abstract public class Slot<T> {
     private final Operator owner;
 
     /**
-     * Type of data passed through this slot, expressed as a {@link DataSet} so as to define not only the types of
+     * Type of data passed through this slot, expressed as a {@link DataSetType} so as to define not only the types of
      * elements that are passed but also capture their structure (e.g., flat, grouped, sorted, ...).
      */
-    private final DataSet type;
+    private final DataSetType<T> type;
 
-    protected Slot(String name, Operator owner, DataSet type) {
+    protected Slot(String name, Operator owner, DataSetType<T> type) {
         this.name = name;
         this.owner = owner;
         this.type = type;
@@ -37,7 +37,40 @@ abstract public class Slot<T> {
         return owner;
     }
 
-    public DataSet getType() {
+    public DataSetType<T> getType() {
         return this.type;
     }
+
+    /**
+     * @return whether this is an {@link OutputSlot}
+     */
+    public boolean isOutputSlot() {
+        return this instanceof OutputSlot;
+    }
+
+    /**
+     * @return whether this is an input slot
+     */
+    public boolean isInputSlot() {
+        return this instanceof InputSlot;
+    }
+
+    public boolean isCompatibleWith(Slot<?> that) {
+        return this.type.equals(that.type);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s, %s]",
+                getClass().getSimpleName(),
+                this.type,
+                this.owner == null ? "no owner" : this.owner.getClass().getSimpleName());
+    }
+
+    /**
+     * @return the index of this slot within its owner
+     * @throws IllegalStateException if this slot does not have an owner
+     * @see #getOwner()
+     */
+    public abstract int getIndex() throws IllegalStateException;
 }

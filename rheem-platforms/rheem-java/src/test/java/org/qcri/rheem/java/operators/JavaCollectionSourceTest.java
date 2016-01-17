@@ -2,7 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.qcri.rheem.core.types.DataSet;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -21,7 +21,7 @@ public class JavaCollectionSourceTest {
         Set<Integer> inputValues = new HashSet<>(Arrays.asList(1, 2, 3));
         JavaCollectionSource collectionSource = new JavaCollectionSource(
                 inputValues, 
-                DataSet.flatAndBasic(Integer.class));
+                DataSetType.createDefault(Integer.class));
         final Stream[] outputStreams = collectionSource.evaluate(new Stream[0], new FunctionCompiler());
         
         Assert.assertEquals(1, outputStreams.length);

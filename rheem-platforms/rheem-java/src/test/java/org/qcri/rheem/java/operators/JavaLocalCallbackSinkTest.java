@@ -2,7 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.qcri.rheem.core.types.DataSet;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -22,7 +22,7 @@ public class JavaLocalCallbackSinkTest {
 
         // Build the sink.
         List<Integer> collector = new LinkedList<>();
-        JavaLocalCallbackSink<Integer> sink = new JavaLocalCallbackSink<>(collector::add, DataSet.flatAndBasic(Integer.class));
+        JavaLocalCallbackSink<Integer> sink = new JavaLocalCallbackSink<>(collector::add, DataSetType.createDefault(Integer.class));
 
         // Execute the sink.
         final Stream<Integer> inputStream = inputValues.stream();

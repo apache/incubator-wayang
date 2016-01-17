@@ -2,14 +2,9 @@ package org.qcri.rheem.basic.mapping;
 
 import org.qcri.rheem.basic.operators.CollocateByOperator;
 import org.qcri.rheem.basic.operators.GroupByOperator;
-import org.qcri.rheem.basic.operators.ReduceByOperator;
-import org.qcri.rheem.basic.operators.ReduceOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.types.BasicDataUnitType;
-import org.qcri.rheem.core.types.DataSet;
-import org.qcri.rheem.core.types.FlatDataSet;
-import org.qcri.rheem.core.types.GroupedDataSet;
+import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -27,20 +22,24 @@ public class CollocateByMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern groupByPattern = new OperatorPattern(
-                "groupBy", new GroupByOperator<>(null, DataSet.flatAndBasic(Void.class),
-                new GroupedDataSet(new BasicDataUnitType(Void.class))), false);
+                "groupBy",
+                new GroupByOperator<>(
+                        null,
+                        DataSetType.createDefault(Void.class),
+                        DataSetType.createGrouped(Void.class)),
+                false);
         return SubplanPattern.createSingleton(groupByPattern);
     }
 
     private static class ReplacementFactory extends ReplacementSubplanFactory {
 
         @Override
-        protected Operator translate(SubplanMatch subplanMatch) {
+        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final GroupByOperator groupBy = (GroupByOperator) subplanMatch.getMatch("groupBy").getOperator();
 
             return new CollocateByOperator<>(
-                    (FlatDataSet) groupBy.getInputType(),
-                    groupBy.getKeyDescriptor());
+                    groupBy.getInputType(),
+                    groupBy.getKeyDescriptor()).at(epoch);
         }
     }
 
