@@ -1,0 +1,15 @@
+package org.qcri.rheem.core.plan.test;
+
+import org.qcri.rheem.core.plan.UnarySource;
+import org.qcri.rheem.core.types.DataSetType;
+
+/**
+ * Dummy source for testing purposes.
+ */
+public class TestSource<T> extends UnarySource<T> {
+
+    public TestSource(DataSetType outputType) {
+        super(outputType, null);
+    }
+
+}
