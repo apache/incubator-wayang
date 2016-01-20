@@ -1,9 +1,11 @@
 package org.qcri.rheem.core.plan;
 
+import java.util.Collection;
+
 /**
  * A subplan encapsulates connected operators as a single operator.
  */
-public class Subplan extends OperatorBase implements ActualOperator, CompositeOperator {
+public class Subplan extends OperatorBase implements ActualOperator, CompositeOperator, EncasedPlan {
 
     /**
      * Maps input and output slots <b>against</b> the direction of the data flow.
@@ -30,12 +32,12 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         // Copy the interface of the input operator, steal its connections, and map the slots.
         InputSlot.mock(inputOperator, newSubplan);
         InputSlot.stealConnections(inputOperator, newSubplan);
-        newSubplan.slotMapping.mapAll(inputOperator.getAllInputs(), newSubplan.inputSlots);
+        newSubplan.slotMapping.mapAllUpsteam(inputOperator.getAllInputs(), newSubplan.inputSlots);
 
         // Copy the interface of the output operator, steal its connections, and map the slots.
         OutputSlot.mock(outputOperator, newSubplan);
         OutputSlot.stealConnections(outputOperator, newSubplan);
-        newSubplan.slotMapping.mapAll(newSubplan.outputSlots, outputOperator.getAllOutputs());
+        newSubplan.slotMapping.mapAllUpsteam(newSubplan.outputSlots, outputOperator.getAllOutputs());
 
         // Traverse through the subplan and become the parent of the operators.
         new PlanTraversal(true, false)
@@ -64,12 +66,35 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         return slotMapping;
     }
 
-    /**
-     * Enter this subplan. This subplan needs to be a sink.
-     *
-     * @return the sink operator within this subplan
-     */
-    public Operator enter() {
+    @Override
+    public Operator getSource() {
+        if (!isSource()) {
+            throw new IllegalArgumentException("Cannot enter subplan: not a source");
+        }
+
+        return this.inputOperator;
+    }
+
+    @Override
+    public <T> Collection<InputSlot<T>> followInput(InputSlot<T> inputSlot) {
+        if (!this.isOwnerOf(inputSlot)) {
+            throw new IllegalArgumentException("Cannot enter alternative: invalid input slot.");
+        }
+
+        final Collection<InputSlot<T>> resolvedSlots = this.slotMapping.resolveDownstream(inputSlot);
+        for (InputSlot<T> resolvedSlot : resolvedSlots) {
+            if (resolvedSlot != null && resolvedSlot.getOwner().getParent() != this) {
+                final String msg = String.format("Cannot enter through: Owner of inner OutputSlot (%s) is not a child of this alternative (%s).",
+                        Operators.collectParents(resolvedSlot.getOwner(), true),
+                        Operators.collectParents(this, true));
+                throw new IllegalStateException(msg);
+            }
+        }
+        return resolvedSlots;
+    }
+
+    @Override
+    public Operator getSink() {
         if (!isSink()) {
             throw new IllegalArgumentException("Cannot enter subplan: no output slot given and subplan is not a sink.");
         }
@@ -77,19 +102,14 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         return this.outputOperator;
     }
 
-    /**
-     * Enter this subplan by following one of its output slots.
-     *
-     * @param subplanOutputSlot an output slot of this subplan
-     * @return the output within the subplan that is connected to the given output slot
-     */
-    public <T> OutputSlot<T> enter(OutputSlot<T> subplanOutputSlot) {
+    @Override
+    public <T> OutputSlot<T> traceOutput(OutputSlot<T> subplanOutputSlot) {
         // If this subplan is not a sink, we trace the given output slot via the slot mapping.
         if (this.isOwnerOf(subplanOutputSlot)) {
             throw new IllegalArgumentException("Cannot enter subplan: Output slot does not belong to this subplan.");
         }
 
-        final OutputSlot<T> resolvedSlot = this.slotMapping.resolve(subplanOutputSlot);
+        final OutputSlot<T> resolvedSlot = this.slotMapping.resolveUpstream(subplanOutputSlot);
         if (resolvedSlot != null && resolvedSlot.getOwner().getParent() != this) {
             throw new IllegalStateException("Traced to an output slot whose owner is not a child of this subplan.");
         }
@@ -100,7 +120,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         if (innerInputSlot.getOwner().getParent() != this) {
             throw new IllegalArgumentException("Trying to exit from an input slot that is not within this subplan.");
         }
-        return this.slotMapping.resolve(innerInputSlot);
+        return this.slotMapping.resolveUpstream(innerInputSlot);
     }
 
     public Subplan exit(Operator innerOperator) {
@@ -113,9 +133,15 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
 
 
     @Override
-    public <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+    public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
         return visitor.visit(this, outputSlot, payload);
     }
+
+//    @Override
+//    public <Payload, Return> Return accept(BottomUpPlanVisitor<Payload, Return> visitor, InputSlot<?> inputSlot, Payload payload) {
+//        return visitor.visit(this, inputSlot, payload);
+//    }
+
     // TODO: develop constructors/factory methods to deal with more than one input and output operator
 
 

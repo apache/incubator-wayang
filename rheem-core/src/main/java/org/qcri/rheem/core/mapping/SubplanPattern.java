@@ -64,7 +64,7 @@ public class SubplanPattern extends OperatorBase {
     }
 
     @Override
-    public <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+    public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
         throw new RuntimeException("Pattern does not accept visitors.");
     }
 
@@ -135,9 +135,9 @@ public class SubplanPattern extends OperatorBase {
 
             if (operator instanceof Subplan) {
                 if (trackedOutputSlot == null) {
-                    match(pattern, ((Subplan) operator).enter(), trackedOutputSlot, subplanMatch);
+                    match(pattern, ((Subplan) operator).getSink(), trackedOutputSlot, subplanMatch);
                 } else {
-                    final OutputSlot<?> innerOutputSlot = ((Subplan) operator).enter(trackedOutputSlot);
+                    final OutputSlot<?> innerOutputSlot = ((Subplan) operator).traceOutput(trackedOutputSlot);
                     match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatch);
                 }
 

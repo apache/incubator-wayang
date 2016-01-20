@@ -59,7 +59,7 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
     }
 
     @Override
-    public <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+    public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
         throw new RuntimeException("Pattern does not accept visitors.");
     }
 

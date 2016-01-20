@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.plan;
 
-import com.sun.org.apache.bcel.internal.generic.RET;
+import java.util.Map;
 
 /**
  * An operator is any node that within a data flow plan.
@@ -168,9 +168,16 @@ public interface Operator {
     }
 
     /**
-     * todo
+     * This method is part of the visitor pattern and calls the appropriate visit method on {@code visitor}.
      */
-    <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload);
+    <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload);
+
+//    /**
+//     * This method is part of the visitor pattern and calls the appropriate visit method on {@code visitor}.
+//     *
+//     * @return return values associated with the inner-most input slot
+//     */
+//    <Payload, Return> Map<InputSlot, Return> accept(BottomUpPlanVisitor<Payload, Return> visitor, InputSlot<?> inputSlot, Payload payload);
 
     /**
      * Operators can be nested in other operators, e.g., in a {@link Subplan} or a {@link OperatorAlternative}.

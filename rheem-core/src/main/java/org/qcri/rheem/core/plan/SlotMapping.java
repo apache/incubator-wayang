@@ -1,7 +1,7 @@
 package org.qcri.rheem.core.plan;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This mapping can be used to encapsulate subplans by connecting slots (usually <b>against</b> the data flow direction,
@@ -9,51 +9,81 @@ import java.util.Map;
  */
 public class SlotMapping {
 
-    private final Map<Slot, Slot> mapping = new HashMap<>();
+    private final Map<Slot, Slot> upstreamMapping = new HashMap<>();
+
+    private Map<Slot, Collection> downstreamMapping = null;
 
     public static SlotMapping wrap(Operator wrappee, Operator wrapper) {
         SlotMapping slotMapping = new SlotMapping();
-        slotMapping.mapAll(wrapper.getAllOutputs(), wrappee.getAllOutputs());
-        slotMapping.mapAll(wrappee.getAllInputs(), wrapper.getAllInputs());
+        slotMapping.mapAllUpsteam(wrapper.getAllOutputs(), wrappee.getAllOutputs());
+        slotMapping.mapAllUpsteam(wrappee.getAllInputs(), wrapper.getAllInputs());
         return slotMapping;
     }
 
-    public void mapAll(InputSlot[] sources, InputSlot[] targets) {
+    public void mapAllUpsteam(InputSlot[] sources, InputSlot[] targets) {
         if (sources.length != targets.length) throw new IllegalArgumentException();
         for (int i = 0; i < sources.length; i++) {
-            map(sources[i], targets[i]);
+            mapUpstream(sources[i], targets[i]);
         }
     }
 
-    public void mapAll(OutputSlot[] sources, OutputSlot[] targets) {
+    public void mapAllUpsteam(OutputSlot[] sources, OutputSlot[] targets) {
         if (sources.length != targets.length) throw new IllegalArgumentException();
         for (int i = 0; i < sources.length; i++) {
-            map(sources[i], targets[i]);
+            mapUpstream(sources[i], targets[i]);
         }
     }
 
-    public void map(InputSlot<?> source, InputSlot<?> target) {
+    public void mapUpstream(InputSlot<?> source, InputSlot<?> target) {
         if (!source.isCompatibleWith(target)) {
             throw new IllegalArgumentException(String.format("Incompatible slots given: %s -> %s", source, target));
         }
 
-        this.mapping.put(source, target);
+        this.upstreamMapping.put(source, target);
+        this.downstreamMapping = null;
     }
 
-    public void map(OutputSlot<?> source, OutputSlot<?> target) {
+    public void mapUpstream(OutputSlot<?> source, OutputSlot<?> target) {
         if (!source.isCompatibleWith(target)) {
             throw new IllegalArgumentException(String.format("Incompatible slots given: %s -> %s", source, target));
         }
 
-        this.mapping.put(source, target);
+        this.upstreamMapping.put(source, target);
+        this.downstreamMapping = null;
     }
 
-    public <T> InputSlot<T> resolve(InputSlot<T> source) {
-        return (InputSlot<T>) this.mapping.get(source);
+    public <T> InputSlot<T> resolveUpstream(InputSlot<T> source) {
+        return (InputSlot<T>) this.upstreamMapping.get(source);
     }
 
-    public <T> OutputSlot<T> resolve(OutputSlot<T> source) {
-        return (OutputSlot<T>) this.mapping.get(source);
+    public <T> OutputSlot<T> resolveUpstream(OutputSlot<T> source) {
+        return (OutputSlot<T>) this.upstreamMapping.get(source);
+    }
+
+    public <T> Collection<InputSlot<T>> resolveDownstream(InputSlot<T> source) {
+        return (Collection<InputSlot<T>>) getOrCreateDownstreamMapping().getOrDefault(source, Collections.emptyList());
+    }
+
+    public <T> Collection<OutputSlot<T>> resolveDownstream(OutputSlot<T> source) {
+        return (Collection<OutputSlot<T>>) getOrCreateDownstreamMapping().getOrDefault(source, Collections.emptyList());
+    }
+
+    /**
+     * Retrieves {@link #downstreamMapping} or creates it if it does not exist.
+     *
+     * @return {@link #downstreamMapping}
+     */
+    private Map<Slot, Collection> getOrCreateDownstreamMapping() {
+        if (this.downstreamMapping == null) {
+            this.downstreamMapping = this.upstreamMapping.entrySet().stream().collect(
+                    Collectors.groupingBy(
+                            Map.Entry::getValue,
+                            Collectors.mapping(
+                                    Map.Entry::getKey,
+                                    Collectors.toCollection(LinkedList::new))));
+        }
+
+        return this.downstreamMapping;
     }
 
     /**
@@ -71,9 +101,9 @@ public class SlotMapping {
             final InputSlot<?> oldInput = oldOperator.getInput(i);
             final InputSlot<?> newInput = newOperator.getInput(i);
 
-            final InputSlot<?> outerInput = resolve(oldInput);
+            final InputSlot<?> outerInput = resolveUpstream(oldInput);
             if (outerInput != null) {
-                map(newInput, outerInput);
+                mapUpstream(newInput, outerInput);
                 delete(oldInput);
             }
         }
@@ -85,7 +115,7 @@ public class SlotMapping {
      * @param key the key of the mapping to remove
      */
     private void delete(InputSlot<?> key) {
-        this.mapping.remove(key);
+        this.upstreamMapping.remove(key);
     }
 
     /**
@@ -94,7 +124,7 @@ public class SlotMapping {
      * @param key the key of the mapping to remove
      */
     private void delete(OutputSlot<?> key) {
-        this.mapping.remove(key);
+        this.upstreamMapping.remove(key);
     }
 
     /**
@@ -112,11 +142,11 @@ public class SlotMapping {
             final OutputSlot<?> oldOutput = oldOperator.getOutput(i);
             final OutputSlot<?> newOutput = newOperator.getOutput(i);
 
-            this.mapping.entrySet().stream()
+            this.upstreamMapping.entrySet().stream()
                     .filter(entry -> entry.getValue() == oldOutput)
                     .findFirst()
                     .map(Map.Entry::getKey)
-                    .ifPresent(outerOutput -> this.map((OutputSlot<?>) outerOutput, newOutput));
+                    .ifPresent(outerOutput -> this.mapUpstream((OutputSlot<?>) outerOutput, newOutput));
             // No need for delete as we are replacing the old mapping.
         }
     }

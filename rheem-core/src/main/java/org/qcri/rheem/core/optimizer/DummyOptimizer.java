@@ -10,7 +10,7 @@ import java.util.Optional;
 /**
  * Dummy implementation: just resolve alternatives by looking for those alternatives that are execution operators.
  */
-public class Optimizer {
+public class DummyOptimizer {
 
     public PhysicalPlan buildExecutionPlan(PhysicalPlan rheemPlan) {
         PhysicalPlan executionPlan = new PhysicalPlan();
@@ -20,16 +20,16 @@ public class Optimizer {
 //            Operator executionSink = pass.pick(sink, null, null);
 //            executionPlan.addSink(executionSink);
 //        }
-        TopDownPlanEnumerator planEnumerator = new TopDownPlanEnumerator();
+        DummyOptimizer.Pass2 pass2 = new DummyOptimizer.Pass2();
         for (Operator sink : rheemPlan.getSinks()) {
-            Operator executionSink = planEnumerator.process(sink, null, null);
+            Operator executionSink = pass2.process(sink, null, null);
             executionPlan.addSink(executionSink);
         }
 
         return executionPlan;
     }
 
-    private static class TopDownPlanEnumerator extends TopDownPlanVisitor<InputSlot<Object>, Operator> {
+    private static class Pass2 extends TopDownPlanVisitor<InputSlot<Object>, Operator> {
 
         Map<OperatorAlternative, OperatorAlternative.Alternative> pickedAlternatives = new HashMap<>();
 
