@@ -145,9 +145,9 @@ public class SubplanPattern extends OperatorBase {
                 for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
                     SubplanMatch subplanMatchCopy = new SubplanMatch(subplanMatch);
                     if (trackedOutputSlot == null) {
-                        match(pattern, alternative.enter(), trackedOutputSlot, subplanMatchCopy);
+                        match(pattern, alternative.getSink(), trackedOutputSlot, subplanMatchCopy);
                     } else {
-                        final OutputSlot<?> innerOutputSlot = alternative.enter(trackedOutputSlot);
+                        final OutputSlot<?> innerOutputSlot = alternative.traceOutput(trackedOutputSlot);
                         match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatchCopy);
                     }
                 }

@@ -10,8 +10,8 @@ public interface ActualOperator extends Operator {
         return visitor.visit(this, outputSlot, payload);
     }
 
-    @Override
-    default <Payload, Return> Return accept(BottomUpPlanVisitor<Payload, Return> visitor, InputSlot<?> inputSlot, Payload payload) {
-        return visitor.visit(this, inputSlot, payload);
-    }
+//    @Override
+//    default <Payload, Return> Return accept(BottomUpPlanVisitor<Payload, Return> visitor, InputSlot<?> inputSlot, Payload payload) {
+//        return visitor.visit(this, inputSlot, payload);
+//    }
 }
