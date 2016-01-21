@@ -90,4 +90,22 @@ public class InputSlot<T> extends Slot<T> {
     public InputSlot<Object> unchecked() {
         return (InputSlot<Object>) this;
     }
+
+    /**
+     * Recursively trace the given {@code inputSlot}.
+     *
+     * @param inputSlot the {@link InputSlot} to trace
+     * @return the {@link InputSlot} of the outermost {@link Operator} that represents the given {@code inputSlot} or
+     * {@code null} if the {@code inputSlot} has no representation in the outermost {@link Operator}.
+     * @see Operator#getContainer()
+     * @see OperatorContainer#traceInput(InputSlot)
+     */
+    public static <T> InputSlot<T> traceOutermostInput(InputSlot<T> inputSlot) {
+        while (inputSlot != null && inputSlot.getOwner().getContainer() != null) {
+            final OperatorContainer container = inputSlot.getOwner().getContainer();
+            inputSlot = container.traceInput(inputSlot);
+        }
+
+        return inputSlot;
+    }
 }

@@ -53,6 +53,9 @@ public class SlotMapping {
     }
 
     public <T> InputSlot<T> resolveUpstream(InputSlot<T> source) {
+        if (source.getOccupant() != null) {
+            throw new IllegalStateException("Tried to resolve (upstream) an InputSlot with an occupant, which is illegal.");
+        }
         return (InputSlot<T>) this.upstreamMapping.get(source);
     }
 
@@ -65,6 +68,9 @@ public class SlotMapping {
     }
 
     public <T> Collection<OutputSlot<T>> resolveDownstream(OutputSlot<T> source) {
+        if (!source.getOccupiedSlots().isEmpty()) {
+            throw new IllegalStateException("Tried to resolve (downstream) an OutputSlot with occupiers, which is illegal.");
+        }
         return (Collection<OutputSlot<T>>) getOrCreateDownstreamMapping().getOrDefault(source, Collections.emptyList());
     }
 

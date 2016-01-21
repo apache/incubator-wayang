@@ -1,7 +1,5 @@
 package org.qcri.rheem.core.plan;
 
-import java.util.Map;
-
 /**
  * An operator is any node that within a data flow plan.
  */
@@ -167,6 +165,18 @@ public interface Operator {
         return this.getNumInputs() == 0;
     }
 
+    default boolean isSubplan() {
+        return this instanceof Subplan;
+    }
+
+    default boolean isAlternative() {
+        return this instanceof OperatorAlternative;
+    }
+
+    default boolean isExecutionOperator() {
+        return this instanceof ExecutionOperator;
+    }
+
     /**
      * This method is part of the visitor pattern and calls the appropriate visit method on {@code visitor}.
      */
@@ -184,15 +194,21 @@ public interface Operator {
      *
      * @return the parent of this operator or {@code null} if this is a top-level operator
      */
-    CompositeOperator getParent();
+    default CompositeOperator getParent() {
+        final OperatorContainer container = getContainer();
+        return container == null ?
+                null :
+                container.toOperator();
+    }
+
+    OperatorContainer getContainer();
 
     /**
-     * Operators can be nested in other operators, e.g., in a {@link Subplan} or a {@link OperatorAlternative}.
+     * Operators can be nested in other operators, e.g., in a {@link Subplan} or a {@link OperatorAlternative.Alternative}.
      *
-     * @param newParent the new parent of this operator or {@code null} to declare it top-level
+     * @param newContainer the new container of this operator or {@code null} to declare it top-level
      */
-    void setParent(CompositeOperator newParent);
-
+    void setContainer(OperatorContainer newContainer);
 
     /**
      * Each operator is associated with an epoch, which is a logical timestamp for the operator's creation.

@@ -5,7 +5,7 @@ import java.util.Collection;
 /**
  * A subplan encapsulates connected operators as a single operator.
  */
-public class Subplan extends OperatorBase implements ActualOperator, CompositeOperator, EncasedPlan {
+public class Subplan extends OperatorBase implements ActualOperator, CompositeOperator, OperatorContainer {
 
     /**
      * Maps input and output slots <b>against</b> the direction of the data flow.
@@ -23,11 +23,11 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
             return inputOperator;
         }
 
-        final CompositeOperator commonParent = Operators.getCommonParent(inputOperator, outputOperator);
+        final OperatorContainer commonContainer = Operators.getCommonContainer(inputOperator, outputOperator);
         // TODO: If the input operator does not have the common parent as parent, then it must be "terminal" in its parent.
         // TODO: If the output operator does not have the common parent as parent, then it must be "terminal" in its parent.
 
-        Subplan newSubplan = new Subplan(inputOperator, outputOperator, commonParent);
+        Subplan newSubplan = new Subplan(inputOperator, outputOperator, commonContainer);
 
         // Copy the interface of the input operator, steal its connections, and map the slots.
         InputSlot.mock(inputOperator, newSubplan);
@@ -41,7 +41,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
 
         // Traverse through the subplan and become the parent of the operators.
         new PlanTraversal(true, false)
-                .withCallback((operator, inputSlot, outputSlot) -> operator.setParent(newSubplan))
+                .withCallback((operator, inputSlot, outputSlot) -> operator.setContainer(newSubplan))
                 .traverse(newSubplan.outputOperator);
 
         return newSubplan;
@@ -53,8 +53,8 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
      *
      * @see #wrap(Operator, Operator)
      */
-    private Subplan(Operator inputOperator, Operator outputOperator, CompositeOperator parent) {
-        super(inputOperator.getNumInputs(), outputOperator.getNumOutputs(), parent);
+    private Subplan(Operator inputOperator, Operator outputOperator, OperatorContainer container) {
+        super(inputOperator.getNumInputs(), outputOperator.getNumOutputs(), container);
 
         this.inputOperator = inputOperator;
         this.outputOperator = outputOperator;
@@ -116,6 +116,11 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         return resolvedSlot;
     }
 
+    @Override
+    public CompositeOperator toOperator() {
+        return this;
+    }
+
     public <T> InputSlot<T> exit(InputSlot<T> innerInputSlot) {
         if (innerInputSlot.getOwner().getParent() != this) {
             throw new IllegalArgumentException("Trying to exit from an input slot that is not within this subplan.");
@@ -171,4 +176,19 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         }
     }
 
+    @Override
+    public <T> InputSlot<T> traceInput(InputSlot<T> inputSlot) {
+        if (inputSlot.getOwner() != this) {
+            throw new IllegalArgumentException("InputSlot does not belong to this Operator.");
+        }
+        return this.slotMapping.resolveUpstream(inputSlot);
+    }
+
+    @Override
+    public <T> Collection<OutputSlot<T>> followOutput(OutputSlot<T> outputSlot) {
+        if (outputSlot.getOwner().getContainer() != this) {
+            throw new IllegalArgumentException("OutputSlot does not belong to this Operator.");
+        }
+        return this.slotMapping.resolveDownstream(outputSlot);
+    }
 }

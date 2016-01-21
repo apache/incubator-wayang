@@ -47,7 +47,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
      * Creates a new instance with the same number of inputs and outputs and the same parent as the given operator.
      */
     private OperatorAlternative(Operator operator) {
-        super(operator.getNumInputs(), operator.getNumOutputs(), operator.getParent());
+        super(operator.getNumInputs(), operator.getNumOutputs(), operator.getContainer());
     }
 
     public List<Alternative> getAlternatives() {
@@ -104,7 +104,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     /**
      * Represents an alternative subplan for the enclosing {@link OperatorAlternative}.
      */
-    public class Alternative implements EncasedPlan {
+    public class Alternative implements OperatorContainer {
 
         /**
          * Maps the slots of the enclosing {@link OperatorAlternative} with the enclosed {@link #operator}.
@@ -119,7 +119,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
         private Alternative(Operator operator, SlotMapping slotMapping) {
             this.slotMapping = slotMapping;
             this.operator = operator;
-            operator.setParent(OperatorAlternative.this);
+            operator.setContainer(this);
         }
 
         public SlotMapping getSlotMapping() {
@@ -156,6 +156,11 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             return resolvedSlot;
         }
 
+        @Override
+        public CompositeOperator toOperator() {
+            return OperatorAlternative.this;
+        }
+
 
         @Override
         public Operator getSource() {
@@ -182,6 +187,27 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
                 }
             }
             return resolvedSlots;
+        }
+
+        @Override
+        public <T> InputSlot<T> traceInput(InputSlot<T> inputSlot) {
+            if (inputSlot.getOccupant() != null) {
+                throw new IllegalStateException("Cannot trace an InputSlot that has an occupant.");
+            }
+
+            if (inputSlot.getOwner().getContainer() != this) {
+                throw new IllegalArgumentException("Cannot trace input slot: does not belong to this alternative.");
+            }
+
+            return this.slotMapping.resolveUpstream(inputSlot);
+        }
+
+        @Override
+        public <T> Collection<OutputSlot<T>> followOutput(OutputSlot<T> outputSlot) {
+            if (outputSlot.getOwner().getContainer() != this) {
+                throw new IllegalArgumentException("OutputSlot does not belong to this Alternative.");
+            }
+            return this.slotMapping.resolveDownstream(outputSlot);
         }
 
         public <T> InputSlot<T> exit(InputSlot<T> innerInputSlot) {

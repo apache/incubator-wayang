@@ -15,21 +15,16 @@ public class DummyOptimizer {
     public PhysicalPlan buildExecutionPlan(PhysicalPlan rheemPlan) {
         PhysicalPlan executionPlan = new PhysicalPlan();
 
-//        Optimizer.Pass pass = new Optimizer.Pass();
-//        for (Operator sink : rheemPlan.getSinks()) {
-//            Operator executionSink = pass.pick(sink, null, null);
-//            executionPlan.addSink(executionSink);
-//        }
-        DummyOptimizer.Pass2 pass2 = new DummyOptimizer.Pass2();
+        Pass pass = new Pass();
         for (Operator sink : rheemPlan.getSinks()) {
-            Operator executionSink = pass2.process(sink, null, null);
+            Operator executionSink = pass.process(sink, null, null);
             executionPlan.addSink(executionSink);
         }
 
         return executionPlan;
     }
 
-    private static class Pass2 extends TopDownPlanVisitor<InputSlot<Object>, Operator> {
+    private static class Pass extends TopDownPlanVisitor<InputSlot<Object>, Operator> {
 
         Map<OperatorAlternative, OperatorAlternative.Alternative> pickedAlternatives = new HashMap<>();
 

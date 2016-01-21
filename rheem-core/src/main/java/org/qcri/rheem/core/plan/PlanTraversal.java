@@ -32,7 +32,7 @@ public class PlanTraversal {
     /**
      * Traversing as with {@link #traverse(Operator, InputSlot, OutputSlot)} for every operator.
      */
-    public PlanTraversal traverse(Collection<Operator> operators) {
+    public PlanTraversal traverse(Collection<? extends Operator> operators) {
         operators.forEach(this::traverse);
         return this;
     }
