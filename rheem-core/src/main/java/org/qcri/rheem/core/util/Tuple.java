@@ -1,5 +1,8 @@
 package org.qcri.rheem.core.util;
 
+import org.qcri.rheem.core.plan.InputSlot;
+import org.qcri.rheem.core.plan.OutputSlot;
+
 import java.util.Objects;
 
 /**
@@ -35,5 +38,21 @@ public class Tuple<T0, T1> {
     @Override
     public String toString() {
         return String.format("(%s, %s)", this.field0, this.field1);
+    }
+
+    public T0 getField0() {
+        return field0;
+    }
+
+    public void setField0(T0 field0) {
+        this.field0 = field0;
+    }
+
+    public T1 getField1() {
+        return field1;
+    }
+
+    public void setField1(T1 field1) {
+        this.field1 = field1;
     }
 }

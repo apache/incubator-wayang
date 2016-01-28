@@ -100,4 +100,22 @@ public class Canonicalizer<T> implements Set<T> {
     public void clear() {
         this.entries.clear();
     }
+
+    @Override
+    public String toString() {
+        return this.entries.keySet().toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Canonicalizer<?> that = (Canonicalizer<?>) o;
+        return Objects.equals(entries, that.entries);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(entries);
+    }
 }

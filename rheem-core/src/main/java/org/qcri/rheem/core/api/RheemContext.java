@@ -107,6 +107,9 @@ public class RheemContext {
         planEnumerator.run();
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.getComprehensiveEnumeration();
         logger.info("Enumerated {} plans.", comprehensiveEnumeration.getPartialPlans().size());
+        for (PlanEnumeration.PartialPlan partialPlan : comprehensiveEnumeration.getPartialPlans()) {
+            logger.info("Plan with operators: {}", partialPlan.getOperators());
+        }
 
         PhysicalPlan executionPlan = this.optimizer.buildExecutionPlan(physicalPlan);
 

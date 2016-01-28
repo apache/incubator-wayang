@@ -124,7 +124,7 @@ public class PlanEnumerator {
         for (PlanEnumeration inputEnumeration : operatorActivation.activationCollector) {
             // Inputs might not always be available, e.g., when enumerating an alternative.
             if (inputEnumeration != null) {
-                completeEnumeration = inputEnumeration.concatenate(completeEnumeration);
+                completeEnumeration = inputEnumeration.join(completeEnumeration);
             }
             // TODO: pruning.
         }
@@ -209,7 +209,7 @@ public class PlanEnumerator {
 
             branchEnumeration = branchEnumeration == null
                     ? operatorEnumeration
-                    : branchEnumeration.concatenate(operatorEnumeration);
+                    : branchEnumeration.join(operatorEnumeration);
         }
 
         // TODO: pruning
@@ -247,15 +247,10 @@ public class PlanEnumerator {
     }
 
     public PlanEnumeration getComprehensiveEnumeration() {
-        if (this.nonActivatingEnumerations.size() > 1) {
-            throw new IllegalArgumentException(
-                    String.format(
-                            "Unsupported number of non-activating enumerations: %d.",
-                            this.nonActivatingEnumerations.size()));
-        }
         return this.nonActivatingEnumerations.stream()
-                .map(planEnumeration -> planEnumeration.escape(this.alternative))
-                .findFirst().orElse(null);
+                .map(instance -> instance.escape(this.alternative))
+                .reduce((instance1, instance2) -> instance1.join(instance2))
+                .orElse(null);
     }
 
     /**

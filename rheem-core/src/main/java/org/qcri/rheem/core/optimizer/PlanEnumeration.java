@@ -2,7 +2,7 @@ package org.qcri.rheem.core.optimizer;
 
 import org.qcri.rheem.core.plan.*;
 import org.qcri.rheem.core.util.Canonicalizer;
-import org.qcri.rheem.core.util.Counter;
+import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,13 +27,13 @@ public class PlanEnumeration {
      * {@link OperatorAlternative}s whose {@link InputSlot}s depend on an {@link Operator} that is outside of this
      * {@link PlanEnumeration} scope are relevant for pruning and therefore represented here.
      */
-    private final Set<InputSlot> inputSlots = new HashSet<>();
+    private final Set<InputSlot> requestedInputSlots = new HashSet<>();
 
     /**
      * {@link OperatorAlternative}s whose {@link OutputSlot}s feed to an {@link Operator} that is outside of this
      * {@link PlanEnumeration} scope are relevant for pruning and therefore represented here.
      */
-    private final Counter<OutputSlot> outputSlotCounter = new Counter<>();
+    private final Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots = new HashSet<>();
 
 //    private final Set<InputSlot> originalInputSlots = new HashSet<>();
 
@@ -65,26 +65,33 @@ public class PlanEnumeration {
             instance.terminalOperators.add(inputOperator);
         } else {
             for (InputSlot<?> inputSlot : inputOperator.getAllInputs()) {
-                instance.inputSlots.add(inputSlot);
+                instance.requestedInputSlots.add(inputSlot);
             }
         }
 
         if (outputOperator.isSink()) {
             instance.terminalOperators.add(outputOperator);
         } else {
-            for (OutputSlot<?> outputSlot : outputOperator.getAllOutputs()) {
-                instance.outputSlotCounter.increment(outputSlot);
+            for (OutputSlot outputSlot : outputOperator.getAllOutputs()) {
+                List<InputSlot> inputSlots = outputSlot.getOccupiedSlots();
+                if (inputSlots.isEmpty()) {
+                    inputSlots = Collections.singletonList(null);
+                    for (InputSlot inputSlot : inputSlots) {
+                        instance.servingOutputSlots.add(new Tuple<>(outputSlot, inputSlot));
+                    }
+                }
             }
         }
+
         return instance;
     }
 
     private static void assertMatchingInterface(PlanEnumeration instance1, PlanEnumeration instance2) {
-        if (!instance1.inputSlots.equals(instance2.inputSlots)) {
+        if (!instance1.requestedInputSlots.equals(instance2.requestedInputSlots)) {
             throw new IllegalArgumentException("Input slots are not matching.");
         }
 
-        if (!instance1.outputSlotCounter.equals(instance2.outputSlotCounter)) {
+        if (!instance1.servingOutputSlots.equals(instance2.servingOutputSlots)) {
             throw new IllegalArgumentException("Output slots are not matching.");
         }
 
@@ -96,34 +103,73 @@ public class PlanEnumeration {
     private PlanEnumeration() {
     }
 
+    /**
+     * Create a new instance that represents the concatenation of two further instances.
+     */
     private PlanEnumeration(PlanEnumeration pe1, PlanEnumeration pe2) {
         // Figure out if the two instance can be concatenated in the first place.
         // To this end, there muse be some remaining OutputSlot of this instance that connects to an InputSlot
         // of the other instance. At first, we collect these touchpoints.
-        Map<InputSlot, OutputSlot> touchpoints = pe1.collectDownstreamTouchpoints(pe2);
-        if (touchpoints.isEmpty()) {
-            throw new IllegalArgumentException("Cannot concatenate plan enumerations: no (directed) point of touch");
+        final Set<InputSlot> connectedInputSlots = pe1.collectDownstreamTouchpoints(pe2);
+        if (connectedInputSlots.isEmpty()) {
+            LOGGER.warn("Could not find a (directed) point of touch when joining to instances.");
         }
 
-        // Determine the new input slots.
-        this.inputSlots.addAll(pe1.inputSlots);
-        this.inputSlots.addAll(pe2.inputSlots);
-        this.inputSlots.removeAll(touchpoints.keySet());
-
-        // Determine the new output slots.
-        this.outputSlotCounter.addAll(pe1.outputSlotCounter);
-        this.outputSlotCounter.addAll(pe2.outputSlotCounter);
-        touchpoints.values().forEach(this.outputSlotCounter::decrement);
-
-        // Determine the common scope of the two enumerations, because plans might conflig here.
         final List<OperatorAlternative> commonScope = pe1.intersectScopeWith(pe2);
+
+        // Determine the new input slots.
+//        Counter<InputSlot> inputSlotRequestCounter = new Counter<>();
+//        pe1.requestedInputSlots.forEach(inputSlotRequestCounter::increment);
+//        pe2.requestedInputSlots.forEach(inputSlotRequestCounter::increment);
+
+
+
+        // Add all slots that are requested by both input instances.
+        this.requestedInputSlots.addAll(pe1.requestedInputSlots);
+        this.requestedInputSlots.retainAll(pe2.requestedInputSlots);
+
+        // Add all slots that are requested by one of the input instances and is not in the common scope.
+        pe1.requestedInputSlots.stream()
+                .filter(inputSlot -> !commonScope.contains(inputSlot.getOwner()))
+                .forEach(this.requestedInputSlots::add);
+        pe2.requestedInputSlots.stream()
+                .filter(inputSlot -> !commonScope.contains(inputSlot.getOwner()))
+                .forEach(this.requestedInputSlots::add);
+
+        // Delete served input slots
+        pe1.servingOutputSlots.removeAll(connectedInputSlots);
+
+
+
+        // Add all slots that are provided by both input instances.
+        this.servingOutputSlots.addAll(pe1.servingOutputSlots);
+        this.servingOutputSlots.retainAll(pe2.servingOutputSlots);
+
+        // Add all slots that are requested by one of the input instances and are not in the common scope.
+        pe1.servingOutputSlots.stream()
+                .filter(outputSlotInputSlotTuple -> !commonScope.contains(outputSlotInputSlotTuple.field0))
+                .forEach(this.servingOutputSlots::add);
+        pe2.servingOutputSlots.stream()
+                .filter(outputSlotInputSlotTuple -> !commonScope.contains(outputSlotInputSlotTuple.field0))
+                .forEach(this.servingOutputSlots::add);
+
+        // Delete serving input slots.
+        this.servingOutputSlots.removeIf(outputSlotInputSlotTuple -> connectedInputSlots.contains(outputSlotInputSlotTuple.getField1()));
+
+
+        // Determine the new scope of the two enumerations.
         this.scope.addAll(pe1.scope);
         this.scope.addAll(pe2.scope);
 
         // Concatenate each possible combination of plans.
+        joinPartialPlansUsingNestedLoops(pe1, pe2, commonScope);
+        // TODO: use a hybrid hash join if the scope is not empty.
+    }
+
+    private void joinPartialPlansUsingNestedLoops(PlanEnumeration pe1, PlanEnumeration pe2, List<OperatorAlternative> commonScope) {
         for (PartialPlan plan1 : pe1.partialPlans) {
             for (PartialPlan plan2 : pe2.partialPlans) {
-                final PartialPlan newPartialPlan = plan1.concatenate(plan2, touchpoints, commonScope);
+                final PartialPlan newPartialPlan = plan1.join(plan2, commonScope);
                 if (newPartialPlan != null) {
                     this.add(newPartialPlan);
                 }
@@ -131,25 +177,23 @@ public class PlanEnumeration {
         }
     }
 
+
     /**
      * Concatenate two instances. This potentially increases number of {@link #partialPlans} to the product
      * of the numbers of partial plans of the two instances.
      *
-     * @param that instance to concatenate
+     * @param that instance to join
      * @return a new instance representing the concatenation
      */
-    public PlanEnumeration concatenate(PlanEnumeration that) {
+    public PlanEnumeration join(PlanEnumeration that) {
         return new PlanEnumeration(this, that);
     }
 
-    private Map<InputSlot, OutputSlot> collectDownstreamTouchpoints(PlanEnumeration that) {
-        Map<InputSlot, OutputSlot> touchpoints = new HashMap<>();
-        for (InputSlot inputSlot : that.inputSlots) {
-            final OutputSlot occupant = inputSlot.getOccupant();
-            if (occupant != null && this.outputSlotCounter.get(occupant) > 0) {
-                touchpoints.put(inputSlot, occupant);
-            }
-        }
+    private Set<InputSlot> collectDownstreamTouchpoints(PlanEnumeration that) {
+        Set<InputSlot> touchpoints = this.servingOutputSlots.stream()
+                .map(Tuple::getField1)
+                .collect(Collectors.toCollection(HashSet::new));
+        touchpoints.retainAll(that.requestedInputSlots);
         return touchpoints;
     }
 
@@ -182,7 +226,7 @@ public class PlanEnumeration {
     }
 
     public boolean isComprehensive() {
-        return this.outputSlotCounter.isEmpty() && this.inputSlots.isEmpty();
+        return this.servingOutputSlots.isEmpty() && this.requestedInputSlots.isEmpty();
     }
 
     public void subsume(PlanEnumeration that) {
@@ -208,18 +252,29 @@ public class PlanEnumeration {
         escapedInstance.scope.add(operatorAlternative);
 
         // Escape the input slots.
-        for (InputSlot inputSlot : this.inputSlots) {
+        for (InputSlot inputSlot : this.requestedInputSlots) {
             final InputSlot escapedInput = alternative.getSlotMapping().resolveUpstream(inputSlot);
             if (escapedInput != null) {
-                escapedInstance.inputSlots.add(escapedInput);
+                escapedInstance.requestedInputSlots.add(escapedInput);
             }
         }
 
         // Escape the output slots.
-        for (Map.Entry<OutputSlot, Integer> count : this.outputSlotCounter) {
-            final OutputSlot<Object> thisOutput = count.getKey().unchecked();
-            for (OutputSlot<Object> escapedOutput : alternative.getSlotMapping().resolveDownstream(thisOutput)) {
-                escapedInstance.outputSlotCounter.add(escapedOutput, count.getValue());
+        for (Tuple<OutputSlot, InputSlot> link : this.servingOutputSlots) {
+            if (link.field1 != null) {
+                throw new IllegalStateException("Cannot escape a connected output slot.");
+            }
+            final Collection<OutputSlot> resolvedOutputSlots =
+                    alternative.getSlotMapping().resolveDownstream(link.field0);
+            for (OutputSlot escapedOutput : resolvedOutputSlots) {
+                final List<InputSlot> occupiedInputs = escapedOutput.getOccupiedSlots();
+                if (occupiedInputs.isEmpty()) {
+                    escapedInstance.servingOutputSlots.add(new Tuple<>(escapedOutput, null));
+                } else {
+                    for (InputSlot inputSlot : occupiedInputs) {
+                        escapedInstance.servingOutputSlots.add(new Tuple<>(escapedOutput, inputSlot));
+                    }
+                }
             }
         }
 
@@ -249,6 +304,16 @@ public class PlanEnumeration {
     public Collection<PartialPlan> getPartialPlans() {
         return this.partialPlans;
     }
+
+//    public PlanEnumeration join(PlanEnumeration that) {
+//        this.scope.addAll(that.scope);
+//        this.requestedInputSlots.addAll(that.requestedInputSlots);
+//        this.servingOutputSlots.addAll(that.servingOutputSlots);
+//        this.terminalOperators.addAll(that.terminalOperators);
+//
+//        final List<OperatorAlternative> commonScope = this.intersectScopeWith(that);
+//
+//    }
 
     /**
      * Represents a partial execution plan.
@@ -319,12 +384,10 @@ public class PlanEnumeration {
         /**
          * Create a new instance that forms the concatenation of the two.
          *
-         * @param that        instance to concatenate
-         * @param touchpoints @return the concatenated instance or {@code null} if concatenation is impossible
+         * @param that        instance to join
          * @param commonScope
          */
-        public PartialPlan concatenate(PartialPlan that,
-                                       Map<InputSlot, OutputSlot> touchpoints, List<OperatorAlternative> commonScope) {
+        public PartialPlan join(PartialPlan that, List<OperatorAlternative> commonScope) {
 
             // Find out if the two plans do not disagree at some point.
             for (OperatorAlternative operatorAlternative : commonScope) {
@@ -369,6 +432,10 @@ public class PlanEnumeration {
             escapedPartialPlan.settledAlternatives.putAll(this.settledAlternatives);
             escapedPartialPlan.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
             return escapedPartialPlan;
+        }
+
+        public Canonicalizer<ExecutionOperator> getOperators() {
+            return operators;
         }
     }
 
