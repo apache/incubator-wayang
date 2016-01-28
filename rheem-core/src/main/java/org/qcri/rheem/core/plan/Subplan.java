@@ -1,6 +1,10 @@
 package org.qcri.rheem.core.plan;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * A subplan encapsulates connected operators as a single operator.
@@ -190,5 +194,37 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
             throw new IllegalArgumentException("OutputSlot does not belong to this Operator.");
         }
         return this.slotMapping.resolveDownstream(outputSlot);
+    }
+
+    /**
+     * Collect {@link Operator}s within this instance that are connected to an outer {@link OutputSlot}.
+     *
+     * @return the collected {@link Operator}s
+     */
+    public Collection<Operator> collectOutputOperators() {
+        if (this.isSink()) {
+            return Collections.singleton(this.getSink());
+        }
+        return Arrays.stream(getAllOutputs())
+                .map(this.slotMapping::resolveUpstream)
+                .filter(Objects::nonNull)
+                .map(OutputSlot::getOwner)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Collect {@link Operator}s within this instance that are connected to an outer {@link InputSlot}.
+     *
+     * @return the collected {@link Operator}s
+     */
+    public Collection<Operator> collectInputOperators() {
+        if (this.isSource()) {
+            return Collections.singleton(this.getSource());
+        }
+
+        return Arrays.stream(getAllInputs())
+                .flatMap(inputSlot -> this.slotMapping.resolveDownstream(inputSlot).stream())
+                .map(InputSlot::getOwner)
+                .collect(Collectors.toList());
     }
 }

@@ -34,10 +34,10 @@ public class OutputSlot<T> extends Slot<T> {
         }
 
         for (int i = 0; i < victim.getNumOutputs(); i++) {
-            final List<? extends InputSlot<?>> occupiedSlots = victim.getOutput(i).getOccupiedSlots();
+            final List<? extends InputSlot<?>> occupiedSlots = new ArrayList<>(victim.getOutput(i).getOccupiedSlots());
             for (InputSlot<?> occupiedSlot : occupiedSlots) {
-                ((OutputSlot<Object>) victim.getOutput(i)).disconnectFrom((InputSlot<Object>) occupiedSlot);
-                ((OutputSlot<Object>) thief.getOutput(i)).connectTo((InputSlot<Object>) occupiedSlot);
+                victim.getOutput(i).unchecked().disconnectFrom(occupiedSlot.unchecked());
+                thief.getOutput(i).unchecked().connectTo(occupiedSlot.unchecked());
             }
         }
     }

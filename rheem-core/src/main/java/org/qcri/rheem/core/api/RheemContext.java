@@ -3,6 +3,9 @@ package org.qcri.rheem.core.api;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.optimizer.Optimizer;
+import org.qcri.rheem.core.optimizer.PlanEnumeration;
+import org.qcri.rheem.core.optimizer.PlanEnumerator;
+import org.qcri.rheem.core.optimizer.SanityChecker;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.PhysicalPlan;
@@ -98,6 +101,12 @@ public class RheemContext {
             logger.info("Applied {} transformations in epoch {}.", numTransformations, epoch);
             isAnyChange = numTransformations > 0;
         } while (isAnyChange);
+
+        new SanityChecker(physicalPlan).checkAllCriteria();
+        final PlanEnumerator planEnumerator = new PlanEnumerator(physicalPlan);
+        planEnumerator.run();
+        final PlanEnumeration comprehensiveEnumeration = planEnumerator.getComprehensiveEnumeration();
+        logger.info("Enumerated {} plans.", comprehensiveEnumeration.getPartialPlans().size());
 
         PhysicalPlan executionPlan = this.optimizer.buildExecutionPlan(physicalPlan);
 

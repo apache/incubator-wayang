@@ -92,6 +92,15 @@ public class PlanTraversal {
     }
 
     /**
+     * Retrieve all traversed operators.
+     *
+     * @return previously traversed operators
+     */
+    public Collection<Operator> getTraversedNodes() {
+        return getTraversedNodesWith(operator -> true);
+    }
+
+    /**
      * A callback can be invoked during a plan traversal on each traversed node.
      */
     @FunctionalInterface
@@ -105,6 +114,10 @@ public class PlanTraversal {
          */
         void traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot);
 
+        /**
+         * Does nothing.
+         */
+        Callback NOP = (operator, fromInputSlot, fromOutputSlot) -> {};
     }
 
 }

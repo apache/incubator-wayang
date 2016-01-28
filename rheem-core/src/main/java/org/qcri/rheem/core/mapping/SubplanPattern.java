@@ -2,10 +2,7 @@ package org.qcri.rheem.core.mapping;
 
 import org.qcri.rheem.core.plan.*;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A subplan pattern describes a class of subplans in a {@link org.qcri.rheem.core.plan.PhysicalPlan}.
@@ -129,8 +126,8 @@ public class SubplanPattern extends OperatorBase {
                            OutputSlot<?> trackedOutputSlot,
                            SubplanMatch subplanMatch) {
 
-            if (pattern.getNumInputs() > 1) {
-                throw new RuntimeException("Cannot match pattern: Operator with more than one input not supported, yet.");
+            if (pattern.getNumInputs() > 1 && Arrays.stream(pattern.getAllInputs()).anyMatch(inputSlot -> inputSlot.getOccupant() != null)) {
+                throw new RuntimeException("Cannot match pattern: Operator with more than one occupied input not supported, yet.");
             }
 
             if (operator instanceof Subplan) {

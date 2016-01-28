@@ -13,6 +13,25 @@ public class SlotMapping {
 
     private Map<Slot, Collection> downstreamMapping = null;
 
+    /**
+     * Create a new instance that maps all {@link Slot}s of the given {@link Operator} to themselves.
+     *
+     * @param operator that will be decorated with the new instance
+     * @return the new instance
+     */
+    public static SlotMapping createIdentityMapping(Operator operator) {
+        return wrap(operator, operator);
+    }
+
+    /**
+     * Creates a new instance where the {@link Slot}s of the {@code wrapper} are mapped to the {@link Slot}s of the
+     * {@code wrappee}, thereby matching their {@link Slot}s by their index (as in {@link Operator#getInput(int)} and
+     * {@link Operator#getOutput(int)}).
+     *
+     * @param wrappee the inner {@link Operator}
+     * @param wrapper the outer {@link Operator}
+     * @return the new instance
+     */
     public static SlotMapping wrap(Operator wrappee, Operator wrapper) {
         SlotMapping slotMapping = new SlotMapping();
         slotMapping.mapAllUpsteam(wrapper.getAllOutputs(), wrappee.getAllOutputs());
@@ -156,4 +175,31 @@ public class SlotMapping {
             // No need for delete as we are replacing the old mapping.
         }
     }
+
+    /**
+     * Functionally compose two instances. The {@link OutputSlot}s of this instance are followed to {@link InputSlot}s
+     * to the other instances, thereby applying the mapping step.
+     *
+     * @param that the instance to be composed to this one
+     * @return a {@link Map} mapping inner {@link InputSlot}s of the second instance to the inner {@link OutputSlot}s
+     * of the first one
+     */
+    public Map<InputSlot, OutputSlot> compose(SlotMapping that) {
+        Map<InputSlot, OutputSlot> result = new HashMap<>(2);
+        that.upstreamMapping.entrySet().stream()
+                .filter(entry -> entry.getKey().isInputSlot())
+                .forEach(entry -> {
+                    InputSlot thatOuterInputSlot = (InputSlot) entry.getValue();
+                    final OutputSlot allegedThisOuterOutputSlot = thatOuterInputSlot.getOccupant();
+                    if (allegedThisOuterOutputSlot == null) return;
+                    final OutputSlot thisInnerOutputSlot = this.resolveUpstream(allegedThisOuterOutputSlot);
+                    if (thisInnerOutputSlot == null) return;
+                    final InputSlot thatInnerInputSlot = (InputSlot) entry.getKey();
+                    result.put(thatInnerInputSlot, thisInnerOutputSlot);
+                });
+
+        return result;
+    }
+
+
 }

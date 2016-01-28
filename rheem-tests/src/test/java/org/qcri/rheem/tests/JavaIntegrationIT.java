@@ -2,10 +2,7 @@ package org.qcri.rheem.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.qcri.rheem.basic.operators.LocalCallbackSink;
-import org.qcri.rheem.basic.operators.MapOperator;
-import org.qcri.rheem.basic.operators.StdoutSink;
-import org.qcri.rheem.basic.operators.TextFileSource;
+import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.PhysicalPlan;
@@ -17,9 +14,12 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Test the Java integration with Rheem.
@@ -73,6 +73,65 @@ public class JavaIntegrationIT {
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
+    }
+
+    @Test
+    public void testMultiSourceAndMultiSink() throws URISyntaxException {
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+
+        // Define some input data.
+        final List<String> collection1 = Arrays.<String>asList("This is source 1.", "This is source 1, too.");
+        final List<String> collection2 = Arrays.<String>asList("This is source 2.", "This is source 2, too.");
+
+        // Build a Rheem plan.
+        PhysicalPlan rheemPlan = new PhysicalPlan();
+
+        final DataSetType<String> stringDataSet = DataSetType.createDefault(String.class);
+        CollectionSource<String> source1 = new CollectionSource<>(
+                collection1,
+                stringDataSet);
+
+        CollectionSource<String> source2 = new CollectionSource<>(
+                collection2,
+                stringDataSet);
+
+        CoalesceOperator<String> coalesceOperator = new CoalesceOperator<>(stringDataSet);
+        source1.connectTo(0, coalesceOperator, 0);
+        source2.connectTo(0, coalesceOperator, 1);
+
+        MapOperator<String, String> reverseOperator = new MapOperator<>(
+                stringDataSet,
+                stringDataSet,
+                new TransformationDescriptor<>(
+                        String::toUpperCase,
+                        DataUnitType.createBasic(String.class),
+                        DataUnitType.createBasic(String.class)));
+        coalesceOperator.connectTo(0, reverseOperator, 0);
+
+        List<String> collector1 = new LinkedList<>();
+        LocalCallbackSink<String> sink1 = LocalCallbackSink.createCollectingSink(collector1, stringDataSet);
+        coalesceOperator.connectTo(0, sink1, 0);
+        rheemPlan.addSink(sink1);
+
+        List<String> collector2 = new LinkedList<>();
+        LocalCallbackSink<String> sink2 = LocalCallbackSink.createCollectingSink(collector2, stringDataSet);
+        coalesceOperator.connectTo(0, sink2, 0);
+        rheemPlan.addSink(sink2);
+
+        // Have Rheem execute the plan.
+        rheemContext.execute(rheemPlan);
+
+        // Check the results in both sinks.
+        List<String> expectedOutcome = Stream.concat(collection1.stream(), collection2.stream())
+                .map(String::toUpperCase)
+                .collect(Collectors.toList());
+        Collections.sort(expectedOutcome);
+        Collections.sort(collector1);
+        Collections.sort(collector2);
+        Assert.assertEquals(expectedOutcome, collector1);
+        Assert.assertEquals(expectedOutcome, collector2);
     }
 
 }
