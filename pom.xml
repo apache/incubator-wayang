@@ -80,6 +80,11 @@
                 <version>1.48</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.3.2</version>
+            </dependency>
+            <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>koloboke-api-jdk8</artifactId>
                 <version>0.6.8</version>
