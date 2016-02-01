@@ -21,7 +21,7 @@ public class JavaGlobalReduceOperator<Type>
     /**
      * Creates a new instance.
      *
-     * @param type             type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
+     * @param type type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
      * @param reduceDescriptor describes the reduction to be performed on the elements
      */
     public JavaGlobalReduceOperator(DataSetType<Type> type,
