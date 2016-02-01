@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -207,4 +208,80 @@ public class JavaIntegrationIT {
         Assert.assertEquals(expectedOutcome, collector2);
     }
 
+
+
+
+    public void testFullScenario1() throws URISyntaxException {
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+
+        // Build a Rheem plan.
+        final URL inputUrl = getClass().getResource("/some-lines.txt");
+        TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
+        MapOperator<String, String> upperCaseOperator = new MapOperator<>(
+                DataSetType.createDefault(String.class),
+                DataSetType.createDefault(String.class),
+                new TransformationDescriptor<>(
+                        String::toUpperCase,
+                        DataUnitType.createBasic(String.class),
+                        DataUnitType.createBasic(String.class)));
+        StdoutSink<Long> stdoutSink = new StdoutSink<>(DataSetType.createDefault(Long.class));
+        CountOperator<String> countLinesOperator = new CountOperator<>(DataSetType.createDefault(String.class));
+        DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(DataSetType.createDefault(String.class));
+        SortOperator<String> sortOperator = new SortOperator<>(DataSetType.createDefault(String.class));
+
+        textFileSource.connectTo(0, sortOperator, 0);
+        sortOperator.connectTo(0, upperCaseOperator, 0);
+        upperCaseOperator.connectTo(0, distinctLinesOperator, 0);
+        distinctLinesOperator.connectTo(0, countLinesOperator, 0);
+        countLinesOperator.connectTo(0, stdoutSink, 0); // 5 distinct lines, 6 total
+
+
+        // Execute physical plan
+        PhysicalPlan rheemPlan = new PhysicalPlan();
+        rheemPlan.addSink(stdoutSink);
+        rheemContext.execute(rheemPlan);
+    }
+
+    @Test
+    public void testFullScenario2() throws URISyntaxException {
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+
+        // Build a Rheem plan.
+        final URL inputUrl = getClass().getResource("/some-lines.txt");
+        TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
+        FilterOperator<String> noCommaOperator = new FilterOperator<>(
+                DataSetType.createDefault(String.class),
+                new Predicate<String>() {
+                    @Override
+                    public boolean test(String s) {
+                        return !s.contains(",");
+                    }
+                });
+        MapOperator<String, String> upperCaseOperator = new MapOperator<>(
+                DataSetType.createDefault(String.class),
+                DataSetType.createDefault(String.class),
+                new TransformationDescriptor<>(
+                        String::toUpperCase,
+                        DataUnitType.createBasic(String.class),
+                        DataUnitType.createBasic(String.class)));
+        StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
+        DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(DataSetType.createDefault(String.class));
+        SortOperator<String> sortOperator = new SortOperator<>(DataSetType.createDefault(String.class));
+
+        textFileSource.connectTo(0, noCommaOperator, 0);
+        noCommaOperator.connectTo(0, sortOperator, 0);
+        sortOperator.connectTo(0, upperCaseOperator, 0);
+        upperCaseOperator.connectTo(0, distinctLinesOperator, 0);
+        distinctLinesOperator.connectTo(0, stdoutSink, 0);
+
+
+        // Execute physical plan
+        PhysicalPlan rheemPlan = new PhysicalPlan();
+        rheemPlan.addSink(stdoutSink);
+        rheemContext.execute(rheemPlan);
+    }
 }

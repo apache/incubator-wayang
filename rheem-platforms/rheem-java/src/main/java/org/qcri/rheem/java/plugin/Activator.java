@@ -22,6 +22,11 @@ public class Activator {
         rheemContext.register(new JavaGlobalReduceOperatorMapping());
         rheemContext.register(new JavaCollocateByOperatorMapping());
         rheemContext.register(new JavaCoalesceOperatorMapping());
+        rheemContext.register(new FlatMapToJavaFlatMapMapping());
+        rheemContext.register(new CountToJavaCountMapping());
+        rheemContext.register(new DistinctToJavaDistinctMapping());
+        rheemContext.register(new SortToJavaSortMapping());
+        rheemContext.register(new FilterToJavaFilterMapping());
     }
 
 }
