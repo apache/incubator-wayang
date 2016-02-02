@@ -1,6 +1,11 @@
 package org.qcri.rheem.core.plan;
 
+import org.qcri.rheem.core.optimizer.costs.AggregatingCardinalityEstimator;
+import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
+
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This operator encapsulates operators that are alternative to each other.
@@ -231,4 +236,16 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
     }
 
+    @Override
+    public Optional<CardinalityEstimator> getCardinalityEstimator(final int outputIndex) {
+        final List<CardinalityEstimator> partialEstimators = this.alternatives.stream()
+                .map(Alternative::getOperator)
+                .map(operator -> operator.getCardinalityEstimator(outputIndex))
+                .flatMap(optional -> optional.isPresent() ? Stream.of(optional.get()) : Stream.empty())
+                .collect(Collectors.toList());
+
+        return partialEstimators.isEmpty() ?
+                Optional.empty() :
+                Optional.of(new AggregatingCardinalityEstimator(partialEstimators));
+    }
 }
