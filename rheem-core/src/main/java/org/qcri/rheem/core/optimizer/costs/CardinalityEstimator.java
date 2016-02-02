@@ -16,6 +16,8 @@ public interface CardinalityEstimator {
 
     CardinalityEstimate estimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates);
 
+    OutputSlot<?> getTargetOutput();
+
     abstract class WithCache implements CardinalityEstimator {
 
         /**
@@ -49,6 +51,11 @@ public interface CardinalityEstimator {
          * Do the actual estimation.
          */
         protected abstract CardinalityEstimate calculateEstimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates);
+
+        @Override
+        public OutputSlot<?> getTargetOutput() {
+            return this.targetOutput;
+        }
     }
 
 }
