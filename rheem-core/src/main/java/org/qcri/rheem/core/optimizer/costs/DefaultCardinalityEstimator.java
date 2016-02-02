@@ -2,15 +2,17 @@ package org.qcri.rheem.core.optimizer.costs;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.plan.OutputSlot;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.function.ToLongBiFunction;
 import java.util.function.ToLongFunction;
 
 /**
  * Default implementation of the {@link CardinalityEstimator}. Generalizes a single-point estimation function.
  */
-public class DefaultCardinalityEstimator implements CardinalityEstimator {
+public class DefaultCardinalityEstimator extends CardinalityEstimator.WithCache {
 
     private final double certaintyProb;
 
@@ -18,11 +20,24 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator {
 
     private final ToLongBiFunction<long[], RheemContext> singlePointEstimator;
 
-    public DefaultCardinalityEstimator(double certaintyProb, int numInputs, ToLongFunction<long[]> singlePointEstimator) {
-        this(certaintyProb, numInputs, (inputCards, rheemContext) -> singlePointEstimator.applyAsLong(inputCards));
+    public DefaultCardinalityEstimator(double certaintyProb,
+                                       int numInputs,
+                                       ToLongFunction<long[]> singlePointEstimator,
+                                       OutputSlot<?> outputSlot,
+                                       Map<OutputSlot<?>, CardinalityEstimate> cache) {
+        this(certaintyProb,
+                numInputs,
+                (inputCards, rheemContext) -> singlePointEstimator.applyAsLong(inputCards),
+                outputSlot,
+                cache);
     }
 
-    public DefaultCardinalityEstimator(double certaintyProb, int numInputs, ToLongBiFunction<long[], RheemContext> singlePointEstimator) {
+    public DefaultCardinalityEstimator(double certaintyProb,
+                                       int numInputs,
+                                       ToLongBiFunction<long[], RheemContext> singlePointEstimator,
+                                       OutputSlot<?> outputSlot,
+                                       Map<OutputSlot<?>, CardinalityEstimate> cache) {
+        super(outputSlot, cache);
         this.certaintyProb = certaintyProb;
         this.numInputs = numInputs;
         this.singlePointEstimator = singlePointEstimator;
@@ -30,7 +45,7 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator {
 
 
     @Override
-    public CardinalityEstimate estimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
+    public CardinalityEstimate calculateEstimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
         Validate.isTrue(inputEstimates.length == this.numInputs);
 
         if (this.numInputs == 0) {

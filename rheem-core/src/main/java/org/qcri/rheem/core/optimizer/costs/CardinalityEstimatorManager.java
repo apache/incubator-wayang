@@ -4,7 +4,12 @@ import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.plan.Operator;
+import org.qcri.rheem.core.plan.OutputSlot;
+import org.qcri.rheem.core.plan.PhysicalPlan;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -43,6 +48,12 @@ public class CardinalityEstimatorManager {
 
         final double selectivity = this.multimapSelectivities.get(transformationDescriptor);
         return selectivity == this.multimapSelectivities.getNoEntryValue() ? OptionalDouble.empty() : OptionalDouble.of(selectivity);
+    }
+
+    public Map<OutputSlot<?>, CardinalityEstimate> estimateAllCardinatilities(PhysicalPlan physicalPlan) {
+        final Collection<Operator> sources = physicalPlan.collectReachableTopLevelSources();
+        // TODO
+        return null;
     }
 
 }

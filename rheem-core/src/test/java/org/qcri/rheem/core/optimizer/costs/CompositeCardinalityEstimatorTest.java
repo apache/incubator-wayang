@@ -6,6 +6,7 @@ import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.Subplan;
 import org.qcri.rheem.core.plan.test.TestJoin;
 import org.qcri.rheem.core.plan.test.TestMapOperator;
+import org.qcri.rheem.core.plan.test.TestSource;
 import org.qcri.rheem.core.types.DataSetType;
 
 import static org.mockito.Mockito.mock;
@@ -29,11 +30,29 @@ public class CompositeCardinalityEstimatorTest {
         op1.connectTo(0, op2, 0);
 
         Subplan subplan = (Subplan) Subplan.wrap(op1, op2);
-        final CardinalityEstimator estimator = subplan.getCardinalityEstimator(0).get();
+        final CardinalityEstimator estimator = subplan.getCardinalityEstimator(0, null).get();
 
         final CardinalityEstimate inputEstimate = new CardinalityEstimate(10, 100, 0.9);
         final CardinalityEstimate outputEstimate = estimator.estimate(mock(RheemContext.class), inputEstimate);
         Assert.assertEquals(inputEstimate, outputEstimate);
+    }
+
+    @Test
+    public void testSourceSubplan() {
+        TestSource<String> source = new TestSource<>(DataSetType.createDefault(String.class));
+        TestMapOperator<String, String> op = new TestMapOperator<>(
+                DataSetType.createDefault(String.class),
+                DataSetType.createDefault(String.class)
+        );
+
+        source.connectTo(0, op, 0);
+
+        Subplan subplan = (Subplan) Subplan.wrap(source, op);
+        final CardinalityEstimator estimator = subplan.getCardinalityEstimator(0, null).get();
+
+        final CardinalityEstimate outputEstimate = estimator.estimate(mock(RheemContext.class));
+        final CardinalityEstimate expectedEstimate = new CardinalityEstimate(100, 100, 1d);
+        Assert.assertEquals(expectedEstimate, outputEstimate);
     }
 
 
@@ -55,7 +74,7 @@ public class CompositeCardinalityEstimatorTest {
         join1.connectTo(0, map4, 0);
 
         Subplan subplan = (Subplan) Subplan.wrap(map1, map4);
-        final CardinalityEstimator estimator = subplan.getCardinalityEstimator(0).get();
+        final CardinalityEstimator estimator = subplan.getCardinalityEstimator(0, null).get();
 
         final CardinalityEstimate inputEstimate = new CardinalityEstimate(10, 100, 0.9d);
         final CardinalityEstimate outputEstimate = estimator.estimate(mock(RheemContext.class), inputEstimate);

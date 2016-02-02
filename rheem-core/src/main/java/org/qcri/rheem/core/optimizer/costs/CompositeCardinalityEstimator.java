@@ -3,6 +3,7 @@ package org.qcri.rheem.core.optimizer.costs;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,58 +15,37 @@ import java.util.stream.Stream;
 /**
  * {@link CardinalityEstimator} that subsumes a DAG of operators, each one providing a local {@link CardinalityEstimator}.
  */
-public class CompositeCardinalityEstimator implements CardinalityEstimator {
+public class CompositeCardinalityEstimator extends CardinalityEstimator.WithCache {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CompositeCardinalityEstimator.class);
 
     private final List<List<Activation>> inputActivations;
+
+    private final Collection<Activator> sourceActivators;
 
     /**
      * Create an instance for the given {@link Subplan}.
      *
      * @return the instance if it could be created
      */
-    public static Optional<CardinalityEstimator> createFor(Subplan subplan, int outputIndex) {
+    public static Optional<CardinalityEstimator> createFor(Subplan subplan,
+                                                           int outputIndex,
+                                                           Map<OutputSlot<?>, CardinalityEstimate> cache) {
         final OutputSlot<?> subplanOutput = subplan.getOutput(outputIndex);
         final OutputSlot<?> innerOutput = subplan.traceOutput(subplanOutput);
         if (innerOutput == null) {
-            return Optional.of(new DefaultCardinalityEstimator(1d, subplan.getNumInputs(), inputCards -> 0L));
+            return Optional.of(
+                    new DefaultCardinalityEstimator(1d, subplan.getNumInputs(), inputCards -> 0L, subplanOutput, cache));
         }
 
-        // Go through all relevant operators of the subplan and create EstimatorActivators.
-        final AtomicBoolean isAllPartialEstimatorsAvailable = new AtomicBoolean(true);
-        final CompositeCardinalityEstimator.TopDownBuilder builder = new CompositeCardinalityEstimator.TopDownBuilder();
-        new PlanTraversal(true, false).withCallback((operator, fromInputSlot, fromOutputSlot) -> {
-            if (fromOutputSlot != null) {
-                if (!builder.add(fromOutputSlot)) {
-                    isAllPartialEstimatorsAvailable.set(false);
-                }
-            }
-        }).traverse(innerOutput.getOwner(), null, innerOutput);
-
-        if (!isAllPartialEstimatorsAvailable.get()) {
-            LOGGER.info("Could not build instance: missing partial estimator");
+        // Starting from the an output, find all required inputs.
+        TopDownBuilder builder = new TopDownBuilder(cache);
+        final Tuple<Map<InputSlot<?>, Collection<Activation>>, Collection<Activator>> builderOutput = builder.buildFor(innerOutput);
+        if (builderOutput == null) {
             return Optional.empty();
         }
-
-        // Find all required activators.
-        final Map<InputSlot<?>, Collection<Activation>> requiredActivations = new HashMap<>();
-        new PlanTraversal(true, false).withCallback((operator, fromInputSlot, fromOutputSlot) -> {
-            for (InputSlot<?> inputSlot : operator.getAllInputs()) {
-                if (inputSlot.getOccupant() != null) {
-                    continue;
-                }
-                final Activator activator = builder.estimatorActivators.get(fromOutputSlot);
-                final Activation activation = new Activation(inputSlot.getIndex(), activator);
-                requiredActivations.compute(inputSlot, (inputSlot_, activations) -> {
-                    if (activations == null) {
-                        activations = new LinkedList<>();
-                    }
-                    activations.add(activation);
-                    return activations;
-                });
-            }
-        }).traverse(innerOutput.getOwner(), null, innerOutput);
+        final Map<InputSlot<?>, Collection<Activation>> requiredActivations = builderOutput.field0;
+        final Collection<Activator> sourceActivators = builderOutput.field1;
 
         // Ensure that all required activations are connected to outer input slots.
         List<List<Activation>> inputActivations = new ArrayList<>(subplan.getNumInputs());
@@ -84,7 +64,7 @@ public class CompositeCardinalityEstimator implements CardinalityEstimator {
             return Optional.empty();
         }
 
-        return Optional.of(new CompositeCardinalityEstimator(inputActivations));
+        return Optional.of(new CompositeCardinalityEstimator(inputActivations, sourceActivators, subplanOutput, cache));
     }
 
     /**
@@ -93,13 +73,18 @@ public class CompositeCardinalityEstimator implements CardinalityEstimator {
      * @param inputActivations {@link Activation}s that will be satisfied by the parameters of
      *                         {@link #estimate(RheemContext, CardinalityEstimate...)}; the indices of the {@link Activation}s match those
      *                         of the {@link CardinalityEstimate}s
+     * @param sourceActivators {@link Activator}s of source {@link CardinalityEstimator}
      */
-    private CompositeCardinalityEstimator(List<List<Activation>> inputActivations) {
+    private CompositeCardinalityEstimator(final List<List<Activation>> inputActivations,
+                                          Collection<Activator> sourceActivators, final OutputSlot<?> targetOutputSlot,
+                                          final Map<OutputSlot<?>, CardinalityEstimate> cache) {
+        super(targetOutputSlot, cache);
         this.inputActivations = inputActivations;
+        this.sourceActivators = sourceActivators;
     }
 
     @Override
-    synchronized public CardinalityEstimate estimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
+    synchronized public CardinalityEstimate calculateEstimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
         final Queue<Activator> activators = initializeActivatorQueue(inputEstimates);
         Optional<CardinalityEstimate> optionalEstimate;
         do {
@@ -116,7 +101,7 @@ public class CompositeCardinalityEstimator implements CardinalityEstimator {
      */
     private Queue<Activator> initializeActivatorQueue(CardinalityEstimate[] inputEstimates) {
         int inputIndex = 0;
-        Queue<Activator> activatedActivators = new LinkedList<>();
+        Queue<Activator> activatedActivators = new LinkedList<>(this.sourceActivators);
         for (List<Activation> activations : this.inputActivations) {
             for (Activation activation : activations) {
                 final CardinalityEstimate inputEstimate = inputEstimates[inputIndex];
@@ -220,11 +205,59 @@ public class CompositeCardinalityEstimator implements CardinalityEstimator {
 
         private Map<OutputSlot<?>, Activator> estimatorActivators = new HashMap<>();
 
-        public boolean add(OutputSlot<?> outputSlot) {
+        private final Map<OutputSlot<?>, CardinalityEstimate> cache;
+
+        private boolean isAllPartialEstimatesAvailable = true;
+
+        private TopDownBuilder(Map<OutputSlot<?>, CardinalityEstimate> cache) {
+            this.cache = cache;
+        }
+
+        public Tuple<Map<InputSlot<?>, Collection<Activation>>, Collection<Activator>> buildFor(OutputSlot<?> outputSlot) {
+            // Go through all relevant operators of the subplan and create EstimatorActivators.
+            new PlanTraversal(true, false).withCallback((operator, fromInputSlot, fromOutputSlot) -> {
+                if (fromOutputSlot != null) {
+                    this.add(fromOutputSlot);
+                }
+            }).traverse(outputSlot.getOwner(), null, outputSlot);
+
+            if (!this.isAllPartialEstimatesAvailable) {
+                LOGGER.info("Could not build instance: missing partial estimator");
+                return null;
+            }
+
+            // Find all required activators.
+            final Map<InputSlot<?>, Collection<Activation>> requiredActivations = new HashMap<>();
+            final Collection<Activator> sourceActivators = new LinkedList<>();
+            new PlanTraversal(true, false).withCallback((operator, fromInputSlot, fromOutputSlot) -> {
+                final Activator activator = this.estimatorActivators.get(fromOutputSlot);
+                if (operator.getNumInputs() == 0) {
+                    sourceActivators.add(activator);
+                }
+                for (InputSlot<?> inputSlot : operator.getAllInputs()) {
+                    if (inputSlot.getOccupant() != null) {
+                        continue;
+                    }
+                    final Activation activation = new Activation(inputSlot.getIndex(), activator);
+                    requiredActivations.compute(inputSlot, (inputSlot_, activations) -> {
+                        if (activations == null) {
+                            activations = new LinkedList<>();
+                        }
+                        activations.add(activation);
+                        return activations;
+                    });
+                }
+            }).traverse(outputSlot.getOwner(), null, outputSlot);
+
+            return new Tuple<>(requiredActivations, sourceActivators);
+        }
+
+        private void add(OutputSlot<?> outputSlot) {
             // Get or create the estimator.
             final Activator activator = getOrCreateEstimatorActivator(outputSlot);
             if (activator == null) {
-                return false;
+                this.isAllPartialEstimatesAvailable = false;
+                return;
             }
 
             // Register existing dependent activators.
@@ -233,7 +266,6 @@ public class CompositeCardinalityEstimator implements CardinalityEstimator {
             // Register with required activators.
             registerAsDependentActivation(outputSlot, activator);
 
-            return true;
         }
 
 
@@ -246,7 +278,8 @@ public class CompositeCardinalityEstimator implements CardinalityEstimator {
 
             // Otherwise, try to create the activator.
             final Operator operator = outputSlot.getOwner();
-            final Optional<CardinalityEstimator> optionalEstimator = operator.getCardinalityEstimator(outputSlot.getIndex());
+            final Optional<CardinalityEstimator> optionalEstimator =
+                    operator.getCardinalityEstimator(outputSlot.getIndex(), this.cache);
             if (!optionalEstimator.isPresent()) {
                 return null;
             }

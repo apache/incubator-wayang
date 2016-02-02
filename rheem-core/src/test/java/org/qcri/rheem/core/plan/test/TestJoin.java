@@ -1,11 +1,13 @@
 package org.qcri.rheem.core.plan.test;
 
 
+import org.qcri.rheem.core.optimizer.costs.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.*;
 import org.qcri.rheem.core.types.DataSetType;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -26,7 +28,13 @@ public class TestJoin<In1, In2, Out> extends OperatorBase implements ActualOpera
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex) {
-        return Optional.of(new DefaultCardinalityEstimator(0.7d, 2, cards -> cards[0] * cards[1]));
+    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
+                                                                  Map<OutputSlot<?>, CardinalityEstimate> cache) {
+        return Optional.of(new DefaultCardinalityEstimator(
+                0.7d,
+                2,
+                cards -> cards[0] * cards[1],
+                this.getOutput(outputIndex),
+                cache));
     }
 }

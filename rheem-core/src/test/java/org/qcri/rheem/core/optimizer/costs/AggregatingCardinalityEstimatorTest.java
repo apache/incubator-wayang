@@ -3,6 +3,7 @@ package org.qcri.rheem.core.optimizer.costs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.Subplan;
 import org.qcri.rheem.core.plan.test.TestJoin;
 import org.qcri.rheem.core.plan.test.TestMapOperator;
@@ -19,9 +20,12 @@ public class AggregatingCardinalityEstimatorTest {
 
     @Test
     public void testEstimate() {
-        CardinalityEstimator partialEstimator1 = new DefaultCardinalityEstimator(0.9, 1, cards -> cards[0] * 2);
-        CardinalityEstimator partialEstimator2 = new DefaultCardinalityEstimator(0.8, 1, cards -> cards[0] * 3);
-        CardinalityEstimator estimator = new AggregatingCardinalityEstimator(Arrays.asList(partialEstimator1, partialEstimator2));
+        CardinalityEstimator partialEstimator1 = new DefaultCardinalityEstimator(0.9, 1, cards -> cards[0] * 2, mock(OutputSlot.class), null);
+        CardinalityEstimator partialEstimator2 = new DefaultCardinalityEstimator(0.8, 1, cards -> cards[0] * 3, mock(OutputSlot.class), null);
+        CardinalityEstimator estimator = new AggregatingCardinalityEstimator(
+                Arrays.asList(partialEstimator1, partialEstimator2),
+                mock(OutputSlot.class),
+                null);
 
         CardinalityEstimate inputEstimate = new CardinalityEstimate(10, 100, 0.3);
         CardinalityEstimate outputEstimate = estimator.estimate(mock(RheemContext.class), inputEstimate);

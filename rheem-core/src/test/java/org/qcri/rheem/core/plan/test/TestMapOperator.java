@@ -1,11 +1,14 @@
 package org.qcri.rheem.core.plan.test;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.costs.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.DefaultCardinalityEstimator;
+import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -20,8 +23,9 @@ public class TestMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex) {
+    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
+                                                                  Map<OutputSlot<?>, CardinalityEstimate> cache) {
         Validate.isTrue(outputIndex == 0);
-        return Optional.of(new DefaultCardinalityEstimator(1d, 1, cards -> cards[0]));
+        return Optional.of(new DefaultCardinalityEstimator(1d, 1, cards -> cards[0], this.getOutput(outputIndex), cache));
     }
 }

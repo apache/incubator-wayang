@@ -45,7 +45,7 @@ public class TextFileSourceTest {
             }
         }
 
-        final Optional<CardinalityEstimator> cardinalityEstimator = textFileSource.getCardinalityEstimator(0);
+        final Optional<CardinalityEstimator> cardinalityEstimator = textFileSource.getCardinalityEstimator(0, null);
 
         Assert.assertTrue(cardinalityEstimator.isPresent());
         final CardinalityEstimate estimate = cardinalityEstimator.get().estimate(mock(RheemContext.class));

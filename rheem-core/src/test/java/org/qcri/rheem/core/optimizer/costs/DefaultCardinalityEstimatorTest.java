@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import static org.mockito.Mockito.*;
 import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.plan.OutputSlot;
 
 import java.util.function.ToLongFunction;
 
@@ -29,7 +30,9 @@ public class DefaultCardinalityEstimatorTest {
         CardinalityEstimator estimator = new DefaultCardinalityEstimator(
                 0.9,
                 2,
-                singlePointEstimator
+                singlePointEstimator,
+                mock(OutputSlot.class),
+                null
         );
 
         CardinalityEstimate estimate = estimator.estimate(rheemContext, inputEstimate1, inputEstimate2);
