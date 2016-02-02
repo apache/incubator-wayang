@@ -1,9 +1,11 @@
 package org.qcri.rheem.core.plan;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
+import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.costs.CompositeCardinalityEstimator;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -109,7 +111,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     @Override
     public <T> OutputSlot<T> traceOutput(OutputSlot<T> subplanOutputSlot) {
         // If this subplan is not a sink, we trace the given output slot via the slot mapping.
-        if (this.isOwnerOf(subplanOutputSlot)) {
+        if (!this.isOwnerOf(subplanOutputSlot)) {
             throw new IllegalArgumentException("Cannot enter subplan: Output slot does not belong to this subplan.");
         }
 
@@ -227,4 +229,12 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
                 .map(InputSlot::getOwner)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex) {
+        Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
+        return CompositeCardinalityEstimator.createFor(this, outputIndex);
+    }
+
+
 }

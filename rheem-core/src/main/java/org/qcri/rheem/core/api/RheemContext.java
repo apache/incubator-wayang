@@ -6,6 +6,7 @@ import org.qcri.rheem.core.optimizer.Optimizer;
 import org.qcri.rheem.core.optimizer.PlanEnumeration;
 import org.qcri.rheem.core.optimizer.PlanEnumerator;
 import org.qcri.rheem.core.optimizer.SanityChecker;
+import org.qcri.rheem.core.optimizer.costs.CardinalityEstimatorManager;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.PhysicalPlan;
@@ -31,6 +32,8 @@ public class RheemContext {
     private final Collection<PlanTransformation> transformations = new LinkedList<>();
 
     private final Optimizer optimizer = new Optimizer();
+
+    private final CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager();
 
     public RheemContext() {
         final String activateClassName = "org.qcri.rheem.basic.plugin.Activator";
@@ -132,4 +135,7 @@ public class RheemContext {
                 .sum();
     }
 
+    public CardinalityEstimatorManager getCardinalityEstimatorManager() {
+        return cardinalityEstimatorManager;
+    }
 }

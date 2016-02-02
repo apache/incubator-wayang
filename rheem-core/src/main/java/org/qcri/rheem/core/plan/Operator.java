@@ -1,5 +1,10 @@
 package org.qcri.rheem.core.plan;
 
+import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
+
+import java.util.Optional;
+
 /**
  * An operator is any node that within a data flow plan.
  */
@@ -238,5 +243,15 @@ public interface Operator {
      */
     default boolean isElementary() {
         return true;
+    }
+
+    /**
+     * Provide a {@link CardinalityEstimator} for the {@link OutputSlot} at {@code outputIndex}.
+     * @param outputIndex index of the {@link OutputSlot} for that the {@link CardinalityEstimator} is requested
+     * @return an {@link Optional} that might provide the requested instance
+     */
+    default Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex) {
+        Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
+        return Optional.empty();
     }
 }

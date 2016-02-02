@@ -3,6 +3,8 @@ package org.qcri.rheem.core.optimizer.costs;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.PhysicalPlan;
 
+import java.util.Objects;
+
 /**
  * An estimate of cardinality within a {@link PhysicalPlan}.
  * <p>The estimate addresses uncertainty in the estimation process by
@@ -42,5 +44,26 @@ public class CardinalityEstimate {
 
     public double getCorrectnessProbability() {
         return correctnessProb;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CardinalityEstimate estimate = (CardinalityEstimate) o;
+        return Double.compare(estimate.correctnessProb, correctnessProb) == 0 &&
+                lowerEstimate == estimate.lowerEstimate &&
+                upperEstimate == estimate.upperEstimate;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(correctnessProb, lowerEstimate, upperEstimate);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%d..%d, %.1f%%]", this.getClass().getSimpleName(),
+                this.lowerEstimate, this.upperEstimate, this.correctnessProb * 100d);
     }
 }

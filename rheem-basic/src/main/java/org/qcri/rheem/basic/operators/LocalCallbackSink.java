@@ -1,9 +1,13 @@
 package org.qcri.rheem.basic.operators;
 
+import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.costs.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.UnarySink;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -32,4 +36,9 @@ public class LocalCallbackSink<T> extends UnarySink<T> {
         return callback;
     }
 
+    @Override
+    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex) {
+        Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
+        return super.getCardinalityEstimator(outputIndex);
+    }
 }

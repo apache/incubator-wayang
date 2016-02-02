@@ -47,7 +47,7 @@ public class PlanTraversal {
         return traverse(operator, null, null);
     }
 
-    private PlanTraversal traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
+    public PlanTraversal traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
         if (visitedOperators.add(operator)) {
             if (this.isFollowInputs) followInputs(operator);
             if (this.isFollowOutputs) followOutputs(operator);

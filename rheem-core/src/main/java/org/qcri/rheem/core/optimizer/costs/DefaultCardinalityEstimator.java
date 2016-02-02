@@ -1,8 +1,10 @@
 package org.qcri.rheem.core.optimizer.costs;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.RheemContext;
 
 import java.util.Arrays;
+import java.util.function.ToLongBiFunction;
 import java.util.function.ToLongFunction;
 
 /**
@@ -14,9 +16,13 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator {
 
     private final int numInputs;
 
-    private final ToLongFunction<long[]> singlePointEstimator;
+    private final ToLongBiFunction<long[], RheemContext> singlePointEstimator;
 
     public DefaultCardinalityEstimator(double certaintyProb, int numInputs, ToLongFunction<long[]> singlePointEstimator) {
+        this(certaintyProb, numInputs, (inputCards, rheemContext) -> singlePointEstimator.applyAsLong(inputCards));
+    }
+
+    public DefaultCardinalityEstimator(double certaintyProb, int numInputs, ToLongBiFunction<long[], RheemContext> singlePointEstimator) {
         this.certaintyProb = certaintyProb;
         this.numInputs = numInputs;
         this.singlePointEstimator = singlePointEstimator;
@@ -24,8 +30,13 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator {
 
 
     @Override
-    public CardinalityEstimate estimate(CardinalityEstimate... inputEstimates) {
+    public CardinalityEstimate estimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
         Validate.isTrue(inputEstimates.length == this.numInputs);
+
+        if (this.numInputs == 0) {
+            final long estimate = this.singlePointEstimator.applyAsLong(new long[0], rheemContext);
+            return new CardinalityEstimate(estimate, estimate, this.certaintyProb);
+        }
 
         long[] lowerAndUpperInputEstimates = extractEstimateValues(inputEstimates);
 
@@ -37,7 +48,7 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator {
                 int bit = (int) ((positionBitmask >>> pos) & 0x1);
                 currentInputEstimates[pos] = lowerAndUpperInputEstimates[(pos << 1) + bit];
             }
-            long currentEstimate = Math.max(this.singlePointEstimator.applyAsLong(currentInputEstimates), 0);
+            long currentEstimate = Math.max(this.singlePointEstimator.applyAsLong(currentInputEstimates, rheemContext), 0);
             if (lowerEstimate == -1 || currentEstimate < lowerEstimate) {
                 lowerEstimate = currentEstimate;
             }
