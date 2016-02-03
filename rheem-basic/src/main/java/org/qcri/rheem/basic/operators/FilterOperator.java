@@ -59,7 +59,7 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
         @Override
         public CardinalityEstimate calculateEstimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
-            Validate.inclusiveBetween(0, FilterOperator.this.getNumOutputs() - 1, inputEstimates.length);
+            Validate.isTrue(inputEstimates.length == FilterOperator.this.getNumInputs());
             final CardinalityEstimate inputEstimate = inputEstimates[0];
 
             final OptionalDouble selectivity = rheemContext.getCardinalityEstimatorManager()

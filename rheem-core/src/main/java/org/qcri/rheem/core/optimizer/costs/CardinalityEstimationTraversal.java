@@ -6,6 +6,7 @@ import org.qcri.rheem.core.plan.InputSlot;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.PlanTraversal;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -317,13 +318,7 @@ public class CardinalityEstimationTraversal {
          */
         protected void addActivation(Map<InputSlot<?>, Collection<Activation>> collector, Activator activator, InputSlot<?> inputSlot) {
             final Activation activation = activator.createActivation(inputSlot.getIndex());
-            collector.compute(inputSlot, (inputSlot_, activations) -> {
-                if (activations == null) {
-                    activations = new LinkedList<>();
-                }
-                activations.add(activation);
-                return activations;
-            });
+            RheemCollections.put(collector, inputSlot, activation);
         }
 
         protected abstract Activator getCachedActivator(OutputSlot<?> outputSlot);

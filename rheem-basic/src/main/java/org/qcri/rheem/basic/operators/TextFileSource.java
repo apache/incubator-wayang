@@ -79,7 +79,7 @@ public class TextFileSource extends UnarySource {
 
         @Override
         public CardinalityEstimate calculateEstimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
-            Validate.inclusiveBetween(0, TextFileSource.this.getNumOutputs() - 1, inputEstimates.length);
+            Validate.isTrue(TextFileSource.this.getNumInputs() == inputEstimates.length);
 
             OptionalLong fileSize = determineFileSize(TextFileSource.this.inputUrl);
             if (!fileSize.isPresent()) {

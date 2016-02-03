@@ -108,22 +108,39 @@ public class RheemContext {
             isAnyChange = numTransformations > 0;
         } while (isAnyChange);
 
+        // We make some assumptions on the hyperplan. Make sure that they hold. After all, the transformations might
+        // have bugs.
         new SanityChecker(physicalPlan).checkAllCriteria();
-        final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates = this.getCardinalityEstimatorManager()
-                .estimateAllCardinatilities(physicalPlan);
+
+        // Make the cardinality estimation pass.
+        final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates =
+                this.getCardinalityEstimatorManager().estimateAllCardinatilities(physicalPlan);
         cardinalityEstimates.entrySet().stream().forEach(entry ->
                 this.logger.info("Cardinality estimate for {}: {}", entry.getKey(), entry.getValue()));
 
+        // Enumerate all possible plan. TODO: Prune them (using the cardinality estimates, amongst others).
         final PlanEnumerator planEnumerator = new PlanEnumerator(physicalPlan);
         planEnumerator.run();
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.getComprehensiveEnumeration();
-        logger.info("Enumerated {} plans.", comprehensiveEnumeration.getPartialPlans().size());
-        for (PlanEnumeration.PartialPlan partialPlan : comprehensiveEnumeration.getPartialPlans()) {
+        final Collection<PlanEnumeration.PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
+        logger.info("Enumerated {} plans.", executionPlans.size());
+        for (PlanEnumeration.PartialPlan partialPlan : executionPlans) {
             logger.info("Plan with operators: {}", partialPlan.getOperators());
         }
 
-        PhysicalPlan executionPlan = this.optimizer.buildExecutionPlan(physicalPlan);
+        // Pick an execution plan. TODO: Pick the best one.
+        PhysicalPlan executionPlan = executionPlans.stream()
+                .findAny().orElseThrow(IllegalStateException::new)
+                .toPhysicalPlan();
 
+        // Take care of the execution.
+        deployAndRun(executionPlan);
+    }
+
+    /**
+     * Dummy implementation: Have the platforms execute the given execution plan.
+     */
+    private void deployAndRun(PhysicalPlan executionPlan) {
         for (Operator sink : executionPlan.getSinks()) {
             final ExecutionOperator executableSink = (ExecutionOperator) sink;
             final Platform platform = ((ExecutionOperator) sink).getPlatform();
@@ -133,8 +150,9 @@ public class RheemContext {
 
     /**
      * Apply all {@link #transformations} to the {@code plan}.
+     *
      * @param physicalPlan the plan to transform
-     * @param epoch the new epoch
+     * @param epoch        the new epoch
      * @return the number of applied transformations
      */
     private int applyAndCountTransformations(PhysicalPlan physicalPlan, int epoch) {

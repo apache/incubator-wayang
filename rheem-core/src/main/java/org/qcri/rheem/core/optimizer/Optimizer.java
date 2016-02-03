@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 /**
  * Dummy implementation: just resolve alternatives by looking for those alternatives that are execution operators.
  */
+@Deprecated
 public class Optimizer {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -70,6 +71,9 @@ public class Optimizer {
                 if (this.processedOperators.contains(workingPath.operatorToBeProcessed)) {
                     continue;
                 }
+                Optimizer.this.logger.info("Processing working path with {} ({} left in queue).",
+                        workingPath.operatorToBeProcessed,
+                        this.workingPaths.size());
                 process(workingPath);
             }
 

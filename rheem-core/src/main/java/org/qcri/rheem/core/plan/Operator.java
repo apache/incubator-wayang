@@ -7,8 +7,8 @@ import org.qcri.rheem.core.optimizer.costs.CardinalityPusher;
 import org.qcri.rheem.core.optimizer.costs.DefaultCardinalityPusher;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * An operator is any node that within a data flow plan.
@@ -132,26 +132,56 @@ public interface Operator {
             throw new IllegalArgumentException("Slot does not belong to this operator.");
         }
 
+        if (input.getOccupant() != null) {
+            return input;
+        }
+
         // Try to exit through the parent.
-        final Operator parent = this.getParent();
-        if (parent != null) {
-            if (parent instanceof Subplan) {
-                final InputSlot<T> parentInputSlot = ((Subplan) parent).exit(input);
-                if (parentInputSlot != null) {
-                    return parent.getOutermostInputSlot(parentInputSlot);
-                }
-
-            } else if (parent instanceof OperatorAlternative.Alternative) {
-                final InputSlot<T> parentInputSlot = ((OperatorAlternative.Alternative) parent).exit(input);
-                if (parentInputSlot != null) {
-                    return parent.getOutermostInputSlot(parentInputSlot);
-                }
+        final OperatorContainer container = this.getContainer();
+        if (container != null) {
+            final InputSlot<T> tracedInput = container.traceInput(input);
+            if (tracedInput != null) {
+                return container.toOperator().getOutermostInputSlot(tracedInput);
             }
-
         }
 
         return input;
     }
+
+    /**
+     * Retrieve the outermost {@link OutputSlot}s if this operator is nested in other operators.
+     *
+     * @param output the slot to track
+     * @return the outermost {@link InputSlot}
+     * @see #getParent()
+     */
+    default <T> Collection<OutputSlot<T>> getOutermostOutputSlots(OutputSlot<T> output) {
+        Validate.isTrue(this.isOwnerOf(output));
+
+        if (!output.getOccupiedSlots().isEmpty()) {
+            return Collections.singleton(output);
+        }
+
+        // Try to exit through the parent.
+        final OperatorContainer container = this.getContainer();
+        if (container != null) {
+            final Collection<OutputSlot<T>> followedOutputs = container.followOutput(output);
+            if (!followedOutputs.isEmpty()) {
+                return followedOutputs.stream()
+                        .flatMap(followedOutput -> container.toOperator().getOutermostOutputSlots(followedOutput).stream())
+                        .collect(Collectors.toList());
+            }
+        }
+
+        return Collections.singleton(output);
+    }
+
+
+    //    /**
+//     * This method is part of the visitor pattern and calls the appropriate visit method on {@code visitor}.
+//     *
+//     * @return return values associated with the inner-most input slot
+//     */
 
     default boolean isOwnerOf(Slot<?> slot) {
         return slot.getOwner() == this;
@@ -192,11 +222,6 @@ public interface Operator {
      */
     <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload);
 
-//    /**
-//     * This method is part of the visitor pattern and calls the appropriate visit method on {@code visitor}.
-//     *
-//     * @return return values associated with the inner-most input slot
-//     */
 //    <Payload, Return> Map<InputSlot, Return> accept(BottomUpPlanVisitor<Payload, Return> visitor, InputSlot<?> inputSlot, Payload payload);
 
     /**
@@ -234,6 +259,7 @@ public interface Operator {
      */
     void setEpoch(int epoch);
 
+
     /**
      * <i>Optional operation for non-composite operators.</i>
      *
@@ -242,13 +268,13 @@ public interface Operator {
      */
     int getEpoch();
 
-
     /**
      * @return whether this is an elementary operator
      */
     default boolean isElementary() {
         return true;
     }
+
 
     /**
      * Provide a {@link CardinalityEstimator} for the {@link OutputSlot} at {@code outputIndex}.
@@ -264,9 +290,7 @@ public interface Operator {
         return Optional.empty();
     }
 
-
     default CardinalityPusher getCardinalityPusher(final Map<OutputSlot<?>, CardinalityEstimate> cache) {
         return new DefaultCardinalityPusher(this, cache);
     }
-
 }

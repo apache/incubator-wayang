@@ -12,6 +12,9 @@ public interface ExecutionOperator extends ActualOperator {
      */
     Platform getPlatform();
 
+    /**
+     * @return a copy of this instance; it's {@link Slot}s will not be connected
+     */
     ExecutionOperator copy();
 
 }

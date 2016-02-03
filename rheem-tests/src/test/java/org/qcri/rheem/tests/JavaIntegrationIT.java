@@ -102,18 +102,18 @@ public class JavaIntegrationIT {
         source1.connectTo(0, coalesceOperator, 0);
         source2.connectTo(0, coalesceOperator, 1);
 
-        MapOperator<String, String> reverseOperator = new MapOperator<>(
+        MapOperator<String, String> uppercaseOperator = new MapOperator<>(
                 stringDataSet,
                 stringDataSet,
                 new TransformationDescriptor<>(
                         String::toUpperCase,
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(String.class)));
-        coalesceOperator.connectTo(0, reverseOperator, 0);
+        coalesceOperator.connectTo(0, uppercaseOperator, 0);
 
         List<String> collector1 = new LinkedList<>();
         LocalCallbackSink<String> sink1 = LocalCallbackSink.createCollectingSink(collector1, stringDataSet);
-        reverseOperator.connectTo(0, sink1, 0);
+        uppercaseOperator.connectTo(0, sink1, 0);
         rheemPlan.addSink(sink1);
 
         List<String> collector2 = new LinkedList<>();
@@ -125,14 +125,17 @@ public class JavaIntegrationIT {
         rheemContext.execute(rheemPlan);
 
         // Check the results in both sinks.
-        List<String> expectedOutcome = Stream.concat(collection1.stream(), collection2.stream())
+        List<String> expectedOutcome1 = Stream.concat(collection1.stream(), collection2.stream())
                 .map(String::toUpperCase)
                 .collect(Collectors.toList());
-        Collections.sort(expectedOutcome);
+        List<String> expectedOutcome2 = Stream.concat(collection1.stream(), collection2.stream())
+                .collect(Collectors.toList());
+        Collections.sort(expectedOutcome1);
+        Collections.sort(expectedOutcome2);
         Collections.sort(collector1);
         Collections.sort(collector2);
-        Assert.assertEquals(expectedOutcome, collector1);
-        Assert.assertEquals(expectedOutcome, collector2);
+        Assert.assertEquals(expectedOutcome1, collector1);
+        Assert.assertEquals(expectedOutcome2, collector2);
     }
 
     @Test
@@ -199,7 +202,7 @@ public class JavaIntegrationIT {
 
         // Check the results in both sinks.
         List<String> expectedOutcome = Stream.concat(collection1.stream(), collection2.stream())
-                .map(String::toUpperCase)
+                .flatMap(string -> Arrays.asList(string.toLowerCase(), string.toUpperCase()).stream())
                 .collect(Collectors.toList());
         Collections.sort(expectedOutcome);
         Collections.sort(collector1);
@@ -208,9 +211,7 @@ public class JavaIntegrationIT {
         Assert.assertEquals(expectedOutcome, collector2);
     }
 
-
-
-
+    @Test
     public void testFullScenario1() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();

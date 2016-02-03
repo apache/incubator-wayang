@@ -10,6 +10,7 @@ import java.util.Optional;
 /**
  * Dummy implementation: just resolve alternatives by looking for those alternatives that are execution operators.
  */
+@Deprecated
 public class DummyOptimizer {
 
     public PhysicalPlan buildExecutionPlan(PhysicalPlan rheemPlan) {

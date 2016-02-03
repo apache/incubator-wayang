@@ -64,7 +64,7 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
 
         @Override
         public CardinalityEstimate calculateEstimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
-            Validate.inclusiveBetween(0, FlatMapOperator.this.getNumOutputs() - 1, inputEstimates.length);
+            Validate.isTrue(FlatMapOperator.this.getNumInputs() == inputEstimates.length);
             final CardinalityEstimate inputEstimate = inputEstimates[0];
 
             final OptionalDouble selectivity = rheemContext.getCardinalityEstimatorManager()

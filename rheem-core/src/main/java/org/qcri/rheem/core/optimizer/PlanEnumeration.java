@@ -1,7 +1,9 @@
 package org.qcri.rheem.core.optimizer;
 
+import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.*;
 import org.qcri.rheem.core.util.Canonicalizer;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +125,6 @@ public class PlanEnumeration {
 //        pe2.requestedInputSlots.forEach(inputSlotRequestCounter::increment);
 
 
-
         // Add all slots that are requested by both input instances.
         this.requestedInputSlots.addAll(pe1.requestedInputSlots);
         this.requestedInputSlots.retainAll(pe2.requestedInputSlots);
@@ -138,7 +139,6 @@ public class PlanEnumeration {
 
         // Delete served input slots
         pe1.servingOutputSlots.removeAll(connectedInputSlots);
-
 
 
         // Add all slots that are provided by both input instances.
@@ -436,6 +436,62 @@ public class PlanEnumeration {
 
         public Canonicalizer<ExecutionOperator> getOperators() {
             return operators;
+        }
+
+        public PhysicalPlan toPhysicalPlan() {
+            Map<OutputSlot<?>, ExecutionOperator> copiedOutputProviders = new HashMap<>();
+            Map<OutputSlot<?>, Collection<InputSlot<?>>> copiedOutputRequesters = new HashMap<>();
+
+            Collection<ExecutionOperator> sinks = new LinkedList<>();
+            for (ExecutionOperator pickedOperator : this.operators) {
+                final ExecutionOperator copy = pickedOperator.copy();
+
+                // Connect the InputSlots or issue an connecting request.
+                for (InputSlot<?> originalInput : pickedOperator.getAllInputs()) {
+                    final InputSlot<?> originalOuterInput = pickedOperator.getOutermostInputSlot(originalInput);
+                    final OutputSlot<?> originalRequestedOutput = originalOuterInput.getOccupant();
+                    Validate.notNull(originalRequestedOutput, "Outermost %s does not have an occupant.", originalOuterInput);
+                    final ExecutionOperator copiedOutputProvider = copiedOutputProviders.get(originalRequestedOutput);
+                    if (copiedOutputProvider != null) {
+                        copiedOutputProvider.connectTo(originalRequestedOutput.getIndex(),
+                                copy,
+                                originalInput.getIndex());
+                    } else {
+                        RheemCollections.put(copiedOutputRequesters,
+                                originalRequestedOutput,
+                                copy.getInput(originalInput.getIndex()));
+                    }
+                }
+
+                // Connect the OutputSlots and offer further connections.
+                for (OutputSlot<?> originalOutput : pickedOperator.getAllOutputs()) {
+                    Collection<OutputSlot<Object>> originalOuterOutputs =
+                            pickedOperator.getOutermostOutputSlots(originalOutput.unchecked());
+                    for (OutputSlot<Object> originalOuterOutput : originalOuterOutputs) {
+                        copiedOutputProviders.put(originalOuterOutput, copy);
+                        final Collection<InputSlot<?>> connectableOutputRequesters =
+                                copiedOutputRequesters.remove(originalOuterOutput);
+                        if (connectableOutputRequesters != null) {
+                            for (InputSlot<?> outputRequester : connectableOutputRequesters) {
+                                copy.connectTo(originalOutput.getIndex(),
+                                        outputRequester.getOwner(),
+                                        outputRequester.getIndex());
+                            }
+                        }
+                    }
+                }
+
+                // Remember sinks.
+                if (copy.isSink()) {
+                    sinks.add(copy);
+                }
+            }
+            Validate.isTrue(copiedOutputRequesters.isEmpty());
+            Validate.isTrue(!sinks.isEmpty());
+
+            final PhysicalPlan physicalPlan = new PhysicalPlan();
+            sinks.forEach(physicalPlan::addSink);
+            return physicalPlan;
         }
     }
 
