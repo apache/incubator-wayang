@@ -49,12 +49,12 @@ public class PlanTraversal {
 
     public PlanTraversal traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
         if (visitedOperators.add(operator)) {
-            if (this.isFollowInputs) followInputs(operator);
-            if (this.isFollowOutputs) followOutputs(operator);
-
             if (this.traversalCallback != null) {
                 this.traversalCallback.traverse(operator, fromInputSlot, fromOutputSlot);
             }
+
+            if (this.isFollowInputs) followInputs(operator);
+            if (this.isFollowOutputs) followOutputs(operator);
         }
 
         return this;

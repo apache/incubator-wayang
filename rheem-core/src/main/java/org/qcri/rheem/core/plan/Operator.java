@@ -4,6 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.costs.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.CardinalityPusher;
+import org.qcri.rheem.core.optimizer.costs.DefaultCardinalityPusher;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
@@ -264,11 +265,8 @@ public interface Operator {
     }
 
 
-    default Optional<CardinalityPusher> getCardinalityPusher(final Map<OutputSlot<?>, CardinalityEstimate> cache) {
-        Validate.isTrue(this.getNumOutputs() == 0);
-        LoggerFactory.getLogger(this.getClass()).warn("Cardinality pushing has not been implemented, yet!");
-        return Optional.empty();
+    default CardinalityPusher getCardinalityPusher(final Map<OutputSlot<?>, CardinalityEstimate> cache) {
+        return new DefaultCardinalityPusher(this, cache);
     }
-
 
 }

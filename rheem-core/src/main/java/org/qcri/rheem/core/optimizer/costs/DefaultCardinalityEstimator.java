@@ -46,7 +46,8 @@ public class DefaultCardinalityEstimator extends CardinalityEstimator.WithCache 
 
     @Override
     public CardinalityEstimate calculateEstimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
-        Validate.isTrue(inputEstimates.length == this.numInputs);
+        Validate.isTrue(inputEstimates.length == this.numInputs, "Received %d input estimates, require %d.",
+                inputEstimates.length, this.numInputs);
 
         if (this.numInputs == 0) {
             final long estimate = this.singlePointEstimator.applyAsLong(new long[0], rheemContext);

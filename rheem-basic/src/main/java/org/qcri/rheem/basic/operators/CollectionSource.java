@@ -36,7 +36,7 @@ public class CollectionSource<T> extends UnarySource<T> implements ActualOperato
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
         return Optional.of(new DefaultCardinalityEstimator(
                 1d,
-                1,
+                getNumInputs(),
                 inputCards -> this.collection.size(),
                 this.getOutput(outputIndex),
                 cache));

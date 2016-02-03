@@ -1,8 +1,6 @@
 package org.qcri.rheem.core.plan;
 
-import org.qcri.rheem.core.optimizer.costs.AggregatingCardinalityEstimator;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.costs.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -241,14 +239,19 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     public Optional<CardinalityEstimator> getCardinalityEstimator(
             final int outputIndex,
             final Map<OutputSlot<?>, CardinalityEstimate> cache) {
-        final List<CardinalityEstimator> partialEstimators = this.alternatives.stream()
+        final List<CardinalityEstimator> alternativeEstimators = this.alternatives.stream()
                 .map(Alternative::getOperator)
                 .map(operator -> operator.getCardinalityEstimator(outputIndex, cache))
                 .flatMap(optional -> optional.isPresent() ? Stream.of(optional.get()) : Stream.empty())
                 .collect(Collectors.toList());
 
-        return partialEstimators.isEmpty() ?
+        return alternativeEstimators.isEmpty() ?
                 Optional.empty() :
-                Optional.of(new AggregatingCardinalityEstimator(partialEstimators, this.getOutput(outputIndex), cache));
+                Optional.of(new AggregatingCardinalityEstimator(alternativeEstimators, this.getOutput(outputIndex), cache));
+    }
+
+    @Override
+    public CardinalityPusher getCardinalityPusher(Map<OutputSlot<?>, CardinalityEstimate> cache) {
+        return new AggregatingCardinalityPusher(this, cache);
     }
 }

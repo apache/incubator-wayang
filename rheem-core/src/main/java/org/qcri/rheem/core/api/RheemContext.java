@@ -6,9 +6,11 @@ import org.qcri.rheem.core.optimizer.Optimizer;
 import org.qcri.rheem.core.optimizer.PlanEnumeration;
 import org.qcri.rheem.core.optimizer.PlanEnumerator;
 import org.qcri.rheem.core.optimizer.SanityChecker;
+import org.qcri.rheem.core.optimizer.costs.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.CardinalityEstimatorManager;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.plan.Operator;
+import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.PhysicalPlan;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.Logger;
@@ -18,6 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * This is the entry point for users to work with Rheem.
@@ -33,7 +36,7 @@ public class RheemContext {
 
     private final Optimizer optimizer = new Optimizer();
 
-    private final CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager();
+    private final CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this);
 
     public RheemContext() {
         final String activateClassName = "org.qcri.rheem.basic.plugin.Activator";
@@ -106,6 +109,11 @@ public class RheemContext {
         } while (isAnyChange);
 
         new SanityChecker(physicalPlan).checkAllCriteria();
+        final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates = this.getCardinalityEstimatorManager()
+                .estimateAllCardinatilities(physicalPlan);
+        cardinalityEstimates.entrySet().stream().forEach(entry ->
+                this.logger.info("Cardinality estimate for {}: {}", entry.getKey(), entry.getValue()));
+
         final PlanEnumerator planEnumerator = new PlanEnumerator(physicalPlan);
         planEnumerator.run();
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.getComprehensiveEnumeration();

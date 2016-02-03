@@ -106,4 +106,16 @@ public class Operators {
         }
     }
 
+    public static final Operator slotlessOperator(OperatorContainer container) {
+        return new OperatorBase(0, 0, container) {
+            @Override
+            public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+                throw new RuntimeException("Not implemented.");
+            }
+        };
+    }
+
+    public static final Operator slotlessOperator() {
+        return slotlessOperator(null);
+    }
 }

@@ -64,7 +64,7 @@ abstract public class Slot<T> {
         return String.format("%s[%s, %s]",
                 getClass().getSimpleName(),
                 this.type,
-                this.owner == null ? "no owner" : this.owner.getClass().getSimpleName());
+                this.owner == null ? "no owner" : this.owner.toString());
     }
 
     /**

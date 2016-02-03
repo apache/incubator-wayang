@@ -35,7 +35,7 @@ public class CompositeCardinalityEstimator extends CardinalityEstimator.WithCach
         final List<Collection<InputSlot<?>>> innerInputs = Arrays.stream(subplan.getAllInputs())
                 .map(inputSlot -> (Collection<InputSlot<?>>) (Collection) subplan.followInput(inputSlot))
                 .collect(Collectors.toList());
-        final CardinalityEstimationTraversal traversal = CardinalityEstimationTraversal.createTopDown(
+        final CardinalityEstimationTraversal traversal = CardinalityEstimationTraversal.createPullTraversal(
                 innerInputs, innerOutput, cache);
         if (traversal == null) {
             return Optional.empty();
