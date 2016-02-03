@@ -129,9 +129,9 @@ public class SubplanPattern extends OperatorBase {
                            OutputSlot<?> trackedOutputSlot,
                            SubplanMatch subplanMatch) {
 
-            if (pattern.getNumInputs() > 1) {
-                throw new RuntimeException("Cannot match pattern: Operator with more than one input not supported, yet.");
-            }
+//            if (pattern.getNumInputs() > 1) {
+//                throw new RuntimeException("Cannot match pattern: Operator with more than one input not supported, yet.");
+//            }
 
             if (operator instanceof Subplan) {
                 if (trackedOutputSlot == null) {

@@ -115,7 +115,9 @@ public class JavaIntegrationIT {
 
         // Build a Rheem plan.
         final URL inputUrl = getClass().getResource("/some-lines.txt");
+        final URL inputUrl1 = getClass().getResource("/other-lines.txt");
         TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
+        TextFileSource textFileSource1 = new TextFileSource(inputUrl1.toURI().toString());
         FilterOperator<String> noCommaOperator = new FilterOperator<>(
                 DataSetType.createDefault(String.class),
                 new Predicate<String>() {
@@ -131,12 +133,16 @@ public class JavaIntegrationIT {
                         String::toUpperCase,
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(String.class)));
+        UnionAllOperator<String> unionOperator = new UnionAllOperator<>(DataSetType.createDefault(String.class));
         StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
         DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(DataSetType.createDefault(String.class));
         SortOperator<String> sortOperator = new SortOperator<>(DataSetType.createDefault(String.class));
 
+        // Read from file 1, remove commas, union with file 2, sort, upper case, then remove duplicates and output.
         textFileSource.connectTo(0, noCommaOperator, 0);
-        noCommaOperator.connectTo(0, sortOperator, 0);
+        textFileSource1.connectTo(0, unionOperator, 0);
+        noCommaOperator.connectTo(0, unionOperator, 1);
+        unionOperator.connectTo(0, sortOperator, 0);
         sortOperator.connectTo(0, upperCaseOperator, 0);
         upperCaseOperator.connectTo(0, distinctLinesOperator, 0);
         distinctLinesOperator.connectTo(0, stdoutSink, 0);

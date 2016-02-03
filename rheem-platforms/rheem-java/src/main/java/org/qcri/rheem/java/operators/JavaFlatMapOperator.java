@@ -9,7 +9,7 @@ import org.qcri.rheem.java.compiler.FunctionCompiler;
 import java.util.stream.Stream;
 
 /**
- * Java implementation of the {@link org.qcri.rheem.basic.operators.FlatMapOperator}.
+ * Java implementation of the {@link FlatMapOperator}.
  */
 public class JavaFlatMapOperator<InputType, OutputType>
         extends FlatMapOperator<InputType, OutputType>
