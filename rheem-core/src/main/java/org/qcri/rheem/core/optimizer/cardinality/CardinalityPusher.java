@@ -30,8 +30,19 @@ public abstract class CardinalityPusher {
                     this.getOperator());
             return this.createFallbackEstimates(rheemContext, inputEstimates);
         }
+        final CardinalityEstimate[] cardinalityEstimates = this.doPush(rheemContext, inputEstimates);
+        putToCache(cardinalityEstimates);
+        return cardinalityEstimates;
+    }
 
-        return this.doPush(rheemContext, inputEstimates);
+    private void putToCache(CardinalityEstimate[] cardinalityEstimates) {
+        for (int outputIndex = 0; outputIndex < this.getOperator().getNumOutputs(); outputIndex++) {
+            putToCache(outputIndex, cardinalityEstimates[outputIndex]);
+        }
+    }
+
+    protected void putToCache(int outputIndex, CardinalityEstimate cardinalityEstimate) {
+        this.cache.put(this.operator.getOutput(outputIndex), cardinalityEstimate);
     }
 
     private boolean canHandle(RheemContext rheemContext, CardinalityEstimate[] inputEstimates) {

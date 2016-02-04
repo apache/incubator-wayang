@@ -61,9 +61,10 @@ abstract public class Slot<T> {
 
     @Override
     public String toString() {
-        return String.format("%s[%s, %s]",
+        return String.format("%s[%s of %s]",
                 getClass().getSimpleName(),
-                this.type,
+//                this.type,
+                this.name,
                 this.owner == null ? "no owner" : this.owner.toString());
     }
 

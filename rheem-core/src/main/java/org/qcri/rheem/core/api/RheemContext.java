@@ -8,6 +8,10 @@ import org.qcri.rheem.core.optimizer.PlanEnumerator;
 import org.qcri.rheem.core.optimizer.SanityChecker;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
+import org.qcri.rheem.core.optimizer.costs.ResourceUsageProfileToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.ResourceUsageToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimationTraversal;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.OutputSlot;
@@ -110,8 +114,10 @@ public class RheemContext {
         // Make the cardinality estimation pass.
         final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates = estimateCardinalities(physicalPlan);
 
+        final Map<ExecutionOperator, TimeEstimate> timeEstimates = estimateExecutionTimes(physicalPlan, cardinalityEstimates);
+
         // Enumerate plans and pick the best one.
-        final PhysicalPlan pickedExecutionPlan = extractExecutionPlan(physicalPlan, cardinalityEstimates);
+        final PhysicalPlan pickedExecutionPlan = extractExecutionPlan(physicalPlan, timeEstimates);
         return pickedExecutionPlan;
     }
 
@@ -157,12 +163,31 @@ public class RheemContext {
     }
 
     /**
+     * Go over the given {@link PhysicalPlan} and estimate the execution times of its
+     * {@link ExecutionOperator}s.
+     */
+    private Map<ExecutionOperator, TimeEstimate> estimateExecutionTimes(PhysicalPlan physicalPlan, Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates) {
+        ResourceUsageProfileToTimeConverter timeConverter = ResourceUsageProfileToTimeConverter.createDefault(
+                ResourceUsageToTimeConverter.createLinearCoverter(0.001d),
+                ResourceUsageToTimeConverter.createLinearCoverter(0.01d),
+                ResourceUsageToTimeConverter.createLinearCoverter(0.01d),
+                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+        );
+        final Map<ExecutionOperator, TimeEstimate> timeEstimates = TimeEstimationTraversal.traverse(physicalPlan,
+                timeConverter,
+                cardinalityEstimates);
+        timeEstimates.entrySet().forEach(entry ->
+                this.logger.info("Time estimate for {}: {}", entry.getKey(), entry.getValue()));
+        return timeEstimates;
+    }
+
+    /**
      * Enumerate possible execution plans from the given {@link PhysicalPlan} and determine the (seemingly) best one.
      */
     private PhysicalPlan extractExecutionPlan(final PhysicalPlan physicalPlan,
-                                              final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates) {
+                                              final Map<ExecutionOperator, TimeEstimate> timeEstimates) {
         // Enumerate all possible plan. TODO: Prune them (using the cardinality estimates, amongst others).
-        final PlanEnumerator planEnumerator = new PlanEnumerator(physicalPlan);
+        final PlanEnumerator planEnumerator = new PlanEnumerator(physicalPlan, timeEstimates);
         planEnumerator.run();
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.getComprehensiveEnumeration();
         final Collection<PlanEnumeration.PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();

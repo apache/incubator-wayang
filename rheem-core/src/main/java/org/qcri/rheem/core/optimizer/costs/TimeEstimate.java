@@ -11,4 +11,12 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
         super(lowerEstimate, upperEstimate, correctnessProb);
     }
 
+    public TimeEstimate plus(TimeEstimate that) {
+        return new TimeEstimate(
+                this.getLowerEstimate() + that.getLowerEstimate(),
+                this.getUpperEstimate() + that.getUpperEstimate(),
+                Math.min(this.getCorrectnessProbability(), that.getCorrectnessProbability())
+        );
+    }
+
 }

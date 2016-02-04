@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.*;
 import org.qcri.rheem.core.util.Canonicalizer;
 import org.qcri.rheem.core.util.RheemCollections;
@@ -36,10 +37,6 @@ public class PlanEnumeration {
      * {@link PlanEnumeration} scope are relevant for pruning and therefore represented here.
      */
     private final Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots = new HashSet<>();
-
-//    private final Set<InputSlot> originalInputSlots = new HashSet<>();
-
-//    private final Set<OutputSlot> originalOutputSlots = new HashSet<>();
 
     private final Set<Operator> terminalOperators = new HashSet<>();
 
@@ -339,6 +336,8 @@ public class PlanEnumeration {
 
         private PlanEnumeration planEnumeration;
 
+        private TimeEstimate executionTimeEstimate;
+
         /**
          * Create a new instance.
          */
@@ -436,6 +435,16 @@ public class PlanEnumeration {
 
         public Canonicalizer<ExecutionOperator> getOperators() {
             return operators;
+        }
+
+        public TimeEstimate getExecutionTimeEstimate(Map<ExecutionOperator, TimeEstimate> operatorTimeEstimates) {
+            if (this.executionTimeEstimate == null) {
+                this.executionTimeEstimate = this.operators.stream()
+                        .map(operatorTimeEstimates::get)
+                        .reduce(TimeEstimate::plus)
+                        .get();
+            }
+            return this.executionTimeEstimate;
         }
 
         public PhysicalPlan toPhysicalPlan() {

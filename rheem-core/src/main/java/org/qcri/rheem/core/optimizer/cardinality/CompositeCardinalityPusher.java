@@ -73,6 +73,5 @@ public class CompositeCardinalityPusher extends CardinalityPusher {
             result[outputIndex] = cardinalityEstimate;
         }
         return result;
-
     }
 }

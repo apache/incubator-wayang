@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.optimizer;
 
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,11 @@ public class PlanEnumerator {
      * Logger.
      */
     private Logger logger = LoggerFactory.getLogger(getClass());
+
+    /**
+     * {@link CardinalityEstimate}s that can be used to assess plans.
+     */
+    private final Map<ExecutionOperator, TimeEstimate> timeEstimates;
 
     /**
      * {@link PlanEnumerator.OperatorActivation}s that can be activated and should be followed to create branches.
@@ -41,16 +48,27 @@ public class PlanEnumerator {
 
     /**
      * Creates a new instance.
-     *
-     * @param physicalPlan a hyperplan that should be used for enumeration.
+     *  @param physicalPlan         a hyperplan that should be used for enumeration.
      */
-    public PlanEnumerator(PhysicalPlan physicalPlan) {
-        this(physicalPlan.collectReachableTopLevelSources());
+    public PlanEnumerator(PhysicalPlan physicalPlan, Map<ExecutionOperator, TimeEstimate> timeEstimates) {
+        this(physicalPlan.collectReachableTopLevelSources(), timeEstimates);
     }
 
-    private PlanEnumerator(OperatorAlternative.Alternative alternative) {
-        this(findStartOperators(alternative));
+    private PlanEnumerator(OperatorAlternative.Alternative alternative, Map<ExecutionOperator, TimeEstimate> timeEstimates) {
+        this(findStartOperators(alternative), timeEstimates);
         this.alternative = alternative;
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param startOperators form the starting point for the enumeration
+     */
+    private PlanEnumerator(Collection<Operator> startOperators, Map<ExecutionOperator, TimeEstimate> timeEstimates) {
+        startOperators.stream()
+                .map(PlanEnumerator.OperatorActivation::new)
+                .forEach(this.activatedOperators::add);
+        this.timeEstimates = timeEstimates;
     }
 
     /**
@@ -67,17 +85,6 @@ public class PlanEnumerator {
         } else {
             return Collections.singleton(alternativeOperator);
         }
-    }
-
-    /**
-     * Creates a new instance.
-     *
-     * @param startOperators form the starting point for the enumeration
-     */
-    private PlanEnumerator(Collection<Operator> startOperators) {
-        startOperators.stream()
-                .map(PlanEnumerator.OperatorActivation::new)
-                .forEach(this.activatedOperators::add);
     }
 
     /**
@@ -187,7 +194,7 @@ public class PlanEnumerator {
             if (operator.isAlternative()) {
                 operatorEnumeration = null;
                 for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
-                    final PlanEnumerator alternativeEnumerator = new PlanEnumerator(alternative);
+                    final PlanEnumerator alternativeEnumerator = new PlanEnumerator(alternative, this.timeEstimates);
                     alternativeEnumerator.run();
                     final PlanEnumeration alternativeEnumeration = alternativeEnumerator.getComprehensiveEnumeration();
                     if (alternativeEnumeration != null) {
@@ -249,7 +256,7 @@ public class PlanEnumerator {
     public PlanEnumeration getComprehensiveEnumeration() {
         return this.nonActivatingEnumerations.stream()
                 .map(instance -> instance.escape(this.alternative))
-                .reduce((instance1, instance2) -> instance1.join(instance2))
+                .reduce(PlanEnumeration::join)
                 .orElse(null);
     }
 

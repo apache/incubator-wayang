@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.function;
 
+import org.qcri.rheem.core.optimizer.costs.ResourceFunction;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataUnitGroupType;
 
@@ -16,6 +17,15 @@ public abstract class AggregationDescriptor<InputType, OutputType> extends Funct
     private final BasicDataUnitType<OutputType> outputType;
 
     public AggregationDescriptor(DataUnitGroupType<InputType> inputType, BasicDataUnitType<OutputType> outputType) {
+        this(inputType, outputType,
+                ResourceFunction.createFallback(1, 1),
+                ResourceFunction.createFallback(1, 1));
+    }
+
+    public AggregationDescriptor(DataUnitGroupType<InputType> inputType, BasicDataUnitType<OutputType> outputType,
+                                 ResourceFunction cpuResourceFunction,
+                                 ResourceFunction memoryResourceFunction) {
+        super(cpuResourceFunction, memoryResourceFunction);
         this.inputType = inputType;
         this.outputType = outputType;
     }
