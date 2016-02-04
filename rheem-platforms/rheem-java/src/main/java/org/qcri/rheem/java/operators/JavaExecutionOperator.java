@@ -1,9 +1,13 @@
 package org.qcri.rheem.java.operators;
 
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.ResourceFunction;
+import org.qcri.rheem.core.optimizer.costs.ResourceUsageEstimate;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.plugin.Activator;
+import org.slf4j.LoggerFactory;
 
 import java.util.stream.Stream;
 
@@ -28,4 +32,43 @@ public interface JavaExecutionOperator extends ExecutionOperator {
      */
     Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler);
 
+    @Override
+    default ResourceUsageEstimate estimateCpuUsage(CardinalityEstimate[] inputCardinalities,
+                                                   CardinalityEstimate[] outputCardinalities) {
+        LoggerFactory.getLogger(this.getClass()).warn("Using fallback CPU resource function for {}.", this);
+        ResourceFunction resourceFunction = ResourceFunction.createFallback(
+                inputCardinalities.length,
+                outputCardinalities.length);
+        return resourceFunction.calculate(inputCardinalities, outputCardinalities);
+    }
+
+    @Override
+    default ResourceUsageEstimate estimateRamUsage(CardinalityEstimate[] inputCardinalities,
+                                                   CardinalityEstimate[] outputCardinalities) {
+        LoggerFactory.getLogger(this.getClass()).warn("Using fallback RAM resource function for {}.", this);
+        ResourceFunction resourceFunction = ResourceFunction.createFallback(
+                inputCardinalities.length,
+                outputCardinalities.length);
+        return resourceFunction.calculate(inputCardinalities, outputCardinalities);
+    }
+
+    @Override
+    default ResourceUsageEstimate estimateDiskUsage(CardinalityEstimate[] inputCardinalities,
+                                                   CardinalityEstimate[] outputCardinalities) {
+        LoggerFactory.getLogger(this.getClass()).warn("Using fallback disk resource function for {}.", this);
+        ResourceFunction resourceFunction = ResourceFunction.createFallback(
+                inputCardinalities.length,
+                outputCardinalities.length);
+        return resourceFunction.calculate(inputCardinalities, outputCardinalities);
+    }
+
+    @Override
+    default ResourceUsageEstimate estimateNetworkUsage(CardinalityEstimate[] inputCardinalities,
+                                                   CardinalityEstimate[] outputCardinalities) {
+        LoggerFactory.getLogger(this.getClass()).warn("Using fallback network resource function for {}.", this);
+        ResourceFunction resourceFunction = ResourceFunction.createFallback(
+                inputCardinalities.length,
+                outputCardinalities.length);
+        return resourceFunction.calculate(inputCardinalities, outputCardinalities);
+    }
 }

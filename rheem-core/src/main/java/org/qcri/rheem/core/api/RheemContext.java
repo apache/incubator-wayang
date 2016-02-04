@@ -29,18 +29,17 @@ public class RheemContext {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    public static final String BASIC_PLUGIN_ACTIVATOR = "org.qcri.rheem.basic.plugin.Activator";
+
     /**
      * All registered mappings.
      */
     private final Collection<PlanTransformation> transformations = new LinkedList<>();
 
-    private final Optimizer optimizer = new Optimizer();
-
     private final CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this);
 
     public RheemContext() {
-        final String activateClassName = "org.qcri.rheem.basic.plugin.Activator";
-        activatePackage(activateClassName);
+        activatePackage(BASIC_PLUGIN_ACTIVATOR);
     }
 
     /**
@@ -95,10 +94,31 @@ public class RheemContext {
      * @param physicalPlan the plan to execute
      */
     public void execute(PhysicalPlan physicalPlan) {
-        // NB: This is a dummy implementation to make the simplest case work.
+        PhysicalPlan executionPlan = getExecutionPlan(physicalPlan);
 
-        // TODO: introduce calls only, for example the following block of code should be a simple call to the optimizer
+        // Take care of the execution.
+        deployAndRun(executionPlan);
+    }
 
+    /**
+     * Determine a good/the best execution plan from a given {@link PhysicalPlan}.
+     */
+    private PhysicalPlan getExecutionPlan(PhysicalPlan physicalPlan) {
+        // Apply the mappings to the plan to form a hyperplan.
+        applyMappings(physicalPlan);
+
+        // Make the cardinality estimation pass.
+        final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates = estimateCardinalities(physicalPlan);
+
+        // Enumerate plans and pick the best one.
+        final PhysicalPlan pickedExecutionPlan = extractExecutionPlan(physicalPlan, cardinalityEstimates);
+        return pickedExecutionPlan;
+    }
+
+    /**
+     * Apply all available {@link #transformations} to the {@link PhysicalPlan}.
+     */
+    private void applyMappings(PhysicalPlan physicalPlan) {
         boolean isAnyChange;
         int epoch = Operator.FIRST_EPOCH;
         do {
@@ -108,16 +128,39 @@ public class RheemContext {
             isAnyChange = numTransformations > 0;
         } while (isAnyChange);
 
+        // Check that the mappings have been applied properly.
+        checkHyperplanSanity(physicalPlan);
+    }
+
+    /**
+     * Check that the given {@link PhysicalPlan} is as we expect it to be in the following steps.
+     */
+    private void checkHyperplanSanity(PhysicalPlan physicalPlan) {
         // We make some assumptions on the hyperplan. Make sure that they hold. After all, the transformations might
         // have bugs.
-        new SanityChecker(physicalPlan).checkAllCriteria();
+        final SanityChecker sanityChecker = new SanityChecker(physicalPlan);
+        if (!sanityChecker.checkAllCriteria()) {
+            throw new IllegalStateException("Hyperplan is not in an expected state.");
+        }
+    }
 
-        // Make the cardinality estimation pass.
+    /**
+     * Go over the given {@link PhysicalPlan} and estimate the cardinalities of data being passed between its
+     * {@link Operator}s.
+     */
+    private Map<OutputSlot<?>, CardinalityEstimate> estimateCardinalities(PhysicalPlan physicalPlan) {
         final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates =
                 this.getCardinalityEstimatorManager().estimateAllCardinatilities(physicalPlan);
         cardinalityEstimates.entrySet().stream().forEach(entry ->
-                this.logger.info("Cardinality estimate for {}: {}", entry.getKey(), entry.getValue()));
+                this.logger.debug("Cardinality estimate for {}: {}", entry.getKey(), entry.getValue()));
+        return cardinalityEstimates;
+    }
 
+    /**
+     * Enumerate possible execution plans from the given {@link PhysicalPlan} and determine the (seemingly) best one.
+     */
+    private PhysicalPlan extractExecutionPlan(final PhysicalPlan physicalPlan,
+                                              final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates) {
         // Enumerate all possible plan. TODO: Prune them (using the cardinality estimates, amongst others).
         final PlanEnumerator planEnumerator = new PlanEnumerator(physicalPlan);
         planEnumerator.run();
@@ -129,12 +172,9 @@ public class RheemContext {
         }
 
         // Pick an execution plan. TODO: Pick the best one.
-        PhysicalPlan executionPlan = executionPlans.stream()
+        return executionPlans.stream()
                 .findAny().orElseThrow(IllegalStateException::new)
                 .toPhysicalPlan();
-
-        // Take care of the execution.
-        deployAndRun(executionPlan);
     }
 
     /**

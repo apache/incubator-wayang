@@ -1,0 +1,81 @@
+package org.qcri.rheem.core.optimizer.costs;
+
+import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+
+import java.util.function.ToLongBiFunction;
+
+/**
+ * Implementation of {@link ResourceFunction} that uses a single-point cost function.
+ */
+public class DefaultResourceFunction extends ResourceFunction {
+
+    private final double correctnessProbablity;
+
+    private final int numInputs, numOutputs;
+
+    private final ToLongBiFunction<long[], long[]> singlePointEstimator;
+
+    public DefaultResourceFunction(int numInputs,
+                                   int numOutputs,
+                                   double correctnessProbablity,
+                                   ToLongBiFunction<long[], long[]> singlePointFunction) {
+
+        this.numInputs = numInputs;
+        this.numOutputs = numOutputs;
+        this.correctnessProbablity = correctnessProbablity;
+        this.singlePointEstimator = singlePointFunction;
+    }
+
+    @Override
+    public ResourceUsageEstimate calculate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
+        Validate.isTrue(inputEstimates.length == this.numInputs, "Received %d input estimates, require %d.",
+                inputEstimates.length, this.numInputs);
+        Validate.isTrue(outputEstimates.length == this.numOutputs, "Received %d output estimates, require %d.",
+                outputEstimates.length, this.numOutputs);
+
+
+        long[][] inputEstimateCombinations = enumerateCombinations(inputEstimates);
+        long[][] outputEstimateCombinations = enumerateCombinations(outputEstimates);
+
+        long lowerEstimate = -1, upperEstimate = -1;
+        for (int inputEstimateId = 0; inputEstimateId < inputEstimateCombinations.length; inputEstimateId++) {
+            for (int outputEstimateId = 0; outputEstimateId < outputEstimateCombinations.length; outputEstimateId++) {
+                long estimate = Math.max(this.singlePointEstimator.applyAsLong(
+                        inputEstimateCombinations[inputEstimateId],
+                        outputEstimateCombinations[outputEstimateId]
+                ), 0);
+                if (lowerEstimate == -1 || estimate < lowerEstimate) {
+                    lowerEstimate = estimate;
+                }
+                if (upperEstimate == -1 || estimate > upperEstimate) {
+                    upperEstimate = estimate;
+                }
+            }
+        }
+
+        double correctnessProbability = calculateJointProbability(inputEstimates, outputEstimates)
+                * this.correctnessProbablity;
+        return new ResourceUsageEstimate(lowerEstimate, upperEstimate, correctnessProbability);
+    }
+
+    private long[][] enumerateCombinations(CardinalityEstimate[] cardinalityEstimates) {
+        if (cardinalityEstimates.length == 0) {
+            return new long[1][0];
+        }
+
+        int numCombinations = 1 << cardinalityEstimates.length;
+        long[][] combinations = new long[numCombinations][cardinalityEstimates.length];
+        for (int combinationIdentifier = 0; combinationIdentifier < numCombinations; combinationIdentifier++) {
+            for (int pos = 0; pos < cardinalityEstimates.length; pos++) {
+                int bit = (combinationIdentifier >>> pos) & 0x1;
+                combinations[combinationIdentifier][pos] = bit == 0 ?
+                        cardinalityEstimates[pos].getLowerEstimate() :
+                        cardinalityEstimates[pos].getUpperEstimate();
+            }
+        }
+
+        return combinations;
+    }
+
+}
