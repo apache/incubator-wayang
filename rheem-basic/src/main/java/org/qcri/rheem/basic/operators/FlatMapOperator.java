@@ -3,7 +3,7 @@ package org.qcri.rheem.basic.operators;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
@@ -39,7 +39,7 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     }
 
     @Override
-    public Optional<org.qcri.rheem.core.optimizer.costs.CardinalityEstimator> getCardinalityEstimator(
+    public Optional<org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator> getCardinalityEstimator(
             final int outputIndex,
             final Map<OutputSlot<?>, CardinalityEstimate> cache) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
@@ -47,9 +47,9 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     }
 
     /**
-     * Custom {@link org.qcri.rheem.core.optimizer.costs.CardinalityEstimator} for {@link FlatMapOperator}s.
+     * Custom {@link org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator} for {@link FlatMapOperator}s.
      */
-    private class CardinalityEstimator extends org.qcri.rheem.core.optimizer.costs.CardinalityEstimator.WithCache {
+    private class CardinalityEstimator extends org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator.WithCache {
 
         public static final double DEFAULT_SELECTIVITY_CORRECTNESS = 0.9;
 

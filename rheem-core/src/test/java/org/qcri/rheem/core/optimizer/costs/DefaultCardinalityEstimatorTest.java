@@ -4,6 +4,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import static org.mockito.Mockito.*;
 import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.OutputSlot;
 
 import java.util.function.ToLongFunction;

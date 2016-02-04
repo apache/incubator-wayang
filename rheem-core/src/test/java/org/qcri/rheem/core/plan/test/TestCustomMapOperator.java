@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.plan.test;
 
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 

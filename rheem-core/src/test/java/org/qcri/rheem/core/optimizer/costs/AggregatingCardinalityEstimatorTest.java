@@ -3,11 +3,11 @@ package org.qcri.rheem.core.optimizer.costs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.Subplan;
-import org.qcri.rheem.core.plan.test.TestJoin;
-import org.qcri.rheem.core.plan.test.TestMapOperator;
-import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Arrays;
 

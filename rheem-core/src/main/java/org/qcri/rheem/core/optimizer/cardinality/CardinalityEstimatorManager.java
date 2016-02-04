@@ -1,15 +1,13 @@
-package org.qcri.rheem.core.optimizer.costs;
+package org.qcri.rheem.core.optimizer.cardinality;
 
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.PhysicalPlan;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.OptionalDouble;

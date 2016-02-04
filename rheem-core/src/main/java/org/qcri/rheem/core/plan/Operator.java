@@ -1,11 +1,10 @@
 package org.qcri.rheem.core.plan;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.costs.CardinalityPusher;
-import org.qcri.rheem.core.optimizer.costs.DefaultCardinalityPusher;
-import org.slf4j.LoggerFactory;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -1,9 +1,9 @@
 package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.costs.FixedSizeCardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
 import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;

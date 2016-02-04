@@ -1,10 +1,8 @@
-package org.qcri.rheem.core.optimizer.costs;
+package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.SlotMapping;
-import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

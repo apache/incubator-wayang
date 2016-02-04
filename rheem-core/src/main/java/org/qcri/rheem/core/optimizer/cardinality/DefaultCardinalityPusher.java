@@ -1,4 +1,4 @@
-package org.qcri.rheem.core.optimizer.costs;
+package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.Operator;

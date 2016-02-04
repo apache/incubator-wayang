@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.plan;
 
-import org.qcri.rheem.core.optimizer.costs.*;
+import org.qcri.rheem.core.optimizer.cardinality.*;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -1,12 +1,11 @@
 package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.costs.DefaultCardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.BinaryToUnaryOperator;
 import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.plan.OperatorContainer;
 import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.types.DataSetType;
 

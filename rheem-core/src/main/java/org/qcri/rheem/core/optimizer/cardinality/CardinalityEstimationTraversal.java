@@ -1,4 +1,4 @@
-package org.qcri.rheem.core.optimizer.costs;
+package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.RheemContext;

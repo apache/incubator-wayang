@@ -1,9 +1,9 @@
 package org.qcri.rheem.core.plan.test;
 
 
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.costs.DefaultCardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.*;
 import org.qcri.rheem.core.types.DataSetType;
 

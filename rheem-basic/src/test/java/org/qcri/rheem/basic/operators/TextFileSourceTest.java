@@ -3,8 +3,8 @@ package org.qcri.rheem.basic.operators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
