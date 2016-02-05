@@ -39,7 +39,7 @@ public class RheemContext {
     /**
      * All registered mappings.
      */
-    private final Collection<PlanTransformation> transformations = new LinkedList<>();
+    final Collection<PlanTransformation> transformations = new LinkedList<>();
 
     private final CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this);
 
@@ -99,6 +99,8 @@ public class RheemContext {
      * @param physicalPlan the plan to execute
      */
     public void execute(PhysicalPlan physicalPlan) {
+        Job job = new Job(this, physicalPlan);
+        job.execute();
         PhysicalPlan executionPlan = getExecutionPlan(physicalPlan);
 
         // Take care of the execution.
