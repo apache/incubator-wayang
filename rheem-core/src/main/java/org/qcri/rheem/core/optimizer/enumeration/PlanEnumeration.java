@@ -1,4 +1,4 @@
-package org.qcri.rheem.core.optimizer;
+package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A {@link PlanEnumeration} represents a collection of (partial) execution plans. All these enumerated plans are extracted
@@ -206,6 +207,7 @@ public class PlanEnumeration {
     public void add(PartialPlan partialPlan) {
         // TODO: Check if the plan conforms to this instance.
         this.partialPlans.add(partialPlan);
+        partialPlan.setPlanEnumeration(this);
     }
 
     /**
@@ -435,6 +437,35 @@ public class PlanEnumeration {
 
         public Canonicalizer<ExecutionOperator> getOperators() {
             return operators;
+        }
+
+        /**
+         * @return those contained {@link ExecutionOperator}s that have a {@link Slot} that is yet to be connected
+         * to a further {@link ExecutionOperator} in the further plan enumeration process
+         */
+        public Collection<ExecutionOperator> getInterfaceOperators() {
+            Validate.notNull(this.getPlanEnumeration());
+            final Set<OutputSlot> outputSlots = this.getPlanEnumeration().servingOutputSlots.stream()
+                    .map(Tuple::getField0)
+                    .distinct()
+                    .collect(Collectors.toSet());
+            final Set<InputSlot> inputSlots = this.getPlanEnumeration().requestedInputSlots;
+
+            return this.operators.stream()
+                    .filter(operator ->
+                            allOutermostInputSlots(operator).anyMatch(inputSlots::contains) ||
+                                    allOutermostOutputSlots(operator).anyMatch(outputSlots::contains))
+                    .collect(Collectors.toList());
+        }
+
+        private Stream<OutputSlot> allOutermostOutputSlots(Operator operator) {
+            return Arrays.stream(operator.getAllOutputs())
+                    .flatMap(output -> operator.getOutermostOutputSlots(output).stream());
+        }
+
+        private Stream<InputSlot> allOutermostInputSlots(Operator operator) {
+            return Arrays.stream(operator.getAllInputs())
+                    .map(operator::getOutermostInputSlot);
         }
 
         public TimeEstimate getExecutionTimeEstimate(Map<ExecutionOperator, TimeEstimate> operatorTimeEstimates) {

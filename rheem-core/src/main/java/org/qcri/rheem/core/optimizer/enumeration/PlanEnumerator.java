@@ -1,4 +1,4 @@
-package org.qcri.rheem.core.optimizer;
+package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
@@ -10,7 +10,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * The plan partitioner recursively dissects a {@link PhysicalPlan} into .
+ * The plan partitioner recursively dissects a {@link PhysicalPlan} into {@link PlanEnumeration}s and then assembles
+ * them.
  */
 public class PlanEnumerator {
 
@@ -47,28 +48,39 @@ public class PlanEnumerator {
     private final Collection<PlanEnumeration> nonActivatingEnumerations = new LinkedList<>();
 
     /**
+     * {@link PlanEnumerationPruningStrategy}s to be applied while enumerating.
+     */
+    private final Collection<PlanEnumerationPruningStrategy> pruningStrategies;
+
+    /**
      * Creates a new instance.
      *  @param physicalPlan         a hyperplan that should be used for enumeration.
      */
     public PlanEnumerator(PhysicalPlan physicalPlan, Map<ExecutionOperator, TimeEstimate> timeEstimates) {
-        this(physicalPlan.collectReachableTopLevelSources(), timeEstimates);
+        this(physicalPlan.collectReachableTopLevelSources(), timeEstimates, new LinkedList<>());
     }
 
-    private PlanEnumerator(OperatorAlternative.Alternative alternative, Map<ExecutionOperator, TimeEstimate> timeEstimates) {
-        this(findStartOperators(alternative), timeEstimates);
+    /**
+     * Fork constructor.
+     */
+    private PlanEnumerator(OperatorAlternative.Alternative alternative,
+                           Map<ExecutionOperator, TimeEstimate> timeEstimates,
+                           Collection<PlanEnumerationPruningStrategy> pruningStrategies) {
+        this(findStartOperators(alternative), timeEstimates, pruningStrategies);
         this.alternative = alternative;
     }
 
     /**
-     * Creates a new instance.
-     *
-     * @param startOperators form the starting point for the enumeration
+     * Basic constructor.
      */
-    private PlanEnumerator(Collection<Operator> startOperators, Map<ExecutionOperator, TimeEstimate> timeEstimates) {
+    private PlanEnumerator(Collection<Operator> startOperators,
+                           Map<ExecutionOperator, TimeEstimate> timeEstimates,
+                           Collection<PlanEnumerationPruningStrategy> pruningStrategies) {
         startOperators.stream()
                 .map(PlanEnumerator.OperatorActivation::new)
                 .forEach(this.activatedOperators::add);
         this.timeEstimates = timeEstimates;
+        this.pruningStrategies = pruningStrategies;
     }
 
     /**
@@ -125,6 +137,7 @@ public class PlanEnumerator {
         if (branchEnumeration == null) {
             return;
         }
+        this.prune(branchEnumeration);
 
         // Build the complete enumeration from head to toe.
         PlanEnumeration completeEnumeration = branchEnumeration;
@@ -133,7 +146,8 @@ public class PlanEnumerator {
             if (inputEnumeration != null) {
                 completeEnumeration = inputEnumeration.join(completeEnumeration);
             }
-            // TODO: pruning.
+
+            this.prune(completeEnumeration);
         }
 
         // Once we stopped, activate all successive operators.
@@ -194,7 +208,7 @@ public class PlanEnumerator {
             if (operator.isAlternative()) {
                 operatorEnumeration = null;
                 for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
-                    final PlanEnumerator alternativeEnumerator = new PlanEnumerator(alternative, this.timeEstimates);
+                    final PlanEnumerator alternativeEnumerator = new PlanEnumerator(alternative, this.timeEstimates, this.pruningStrategies);
                     alternativeEnumerator.run();
                     final PlanEnumeration alternativeEnumeration = alternativeEnumerator.getComprehensiveEnumeration();
                     if (alternativeEnumeration != null) {
@@ -218,8 +232,6 @@ public class PlanEnumerator {
                     ? operatorEnumeration
                     : branchEnumeration.join(operatorEnumeration);
         }
-
-        // TODO: pruning
 
         return branchEnumeration;
     }
@@ -258,6 +270,14 @@ public class PlanEnumerator {
                 .map(instance -> instance.escape(this.alternative))
                 .reduce(PlanEnumeration::join)
                 .orElse(null);
+    }
+
+    public void addPruningStrategy(PlanEnumerationPruningStrategy strategy) {
+        this.pruningStrategies.add(strategy);
+    }
+
+    private void prune(final PlanEnumeration planEnumeration) {
+        this.pruningStrategies.forEach(strategy -> strategy.prune(planEnumeration));
     }
 
     /**

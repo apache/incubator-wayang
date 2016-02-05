@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class can be used to build an execution {@link org.qcri.rheem.core.plan.PhysicalPlan} in a bottom-up manner.
+ * @deprecated
  */
 public class ExecutionPlanBuilder {
 

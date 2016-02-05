@@ -1,6 +1,6 @@
-package org.qcri.rheem.core.optimizer;
+package org.qcri.rheem.core.optimizer.enumeration;
 
-import static org.qcri.rheem.core.optimizer.PlanEnumeration.*;
+import static org.qcri.rheem.core.optimizer.enumeration.PlanEnumeration.*;
 
 /**
  * A strategy to prune {@link PartialPlan}s from a {@link PlanEnumeration}.

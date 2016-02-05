@@ -41,6 +41,10 @@ public class ProbabilisticIntervalEstimate {
         return upperEstimate;
     }
 
+    public long getAverageEstimate() {
+        return (this.getUpperEstimate() - this.getLowerEstimate()) / 2;
+    }
+
     public double getCorrectnessProbability() {
         return correctnessProb;
     }

@@ -2,9 +2,9 @@ package org.qcri.rheem.core.api;
 
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.mapping.PlanTransformation;
-import org.qcri.rheem.core.optimizer.Optimizer;
-import org.qcri.rheem.core.optimizer.PlanEnumeration;
-import org.qcri.rheem.core.optimizer.PlanEnumerator;
+import org.qcri.rheem.core.optimizer.enumeration.InternalOperatorPruningStrategy;
+import org.qcri.rheem.core.optimizer.enumeration.PlanEnumeration;
+import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerator;
 import org.qcri.rheem.core.optimizer.SanityChecker;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
@@ -186,9 +186,14 @@ public class RheemContext {
      */
     private PhysicalPlan extractExecutionPlan(final PhysicalPlan physicalPlan,
                                               final Map<ExecutionOperator, TimeEstimate> timeEstimates) {
-        // Enumerate all possible plan. TODO: Prune them (using the cardinality estimates, amongst others).
+
+        // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = new PlanEnumerator(physicalPlan, timeEstimates);
+        planEnumerator.addPruningStrategy(new InternalOperatorPruningStrategy(
+                timeEstimates,
+                TimeEstimate.expectionValueComparator()));
         planEnumerator.run();
+
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.getComprehensiveEnumeration();
         final Collection<PlanEnumeration.PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
         logger.info("Enumerated {} plans.", executionPlans.size());
