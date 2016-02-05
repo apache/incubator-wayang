@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.plan.test;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.OutputSlot;
@@ -14,15 +15,13 @@ import java.util.Optional;
  */
 public class TestSink<T> extends UnarySink<T> {
 
-    public static final int OUTPUT_SIZE = 100;
-
     public TestSink(DataSetType<T> inputType) {
         super(inputType, null);
     }
 
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
-                                                                  Map<OutputSlot<?>, CardinalityEstimate> cache) {
+                                                                  Configuration configuration) {
         throw new RuntimeException();
     }
 }

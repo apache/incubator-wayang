@@ -1,16 +1,13 @@
 package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.stream.Stream;
 
 /**
@@ -41,15 +38,15 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     @Override
     public Optional<org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator> getCardinalityEstimator(
             final int outputIndex,
-            final Map<OutputSlot<?>, CardinalityEstimate> cache) {
+            final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return Optional.of(new FlatMapOperator.CardinalityEstimator(this.getOutput(outputIndex), cache));
+        return Optional.of(new FlatMapOperator.CardinalityEstimator());
     }
 
     /**
      * Custom {@link org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator} for {@link FlatMapOperator}s.
      */
-    private class CardinalityEstimator extends org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator.WithCache {
+    private class CardinalityEstimator implements org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator {
 
         public static final double DEFAULT_SELECTIVITY_CORRECTNESS = 0.9;
 
@@ -58,21 +55,17 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
          */
         public static final double DEFAULT_SELECTIVITY_DEVIATION = 0.01;
 
-        public CardinalityEstimator(OutputSlot<?> targetOutput, Map<OutputSlot<?>, CardinalityEstimate> estimateCache) {
-            super(targetOutput, estimateCache);
-        }
-
         @Override
-        public CardinalityEstimate calculateEstimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
+        public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
             Validate.isTrue(FlatMapOperator.this.getNumInputs() == inputEstimates.length);
             final CardinalityEstimate inputEstimate = inputEstimates[0];
 
-            final OptionalDouble selectivity = rheemContext.getCardinalityEstimatorManager()
-                    .getSelectivity(FlatMapOperator.this.functionDescriptor);
+            final Optional<Double> selectivity = configuration.getMultimapSelectivityProvider().optionallyProvideFor(
+                    FlatMapOperator.this.functionDescriptor);
             if (selectivity.isPresent()) {
                 return new CardinalityEstimate(
-                        (long) (inputEstimate.getLowerEstimate() * selectivity.getAsDouble()),
-                        (long) (inputEstimate.getUpperEstimate() * selectivity.getAsDouble()),
+                        (long) (inputEstimate.getLowerEstimate() * selectivity.get()),
+                        (long) (inputEstimate.getUpperEstimate() * selectivity.get()),
                         inputEstimate.getCorrectnessProbability() * DEFAULT_SELECTIVITY_CORRECTNESS
                 );
             } else {

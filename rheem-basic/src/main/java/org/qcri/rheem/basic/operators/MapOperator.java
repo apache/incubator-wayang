@@ -1,6 +1,7 @@
 package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
@@ -39,13 +40,8 @@ public class MapOperator<InputType, OutputType> extends UnaryToUnaryOperator<Inp
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(
             final int outputIndex,
-            final Map<OutputSlot<?>, CardinalityEstimate> cache) {
+            final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return Optional.of(new DefaultCardinalityEstimator(
-                1d,
-                1,
-                inputCards -> inputCards[0],
-                this.getOutput(outputIndex),
-                cache));
+        return Optional.of(new DefaultCardinalityEstimator(1d, 1, inputCards -> inputCards[0]));
     }
 }

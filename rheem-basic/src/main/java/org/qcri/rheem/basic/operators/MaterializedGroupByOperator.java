@@ -1,6 +1,7 @@
 package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
@@ -43,10 +44,10 @@ public class MaterializedGroupByOperator<Type, Key> extends UnaryToUnaryOperator
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(
             final int outputIndex,
-            final Map<OutputSlot<?>, CardinalityEstimate> cache) {
+            final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
         // TODO: Come up with a decent way to estimate the "distinctness" of reduction keys.
-        return Optional.of(new DefaultCardinalityEstimator(0.5d, 1, inputCards -> (long) (inputCards[0] * 0.1), this.getOutput(outputIndex), cache));
+        return Optional.of(new DefaultCardinalityEstimator(0.5d, 1, inputCards -> (long) (inputCards[0] * 0.1)));
     }
 
 }

@@ -1,10 +1,11 @@
 package org.qcri.rheem.core.plan;
 
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.configuration.ConfigurationProvider;
 import org.qcri.rheem.core.optimizer.cardinality.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * This operator encapsulates operators that are alternative to each other.
@@ -238,20 +239,21 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(
             final int outputIndex,
-            final Map<OutputSlot<?>, CardinalityEstimate> cache) {
+            final Configuration configuration) {
+
+        final OutputSlot<?> requestedSlot = this.getOutput(outputIndex);
+
         final List<CardinalityEstimator> alternativeEstimators = this.alternatives.stream()
-                .map(Alternative::getOperator)
-                .map(operator -> operator.getCardinalityEstimator(outputIndex, cache))
-                .flatMap(optional -> optional.isPresent() ? Stream.of(optional.get()) : Stream.empty())
+                .map(alternative -> alternative.traceOutput(requestedSlot))
+                .map(configuration.getCardinalityEstimatorProvider()::provideFor)
                 .collect(Collectors.toList());
 
-        return alternativeEstimators.isEmpty() ?
-                Optional.empty() :
-                Optional.of(new AggregatingCardinalityEstimator(alternativeEstimators, this.getOutput(outputIndex), cache));
+        return Optional.of(new AggregatingCardinalityEstimator(alternativeEstimators));
     }
 
     @Override
-    public CardinalityPusher getCardinalityPusher(Map<OutputSlot<?>, CardinalityEstimate> cache) {
-        return new AggregatingCardinalityPusher(this, cache);
+    public CardinalityPusher getCardinalityPusher(final Configuration configuration,
+                                                  Map<OutputSlot<?>, CardinalityEstimate> cache) {
+        return new AggregatingCardinalityPusher(this, configuration, cache);
     }
 }

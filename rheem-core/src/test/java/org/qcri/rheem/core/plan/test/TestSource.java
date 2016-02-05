@@ -1,13 +1,11 @@
 package org.qcri.rheem.core.plan.test;
 
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
-import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -20,7 +18,7 @@ public class TestSource<T> extends UnarySource<T> {
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex, Map<OutputSlot<?>, CardinalityEstimate> cache) {
-        return Optional.of(new FixedSizeCardinalityEstimator(100, this.getOutput(outputIndex), cache));
+    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex, Configuration configuration) {
+        return Optional.of(new FixedSizeCardinalityEstimator(100));
     }
 }

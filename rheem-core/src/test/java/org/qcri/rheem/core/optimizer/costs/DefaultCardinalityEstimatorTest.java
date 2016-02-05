@@ -2,14 +2,14 @@ package org.qcri.rheem.core.optimizer.costs;
 
 import org.junit.Assert;
 import org.junit.Test;
-import static org.mockito.Mockito.*;
-import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import org.qcri.rheem.core.plan.OutputSlot;
 
 import java.util.function.ToLongFunction;
+
+import static org.mockito.Mockito.mock;
 
 
 
@@ -21,8 +21,8 @@ public class DefaultCardinalityEstimatorTest {
 
     @Test
     public void testBinaryInputEstimation() {
-        // Mock RheemContext so as to not depend on rheem-basic, which is loaded by default.
-        RheemContext rheemContext = mock(RheemContext.class);
+        // Mock Configuration so as to not depend on rheem-basic, which is loaded by default by RheemContext.
+        Configuration configuration = mock(Configuration.class);
 
         CardinalityEstimate inputEstimate1 = new CardinalityEstimate(50, 60, 0.8);
         CardinalityEstimate inputEstimate2 = new CardinalityEstimate(10, 100, 0.4);
@@ -33,12 +33,10 @@ public class DefaultCardinalityEstimatorTest {
         CardinalityEstimator estimator = new DefaultCardinalityEstimator(
                 0.9,
                 2,
-                singlePointEstimator,
-                mock(OutputSlot.class),
-                null
+                singlePointEstimator
         );
 
-        CardinalityEstimate estimate = estimator.estimate(rheemContext, inputEstimate1, inputEstimate2);
+        CardinalityEstimate estimate = estimator.estimate(configuration, inputEstimate1, inputEstimate2);
 
         Assert.assertEquals(0.9 * 0.4, estimate.getCorrectnessProbability(), 0.001);
         Assert.assertEquals(singlePointEstimator.applyAsLong(new long[]{50, 10}), estimate.getLowerEstimate());

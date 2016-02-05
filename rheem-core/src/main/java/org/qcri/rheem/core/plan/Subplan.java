@@ -1,6 +1,8 @@
 package org.qcri.rheem.core.plan;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.configuration.ConfigurationProvider;
 import org.qcri.rheem.core.optimizer.cardinality.*;
 
 import java.util.*;
@@ -229,14 +231,16 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
-                                                                  Map<OutputSlot<?>, CardinalityEstimate> cache) {
+    public Optional<CardinalityEstimator> getCardinalityEstimator(final int outputIndex,
+                                                                  final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return CompositeCardinalityEstimator.createFor(this, outputIndex, cache);
+        return CompositeCardinalityEstimator.createFor(this, outputIndex, configuration);
     }
 
     @Override
-    public CardinalityPusher getCardinalityPusher(Map<OutputSlot<?>, CardinalityEstimate> cache) {
-        return CompositeCardinalityPusher.createFor(this, cache);
+    public CardinalityPusher getCardinalityPusher(
+            final Configuration configuration,
+            final Map<OutputSlot<?>, CardinalityEstimate> cache) {
+        return CompositeCardinalityPusher.createFor(this, configuration, cache);
     }
 }

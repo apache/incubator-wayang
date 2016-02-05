@@ -2,6 +2,7 @@ package org.qcri.rheem.basic.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
@@ -45,10 +46,12 @@ public class TextFileSourceTest {
             }
         }
 
-        final Optional<CardinalityEstimator> cardinalityEstimator = textFileSource.getCardinalityEstimator(0, null);
+        Configuration configuration = mock(Configuration.class);
+        final Optional<CardinalityEstimator> cardinalityEstimator = textFileSource
+                .getCardinalityEstimator(0, configuration);
 
         Assert.assertTrue(cardinalityEstimator.isPresent());
-        final CardinalityEstimate estimate = cardinalityEstimator.get().estimate(mock(RheemContext.class));
+        final CardinalityEstimate estimate = cardinalityEstimator.get().estimate(configuration);
 
         logger.info("Estimated between {} and {} lines in {} and counted {}.",
                 estimate.getLowerEstimate(),

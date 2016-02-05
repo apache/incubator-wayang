@@ -1,9 +1,8 @@
 package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.LimitedInputStream;
@@ -16,7 +15,6 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
@@ -49,9 +47,9 @@ public class TextFileSource extends UnarySource {
     @Override
     public Optional<org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator> getCardinalityEstimator(
             final int outputIndex,
-            final Map<OutputSlot<?>, CardinalityEstimate> cache) {
+            final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return Optional.of(new TextFileSource.CardinalityEstimator(this.getOutput(), cache));
+        return Optional.of(new TextFileSource.CardinalityEstimator());
     }
 
     public String getEncoding() {
@@ -61,7 +59,7 @@ public class TextFileSource extends UnarySource {
     /**
      * Custom {@link org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator} for {@link FlatMapOperator}s.
      */
-    private class CardinalityEstimator extends org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator.WithCache {
+    private class CardinalityEstimator implements org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator {
 
         public final CardinalityEstimate FALLBACK_ESTIMATE = new CardinalityEstimate(1000L, 100000000L, 0.7);
 
@@ -72,12 +70,8 @@ public class TextFileSource extends UnarySource {
          */
         public static final double EXPECTED_ESTIMATE_DEVIATION = 0.05;
 
-        public CardinalityEstimator(OutputSlot<?> targetOutput, Map<OutputSlot<?>, CardinalityEstimate> estimateCache) {
-            super(targetOutput, estimateCache);
-        }
-
         @Override
-        public CardinalityEstimate calculateEstimate(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
+        public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
             Validate.isTrue(TextFileSource.this.getNumInputs() == inputEstimates.length);
 
             OptionalLong fileSize = determineFileSize(TextFileSource.this.inputUrl);

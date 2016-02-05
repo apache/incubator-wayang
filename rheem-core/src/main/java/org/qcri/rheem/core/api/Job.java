@@ -3,6 +3,7 @@ package org.qcri.rheem.core.api;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.SanityChecker;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.ResourceUsageProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.ResourceUsageToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
@@ -34,10 +35,13 @@ public class Job {
 
     private final RheemContext rheemContext;
 
+    private final Configuration configuration;
+
     private final PhysicalPlan rheemPlan;
 
     Job(RheemContext rheemContext, PhysicalPlan rheemPlan) {
         this.rheemContext = rheemContext;
+        this.configuration = this.rheemContext.getConfiguration().fork();
         this.rheemPlan = rheemPlan;
     }
 
@@ -108,8 +112,9 @@ public class Job {
      * {@link Operator}s.
      */
     private Map<OutputSlot<?>, CardinalityEstimate> estimateCardinalities() {
-        final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates =
-                this.rheemContext.getCardinalityEstimatorManager().estimateAllCardinatilities(this.rheemPlan);
+        CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this.configuration);
+        cardinalityEstimatorManager.pushCardinalityEstimation(this.rheemPlan);
+        final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates = cardinalityEstimatorManager.getCache();
         cardinalityEstimates.entrySet().stream().forEach(entry ->
                 this.logger.debug("Cardinality estimate for {}: {}", entry.getKey(), entry.getValue()));
         return cardinalityEstimates;
@@ -181,7 +186,7 @@ public class Job {
     /**
      * Apply all {@link RheemContext#transformations} to the {@code plan}.
      *
-     * @param epoch          the new epoch
+     * @param epoch the new epoch
      * @return the number of applied transformations
      */
     private int applyAndCountTransformations(int epoch) {
