@@ -101,10 +101,10 @@ public class RheemContext {
     public void execute(PhysicalPlan physicalPlan) {
         Job job = new Job(this, physicalPlan);
         job.execute();
-        PhysicalPlan executionPlan = getExecutionPlan(physicalPlan);
-
-        // Take care of the execution.
-        deployAndRun(executionPlan);
+//        PhysicalPlan executionPlan = getExecutionPlan(physicalPlan);
+//
+//        // Take care of the execution.
+//        deployAndRun(executionPlan);
     }
 
     /**

@@ -27,6 +27,8 @@ public class Activator {
         rheemContext.register(new DistinctToJavaDistinctMapping());
         rheemContext.register(new SortToJavaSortMapping());
         rheemContext.register(new FilterToJavaFilterMapping());
+        rheemContext.register(new UnionAllToJavaUnionAllMapping());
+        rheemContext.register(new CartesianToJavaCartesianMapping());
     }
 
 }

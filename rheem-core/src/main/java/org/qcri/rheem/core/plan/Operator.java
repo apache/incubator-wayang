@@ -1,10 +1,8 @@
 package org.qcri.rheem.core.plan;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
-import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.*;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -286,7 +284,8 @@ public interface Operator {
             final int outputIndex,
             final Map<OutputSlot<?>, CardinalityEstimate> cache) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return Optional.empty();
+        LoggerFactory.getLogger(this.getClass()).warn("Use fallback cardinality estimator for {}.", this);
+        return Optional.of(new CardinalityEstimationProvider.FallbackCardinalityEstimator(this.getOutput(outputIndex), cache));
     }
 
     default CardinalityPusher getCardinalityPusher(final Map<OutputSlot<?>, CardinalityEstimate> cache) {

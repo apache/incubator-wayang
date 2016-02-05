@@ -37,4 +37,8 @@ public class CoalesceOperator<Type> extends BinaryToUnaryOperator<Type, Type, Ty
                 this.getOutput(outputIndex),
                 cache));
     }
+
+    public OutputSlot<?> getOutput() {
+        return this.getOutput(0);
+    }
 }

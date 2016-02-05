@@ -29,6 +29,7 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
 
     /**
      * Test whether this pattern matches a given operator.
+     *
      * @param operator the operator to match or {@code null}, which represents the absence of an operator to match
      * @return whether the operator matches
      */

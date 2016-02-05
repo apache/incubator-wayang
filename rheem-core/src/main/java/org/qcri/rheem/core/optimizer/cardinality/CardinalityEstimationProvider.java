@@ -66,7 +66,7 @@ public class CardinalityEstimationProvider {
      * Assumes with a confidence of 50% that the output cardinality will be somewhere between 1 and the product of
      * all 10*input estimates.
      */
-    private static class FallbackCardinalityEstimator extends CardinalityEstimator.WithCache {
+    public static class FallbackCardinalityEstimator extends CardinalityEstimator.WithCache {
 
         public FallbackCardinalityEstimator(OutputSlot<?> targetOutput, Map<OutputSlot<?>, CardinalityEstimate> estimateCache) {
             super(targetOutput, estimateCache);

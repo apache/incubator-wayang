@@ -126,7 +126,11 @@ public class SubplanPattern extends OperatorBase {
                            OutputSlot<?> trackedOutputSlot,
                            SubplanMatch subplanMatch) {
 
-            if (pattern.getNumInputs() > 1 && Arrays.stream(pattern.getAllInputs()).anyMatch(inputSlot -> inputSlot.getOccupant() != null)) {
+            if (pattern.getNumInputs() > 1 &&
+                    Arrays.stream(pattern.getAllInputs())
+                            .map(InputSlot::getOccupant)
+                            .filter(Objects::nonNull)
+                            .count() > 1) {
                 throw new RuntimeException("Cannot match pattern: Operator with more than one occupied input not supported, yet.");
             }
 
