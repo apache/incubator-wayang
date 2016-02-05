@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -187,11 +188,14 @@ public class RheemContext {
     private PhysicalPlan extractExecutionPlan(final PhysicalPlan physicalPlan,
                                               final Map<ExecutionOperator, TimeEstimate> timeEstimates) {
 
+        // Defines the plan that we want to use in the end.
+        final Comparator<TimeEstimate> timeEstimateComparator = TimeEstimate.expectionValueComparator();
+
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = new PlanEnumerator(physicalPlan, timeEstimates);
         planEnumerator.addPruningStrategy(new InternalOperatorPruningStrategy(
                 timeEstimates,
-                TimeEstimate.expectionValueComparator()));
+                timeEstimateComparator));
         planEnumerator.run();
 
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.getComprehensiveEnumeration();
@@ -201,9 +205,14 @@ public class RheemContext {
             logger.info("Plan with operators: {}", partialPlan.getOperators());
         }
 
-        // Pick an execution plan. TODO: Pick the best one.
+        // Pick an execution plan.
         return executionPlans.stream()
-                .findAny().orElseThrow(IllegalStateException::new)
+                .reduce((p1, p2) -> {
+                    final TimeEstimate t1 = p1.getExecutionTimeEstimate(timeEstimates);
+                    final TimeEstimate t2 = p2.getExecutionTimeEstimate(timeEstimates);
+                    return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
+                })
+                .orElseThrow(IllegalStateException::new)
                 .toPhysicalPlan();
     }
 
