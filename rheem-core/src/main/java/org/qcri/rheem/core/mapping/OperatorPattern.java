@@ -29,6 +29,7 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
 
     /**
      * Test whether this pattern matches a given operator.
+     *
      * @param operator the operator to match or {@code null}, which represents the absence of an operator to match
      * @return whether the operator matches
      */
@@ -59,7 +60,7 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
     }
 
     @Override
-    public <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+    public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
         throw new RuntimeException("Pattern does not accept visitors.");
     }
 

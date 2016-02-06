@@ -2,9 +2,7 @@ package org.qcri.rheem.core.plan;
 
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * An output slot declares an output of an {@link Operator}.
@@ -36,10 +34,10 @@ public class OutputSlot<T> extends Slot<T> {
         }
 
         for (int i = 0; i < victim.getNumOutputs(); i++) {
-            final List<? extends InputSlot<?>> occupiedSlots = victim.getOutput(i).getOccupiedSlots();
+            final List<? extends InputSlot<?>> occupiedSlots = new ArrayList<>(victim.getOutput(i).getOccupiedSlots());
             for (InputSlot<?> occupiedSlot : occupiedSlots) {
-                ((OutputSlot<Object>) victim.getOutput(i)).disconnectFrom((InputSlot<Object>) occupiedSlot);
-                ((OutputSlot<Object>) thief.getOutput(i)).connectTo((InputSlot<Object>) occupiedSlot);
+                victim.getOutput(i).unchecked().disconnectFrom(occupiedSlot.unchecked());
+                thief.getOutput(i).unchecked().connectTo(occupiedSlot.unchecked());
             }
         }
     }
@@ -95,5 +93,32 @@ public class OutputSlot<T> extends Slot<T> {
     @SuppressWarnings("unchecked")
     public OutputSlot<Object> unchecked() {
         return (OutputSlot<Object>) this;
+    }
+
+    /**
+     * Recursively follow the given {@code outputSlot}.
+     *
+     * @param outputSlot the {@link OutputSlot} to follow
+     * @return the interfacing {@link OutputSlot}s (either belong to a top-level {@link Operator} or occupy an
+     * {@link InputSlot}) that represent given {@code outputSlot}
+     * @see Operator#getContainer()
+     * @see OperatorContainer#followOutput(OutputSlot)
+     */
+    public static <T> Collection<OutputSlot<T>> followOutputRecursively(OutputSlot<T> outputSlot) {
+        Queue<OutputSlot<T>> processableOutputs = new LinkedList<>();
+        processableOutputs.add(outputSlot);
+        Collection<OutputSlot<T>> resolvedOutputs = new LinkedList<>();
+
+        while (!processableOutputs.isEmpty()) {
+            final OutputSlot<T> processableOutput = processableOutputs.poll();
+            if (!processableOutput.getOccupiedSlots().isEmpty() || processableOutput.getOwner().getContainer() == null) {
+                resolvedOutputs.add(processableOutput);
+            } else {
+                final OperatorContainer container = processableOutput.getOwner().getContainer();
+                processableOutputs.addAll(container.followOutput(processableOutput));
+            }
+        }
+
+        return resolvedOutputs;
     }
 }

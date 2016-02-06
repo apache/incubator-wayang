@@ -20,8 +20,10 @@ public interface CompositeOperator extends Operator {
 
     /**
      * Acknowledge that the given old operator has been replaced with a new one.
+     *
      * @param oldOperator the operator that has been replaced
      * @param newOperator the new operator
      */
     void replace(Operator oldOperator, Operator newOperator);
+
 }

@@ -32,7 +32,7 @@ public class PlanTraversal {
     /**
      * Traversing as with {@link #traverse(Operator, InputSlot, OutputSlot)} for every operator.
      */
-    public PlanTraversal traverse(Collection<Operator> operators) {
+    public PlanTraversal traverse(Collection<? extends Operator> operators) {
         operators.forEach(this::traverse);
         return this;
     }
@@ -47,14 +47,14 @@ public class PlanTraversal {
         return traverse(operator, null, null);
     }
 
-    private PlanTraversal traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
+    public PlanTraversal traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
         if (visitedOperators.add(operator)) {
-            if (this.isFollowInputs) followInputs(operator);
-            if (this.isFollowOutputs) followOutputs(operator);
-
             if (this.traversalCallback != null) {
                 this.traversalCallback.traverse(operator, fromInputSlot, fromOutputSlot);
             }
+
+            if (this.isFollowInputs) followInputs(operator);
+            if (this.isFollowOutputs) followOutputs(operator);
         }
 
         return this;
@@ -92,6 +92,15 @@ public class PlanTraversal {
     }
 
     /**
+     * Retrieve all traversed operators.
+     *
+     * @return previously traversed operators
+     */
+    public Collection<Operator> getTraversedNodes() {
+        return getTraversedNodesWith(operator -> true);
+    }
+
+    /**
      * A callback can be invoked during a plan traversal on each traversed node.
      */
     @FunctionalInterface
@@ -105,6 +114,10 @@ public class PlanTraversal {
          */
         void traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot);
 
+        /**
+         * Does nothing.
+         */
+        Callback NOP = (operator, fromInputSlot, fromOutputSlot) -> {};
     }
 
 }

@@ -1,8 +1,8 @@
 package org.qcri.rheem.core.function;
 
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataUnitGroupType;
-import org.qcri.rheem.core.types.DataUnitType;
 
 import java.util.function.BinaryOperator;
 
@@ -20,18 +20,20 @@ public class ReduceDescriptor<Type> extends FunctionDescriptor {
 
     public ReduceDescriptor(DataUnitGroupType<Type> inputType, BasicDataUnitType<Type> outputType,
                             BinaryOperator<Type> javaImplementation) {
+        this(inputType, outputType, javaImplementation,
+                LoadEstimator.createFallback(1, 1),
+                LoadEstimator.createFallback(1, 1));
+    }
+
+    public ReduceDescriptor(DataUnitGroupType<Type> inputType, BasicDataUnitType<Type> outputType,
+                            BinaryOperator<Type> javaImplementation, LoadEstimator cpuLoadEstimator,
+                            LoadEstimator memoryLoadEstimator) {
+        super(cpuLoadEstimator, memoryLoadEstimator);
         this.inputType = inputType;
         this.outputType = outputType;
         this.javaImplementation = javaImplementation;
     }
 
-    public ReduceDescriptor(Class<? extends Type> inputType, BinaryOperator<Type> javaImplementation) {
-        this(
-                DataUnitType.createGroupedUnchecked(inputType),
-                DataUnitType.createBasicUnchecked(inputType),
-                javaImplementation
-        );
-    }
 
     /**
      * This is function is not built to last. It is thought to help out devising programs while we are still figuring

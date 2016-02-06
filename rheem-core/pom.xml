@@ -12,5 +12,11 @@
     <artifactId>rheem-core</artifactId>
     <description>This Rheem module contains all the base code that is used by all other modules.</description>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+    </dependencies>
 
 </project>

@@ -7,8 +7,8 @@ import org.qcri.rheem.core.types.DataSetType;
  */
 public abstract class UnarySource<T> extends OperatorBase implements ActualOperator {
 
-    public UnarySource(DataSetType type, CompositeOperator parent) {
-        super(0, 1, parent);
+    public UnarySource(DataSetType type, OperatorContainer container) {
+        super(0, 1, container);
         this.outputSlots[0] = new OutputSlot<T>("output", this, type);
     }
 

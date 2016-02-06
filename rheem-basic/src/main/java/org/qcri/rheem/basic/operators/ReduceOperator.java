@@ -1,10 +1,17 @@
 package org.qcri.rheem.basic.operators;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
+import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * This operator is context dependent: after a {@link GroupByOperator}, it is meant to be a {@link ReduceByOperator};
@@ -38,5 +45,11 @@ public class ReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
     public ReduceDescriptor<Type> getReduceDescriptor() {
         return reduceDescriptor;
+    }
+
+    @Override
+    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
+                                                                  Configuration configuration) {
+        return Optional.of(new FixedSizeCardinalityEstimator(1L));
     }
 }

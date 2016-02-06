@@ -53,12 +53,12 @@ public class PlanTransformation {
             final Operator replacement = this.replacementFactory.createReplacementSubplan(match, epoch);
 
             if (match.getInputMatch() == match.getOutputMatch()) {
-                logger.info("Replacing {} with {} in epoch {}.",
+                logger.debug("Replacing {} with {} in epoch {}.",
                         match.getOutputMatch().getOperator(),
                         replacement,
                         epoch);
             } else {
-                logger.info("Replacing {}..{} with {} in epoch {}.",
+                logger.debug("Replacing {}..{} with {} in epoch {}.",
                         match.getInputMatch().getOperator(),
                         match.getOutputMatch().getOperator(),
                         replacement,

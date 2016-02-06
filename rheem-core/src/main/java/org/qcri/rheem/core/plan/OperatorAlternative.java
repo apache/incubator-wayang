@@ -1,9 +1,11 @@
 package org.qcri.rheem.core.plan;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.configuration.ConfigurationProvider;
+import org.qcri.rheem.core.optimizer.cardinality.*;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This operator encapsulates operators that are alternative to each other.
@@ -50,7 +52,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
      * Creates a new instance with the same number of inputs and outputs and the same parent as the given operator.
      */
     private OperatorAlternative(Operator operator) {
-        super(operator.getNumInputs(), operator.getNumOutputs(), operator.getParent());
+        super(operator.getNumInputs(), operator.getNumOutputs(), operator.getContainer());
     }
 
     public List<Alternative> getAlternatives() {
@@ -66,9 +68,14 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     }
 
     @Override
-    public <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+    public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
         return visitor.visit(this, outputSlot, payload);
     }
+
+//    @Override
+//    public <Payload, Return> Return accept(BottomUpPlanVisitor<Payload, Return> visitor, InputSlot<?> inputSlot, Payload payload) {
+//        return visitor.visit(this, inputSlot, payload);
+//    }
 
     @Override
     public SlotMapping getSlotMappingFor(Operator child) {
@@ -102,7 +109,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     /**
      * Represents an alternative subplan for the enclosing {@link OperatorAlternative}.
      */
-    public class Alternative {
+    public class Alternative implements OperatorContainer {
 
         /**
          * Maps the slots of the enclosing {@link OperatorAlternative} with the enclosed {@link #operator}.
@@ -117,7 +124,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
         private Alternative(Operator operator, SlotMapping slotMapping) {
             this.slotMapping = slotMapping;
             this.operator = operator;
-            operator.setParent(OperatorAlternative.this);
+            operator.setContainer(this);
         }
 
         public SlotMapping getSlotMapping() {
@@ -128,12 +135,8 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             return operator;
         }
 
-        /**
-         * Enter this alternative. This alternative needs to be a sink.
-         *
-         * @return the sink operator within this alternative
-         */
-        public Operator enter() {
+        @Override
+        public Operator getSink() {
             if (!isSink()) {
                 throw new IllegalArgumentException("Cannot enter alternative: no output slot given and alternative is not a sink.");
             }
@@ -141,19 +144,14 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             return this.operator;
         }
 
-        /**
-         * Enter this alternative by following one of its output slots.
-         *
-         * @param alternativeOutputSlot an output slot of this alternative
-         * @return the output within the alternative that is connected to the given output slot
-         */
-        public <T> OutputSlot<T> enter(OutputSlot<T> alternativeOutputSlot) {
+        @Override
+        public <T> OutputSlot<T> traceOutput(OutputSlot<T> alternativeOutputSlot) {
             // If this alternative is not a sink, we trace the given output slot via the slot mapping.
             if (!OperatorAlternative.this.isOwnerOf(alternativeOutputSlot)) {
                 throw new IllegalArgumentException("Cannot enter alternative: Output slot does not belong to this alternative.");
             }
 
-            final OutputSlot<T> resolvedSlot = this.slotMapping.resolve(alternativeOutputSlot);
+            final OutputSlot<T> resolvedSlot = this.slotMapping.resolveUpstream(alternativeOutputSlot);
             if (resolvedSlot != null && resolvedSlot.getOwner().getParent() != OperatorAlternative.this) {
                 final String msg = String.format("Cannot enter through: Owner of inner OutputSlot (%s) is not a child of this alternative (%s).",
                         Operators.collectParents(resolvedSlot.getOwner(), true),
@@ -163,11 +161,65 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             return resolvedSlot;
         }
 
+        @Override
+        public CompositeOperator toOperator() {
+            return OperatorAlternative.this;
+        }
+
+
+        @Override
+        public Operator getSource() {
+            if (!isSource()) {
+                throw new IllegalStateException("Cannot enter alternative: not a source.");
+            }
+
+            return this.operator;
+        }
+
+        @Override
+        public <T> Collection<InputSlot<T>> followInput(InputSlot<T> inputSlot) {
+            if (!OperatorAlternative.this.isOwnerOf(inputSlot)) {
+                throw new IllegalArgumentException("Cannot enter alternative: invalid input slot.");
+            }
+
+            final Collection<InputSlot<T>> resolvedSlots = this.slotMapping.resolveDownstream(inputSlot);
+            for (InputSlot<T> resolvedSlot : resolvedSlots) {
+                if (resolvedSlot != null && resolvedSlot.getOwner().getParent() != OperatorAlternative.this) {
+                    final String msg = String.format("Cannot enter through: Owner of inner OutputSlot (%s) is not a child of this alternative (%s).",
+                            Operators.collectParents(resolvedSlot.getOwner(), true),
+                            Operators.collectParents(OperatorAlternative.this, true));
+                    throw new IllegalStateException(msg);
+                }
+            }
+            return resolvedSlots;
+        }
+
+        @Override
+        public <T> InputSlot<T> traceInput(InputSlot<T> inputSlot) {
+            if (inputSlot.getOccupant() != null) {
+                throw new IllegalStateException("Cannot trace an InputSlot that has an occupant.");
+            }
+
+            if (inputSlot.getOwner().getContainer() != this) {
+                throw new IllegalArgumentException("Cannot trace input slot: does not belong to this alternative.");
+            }
+
+            return this.slotMapping.resolveUpstream(inputSlot);
+        }
+
+        @Override
+        public <T> Collection<OutputSlot<T>> followOutput(OutputSlot<T> outputSlot) {
+            if (outputSlot.getOwner().getContainer() != this) {
+                throw new IllegalArgumentException("OutputSlot does not belong to this Alternative.");
+            }
+            return this.slotMapping.resolveDownstream(outputSlot);
+        }
+
         public <T> InputSlot<T> exit(InputSlot<T> innerInputSlot) {
             if (innerInputSlot.getOwner().getParent() != OperatorAlternative.this) {
                 throw new IllegalArgumentException("Trying to exit from an input slot that is not within this alternative.");
             }
-            return this.slotMapping.resolve(innerInputSlot);
+            return this.slotMapping.resolveUpstream(innerInputSlot);
         }
 
         public OperatorAlternative getOperatorAlternative() {
@@ -184,4 +236,24 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
     }
 
+    @Override
+    public Optional<CardinalityEstimator> getCardinalityEstimator(
+            final int outputIndex,
+            final Configuration configuration) {
+
+        final OutputSlot<?> requestedSlot = this.getOutput(outputIndex);
+
+        final List<CardinalityEstimator> alternativeEstimators = this.alternatives.stream()
+                .map(alternative -> alternative.traceOutput(requestedSlot))
+                .map(configuration.getCardinalityEstimatorProvider()::provideFor)
+                .collect(Collectors.toList());
+
+        return Optional.of(new AggregatingCardinalityEstimator(alternativeEstimators));
+    }
+
+    @Override
+    public CardinalityPusher getCardinalityPusher(final Configuration configuration,
+                                                  Map<OutputSlot<?>, CardinalityEstimate> cache) {
+        return new AggregatingCardinalityPusher(this, configuration, cache);
+    }
 }

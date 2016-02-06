@@ -10,8 +10,8 @@ public abstract class UnaryToUnaryOperator<InputType, OutputType> extends Operat
     /**
      * Creates a new instance.
      */
-    public UnaryToUnaryOperator(DataSetType inputType, DataSetType outputType, CompositeOperator parent) {
-        super(1, 1, parent);
+    public UnaryToUnaryOperator(DataSetType inputType, DataSetType outputType, OperatorContainer container) {
+        super(1, 1, container);
         this.inputSlots[0] = new InputSlot<>("input", this, inputType);
         this.outputSlots[0] = new OutputSlot<>("output", this, outputType);
     }

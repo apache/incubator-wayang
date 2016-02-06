@@ -2,9 +2,6 @@ package org.qcri.rheem.core.api;
 
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.mapping.PlanTransformation;
-import org.qcri.rheem.core.optimizer.Optimizer;
-import org.qcri.rheem.core.plan.ExecutionOperator;
-import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.PhysicalPlan;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.Logger;
@@ -22,16 +19,19 @@ public class RheemContext {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    public static final String BASIC_PLUGIN_ACTIVATOR = "org.qcri.rheem.basic.plugin.Activator";
+
+    private final Configuration configuration = Configuration.createDefaultConfiguration(this);
+
     /**
      * All registered mappings.
      */
-    private final Collection<PlanTransformation> transformations = new LinkedList<>();
+    final Collection<PlanTransformation> transformations = new LinkedList<>();
 
-    private final Optimizer optimizer = new Optimizer();
+
 
     public RheemContext() {
-        final String activateClassName = "org.qcri.rheem.basic.plugin.Activator";
-        activatePackage(activateClassName);
+        activatePackage(BASIC_PLUGIN_ACTIVATOR);
     }
 
     /**
@@ -86,38 +86,12 @@ public class RheemContext {
      * @param physicalPlan the plan to execute
      */
     public void execute(PhysicalPlan physicalPlan) {
-        // NB: This is a dummy implementation to make the simplest case work.
+        Job job = new Job(this, physicalPlan);
+        job.execute();
 
-        // TODO: introduce calls only, for example the following block of code should be a simple call to the optimizer
-
-        boolean isAnyChange;
-        int epoch = Operator.FIRST_EPOCH;
-        do {
-            epoch++;
-            final int numTransformations = applyAndCountTransformations(physicalPlan, epoch);
-            logger.info("Applied {} transformations in epoch {}.", numTransformations, epoch);
-            isAnyChange = numTransformations > 0;
-        } while (isAnyChange);
-
-        PhysicalPlan executionPlan = this.optimizer.buildExecutionPlan(physicalPlan);
-
-        for (Operator sink : executionPlan.getSinks()) {
-            final ExecutionOperator executableSink = (ExecutionOperator) sink;
-            final Platform platform = ((ExecutionOperator) sink).getPlatform();
-            platform.evaluate(executableSink);
-        }
     }
 
-    /**
-     * Apply all {@link #transformations} to the {@code plan}.
-     * @param physicalPlan the plan to transform
-     * @param epoch the new epoch
-     * @return the number of applied transformations
-     */
-    private int applyAndCountTransformations(PhysicalPlan physicalPlan, int epoch) {
-        return this.transformations.stream()
-                .mapToInt(transformation -> transformation.transform(physicalPlan, epoch))
-                .sum();
+    public Configuration getConfiguration() {
+        return configuration;
     }
-
 }
