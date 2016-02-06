@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
-import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.*;
 
 import java.util.*;
@@ -15,13 +15,15 @@ public class CompositeCardinalityPusher extends CardinalityPusher {
      *
      * @return the instance if it could be created
      */
-    public static CardinalityPusher createFor(Subplan subplan, Map<OutputSlot<?>, CardinalityEstimate> cache) {
+    public static CardinalityPusher createFor(Subplan subplan,
+                                              Configuration configuration,
+                                              Map<OutputSlot<?>, CardinalityEstimate> cache) {
 
         final List<Collection<InputSlot<?>>> innerInputs = Arrays.stream(subplan.getAllInputs())
                 .map(inputSlot -> (Collection<InputSlot<?>>) (Collection) subplan.followInput(inputSlot))
                 .collect(Collectors.toList());
         final CardinalityEstimationTraversal traversal = CardinalityEstimationTraversal.createPushTraversal(
-                innerInputs, Collections.emptyList(), cache);
+                innerInputs, Collections.emptyList(), configuration, cache);
 
         return new CompositeCardinalityPusher(traversal, subplan, cache);
     }
@@ -31,11 +33,13 @@ public class CompositeCardinalityPusher extends CardinalityPusher {
      *
      * @return the instance if it could be created
      */
-    public static CardinalityPusher createFor(PhysicalPlan physicalPlan, Map<OutputSlot<?>, CardinalityEstimate> cache) {
+    public static CardinalityPusher createFor(PhysicalPlan physicalPlan,
+                                              final Configuration configuration,
+                                              Map<OutputSlot<?>, CardinalityEstimate> cache) {
 
         final Collection<Operator> sources = physicalPlan.collectReachableTopLevelSources();
         final CardinalityEstimationTraversal traversal = CardinalityEstimationTraversal.createPushTraversal(
-                Collections.emptyList(), sources, cache);
+                Collections.emptyList(), sources, configuration, cache);
 
         return new CompositeCardinalityPusher(traversal, Operators.slotlessOperator(), cache);
     }
@@ -51,15 +55,15 @@ public class CompositeCardinalityPusher extends CardinalityPusher {
     }
 
     @Override
-    protected CardinalityEstimate[] doPush(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
+    protected CardinalityEstimate[] doPush(Configuration configuration, CardinalityEstimate... inputEstimates) {
         final Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates =
-                this.traversal.traverse(rheemContext, inputEstimates);
+                this.traversal.traverse(configuration, inputEstimates);
         return constructPushResult(terminalEstimates);
     }
 
     /**
      * Collect the relevant {@link CardinalityEstimate}s from the {@code terminalEstimates} and pack them into
-     * an array as expected by {@link CardinalityPusher#push(RheemContext, CardinalityEstimate...)}.
+     * an array as expected by {@link CardinalityPusher#push(Configuration, CardinalityEstimate...)}.
      */
     private CardinalityEstimate[] constructPushResult(Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates) {
         final CardinalityEstimate[] result = new CardinalityEstimate[this.getOperator().getNumOutputs()];

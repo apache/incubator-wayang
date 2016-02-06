@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.function;
 
-import org.qcri.rheem.core.optimizer.costs.ResourceFunction;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 
 import java.util.function.Function;
@@ -23,16 +23,16 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
                                        BasicDataUnitType inputType,
                                        BasicDataUnitType outputType) {
         this(javaImplementation, inputType, outputType,
-                ResourceFunction.createFallback(1, 1),
-                ResourceFunction.createFallback(1, 1));
+                LoadEstimator.createFallback(1, 1),
+                LoadEstimator.createFallback(1, 1));
     }
 
     public TransformationDescriptor(Function<Input, Output> javaImplementation,
                                     BasicDataUnitType inputType,
                                     BasicDataUnitType outputType,
-                                    ResourceFunction cpuResourceFunction,
-                                    ResourceFunction ramResourceFunction) {
-        super(cpuResourceFunction, ramResourceFunction);
+                                    LoadEstimator cpuLoadEstimator,
+                                    LoadEstimator ramLoadEstimator) {
+        super(cpuLoadEstimator, ramLoadEstimator);
         this.javaImplementation = javaImplementation;
         this.inputType = inputType;
         this.outputType = outputType;

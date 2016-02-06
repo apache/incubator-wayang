@@ -1,8 +1,8 @@
 package org.qcri.rheem.core.function;
 
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.ResourceFunction;
-import org.qcri.rheem.core.optimizer.costs.ResourceUsageEstimate;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimate;
 import org.qcri.rheem.core.plan.InputSlot;
 import org.qcri.rheem.core.plan.OutputSlot;
 
@@ -11,13 +11,13 @@ import org.qcri.rheem.core.plan.OutputSlot;
  */
 public abstract class FunctionDescriptor {
 
-    protected final ResourceFunction cpuResourceFunction;
+    protected final LoadEstimator cpuLoadEstimator;
 
-    protected final ResourceFunction memoryResourceFunction;
+    protected final LoadEstimator memoryLoadEstimator;
 
-    public FunctionDescriptor(ResourceFunction cpuResourceFunction, ResourceFunction memoryResourceFunction) {
-        this.cpuResourceFunction = cpuResourceFunction;
-        this.memoryResourceFunction = memoryResourceFunction;
+    public FunctionDescriptor(LoadEstimator cpuLoadEstimator, LoadEstimator memoryLoadEstimator) {
+        this.cpuLoadEstimator = cpuLoadEstimator;
+        this.memoryLoadEstimator = memoryLoadEstimator;
     }
 
 
@@ -26,11 +26,11 @@ public abstract class FunctionDescriptor {
      *
      * @param inputCardinalities  input {@link CardinalityEstimate}s; ordered by this instance's {@link InputSlot}s
      * @param outputCardinalities output {@link CardinalityEstimate}s; ordered by this instance's {@link OutputSlot}s
-     * @return a {@link ResourceUsageEstimate}
+     * @return a {@link LoadEstimate}
      */
-    public ResourceUsageEstimate estimateCpuUsage(CardinalityEstimate[] inputCardinalities,
-                                           CardinalityEstimate[] outputCardinalities) {
-        return this.cpuResourceFunction.calculate(inputCardinalities, outputCardinalities);
+    public LoadEstimate estimateCpuUsage(CardinalityEstimate[] inputCardinalities,
+                                         CardinalityEstimate[] outputCardinalities) {
+        return this.cpuLoadEstimator.calculate(inputCardinalities, outputCardinalities);
     }
 
     /**
@@ -38,11 +38,11 @@ public abstract class FunctionDescriptor {
      *
      * @param inputCardinalities  input {@link CardinalityEstimate}s; ordered by this instance's {@link InputSlot}s
      * @param outputCardinalities output {@link CardinalityEstimate}s; ordered by this instance's {@link OutputSlot}s
-     * @return a {@link ResourceUsageEstimate}
+     * @return a {@link LoadEstimate}
      */
-    public ResourceUsageEstimate estimateRamUsage(CardinalityEstimate[] inputCardinalities,
-                                           CardinalityEstimate[] outputCardinalities) {
-        return this.memoryResourceFunction.calculate(inputCardinalities, outputCardinalities);
+    public LoadEstimate estimateRamUsage(CardinalityEstimate[] inputCardinalities,
+                                         CardinalityEstimate[] outputCardinalities) {
+        return this.memoryLoadEstimator.calculate(inputCardinalities, outputCardinalities);
     }
 
 }

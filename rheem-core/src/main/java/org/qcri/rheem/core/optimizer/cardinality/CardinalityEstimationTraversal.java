@@ -1,7 +1,7 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.InputSlot;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.OutputSlot;
@@ -36,11 +36,13 @@ public class CardinalityEstimationTraversal {
      */
     public static CardinalityEstimationTraversal createPullTraversal(List<Collection<InputSlot<?>>> inputSlots,
                                                                      OutputSlot<?> targetOutput,
-                                                                     Map<OutputSlot<?>, CardinalityEstimate> cache) {
+                                                                     Configuration configuration) {
+        Validate.notNull(inputSlots);
         Validate.notNull(targetOutput);
+        Validate.notNull(configuration);
 
         // Starting from the an output, find all required inputs.
-        return new EstimatorBuilder(inputSlots, cache).build(targetOutput);
+        return new EstimatorBuilder(inputSlots, configuration).build(targetOutput);
     }
 
     /**
@@ -49,19 +51,22 @@ public class CardinalityEstimationTraversal {
      * {@code cache}.
      *
      * @param inputSlots a multi-{@link List} of {@link InputSlot}s where the instance should begin to traverse from;
-     *                   the method {@link #traverse(RheemContext, CardinalityEstimate...)} will expect exactly one
+     *                   the method {@link #traverse(Configuration, CardinalityEstimate...)} will expect exactly one
      *                   {@link CardinalityEstimate} for each entry in this multi-{@link List} and each of the
      *                   {@link CardinalityEstimate}s will be delivered to all {@link InputSlot}s according to their
      *                   order of appearance
      */
     public static CardinalityEstimationTraversal createPushTraversal(List<Collection<InputSlot<?>>> inputSlots,
                                                                      Collection<Operator> sourceOperators,
+                                                                     Configuration configuration,
                                                                      Map<OutputSlot<?>, CardinalityEstimate> cache) {
         Validate.notNull(inputSlots);
+        Validate.notNull(sourceOperators);
         Validate.notNull(cache);
+        Validate.notNull(configuration);
 
         // Starting from the an output, find all required inputs.
-        return new PusherBuilder(inputSlots, cache).build(sourceOperators);
+        return new PusherBuilder(inputSlots, configuration, cache).build(sourceOperators);
     }
 
 
@@ -69,7 +74,7 @@ public class CardinalityEstimationTraversal {
      * Creates a new instance.
      *
      * @param inputActivations {@link Activation}s that will be satisfied by the parameters of
-     *                         {@link CardinalityEstimator#estimate(RheemContext, CardinalityEstimate...)} };
+     *                         {@link CardinalityEstimator#estimate(Configuration, CardinalityEstimate...)} };
      *                         the indices of the {@link Activation}s match those
      *                         of the {@link CardinalityEstimate}s
      * @param sourceActivators {@link Activator}s of source {@link CardinalityEstimator}
@@ -84,12 +89,12 @@ public class CardinalityEstimationTraversal {
     }
 
 
-    public Map<OutputSlot<?>, CardinalityEstimate> traverse(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
+    public Map<OutputSlot<?>, CardinalityEstimate> traverse(Configuration configuration, CardinalityEstimate... inputEstimates) {
         final Queue<Activator> activators = initializeActivatorQueue(inputEstimates);
         final Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates = new HashMap<>();
         do {
             final Activator activator = activators.poll();
-            activator.process(rheemContext, activators, terminalEstimates);
+            activator.process(configuration, activators, this.cache, terminalEstimates);
         } while (!activators.isEmpty());
         reset();
         return terminalEstimates;
@@ -150,11 +155,12 @@ public class CardinalityEstimationTraversal {
          * Execute this instance, thereby activating new instances and putting them on the queue.
          *
          * @param activatorQueue    accepts newly activated {@link CardinalityEstimator}s
-         * @param terminalEstimates
-         * @return optionally the {@link CardinalityEstimate} of this round if there is no dependent {@link CardinalityEstimator}
+         * @param cache
+         * @param terminalEstimates @return optionally the {@link CardinalityEstimate} of this round if there is no dependent {@link CardinalityEstimator}
          */
-        protected abstract void process(RheemContext rheemContext,
+        protected abstract void process(Configuration configuration,
                                         Queue<Activator> activatorQueue,
+                                        Map<OutputSlot<?>, CardinalityEstimate> cache,
                                         Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates);
 
         protected void processDependentActivations(OutputSlot<?> outputSlot,
@@ -198,18 +204,26 @@ public class CardinalityEstimationTraversal {
 
         private final Collection<Activation> dependentActivations = new LinkedList<>();
 
-        EstimatorActivator(CardinalityEstimator estimator, int numInputs) {
+        private final OutputSlot<?> estimatorOutput;
+
+        EstimatorActivator(CardinalityEstimator estimator, int numInputs, OutputSlot<?> estimatorOutput) {
             super(numInputs);
             this.estimator = estimator;
+            this.estimatorOutput = estimatorOutput;
         }
 
         @Override
-        protected void process(RheemContext rheemContext,
+        protected void process(Configuration configuration,
                                Queue<Activator> activatorQueue,
+                               Map<OutputSlot<?>, CardinalityEstimate> cache,
                                Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates) {
+
+            // Cache should only be used when pushing.
+            Validate.isTrue(cache == null);
+
             // Do the local estimation.
-            final CardinalityEstimate resultEstimate = this.estimator.estimate(rheemContext, this.inputEstimates);
-            this.processDependentActivations(this.estimator.getTargetOutput(), resultEstimate,
+            final CardinalityEstimate resultEstimate = this.estimator.estimate(configuration, this.inputEstimates);
+            this.processDependentActivations(this.estimatorOutput, resultEstimate,
                     this.dependentActivations, activatorQueue, terminalEstimates);
         }
 
@@ -235,23 +249,28 @@ public class CardinalityEstimationTraversal {
         @SuppressWarnings("unchecked")
         private final Collection<Activation>[] dependentActivations;
 
-        PusherActivator(Operator operator, Map<OutputSlot<?>, CardinalityEstimate> cache) {
+        PusherActivator(Operator operator,
+                        Configuration configuration,
+                        Map<OutputSlot<?>, CardinalityEstimate> cache) {
             super(operator.getNumInputs());
             this.dependentActivations = new Collection[operator.getNumOutputs()];
             for (int outputIndex = 0; outputIndex < dependentActivations.length; outputIndex++) {
                 dependentActivations[outputIndex] = new LinkedList<>();
 
             }
-            this.pusher = operator.getCardinalityPusher(cache);
+            this.pusher = operator.getCardinalityPusher(configuration, cache);
         }
 
         @Override
-        protected void process(RheemContext rheemContext,
+        protected void process(Configuration configuration,
                                Queue<Activator> activatorQueue,
+                               Map<OutputSlot<?>, CardinalityEstimate> cache,
                                Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates) {
+            Validate.notNull(cache);
 
             // Do the local estimation.
-            final CardinalityEstimate[] resultEstimates = this.pusher.push(rheemContext, this.inputEstimates);
+            final CardinalityEstimate[] resultEstimates = this.pusher.push(configuration, this.inputEstimates);
+
 
             for (int outputIndex = 0; outputIndex < resultEstimates.length; outputIndex++) {
                 // If we could not produce an estimate, we skip.
@@ -260,6 +279,10 @@ public class CardinalityEstimationTraversal {
                     continue;
                 }
 
+                // Cache!
+                cache.put(this.pusher.getOperator().getOutput(outputIndex), resultEstimate);
+
+                // Trigger follow-up operators.
                 this.processDependentActivations(this.pusher.getOperator().getOutput(outputIndex),
                         resultEstimate, this.dependentActivations[outputIndex], activatorQueue, terminalEstimates);
             }
@@ -302,10 +325,15 @@ public class CardinalityEstimationTraversal {
 
         final Map<OutputSlot<?>, CardinalityEstimate> cache;
 
+        final Configuration configuration;
+
         protected boolean isAllPartialEstimatorsAvailable = true;
 
-        private Builder(List<Collection<InputSlot<?>>> inputSlots, Map<OutputSlot<?>, CardinalityEstimate> cache) {
+        private Builder(List<Collection<InputSlot<?>>> inputSlots,
+                        Configuration configuration,
+                        Map<OutputSlot<?>, CardinalityEstimate> cache) {
             this.inputSlots = inputSlots;
+            this.configuration = configuration;
             this.cache = cache;
         }
 
@@ -380,8 +408,8 @@ public class CardinalityEstimationTraversal {
 
         private Map<OutputSlot<?>, EstimatorActivator> createdEstimatorActivators = new HashMap<>();
 
-        private EstimatorBuilder(List<Collection<InputSlot<?>>> inputSlots, Map<OutputSlot<?>, CardinalityEstimate> cache) {
-            super(inputSlots, cache);
+        private EstimatorBuilder(List<Collection<InputSlot<?>>> inputSlots, Configuration configuration) {
+            super(inputSlots, configuration, null);
         }
 
         /**
@@ -457,11 +485,13 @@ public class CardinalityEstimationTraversal {
         protected EstimatorActivator createAndCacheActivator(OutputSlot<?> outputSlot) {
             final Operator operator = outputSlot.getOwner();
             final Optional<CardinalityEstimator> optionalEstimator =
-                    operator.getCardinalityEstimator(outputSlot.getIndex(), this.cache);
+                    operator.getCardinalityEstimator(outputSlot.getIndex(), this.configuration);
             if (!optionalEstimator.isPresent()) {
                 return null;
             }
-            final EstimatorActivator activator = new EstimatorActivator(optionalEstimator.get(), operator.getNumInputs());
+            final EstimatorActivator activator = new EstimatorActivator(optionalEstimator.get(),
+                    operator.getNumInputs(),
+                    outputSlot);
             this.createdEstimatorActivators.put(outputSlot, activator);
             return activator;
         }
@@ -474,8 +504,10 @@ public class CardinalityEstimationTraversal {
 
         private Map<Operator, PusherActivator> createdPusherActivators = new HashMap<>();
 
-        private PusherBuilder(List<Collection<InputSlot<?>>> inputSlots, Map<OutputSlot<?>, CardinalityEstimate> cache) {
-            super(inputSlots, cache);
+        private PusherBuilder(List<Collection<InputSlot<?>>> inputSlots,
+                              Configuration configuration,
+                              Map<OutputSlot<?>, CardinalityEstimate> cache) {
+            super(inputSlots, configuration, cache);
         }
 
         /**
@@ -551,7 +583,7 @@ public class CardinalityEstimationTraversal {
 
         protected Activator createActivator(OutputSlot<?> outputSlot) {
             final Operator operator = outputSlot.getOwner();
-            final PusherActivator pusherActivator = new PusherActivator(operator, this.cache);
+            final PusherActivator pusherActivator = new PusherActivator(operator, this.configuration, this.cache);
             this.createdPusherActivators.put(operator, pusherActivator);
             return pusherActivator;
         }

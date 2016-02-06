@@ -1,13 +1,11 @@
 package org.qcri.rheem.core.plan;
 
-import org.qcri.rheem.core.function.FunctionDescriptor;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.ResourceFunction;
-import org.qcri.rheem.core.optimizer.costs.ResourceUsageEstimate;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.costs.LoadProfile;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.platform.Platform;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.Optional;
 
 /**
  * An execution operator is handled by a certain platform.
@@ -24,70 +22,15 @@ public interface ExecutionOperator extends ActualOperator {
      */
     ExecutionOperator copy();
 
-    default ResourceFunction getCpuResourceFunction() {
-        return ResourceFunction.createFallback(this.getNumInputs(), this.getNumOutputs());
-    }
-
-    default ResourceFunction getRamResourceFunction() {
-        return ResourceFunction.createFallback(this.getNumInputs(), this.getNumOutputs());
-    }
-
-    default ResourceFunction getDiskResourceFunction() {
-        return ResourceFunction.createFallback(this.getNumInputs(), this.getNumOutputs());
-    }
-
-    default ResourceFunction getNetworkResourceFunction() {
-        return ResourceFunction.createFallback(this.getNumInputs(), this.getNumOutputs());
-    }
-
     /**
-     * Estimate the CPU usage of this instance.
+     * Developers of {@link ExecutionOperator}s can provide a default {@link LoadProfileEstimator} via this method.
      *
-     * @param inputCardinalities  input {@link CardinalityEstimate}s; ordered by this instance's {@link InputSlot}s
-     * @param outputCardinalities output {@link CardinalityEstimate}s; ordered by this instance's {@link OutputSlot}s
-     * @return a {@link ResourceUsageEstimate}
+     * @param configuration in which the {@link LoadProfile} should be estimated.
+     * @return an {@link Optional} that might contain the {@link LoadProfileEstimator} (but {@link Optional#empty()}
+     * by default)
      */
-    default ResourceUsageEstimate estimateCpuUsage(CardinalityEstimate[] inputCardinalities,
-                                           CardinalityEstimate[] outputCardinalities) {
-        return this.getCpuResourceFunction().calculate(inputCardinalities, outputCardinalities);
-    }
-
-    /**
-     * Estimate the RAM usage of this instance.
-     *
-     * @param inputCardinalities  input {@link CardinalityEstimate}s; ordered by this instance's {@link InputSlot}s
-     * @param outputCardinalities output {@link CardinalityEstimate}s; ordered by this instance's {@link OutputSlot}s
-     * @return a {@link ResourceUsageEstimate}
-     */
-    default ResourceUsageEstimate estimateRamUsage(CardinalityEstimate[] inputCardinalities,
-                                           CardinalityEstimate[] outputCardinalities) {
-        return this.getRamResourceFunction().calculate(inputCardinalities, outputCardinalities);
-    }
-    /**
-     * Estimate the disk usage of this instance.
-     *
-     * @param inputCardinalities  input {@link CardinalityEstimate}s; ordered by this instance's {@link InputSlot}s
-     * @param outputCardinalities output {@link CardinalityEstimate}s; ordered by this instance's {@link OutputSlot}s
-     * @return a {@link ResourceUsageEstimate}
-     */
-    default ResourceUsageEstimate estimateDiskUsage(CardinalityEstimate[] inputCardinalities,
-                                           CardinalityEstimate[] outputCardinalities) {
-        return this.getDiskResourceFunction().calculate(inputCardinalities, outputCardinalities);
-    }
-    /**
-     * Estimate the network usage of this instance.
-     *
-     * @param inputCardinalities  input {@link CardinalityEstimate}s; ordered by this instance's {@link InputSlot}s
-     * @param outputCardinalities output {@link CardinalityEstimate}s; ordered by this instance's {@link OutputSlot}s
-     * @return a {@link ResourceUsageEstimate}
-     */
-    default ResourceUsageEstimate estimateNetworkUsage(CardinalityEstimate[] inputCardinalities,
-                                           CardinalityEstimate[] outputCardinalities) {
-        return this.getNetworkResourceFunction().calculate(inputCardinalities, outputCardinalities);
-    }
-
-    default Collection<FunctionDescriptor> getAllFunctionDescriptors() {
-        return Collections.emptyList();
+    default Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        return Optional.empty();
     }
 
 }

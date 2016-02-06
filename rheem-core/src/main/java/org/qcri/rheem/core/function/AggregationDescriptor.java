@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.function;
 
-import org.qcri.rheem.core.optimizer.costs.ResourceFunction;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataUnitGroupType;
 
@@ -18,14 +18,14 @@ public abstract class AggregationDescriptor<InputType, OutputType> extends Funct
 
     public AggregationDescriptor(DataUnitGroupType<InputType> inputType, BasicDataUnitType<OutputType> outputType) {
         this(inputType, outputType,
-                ResourceFunction.createFallback(1, 1),
-                ResourceFunction.createFallback(1, 1));
+                LoadEstimator.createFallback(1, 1),
+                LoadEstimator.createFallback(1, 1));
     }
 
     public AggregationDescriptor(DataUnitGroupType<InputType> inputType, BasicDataUnitType<OutputType> outputType,
-                                 ResourceFunction cpuResourceFunction,
-                                 ResourceFunction memoryResourceFunction) {
-        super(cpuResourceFunction, memoryResourceFunction);
+                                 LoadEstimator cpuLoadEstimator,
+                                 LoadEstimator memoryLoadEstimator) {
+        super(cpuLoadEstimator, memoryLoadEstimator);
         this.inputType = inputType;
         this.outputType = outputType;
     }

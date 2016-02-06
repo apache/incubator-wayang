@@ -2,24 +2,28 @@ package org.qcri.rheem.core.optimizer.costs;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.plan.ExecutionOperator;
 
+import java.util.Arrays;
 import java.util.function.ToLongBiFunction;
+import java.util.stream.LongStream;
 
 /**
- * Implementation of {@link ResourceFunction} that uses a single-point cost function.
+ * Implementation of {@link LoadEstimator} that uses a single-point cost function.
  */
-public class DefaultResourceFunction extends ResourceFunction {
+public class DefaultLoadEstimator extends LoadEstimator {
 
+    public static final int UNSPECIFIED_NUM_SLOTS = -1;
     private final double correctnessProbablity;
 
     private final int numInputs, numOutputs;
 
     private final ToLongBiFunction<long[], long[]> singlePointEstimator;
 
-    public DefaultResourceFunction(int numInputs,
-                                   int numOutputs,
-                                   double correctnessProbablity,
-                                   ToLongBiFunction<long[], long[]> singlePointFunction) {
+    public DefaultLoadEstimator(int numInputs,
+                                int numOutputs,
+                                double correctnessProbablity,
+                                ToLongBiFunction<long[], long[]> singlePointFunction) {
 
         this.numInputs = numInputs;
         this.numOutputs = numOutputs;
@@ -27,13 +31,41 @@ public class DefaultResourceFunction extends ResourceFunction {
         this.singlePointEstimator = singlePointFunction;
     }
 
-    @Override
-    public ResourceUsageEstimate calculate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
-        Validate.isTrue(inputEstimates.length == this.numInputs, "Received %d input estimates, require %d.",
-                inputEstimates.length, this.numInputs);
-        Validate.isTrue(outputEstimates.length == this.numOutputs, "Received %d output estimates, require %d.",
-                outputEstimates.length, this.numOutputs);
+    /**
+     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element.
+     */
+    public static LoadEstimator createIOLinearEstimator(ExecutionOperator operator, long loadPerCardinalityUnit) {
+        return new DefaultLoadEstimator(operator.getNumInputs(),
+                operator.getNumOutputs(),
+                0.01,
+                (inputCards, outputCards) ->
+                        loadPerCardinalityUnit * LongStream.concat(
+                                Arrays.stream(inputCards),
+                                Arrays.stream(outputCards)
+                        ).sum()
+        );
+    }
 
+    /**
+     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element.
+     */
+    public static LoadEstimator createIOLinearEstimator(long loadPerCardinalityUnit) {
+        return new DefaultLoadEstimator(UNSPECIFIED_NUM_SLOTS, UNSPECIFIED_NUM_SLOTS,
+                0.01,
+                (inputCards, outputCards) ->
+                        loadPerCardinalityUnit * LongStream.concat(
+                                Arrays.stream(inputCards),
+                                Arrays.stream(outputCards)
+                        ).sum()
+        );
+    }
+
+    @Override
+    public LoadEstimate calculate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
+        Validate.isTrue(inputEstimates.length == this.numInputs || this.numInputs == UNSPECIFIED_NUM_SLOTS,
+                "Received %d input estimates, require %d.", inputEstimates.length, this.numInputs);
+        Validate.isTrue(outputEstimates.length == this.numOutputs || this.numOutputs == UNSPECIFIED_NUM_SLOTS,
+                "Received %d output estimates, require %d.", outputEstimates.length, this.numOutputs);
 
         long[][] inputEstimateCombinations = enumerateCombinations(inputEstimates);
         long[][] outputEstimateCombinations = enumerateCombinations(outputEstimates);
@@ -56,7 +88,7 @@ public class DefaultResourceFunction extends ResourceFunction {
 
         double correctnessProbability = calculateJointProbability(inputEstimates, outputEstimates)
                 * this.correctnessProbablity;
-        return new ResourceUsageEstimate(lowerEstimate, upperEstimate, correctnessProbability);
+        return new LoadEstimate(lowerEstimate, upperEstimate, correctnessProbability);
     }
 
     private long[][] enumerateCombinations(CardinalityEstimate[] cardinalityEstimates) {

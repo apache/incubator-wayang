@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
-import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.OutputSlot;
 import org.slf4j.Logger;
@@ -23,14 +23,14 @@ public abstract class CardinalityPusher {
         this.cache = cache;
     }
 
-    public CardinalityEstimate[] push(RheemContext rheemContext, CardinalityEstimate... inputEstimates) {
+    public CardinalityEstimate[] push(Configuration configuration, CardinalityEstimate... inputEstimates) {
         this.logger.trace("Pushing {} into {}.", Arrays.toString(inputEstimates), this.getOperator());
-        if (!canHandle(rheemContext, inputEstimates)) {
+        if (!canHandle(configuration, inputEstimates)) {
             this.logger.info("Pushed incomplete estimates to {}... providing fallback estimates.",
                     this.getOperator());
-            return this.createFallbackEstimates(rheemContext, inputEstimates);
+            return this.createFallbackEstimates(configuration, inputEstimates);
         }
-        final CardinalityEstimate[] cardinalityEstimates = this.doPush(rheemContext, inputEstimates);
+        final CardinalityEstimate[] cardinalityEstimates = this.doPush(configuration, inputEstimates);
         putToCache(cardinalityEstimates);
         return cardinalityEstimates;
     }
@@ -45,15 +45,15 @@ public abstract class CardinalityPusher {
         this.cache.put(this.operator.getOutput(outputIndex), cardinalityEstimate);
     }
 
-    private boolean canHandle(RheemContext rheemContext, CardinalityEstimate[] inputEstimates) {
+    private boolean canHandle(Configuration configuration, CardinalityEstimate[] inputEstimates) {
         return Arrays.stream(inputEstimates).noneMatch(Objects::isNull);
     }
 
-    private CardinalityEstimate[] createFallbackEstimates(RheemContext rheemContext, CardinalityEstimate[] inputEstimates) {
+    private CardinalityEstimate[] createFallbackEstimates(Configuration configuration, CardinalityEstimate[] inputEstimates) {
         return new CardinalityEstimate[this.getOperator().getNumOutputs()];
     }
 
-    protected abstract CardinalityEstimate[] doPush(RheemContext rheemContext, CardinalityEstimate... inputEstimates);
+    protected abstract CardinalityEstimate[] doPush(Configuration configuration, CardinalityEstimate... inputEstimates);
 
     public Operator getOperator() {
         return operator;

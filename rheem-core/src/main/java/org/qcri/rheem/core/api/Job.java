@@ -4,8 +4,8 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.SanityChecker;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
-import org.qcri.rheem.core.optimizer.costs.ResourceUsageProfileToTimeConverter;
-import org.qcri.rheem.core.optimizer.costs.ResourceUsageToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimationTraversal;
 import org.qcri.rheem.core.optimizer.enumeration.InternalOperatorPruningStrategy;
@@ -125,14 +125,8 @@ public class Job {
      * {@link ExecutionOperator}s.
      */
     private Map<ExecutionOperator, TimeEstimate> estimateExecutionTimes(Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates) {
-        ResourceUsageProfileToTimeConverter timeConverter = ResourceUsageProfileToTimeConverter.createDefault(
-                ResourceUsageToTimeConverter.createLinearCoverter(0.001d),
-                ResourceUsageToTimeConverter.createLinearCoverter(0.01d),
-                ResourceUsageToTimeConverter.createLinearCoverter(0.01d),
-                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
-        );
         final Map<ExecutionOperator, TimeEstimate> timeEstimates = TimeEstimationTraversal.traverse(this.rheemPlan,
-                timeConverter,
+                this.configuration,
                 cardinalityEstimates);
         timeEstimates.entrySet().forEach(entry ->
                 this.logger.info("Time estimate for {}: {}", entry.getKey(), entry.getValue()));

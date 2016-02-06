@@ -7,9 +7,9 @@ import java.util.Arrays;
 /**
  * Describes the resource utilization of something executable.
  */
-public abstract class ResourceFunction {
+public abstract class LoadEstimator {
 
-    public abstract ResourceUsageEstimate calculate(
+    public abstract LoadEstimate calculate(
             CardinalityEstimate[] inputEstimates,
             CardinalityEstimate[] outputEstimates);
 
@@ -23,8 +23,8 @@ public abstract class ResourceFunction {
                 .reduce(1d, (a, b) -> a * b);
     }
 
-    public static ResourceFunction createFallback(int numInputs, int numOutputs) {
-        return new DefaultResourceFunction(numInputs, numOutputs, 0.1d,
+    public static LoadEstimator createFallback(int numInputs, int numOutputs) {
+        return new DefaultLoadEstimator(numInputs, numOutputs, 0.1d,
                 (inputCards, outputCards) -> Arrays.stream(inputCards).sum() + Arrays.stream(outputCards).sum());
     }
 
