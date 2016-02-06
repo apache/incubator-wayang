@@ -103,7 +103,7 @@ public class PlanEnumerator {
      * Execute the enumeration.
      */
     public void run() {
-        this.logger.info("Enumerating with the activated operators {}.", this.activatedOperators.stream()
+        this.logger.debug("Enumerating with the activated operators {}.", this.activatedOperators.stream()
                 .map(OperatorActivation::getOperator)
                 .collect(Collectors.toList()));
 
@@ -124,7 +124,7 @@ public class PlanEnumerator {
     private void enumerateBranchFrom(OperatorActivation operatorActivation) {
         // Start with the activated operator.
         Operator currentOperator = operatorActivation.activatableOperator;
-        logger.info("Creating new branch starting at {}.", currentOperator);
+        logger.debug("Creating new branch starting at {}.", currentOperator);
 
         List<Operator> branch = determineBranch(currentOperator);
 
@@ -166,7 +166,7 @@ public class PlanEnumerator {
         List<Operator> branch = new LinkedList<>();
         Operator currentOperator = startOperator;
         while (true) {
-            this.logger.info("Adding {} to the branch.", currentOperator);
+            this.logger.debug("Adding {} to the branch.", currentOperator);
 
 //            if (currentOperator.isAlternative()) {
 //                OperatorAlternative operatorAlternative = (OperatorAlternative) currentOperator;
@@ -180,22 +180,22 @@ public class PlanEnumerator {
             branch.add(currentOperator);
             // Try to advance. This requires certain conditions, though.
             if (currentOperator.getNumOutputs() != 1) {
-                this.logger.info("Stopping branch, because operator does not have exactly one output.");
+                this.logger.debug("Stopping branch, because operator does not have exactly one output.");
                 break;
             }
             if (currentOperator.getOutput(0).getOccupiedSlots().size() != 1) {
-                this.logger.info("Stopping branch, because operator does not feed exactly one operator.");
+                this.logger.debug("Stopping branch, because operator does not feed exactly one operator.");
                 break;
             }
             Operator nextOperator = currentOperator.getOutput(0).getOccupiedSlots().get(0).getOwner();
             if (nextOperator.getNumInputs() != 1) {
-                this.logger.info("Stopping branch, because next operator does not have exactly one input.");
+                this.logger.debug("Stopping branch, because next operator does not have exactly one input.");
                 break;
             }
 
             currentOperator = nextOperator;
         }
-        this.logger.info("Determined branch : {}.", currentOperator);
+        this.logger.debug("Determined branch : {}.", currentOperator);
 
         return branch;
     }
@@ -222,7 +222,7 @@ public class PlanEnumerator {
                     throw new IllegalStateException("Expect elementary operator.");
                 }
                 if (!operator.isExecutionOperator()) {
-                    this.logger.info("Detected non-execution branch... skipping.");
+                    this.logger.debug("Detected non-execution branch... skipping.");
                     return null;
                 }
                 operatorEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) operator);

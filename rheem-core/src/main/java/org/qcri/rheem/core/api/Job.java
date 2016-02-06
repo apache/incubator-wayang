@@ -4,8 +4,6 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.SanityChecker;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimationTraversal;
 import org.qcri.rheem.core.optimizer.enumeration.InternalOperatorPruningStrategy;
@@ -87,7 +85,7 @@ public class Job {
         do {
             epoch++;
             final int numTransformations = applyAndCountTransformations(epoch);
-            logger.info("Applied {} transformations in epoch {}.", numTransformations, epoch);
+            logger.debug("Applied {} transformations in epoch {}.", numTransformations, epoch);
             isAnyChange = numTransformations > 0;
         } while (isAnyChange);
 
@@ -129,7 +127,7 @@ public class Job {
                 this.configuration,
                 cardinalityEstimates);
         timeEstimates.entrySet().forEach(entry ->
-                this.logger.info("Time estimate for {}: {}", entry.getKey(), entry.getValue()));
+                this.logger.debug("Time estimate for {}: {}", entry.getKey(), entry.getValue()));
         return timeEstimates;
     }
 
@@ -152,7 +150,7 @@ public class Job {
         final Collection<PlanEnumeration.PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
         logger.info("Enumerated {} plans.", executionPlans.size());
         for (PlanEnumeration.PartialPlan partialPlan : executionPlans) {
-            logger.info("Plan with operators: {}", partialPlan.getOperators());
+            logger.debug("Plan with operators: {}", partialPlan.getOperators());
         }
 
         // Pick an execution plan.
@@ -161,6 +159,10 @@ public class Job {
                     final TimeEstimate t1 = p1.getExecutionTimeEstimate(timeEstimates);
                     final TimeEstimate t2 = p2.getExecutionTimeEstimate(timeEstimates);
                     return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
+                })
+                .map(plan -> {
+                    this.logger.info("Picked plan's cost estimate is {}.", plan.getExecutionTimeEstimate(timeEstimates));
+                    return plan;
                 })
                 .orElseThrow(IllegalStateException::new)
                 .toPhysicalPlan();

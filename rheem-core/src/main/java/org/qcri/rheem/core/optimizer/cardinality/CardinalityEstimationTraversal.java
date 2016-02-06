@@ -426,7 +426,7 @@ public class CardinalityEstimationTraversal {
             }).traverse(outputSlot.getOwner(), null, outputSlot);
 
             if (!this.isAllPartialEstimatorsAvailable) {
-                LOGGER.info("Could not build instance: missing partial estimator");
+                LOGGER.debug("Could not build instance: missing partial estimator");
                 return null;
             }
 
@@ -527,7 +527,7 @@ public class CardinalityEstimationTraversal {
                     .traverse(distinctInputs.stream().map(InputSlot::getOwner).collect(Collectors.toList()));
 
             if (!this.isAllPartialEstimatorsAvailable) {
-                LOGGER.info("Could not build instance: missing partial estimator");
+                LOGGER.debug("Could not build instance: missing partial estimator");
                 return null;
             }
 

@@ -395,7 +395,7 @@ public class PlanEnumeration {
                 final OperatorAlternative.Alternative thisChosenAlternative = this.settledAlternatives.get(operatorAlternative);
                 final OperatorAlternative.Alternative thatChosenAlternative = that.settledAlternatives.get(operatorAlternative);
                 if (!thatChosenAlternative.equals(thisChosenAlternative)) {
-                    LOGGER.info("Cannot combine two partial plans: they disagree in some alternatives");
+                    LOGGER.debug("Cannot combine two partial plans: they disagree in some alternatives");
                     return null;
                 }
             }
@@ -403,7 +403,7 @@ public class PlanEnumeration {
             // Find out, how the two partial plans can be concatenated in the first place.
 //            final Map<InputSlot, OutputSlot> touchpoints = this.slotMapping.compose(that.slotMapping);
 //            if (touchpoints.isEmpty()) {
-//                LOGGER.info("Cannot combine two partial plans: no touchpoint between them");
+//                LOGGER.debug("Cannot combine two partial plans: no touchpoint between them");
 //                return null;
 //            }
 

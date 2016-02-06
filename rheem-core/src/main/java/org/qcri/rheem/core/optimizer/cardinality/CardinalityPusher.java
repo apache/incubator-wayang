@@ -26,7 +26,7 @@ public abstract class CardinalityPusher {
     public CardinalityEstimate[] push(Configuration configuration, CardinalityEstimate... inputEstimates) {
         this.logger.trace("Pushing {} into {}.", Arrays.toString(inputEstimates), this.getOperator());
         if (!canHandle(configuration, inputEstimates)) {
-            this.logger.info("Pushed incomplete estimates to {}... providing fallback estimates.",
+            this.logger.debug("Pushed incomplete estimates to {}... providing fallback estimates.",
                     this.getOperator());
             return this.createFallbackEstimates(configuration, inputEstimates);
         }

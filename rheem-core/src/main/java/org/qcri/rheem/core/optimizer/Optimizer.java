@@ -71,7 +71,7 @@ public class Optimizer {
                 if (this.processedOperators.contains(workingPath.operatorToBeProcessed)) {
                     continue;
                 }
-                Optimizer.this.logger.info("Processing working path with {} ({} left in queue).",
+                Optimizer.this.logger.debug("Processing working path with {} ({} left in queue).",
                         workingPath.operatorToBeProcessed,
                         this.workingPaths.size());
                 process(workingPath);

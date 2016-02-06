@@ -90,7 +90,7 @@ public class ExecutionPlanBuilder {
     public Optional<PhysicalPlan> build() {
         // See if there are sinks in the first place.
         if (this.sinks.isEmpty()) {
-            logger.info("Discard plan without sinks.");
+            logger.debug("Discard plan without sinks.");
             return Optional.na();
         }
 
@@ -109,7 +109,7 @@ public class ExecutionPlanBuilder {
                         .getTraversedNodesWith(operator -> true)
         );
         if (!isAllConsumedOperatorInputsSatisfied.get()) {
-            logger.info("Discard plan that comprises consumed operators with unsatisfied inputs.");
+            logger.debug("Discard plan that comprises consumed operators with unsatisfied inputs.");
             return Optional.na();
         }
 
