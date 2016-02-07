@@ -10,10 +10,10 @@ import org.qcri.rheem.core.optimizer.costs.TimeEstimationTraversal;
 import org.qcri.rheem.core.optimizer.enumeration.InternalOperatorPruningStrategy;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumeration;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerator;
-import org.qcri.rheem.core.plan.ExecutionOperator;
-import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.PhysicalPlan;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +37,9 @@ public class Job {
 
     private final Configuration configuration;
 
-    private final PhysicalPlan rheemPlan;
+    private final RheemPlan rheemPlan;
 
-    Job(RheemContext rheemContext, PhysicalPlan rheemPlan) {
+    Job(RheemContext rheemContext, RheemPlan rheemPlan) {
         this.rheemContext = rheemContext;
         this.configuration = this.rheemContext.getConfiguration().fork();
         this.rheemPlan = rheemPlan;
@@ -55,16 +55,16 @@ public class Job {
         }
 
         // Get an execution plan.
-        PhysicalPlan executionPlan = getExecutionPlan();
+        RheemPlan executionPlan = getExecutionPlan();
 
         // Take care of the execution.
         deployAndRun(executionPlan);
     }
 
     /**
-     * Determine a good/the best execution plan from a given {@link PhysicalPlan}.
+     * Determine a good/the best execution plan from a given {@link RheemPlan}.
      */
-    private PhysicalPlan getExecutionPlan() {
+    private RheemPlan getExecutionPlan() {
         // Apply the mappings to the plan to form a hyperplan.
         applyMappingsToRheemPlan();
 
@@ -74,12 +74,12 @@ public class Job {
         final Map<ExecutionOperator, TimeEstimate> timeEstimates = estimateExecutionTimes(cardinalityEstimates);
 
         // Enumerate plans and pick the best one.
-        final PhysicalPlan pickedExecutionPlan = extractExecutionPlan(timeEstimates);
+        final RheemPlan pickedExecutionPlan = extractExecutionPlan(timeEstimates);
         return pickedExecutionPlan;
     }
 
     /**
-     * Apply all available transformations in the {@link #configuration} to the {@link PhysicalPlan}.
+     * Apply all available transformations in the {@link #configuration} to the {@link RheemPlan}.
      */
     private void applyMappingsToRheemPlan() {
         boolean isAnyChange;
@@ -121,7 +121,7 @@ public class Job {
     }
 
     /**
-     * Check that the given {@link PhysicalPlan} is as we expect it to be in the following steps.
+     * Check that the given {@link RheemPlan} is as we expect it to be in the following steps.
      */
     private void checkHyperplanSanity() {
         // We make some assumptions on the hyperplan. Make sure that they hold. After all, the transformations might
@@ -133,7 +133,7 @@ public class Job {
     }
 
     /**
-     * Go over the given {@link PhysicalPlan} and estimate the cardinalities of data being passed between its
+     * Go over the given {@link RheemPlan} and estimate the cardinalities of data being passed between its
      * {@link Operator}s.
      */
     private Map<OutputSlot<?>, CardinalityEstimate> estimateCardinalities() {
@@ -146,7 +146,7 @@ public class Job {
     }
 
     /**
-     * Go over the given {@link PhysicalPlan} and estimate the execution times of its
+     * Go over the given {@link RheemPlan} and estimate the execution times of its
      * {@link ExecutionOperator}s.
      */
     private Map<ExecutionOperator, TimeEstimate> estimateExecutionTimes(Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates) {
@@ -159,9 +159,9 @@ public class Job {
     }
 
     /**
-     * Enumerate possible execution plans from the given {@link PhysicalPlan} and determine the (seemingly) best one.
+     * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
      */
-    private PhysicalPlan extractExecutionPlan(final Map<ExecutionOperator, TimeEstimate> timeEstimates) {
+    private RheemPlan extractExecutionPlan(final Map<ExecutionOperator, TimeEstimate> timeEstimates) {
 
         // Defines the plan that we want to use in the end.
         final Comparator<TimeEstimate> timeEstimateComparator = TimeEstimate.expectionValueComparator();
@@ -192,13 +192,13 @@ public class Job {
                     return plan;
                 })
                 .orElseThrow(IllegalStateException::new)
-                .toPhysicalPlan();
+                .toRheemPlan();
     }
 
     /**
      * Dummy implementation: Have the platforms execute the given execution plan.
      */
-    private void deployAndRun(PhysicalPlan executionPlan) {
+    private void deployAndRun(RheemPlan executionPlan) {
         for (Operator sink : executionPlan.getSinks()) {
             final ExecutionOperator executableSink = (ExecutionOperator) sink;
             final Platform platform = ((ExecutionOperator) sink).getPlatform();

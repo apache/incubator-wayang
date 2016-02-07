@@ -1,8 +1,8 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.plan.ExecutionOperator;
-import org.qcri.rheem.core.plan.Slot;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.Slot;
 
 import java.util.Collection;
 import java.util.Comparator;

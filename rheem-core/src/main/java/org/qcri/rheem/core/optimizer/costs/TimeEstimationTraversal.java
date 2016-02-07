@@ -4,13 +4,13 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.configuration.KeyValueProvider;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Traverses a {@link PhysicalPlan}, thereby creating {@link TimeEstimate}s for every encountered operator.
+ * Traverses a {@link RheemPlan}, thereby creating {@link TimeEstimate}s for every encountered operator.
  */
 public class TimeEstimationTraversal {
 
@@ -34,11 +34,11 @@ public class TimeEstimationTraversal {
      * {@link ExecutionOperator}s.
      *
      * @param plan                 should be traversed
-     * @param cardinalityEstimates provides {@link CardinalityEstimate}s of the {@link PhysicalPlan}
+     * @param cardinalityEstimates provides {@link CardinalityEstimate}s of the {@link RheemPlan}
      * @return the {@link TimeEstimate}s for all encountered {@link ExecutionOperator}s
      */
     public static Map<ExecutionOperator, TimeEstimate> traverse(
-            PhysicalPlan plan,
+            RheemPlan plan,
             Configuration configuration,
             Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates) {
 

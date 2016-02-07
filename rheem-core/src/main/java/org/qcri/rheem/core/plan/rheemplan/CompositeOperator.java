@@ -1,4 +1,4 @@
-package org.qcri.rheem.core.plan;
+package org.qcri.rheem.core.plan.rheemplan;
 
 /**
  * A composite operator can be decomposed into smaller operators.

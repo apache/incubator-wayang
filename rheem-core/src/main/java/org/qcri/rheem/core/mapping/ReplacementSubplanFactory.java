@@ -1,7 +1,7 @@
 package org.qcri.rheem.core.mapping;
 
-import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.plan.Subplan;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.Subplan;
 
 /**
  * This factory takes an {@link SubplanMatch} and derives a replacement {@link Subplan} from it.

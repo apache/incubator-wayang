@@ -5,7 +5,7 @@ import org.qcri.rheem.basic.operators.GroupByOperator;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.basic.operators.ReduceOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Collection;

@@ -1,6 +1,6 @@
 package org.qcri.rheem.basic.operators;
 
-import org.qcri.rheem.core.plan.BinaryToUnaryOperator;
+import org.qcri.rheem.core.plan.rheemplan.BinaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
 

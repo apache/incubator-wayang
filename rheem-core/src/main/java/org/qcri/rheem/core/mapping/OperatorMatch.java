@@ -1,10 +1,10 @@
 package org.qcri.rheem.core.mapping;
 
-import org.qcri.rheem.core.plan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 
 /**
  * An operator match correlates an {@link OperatorPattern} to an actually matched
- * {@link org.qcri.rheem.core.plan.Operator}.
+ * {@link Operator}.
  */
 public class OperatorMatch {
 

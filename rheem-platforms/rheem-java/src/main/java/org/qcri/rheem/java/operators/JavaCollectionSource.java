@@ -2,7 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.TextFileSource;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;

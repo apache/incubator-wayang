@@ -3,14 +3,13 @@ package org.qcri.rheem.core.optimizer.costs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.CompositeCardinalityEstimator;
-import org.qcri.rheem.core.plan.Subplan;
-import org.qcri.rheem.core.plan.test.TestJoin;
-import org.qcri.rheem.core.plan.test.TestMapOperator;
-import org.qcri.rheem.core.plan.test.TestSource;
+import org.qcri.rheem.core.plan.rheemplan.Subplan;
+import org.qcri.rheem.core.plan.rheemplan.test.TestJoin;
+import org.qcri.rheem.core.plan.rheemplan.test.TestMapOperator;
+import org.qcri.rheem.core.plan.rheemplan.test.TestSource;
 import org.qcri.rheem.core.types.DataSetType;
 
 import static org.mockito.Mockito.mock;

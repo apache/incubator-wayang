@@ -1,8 +1,5 @@
 package org.qcri.rheem.core.util;
 
-import org.qcri.rheem.core.plan.InputSlot;
-import org.qcri.rheem.core.plan.OutputSlot;
-
 import java.util.Objects;
 
 /**

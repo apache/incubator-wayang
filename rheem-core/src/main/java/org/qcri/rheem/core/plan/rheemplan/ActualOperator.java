@@ -1,4 +1,4 @@
-package org.qcri.rheem.core.plan;
+package org.qcri.rheem.core.plan.rheemplan;
 
 /**
  * Operator free of ambiguities.

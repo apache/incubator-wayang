@@ -1,8 +1,8 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.PhysicalPlan;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,8 +20,8 @@ public class CardinalityEstimatorManager {
         this.configuration = configuration;
     }
 
-    public void pushCardinalityEstimation(PhysicalPlan physicalPlan) {
-        final CardinalityPusher pusher = CompositeCardinalityPusher.createFor(physicalPlan, this.configuration, this.cache);
+    public void pushCardinalityEstimation(RheemPlan rheemPlan) {
+        final CardinalityPusher pusher = CompositeCardinalityPusher.createFor(rheemPlan, this.configuration, this.cache);
         pusher.push(this.configuration, new CardinalityEstimate[0]);
     }
 

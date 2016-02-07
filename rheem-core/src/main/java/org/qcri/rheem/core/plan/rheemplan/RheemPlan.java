@@ -1,12 +1,12 @@
-package org.qcri.rheem.core.plan;
+package org.qcri.rheem.core.plan.rheemplan;
 
 import java.util.Collection;
 import java.util.LinkedList;
 
 /**
- * A physical plan consists of a set of {@link Operator}s.
+ * A Rheem plan consists of a set of {@link Operator}s.
  */
-public class PhysicalPlan {
+public class RheemPlan {
 
     private final Collection<Operator> sinks = new LinkedList<>();
 

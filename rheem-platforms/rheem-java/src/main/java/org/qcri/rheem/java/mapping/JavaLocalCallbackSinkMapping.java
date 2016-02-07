@@ -2,7 +2,7 @@ package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 import org.qcri.rheem.java.plugin.JavaPlatform;
 

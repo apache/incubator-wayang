@@ -1,7 +1,7 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,15 +29,15 @@ public class CompositeCardinalityPusher extends CardinalityPusher {
     }
 
     /**
-     * Create an instance for the given {@link PhysicalPlan}.
+     * Create an instance for the given {@link RheemPlan}.
      *
      * @return the instance if it could be created
      */
-    public static CardinalityPusher createFor(PhysicalPlan physicalPlan,
+    public static CardinalityPusher createFor(RheemPlan rheemPlan,
                                               final Configuration configuration,
                                               Map<OutputSlot<?>, CardinalityEstimate> cache) {
 
-        final Collection<Operator> sources = physicalPlan.collectReachableTopLevelSources();
+        final Collection<Operator> sources = rheemPlan.collectReachableTopLevelSources();
         final CardinalityEstimationTraversal traversal = CardinalityEstimationTraversal.createPushTraversal(
                 Collections.emptyList(), sources, configuration, cache);
 

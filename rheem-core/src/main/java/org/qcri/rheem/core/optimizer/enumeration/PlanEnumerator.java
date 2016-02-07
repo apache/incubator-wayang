@@ -3,7 +3,7 @@ package org.qcri.rheem.core.optimizer.enumeration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * The plan partitioner recursively dissects a {@link PhysicalPlan} into {@link PlanEnumeration}s and then assembles
+ * The plan partitioner recursively dissects a {@link RheemPlan} into {@link PlanEnumeration}s and then assembles
  * them.
  */
 public class PlanEnumerator {
@@ -56,10 +56,10 @@ public class PlanEnumerator {
     /**
      * Creates a new instance.
      *
-     * @param physicalPlan a hyperplan that should be used for enumeration.
+     * @param rheemPlan a hyperplan that should be used for enumeration.
      */
-    public PlanEnumerator(PhysicalPlan physicalPlan, Map<ExecutionOperator, TimeEstimate> timeEstimates) {
-        this(physicalPlan.collectReachableTopLevelSources(), timeEstimates, new LinkedList<>());
+    public PlanEnumerator(RheemPlan rheemPlan, Map<ExecutionOperator, TimeEstimate> timeEstimates) {
+        this(rheemPlan.collectReachableTopLevelSources(), timeEstimates, new LinkedList<>());
     }
 
     /**

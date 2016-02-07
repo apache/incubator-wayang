@@ -2,7 +2,7 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.Canonicalizer;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
@@ -15,8 +15,8 @@ import java.util.stream.Stream;
 
 /**
  * A {@link PlanEnumeration} represents a collection of (partial) execution plans. All these enumerated plans are extracted
- * from the exact same part of a given {@link PhysicalPlan} (which might be a hyperplan). Therefore, the outputs
- * are mapped to this {@link PhysicalPlan} if the plans are partial.
+ * from the exact same part of a given {@link RheemPlan} (which might be a hyperplan). Therefore, the outputs
+ * are mapped to this {@link RheemPlan} if the plans are partial.
  */
 public class PlanEnumeration {
 
@@ -482,7 +482,7 @@ public class PlanEnumeration {
             return this.executionTimeEstimate;
         }
 
-        public PhysicalPlan toPhysicalPlan() {
+        public RheemPlan toRheemPlan() {
             Map<OutputSlot<?>, ExecutionOperator> copiedOutputProviders = new HashMap<>();
             Map<OutputSlot<?>, Collection<InputSlot<?>>> copiedOutputRequesters = new HashMap<>();
 
@@ -533,9 +533,9 @@ public class PlanEnumeration {
             Validate.isTrue(copiedOutputRequesters.isEmpty());
             Validate.isTrue(!sinks.isEmpty());
 
-            final PhysicalPlan physicalPlan = new PhysicalPlan();
-            sinks.forEach(physicalPlan::addSink);
-            return physicalPlan;
+            final RheemPlan rheemPlan = new RheemPlan();
+            sinks.forEach(rheemPlan::addSink);
+            return rheemPlan;
         }
     }
 

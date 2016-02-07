@@ -3,7 +3,7 @@ package org.qcri.rheem.basic.operators;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.plan.UnarySource;
+import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.LimitedInputStream;
 import org.qcri.rheem.core.util.fs.FileSystem;

@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * This class checks a {@link PhysicalPlan} for several sanity criteria:
+ * This class checks a {@link RheemPlan} for several sanity criteria:
  * <ol>
  * <li>{@link Subplan}s must only be used as top-level {@link Operator} of {@link OperatorAlternative.Alternative}</li>
  * <li>{@link Subplan}s must contain more than one {@link Operator}</li>
@@ -24,15 +24,15 @@ public class SanityChecker {
     /**
      * Is subject to the sanity checks.
      */
-    private final PhysicalPlan physicalPlan;
+    private final RheemPlan rheemPlan;
 
     /**
      * Create a new instance
      *
-     * @param physicalPlan is subject to sanity checks
+     * @param rheemPlan is subject to sanity checks
      */
-    public SanityChecker(PhysicalPlan physicalPlan) {
-        this.physicalPlan = physicalPlan;
+    public SanityChecker(RheemPlan rheemPlan) {
+        this.rheemPlan = rheemPlan;
     }
 
     public boolean checkAllCriteria() {
@@ -51,7 +51,7 @@ public class SanityChecker {
         final AtomicBoolean testOutcome = new AtomicBoolean(true);
         new PlanTraversal(true, false)
             .withCallback(getProperSubplanCallback(testOutcome))
-            .traverse(physicalPlan.getSinks());
+            .traverse(rheemPlan.getSinks());
         return testOutcome.get();
     }
 
@@ -100,7 +100,7 @@ public class SanityChecker {
         AtomicBoolean testOutcome = new AtomicBoolean(true);
         new PlanTraversal(true, false)
                 .withCallback(getFlatAlternativeCallback(testOutcome))
-                .traverse(this.physicalPlan.getSinks());
+                .traverse(this.rheemPlan.getSinks());
         return testOutcome.get();
     }
 

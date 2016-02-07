@@ -1,6 +1,6 @@
-package org.qcri.rheem.core.plan.test;
+package org.qcri.rheem.core.plan.rheemplan.test;
 
-import org.qcri.rheem.core.plan.UnarySink;
+import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.types.DataSetType;
 
 /**

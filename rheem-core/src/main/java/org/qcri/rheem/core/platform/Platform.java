@@ -3,7 +3,7 @@ package org.qcri.rheem.core.platform;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

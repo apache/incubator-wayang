@@ -7,11 +7,10 @@ import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.*;
-import org.qcri.rheem.core.plan.ExecutionOperator;
-import org.qcri.rheem.core.plan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
 
-import java.lang.reflect.Method;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 

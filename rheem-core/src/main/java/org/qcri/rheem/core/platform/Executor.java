@@ -1,9 +1,9 @@
 package org.qcri.rheem.core.platform;
 
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
 /**
- * An executor executes {@link org.qcri.rheem.core.plan.ExecutionOperator}s.
+ * An executor executes {@link ExecutionOperator}s.
  */
 public interface Executor {
 

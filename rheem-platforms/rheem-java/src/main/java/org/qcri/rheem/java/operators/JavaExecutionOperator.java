@@ -1,6 +1,6 @@
 package org.qcri.rheem.java.operators;
 
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.plugin.JavaPlatform;

@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.mapping;
 
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 
 /**
  * An operator pattern matches to a class of operator instances.

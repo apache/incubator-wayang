@@ -2,7 +2,7 @@ package org.qcri.rheem.core.optimizer.costs;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
 import java.util.Arrays;
 import java.util.function.ToLongBiFunction;

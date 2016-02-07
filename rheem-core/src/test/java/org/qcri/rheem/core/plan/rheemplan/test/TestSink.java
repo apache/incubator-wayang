@@ -1,13 +1,10 @@
-package org.qcri.rheem.core.plan.test;
+package org.qcri.rheem.core.plan.rheemplan.test;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.UnarySink;
+import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.Map;
 import java.util.Optional;
 
 /**

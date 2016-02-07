@@ -2,12 +2,11 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CartesianOperator;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 import java.util.stream.Collectors;
 import java.util.stream.Stream;

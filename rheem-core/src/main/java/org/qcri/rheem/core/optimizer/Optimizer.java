@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,9 +18,9 @@ public class Optimizer {
 
     private Queue<EnumerationPath> enumerationPaths = new LinkedList<>();
 
-    private Collection<PhysicalPlan> executionPlans = new LinkedList<>();
+    private Collection<RheemPlan> executionPlans = new LinkedList<>();
 
-    public PhysicalPlan buildExecutionPlan(PhysicalPlan rheemPlan) {
+    public RheemPlan buildExecutionPlan(RheemPlan rheemPlan) {
 
         // Find all sources.
         final Collection<Operator> sources = new PlanTraversal(true, false)

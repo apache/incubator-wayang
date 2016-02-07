@@ -1,11 +1,7 @@
-package org.qcri.rheem.core.plan;
-
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
+package org.qcri.rheem.core.plan.rheemplan;
 
 /**
- * Visitor (as in the Visitor Pattern) for {@link PhysicalPlan}s.
+ * Visitor (as in the Visitor Pattern) for {@link RheemPlan}s.
  */
 public abstract class BottomUpPlanVisitor<Payload, Return> {
 

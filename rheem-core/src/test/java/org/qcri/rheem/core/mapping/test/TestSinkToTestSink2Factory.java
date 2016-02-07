@@ -3,13 +3,13 @@ package org.qcri.rheem.core.mapping.test;
 import org.qcri.rheem.core.mapping.OperatorMatch;
 import org.qcri.rheem.core.mapping.ReplacementSubplanFactory;
 import org.qcri.rheem.core.mapping.SubplanMatch;
-import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.plan.test.TestSink;
-import org.qcri.rheem.core.plan.test.TestSink2;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.test.TestSink;
+import org.qcri.rheem.core.plan.rheemplan.test.TestSink2;
 
 /**
- * This factory replaces a {@link org.qcri.rheem.core.plan.test.TestSink} by a
- * {@link org.qcri.rheem.core.plan.test.TestSink2}.
+ * This factory replaces a {@link TestSink} by a
+ * {@link TestSink2}.
  */
 public class TestSinkToTestSink2Factory extends ReplacementSubplanFactory {
 

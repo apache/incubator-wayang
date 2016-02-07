@@ -1,9 +1,9 @@
 package org.qcri.rheem.core.optimizer.partition;
 
-import org.qcri.rheem.core.plan.PhysicalPlan;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 
 /**
- * An enumeration branch is the basic unit for enumeration, i.e., translation from a {@link PhysicalPlan} to an
+ * An enumeration branch is the basic unit for enumeration, i.e., translation from a {@link RheemPlan} to an
  * {@link ExecutionPlan}.
  */
 public class EnumerationBranch {

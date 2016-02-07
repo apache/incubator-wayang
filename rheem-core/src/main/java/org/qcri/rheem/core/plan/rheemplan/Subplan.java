@@ -1,4 +1,4 @@
-package org.qcri.rheem.core.plan;
+package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;

@@ -2,10 +2,10 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.plan.InputSlot;
-import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.PlanTraversal;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.PlanTraversal;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

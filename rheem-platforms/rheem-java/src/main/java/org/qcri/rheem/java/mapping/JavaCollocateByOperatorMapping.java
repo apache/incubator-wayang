@@ -3,7 +3,7 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.java.operators.JavaMaterializedGroupByOperator;
 import org.qcri.rheem.java.operators.JavaTextFileSource;
 import org.qcri.rheem.java.plugin.JavaPlatform;

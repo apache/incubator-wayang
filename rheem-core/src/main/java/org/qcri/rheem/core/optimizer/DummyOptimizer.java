@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +13,8 @@ import java.util.Optional;
 @Deprecated
 public class DummyOptimizer {
 
-    public PhysicalPlan buildExecutionPlan(PhysicalPlan rheemPlan) {
-        PhysicalPlan executionPlan = new PhysicalPlan();
+    public RheemPlan buildExecutionPlan(RheemPlan rheemPlan) {
+        RheemPlan executionPlan = new RheemPlan();
 
         Pass pass = new Pass();
         for (Operator sink : rheemPlan.getSinks()) {

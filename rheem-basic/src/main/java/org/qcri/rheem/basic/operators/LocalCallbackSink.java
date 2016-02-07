@@ -2,14 +2,11 @@ package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.UnarySink;
+import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 

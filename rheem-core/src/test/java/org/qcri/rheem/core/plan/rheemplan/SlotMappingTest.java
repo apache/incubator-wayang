@@ -1,9 +1,9 @@
-package org.qcri.rheem.core.plan;
+package org.qcri.rheem.core.plan.rheemplan;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.qcri.rheem.core.plan.test.TestSink;
-import org.qcri.rheem.core.plan.test.TestSource;
+import org.qcri.rheem.core.plan.rheemplan.test.TestSink;
+import org.qcri.rheem.core.plan.rheemplan.test.TestSource;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Arrays;

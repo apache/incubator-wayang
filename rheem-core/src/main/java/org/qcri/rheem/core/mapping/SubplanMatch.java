@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.mapping;
 
-import org.qcri.rheem.core.plan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.*;

@@ -1,12 +1,9 @@
 package org.qcri.rheem.core.optimizer.costs;
 
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.plan.ExecutionOperator;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.stream.LongStream;
 
 /**
  * {@link LoadProfileEstimator} that can host further {@link LoadProfileEstimator}s.

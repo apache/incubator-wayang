@@ -1,9 +1,9 @@
-package org.qcri.rheem.core.plan.test;
+package org.qcri.rheem.core.plan.rheemplan.test;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
-import org.qcri.rheem.core.plan.UnarySource;
+import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Optional;

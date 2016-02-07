@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * This class can be used to build an execution {@link org.qcri.rheem.core.plan.PhysicalPlan} in a bottom-up manner.
+ * This class can be used to build an execution {@link RheemPlan} in a bottom-up manner.
  * @deprecated
  */
 public class ExecutionPlanBuilder {
@@ -87,7 +87,7 @@ public class ExecutionPlanBuilder {
         }
     }
 
-    public Optional<PhysicalPlan> build() {
+    public Optional<RheemPlan> build() {
         // See if there are sinks in the first place.
         if (this.sinks.isEmpty()) {
             logger.debug("Discard plan without sinks.");
@@ -128,7 +128,7 @@ public class ExecutionPlanBuilder {
                 ).traverse(this.sinks);
 
         // Build the plan.
-        final PhysicalPlan plan = new PhysicalPlan();
+        final RheemPlan plan = new RheemPlan();
         this.sinks.forEach(plan::addSink);
         return Optional.of(plan);
     }

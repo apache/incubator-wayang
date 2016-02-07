@@ -1,9 +1,9 @@
-package org.qcri.rheem.core.plan;
+package org.qcri.rheem.core.plan.rheemplan;
 
 import java.util.Optional;
 
 /**
- * Visitor (as in the Visitor Pattern) for {@link PhysicalPlan}s.
+ * Visitor (as in the Visitor Pattern) for {@link RheemPlan}s.
  */
 public abstract class TopDownPlanVisitor<Payload, Return> {
 

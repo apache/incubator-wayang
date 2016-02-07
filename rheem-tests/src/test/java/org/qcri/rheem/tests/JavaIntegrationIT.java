@@ -3,12 +3,11 @@ package org.qcri.rheem.tests;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.operators.*;
-import org.qcri.rheem.basic.plugin.RheemBasicPlatform;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.PhysicalPlan;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.plugin.JavaPlatform;
@@ -44,7 +43,7 @@ public class JavaIntegrationIT {
         List<String> collector = new LinkedList<>();
         LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(collector, DataSetType.createDefault(String.class));
         textFileSource.connectTo(0, sink, 0);
-        PhysicalPlan rheemPlan = new PhysicalPlan();
+        RheemPlan rheemPlan = new RheemPlan();
         rheemPlan.addSink(sink);
 
         // Have Rheem execute the plan.
@@ -74,7 +73,7 @@ public class JavaIntegrationIT {
         textFileSource.connectTo(0, reverseOperator, 0);
         StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
         reverseOperator.connectTo(0, stdoutSink, 0);
-        PhysicalPlan rheemPlan = new PhysicalPlan();
+        RheemPlan rheemPlan = new RheemPlan();
         rheemPlan.addSink(stdoutSink);
 
         // Have Rheem execute the plan.
@@ -102,7 +101,7 @@ public class JavaIntegrationIT {
         textFileSource.connectTo(0, reverseOperator, 0);
         StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
         reverseOperator.connectTo(0, stdoutSink, 0);
-        PhysicalPlan rheemPlan = new PhysicalPlan();
+        RheemPlan rheemPlan = new RheemPlan();
         rheemPlan.addSink(stdoutSink);
 
         // Have Rheem execute the plan.
@@ -128,7 +127,7 @@ public class JavaIntegrationIT {
         textFileSource.connectTo(0, reverseOperator, 0);
         StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
         reverseOperator.connectTo(0, stdoutSink, 0);
-        PhysicalPlan rheemPlan = new PhysicalPlan();
+        RheemPlan rheemPlan = new RheemPlan();
         rheemPlan.addSink(stdoutSink);
 
         // Have Rheem execute the plan.
@@ -156,7 +155,7 @@ public class JavaIntegrationIT {
         textFileSource.connectTo(0, reverseOperator, 0);
         StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
         reverseOperator.connectTo(0, stdoutSink, 0);
-        PhysicalPlan rheemPlan = new PhysicalPlan();
+        RheemPlan rheemPlan = new RheemPlan();
         rheemPlan.addSink(stdoutSink);
 
         // Have Rheem execute the plan.
@@ -178,7 +177,7 @@ public class JavaIntegrationIT {
         final List<String> collection2 = Arrays.<String>asList("This is source 2.", "This is source 2, too.");
 
         // Build a Rheem plan.
-        PhysicalPlan rheemPlan = new PhysicalPlan();
+        RheemPlan rheemPlan = new RheemPlan();
 
         final DataSetType<String> stringDataSet = DataSetType.createDefault(String.class);
         CollectionSource<String> source1 = new CollectionSource<>(
@@ -240,7 +239,7 @@ public class JavaIntegrationIT {
         final List<String> collection2 = Arrays.<String>asList("This is source 2.", "This is source 2, too.");
 
         // Build a Rheem plan.
-        PhysicalPlan rheemPlan = new PhysicalPlan();
+        RheemPlan rheemPlan = new RheemPlan();
 
         final DataSetType<String> stringDataSet = DataSetType.createDefault(String.class);
         CollectionSource<String> source1 = new CollectionSource<>(
@@ -330,8 +329,8 @@ public class JavaIntegrationIT {
         countLinesOperator.connectTo(0, stdoutSink, 0); // 5 distinct lines, 6 total
 
 
-        // Execute physical plan
-        PhysicalPlan rheemPlan = new PhysicalPlan();
+        // Execute Rheem plan
+        RheemPlan rheemPlan = new RheemPlan();
         rheemPlan.addSink(stdoutSink);
         rheemContext.execute(rheemPlan);
     }
@@ -377,8 +376,8 @@ public class JavaIntegrationIT {
         distinctLinesOperator.connectTo(0, stdoutSink, 0);
 
 
-        // Execute physical plan
-        PhysicalPlan rheemPlan = new PhysicalPlan();
+        // Execute Rheem plan
+        RheemPlan rheemPlan = new RheemPlan();
         rheemPlan.addSink(stdoutSink);
         rheemContext.execute(rheemPlan);
     }
