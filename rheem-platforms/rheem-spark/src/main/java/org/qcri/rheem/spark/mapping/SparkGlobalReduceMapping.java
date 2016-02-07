@@ -1,17 +1,19 @@
-package org.qcri.rheem.java.mapping;
+package org.qcri.rheem.spark.mapping;
 
-import org.qcri.rheem.basic.operators.FlatMapOperator;
+import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.java.operators.JavaFlatMapOperator;
+import org.qcri.rheem.spark.operators.SparkGlobalReduceOperator;
+
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link FlatMapOperator} to {@link JavaFlatMapOperator}.
+ * Mapping from {@link GlobalReduceOperator} to {@link SparkGlobalReduceOperator}.
+ * todo
  */
-public class FlatMapToJavaFlatMapMapping implements Mapping {
+public class SparkGlobalReduceMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -20,7 +22,7 @@ public class FlatMapToJavaFlatMapMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "flatMap", new FlatMapOperator<>(null, null, null), false);
+                "reduce", new GlobalReduceOperator<>(null, null), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -28,10 +30,11 @@ public class FlatMapToJavaFlatMapMapping implements Mapping {
 
         @Override
         protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final FlatMapOperator<?, ?> originalOperator = (FlatMapOperator<?, ?>) subplanMatch.getMatch("flatMap").getOperator();
-            return new JavaFlatMapOperator(originalOperator.getInputType(),
-                    originalOperator.getOutputType(),
-                    originalOperator.getFunctionDescriptor()).at(epoch);
+            final GlobalReduceOperator<?> originalOperator = (GlobalReduceOperator<?>) subplanMatch.getMatch("reduce").getOperator();
+            return new SparkGlobalReduceOperator<>(
+                    originalOperator.getType().unchecked(),
+                    originalOperator.getReduceDescriptor().unchecked()
+            ).at(epoch);
         }
     }
 }

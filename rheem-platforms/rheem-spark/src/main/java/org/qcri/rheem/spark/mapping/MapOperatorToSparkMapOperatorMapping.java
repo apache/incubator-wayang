@@ -1,17 +1,17 @@
-package org.qcri.rheem.java.mapping;
+package org.qcri.rheem.spark.mapping;
 
-import org.qcri.rheem.basic.operators.FlatMapOperator;
+import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.java.operators.JavaFlatMapOperator;
+import org.qcri.rheem.spark.operators.SparkMapOperator;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link FlatMapOperator} to {@link JavaFlatMapOperator}.
+ * Mapping from {@link MapOperator} to {@link SparkMapOperator}.
  */
-public class FlatMapToJavaFlatMapMapping implements Mapping {
+public class MapOperatorToSparkMapOperatorMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -20,7 +20,7 @@ public class FlatMapToJavaFlatMapMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "flatMap", new FlatMapOperator<>(null, null, null), false);
+                "map", new MapOperator<>(null, null, null), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -28,8 +28,8 @@ public class FlatMapToJavaFlatMapMapping implements Mapping {
 
         @Override
         protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final FlatMapOperator<?, ?> originalOperator = (FlatMapOperator<?, ?>) subplanMatch.getMatch("flatMap").getOperator();
-            return new JavaFlatMapOperator(originalOperator.getInputType(),
+            final MapOperator<?, ?> originalOperator = (MapOperator<?, ?>) subplanMatch.getMatch("map").getOperator();
+            return new SparkMapOperator(originalOperator.getInputType(),
                     originalOperator.getOutputType(),
                     originalOperator.getFunctionDescriptor()).at(epoch);
         }

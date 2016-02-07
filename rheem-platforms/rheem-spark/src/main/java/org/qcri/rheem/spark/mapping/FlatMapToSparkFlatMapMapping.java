@@ -1,17 +1,17 @@
-package org.qcri.rheem.java.mapping;
+package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.java.operators.JavaFlatMapOperator;
+import org.qcri.rheem.spark.operators.SparkFlatMapOperator;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link FlatMapOperator} to {@link JavaFlatMapOperator}.
+ * Mapping from {@link FlatMapOperator} to {@link SparkFlatMapOperator}.
  */
-public class FlatMapToJavaFlatMapMapping implements Mapping {
+public class FlatMapToSparkFlatMapMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -29,7 +29,7 @@ public class FlatMapToJavaFlatMapMapping implements Mapping {
         @Override
         protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final FlatMapOperator<?, ?> originalOperator = (FlatMapOperator<?, ?>) subplanMatch.getMatch("flatMap").getOperator();
-            return new JavaFlatMapOperator(originalOperator.getInputType(),
+            return new SparkFlatMapOperator(originalOperator.getInputType(),
                     originalOperator.getOutputType(),
                     originalOperator.getFunctionDescriptor()).at(epoch);
         }

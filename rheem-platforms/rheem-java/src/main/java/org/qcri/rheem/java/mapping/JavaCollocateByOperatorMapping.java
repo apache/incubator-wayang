@@ -1,17 +1,15 @@
 package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
-import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.java.operators.JavaMaterializedGroupByOperator;
-import org.qcri.rheem.java.operators.JavaTextFileSource;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link TextFileSource} to {@link JavaTextFileSource}.
+ * Mapping from {@link MaterializedGroupByOperator} to {@link JavaMaterializedGroupByOperator}.
  */
 public class JavaCollocateByOperatorMapping implements Mapping {
 
