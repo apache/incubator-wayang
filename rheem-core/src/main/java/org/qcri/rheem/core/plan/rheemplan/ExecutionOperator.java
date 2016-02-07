@@ -3,8 +3,10 @@ package org.qcri.rheem.core.plan.rheemplan;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.platform.Platform;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -33,4 +35,19 @@ public interface ExecutionOperator extends ActualOperator {
         return Optional.empty();
     }
 
+    /**
+     * Display the supported {@link Channel}s for a certain {@link InputSlot}.
+     *
+     * @param index the index of the {@link InputSlot}
+     * @return an {@link List} of {@link Channel}s' {@link Class}es, ordered by their preference of use
+     */
+    List<Class<? extends Channel>> getSupportedInputChannels(int index);
+
+    /**
+     * Display the supported {@link Channel}s for a certain {@link OutputSlot}.
+     *
+     * @param index the index of the {@link OutputSlot}
+     * @return an {@link List} of {@link Channel}s' {@link Class}es, ordered by their preference of use
+     */
+    List<Class<? extends Channel>> getSupportedOutputChannels(int index);
 }

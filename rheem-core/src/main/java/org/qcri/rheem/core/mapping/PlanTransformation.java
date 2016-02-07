@@ -11,8 +11,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * A plan transformation looks for a plan pattern in a {@link RheemPlan} and replaces it
- * with an alternative subplan.
+ * Looks for a {@link SubplanPattern} in a {@link RheemPlan} and replaces it with an alternative {@link Operator}s.
  */
 public class PlanTransformation {
 

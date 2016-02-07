@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.plan.executionplan;
 
+import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -36,5 +37,33 @@ public class ExecutionTask {
         this.outputChannels = new Channel[operator.getNumOutputs()];
     }
 
+    public ExecutionOperator getOperator() {
+        return this.operator;
+    }
 
+    public Channel[] getInputChannels() {
+        return this.inputChannels;
+    }
+
+    public Channel getInputChannel(int index) {
+        return this.getInputChannels()[index];
+    }
+
+    Channel setInputChannel(int index, Channel channel) {
+        Validate.isTrue(this.getInputChannel(index) == null);
+        return this.getInputChannels()[index];
+    }
+
+    public Channel[] getOutputChannels() {
+        return this.outputChannels;
+    }
+
+    public Channel getOutputChannel(int index) {
+        return this.getOutputChannels()[index];
+    }
+
+    void setOutputChannel(int index, Channel channel) {
+        Validate.isTrue(this.getOutputChannel(index) == null);
+        this.getOutputChannels()[index] = channel;
+    }
 }
