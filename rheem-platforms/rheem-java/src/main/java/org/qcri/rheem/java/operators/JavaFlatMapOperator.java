@@ -1,11 +1,12 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.FlatMapOperator;
-import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
+import java.util.Iterator;
 import java.util.stream.Stream;
 
 /**
@@ -20,7 +21,8 @@ public class JavaFlatMapOperator<InputType, OutputType>
      *
      * @param functionDescriptor
      */
-    public JavaFlatMapOperator(DataSetType inputType, DataSetType outputType, TransformationDescriptor<InputType, Stream<OutputType>> functionDescriptor) {
+    public JavaFlatMapOperator(DataSetType inputType, DataSetType outputType,
+                               FlatMapDescriptor<InputType, Iterator<OutputType>> functionDescriptor) {
         super(inputType, outputType, functionDescriptor);
     }
 

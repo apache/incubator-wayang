@@ -1,6 +1,5 @@
 package org.qcri.rheem.core.plan;
 
-import com.sun.org.apache.bcel.internal.generic.RET;
 
 /**
  * An operator is any node that within a data flow plan.
