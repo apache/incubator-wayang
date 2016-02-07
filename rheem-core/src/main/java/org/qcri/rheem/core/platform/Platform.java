@@ -1,19 +1,34 @@
 package org.qcri.rheem.core.platform;
 
+import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.plan.ExecutionOperator;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Collection;
 
 /**
  * A platform describes an execution engine that executes {@link ExecutionOperator}s.
  */
-public class Platform {
+public abstract class Platform {
 
     private final String name;
 
-    private final Executor.Factory executorFactory;
+    public static Platform load(String platformClassName) {
+        final Class<?> platformClass;
+        try {
+            platformClass = Class.forName(platformClassName);
+            final Method getInstanceMethod = platformClass.getMethod("getInstance");
+            return (Platform) getInstanceMethod.invoke(null);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RheemException("Could not load platform: " + platformClassName, e);
+        }
+    }
 
-    public Platform(String name, Executor.Factory executorFactory) {
+    public Platform(String name) {
         this.name = name;
-        this.executorFactory = executorFactory;
     }
 
     /**
@@ -22,7 +37,25 @@ public class Platform {
      * @param executionOperator the execution operator whose result should be evaluated
      */
     public void evaluate(ExecutionOperator executionOperator) {
-        final Executor executor = this.executorFactory.create();
+        Validate.isTrue(this.isExecutable());
+        final Executor executor = this.getExecutorFactory().create();
         executor.evaluate(executionOperator);
+    }
+
+    public abstract Executor.Factory getExecutorFactory();
+
+    public abstract Collection<Mapping> getMappings();
+
+    public String getName() {
+        return name;
+    }
+
+    public abstract boolean isExecutable();
+
+    // TODO: Return some more descriptors about the state of the platform (e.g., available machines, RAM, ...)
+
+    @Override
+    public String toString() {
+        return String.format("Platform[%s]", this.getName());
     }
 }

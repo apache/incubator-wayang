@@ -10,7 +10,7 @@ import java.util.Optional;
 /**
  * Used by {@link Configuration}s to provide some value.
  */
-public abstract class ConfigurationProvider<Key, Value> {
+public abstract class KeyValueProvider<Key, Value> {
 
     public static class NoSuchKeyException extends RheemException {
         public NoSuchKeyException(String message) {
@@ -20,11 +20,11 @@ public abstract class ConfigurationProvider<Key, Value> {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    protected ConfigurationProvider<Key, Value> parent;
+    protected KeyValueProvider<Key, Value> parent;
 
     private String warningSlf4jFormat;
 
-    protected ConfigurationProvider(ConfigurationProvider<Key, Value> parent) {
+    protected KeyValueProvider(KeyValueProvider<Key, Value> parent) {
         this.parent = parent;
     }
 
@@ -32,7 +32,7 @@ public abstract class ConfigurationProvider<Key, Value> {
         return this.provideFor(key, this);
     }
 
-    protected Value provideFor(Key key, ConfigurationProvider<Key, Value> requestee) {
+    protected Value provideFor(Key key, KeyValueProvider<Key, Value> requestee) {
         if (this.warningSlf4jFormat != null) {
             this.logger.warn(this.warningSlf4jFormat, key);
         }
@@ -59,14 +59,14 @@ public abstract class ConfigurationProvider<Key, Value> {
         }
     }
 
-    protected abstract Value tryToProvide(Key key, ConfigurationProvider<Key, Value> requestee);
+    protected abstract Value tryToProvide(Key key, KeyValueProvider<Key, Value> requestee);
 
 
-    public void setParent(ConfigurationProvider<Key, Value> parent) {
+    public void setParent(KeyValueProvider<Key, Value> parent) {
         this.parent = parent;
     }
 
-    public ConfigurationProvider<Key, Value> withSlf4jWarning(String slf4jFormat) {
+    public KeyValueProvider<Key, Value> withSlf4jWarning(String slf4jFormat) {
         this.warningSlf4jFormat = slf4jFormat;
         return this;
     }

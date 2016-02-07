@@ -3,12 +3,10 @@ package org.qcri.rheem.core.plan;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.*;
+import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -303,4 +301,19 @@ public interface Operator {
             final Map<OutputSlot<?>, CardinalityEstimate> cache) {
         return new DefaultCardinalityPusher(this, configuration.getCardinalityEstimatorProvider(), cache);
     }
+
+    /**
+     * Tells if this instance should be executed/implemented only on a certain set of {@link Platform}s.
+     *
+     * @return the targeted {@link Platform}s or an empty {@link Set} if there is no such restriction
+     */
+    Set<Platform> getTargetPlatforms();
+
+    /**
+     * <i>Optional operation.</i> Restrict this instance to be executed/implemented on a certain {@link Platform}s or
+     * allow a further one if there is already a restriction in place.
+     *
+     * @return the targeted {@link Platform}s or an empty {@link Set} if there is no such restriction
+     */
+    void addTargetPlatform(Platform platform);
 }

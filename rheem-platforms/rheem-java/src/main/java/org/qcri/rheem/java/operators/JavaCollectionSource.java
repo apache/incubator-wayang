@@ -6,7 +6,7 @@ import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.qcri.rheem.java.plugin.Activator;
+import org.qcri.rheem.java.plugin.JavaPlatform;
 
 import java.util.Collection;
 import java.util.stream.Stream;
@@ -22,7 +22,7 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
 
     @Override
     public Platform getPlatform() {
-        return Activator.PLATFORM;
+        return JavaPlatform.getInstance();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.api;
 
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.optimizer.SanityChecker;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
@@ -21,6 +22,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Describes a job that is to be executed using Rheem.
@@ -77,20 +79,45 @@ public class Job {
     }
 
     /**
-     * Apply all available {@link RheemContext#transformations} to the {@link PhysicalPlan}.
+     * Apply all available transformations in the {@link #configuration} to the {@link PhysicalPlan}.
      */
     private void applyMappingsToRheemPlan() {
         boolean isAnyChange;
         int epoch = Operator.FIRST_EPOCH;
+        final Collection<PlanTransformation> transformations = this.gatherTransformations();
         do {
             epoch++;
-            final int numTransformations = applyAndCountTransformations(epoch);
+            final int numTransformations = applyAndCountTransformations(transformations, epoch);
             logger.debug("Applied {} transformations in epoch {}.", numTransformations, epoch);
             isAnyChange = numTransformations > 0;
         } while (isAnyChange);
 
         // Check that the mappings have been applied properly.
         checkHyperplanSanity();
+    }
+
+
+    /**
+     * Gather all available {@link PlanTransformation}s from the {@link #configuration}.
+     */
+    private Collection<PlanTransformation> gatherTransformations() {
+        return this.configuration.getPlatformProvider().provideAll().stream()
+                .flatMap(platform -> platform.getMappings().stream())
+                .flatMap(mapping -> mapping.getTransformations().stream())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Apply all {@code transformations} to the {@code plan}.
+     *
+     * @param transformations transformations to apply
+     * @param epoch           the new epoch
+     * @return the number of applied transformations
+     */
+    private int applyAndCountTransformations(Collection<PlanTransformation> transformations, int epoch) {
+        return transformations.stream()
+                .mapToInt(transformation -> transformation.transform(this.rheemPlan, epoch))
+                .sum();
     }
 
     /**
@@ -180,14 +207,9 @@ public class Job {
     }
 
     /**
-     * Apply all {@link RheemContext#transformations} to the {@code plan}.
-     *
-     * @param epoch the new epoch
-     * @return the number of applied transformations
+     * Modify the {@link Configuration} to control the {@link Job} execution.
      */
-    private int applyAndCountTransformations(int epoch) {
-        return this.rheemContext.transformations.stream()
-                .mapToInt(transformation -> transformation.transform(this.rheemPlan, epoch))
-                .sum();
+    public Configuration getConfiguration() {
+        return this.configuration;
     }
 }

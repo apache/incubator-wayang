@@ -3,11 +3,16 @@ package org.qcri.rheem.tests;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.operators.*;
+import org.qcri.rheem.basic.plugin.RheemBasicPlatform;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.PhysicalPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
+import org.qcri.rheem.java.plugin.JavaPlatform;
+import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -31,7 +36,7 @@ public class JavaIntegrationIT {
     public void testReadAndWrite() throws URISyntaxException, IOException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
         final URL inputUrl = getClass().getResource("/some-lines.txt");
@@ -54,7 +59,7 @@ public class JavaIntegrationIT {
     public void testReadAndTransformAndWrite() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
         final URL inputUrl = getClass().getResource("/some-lines.txt");
@@ -76,11 +81,97 @@ public class JavaIntegrationIT {
         rheemContext.execute(rheemPlan);
     }
 
+    @Test(expected = RheemException.class)
+    public void testReadAndTransformAndWriteWithIllegalConfiguration1() throws URISyntaxException {
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+
+        // Build a Rheem plan.
+        final URL inputUrl = getClass().getResource("/some-lines.txt");
+        TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
+        // ILLEGAL: This platform is not registered, so this operator will find no implementation.
+        textFileSource.addTargetPlatform(MyMadeUpPlatform.getInstance());
+        MapOperator<String, String> reverseOperator = new MapOperator<>(
+                DataSetType.createDefault(String.class),
+                DataSetType.createDefault(String.class),
+                new TransformationDescriptor<>(
+                        String::toUpperCase,
+                        DataUnitType.createBasic(String.class),
+                        DataUnitType.createBasic(String.class)));
+        textFileSource.connectTo(0, reverseOperator, 0);
+        StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
+        reverseOperator.connectTo(0, stdoutSink, 0);
+        PhysicalPlan rheemPlan = new PhysicalPlan();
+        rheemPlan.addSink(stdoutSink);
+
+        // Have Rheem execute the plan.
+        rheemContext.execute(rheemPlan);
+    }
+
+    @Test(expected = RheemException.class)
+    public void testReadAndTransformAndWriteWithIllegalConfiguration2() throws URISyntaxException {
+        RheemContext rheemContext = new RheemContext();
+        // ILLEGAL: This dummy platform is not sufficient to execute the plan.
+        rheemContext.register(MyMadeUpPlatform.getInstance());
+
+        // Build a Rheem plan.
+        final URL inputUrl = getClass().getResource("/some-lines.txt");
+        TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
+        MapOperator<String, String> reverseOperator = new MapOperator<>(
+                DataSetType.createDefault(String.class),
+                DataSetType.createDefault(String.class),
+                new TransformationDescriptor<>(
+                        String::toUpperCase,
+                        DataUnitType.createBasic(String.class),
+                        DataUnitType.createBasic(String.class)));
+        textFileSource.connectTo(0, reverseOperator, 0);
+        StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
+        reverseOperator.connectTo(0, stdoutSink, 0);
+        PhysicalPlan rheemPlan = new PhysicalPlan();
+        rheemPlan.addSink(stdoutSink);
+
+        // Have Rheem execute the plan.
+        rheemContext.execute(rheemPlan);
+    }
+
+    @Test(expected = RheemException.class)
+    public void testReadAndTransformAndWriteWithIllegalConfiguration3() throws URISyntaxException {
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+
+        // Build a Rheem plan.
+        final URL inputUrl = getClass().getResource("/some-lines.txt");
+        TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
+        // ILLEGAL:
+        textFileSource.addTargetPlatform(MyMadeUpPlatform.getInstance());
+        MapOperator<String, String> reverseOperator = new MapOperator<>(
+                DataSetType.createDefault(String.class),
+                DataSetType.createDefault(String.class),
+                new TransformationDescriptor<>(
+                        String::toUpperCase,
+                        DataUnitType.createBasic(String.class),
+                        DataUnitType.createBasic(String.class)));
+        textFileSource.connectTo(0, reverseOperator, 0);
+        StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
+        reverseOperator.connectTo(0, stdoutSink, 0);
+        PhysicalPlan rheemPlan = new PhysicalPlan();
+        rheemPlan.addSink(stdoutSink);
+
+        // Have Rheem execute the plan.
+        final Job job = rheemContext.createJob(rheemPlan);
+        // ILLEGAL: We blacklist the Java platform, although we need it.
+        job.getConfiguration().getPlatformProvider().addToBlacklist(JavaPlatform.getInstance());
+        job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());
+        rheemContext.execute(rheemPlan);
+    }
+
     @Test
     public void testMultiSourceAndMultiSink() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Define some input data.
         final List<String> collection1 = Arrays.<String>asList("This is source 1.", "This is source 1, too.");
@@ -142,7 +233,7 @@ public class JavaIntegrationIT {
     public void testMultiSourceAndHoleAndMultiSink() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Define some input data.
         final List<String> collection1 = Arrays.<String>asList("This is source 1.", "This is source 1, too.");
@@ -215,7 +306,7 @@ public class JavaIntegrationIT {
     public void testFullScenario1() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
         final URL inputUrl = getClass().getResource("/some-lines.txt");
@@ -249,7 +340,7 @@ public class JavaIntegrationIT {
     public void testFullScenario2() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
         final URL inputUrl = getClass().getResource("/some-lines.txt");

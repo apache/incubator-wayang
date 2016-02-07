@@ -1,8 +1,6 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.core.api.configuration.ConfigurationProvider;
 import org.qcri.rheem.core.plan.InputSlot;
 import org.qcri.rheem.core.plan.OperatorAlternative;
 import org.qcri.rheem.core.plan.OutputSlot;

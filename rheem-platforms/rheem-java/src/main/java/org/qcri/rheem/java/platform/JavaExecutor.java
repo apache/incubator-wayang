@@ -14,7 +14,7 @@ import java.util.stream.Stream;
  */
 public class JavaExecutor implements Executor {
 
-    public static final Executor.Factory FACTORY = () -> new JavaExecutor();
+    public static final Executor.Factory FACTORY = JavaExecutor::new;
 
     public FunctionCompiler compiler = new FunctionCompiler();
 

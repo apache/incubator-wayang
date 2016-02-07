@@ -2,7 +2,7 @@ package org.qcri.rheem.core.optimizer.costs;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.configuration.ConfigurationProvider;
+import org.qcri.rheem.core.api.configuration.KeyValueProvider;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.*;
 
@@ -96,7 +96,7 @@ public class TimeEstimationTraversal {
      * Retrieve the {@link LoadProfileEstimator} for a given {@link ExecutionOperator}/
      */
     private LoadProfileEstimator getEstimatorFor(ExecutionOperator executionOperator) {
-        final ConfigurationProvider<ExecutionOperator, LoadProfileEstimator> loadProfileEstimatorProvider =
+        final KeyValueProvider<ExecutionOperator, LoadProfileEstimator> loadProfileEstimatorProvider =
                 this.configuration.getOperatorLoadProfileEstimatorProvider();
         return loadProfileEstimatorProvider.provideFor(executionOperator);
     }

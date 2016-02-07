@@ -1,9 +1,9 @@
 package org.qcri.rheem.core.mapping;
 
 import org.qcri.rheem.core.plan.Operator;
+import org.qcri.rheem.core.platform.Platform;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A subplan match correlates a {@link SubplanPattern} with its actually matched .
@@ -14,6 +14,11 @@ public class SubplanMatch {
      * The atcual operators that have been matched to the {@link #pattern}.
      */
     private final Map<String, OperatorMatch> operatorMatches = new HashMap<>();
+
+    /**
+     * <i>Lazily initialized.</i> {@link Platform} restrictions coming from the matched {@link Operator}s.
+     */
+    private Optional<Set<Platform>> targetPlatforms = null;
 
     /**
      * The pattern that has been matched.
@@ -73,5 +78,26 @@ public class SubplanMatch {
                 .mapToInt(Operator::getEpoch)
                 .max()
                 .orElse(Operator.FIRST_EPOCH);
+    }
+
+    /**
+     * {@link Platform} restrictions coming from the matched {@link Operator}s. Notice that the semantics of empty
+     * {@link Set}s differ from those in {@link Operator#getTargetPlatforms()}.
+     *
+     * @return the intersection of all {@link Platform} restrictions in the matched {@link Operator}s
+     */
+    public Optional<Set<Platform>> getTargetPlatforms() {
+        if (this.targetPlatforms == null) {
+            this.targetPlatforms = this.operatorMatches.values().stream()
+                    .map(OperatorMatch::getOperator)
+                    .map(Operator::getTargetPlatforms)
+                    .filter(platforms -> !platforms.isEmpty())
+                    .reduce((platforms1, platforms2) -> {
+                        Set<Platform> platforms = new HashSet<>(platforms1);
+                        platforms.retainAll(platforms2);
+                        return platforms;
+                    });
+        }
+        return this.targetPlatforms;
     }
 }

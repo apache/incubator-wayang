@@ -2,7 +2,6 @@ package org.qcri.rheem.core.plan;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.configuration.ConfigurationProvider;
 import org.qcri.rheem.core.optimizer.cardinality.*;
 
 import java.util.*;

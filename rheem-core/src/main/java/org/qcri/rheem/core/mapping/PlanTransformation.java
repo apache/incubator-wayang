@@ -1,10 +1,12 @@
 package org.qcri.rheem.core.mapping;
 
 import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -22,9 +24,14 @@ public class PlanTransformation {
 
     private final ReplacementSubplanFactory replacementFactory;
 
-    public PlanTransformation(SubplanPattern pattern, ReplacementSubplanFactory replacementFactory) {
+    private final Collection<Platform> targetPlatforms;
+
+    public PlanTransformation(SubplanPattern pattern,
+                              ReplacementSubplanFactory replacementFactory,
+                              Platform... targetPlatforms) {
         this.pattern = pattern;
         this.replacementFactory = replacementFactory;
+        this.targetPlatforms = Arrays.asList(targetPlatforms);
     }
 
     /**
@@ -65,6 +72,10 @@ public class PlanTransformation {
                         epoch);
             }
 
+            if (!this.meetsPlatformRestrictions(match)) {
+                continue;
+            }
+
             if (this.isReplacing) {
                 replace(plan, match, replacement);
             } else {
@@ -74,6 +85,23 @@ public class PlanTransformation {
         }
 
         return numTransformations;
+    }
+
+    /**
+     * Check if this instances does not violate any of the {@link Operator#getTargetPlatforms()} restrictions.
+     */
+    private boolean meetsPlatformRestrictions(SubplanMatch match) {
+        // Short-cut: This transformation is not introducing some platform dependency.
+        if (this.getTargetPlatforms().isEmpty()) {
+            return true;
+        }
+
+        // Short-cut: The matched operators do not require specific platforms.
+        if (!match.getTargetPlatforms().isPresent()) {
+            return true;
+        }
+        // Otherwise check if
+        return match.getTargetPlatforms().get().containsAll(this.getTargetPlatforms());
     }
 
     private void introduceAlternative(PhysicalPlan plan, SubplanMatch match, Operator replacement) {
@@ -138,5 +166,9 @@ public class PlanTransformation {
                 plan.addSink(sink);
             }
         }
+    }
+
+    public Collection<Platform> getTargetPlatforms() {
+        return this.targetPlatforms;
     }
 }
