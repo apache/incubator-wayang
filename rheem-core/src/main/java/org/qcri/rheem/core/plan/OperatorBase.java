@@ -1,5 +1,10 @@
 package org.qcri.rheem.core.plan;
 
+import org.qcri.rheem.core.platform.Platform;
+
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Helper class for the implementation of the {@link Operator} interface.
  */
@@ -12,6 +17,8 @@ public abstract class OperatorBase implements Operator {
     protected final InputSlot<?>[] inputSlots;
 
     protected final OutputSlot<?>[] outputSlots;
+
+    private final Set<Platform> targetPlatforms = new HashSet<>(0);
 
     public OperatorBase(InputSlot<?>[] inputSlots, OutputSlot<?>[] outputSlots, OperatorContainer container) {
         this.container = container;
@@ -69,5 +76,15 @@ public abstract class OperatorBase implements Operator {
                 this.getNumOutputs(),
 //                this.getParent() == null ? "top-level" : "nested",
                 this.hashCode());
+    }
+
+    @Override
+    public Set<Platform> getTargetPlatforms() {
+        return this.targetPlatforms;
+    }
+
+    @Override
+    public void addTargetPlatform(Platform platform) {
+        this.targetPlatforms.add(platform);
     }
 }

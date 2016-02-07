@@ -5,6 +5,7 @@ import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaStdoutSink;
+import org.qcri.rheem.java.plugin.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -16,7 +17,8 @@ public class StdoutSinkToJavaStdoutSinkMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory()));
+        return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory(),
+                JavaPlatform.getInstance()));
     }
 
     private SubplanPattern createSubplanPattern() {

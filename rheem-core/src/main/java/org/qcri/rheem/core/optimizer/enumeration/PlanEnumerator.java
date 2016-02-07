@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.*;
@@ -43,9 +44,9 @@ public class PlanEnumerator {
     private final Map<Operator, OperatorActivation> activationCollector = new HashMap<>();
 
     /**
-     * This instance will put all complete {@link PlanEnumeration}s here.
+     * This instance will put all completed {@link PlanEnumeration}s (which did not cause an activation) here.
      */
-    private final Collection<PlanEnumeration> nonActivatingEnumerations = new LinkedList<>();
+    private final Collection<PlanEnumeration> completedEnumerations = new LinkedList<>();
 
     /**
      * {@link PlanEnumerationPruningStrategy}s to be applied while enumerating.
@@ -54,7 +55,8 @@ public class PlanEnumerator {
 
     /**
      * Creates a new instance.
-     *  @param physicalPlan         a hyperplan that should be used for enumeration.
+     *
+     * @param physicalPlan a hyperplan that should be used for enumeration.
      */
     public PlanEnumerator(PhysicalPlan physicalPlan, Map<ExecutionOperator, TimeEstimate> timeEstimates) {
         this(physicalPlan.collectReachableTopLevelSources(), timeEstimates, new LinkedList<>());
@@ -152,7 +154,7 @@ public class PlanEnumerator {
 
         // Once we stopped, activate all successive operators.
         if (!activateDownstreamOperators(branch, completeEnumeration)) {
-            this.nonActivatingEnumerations.add(completeEnumeration);
+            this.completedEnumerations.add(completeEnumeration);
         }
     }
 
@@ -210,7 +212,7 @@ public class PlanEnumerator {
                 for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
                     final PlanEnumerator alternativeEnumerator = new PlanEnumerator(alternative, this.timeEstimates, this.pruningStrategies);
                     alternativeEnumerator.run();
-                    final PlanEnumeration alternativeEnumeration = alternativeEnumerator.getComprehensiveEnumeration();
+                    final PlanEnumeration alternativeEnumeration = alternativeEnumerator.joinAllCompleteEnumerations();
                     if (alternativeEnumeration != null) {
                         if (operatorEnumeration == null) operatorEnumeration = alternativeEnumeration;
                         else operatorEnumeration.subsume(alternativeEnumeration);
@@ -266,7 +268,23 @@ public class PlanEnumerator {
     }
 
     public PlanEnumeration getComprehensiveEnumeration() {
-        return this.nonActivatingEnumerations.stream()
+        final PlanEnumeration comprehensiveEnumeration = this.joinAllCompleteEnumerations();
+        if (comprehensiveEnumeration == null) {
+            throw new RheemException("Could not find a single execution plan.");
+        }
+        return comprehensiveEnumeration;
+    }
+
+    /**
+     * Creates a new instance by <ol>
+     * <li>escaping all terminal operations (in {@link #completedEnumerations}) from {@link #alternative} and</li>
+     * <li>joining them.</li>
+     * </ol>
+     *
+     * @return the new instance or {@code null} if none
+     */
+    private PlanEnumeration joinAllCompleteEnumerations() {
+        return this.completedEnumerations.stream()
                 .map(instance -> instance.escape(this.alternative))
                 .reduce(PlanEnumeration::join)
                 .orElse(null);

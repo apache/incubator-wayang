@@ -239,7 +239,11 @@ public class PlanEnumeration {
     }
 
     /**
-     * Create a new instance that equals this instance but redirects using the given {@link SlotMapping}
+     * Create a new instance that equals this instance but redirects via
+     * {@link OperatorAlternative.Alternative#getSlotMapping()}.
+     *
+     * @param alternative the alternative to escape or {@code null} if none (in that case, this method returns the
+     *                    this instance)
      */
     public PlanEnumeration escape(OperatorAlternative.Alternative alternative) {
         if (alternative == null) return this;

@@ -84,7 +84,7 @@ public class Job {
     private void applyMappingsToRheemPlan() {
         boolean isAnyChange;
         int epoch = Operator.FIRST_EPOCH;
-        final Collection<PlanTransformation> transformations = this.gatherMappings();
+        final Collection<PlanTransformation> transformations = this.gatherTransformations();
         do {
             epoch++;
             final int numTransformations = applyAndCountTransformations(transformations, epoch);
@@ -100,7 +100,7 @@ public class Job {
     /**
      * Gather all available {@link PlanTransformation}s from the {@link #configuration}.
      */
-    private Collection<PlanTransformation> gatherMappings() {
+    private Collection<PlanTransformation> gatherTransformations() {
         return this.configuration.getPlatformProvider().provideAll().stream()
                 .flatMap(platform -> platform.getMappings().stream())
                 .flatMap(mapping -> mapping.getTransformations().stream())
