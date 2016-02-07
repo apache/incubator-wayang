@@ -1,10 +1,7 @@
 package org.qcri.rheem.core.api;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.api.configuration.KeyValueProvider;
-import org.qcri.rheem.core.api.configuration.ConstantProvider;
-import org.qcri.rheem.core.api.configuration.FunctionalKeyValueProvider;
-import org.qcri.rheem.core.api.configuration.MapBasedKeyValueProvider;
+import org.qcri.rheem.core.api.configuration.*;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
@@ -12,7 +9,9 @@ import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.plan.OutputSlot;
+import org.qcri.rheem.core.platform.Platform;
 
+import java.lang.reflect.Method;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -20,6 +19,8 @@ import java.util.stream.Stream;
  * Describes both the configuration of a {@link RheemContext} and {@link Job}s.
  */
 public class Configuration {
+
+    private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
 
     private final RheemContext rheemContext;
 
@@ -36,6 +37,8 @@ public class Configuration {
     private KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider;
 
     private ConstantProvider<LoadProfileToTimeConverter> loadProfileToTimeConverterProvider;
+    
+    private CollectionProvider<Platform> platformProvider;
 
     /**
      * Creates a new top-level instance.
@@ -60,6 +63,9 @@ public class Configuration {
         this.parent = parent;
 
         if (this.parent != null) {
+            // Providers for platforms.
+            this.platformProvider = new CollectionProvider<>(this.parent.platformProvider);
+
             // Providers for cardinality estimation.
             this.cardinalityEstimatorProvider =
                     new MapBasedKeyValueProvider<>(this.parent.cardinalityEstimatorProvider);
@@ -80,10 +86,18 @@ public class Configuration {
 
     public static Configuration createDefaultConfiguration(RheemContext rheemContext) {
         Configuration configuration = new Configuration(rheemContext);
+        bootstrapPlatforms(configuration);
         bootstrapCardinalityEstimationProvider(configuration);
         bootstrapSelectivityProviders(configuration);
         bootstrapLoadAndTimeEstimatorProviders(configuration);
         return configuration;
+    }
+
+    private static void bootstrapPlatforms(Configuration configuration) {
+        CollectionProvider<Platform> platformProvider = new CollectionProvider<>();
+        Platform platform = Platform.load(BASIC_PLATFORM);
+        platformProvider.addToWhitelist(platform);
+        configuration.setPlatformProvider(platformProvider);
     }
 
     private static void bootstrapCardinalityEstimationProvider(final Configuration configuration) {
@@ -190,6 +204,7 @@ public class Configuration {
         }
     }
 
+    
 
     /**
      * Creates a child instance.
@@ -251,5 +266,13 @@ public class Configuration {
 
     public void setFunctionLoadProfileEstimatorProvider(KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider) {
         this.functionLoadProfileEstimatorProvider = functionLoadProfileEstimatorProvider;
+    }
+
+    public CollectionProvider<Platform> getPlatformProvider() {
+        return platformProvider;
+    }
+
+    public void setPlatformProvider(CollectionProvider<Platform> platformProvider) {
+        this.platformProvider = platformProvider;
     }
 }

@@ -8,6 +8,7 @@ import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.PhysicalPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
+import org.qcri.rheem.java.plugin.JavaPlatform;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -31,7 +32,7 @@ public class JavaIntegrationIT {
     public void testReadAndWrite() throws URISyntaxException, IOException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
         final URL inputUrl = getClass().getResource("/some-lines.txt");
@@ -54,7 +55,7 @@ public class JavaIntegrationIT {
     public void testReadAndTransformAndWrite() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
         final URL inputUrl = getClass().getResource("/some-lines.txt");
@@ -80,7 +81,7 @@ public class JavaIntegrationIT {
     public void testMultiSourceAndMultiSink() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Define some input data.
         final List<String> collection1 = Arrays.<String>asList("This is source 1.", "This is source 1, too.");
@@ -142,7 +143,7 @@ public class JavaIntegrationIT {
     public void testMultiSourceAndHoleAndMultiSink() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Define some input data.
         final List<String> collection1 = Arrays.<String>asList("This is source 1.", "This is source 1, too.");
@@ -215,7 +216,7 @@ public class JavaIntegrationIT {
     public void testFullScenario1() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
         final URL inputUrl = getClass().getResource("/some-lines.txt");
@@ -249,7 +250,7 @@ public class JavaIntegrationIT {
     public void testFullScenario2() throws URISyntaxException {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
-        org.qcri.rheem.java.plugin.Activator.activate(rheemContext);
+        rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
         final URL inputUrl = getClass().getResource("/some-lines.txt");

@@ -1,10 +1,9 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.TextFileSource;
-import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.qcri.rheem.java.plugin.Activator;
+import org.qcri.rheem.java.plugin.JavaPlatform;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +24,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
     @Override
     public Platform getPlatform() {
-        return Activator.PLATFORM;
+        return JavaPlatform.getInstance();
     }
 
     @Override
