@@ -7,7 +7,6 @@ import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
-import java.util.stream.Stream;
 
 /**
  * Spark implementation of the {@link DistinctOperator}.

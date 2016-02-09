@@ -1,7 +1,7 @@
 package org.qcri.rheem.basic.operators;
 
+import org.qcri.rheem.core.function.KeyExtractorDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
@@ -10,7 +10,7 @@ import org.qcri.rheem.core.types.DataSetType;
  */
 public class ReduceByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Type> {
 
-    protected final TransformationDescriptor<Type, Key> keyDescriptor;
+    protected final KeyExtractorDescriptor<Type, Key> keyDescriptor;
 
     protected final ReduceDescriptor<Type> reduceDescriptor;
 
@@ -22,7 +22,7 @@ public class ReduceByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Type
      * @param reduceDescriptor describes the reduction to be performed on the elements
      */
     public ReduceByOperator(DataSetType<Type> type,
-                            TransformationDescriptor<Type, Key> keyDescriptor,
+                            KeyExtractorDescriptor<Type, Key> keyDescriptor,
                             ReduceDescriptor<Type> reduceDescriptor) {
         super(type, type, null);
         this.keyDescriptor = keyDescriptor;
@@ -33,7 +33,7 @@ public class ReduceByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Type
         return this.getInputType();
     }
 
-    public TransformationDescriptor<Type, Key> getKeyDescriptor() {
+    public KeyExtractorDescriptor<Type, Key> getKeyDescriptor() {
         return keyDescriptor;
     }
 

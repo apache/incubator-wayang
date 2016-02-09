@@ -1,8 +1,8 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.ReduceByOperator;
+import org.qcri.rheem.core.function.KeyExtractorDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
@@ -29,7 +29,7 @@ public class JavaReduceByOperator<Type, KeyType>
      * @param keyDescriptor    describes how to extract the key from data units
      * @param reduceDescriptor describes the reduction to be performed on the elements
      */
-    public JavaReduceByOperator(DataSetType<Type> type, TransformationDescriptor<Type, KeyType> keyDescriptor,
+    public JavaReduceByOperator(DataSetType<Type> type, KeyExtractorDescriptor<Type, KeyType> keyDescriptor,
                                 ReduceDescriptor<Type> reduceDescriptor) {
         super(type, keyDescriptor, reduceDescriptor);
     }

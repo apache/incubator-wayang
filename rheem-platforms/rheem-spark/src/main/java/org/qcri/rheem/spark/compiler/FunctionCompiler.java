@@ -3,8 +3,8 @@ package org.qcri.rheem.spark.compiler;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
 import org.apache.spark.api.java.function.PairFunction;
-import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
+import org.qcri.rheem.core.function.KeyExtractorDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 
@@ -37,22 +37,19 @@ public class FunctionCompiler {
         };
     }
 
-//    /**
-//     * Compile a transformation.
-//     *
-//     * @param descriptor describes the transformation
-//     * @param <I>        input type of the transformation
-//     * @param <O>        output type of the transformation
-//     * @return a compiled function
-//     */
-//    public <T,K,V> PairFunction <T, K, V> compile(ProjectionDescriptor<T, K> descriptor) {
-//        return new PairFunction<T, K, V>() {
-//            @Override
-//            public Tuple2<K, V> call(T t) throws Exception {
-//                return descriptor.getJavaImplementation().apply(t);
-//            }
-//        }
-//    }
+    /**
+     * Compile a key extraction.
+     * @return a compiled function
+     */
+    public <T,K> PairFunction <T, K, T> compile(KeyExtractorDescriptor<T, K> descriptor) {
+        return new PairFunction<T, K, T>() {
+            @Override
+            public Tuple2<K, T> call(T t) throws Exception {
+                K key = descriptor.getJavaImplementation().apply(t);
+                return new Tuple2<>(key, t);
+            }
+        };
+    }
 
 
     public <I, O> FlatMapFunction<I, O> compile(FlatMapDescriptor<I, Iterator<O>> descriptor) {

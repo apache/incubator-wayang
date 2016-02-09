@@ -3,19 +3,14 @@ package org.qcri.rheem.spark.operators;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
+import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
+import org.qcri.rheem.core.function.KeyExtractorDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Spark implementation of the {@link ReduceByOperator}.
@@ -32,7 +27,7 @@ public class SparkReduceByOperator<Type, KeyType>
      * @param keyDescriptor    describes how to extract the key from data units
      * @param reduceDescriptor describes the reduction to be performed on the elements
      */
-    public SparkReduceByOperator(DataSetType<Type> type, TransformationDescriptor<Type, KeyType> keyDescriptor,
+    public SparkReduceByOperator(DataSetType<Type> type, KeyExtractorDescriptor<Type, KeyType> keyDescriptor,
                                 ReduceDescriptor<Type> reduceDescriptor) {
         super(type, keyDescriptor, reduceDescriptor);
     }
@@ -44,11 +39,12 @@ public class SparkReduceByOperator<Type, KeyType>
         }
 
         final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputStreams[0];
-        //final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor);
-        //final BinaryOperator<Type> reduceFunction = compiler.compile(this.reduceDescriptor);
-        //final JavaPairRDD<KeyType, Type> outputStream = inputStream.mapToPair(null).reduceByKey(reduceFunction);
+        final PairFunction<Type, KeyType, Type> keyExtractor = compiler.compile(this.keyDescriptor);
+        Function2<Type, Type, Type> reduceFunc = compiler.compile(this.reduceDescriptor);
+        JavaPairRDD<KeyType, Type> pairStream = inputStream.mapToPair(keyExtractor);
+        final JavaPairRDD<KeyType, Type> outputStream = pairStream.reduceByKey(reduceFunc);
 
-        return new JavaRDDLike[]{null};
+        return new JavaRDDLike[]{outputStream};
     }
 
     @Override

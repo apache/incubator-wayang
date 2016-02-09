@@ -10,9 +10,6 @@ import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.BinaryOperator;
-import java.util.stream.Stream;
 
 /**
  * Spark implementation of the {@link GlobalReduceOperator}.

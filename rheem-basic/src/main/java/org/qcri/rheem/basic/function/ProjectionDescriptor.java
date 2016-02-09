@@ -1,6 +1,6 @@
 package org.qcri.rheem.basic.function;
 
-import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.function.KeyExtractorDescriptor;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 
 import java.lang.reflect.Field;
@@ -12,7 +12,7 @@ import java.util.function.Function;
 /**
  * This descriptor pertains to projections. It takes field names of the input type to describe the projection.
  */
-public class ProjectionDescriptor<Input, Output> extends TransformationDescriptor<Input, Output> {
+public class ProjectionDescriptor<Input, Output> extends KeyExtractorDescriptor<Input, Output> {
 
     private final List<String> fieldNames;
 
