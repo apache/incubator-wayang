@@ -297,9 +297,8 @@ public interface Operator {
      * @return the {@link CardinalityPusher}
      */
     default CardinalityPusher getCardinalityPusher(
-            final Configuration configuration,
-            final Map<OutputSlot<?>, CardinalityEstimate> cache) {
-        return new DefaultCardinalityPusher(this, configuration.getCardinalityEstimatorProvider(), cache);
+            final Configuration configuration) {
+        return new DefaultCardinalityPusher(this, configuration.getCardinalityEstimatorProvider());
     }
 
     /**

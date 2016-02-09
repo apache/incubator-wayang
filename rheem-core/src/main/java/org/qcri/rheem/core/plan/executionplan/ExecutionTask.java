@@ -66,4 +66,9 @@ public class ExecutionTask {
         Validate.isTrue(this.getOutputChannel(index) == null);
         this.getOutputChannels()[index] = channel;
     }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + this.operator + ']';
+    }
 }

@@ -251,8 +251,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     }
 
     @Override
-    public CardinalityPusher getCardinalityPusher(final Configuration configuration,
-                                                  Map<OutputSlot<?>, CardinalityEstimate> cache) {
-        return new AggregatingCardinalityPusher(this, configuration, cache);
+    public CardinalityPusher getCardinalityPusher(final Configuration configuration) {
+        return new AggregatingCardinalityPusher(this, configuration);
     }
 }

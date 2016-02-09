@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.HashSet;
@@ -19,6 +20,11 @@ public abstract class OperatorBase implements Operator {
     protected final OutputSlot<?>[] outputSlots;
 
     private final Set<Platform> targetPlatforms = new HashSet<>(0);
+
+    /**
+     * Can assign a {@link TimeEstimate} to {@link ExecutionOperator}s.
+     */
+    private TimeEstimate timeEstimate;
 
     public OperatorBase(InputSlot<?>[] inputSlots, OutputSlot<?>[] outputSlots, OperatorContainer container) {
         this.container = container;
@@ -86,5 +92,19 @@ public abstract class OperatorBase implements Operator {
     @Override
     public void addTargetPlatform(Platform platform) {
         this.targetPlatforms.add(platform);
+    }
+
+    public TimeEstimate getTimeEstimate() {
+        if (!this.isExecutionOperator()) {
+            throw new IllegalStateException("Cannot retrieve time estimate for non-execution operator " + this);
+        }
+        return this.timeEstimate;
+    }
+
+    public void setTimeEstimate(TimeEstimate timeEstimate) {
+        if (!this.isExecutionOperator()) {
+            throw new IllegalStateException("Cannot set time estimate for non-execution operator " + this);
+        }
+        this.timeEstimate = timeEstimate;
     }
 }

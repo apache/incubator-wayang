@@ -1,6 +1,8 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.types.DataSetType;
+import org.slf4j.LoggerFactory;
 
 /**
  * Abstract class for inputs and outputs to operators.
@@ -22,6 +24,11 @@ abstract public class Slot<T> {
      * elements that are passed but also capture their structure (e.g., flat, grouped, sorted, ...).
      */
     private final DataSetType<T> type;
+
+    /**
+     * Can assign a {@link CardinalityEstimate} to this instance, which is then associated to a certain {@link RheemPlan}.
+     */
+    private CardinalityEstimate cardinalityEstimate;
 
     protected Slot(String name, Operator owner, DataSetType<T> type) {
         this.name = name;
@@ -74,4 +81,25 @@ abstract public class Slot<T> {
      * @see #getOwner()
      */
     public abstract int getIndex() throws IllegalStateException;
+
+    /**
+     * Get the currently assigned {@link CardinalityEstimate}.
+     *
+     * @return the {@link CardinalityEstimate} or {@code null} if none
+     */
+    public CardinalityEstimate getCardinalityEstimate() {
+        return this.cardinalityEstimate;
+    }
+
+    /**
+     * Assign a {@link CardinalityEstimate} to this instance.
+     *
+     * @param cardinalityEstimate the {@link CardinalityEstimate} to assign
+     */
+    public void setCardinalityEstimate(CardinalityEstimate cardinalityEstimate) {
+        if (this.cardinalityEstimate != null) {
+            LoggerFactory.getLogger(this.getClass()).warn("Reassigning cardinality.");
+        }
+        this.cardinalityEstimate = cardinalityEstimate;
+    }
 }

@@ -26,4 +26,7 @@ public abstract class Channel {
 
     public abstract boolean isReusable();
 
+    public ExecutionTask getProducer() {
+        return this.producer;
+    }
 }

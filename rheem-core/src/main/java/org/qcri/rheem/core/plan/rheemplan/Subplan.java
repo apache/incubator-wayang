@@ -238,8 +238,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
 
     @Override
     public CardinalityPusher getCardinalityPusher(
-            final Configuration configuration,
-            final Map<OutputSlot<?>, CardinalityEstimate> cache) {
-        return CompositeCardinalityPusher.createFor(this, configuration, cache);
+            final Configuration configuration) {
+        return CompositeCardinalityPusher.createFor(this, configuration);
     }
 }

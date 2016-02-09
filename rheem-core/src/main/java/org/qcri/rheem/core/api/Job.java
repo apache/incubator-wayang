@@ -7,7 +7,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimationTraversal;
-import org.qcri.rheem.core.optimizer.enumeration.InternalOperatorPruningStrategy;
+import org.qcri.rheem.core.optimizer.enumeration.PartialPlan;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumeration;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -55,10 +55,10 @@ public class Job {
         }
 
         // Get an execution plan.
-        RheemPlan executionPlan = getExecutionPlan();
+        RheemPlan executionPlan = this.getExecutionPlan();
 
         // Take care of the execution.
-        deployAndRun(executionPlan);
+        this.deployAndRun(executionPlan);
     }
 
     /**
@@ -66,16 +66,14 @@ public class Job {
      */
     private RheemPlan getExecutionPlan() {
         // Apply the mappings to the plan to form a hyperplan.
-        applyMappingsToRheemPlan();
+        this.applyMappingsToRheemPlan();
 
         // Make the cardinality estimation pass.
-        final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates = estimateCardinalities();
-
-        final Map<ExecutionOperator, TimeEstimate> timeEstimates = estimateExecutionTimes(cardinalityEstimates);
+        this.estimateCardinalities();
+//        this.estimateExecutionTimes();
 
         // Enumerate plans and pick the best one.
-        final RheemPlan pickedExecutionPlan = extractExecutionPlan(timeEstimates);
-        return pickedExecutionPlan;
+        return this.extractExecutionPlan();
     }
 
     /**
@@ -87,13 +85,13 @@ public class Job {
         final Collection<PlanTransformation> transformations = this.gatherTransformations();
         do {
             epoch++;
-            final int numTransformations = applyAndCountTransformations(transformations, epoch);
-            logger.debug("Applied {} transformations in epoch {}.", numTransformations, epoch);
+            final int numTransformations = this.applyAndCountTransformations(transformations, epoch);
+            this.logger.debug("Applied {} transformations in epoch {}.", numTransformations, epoch);
             isAnyChange = numTransformations > 0;
         } while (isAnyChange);
 
         // Check that the mappings have been applied properly.
-        checkHyperplanSanity();
+        this.checkHyperplanSanity();
     }
 
 
@@ -136,23 +134,21 @@ public class Job {
      * Go over the given {@link RheemPlan} and estimate the cardinalities of data being passed between its
      * {@link Operator}s.
      */
-    private Map<OutputSlot<?>, CardinalityEstimate> estimateCardinalities() {
+    private void estimateCardinalities() {
         CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this.configuration);
         cardinalityEstimatorManager.pushCardinalityEstimation(this.rheemPlan);
-        final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates = cardinalityEstimatorManager.getCache();
-        cardinalityEstimates.entrySet().stream().forEach(entry ->
-                this.logger.debug("Cardinality estimate for {}: {}", entry.getKey(), entry.getValue()));
-        return cardinalityEstimates;
+//        final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates = cardinalityEstimatorManager.getCache();
+//        cardinalityEstimates.entrySet().stream().forEach(entry ->
+//                this.logger.debug("Cardinality estimate for {}: {}", entry.getKey(), entry.getValue()));
+//        return cardinalityEstimates;
     }
 
     /**
-     * Go over the given {@link RheemPlan} and estimate the execution times of its
-     * {@link ExecutionOperator}s.
+     * Go over the given {@link RheemPlan} and estimate the execution times of its {@link ExecutionOperator}s.
      */
     private Map<ExecutionOperator, TimeEstimate> estimateExecutionTimes(Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates) {
-        final Map<ExecutionOperator, TimeEstimate> timeEstimates = TimeEstimationTraversal.traverse(this.rheemPlan,
-                this.configuration,
-                cardinalityEstimates);
+        final Map<ExecutionOperator, TimeEstimate> timeEstimates = TimeEstimationTraversal.traverse(
+                this.rheemPlan, this.configuration, cardinalityEstimates);
         timeEstimates.entrySet().forEach(entry ->
                 this.logger.debug("Time estimate for {}: {}", entry.getKey(), entry.getValue()));
         return timeEstimates;
@@ -161,34 +157,29 @@ public class Job {
     /**
      * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
      */
-    private RheemPlan extractExecutionPlan(final Map<ExecutionOperator, TimeEstimate> timeEstimates) {
-
+    private RheemPlan extractExecutionPlan() {
         // Defines the plan that we want to use in the end.
-        final Comparator<TimeEstimate> timeEstimateComparator = TimeEstimate.expectionValueComparator();
+        final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
 
         // Enumerate all possible plan.
-        final PlanEnumerator planEnumerator = new PlanEnumerator(this.rheemPlan, timeEstimates);
-        planEnumerator.addPruningStrategy(new InternalOperatorPruningStrategy(
-                timeEstimates,
-                timeEstimateComparator));
-        planEnumerator.run();
-
-        final PlanEnumeration comprehensiveEnumeration = planEnumerator.getComprehensiveEnumeration();
-        final Collection<PlanEnumeration.PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
-        logger.info("Enumerated {} plans.", executionPlans.size());
-        for (PlanEnumeration.PartialPlan partialPlan : executionPlans) {
-            logger.debug("Plan with operators: {}", partialPlan.getOperators());
+        final PlanEnumerator planEnumerator = new PlanEnumerator(this.rheemPlan, this.configuration);
+        this.configuration.getPruningStrategiesProvider().forEach(planEnumerator::addPruningStrategy);
+        final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
+        final Collection<PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
+        this.logger.info("Enumerated {} plans.", executionPlans.size());
+        for (PartialPlan partialPlan : executionPlans) {
+            this.logger.debug("Plan with operators: {}", partialPlan.getOperators());
         }
 
         // Pick an execution plan.
         return executionPlans.stream()
                 .reduce((p1, p2) -> {
-                    final TimeEstimate t1 = p1.getExecutionTimeEstimate(timeEstimates);
-                    final TimeEstimate t2 = p2.getExecutionTimeEstimate(timeEstimates);
+                    final TimeEstimate t1 = p1.getExecutionPlan().estimateExecutionTime(this.configuration);
+                    final TimeEstimate t2 = p1.getExecutionPlan().estimateExecutionTime(this.configuration);
                     return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
                 })
                 .map(plan -> {
-                    this.logger.info("Picked plan's cost estimate is {}.", plan.getExecutionTimeEstimate(timeEstimates));
+                    this.logger.info("Picked plan's cost estimate is {}.", plan.getExecutionPlan().estimateExecutionTime(this.configuration));
                     return plan;
                 })
                 .orElseThrow(IllegalStateException::new)

@@ -16,12 +16,11 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
     private final List<Tuple<OperatorAlternative.Alternative, CardinalityPusher>> pushPaths;
 
     public AggregatingCardinalityPusher(final OperatorAlternative operatorAlternative,
-                                        final Configuration configuration,
-                                        final Map<OutputSlot<?>, CardinalityEstimate> cache) {
-        super(operatorAlternative, cache);
+                                        final Configuration configuration) {
+        super(operatorAlternative);
         this.pushPaths = operatorAlternative.getAlternatives().stream()
                 .map(alternative -> {
-                    final CardinalityPusher pusher = alternative.getOperator().getCardinalityPusher(configuration, cache);
+                    final CardinalityPusher pusher = alternative.getOperator().getCardinalityPusher(configuration);
                     return new Tuple<>(alternative, pusher);
                 })
                 .collect(Collectors.toList());

@@ -3,6 +3,7 @@ package org.qcri.rheem.core.plan.rheemplan;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.platform.Platform;
 
@@ -50,4 +51,18 @@ public interface ExecutionOperator extends ActualOperator {
      * @return an {@link List} of {@link Channel}s' {@link Class}es, ordered by their preference of use
      */
     List<Class<? extends Channel>> getSupportedOutputChannels(int index);
+
+    /**
+     * Get the {@link TimeEstimate} associated to this instance.
+     *
+     * @return the associated {@link TimeEstimate} or {@code null} if none
+     */
+    TimeEstimate getTimeEstimate();
+
+    /**
+     * Associate a {@link TimeEstimate} to this instance.
+     *
+     * @return
+     */
+    void setTimeEstimate(TimeEstimate timeEstimate);
 }

@@ -1,9 +1,17 @@
 package org.qcri.rheem.core.optimizer.costs;
 
+import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.Slot;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * {@link LoadProfileEstimator} that can host further {@link LoadProfileEstimator}s.
@@ -44,6 +52,53 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
 
     public void nest(LoadProfileEstimator nestedEstimator) {
         this.nestedLoadEstimators.add(nestedEstimator);
+    }
+
+    @Override
+    public LoadProfile estimate(ExecutionOperator executionOperator) {
+        CardinalityEstimate[] inputEstimates = collectInputEstimates(executionOperator);
+        CardinalityEstimate[] outputEstimates = collectOutputEstimates(executionOperator);
+        return this.estimate(inputEstimates, outputEstimates);
+    }
+
+    /**
+     * Assemble the input {@link CardinalityEstimate} array for a given {@link ExecutionOperator} from a precalculated
+     * {@link CardinalityEstimate}s.
+     */
+    private static CardinalityEstimate[] collectInputEstimates(ExecutionOperator executionOperator) {
+        final InputSlot<?>[] operatorInputs = executionOperator.getAllInputs();
+        CardinalityEstimate[] collectedEstimates = new CardinalityEstimate[operatorInputs.length];
+        for (int inputIndex = 0; inputIndex < operatorInputs.length; inputIndex++) {
+            final InputSlot<?> input = operatorInputs[inputIndex];
+            final InputSlot<?> outermostInput = executionOperator.getOutermostInputSlot(input);
+            collectedEstimates[inputIndex] = outermostInput.getCardinalityEstimate();
+            Validate.notNull(collectedEstimates[inputIndex],
+                    "Could not find a cardinality estimate for input %d of %s (looked at %s).",
+                    inputIndex, executionOperator, outermostInput);
+        }
+        return collectedEstimates;
+    }
+
+    /**
+     * Assemble the output {@link CardinalityEstimate} array for a given {@link ExecutionOperator} from a precalculated
+     * {@link CardinalityEstimate}s.
+     */
+    private static CardinalityEstimate[] collectOutputEstimates(ExecutionOperator executionOperator) {
+        final OutputSlot<?>[] operatorOutputs = executionOperator.getAllOutputs();
+        CardinalityEstimate[] collectedEstimates = new CardinalityEstimate[operatorOutputs.length];
+        for (int outputIndex = 0; outputIndex < operatorOutputs.length; outputIndex++) {
+            final OutputSlot<?> output = operatorOutputs[outputIndex];
+            final Collection<OutputSlot<Object>> outermostOutputs = executionOperator.getOutermostOutputSlots(output.unchecked());
+            final Set<CardinalityEstimate> estimates = outermostOutputs.stream()
+                    .map(Slot::getCardinalityEstimate)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            Validate.isTrue(estimates.size() == 1,
+                    "Illegal number of cardinality estimates for %s: %s.",
+                    executionOperator, estimates);
+            collectedEstimates[outputIndex] = estimates.stream().findFirst().get();
+        }
+        return collectedEstimates;
     }
 
     public LoadProfile estimate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
