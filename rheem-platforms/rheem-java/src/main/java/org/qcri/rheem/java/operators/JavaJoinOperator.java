@@ -58,6 +58,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaCartesianOperator<>(getInputType0(), getInputType1());
+        return new JavaJoinOperator<>(getInputType0(), getInputType1(),
+                getKeyDescriptor0(), getKeyDescriptor1());
     }
 }
