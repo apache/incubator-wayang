@@ -11,9 +11,7 @@ public class BasicDataUnitType<T> extends DataUnitType<T> {
 
     protected BasicDataUnitType(Class<T> typeClass) {
         this.typeClass = typeClass;
-
-        // TODO: The class might have generics. In that case, this class does currently not fully describe the data
-        // unit type.
+        // TODO: The class might have generics. In that case, this class does currently not fully describe the data unit type.
     }
 
     @Override

@@ -32,5 +32,10 @@ public class StreamChannel extends Channel {
         public void setUpInput(StreamChannel collectionChannel, ExecutionTask executionTask, int index) {
             collectionChannel.addConsumer(executionTask, index);
         }
+
+        @Override
+        public boolean isReusable() {
+            return false;
+        }
     }
 }

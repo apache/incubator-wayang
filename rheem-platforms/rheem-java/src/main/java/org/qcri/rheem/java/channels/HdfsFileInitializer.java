@@ -19,4 +19,9 @@ public class HdfsFileInitializer implements ChannelInitializer<HdfsFile> {
     public void setUpInput(HdfsFile channel, ExecutionTask executionTask, int index) {
         throw new RuntimeException("Not implemented yet.");
     }
+
+    @Override
+    public boolean isReusable() {
+        return true;
+    }
 }

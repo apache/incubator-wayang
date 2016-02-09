@@ -30,8 +30,6 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
         this.startActivators = startOperators.stream().map(Activator::new).collect(Collectors.toList());
     }
 
-    // TODO: Check if channel should be reusable.
-    // TODO: Take into consideration more than one output
     public boolean connect(ExecutionTask task1, int outputIndex, ExecutionTask task2, int inputIndex) {
         final Class<Channel> channelClass = (Class<Channel>) this.pickChannelClass(task1, outputIndex, task2, inputIndex);
         if (channelClass == null) {
@@ -59,14 +57,23 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
     private Class<? extends Channel> pickChannelClass(ExecutionTask task1, int outputIndex, ExecutionTask task2, int inputIndex) {
         final ExecutionOperator op1 = task1.getOperator();
         final ExecutionOperator op2 = task2.getOperator();
+        final boolean requestReusableChannel = op1.getOutermostOutputSlots(op1.getOutput(outputIndex)).stream()
+                .flatMap(outputSlot -> outputSlot.getOccupiedSlots().stream())
+                .count() > 1;
         final List<Class<? extends Channel>> supportedOutputChannels = op1.getSupportedOutputChannels(outputIndex);
         final List<Class<? extends Channel>> supportedInputChannels = op2.getSupportedInputChannels(inputIndex);
         for (Class<? extends Channel> channelClass : supportedOutputChannels) {
+            if (requestReusableChannel && !this.checkIfReusable(op1, channelClass)) continue;
             if (supportedInputChannels.contains(channelClass)) {
                 return channelClass;
             }
         }
         return null;
+    }
+
+    private boolean checkIfReusable(ExecutionOperator operator, Class<? extends Channel> channelClass) {
+        final ChannelInitializer<? extends Channel> channelInitializer = operator.getPlatform().getChannelInitializer(channelClass);
+        return channelInitializer.isReusable();
     }
 
     @Override
@@ -84,7 +91,7 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
     }
 
     /**
-     * TODO
+     * Takes care of creating {@link ExecutionTask}s and {@link Channel}s.
      */
     public class Activator extends AbstractTopologicalTraversal.Activator<Activation> {
 
@@ -174,7 +181,7 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
     }
 
     /**
-     * TODO
+     * Propagates a {@link Channel} to its consumers.
      */
     public static class Activation extends AbstractTopologicalTraversal.Activation<Activator> {
 

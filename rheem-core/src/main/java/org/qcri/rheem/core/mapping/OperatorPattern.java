@@ -39,7 +39,7 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
                 this.operatorClass.isAssignableFrom(operator.getClass()) :
                 this.operatorClass.equals(operator.getClass())) {
             checkSanity(operator);
-            return new OperatorMatch(this, operator); // todo
+            return new OperatorMatch(this, operator);
         }
 
         return null;

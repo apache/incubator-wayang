@@ -33,5 +33,10 @@ public class CollectionChannel extends Channel {
         public void setUpInput(CollectionChannel collectionChannel, ExecutionTask executionTask, int index) {
             collectionChannel.addConsumer(executionTask, index);
         }
+
+        @Override
+        public boolean isReusable() {
+            return true;
+        }
     }
 }

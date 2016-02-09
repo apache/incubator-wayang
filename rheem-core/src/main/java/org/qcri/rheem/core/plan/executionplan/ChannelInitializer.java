@@ -30,4 +30,8 @@ public interface ChannelInitializer<T extends Channel> {
      */
     void setUpInput(T channel, ExecutionTask executionTask, int index);
 
+    /**
+     * @return whether the {@link Channel}s managed by this instance are reusable
+     */
+    boolean isReusable();
 }

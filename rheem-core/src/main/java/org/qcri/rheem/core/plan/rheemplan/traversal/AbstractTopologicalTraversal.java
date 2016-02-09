@@ -5,12 +5,13 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Queue;
 
 /**
  * Encapsulates logic to traverse a {@link RheemPlan} in a topological, bottom-up manner.
@@ -24,9 +25,10 @@ public abstract class AbstractTopologicalTraversal<Payload,
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
-     * TODO
+     * Perform a traversal starting from source {@link Operator}s and initially activated {@link Operator}s.
      *
-     * @param payloads
+     * @param payloads <i>Not needed so far... remove?</i> fed as parameters into the initially activated {@link Operator}s,
+     *                 whereby indices of this array are matched with the parameter of {@link #getInitialActivations(int)}.
      */
     @SafeVarargs
     public final void traverse(Payload... payloads) {
