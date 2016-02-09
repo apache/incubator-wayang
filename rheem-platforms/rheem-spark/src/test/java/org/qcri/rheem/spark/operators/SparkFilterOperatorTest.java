@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
+import org.apache.spark.rpc.netty.Inbox;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
@@ -28,7 +29,7 @@ public class SparkFilterOperatorTest extends SparkOperatorTestBase {
         SparkFilterOperator<Integer> filterOperator =
                 new SparkFilterOperator<>(
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        item -> item > 0
+                        (Predicate<Integer> & Serializable) item -> item > 0
                 );
 
         // Execute the distinct operator.

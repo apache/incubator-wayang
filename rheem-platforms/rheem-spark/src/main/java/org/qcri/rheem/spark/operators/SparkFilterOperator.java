@@ -2,11 +2,13 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
+import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
+import java.io.Serializable;
 import java.util.function.Predicate;
 
 /**
@@ -16,6 +18,20 @@ public class SparkFilterOperator<Type>
         extends FilterOperator<Type>
         implements SparkExecutionOperator {
 
+
+    public static class FilterWrapper<Type> implements Function<Type, Boolean> {
+
+        private Predicate<Type> rheemPredicate;
+
+        public FilterWrapper(Predicate<Type> rheemPredicate) {
+            this.rheemPredicate = rheemPredicate;
+        }
+
+        @Override
+        public Boolean call(Type el) throws Exception {
+            return this.rheemPredicate.test(el);
+        }
+    }
 
     /**
      * Creates a new instance.
@@ -34,7 +50,7 @@ public class SparkFilterOperator<Type>
 
         final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputStreams[0];
 
-        final JavaRDD<Type> outputStream = inputStream.filter(item -> predicate.test(item));
+        final JavaRDD<Type> outputStream = inputStream.filter(new FilterWrapper<>(this.predicate));
 
         return new JavaRDDLike[]{outputStream};
     }
