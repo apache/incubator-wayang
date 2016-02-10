@@ -29,12 +29,12 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 1) {
+    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler) {
+        if (inputRdds.length != 1) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }
 
-        final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputStreams[0];
+        final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputRdds[0];
         final JavaPairRDD<KeyType, Iterable<Type>> outputStream = inputStream.groupBy(compiler.compile(this.keyDescriptor));
 
         return new JavaRDDLike[]{outputStream};

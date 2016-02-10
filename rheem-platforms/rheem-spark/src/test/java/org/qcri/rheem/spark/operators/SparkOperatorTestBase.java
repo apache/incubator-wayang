@@ -1,8 +1,6 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-
 import org.qcri.rheem.spark.plugin.Activator;
 
 /**
@@ -10,8 +8,8 @@ import org.qcri.rheem.spark.plugin.Activator;
  */
 public class SparkOperatorTestBase {
 
-    public  JavaSparkContext getSC() {return Activator.sc;};
-    public SparkOperatorTestBase() {
+    public JavaSparkContext getSC() {
+        return Activator.sc;
     }
 
 }

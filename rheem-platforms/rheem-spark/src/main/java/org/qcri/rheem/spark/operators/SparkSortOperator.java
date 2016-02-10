@@ -26,12 +26,12 @@ public class SparkSortOperator<Type>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 1) {
+    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler) {
+        if (inputRdds.length != 1) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }
 
-        final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputStreams[0];
+        final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputRdds[0];
 
         // TODO: Better sort function!
         final JavaRDD<Type> outputStream = inputStream.mapToPair(x->new Tuple2<Type,

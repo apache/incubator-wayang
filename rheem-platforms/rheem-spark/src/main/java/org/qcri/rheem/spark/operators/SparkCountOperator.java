@@ -31,13 +31,13 @@ public class SparkCountOperator<Type>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputStreams, FunctionCompiler compiler) {
+    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler) {
         JavaSparkContext sc = this.getSC();
-        if (inputStreams.length != 1) {
+        if (inputRdds.length != 1) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }
 
-        final JavaRDD<Type> inputStream = (JavaRDD<Type>)inputStreams[0];
+        final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputRdds[0];
         final Long count = inputStream.count();
 
         List<Long> data = Arrays.asList(count);

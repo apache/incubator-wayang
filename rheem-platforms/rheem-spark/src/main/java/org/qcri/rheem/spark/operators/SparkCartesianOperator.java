@@ -25,12 +25,12 @@ public class SparkCartesianOperator<InputType0, InputType1>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 2) {
+    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler) {
+        if (inputRdds.length != 2) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }
-        final JavaRDD<InputType0> inputStream0 = (JavaRDD<InputType0>) inputStreams[0];
-        final JavaRDD<InputType1> inputStream1 = (JavaRDD<InputType1>) inputStreams[1];
+        final JavaRDD<InputType0> inputStream0 = (JavaRDD<InputType0>) inputRdds[0];
+        final JavaRDD<InputType1> inputStream1 = (JavaRDD<InputType1>) inputRdds[1];
 
         final JavaPairRDD<InputType0, InputType1> outputStream = inputStream0.cartesian(inputStream1);
 

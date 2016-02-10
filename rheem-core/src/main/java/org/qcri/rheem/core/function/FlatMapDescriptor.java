@@ -16,11 +16,11 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
 
     protected final BasicDataUnitType outputType;
 
-    private final Function<Input,Output> javaImplementation;
+    private final SerializableFunction<Input, Output> javaImplementation;
 
-    public FlatMapDescriptor(Function<Input, Output> javaImplementation,
-                                    BasicDataUnitType inputType,
-                                    BasicDataUnitType outputType) {
+    public FlatMapDescriptor(SerializableFunction<Input, Output> javaImplementation,
+                             BasicDataUnitType inputType,
+                             BasicDataUnitType outputType) {
         this.javaImplementation = javaImplementation;
         this.inputType = inputType;
         this.outputType = outputType;
@@ -45,4 +45,5 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
     public FlatMapDescriptor<Object, Object> unchecked() {
         return (FlatMapDescriptor<Object, Object>) this;
     }
+
 }

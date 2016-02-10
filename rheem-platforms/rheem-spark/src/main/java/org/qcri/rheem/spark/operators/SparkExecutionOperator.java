@@ -26,10 +26,10 @@ public interface SparkExecutionOperator extends ExecutionOperator {
      * a set of {@link JavaRDDLike}s according to the operator outputs -- unless the operator is a sink, then it triggers
      * execution.
      *
-     * @param inputStreams {@link JavaRDDLike}s that satisfy the inputs of this operator
+     * @param inputRdds {@link JavaRDDLike}s that satisfy the inputs of this operator
      * @param compiler     compiles functions used by the operator
      * @return {@link JavaRDDLike}s that statisfy the outputs of this operator
      */
-    JavaRDDLike[] evaluate(JavaRDDLike[] inputStreams, FunctionCompiler compiler);
+    JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler);
 
 }

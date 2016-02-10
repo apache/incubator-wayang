@@ -27,12 +27,12 @@ public class SparkMapOperator<InputType, OutputType>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 1) {
+    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler) {
+        if (inputRdds.length != 1) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }
 
-        final JavaRDD<InputType> inputStream = (JavaRDD<InputType>) inputStreams[0];
+        final JavaRDD<InputType> inputStream = (JavaRDD<InputType>) inputRdds[0];
         final JavaRDD<OutputType> outputStream = inputStream.map(compiler.compile(this.functionDescriptor));
 
         return new JavaRDDLike[]{outputStream};

@@ -16,16 +16,16 @@ public class ReduceDescriptor<Type> extends FunctionDescriptor {
 
     private final BasicDataUnitType<Type> outputType;
 
-    private final BinaryOperator<Type> javaImplementation;
+    private final SerializableBinaryOperator<Type> javaImplementation;
 
     public ReduceDescriptor(DataUnitGroupType<Type> inputType, BasicDataUnitType<Type> outputType,
-                            BinaryOperator<Type> javaImplementation) {
+                            SerializableBinaryOperator<Type> javaImplementation) {
         this.inputType = inputType;
         this.outputType = outputType;
         this.javaImplementation = javaImplementation;
     }
 
-    public ReduceDescriptor(Class<? extends Type> inputType, BinaryOperator<Type> javaImplementation) {
+    public ReduceDescriptor(Class<? extends Type> inputType, SerializableBinaryOperator<Type> javaImplementation) {
         this(
                 DataUnitType.createGroupedUnchecked(inputType),
                 DataUnitType.createBasicUnchecked(inputType),

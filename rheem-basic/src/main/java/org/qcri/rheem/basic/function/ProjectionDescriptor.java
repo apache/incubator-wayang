@@ -1,14 +1,13 @@
 package org.qcri.rheem.basic.function;
 
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * This descriptor pertains to projections. It takes field names of the input type to describe the projection.
@@ -22,8 +21,8 @@ public class ProjectionDescriptor<Input, Output> extends TransformationDescripto
         this.fieldNames = Collections.unmodifiableList(Arrays.asList(fieldNames));
     }
 
-    private static <Input, Output> Function<Input, Output> createJavaImplementation(String[] fieldNames,
-                                                                                    BasicDataUnitType inputType) {
+    private static <Input, Output> FunctionDescriptor.SerializableFunction<Input, Output>
+    createJavaImplementation(String[] fieldNames, BasicDataUnitType inputType) {
         // Get the name of the field to be projected.
         if (fieldNames.length != 1) {
             throw new IllegalStateException("The projection descriptor currently supports only a single field.");
@@ -36,7 +35,7 @@ public class ProjectionDescriptor<Input, Output> extends TransformationDescripto
         return this.fieldNames;
     }
 
-    private static class JavaFunction<Input, Output> implements Function<Input, Output>, Serializable {
+    private static class JavaFunction<Input, Output> implements FunctionDescriptor.SerializableFunction<Input, Output> {
 
         private final String fieldName;
 

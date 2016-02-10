@@ -25,13 +25,13 @@ public class SparkUnionAllOperator<Type>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 2) {
+    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler) {
+        if (inputRdds.length != 2) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }
 
-        final JavaRDD<Type> inputStream0 = (JavaRDD<Type>) inputStreams[0];
-        final JavaRDD<Type> inputStream1 = (JavaRDD<Type>) inputStreams[1];
+        final JavaRDD<Type> inputStream0 = (JavaRDD<Type>) inputRdds[0];
+        final JavaRDD<Type> inputStream1 = (JavaRDD<Type>) inputRdds[1];
         final JavaRDD<Type> outputStream = inputStream0.union(inputStream1);
 
         return new JavaRDDLike[]{outputStream};
