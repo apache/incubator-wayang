@@ -38,6 +38,6 @@ public class JavaCountOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaCountOperator<>(getInputType());
+        return new JavaCountOperator<>(this.getInputType());
     }
 }

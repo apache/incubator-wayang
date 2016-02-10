@@ -2,13 +2,11 @@ package org.qcri.rheem.java.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class PlanTransformation {
 
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final SubplanPattern pattern;
 
@@ -54,17 +54,17 @@ public class PlanTransformation {
      */
     public int transform(RheemPlan plan, int epoch) {
         int numTransformations = 0;
-        List<SubplanMatch> matches = pattern.match(plan, epoch - 1);
+        List<SubplanMatch> matches = this.pattern.match(plan, epoch - 1);
         for (SubplanMatch match : matches) {
             final Operator replacement = this.replacementFactory.createReplacementSubplan(match, epoch);
 
             if (match.getInputMatch() == match.getOutputMatch()) {
-                logger.debug("Replacing {} with {} in epoch {}.",
+                this.logger.debug("Replacing {} with {} in epoch {}.",
                         match.getOutputMatch().getOperator(),
                         replacement,
                         epoch);
             } else {
-                logger.debug("Replacing {}..{} with {} in epoch {}.",
+                this.logger.debug("Replacing {}..{} with {} in epoch {}.",
                         match.getInputMatch().getOperator(),
                         match.getOutputMatch().getOperator(),
                         replacement,
@@ -76,9 +76,9 @@ public class PlanTransformation {
             }
 
             if (this.isReplacing) {
-                replace(plan, match, replacement);
+                this.replace(plan, match, replacement);
             } else {
-                introduceAlternative(plan, match, replacement);
+                this.introduceAlternative(plan, match, replacement);
             }
             numTransformations++;
         }

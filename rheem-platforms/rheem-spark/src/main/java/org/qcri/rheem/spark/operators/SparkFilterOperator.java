@@ -9,7 +9,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
-import java.io.Serializable;
 import java.util.function.Predicate;
 
 /**
@@ -58,6 +57,6 @@ public class SparkFilterOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkFilterOperator<>(getInputType(), getFunctionDescriptor());
+        return new SparkFilterOperator<>(this.getInputType(), this.getFunctionDescriptor());
     }
 }

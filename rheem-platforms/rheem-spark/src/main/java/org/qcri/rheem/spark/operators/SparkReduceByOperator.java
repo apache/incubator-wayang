@@ -51,7 +51,7 @@ public class SparkReduceByOperator<Type, KeyType>
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkReduceByOperator<>(getType(), getKeyDescriptor(), getReduceDescriptor());
+        return new SparkReduceByOperator<>(this.getType(), this.getKeyDescriptor(), this.getReduceDescriptor());
     }
 
     /**

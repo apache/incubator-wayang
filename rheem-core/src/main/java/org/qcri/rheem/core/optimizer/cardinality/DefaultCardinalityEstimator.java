@@ -45,7 +45,7 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator {
             return new CardinalityEstimate(estimate, estimate, this.certaintyProb);
         }
 
-        long[] lowerAndUpperInputEstimates = extractEstimateValues(inputEstimates);
+        long[] lowerAndUpperInputEstimates = this.extractEstimateValues(inputEstimates);
 
         long lowerEstimate = -1, upperEstimate = -1;
         long[] currentInputEstimates = new long[this.numInputs];

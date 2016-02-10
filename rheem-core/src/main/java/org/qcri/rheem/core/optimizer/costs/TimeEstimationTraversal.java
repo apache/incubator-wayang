@@ -48,7 +48,7 @@ public class TimeEstimationTraversal {
     }
 
     private void startTraversalFrom(Operator startOperator) {
-        planTraversal.traverse(startOperator);
+        this.planTraversal.traverse(startOperator);
     }
 
     private void startTraversalFrom(Collection<Operator> startOperators) {
@@ -84,7 +84,7 @@ public class TimeEstimationTraversal {
             throws IllegalArgumentException {
 
         // Collect the assets necessary for the estimation.
-        final LoadProfileEstimator estimator = getEstimatorFor(executionOperator);
+        final LoadProfileEstimator estimator = this.getEstimatorFor(executionOperator);
         final CardinalityEstimate[] inputEstimates = collectInputEstimates(executionOperator, this.cardinalityEstimates);
         final CardinalityEstimate[] outputEstimates = collectOutputEstimates(executionOperator, this.cardinalityEstimates);
 

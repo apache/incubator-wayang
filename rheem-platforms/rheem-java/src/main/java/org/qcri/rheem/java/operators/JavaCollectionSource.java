@@ -32,6 +32,6 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaCollectionSource(getCollection(), getType());
+        return new JavaCollectionSource(this.getCollection(), this.getType());
     }
 }

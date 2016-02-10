@@ -18,7 +18,7 @@ public class JavaCoalesceOperatorMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory(),
+        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
                 JavaPlatform.getInstance()));
     }
 

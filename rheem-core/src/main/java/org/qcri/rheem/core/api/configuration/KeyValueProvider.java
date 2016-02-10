@@ -38,7 +38,7 @@ public abstract class KeyValueProvider<Key, Value> {
         }
 
         // Look for a custom answer.
-        final Value value = tryToProvide(key, requestee);
+        final Value value = this.tryToProvide(key, requestee);
         if (value != null) {
             return value;
         }

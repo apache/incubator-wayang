@@ -7,7 +7,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.List;
-
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,6 +44,6 @@ public class JavaCartesianOperator<InputType0, InputType1>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaCartesianOperator<>(getInputType0(), getInputType1());
+        return new JavaCartesianOperator<>(this.getInputType0(), this.getInputType1());
     }
 }

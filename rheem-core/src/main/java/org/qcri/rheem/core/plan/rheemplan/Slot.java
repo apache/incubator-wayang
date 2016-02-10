@@ -37,11 +37,11 @@ abstract public class Slot<T> {
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public Operator getOwner() {
-        return owner;
+        return this.owner;
     }
 
     public DataSetType<T> getType() {
@@ -69,7 +69,7 @@ abstract public class Slot<T> {
     @Override
     public String toString() {
         return String.format("%s[%s of %s]",
-                getClass().getSimpleName(),
+                this.getClass().getSimpleName(),
 //                this.type,
                 this.name,
                 this.owner == null ? "no owner" : this.owner.toString());

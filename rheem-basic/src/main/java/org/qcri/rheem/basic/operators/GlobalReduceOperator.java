@@ -34,7 +34,7 @@ public class GlobalReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type>
     }
 
     public ReduceDescriptor<Type> getReduceDescriptor() {
-        return reduceDescriptor;
+        return this.reduceDescriptor;
     }
 
     @Override

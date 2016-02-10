@@ -115,7 +115,7 @@ public class SubplanPattern extends OperatorBase {
 
             // Try to make a match starting from the currently visited operator.
             final SubplanMatch subplanMatch = new SubplanMatch(SubplanPattern.this);
-            match(SubplanPattern.this.outputPattern, operator, fromOutputSlot, subplanMatch);
+            this.match(SubplanPattern.this.outputPattern, operator, fromOutputSlot, subplanMatch);
         }
 
         /**
@@ -136,20 +136,20 @@ public class SubplanPattern extends OperatorBase {
 
             if (operator instanceof Subplan) {
                 if (trackedOutputSlot == null) {
-                    match(pattern, ((Subplan) operator).getSink(), trackedOutputSlot, subplanMatch);
+                    this.match(pattern, ((Subplan) operator).getSink(), trackedOutputSlot, subplanMatch);
                 } else {
                     final OutputSlot<?> innerOutputSlot = ((Subplan) operator).traceOutput(trackedOutputSlot);
-                    match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatch);
+                    this.match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatch);
                 }
 
             } else if (operator instanceof OperatorAlternative) {
                 for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
                     SubplanMatch subplanMatchCopy = new SubplanMatch(subplanMatch);
                     if (trackedOutputSlot == null) {
-                        match(pattern, alternative.getSink(), trackedOutputSlot, subplanMatchCopy);
+                        this.match(pattern, alternative.getSink(), trackedOutputSlot, subplanMatchCopy);
                     } else {
                         final OutputSlot<?> innerOutputSlot = alternative.traceOutput(trackedOutputSlot);
-                        match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatchCopy);
+                        this.match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatchCopy);
                     }
                 }
 
@@ -178,7 +178,7 @@ public class SubplanPattern extends OperatorBase {
                     final InputSlot<?> outerInputSlot = operator.getOutermostInputSlot(operator.getInput(inputIndex));
                     final OutputSlot<?> occupant = outerInputSlot.getOccupant();
                     if (occupant != null) {
-                        match(inputOperatorPattern, occupant.getOwner(), occupant, subplanMatch);
+                        this.match(inputOperatorPattern, occupant.getOwner(), occupant, subplanMatch);
                     }
 
                 }

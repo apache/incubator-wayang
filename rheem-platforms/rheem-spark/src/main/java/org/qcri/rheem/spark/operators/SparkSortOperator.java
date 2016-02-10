@@ -44,7 +44,7 @@ public class SparkSortOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkSortOperator<>(getInputType());
+        return new SparkSortOperator<>(this.getInputType());
     }
 
 }

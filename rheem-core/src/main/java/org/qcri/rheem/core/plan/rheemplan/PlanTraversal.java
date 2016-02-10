@@ -43,17 +43,17 @@ public class PlanTraversal {
      * @return this instance
      */
     public PlanTraversal traverse(Operator operator) {
-        return traverse(operator, null, null);
+        return this.traverse(operator, null, null);
     }
 
     public PlanTraversal traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
-        if (visitedOperators.add(operator)) {
+        if (this.visitedOperators.add(operator)) {
             if (this.traversalCallback != null) {
                 this.traversalCallback.traverse(operator, fromInputSlot, fromOutputSlot);
             }
 
-            if (this.isFollowInputs) followInputs(operator);
-            if (this.isFollowOutputs) followOutputs(operator);
+            if (this.isFollowInputs) this.followInputs(operator);
+            if (this.isFollowOutputs) this.followOutputs(operator);
         }
 
         return this;
@@ -66,7 +66,7 @@ public class PlanTraversal {
         Arrays.stream(operator.getAllInputs())
                 .map(InputSlot::getOccupant)
                 .filter(outputSlot -> outputSlot != null)
-                .forEach(outputSlot -> traverse(outputSlot.getOwner(), null, outputSlot));
+                .forEach(outputSlot -> this.traverse(outputSlot.getOwner(), null, outputSlot));
     }
 
     /**
@@ -77,7 +77,7 @@ public class PlanTraversal {
                 .map(outputSlot -> ((OutputSlot<Object>) outputSlot).getOccupiedSlots())
                 .flatMap(Collection::stream)
                 .filter(inputSlot -> inputSlot != null)
-                .forEach(inputSlot -> traverse(inputSlot.getOwner(), inputSlot, null));
+                .forEach(inputSlot -> this.traverse(inputSlot.getOwner(), inputSlot, null));
     }
 
     /**
@@ -96,7 +96,7 @@ public class PlanTraversal {
      * @return previously traversed operators
      */
     public Collection<Operator> getTraversedNodes() {
-        return getTraversedNodesWith(operator -> true);
+        return this.getTraversedNodesWith(operator -> true);
     }
 
     /**

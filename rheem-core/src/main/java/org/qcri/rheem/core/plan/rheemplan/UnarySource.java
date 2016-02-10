@@ -13,11 +13,11 @@ public abstract class UnarySource<T> extends OperatorBase implements ActualOpera
     }
 
     public OutputSlot<T> getOutput() {
-        return (OutputSlot<T>) getOutput(0);
+        return (OutputSlot<T>) this.getOutput(0);
     }
 
     public DataSetType<T> getType() {
-        return getOutput().getType();
+        return this.getOutput().getType();
     }
 
 }

@@ -32,13 +32,13 @@ public class JavaFilterOperator<Type>
         }
 
         final Stream<Type> inputStream = inputStreams[0];
-        final Stream<Type> outputStream = inputStream.filter(predicate);
+        final Stream<Type> outputStream = inputStream.filter(this.predicate);
 
         return new Stream[]{outputStream};
     }
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaFilterOperator<>(getInputType(), getFunctionDescriptor());
+        return new JavaFilterOperator<>(this.getInputType(), this.getFunctionDescriptor());
     }
 }

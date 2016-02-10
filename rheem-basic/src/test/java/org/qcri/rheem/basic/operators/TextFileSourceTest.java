@@ -3,7 +3,6 @@ package org.qcri.rheem.basic.operators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.slf4j.Logger;
@@ -21,7 +20,7 @@ import static org.mockito.Mockito.mock;
  */
 public class TextFileSourceTest {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Test
     public void testCardinalityEstimation() throws URISyntaxException, IOException {
@@ -53,7 +52,7 @@ public class TextFileSourceTest {
         Assert.assertTrue(cardinalityEstimator.isPresent());
         final CardinalityEstimate estimate = cardinalityEstimator.get().estimate(configuration);
 
-        logger.info("Estimated between {} and {} lines in {} and counted {}.",
+        this.logger.info("Estimated between {} and {} lines in {} and counted {}.",
                 estimate.getLowerEstimate(),
                 estimate.getUpperEstimate(),
                 testFile,

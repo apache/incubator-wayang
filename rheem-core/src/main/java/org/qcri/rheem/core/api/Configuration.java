@@ -14,7 +14,6 @@ import org.qcri.rheem.core.platform.Platform;
 
 import java.util.Comparator;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 /**
  * Describes both the configuration of a {@link RheemContext} and {@link Job}s.

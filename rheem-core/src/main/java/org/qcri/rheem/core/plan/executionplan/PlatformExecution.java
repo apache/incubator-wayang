@@ -18,6 +18,6 @@ public class PlatformExecution {
     }
 
     public Collection<ExecutionStage> getStages() {
-        return stages;
+        return this.stages;
     }
 }

@@ -32,7 +32,7 @@ public class RheemBasicPlatform extends Platform {
 
     public RheemBasicPlatform() {
         super("Rheem Basic");
-        initMappings();
+        this.initMappings();
     }
 
     private void initMappings() {

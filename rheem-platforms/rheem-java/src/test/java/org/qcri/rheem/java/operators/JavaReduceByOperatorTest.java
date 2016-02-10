@@ -5,9 +5,7 @@ import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.types.DataUnitGroupType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 

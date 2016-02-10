@@ -1,7 +1,10 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.*;
+import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -59,7 +62,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     }
 
     public void addAlternative(Operator alternative) {
-        addAlternative(new Alternative(alternative, SlotMapping.wrap(alternative, this)));
+        this.addAlternative(new Alternative(alternative, SlotMapping.wrap(alternative, this)));
     }
 
     private void addAlternative(Alternative alternative) {
@@ -126,17 +129,18 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             operator.setContainer(this);
         }
 
+        @Override
         public SlotMapping getSlotMapping() {
-            return slotMapping;
+            return this.slotMapping;
         }
 
         public Operator getOperator() {
-            return operator;
+            return this.operator;
         }
 
         @Override
         public Operator getSink() {
-            if (!isSink()) {
+            if (!OperatorAlternative.this.isSink()) {
                 throw new IllegalArgumentException("Cannot enter alternative: no output slot given and alternative is not a sink.");
             }
 
@@ -168,7 +172,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
         @Override
         public Operator getSource() {
-            if (!isSource()) {
+            if (!OperatorAlternative.this.isSource()) {
                 throw new IllegalStateException("Cannot enter alternative: not a source.");
             }
 
@@ -226,7 +230,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
         }
 
         public OperatorAlternative exit(Operator innerOperator) {
-            if (!isSource()) {
+            if (!OperatorAlternative.this.isSource()) {
                 throw new IllegalArgumentException("Cannot exit alternative: no input slot given and alternative is not a source.");
             }
 

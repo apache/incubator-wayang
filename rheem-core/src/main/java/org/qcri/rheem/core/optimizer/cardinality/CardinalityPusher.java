@@ -12,7 +12,7 @@ import java.util.Objects;
 
 public abstract class CardinalityPusher {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected final Operator operator;
 
@@ -22,13 +22,13 @@ public abstract class CardinalityPusher {
 
     public CardinalityEstimate[] push(Configuration configuration, CardinalityEstimate... inputEstimates) {
         this.logger.trace("Pushing {} into {}.", Arrays.toString(inputEstimates), this.getOperator());
-        if (!canHandle(configuration, inputEstimates)) {
+        if (!this.canHandle(configuration, inputEstimates)) {
             this.logger.debug("Pushed incomplete estimates to {}... providing fallback estimates.",
                     this.getOperator());
             return this.createFallbackEstimates(configuration, inputEstimates);
         }
         final CardinalityEstimate[] cardinalityEstimates = this.doPush(configuration, inputEstimates);
-        associateToSlots(cardinalityEstimates);
+        this.associateToSlots(cardinalityEstimates);
         return cardinalityEstimates;
     }
 
@@ -54,7 +54,7 @@ public abstract class CardinalityPusher {
     protected abstract CardinalityEstimate[] doPush(Configuration configuration, CardinalityEstimate... inputEstimates);
 
     public Operator getOperator() {
-        return operator;
+        return this.operator;
     }
 
 

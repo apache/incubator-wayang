@@ -83,13 +83,13 @@ public class CardinalityEstimationTraversal {
 
 
     public Map<OutputSlot<?>, CardinalityEstimate> traverse(Configuration configuration, CardinalityEstimate... inputEstimates) {
-        final Queue<Activator> activators = initializeActivatorQueue(inputEstimates);
+        final Queue<Activator> activators = this.initializeActivatorQueue(inputEstimates);
         final Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates = new HashMap<>();
         do {
             final Activator activator = activators.poll();
             activator.process(configuration, activators, terminalEstimates);
         } while (!activators.isEmpty());
-        reset();
+        this.reset();
         return terminalEstimates;
     }
 
@@ -240,8 +240,8 @@ public class CardinalityEstimationTraversal {
                         Configuration configuration) {
             super(operator.getNumInputs());
             this.dependentActivations = new Collection[operator.getNumOutputs()];
-            for (int outputIndex = 0; outputIndex < dependentActivations.length; outputIndex++) {
-                dependentActivations[outputIndex] = new LinkedList<>();
+            for (int outputIndex = 0; outputIndex < this.dependentActivations.length; outputIndex++) {
+                this.dependentActivations[outputIndex] = new LinkedList<>();
 
             }
             this.pusher = operator.getCardinalityPusher(configuration);
@@ -422,11 +422,11 @@ public class CardinalityEstimationTraversal {
                     if (inputSlot.getOccupant() != null) {
                         continue;
                     }
-                    addActivation(requiredActivations, activator, inputSlot);
+                    this.addActivation(requiredActivations, activator, inputSlot);
                 }
             }).traverse(outputSlot.getOwner(), null, outputSlot);
 
-            final List<Collection<Activation>> alignedActivations = alignActivations(this.inputSlots, requiredActivations);
+            final List<Collection<Activation>> alignedActivations = this.alignActivations(this.inputSlots, requiredActivations);
             if (!requiredActivations.isEmpty()) {
                 LOGGER.warn("Could not build instance: unsatisfied required inputs");
                 return null;
@@ -449,10 +449,10 @@ public class CardinalityEstimationTraversal {
             }
 
             // Register existing dependent activators.
-            registerDependentActivations(outputSlot, activator);
+            this.registerDependentActivations(outputSlot, activator);
 
             // Register with required activators.
-            registerAsDependentActivation(outputSlot, activator);
+            this.registerAsDependentActivation(outputSlot, activator);
 
         }
 
@@ -516,7 +516,7 @@ public class CardinalityEstimationTraversal {
                 final Operator owner = inputSlot.getOwner();
                 final Activator activator = this.createdPusherActivators.get(owner);
                 if (activator != null) {
-                    addActivation(requiredActivations, activator, inputSlot);
+                    this.addActivation(requiredActivations, activator, inputSlot);
                 }
             }
 
@@ -529,7 +529,7 @@ public class CardinalityEstimationTraversal {
                 }
             }
 
-            final List<Collection<Activation>> alignedActivations = alignActivations(this.inputSlots, requiredActivations);
+            final List<Collection<Activation>> alignedActivations = this.alignActivations(this.inputSlots, requiredActivations);
             if (!requiredActivations.isEmpty()) {
                 LOGGER.warn("Could not build instance: unsatisfied required inputs");
                 return null;
@@ -549,13 +549,14 @@ public class CardinalityEstimationTraversal {
             activator = this.createActivator(outputSlot);
 
             // Register existing dependent activators.
-            registerDependentActivations(outputSlot, activator);
+            this.registerDependentActivations(outputSlot, activator);
 
             // Register with required activators.
-            registerAsDependentActivation(outputSlot, activator);
+            this.registerAsDependentActivation(outputSlot, activator);
 
         }
 
+        @Override
         protected Activator getCachedActivator(OutputSlot<?> outputSlot) {
             return this.createdPusherActivators.get(outputSlot.getOwner());
         }

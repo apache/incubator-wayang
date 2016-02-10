@@ -22,14 +22,14 @@ public class BasicDataUnitType<T> extends DataUnitType<T> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         BasicDataUnitType that = (BasicDataUnitType) o;
-        return Objects.equals(typeClass, that.typeClass);
+        return Objects.equals(this.typeClass, that.typeClass);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(typeClass);
+        return Objects.hash(this.typeClass);
     }
 
     @Override
@@ -38,6 +38,6 @@ public class BasicDataUnitType<T> extends DataUnitType<T> {
     }
 
     public Class<?> getTypeClass() {
-        return typeClass;
+        return this.typeClass;
     }
 }

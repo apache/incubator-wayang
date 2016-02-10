@@ -2,7 +2,10 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.*;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.CompositeCardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CompositeCardinalityPusher;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -67,13 +70,14 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
 
     }
 
+    @Override
     public SlotMapping getSlotMapping() {
-        return slotMapping;
+        return this.slotMapping;
     }
 
     @Override
     public Operator getSource() {
-        if (!isSource()) {
+        if (!this.isSource()) {
             throw new IllegalArgumentException("Cannot enter subplan: not a source");
         }
 
@@ -100,7 +104,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
 
     @Override
     public Operator getSink() {
-        if (!isSink()) {
+        if (!this.isSink()) {
             throw new IllegalArgumentException("Cannot enter subplan: no output slot given and subplan is not a sink.");
         }
 
@@ -134,7 +138,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     }
 
     public Subplan exit(Operator innerOperator) {
-        if (!isSource()) {
+        if (!this.isSource()) {
             throw new IllegalArgumentException("Cannot exit subplan: no input slot given and subplan is not a source.");
         }
 
@@ -206,7 +210,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         if (this.isSink()) {
             return Collections.singleton(this.getSink());
         }
-        return Arrays.stream(getAllOutputs())
+        return Arrays.stream(this.getAllOutputs())
                 .map(this.slotMapping::resolveUpstream)
                 .filter(Objects::nonNull)
                 .map(OutputSlot::getOwner)
@@ -223,7 +227,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
             return Collections.singleton(this.getSource());
         }
 
-        return Arrays.stream(getAllInputs())
+        return Arrays.stream(this.getAllInputs())
                 .flatMap(inputSlot -> this.slotMapping.resolveDownstream(inputSlot).stream())
                 .map(InputSlot::getOwner)
                 .collect(Collectors.toList());

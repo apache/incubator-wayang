@@ -32,7 +32,7 @@ public class JavaPlatform extends Platform {
     
     private JavaPlatform() {
         super(PLATFORM_NAME);
-        initializeMappings();
+        this.initializeMappings();
     }
 
     private void initializeMappings() {

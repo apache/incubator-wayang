@@ -74,14 +74,14 @@ public class InputSlot<T> extends Slot<T> {
     }
 
     public OutputSlot<T> getOccupant() {
-        return occupant;
+        return this.occupant;
     }
 
     @Override
     public int getIndex() throws IllegalStateException {
-        if (Objects.isNull(getOwner())) throw new IllegalStateException("This slot has no owner.");
-        for (int i = 0; i < getOwner().getNumInputs(); i++) {
-            if (getOwner().getInput(i) == this) return i;
+        if (Objects.isNull(this.getOwner())) throw new IllegalStateException("This slot has no owner.");
+        for (int i = 0; i < this.getOwner().getNumInputs(); i++) {
+            if (this.getOwner().getInput(i) == this) return i;
         }
         throw new IllegalStateException("Could not find this slot within its owner.");
     }

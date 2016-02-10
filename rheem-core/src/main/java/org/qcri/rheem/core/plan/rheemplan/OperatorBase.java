@@ -58,7 +58,7 @@ public abstract class OperatorBase implements Operator {
 
     @Override
     public int getEpoch() {
-        return epoch;
+        return this.epoch;
     }
 
     @Override

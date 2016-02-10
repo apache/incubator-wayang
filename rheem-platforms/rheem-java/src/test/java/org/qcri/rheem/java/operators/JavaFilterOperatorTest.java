@@ -28,10 +28,7 @@ public class JavaFilterOperatorTest {
                         new Predicate<Integer>() {
                             @Override
                             public boolean test(Integer item) {
-                                if (item > 0)
-                                    return true;
-                                else
-                                    return false;
+                                return item > 0;
                             }
                         }
                 );

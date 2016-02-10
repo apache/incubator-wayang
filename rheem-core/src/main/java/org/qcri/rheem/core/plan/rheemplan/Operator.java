@@ -2,11 +2,17 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.*;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -15,11 +21,11 @@ import java.util.stream.Collectors;
 public interface Operator {
 
     default int getNumInputs() {
-        return getAllInputs().length;
+        return this.getAllInputs().length;
     }
 
     default int getNumOutputs() {
-        return getAllOutputs().length;
+        return this.getAllOutputs().length;
     }
 
     InputSlot<?>[] getAllInputs();
@@ -27,7 +33,7 @@ public interface Operator {
     OutputSlot<?>[] getAllOutputs();
 
     default InputSlot<?> getInput(int index) {
-        final InputSlot[] allInputs = getAllInputs();
+        final InputSlot[] allInputs = this.getAllInputs();
         if (index < 0 || index >= allInputs.length) {
             throw new IllegalArgumentException(String.format("Illegal input index: %d.", index));
         }
@@ -35,7 +41,7 @@ public interface Operator {
     }
 
     default OutputSlot<?> getOutput(int index) {
-        final OutputSlot[] allOutputs = getAllOutputs();
+        final OutputSlot[] allOutputs = this.getAllOutputs();
         if (index < 0 || index >= allOutputs.length) {
             throw new IllegalArgumentException(String.format("Illegal output index: %d.", index));
         }
@@ -43,14 +49,14 @@ public interface Operator {
     }
 
     default InputSlot<?> getInput(String name) {
-        for (InputSlot inputSlot : getAllInputs()) {
+        for (InputSlot inputSlot : this.getAllInputs()) {
             if (inputSlot.getName().equals(name)) return inputSlot;
         }
         throw new IllegalArgumentException(String.format("No slot with such name: %s", name));
     }
 
     default OutputSlot<?> getOutput(String name) {
-        for (OutputSlot outputSlot : getAllOutputs()) {
+        for (OutputSlot outputSlot : this.getAllOutputs()) {
             if (outputSlot.getName().equals(name)) return outputSlot;
         }
         throw new IllegalArgumentException(String.format("No slot with such name: %s", name));
@@ -82,7 +88,7 @@ public interface Operator {
      * @see #getParent()
      */
     default Operator getInputOperator(int inputIndex) {
-        return getInputOperator(getInput(inputIndex));
+        return this.getInputOperator(this.getInput(inputIndex));
     }
 
     /**
@@ -93,7 +99,7 @@ public interface Operator {
      * @see #getParent()
      */
     default Operator getInputOperator(InputSlot<?> input) {
-        if (!isOwnerOf(input)) {
+        if (!this.isOwnerOf(input)) {
             throw new IllegalArgumentException("Slot does not belong to this operator.");
         }
 
@@ -127,7 +133,7 @@ public interface Operator {
      * @see #getParent()
      */
     default <T> InputSlot<T> getOutermostInputSlot(InputSlot<T> input) {
-        if (!isOwnerOf(input)) {
+        if (!this.isOwnerOf(input)) {
             throw new IllegalArgumentException("Slot does not belong to this operator.");
         }
 
@@ -229,7 +235,7 @@ public interface Operator {
      * @return the parent of this operator or {@code null} if this is a top-level operator
      */
     default CompositeOperator getParent() {
-        final OperatorContainer container = getContainer();
+        final OperatorContainer container = this.getContainer();
         return container == null ?
                 null :
                 container.toOperator();

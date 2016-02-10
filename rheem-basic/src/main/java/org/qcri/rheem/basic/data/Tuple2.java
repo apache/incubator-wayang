@@ -22,15 +22,15 @@ public class Tuple2<T0, T1> implements Serializable {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         Tuple2<?, ?> tuple2 = (Tuple2<?, ?>) o;
-        return Objects.equals(field0, tuple2.field0) &&
-                Objects.equals(field1, tuple2.field1);
+        return Objects.equals(this.field0, tuple2.field0) &&
+                Objects.equals(this.field1, tuple2.field1);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(field0, field1);
+        return Objects.hash(this.field0, this.field1);
     }
 
     @Override

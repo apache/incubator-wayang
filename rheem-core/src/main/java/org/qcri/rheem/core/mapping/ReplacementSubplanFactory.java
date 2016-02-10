@@ -9,8 +9,8 @@ import org.qcri.rheem.core.plan.rheemplan.Subplan;
 public abstract class ReplacementSubplanFactory {
 
     public Operator createReplacementSubplan(SubplanMatch subplanMatch, int epoch) {
-        final Operator replacementSubplan = translate(subplanMatch, epoch);
-        checkSanity(subplanMatch, replacementSubplan);
+        final Operator replacementSubplan = this.translate(subplanMatch, epoch);
+        this.checkSanity(subplanMatch, replacementSubplan);
         return replacementSubplan;
     }
 

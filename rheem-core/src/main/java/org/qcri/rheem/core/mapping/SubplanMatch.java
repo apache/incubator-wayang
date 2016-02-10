@@ -47,11 +47,11 @@ public class SubplanMatch {
     }
 
     public Map<String, OperatorMatch> getOperatorMatches() {
-        return operatorMatches;
+        return this.operatorMatches;
     }
 
     public SubplanPattern getPattern() {
-        return pattern;
+        return this.pattern;
     }
 
     public OperatorMatch getInputMatch() {

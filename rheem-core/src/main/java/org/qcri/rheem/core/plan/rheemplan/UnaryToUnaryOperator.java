@@ -17,18 +17,18 @@ public abstract class UnaryToUnaryOperator<InputType, OutputType> extends Operat
     }
 
     public InputSlot<InputType> getInput() {
-        return (InputSlot<InputType>) getInput(0);
+        return (InputSlot<InputType>) this.getInput(0);
     }
 
     public OutputSlot<OutputType> getOutput() {
-        return (OutputSlot<OutputType>) getOutput(0);
+        return (OutputSlot<OutputType>) this.getOutput(0);
     }
 
     public DataSetType<InputType> getInputType() {
-        return getInput().getType();
+        return this.getInput().getType();
     }
 
     public DataSetType getOutputType() {
-        return getOutput().getType();
+        return this.getOutput().getType();
     }
 }

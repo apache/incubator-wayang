@@ -49,7 +49,7 @@ public abstract class Platform {
     public abstract Collection<Mapping> getMappings();
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public abstract boolean isExecutable();

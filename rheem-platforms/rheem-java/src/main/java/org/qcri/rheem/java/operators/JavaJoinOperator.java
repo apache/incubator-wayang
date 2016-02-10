@@ -55,7 +55,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaJoinOperator<>(getInputType0(), getInputType1(),
-                getKeyDescriptor0(), getKeyDescriptor1());
+        return new JavaJoinOperator<>(this.getInputType0(), this.getInputType1(),
+                this.getKeyDescriptor0(), this.getKeyDescriptor1());
     }
 }

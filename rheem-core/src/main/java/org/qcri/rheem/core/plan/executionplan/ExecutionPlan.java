@@ -18,6 +18,6 @@ public class ExecutionPlan {
     }
 
     public Collection<ExecutionStage> getStartingStages() {
-        return startingStages;
+        return this.startingStages;
     }
 }

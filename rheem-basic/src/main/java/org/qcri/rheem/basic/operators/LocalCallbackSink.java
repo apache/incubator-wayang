@@ -33,7 +33,7 @@ public class LocalCallbackSink<T> extends UnarySink<T> {
     }
 
     public Consumer<T> getCallback() {
-        return callback;
+        return this.callback;
     }
 
     @Override

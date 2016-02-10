@@ -37,6 +37,6 @@ public class JavaUnionAllOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaUnionAllOperator<>(getInputType0());
+        return new JavaUnionAllOperator<>(this.getInputType0());
     }
 }

@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 public class RheemContext {
 
     @SuppressWarnings("unused")
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Configuration configuration = Configuration.createDefaultConfiguration(this);
 
@@ -41,6 +41,6 @@ public class RheemContext {
     }
 
     public Configuration getConfiguration() {
-        return configuration;
+        return this.configuration;
     }
 }

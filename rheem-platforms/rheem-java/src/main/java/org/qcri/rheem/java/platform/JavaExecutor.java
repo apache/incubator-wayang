@@ -29,7 +29,7 @@ public class JavaExecutor implements Executor {
                     "Execution plan contains non-Java operator %s.", executionOperator));
         }
 
-        evaluate0((JavaExecutionOperator) executionOperator);
+        this.evaluate0((JavaExecutionOperator) executionOperator);
     }
 
     private Stream[] evaluate0(JavaExecutionOperator operator) {
@@ -47,7 +47,7 @@ public class JavaExecutor implements Executor {
                         "Execution plan contains non-Java operator %s.", inputOperator));
             }
 
-            Stream[] outputStreams = evaluate0((JavaExecutionOperator) inputOperator);
+            Stream[] outputStreams = this.evaluate0((JavaExecutionOperator) inputOperator);
             int outputSlotIndex = 0;
             for (; outputSlot != inputOperator.getOutput(outputSlotIndex); outputSlotIndex++) ;
             inputStreams[i] = outputStreams[outputSlotIndex];

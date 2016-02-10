@@ -115,7 +115,7 @@ public class PartialPlan {
     }
 
     public Canonicalizer<ExecutionOperator> getOperators() {
-        return operators;
+        return this.operators;
     }
 
     /**
@@ -132,8 +132,8 @@ public class PartialPlan {
 
         return this.operators.stream()
                 .filter(operator ->
-                        allOutermostInputSlots(operator).anyMatch(inputSlots::contains) ||
-                                allOutermostOutputSlots(operator).anyMatch(outputSlots::contains))
+                        this.allOutermostInputSlots(operator).anyMatch(inputSlots::contains) ||
+                                this.allOutermostOutputSlots(operator).anyMatch(outputSlots::contains))
                 .collect(Collectors.toList());
     }
 

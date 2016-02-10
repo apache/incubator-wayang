@@ -8,12 +8,12 @@ import java.util.Optional;
 public abstract class TopDownPlanVisitor<Payload, Return> {
 
     public Return process(Operator operator, OutputSlot<?> fromOutputSlot, Payload payload) {
-        final Optional<Return> returnOptional = prepareVisit(operator, fromOutputSlot, payload);
+        final Optional<Return> returnOptional = this.prepareVisit(operator, fromOutputSlot, payload);
         if (returnOptional != null) {
             return returnOptional.orElse(null);
         }
         Return result = operator.accept(this, fromOutputSlot, payload);
-        followUp(operator, fromOutputSlot, payload, result);
+        this.followUp(operator, fromOutputSlot, payload, result);
 
         return result;
     }
@@ -49,7 +49,7 @@ public abstract class TopDownPlanVisitor<Payload, Return> {
                 .unchecked();
         final OutputSlot<Object> occupant = outerInputSlot.getOccupant();
         if (occupant != null) {
-            return Optional.ofNullable(process(occupant.getOwner(), occupant, payload));
+            return Optional.ofNullable(this.process(occupant.getOwner(), occupant, payload));
         } else {
             return null;
         }

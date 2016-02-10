@@ -31,6 +31,6 @@ public class JavaLocalCallbackSink<T> extends LocalCallbackSink<T> implements Ja
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaLocalCallbackSink<>(this.callback, getType());
+        return new JavaLocalCallbackSink<>(this.callback, this.getType());
     }
 }

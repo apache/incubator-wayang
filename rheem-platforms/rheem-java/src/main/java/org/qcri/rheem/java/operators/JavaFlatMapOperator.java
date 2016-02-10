@@ -1,8 +1,8 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.FlatMapOperator;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -40,6 +40,6 @@ public class JavaFlatMapOperator<InputType, OutputType>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaFlatMapOperator<>(getInputType(), getOutputType(), getFunctionDescriptor());
+        return new JavaFlatMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
     }
 }

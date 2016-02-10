@@ -1,15 +1,12 @@
 package org.qcri.rheem.spark.compiler;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
-
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-
-
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
 
 import java.util.Iterator;
 import java.util.function.BinaryOperator;

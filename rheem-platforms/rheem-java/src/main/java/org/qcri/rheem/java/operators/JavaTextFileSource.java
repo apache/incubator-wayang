@@ -31,7 +31,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
     public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
         URL url;
         try {
-            url = new URL(getInputUrl());
+            url = new URL(this.getInputUrl());
         } catch (MalformedURLException e) {
             throw new RuntimeException("Could not parse input URL.", e);
         }
@@ -50,6 +50,6 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
     @Override
     public JavaTextFileSource copy() {
-        return new JavaTextFileSource(getInputUrl());
+        return new JavaTextFileSource(this.getInputUrl());
     }
 }

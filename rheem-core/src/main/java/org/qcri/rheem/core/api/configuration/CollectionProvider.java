@@ -59,7 +59,7 @@ public class CollectionProvider<Value> implements Iterable<Value> {
     public Collection<Value> provideAll() {
         Set<Value> containedValues = new HashSet<>();
         Set<Value> excludedValues = new HashSet<>();
-        return provideAll(containedValues, excludedValues);
+        return this.provideAll(containedValues, excludedValues);
     }
 
     private Collection<Value> provideAll(Set<Value> containedValues, Set<Value> excludedValues) {

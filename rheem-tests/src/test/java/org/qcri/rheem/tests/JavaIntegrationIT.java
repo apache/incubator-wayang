@@ -38,7 +38,7 @@ public class JavaIntegrationIT {
         rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
-        final URL inputUrl = getClass().getResource("/some-lines.txt");
+        final URL inputUrl = this.getClass().getResource("/some-lines.txt");
         TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
         List<String> collector = new LinkedList<>();
         LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(collector, DataSetType.createDefault(String.class));
@@ -61,7 +61,7 @@ public class JavaIntegrationIT {
         rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
-        final URL inputUrl = getClass().getResource("/some-lines.txt");
+        final URL inputUrl = this.getClass().getResource("/some-lines.txt");
         TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
         MapOperator<String, String> reverseOperator = new MapOperator<>(
                 DataSetType.createDefault(String.class),
@@ -87,7 +87,7 @@ public class JavaIntegrationIT {
         rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
-        final URL inputUrl = getClass().getResource("/some-lines.txt");
+        final URL inputUrl = this.getClass().getResource("/some-lines.txt");
         TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
         // ILLEGAL: This platform is not registered, so this operator will find no implementation.
         textFileSource.addTargetPlatform(MyMadeUpPlatform.getInstance());
@@ -115,7 +115,7 @@ public class JavaIntegrationIT {
         rheemContext.register(MyMadeUpPlatform.getInstance());
 
         // Build a Rheem plan.
-        final URL inputUrl = getClass().getResource("/some-lines.txt");
+        final URL inputUrl = this.getClass().getResource("/some-lines.txt");
         TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
         MapOperator<String, String> reverseOperator = new MapOperator<>(
                 DataSetType.createDefault(String.class),
@@ -141,7 +141,7 @@ public class JavaIntegrationIT {
         rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
-        final URL inputUrl = getClass().getResource("/some-lines.txt");
+        final URL inputUrl = this.getClass().getResource("/some-lines.txt");
         TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
         // ILLEGAL:
         textFileSource.addTargetPlatform(MyMadeUpPlatform.getInstance());
@@ -308,7 +308,7 @@ public class JavaIntegrationIT {
         rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
-        final URL inputUrl = getClass().getResource("/some-lines.txt");
+        final URL inputUrl = this.getClass().getResource("/some-lines.txt");
         TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
                 DataSetType.createDefault(String.class),
@@ -342,8 +342,8 @@ public class JavaIntegrationIT {
         rheemContext.register(JavaPlatform.getInstance());
 
         // Build a Rheem plan.
-        final URL inputUrl = getClass().getResource("/some-lines.txt");
-        final URL inputUrl1 = getClass().getResource("/other-lines.txt");
+        final URL inputUrl = this.getClass().getResource("/some-lines.txt");
+        final URL inputUrl1 = this.getClass().getResource("/other-lines.txt");
         TextFileSource textFileSource = new TextFileSource(inputUrl.toURI().toString());
         TextFileSource textFileSource1 = new TextFileSource(inputUrl1.toURI().toString());
         FilterOperator<String> noCommaOperator = new FilterOperator<>(

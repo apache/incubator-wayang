@@ -20,15 +20,15 @@ public abstract class BinaryToUnaryOperator<InputType0, InputType1, OutputType> 
 
 
     public DataSetType<InputType0> getInputType0() {
-        return ((InputSlot<InputType0>) getInput(0)).getType();
+        return ((InputSlot<InputType0>) this.getInput(0)).getType();
     }
 
     public DataSetType<InputType1> getInputType1() {
-        return ((InputSlot<InputType1>) getInput(1)).getType();
+        return ((InputSlot<InputType1>) this.getInput(1)).getType();
     }
 
 
     public DataSetType<OutputType> getOutputType() {
-        return ((OutputSlot<OutputType>) getOutput(0)).getType();
+        return ((OutputSlot<OutputType>) this.getOutput(0)).getType();
     }
 }

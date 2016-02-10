@@ -5,7 +5,6 @@ import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.spark.operators.SparkGlobalReduceOperator;
 
-
 import java.util.Collection;
 import java.util.Collections;
 
@@ -17,7 +16,7 @@ public class SparkGlobalReduceMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory()));
+        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory()));
     }
 
     private SubplanPattern createSubplanPattern() {

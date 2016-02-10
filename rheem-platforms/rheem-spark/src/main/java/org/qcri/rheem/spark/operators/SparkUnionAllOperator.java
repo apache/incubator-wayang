@@ -8,8 +8,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
-import java.util.stream.Stream;
-
 /**
  * Spark implementation of the {@link UnionAllOperator}.
  */
@@ -40,6 +38,6 @@ public class SparkUnionAllOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkUnionAllOperator<>(getInputType0());
+        return new SparkUnionAllOperator<>(this.getInputType0());
     }
 }

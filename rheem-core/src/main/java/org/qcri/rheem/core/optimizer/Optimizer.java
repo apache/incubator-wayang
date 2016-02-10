@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Deprecated
 public class Optimizer {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private Queue<EnumerationPath> enumerationPaths = new LinkedList<>();
 
@@ -33,12 +33,12 @@ public class Optimizer {
                 .collect(Collectors.toCollection(LinkedList::new));
 
         // Start working on the working paths.
-        enumerationPaths.add(new EnumerationPath(workingPathQueue, new ExecutionPlanBuilder()));
-        while (!enumerationPaths.isEmpty()) {
-            enumerationPaths.poll().run();
+        this.enumerationPaths.add(new EnumerationPath(workingPathQueue, new ExecutionPlanBuilder()));
+        while (!this.enumerationPaths.isEmpty()) {
+            this.enumerationPaths.poll().run();
         }
 
-        logger.info("Found {} execution plan(s).", this.executionPlans.size());
+        this.logger.info("Found {} execution plan(s).", this.executionPlans.size());
 
         return this.executionPlans.stream().findAny().get();
     }
@@ -74,7 +74,7 @@ public class Optimizer {
                 Optimizer.this.logger.debug("Processing working path with {} ({} left in queue).",
                         workingPath.operatorToBeProcessed,
                         this.workingPaths.size());
-                process(workingPath);
+                this.process(workingPath);
             }
 
             this.executionPlanBuilder.build().stream().forEach(Optimizer.this.executionPlans::add);
@@ -89,7 +89,7 @@ public class Optimizer {
                     if (Objects.isNull(unforkedAlternative)) {
                         unforkedAlternative = alternative;
                     } else {
-                        forkWith(alternative);
+                        this.forkWith(alternative);
                     }
                 }
                 this.workingPaths.add(new WorkingPath(unforkedAlternative.getOperator()));
@@ -117,7 +117,7 @@ public class Optimizer {
                     boolean isAllInputsServed = true;
                     OutputSlot[] servingOutputSlots = new OutputSlot[executionOperator.getNumInputs()];
                     for (int i = 0; i < executionOperator.getNumInputs(); i++) {
-                        Optional<OutputSlot> optionalServingOutputSlot = executionPlanBuilder.getServingOutputSlot(executionOperator.getInput(i));
+                        Optional<OutputSlot> optionalServingOutputSlot = this.executionPlanBuilder.getServingOutputSlot(executionOperator.getInput(i));
                         if (!optionalServingOutputSlot.isAvailable()) {
                             isAllInputsServed = false;
                             break;
@@ -165,7 +165,7 @@ public class Optimizer {
             // Create the fork.
             EnumerationPath fork = new EnumerationPath(
                     workingPathsCopy,
-                    executionPlanBuilder.copy(),
+                    this.executionPlanBuilder.copy(),
                     processedOperatorsCopy
             );
             Optimizer.this.enumerationPaths.add(fork);

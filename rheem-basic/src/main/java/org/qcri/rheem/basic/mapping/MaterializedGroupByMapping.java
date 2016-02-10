@@ -1,7 +1,7 @@
 package org.qcri.rheem.basic.mapping;
 
-import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.basic.operators.GroupByOperator;
+import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
@@ -17,7 +17,7 @@ public class MaterializedGroupByMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory()));
+        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory()));
     }
 
     private SubplanPattern createSubplanPattern() {

@@ -101,9 +101,10 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
         return collectedEstimates;
     }
 
+    @Override
     public LoadProfile estimate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
-        final LoadProfile mainLoadProfile = performLocalEstimation(inputEstimates, outputEstimates);
-        performNestedEstimations(inputEstimates, outputEstimates, mainLoadProfile);
+        final LoadProfile mainLoadProfile = this.performLocalEstimation(inputEstimates, outputEstimates);
+        this.performNestedEstimations(inputEstimates, outputEstimates, mainLoadProfile);
         return mainLoadProfile;
     }
 

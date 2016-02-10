@@ -3,7 +3,8 @@ package org.qcri.rheem.core.optimizer.costs;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * Reflects the (estimated) required resources of an {@link Operator} or {@link FunctionDescriptor}.
@@ -30,23 +31,23 @@ public class LoadProfile {
 
 
     public LoadEstimate getCpuUsage() {
-        return cpuUsage;
+        return this.cpuUsage;
     }
 
     public LoadEstimate getRamUsage() {
-        return ramUsage;
+        return this.ramUsage;
     }
 
     public LoadEstimate getNetworkUsage() {
-        return networkUsage;
+        return this.networkUsage;
     }
 
     public LoadEstimate getDiskUsage() {
-        return diskUsage;
+        return this.diskUsage;
     }
 
     public Collection<LoadProfile> getSubprofiles() {
-        return subprofiles;
+        return this.subprofiles;
     }
 
     public void nest(LoadProfile subprofile) {

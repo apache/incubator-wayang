@@ -41,7 +41,7 @@ public class TextFileSource extends UnarySource {
     }
 
     public String getInputUrl() {
-        return inputUrl;
+        return this.inputUrl;
     }
 
     @Override
@@ -53,7 +53,7 @@ public class TextFileSource extends UnarySource {
     }
 
     public String getEncoding() {
-        return encoding;
+        return this.encoding;
     }
 
     /**
@@ -74,20 +74,20 @@ public class TextFileSource extends UnarySource {
         public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
             Validate.isTrue(TextFileSource.this.getNumInputs() == inputEstimates.length);
 
-            OptionalLong fileSize = determineFileSize(TextFileSource.this.inputUrl);
+            OptionalLong fileSize = this.determineFileSize(TextFileSource.this.inputUrl);
             if (!fileSize.isPresent()) {
                 TextFileSource.this.logger.warn("Could not determine size of {}... deliver fallback estimate.",
                         TextFileSource.this.inputUrl);
-                return FALLBACK_ESTIMATE;
+                return this.FALLBACK_ESTIMATE;
             } else if (fileSize.getAsLong() == 0L) {
                 return new CardinalityEstimate(0L, 0L, 1d);
             }
 
-            OptionalDouble bytesPerLine = estimateBytesPerLine();
+            OptionalDouble bytesPerLine = this.estimateBytesPerLine();
             if (!bytesPerLine.isPresent()) {
                 TextFileSource.this.logger.warn("Could not determine average line size of {}... deliver fallback estimate.",
                         TextFileSource.this.inputUrl);
-                return FALLBACK_ESTIMATE;
+                return this.FALLBACK_ESTIMATE;
             }
 
             double numEstimatedLines = fileSize.getAsLong() / bytesPerLine.getAsDouble();
@@ -112,7 +112,7 @@ public class TextFileSource extends UnarySource {
                 try {
                     return OptionalLong.of(fileSystem.get().getFileSize(inputUrl));
                 } catch (FileNotFoundException e) {
-                    logger.warn("Could not determine file size.", e);
+                    TextFileSource.this.logger.warn("Could not determine file size.", e);
                 }
             }
 
@@ -125,13 +125,13 @@ public class TextFileSource extends UnarySource {
          * @return the average number of bytes per line if it could be determined
          */
         private OptionalDouble estimateBytesPerLine() {
-            final Optional<FileSystem> fileSystem = FileSystems.getFileSystem(inputUrl);
+            final Optional<FileSystem> fileSystem = FileSystems.getFileSystem(TextFileSource.this.inputUrl);
             if (fileSystem.isPresent()) {
 
                 // Construct a limited reader for the first x KiB of the file.
                 final int KiB = 1024;
                 final int MiB = 1024 * KiB;
-                try (LimitedInputStream lis = new LimitedInputStream(fileSystem.get().open(inputUrl), 1 * MiB)) {
+                try (LimitedInputStream lis = new LimitedInputStream(fileSystem.get().open(TextFileSource.this.inputUrl), 1 * MiB)) {
                     final BufferedReader bufferedReader = new BufferedReader(
                             new InputStreamReader(lis, TextFileSource.this.encoding)
                     );
@@ -148,12 +148,12 @@ public class TextFileSource extends UnarySource {
                     }
 
                     if (numLineFeeds == 0) {
-                        logger.warn("Could not find any newline character in {}.", inputUrl);
+                        TextFileSource.this.logger.warn("Could not find any newline character in {}.", TextFileSource.this.inputUrl);
                         return OptionalDouble.empty();
                     }
                     return OptionalDouble.of((double) lis.getNumReadBytes() / numLineFeeds);
                 } catch (IOException e) {
-                    logger.error("Could not estimate bytes per line of an input file.", e);
+                    TextFileSource.this.logger.error("Could not estimate bytes per line of an input file.", e);
                 }
             }
 

@@ -21,12 +21,12 @@ public class SlotMappingTest {
     public void testSimpleSlotMapping() {
         SlotMapping slotMapping = new SlotMapping();
 
-        OutputSlot<String> innerOutputSlot1 = new OutputSlot<>("innerOutputSlot1", new TestSink<>(STRING_TYPE), STRING_TYPE);
-        OutputSlot<String> outerOutputSlot1 = new OutputSlot<>("innerOutputSlot1", new TestSink<>(STRING_TYPE), STRING_TYPE);
+        OutputSlot<String> innerOutputSlot1 = new OutputSlot<>("innerOutputSlot1", new TestSink<>(this.STRING_TYPE), this.STRING_TYPE);
+        OutputSlot<String> outerOutputSlot1 = new OutputSlot<>("innerOutputSlot1", new TestSink<>(this.STRING_TYPE), this.STRING_TYPE);
         slotMapping.mapUpstream(outerOutputSlot1, innerOutputSlot1);
 
-        InputSlot<String> outerInputSlot1 = new InputSlot<>("outerInputSlot1", new TestSource<>(STRING_TYPE), STRING_TYPE);
-        InputSlot<String> innerInputSlot1 = new InputSlot<>("innerInputSlot1", new TestSource<>(STRING_TYPE), STRING_TYPE);
+        InputSlot<String> outerInputSlot1 = new InputSlot<>("outerInputSlot1", new TestSource<>(this.STRING_TYPE), this.STRING_TYPE);
+        InputSlot<String> innerInputSlot1 = new InputSlot<>("innerInputSlot1", new TestSource<>(this.STRING_TYPE), this.STRING_TYPE);
         slotMapping.mapUpstream(innerInputSlot1, outerInputSlot1);
 
         Assert.assertEquals(innerOutputSlot1, slotMapping.resolveUpstream(outerOutputSlot1));
@@ -37,15 +37,15 @@ public class SlotMappingTest {
     public void testOverridingSlotMapping() {
         SlotMapping slotMapping = new SlotMapping();
 
-        OutputSlot<String> innerOutputSlot1 = new OutputSlot<>("innerOutputSlot1", new TestSink<>(STRING_TYPE), STRING_TYPE);
-        OutputSlot<String> innerOutputSlot2 = new OutputSlot<>("innerOutputSlot2", new TestSink<>(STRING_TYPE), STRING_TYPE);
-        OutputSlot<String> outerOutputSlot1 = new OutputSlot<>("innerOutputSlot1", new TestSink<>(STRING_TYPE), STRING_TYPE);
+        OutputSlot<String> innerOutputSlot1 = new OutputSlot<>("innerOutputSlot1", new TestSink<>(this.STRING_TYPE), this.STRING_TYPE);
+        OutputSlot<String> innerOutputSlot2 = new OutputSlot<>("innerOutputSlot2", new TestSink<>(this.STRING_TYPE), this.STRING_TYPE);
+        OutputSlot<String> outerOutputSlot1 = new OutputSlot<>("innerOutputSlot1", new TestSink<>(this.STRING_TYPE), this.STRING_TYPE);
         slotMapping.mapUpstream(outerOutputSlot1, innerOutputSlot1);
         slotMapping.mapUpstream(outerOutputSlot1, innerOutputSlot2);
 
-        InputSlot<String> outerInputSlot1 = new InputSlot<>("outerInputSlot1", new TestSource<>(STRING_TYPE), STRING_TYPE);
-        InputSlot<String> outerInputSlot2 = new InputSlot<>("outerInputSlot2", new TestSource<>(STRING_TYPE), STRING_TYPE);
-        InputSlot<String> innerInputSlot1 = new InputSlot<>("innerInputSlot1", new TestSource<>(STRING_TYPE), STRING_TYPE);
+        InputSlot<String> outerInputSlot1 = new InputSlot<>("outerInputSlot1", new TestSource<>(this.STRING_TYPE), this.STRING_TYPE);
+        InputSlot<String> outerInputSlot2 = new InputSlot<>("outerInputSlot2", new TestSource<>(this.STRING_TYPE), this.STRING_TYPE);
+        InputSlot<String> innerInputSlot1 = new InputSlot<>("innerInputSlot1", new TestSource<>(this.STRING_TYPE), this.STRING_TYPE);
         slotMapping.mapUpstream(innerInputSlot1, outerInputSlot1);
         slotMapping.mapUpstream(innerInputSlot1, outerInputSlot2);
 
@@ -57,15 +57,15 @@ public class SlotMappingTest {
     public void testMultiMappings() {
         SlotMapping slotMapping = new SlotMapping();
 
-        OutputSlot<String> innerOutputSlot1 = new OutputSlot<>("innerOutputSlot1", new TestSink<>(STRING_TYPE), STRING_TYPE);
-        OutputSlot<String> outerOutputSlot1 = new OutputSlot<>("outerOutputSlot1", new TestSink<>(STRING_TYPE), STRING_TYPE);
-        OutputSlot<String> outerOutputSlot2 = new OutputSlot<>("outerOutputSlot2", new TestSink<>(STRING_TYPE), STRING_TYPE);
+        OutputSlot<String> innerOutputSlot1 = new OutputSlot<>("innerOutputSlot1", new TestSink<>(this.STRING_TYPE), this.STRING_TYPE);
+        OutputSlot<String> outerOutputSlot1 = new OutputSlot<>("outerOutputSlot1", new TestSink<>(this.STRING_TYPE), this.STRING_TYPE);
+        OutputSlot<String> outerOutputSlot2 = new OutputSlot<>("outerOutputSlot2", new TestSink<>(this.STRING_TYPE), this.STRING_TYPE);
         slotMapping.mapUpstream(outerOutputSlot1, innerOutputSlot1);
         slotMapping.mapUpstream(outerOutputSlot2, innerOutputSlot1);
 
-        InputSlot<String> outerInputSlot1 = new InputSlot<>("outerInputSlot1", new TestSource<>(STRING_TYPE), STRING_TYPE);
-        InputSlot<String> innerInputSlot1 = new InputSlot<>("innerInputSlot1", new TestSource<>(STRING_TYPE), STRING_TYPE);
-        InputSlot<String> innerInputSlot2 = new InputSlot<>("innerInputSlot2", new TestSource<>(STRING_TYPE), STRING_TYPE);
+        InputSlot<String> outerInputSlot1 = new InputSlot<>("outerInputSlot1", new TestSource<>(this.STRING_TYPE), this.STRING_TYPE);
+        InputSlot<String> innerInputSlot1 = new InputSlot<>("innerInputSlot1", new TestSource<>(this.STRING_TYPE), this.STRING_TYPE);
+        InputSlot<String> innerInputSlot2 = new InputSlot<>("innerInputSlot2", new TestSource<>(this.STRING_TYPE), this.STRING_TYPE);
         slotMapping.mapUpstream(innerInputSlot1, outerInputSlot1);
         slotMapping.mapUpstream(innerInputSlot2, outerInputSlot1);
 

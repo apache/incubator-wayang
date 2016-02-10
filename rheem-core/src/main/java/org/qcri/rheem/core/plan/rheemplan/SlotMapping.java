@@ -42,14 +42,14 @@ public class SlotMapping {
     public void mapAllUpsteam(InputSlot[] sources, InputSlot[] targets) {
         if (sources.length != targets.length) throw new IllegalArgumentException();
         for (int i = 0; i < sources.length; i++) {
-            mapUpstream(sources[i], targets[i]);
+            this.mapUpstream(sources[i], targets[i]);
         }
     }
 
     public void mapAllUpsteam(OutputSlot[] sources, OutputSlot[] targets) {
         if (sources.length != targets.length) throw new IllegalArgumentException();
         for (int i = 0; i < sources.length; i++) {
-            mapUpstream(sources[i], targets[i]);
+            this.mapUpstream(sources[i], targets[i]);
         }
     }
 
@@ -83,14 +83,14 @@ public class SlotMapping {
     }
 
     public <T> Collection<InputSlot<T>> resolveDownstream(InputSlot<T> source) {
-        return (Collection<InputSlot<T>>) getOrCreateDownstreamMapping().getOrDefault(source, Collections.emptyList());
+        return (Collection<InputSlot<T>>) this.getOrCreateDownstreamMapping().getOrDefault(source, Collections.emptyList());
     }
 
     public <T> Collection<OutputSlot<T>> resolveDownstream(OutputSlot<T> source) {
         if (!source.getOccupiedSlots().isEmpty()) {
             throw new IllegalStateException("Tried to resolve (downstream) an OutputSlot with occupiers, which is illegal.");
         }
-        return (Collection<OutputSlot<T>>) getOrCreateDownstreamMapping().getOrDefault(source, Collections.emptyList());
+        return (Collection<OutputSlot<T>>) this.getOrCreateDownstreamMapping().getOrDefault(source, Collections.emptyList());
     }
 
     /**
@@ -126,10 +126,10 @@ public class SlotMapping {
             final InputSlot<?> oldInput = oldOperator.getInput(i);
             final InputSlot<?> newInput = newOperator.getInput(i);
 
-            final InputSlot<?> outerInput = resolveUpstream(oldInput);
+            final InputSlot<?> outerInput = this.resolveUpstream(oldInput);
             if (outerInput != null) {
-                mapUpstream(newInput, outerInput);
-                delete(oldInput);
+                this.mapUpstream(newInput, outerInput);
+                this.delete(oldInput);
             }
         }
     }

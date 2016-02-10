@@ -3,7 +3,6 @@ package org.qcri.rheem.core.optimizer.costs;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;

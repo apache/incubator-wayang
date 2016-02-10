@@ -8,7 +8,6 @@ import org.qcri.rheem.core.util.Tuple;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class AggregatingCardinalityPusher extends CardinalityPusher {
@@ -43,9 +42,9 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
     private CardinalityEstimate[] pushThroughPath(Tuple<OperatorAlternative.Alternative, CardinalityPusher> pushPath,
                                                   Configuration configuration,
                                                   CardinalityEstimate[] inputEstimates) {
-        CardinalityEstimate[] translatedEstimates = translateInputEstimates(inputEstimates, pushPath.field0);
+        CardinalityEstimate[] translatedEstimates = this.translateInputEstimates(inputEstimates, pushPath.field0);
         final CardinalityEstimate[] outputEstimates = pushPath.field1.push(configuration, translatedEstimates);
-        return translateOutputEstimates(outputEstimates, pushPath.field0);
+        return this.translateOutputEstimates(outputEstimates, pushPath.field0);
     }
 
     private CardinalityEstimate[] translateInputEstimates(CardinalityEstimate[] inputEstimates,

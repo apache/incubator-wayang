@@ -46,6 +46,6 @@ public class SparkCountOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkCountOperator<>(getInputType());
+        return new SparkCountOperator<>(this.getInputType());
     }
 }

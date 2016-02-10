@@ -29,7 +29,7 @@ public class SparkExecutor implements Executor {
                     "Execution plan contains non-Java operator %s.", executionOperator));
         }
 
-        evaluate0((SparkExecutionOperator) executionOperator);
+        this.evaluate0((SparkExecutionOperator) executionOperator);
     }
 
     private JavaRDDLike[] evaluate0(SparkExecutionOperator operator) {
@@ -47,7 +47,7 @@ public class SparkExecutor implements Executor {
                         "Execution plan contains non-Spark operator %s.", inputOperator));
             }
 
-            JavaRDDLike[] outputStreams = evaluate0((SparkExecutionOperator) inputOperator);
+            JavaRDDLike[] outputStreams = this.evaluate0((SparkExecutionOperator) inputOperator);
             int outputSlotIndex = 0;
             for (; outputSlot != inputOperator.getOutput(outputSlotIndex); outputSlotIndex++) ;
             inputStreams[i] = outputStreams[outputSlotIndex];

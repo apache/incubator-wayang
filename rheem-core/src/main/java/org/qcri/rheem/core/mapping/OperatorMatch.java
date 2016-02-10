@@ -18,10 +18,10 @@ public class OperatorMatch {
     }
 
     public OperatorPattern getPattern() {
-        return pattern;
+        return this.pattern;
     }
 
     public Operator getOperator() {
-        return operator;
+        return this.operator;
     }
 }

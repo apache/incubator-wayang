@@ -18,7 +18,7 @@ public class RheemPlan {
     }
 
     public Collection<Operator> getSinks() {
-        return sinks;
+        return this.sinks;
     }
 
     /**

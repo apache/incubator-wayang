@@ -38,7 +38,7 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
         if (this.isMatchSubclasses ?
                 this.operatorClass.isAssignableFrom(operator.getClass()) :
                 this.operatorClass.equals(operator.getClass())) {
-            checkSanity(operator);
+            this.checkSanity(operator);
             return new OperatorMatch(this, operator);
         }
 
@@ -56,7 +56,7 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
 
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     @Override

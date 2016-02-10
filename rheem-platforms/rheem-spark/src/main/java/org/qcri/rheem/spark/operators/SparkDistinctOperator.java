@@ -40,6 +40,6 @@ public class SparkDistinctOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkDistinctOperator<>(getInputType());
+        return new SparkDistinctOperator<>(this.getInputType());
     }
 }

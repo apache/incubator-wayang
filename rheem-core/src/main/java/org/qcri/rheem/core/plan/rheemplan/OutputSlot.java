@@ -52,9 +52,9 @@ public class OutputSlot<T> extends Slot<T> {
 
     @Override
     public int getIndex() throws IllegalStateException {
-        if (Objects.isNull(getOwner())) throw new IllegalStateException("This slot has no owner.");
-        for (int i = 0; i < getOwner().getNumOutputs(); i++) {
-            if (getOwner().getOutput(i) == this) return i;
+        if (Objects.isNull(this.getOwner())) throw new IllegalStateException("This slot has no owner.");
+        for (int i = 0; i < this.getOwner().getNumOutputs(); i++) {
+            if (this.getOwner().getOutput(i) == this) return i;
         }
         throw new IllegalStateException("Could not find this slot within its owner.");
     }
@@ -73,7 +73,7 @@ public class OutputSlot<T> extends Slot<T> {
             throw new IllegalStateException("Cannot connect: input slot is already occupied");
         }
 
-        occupiedSlots.add(inputSlot);
+        this.occupiedSlots.add(inputSlot);
         inputSlot.setOccupant(this);
     }
 
@@ -82,12 +82,12 @@ public class OutputSlot<T> extends Slot<T> {
             throw new IllegalStateException("Cannot disconnect: input slot is not occupied by this output slot");
         }
 
-        occupiedSlots.remove(inputSlot);
+        this.occupiedSlots.remove(inputSlot);
         inputSlot.setOccupant(null);
     }
 
     public List<InputSlot<T>> getOccupiedSlots() {
-        return occupiedSlots;
+        return this.occupiedSlots;
     }
 
     @SuppressWarnings("unchecked")

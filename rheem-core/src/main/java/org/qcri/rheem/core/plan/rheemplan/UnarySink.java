@@ -13,11 +13,11 @@ public abstract class UnarySink<T> extends OperatorBase implements ActualOperato
     }
 
     public InputSlot<T> getInput() {
-        return (InputSlot<T>) getInput(0);
+        return (InputSlot<T>) this.getInput(0);
     }
 
     public DataSetType<T> getType() {
-        return getInput().getType();
+        return this.getInput().getType();
     }
 
 }

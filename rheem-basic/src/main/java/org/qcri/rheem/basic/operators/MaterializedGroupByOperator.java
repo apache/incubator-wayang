@@ -35,7 +35,7 @@ public class MaterializedGroupByOperator<Type, Key> extends UnaryToUnaryOperator
     }
 
     public TransformationDescriptor<Type, Key> getKeyDescriptor() {
-        return keyDescriptor;
+        return this.keyDescriptor;
     }
 
     @Override

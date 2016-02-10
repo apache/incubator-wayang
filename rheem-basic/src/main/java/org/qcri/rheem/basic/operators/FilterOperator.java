@@ -32,7 +32,7 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     }
 
     public Predicate<Type> getFunctionDescriptor() {
-        return predicate;
+        return this.predicate;
     }
 
     @Override

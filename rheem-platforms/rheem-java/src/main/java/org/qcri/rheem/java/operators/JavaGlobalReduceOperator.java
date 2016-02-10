@@ -44,6 +44,6 @@ public class JavaGlobalReduceOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaGlobalReduceOperator<>(getInputType(), getReduceDescriptor());
+        return new JavaGlobalReduceOperator<>(this.getInputType(), this.getReduceDescriptor());
     }
 }

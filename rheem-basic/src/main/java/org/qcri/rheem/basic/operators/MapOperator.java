@@ -31,7 +31,7 @@ public class MapOperator<InputType, OutputType> extends UnaryToUnaryOperator<Inp
     }
 
     public TransformationDescriptor<InputType, OutputType> getFunctionDescriptor() {
-        return functionDescriptor;
+        return this.functionDescriptor;
     }
 
     @Override

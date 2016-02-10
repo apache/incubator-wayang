@@ -1,7 +1,6 @@
 package org.qcri.rheem.spark.platform;
 
 import org.apache.spark.SparkConf;
-import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.plan.executionplan.Channel;
@@ -39,7 +38,7 @@ public class SparkPlatform extends Platform {
 
     private SparkPlatform() {
         super(PLATFORM_NAME);
-        initializeMappings();
+        this.initializeMappings();
     }
 
     public JavaSparkContext getSparkContext() {

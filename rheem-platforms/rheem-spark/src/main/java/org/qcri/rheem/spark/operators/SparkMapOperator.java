@@ -41,6 +41,6 @@ public class SparkMapOperator<InputType, OutputType>
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkMapOperator<>(getInputType(), getOutputType(), getFunctionDescriptor());
+        return new SparkMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
     }
 }

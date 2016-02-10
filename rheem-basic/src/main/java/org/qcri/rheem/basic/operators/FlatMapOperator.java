@@ -32,7 +32,7 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     }
 
     public FlatMapDescriptor<InputType, Iterator<OutputType>> getFunctionDescriptor() {
-        return functionDescriptor;
+        return this.functionDescriptor;
     }
 
     @Override

@@ -38,6 +38,6 @@ public class JavaDistinctOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaDistinctOperator<>(getInputType());
+        return new JavaDistinctOperator<>(this.getInputType());
     }
 }

@@ -109,13 +109,13 @@ public class Canonicalizer<T> implements Set<T> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         Canonicalizer<?> that = (Canonicalizer<?>) o;
-        return Objects.equals(entries, that.entries);
+        return Objects.equals(this.entries, that.entries);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(entries);
+        return Objects.hash(this.entries);
     }
 }

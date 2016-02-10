@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ExecutionPlanBuilder {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * This map keeps track of which (potentially alternative) outputs are already implemented via an {@link
@@ -90,7 +90,7 @@ public class ExecutionPlanBuilder {
     public Optional<RheemPlan> build() {
         // See if there are sinks in the first place.
         if (this.sinks.isEmpty()) {
-            logger.debug("Discard plan without sinks.");
+            this.logger.debug("Discard plan without sinks.");
             return Optional.na();
         }
 
@@ -109,7 +109,7 @@ public class ExecutionPlanBuilder {
                         .getTraversedNodesWith(operator -> true)
         );
         if (!isAllConsumedOperatorInputsSatisfied.get()) {
-            logger.debug("Discard plan that comprises consumed operators with unsatisfied inputs.");
+            this.logger.debug("Discard plan that comprises consumed operators with unsatisfied inputs.");
             return Optional.na();
         }
 

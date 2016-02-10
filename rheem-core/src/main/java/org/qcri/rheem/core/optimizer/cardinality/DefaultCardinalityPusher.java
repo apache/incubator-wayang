@@ -5,8 +5,6 @@ import org.qcri.rheem.core.api.configuration.KeyValueProvider;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
-import java.util.Map;
-
 public class DefaultCardinalityPusher extends CardinalityPusher {
 
     private final CardinalityEstimator[] cardinalityEstimators;
@@ -16,7 +14,7 @@ public class DefaultCardinalityPusher extends CardinalityPusher {
         super(operator);
         this.cardinalityEstimators = new CardinalityEstimator[operator.getNumOutputs()];
         for (int outputIndex = 0; outputIndex < operator.getNumOutputs(); outputIndex++) {
-            initializeEstimator(operator, outputIndex, estimationProvider);
+            this.initializeEstimator(operator, outputIndex, estimationProvider);
         }
     }
 
