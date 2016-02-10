@@ -44,7 +44,6 @@ public class JavaPlatform extends Platform {
         this.mappings.add(new JavaLocalCallbackSinkMapping());
         this.mappings.add(new JavaGlobalReduceOperatorMapping());
         this.mappings.add(new JavaCollocateByOperatorMapping());
-        this.mappings.add(new JavaCoalesceOperatorMapping());
         this.mappings.add(new FlatMapToJavaFlatMapMapping());
         this.mappings.add(new CountToJavaCountMapping());
         this.mappings.add(new DistinctToJavaDistinctMapping());

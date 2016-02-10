@@ -188,7 +188,7 @@ public class JavaIntegrationIT {
                 collection2,
                 stringDataSet);
 
-        CoalesceOperator<String> coalesceOperator = new CoalesceOperator<>(stringDataSet);
+        UnionAllOperator<String> coalesceOperator = new UnionAllOperator<>(stringDataSet);
         source1.connectTo(0, coalesceOperator, 0);
         source2.connectTo(0, coalesceOperator, 1);
 
@@ -250,7 +250,7 @@ public class JavaIntegrationIT {
                 collection2,
                 stringDataSet);
 
-        CoalesceOperator<String> coalesceOperator1 = new CoalesceOperator<>(stringDataSet);
+        UnionAllOperator<String> coalesceOperator1 = new UnionAllOperator<>(stringDataSet);
         source1.connectTo(0, coalesceOperator1, 0);
         source2.connectTo(0, coalesceOperator1, 1);
 
@@ -272,7 +272,7 @@ public class JavaIntegrationIT {
                         DataUnitType.createBasic(String.class)));
         coalesceOperator1.connectTo(0, upperCaseOperator, 0);
 
-        CoalesceOperator<String> coalesceOperator2 = new CoalesceOperator<>(stringDataSet);
+        UnionAllOperator<String> coalesceOperator2 = new UnionAllOperator<>(stringDataSet);
         lowerCaseOperator.connectTo(0, coalesceOperator2, 0);
         upperCaseOperator.connectTo(0, coalesceOperator2, 1);
 

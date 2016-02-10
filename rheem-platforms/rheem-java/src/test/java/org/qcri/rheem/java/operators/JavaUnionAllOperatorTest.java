@@ -23,13 +23,11 @@ public class JavaUnionAllOperatorTest {
 
         // Build the UnionAll operator.
         JavaUnionAllOperator<Integer> unionAllOperator =
-                new JavaUnionAllOperator<>(
-                        DataSetType.createDefaultUnchecked(Integer.class)
-                );
+                new JavaUnionAllOperator<>(DataSetType.createDefaultUnchecked(Integer.class));
 
         // Execute the sort operator.
-        final Stream[] outputStreams = unionAllOperator.evaluate(new Stream[]{inputStream0, inputStream1},
-                new FunctionCompiler());
+        final Stream[] outputStreams = unionAllOperator.evaluate(
+                new Stream[]{inputStream0, inputStream1}, new FunctionCompiler());
 
         // Verify the outcome.
         Assert.assertEquals(1, outputStreams.length);

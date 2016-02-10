@@ -17,6 +17,7 @@ public class JavaUnionAllOperator<Type>
     /**
      * Creates a new instance.
      *
+     * @param type the type of the datasets to be coalesced
      */
     public JavaUnionAllOperator(DataSetType<Type> type) {
         super(type);
