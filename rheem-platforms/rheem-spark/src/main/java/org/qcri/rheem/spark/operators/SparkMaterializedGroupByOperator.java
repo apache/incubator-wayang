@@ -1,13 +1,14 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
+import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import scala.Tuple2;
 
 
 /**
@@ -34,14 +35,29 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }
 
-        final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputRdds[0];
-        final JavaPairRDD<KeyType, Iterable<Type>> outputStream = inputStream.groupBy(compiler.compile(this.keyDescriptor));
+        final JavaRDD<Type> inputRdd = (JavaRDD<Type>) inputRdds[0];
+        final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor);
+        final Function<scala.Tuple2<KeyType, Iterable<Type>>, Iterable<Type>> projector = new GroupProjector<>();
+        final JavaRDDLike outputRdd = inputRdd
+                .groupBy(keyExtractor)
+                .map(projector);
 
-        return new JavaRDDLike[]{outputStream};
+        // TODO: MaterializedGroupByOperator actually prescribes to return Iterators, not Iterables.
+        return new JavaRDDLike[]{outputRdd};
     }
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkMaterializedGroupByOperator<>(getType(), getKeyDescriptor());
+        return new SparkMaterializedGroupByOperator<>(this.getType(), this.getKeyDescriptor());
     }
+
+    private static class GroupProjector<Key, Type> implements Function<scala.Tuple2<Key, Iterable<Type>>, Iterable<Type>> {
+
+        @Override
+        public Iterable<Type> call(Tuple2<Key, Iterable<Type>> groupWithKey) throws Exception {
+            return groupWithKey._2;
+        }
+
+    }
+
 }
