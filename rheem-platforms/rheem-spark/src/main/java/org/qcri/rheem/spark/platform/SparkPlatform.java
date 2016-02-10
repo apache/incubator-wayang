@@ -53,15 +53,17 @@ public class SparkPlatform extends Platform {
 
     private void initializeMappings() {
         this.mappings.add(new CartesianToSparkCartesianMapping());
+        this.mappings.add(new CollectionSourceMapping());
         this.mappings.add(new CountToSparkCountMapping());
         this.mappings.add(new DistinctToSparkDistinctMapping());
         this.mappings.add(new FilterToSparkFilterMapping());
+        this.mappings.add(new GlobalReduceMapping());
+        this.mappings.add(new LocalCallbackSinkMapping());
         this.mappings.add(new FlatMapToSparkFlatMapMapping());
         this.mappings.add(new MapOperatorToSparkMapOperatorMapping());
         this.mappings.add(new MtrlGroupByToSparkMtrlGroupByMapping());
         this.mappings.add(new ReduceByToSparkReduceByMapping());
         this.mappings.add(new SortToSparkSortMapping());
-        this.mappings.add(new SparkGlobalReduceMapping());
         this.mappings.add(new UnionAllToSparkUnionAllMapping());
     }
 

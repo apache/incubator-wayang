@@ -35,8 +35,7 @@ public class SparkSortOperator<Type>
         final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputRdds[0];
 
         // TODO: Better sort function!
-        final JavaRDD<Type> outputStream = inputStream.mapToPair(x->new Tuple2<Type,
-                Boolean>(x, true)).sortByKey().map(y-> y._1);
+        final JavaRDD<Type> outputStream = inputStream.mapToPair(x-> new Tuple2<>(x, true)).sortByKey().map(y-> y._1);
 
 
         return new JavaRDDLike[]{outputStream};

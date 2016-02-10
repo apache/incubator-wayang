@@ -12,7 +12,7 @@ import java.util.Collections;
  * Mapping from {@link GlobalReduceOperator} to {@link SparkGlobalReduceOperator}.
  * todo
  */
-public class SparkGlobalReduceMapping implements Mapping {
+public class GlobalReduceMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
