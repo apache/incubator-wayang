@@ -6,7 +6,7 @@ import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.java.plugin.JavaPlatform;
+import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
 import java.io.IOException;
@@ -21,9 +21,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Test the Java integration with Rheem.
+ * Test the Spark integration with Rheem.
  */
-public class JavaIntegrationIT {
+public class SparkIntegrationIT {
 
     @Test
     public void testReadAndWrite() throws URISyntaxException, IOException {
@@ -31,9 +31,9 @@ public class JavaIntegrationIT {
         List<String> collector = new LinkedList<>();
         RheemPlan rheemPlan = RheemPlans.readWrite(RheemPlans.FILE_SOME_LINES_TXT, collector);
 
-        // Instantiate Rheem and activate the Java backend.
+        // Instantiate Rheem and activate the Spark backend.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
@@ -48,9 +48,9 @@ public class JavaIntegrationIT {
         // Build a Rheem plan.
         final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
+        // Instantiate Rheem and activate the Spark backend.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
@@ -63,9 +63,9 @@ public class JavaIntegrationIT {
         // ILLEGAL: This platform is not registered, so this operator will find no implementation.
         rheemPlan.getSinks().forEach(sink -> sink.addTargetPlatform(MyMadeUpPlatform.getInstance()));
 
-        // Instantiate Rheem and activate the Java backend.
+        // Instantiate Rheem and activate the Spark backend.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
@@ -92,14 +92,14 @@ public class JavaIntegrationIT {
         // Build a Rheem plan.
         final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
+        // Instantiate Rheem and activate the Spark backend.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
 
         // Have Rheem execute the plan.
         final Job job = rheemContext.createJob(rheemPlan);
-        // ILLEGAL: We blacklist the Java platform, although we need it.
-        job.getConfiguration().getPlatformProvider().addToBlacklist(JavaPlatform.getInstance());
+        // ILLEGAL: We blacklist the Spark platform, although we need it.
+        job.getConfiguration().getPlatformProvider().addToBlacklist(SparkPlatform.getInstance());
         job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());
         job.execute();
     }
@@ -113,9 +113,9 @@ public class JavaIntegrationIT {
         List<String> collector2 = new LinkedList<>();
         final RheemPlan rheemPlan = RheemPlans.multiSourceMultiSink(collection1, collection2, collector1, collector2);
 
-        // Instantiate Rheem and activate the Java backend.
+        // Instantiate Rheem and activate the Spark backend.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
@@ -143,9 +143,9 @@ public class JavaIntegrationIT {
         List<String> collector2 = new LinkedList<>();
         final RheemPlan rheemPlan = RheemPlans.multiSourceHoleMultiSink(collection1, collection2, collector1, collector2);
 
-        // Instantiate Rheem and activate the Java backend.
+        // Instantiate Rheem and activate the Spark backend.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
@@ -166,9 +166,9 @@ public class JavaIntegrationIT {
         // Build the RheemPlan.
         RheemPlan rheemPlan = RheemPlans.diverseScenario1(RheemPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
+        // Instantiate Rheem and activate the Spark backend.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
 
         rheemContext.execute(rheemPlan);
     }
@@ -178,9 +178,9 @@ public class JavaIntegrationIT {
         // Build the RheemPlan.
         RheemPlan rheemPlan = RheemPlans.diverseScenario2(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
+        // Instantiate Rheem and activate the Spark backend.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
 
         rheemContext.execute(rheemPlan);
     }
