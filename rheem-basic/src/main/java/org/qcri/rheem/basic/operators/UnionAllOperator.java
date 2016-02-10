@@ -13,6 +13,6 @@ public class UnionAllOperator<Type>
 
 
     public UnionAllOperator(DataSetType<Type> type) {
-        super(type, type, type, null);
+        super(type, type, type);
     }
 }

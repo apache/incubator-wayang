@@ -31,7 +31,7 @@ public class SparkUnionAllOperatorTest extends SparkOperatorTestBase {
 
         // Execute the sort operator.
         final JavaRDDLike[] outputStreams = unionAllOperator.evaluate(new JavaRDD[]{inputStream0, inputStream1},
-                new FunctionCompiler());
+                new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
         Assert.assertEquals(1, outputStreams.length);

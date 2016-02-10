@@ -34,7 +34,7 @@ public class SparkFilterOperatorTest extends SparkOperatorTestBase {
 
         // Execute the distinct operator.
         final JavaRDDLike[] outputStreams = filterOperator.evaluate(new JavaRDD[]{inputStream},
-                new FunctionCompiler());
+                new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
         Assert.assertEquals(1, outputStreams.length);

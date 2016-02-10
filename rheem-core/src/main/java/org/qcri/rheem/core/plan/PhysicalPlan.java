@@ -20,4 +20,13 @@ public class PhysicalPlan {
     public Collection<Operator> getSinks() {
         return sinks;
     }
+
+    /**
+     * Find the source {@link Operator}s that are reachable from the sinks.
+     * @return the reachable sources, only top-level operators are considered
+     * @see #getSinks()
+     */
+    public Collection<Operator> collectReachableTopLevelSources() {
+        return new PlanTraversal(true, false).traverse(this.sinks).getTraversedNodesWith(Operator::isSource);
+    }
 }

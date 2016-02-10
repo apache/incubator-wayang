@@ -7,6 +7,7 @@ import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.platform.SparkExecutor;
 
 import java.util.Iterator;
 
@@ -29,7 +30,7 @@ public class SparkFlatMapOperator<InputType, OutputType>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler) {
+    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         if (inputRdds.length != 1) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }

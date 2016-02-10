@@ -1,171 +1,183 @@
 package org.qcri.rheem.core.optimizer;
 
 import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Dummy implementation: just resolve alternatives by looking for those alternatives that are execution operators.
  */
+@Deprecated
 public class Optimizer {
 
-    public PhysicalPlan buildExecutionPlan(PhysicalPlan rheemPlan) {
-        PhysicalPlan executionPlan = new PhysicalPlan();
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-//        Optimizer.Pass pass = new Optimizer.Pass();
-//        for (Operator sink : rheemPlan.getSinks()) {
-//            Operator executionSink = pass.pick(sink, null, null);
-//            executionPlan.addSink(executionSink);
-//        }
-        Optimizer.Pass2 pass2 = new Optimizer.Pass2();
-        for (Operator sink : rheemPlan.getSinks()) {
-            Operator executionSink = pass2.process(sink, null, null);
-            executionPlan.addSink(executionSink);
+    private Queue<EnumerationPath> enumerationPaths = new LinkedList<>();
+
+    private Collection<PhysicalPlan> executionPlans = new LinkedList<>();
+
+    public PhysicalPlan buildExecutionPlan(PhysicalPlan rheemPlan) {
+
+        // Find all sources.
+        final Collection<Operator> sources = new PlanTraversal(true, false)
+                .traverse(rheemPlan.getSinks())
+                .getTraversedNodesWith(Operator::isSource);
+
+        // Create the working paths.
+        final Queue<WorkingPath> workingPathQueue = sources.stream()
+                .map(WorkingPath::new)
+                .collect(Collectors.toCollection(LinkedList::new));
+
+        // Start working on the working paths.
+        enumerationPaths.add(new EnumerationPath(workingPathQueue, new ExecutionPlanBuilder()));
+        while (!enumerationPaths.isEmpty()) {
+            enumerationPaths.poll().run();
         }
 
-        return executionPlan;
+        logger.info("Found {} execution plan(s).", this.executionPlans.size());
+
+        return this.executionPlans.stream().findAny().get();
     }
 
-    private static class Pass {
+    private class EnumerationPath implements Runnable {
 
-        Map<OperatorAlternative, OperatorAlternative.Alternative> pickedAlternatives = new HashMap<>();
+        private final Queue<WorkingPath> workingPaths;
 
-        Map<Operator, ExecutionOperator> executionOperators = new HashMap<>();
+        private final ExecutionPlanBuilder executionPlanBuilder;
 
-        Map<OutputSlot<?>, OutputSlot<?>> slotTranslation = new HashMap<>();
+        private final Set<Operator> processedOperators;
 
-        private Operator pick(Operator operator,
-                              OutputSlot<Object> fromOutputSlot,
-                              InputSlot<Object> pendingExecOpInputSlot) {
+        private EnumerationPath(Queue<WorkingPath> workingPaths,
+                                ExecutionPlanBuilder executionPlanBuilder) {
+            this(workingPaths, executionPlanBuilder, new HashSet<>());
+        }
 
-            // Simple case: we have already created the requested output slot.
-            if (fromOutputSlot != null && slotTranslation.containsKey(fromOutputSlot)) {
-                final OutputSlot<Object> execOpOutputSlot = this.slotTranslation.get(fromOutputSlot).unchecked();
-                execOpOutputSlot.connectTo(pendingExecOpInputSlot);
-                return execOpOutputSlot.getOwner();
+        private EnumerationPath(Queue<WorkingPath> workingPaths,
+                                ExecutionPlanBuilder executionPlanBuilder,
+                                Set<Operator> processedOperators) {
+            this.workingPaths = workingPaths;
+            this.executionPlanBuilder = executionPlanBuilder;
+            this.processedOperators = processedOperators;
+        }
+
+        @Override
+        public void run() {
+            while (!this.workingPaths.isEmpty()) {
+                final WorkingPath workingPath = this.workingPaths.poll();
+                if (this.processedOperators.contains(workingPath.operatorToBeProcessed)) {
+                    continue;
+                }
+                Optimizer.this.logger.debug("Processing working path with {} ({} left in queue).",
+                        workingPath.operatorToBeProcessed,
+                        this.workingPaths.size());
+                process(workingPath);
             }
 
-            // Otherwise, we need to do some translation.
-            if (operator instanceof Subplan) {
-                // If the operator is a subplan, delegate the picking.
-                if (fromOutputSlot == null) {
-                    return pick(((Subplan) operator).enter(), fromOutputSlot, pendingExecOpInputSlot);
-                } else {
-                    final OutputSlot<Object> innerOutputSlot = ((Subplan) operator).enter(fromOutputSlot).unchecked();
-                    return pick(innerOutputSlot.getOwner(), innerOutputSlot, pendingExecOpInputSlot);
-                }
+            this.executionPlanBuilder.build().stream().forEach(Optimizer.this.executionPlans::add);
+        }
 
-            } else if (operator instanceof OperatorAlternative) {
-                // If the operator is an alternative, check at first if we already settled upon an alternative.
-                final OperatorAlternative operatorAlternative = (OperatorAlternative) operator;
-                OperatorAlternative.Alternative pickedAlternative;
-                ExecutionOperator executionOperator;
-
-                if (this.pickedAlternatives.containsKey(operatorAlternative)) {
-                    pickedAlternative = this.pickedAlternatives.get(operatorAlternative);
-                    executionOperator = this.executionOperators.get(operator);
-
-                } else {
-                    pickedAlternative = operatorAlternative.getAlternatives().stream()
-                            .filter(alternative -> alternative.getOperator() instanceof ExecutionOperator)
-                            .findFirst()
-                            .orElseThrow(() -> new RuntimeException("No executable alternative found."));
-                    this.pickedAlternatives.put(operatorAlternative, pickedAlternative);
-                    executionOperator = ((ExecutionOperator) pickedAlternative.getOperator()).copy();
-                    this.executionOperators.put(operator, executionOperator);
-
-                    // We have a new operator -> we need to translate its children as well.
-                    for (int inputIndex = 0; inputIndex < operator.getNumInputs(); inputIndex++) {
-                        final InputSlot<Object> outerInputSlot = operator
-                                .getOutermostInputSlot(operator.getInput(inputIndex))
-                                .unchecked();
-                        final OutputSlot<Object> occupant = outerInputSlot.getOccupant();
-                        if (occupant != null) {
-                            pick(occupant.getOwner(), occupant, executionOperator.getInput(inputIndex).unchecked());
-                        }
+        private void process(WorkingPath workingPath) {
+            final Operator nextOperator = workingPath.operatorToBeProcessed;
+            if (nextOperator.isAlternative()) {
+                OperatorAlternative operatorAlternative = (OperatorAlternative) nextOperator;
+                OperatorAlternative.Alternative unforkedAlternative = null;
+                for (OperatorAlternative.Alternative alternative : operatorAlternative.getAlternatives()) {
+                    if (Objects.isNull(unforkedAlternative)) {
+                        unforkedAlternative = alternative;
+                    } else {
+                        forkWith(alternative);
                     }
                 }
+                this.workingPaths.add(new WorkingPath(unforkedAlternative.getOperator()));
+                this.processedOperators.add(nextOperator);
+                return;
+            }
 
-                if (Objects.nonNull(fromOutputSlot)) {
-                    final OutputSlot<Object> innerOutputSlot = pickedAlternative.getSlotMapping().resolve(fromOutputSlot);
-                    OutputSlot<Object> execOpOutputSlot = executionOperator.getOutput(innerOutputSlot.getIndex()).unchecked();
-                    execOpOutputSlot.connectTo(pendingExecOpInputSlot);
+            if (nextOperator.isSubplan()) {
+                Subplan subplan = (Subplan) nextOperator;
+                Arrays.stream(subplan.getAllInputs())
+                        .flatMap(input -> subplan.followInput(input).stream())
+                        .map(InputSlot::getOwner)
+                        .map(WorkingPath::new)
+                        .forEach(this.workingPaths::add);
+                this.processedOperators.add(nextOperator);
+                return;
+
+            }
+
+            if (nextOperator.isElementary()) {
+                if (nextOperator.isExecutionOperator()) {
+                    ExecutionOperator executionOperator = (ExecutionOperator) nextOperator;
+
+                    // Check if and how we can satisfy the inputs of the operator.
+                    boolean isAllInputsServed = true;
+                    OutputSlot[] servingOutputSlots = new OutputSlot[executionOperator.getNumInputs()];
+                    for (int i = 0; i < executionOperator.getNumInputs(); i++) {
+                        Optional<OutputSlot> optionalServingOutputSlot = executionPlanBuilder.getServingOutputSlot(executionOperator.getInput(i));
+                        if (!optionalServingOutputSlot.isAvailable()) {
+                            isAllInputsServed = false;
+                            break;
+                        } else {
+                            servingOutputSlots[i] = optionalServingOutputSlot.getValue();
+                        }
+                    }
+
+                    // Defer if not all inputs are available, yet.
+                    if (!isAllInputsServed) {
+                        this.workingPaths.add(workingPath);
+                        return;
+                    }
+
+                    // Otherwise add the operator.
+                    this.executionPlanBuilder.add(executionOperator, servingOutputSlots);
+
+                    // Schedule the processing of the following operators.
+                    Arrays.stream(executionOperator.getAllOutputs())
+                            .flatMap(outputSlot -> OutputSlot.followOutputRecursively(outputSlot).stream())
+                            .flatMap(outputSlot -> outputSlot.getOccupiedSlots().stream())
+                            .map(InputSlot::getOwner)
+                            .distinct()
+                            .map(WorkingPath::new)
+                            .forEach(this.workingPaths::add);
                 }
 
-                return executionOperator;
-
-            } else {
-                throw new RuntimeException("Unforeseen operator type: " + operator);
+                // Ignore non-execution elementary operators.
+                this.processedOperators.add(nextOperator);
+                return;
             }
+
+            throw new IllegalStateException("Unknown operator type: " + nextOperator);
+        }
+
+        public void forkWith(OperatorAlternative.Alternative alternative) {
+            // Add the Alternative as WorkingPath to the fork.
+            final LinkedList<WorkingPath> workingPathsCopy = new LinkedList<>(this.workingPaths);
+            workingPathsCopy.add(new WorkingPath(alternative.getOperator()));
+
+            // Mark the OperatorAlternative as processed in the fork.
+            final HashSet<Operator> processedOperatorsCopy = new HashSet<>(this.processedOperators);
+            processedOperatorsCopy.add(alternative.toOperator());
+
+            // Create the fork.
+            EnumerationPath fork = new EnumerationPath(
+                    workingPathsCopy,
+                    executionPlanBuilder.copy(),
+                    processedOperatorsCopy
+            );
+            Optimizer.this.enumerationPaths.add(fork);
         }
     }
 
-    private static class Pass2 extends PlanVisitor<InputSlot<Object>, Operator> {
+    private static class WorkingPath {
 
-        Map<OperatorAlternative, OperatorAlternative.Alternative> pickedAlternatives = new HashMap<>();
+        private final Operator operatorToBeProcessed;
 
-        Map<Operator, ExecutionOperator> executionOperators = new HashMap<>();
-
-        Map<OutputSlot<?>, OutputSlot<?>> slotTranslation = new HashMap<>();
-
-        @Override
-        protected Optional<Operator> prepareVisit(Operator operator, OutputSlot<?> fromOutputSlot, InputSlot<Object> pendingExecOpInputSlot) {
-            // Simple case: we have already created the requested output slot.
-            if (fromOutputSlot != null && slotTranslation.containsKey(fromOutputSlot)) {
-                final OutputSlot<Object> execOpOutputSlot = this.slotTranslation.get(fromOutputSlot).unchecked();
-                execOpOutputSlot.connectTo(pendingExecOpInputSlot);
-                return Optional.of(execOpOutputSlot.getOwner());
-            }
-            return null;
-        }
-
-        @Override
-        protected void followUp(Operator operator, OutputSlot<?> fromOutputSlot, InputSlot<Object> inputSlot, Operator result) {
-
-        }
-
-        @Override
-        public Operator visit(OperatorAlternative operatorAlternative, OutputSlot<?> fromOutputSlot, InputSlot<Object> pendingExecOpInputSlot) {
-            // If the operator is an alternative, check at first if we already settled upon an alternative.
-            OperatorAlternative.Alternative pickedAlternative;
-            ExecutionOperator executionOperator;
-
-            if (this.pickedAlternatives.containsKey(operatorAlternative)) {
-                pickedAlternative = this.pickedAlternatives.get(operatorAlternative);
-                executionOperator = this.executionOperators.get(operatorAlternative);
-
-            } else {
-                pickedAlternative = operatorAlternative.getAlternatives().stream()
-                        .filter(alternative -> alternative.getOperator() instanceof ExecutionOperator)
-                        .findFirst()
-                        .orElseThrow(() -> new RuntimeException("No executable alternative found."));
-                this.pickedAlternatives.put(operatorAlternative, pickedAlternative);
-                executionOperator = ((ExecutionOperator) pickedAlternative.getOperator()).copy();
-                this.executionOperators.put(operatorAlternative, executionOperator);
-
-                // We have a new operator -> we need to translate its children as well.
-                for (int inputIndex = 0; inputIndex < operatorAlternative.getNumInputs(); inputIndex++) {
-                    proceed(operatorAlternative, inputIndex, executionOperator.getInput(inputIndex).unchecked());
-                }
-
-            }
-
-            if (Objects.nonNull(fromOutputSlot)) {
-                final OutputSlot<Object> innerOutputSlot = pickedAlternative.getSlotMapping().resolve(fromOutputSlot.unchecked());
-                OutputSlot<Object> execOpOutputSlot = executionOperator.getOutput(innerOutputSlot.getIndex()).unchecked();
-                execOpOutputSlot.connectTo(pendingExecOpInputSlot);
-            }
-
-            return executionOperator;
-        }
-
-        @Override
-        public Operator visit(ActualOperator operator, OutputSlot<?> fromOutputSlot, InputSlot<Object> inputSlot) {
-            throw new RuntimeException("Unforeseen operator type: " + operator);
+        public WorkingPath(Operator operatorToBeProcessed) {
+            this.operatorToBeProcessed = operatorToBeProcessed;
         }
     }
-
 }

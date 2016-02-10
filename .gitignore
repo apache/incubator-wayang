@@ -1,8 +1,14 @@
-hybrid/*
+# IntelliJ
 **/.idea/workspace.xml
-**/.idea/tasks.xml
-**/application.properties
 .idea
-**/target/
-**/.DS_Store
+.idea/
 **/*.iml
+
+# Maven
+**/target/
+
+# Mac OS X
+**/.DS_Store
+
+# Misc
+hybrid/*

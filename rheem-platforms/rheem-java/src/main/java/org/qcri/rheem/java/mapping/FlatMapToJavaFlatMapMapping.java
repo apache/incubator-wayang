@@ -4,6 +4,7 @@ import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.java.operators.JavaFlatMapOperator;
+import org.qcri.rheem.java.plugin.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -15,7 +16,8 @@ public class FlatMapToJavaFlatMapMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory()));
+        return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory(),
+                JavaPlatform.getInstance()));
     }
 
     private SubplanPattern createSubplanPattern() {

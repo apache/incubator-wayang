@@ -1,18 +1,17 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
-import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.platform.SparkExecutor;
 
 /**
  * Spark implementation of the {@link ReduceByOperator}.
@@ -35,7 +34,7 @@ public class SparkReduceByOperator<Type, KeyType>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler) {
+    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         if (inputRdds.length != 1) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }

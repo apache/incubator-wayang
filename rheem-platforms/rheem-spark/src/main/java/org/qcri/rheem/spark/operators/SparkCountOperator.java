@@ -8,6 +8,7 @@ import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import org.apache.spark.api.java.JavaRDDLike;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.qcri.rheem.spark.platform.SparkExecutor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,8 +32,7 @@ public class SparkCountOperator<Type>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler) {
-        JavaSparkContext sc = this.getSC();
+    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         if (inputRdds.length != 1) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }
@@ -41,7 +41,7 @@ public class SparkCountOperator<Type>
         final Long count = inputStream.count();
 
         List<Long> data = Arrays.asList(count);
-        JavaRDD<Long> distData = sc.parallelize(data);
+        JavaRDD<Long> distData = sparkExecutor.sc.parallelize(data);
 
         return new JavaRDDLike[]{distData};
     }

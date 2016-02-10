@@ -29,7 +29,7 @@ public class SparkCountOperatorTest extends SparkOperatorTestBase{
                 new SparkCountOperator<>(DataSetType.createDefaultUnchecked(Integer.class));
 
         // Execute the count operator.
-        final JavaRDDLike[] outputStreams = countOperator.evaluate(new JavaRDD[]{inputStream}, new FunctionCompiler());
+        final JavaRDDLike[] outputStreams = countOperator.evaluate(new JavaRDD[]{inputStream}, new FunctionCompiler(), this.sparkExecutor);
 
 
         // Verify the outcome.

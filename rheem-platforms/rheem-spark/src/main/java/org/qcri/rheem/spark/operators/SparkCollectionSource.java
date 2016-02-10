@@ -6,6 +6,7 @@ import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.platform.SparkExecutor;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,9 +22,9 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler) {
+    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         Validate.isTrue(inputRdds.length == 0);
-        return new JavaRDDLike[] { this.getSC().parallelize(this.getCollectionAsList()) };
+        return new JavaRDDLike[] { sparkExecutor.sc.parallelize(this.getCollectionAsList()) };
     }
 
     private List<Type> getCollectionAsList() {

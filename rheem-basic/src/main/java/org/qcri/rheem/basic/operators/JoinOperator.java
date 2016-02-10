@@ -12,16 +12,22 @@ import org.qcri.rheem.core.types.DataSetType;
 public class JoinOperator<InputType0, InputType1, Key>
         extends BinaryToUnaryOperator<InputType0, InputType1, Tuple2<InputType0, InputType1>> {
 
+    private static <InputType0, InputType1> DataSetType<Tuple2<InputType0, InputType1>> createOutputDataSetType() {
+        return DataSetType.createDefaultUnchecked(Tuple2.class);
+    }
+
     protected final TransformationDescriptor<InputType0, Key> keyDescriptor0;
+
     protected final TransformationDescriptor<InputType1, Key> keyDescriptor1;
 
-
-    public JoinOperator(DataSetType <InputType0> inputType0, DataSetType inputType1,
+    public JoinOperator(DataSetType<InputType0> inputType0,
+                        DataSetType<InputType1> inputType1,
                         TransformationDescriptor<InputType0, Key> keyDescriptor0,
                         TransformationDescriptor<InputType1, Key> keyDescriptor1) {
-        super(inputType0, inputType1, DataSetType.createDefaultUnchecked(Tuple2.class), null);
+        super(inputType0, inputType1, JoinOperator.<InputType0, InputType1>createOutputDataSetType());
         this.keyDescriptor0 = keyDescriptor0;
         this.keyDescriptor1 = keyDescriptor1;
+
     }
 
     public TransformationDescriptor<InputType0, Key> getKeyDescriptor0() {

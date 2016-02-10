@@ -1,6 +1,9 @@
 package org.qcri.rheem.core.plan;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Utility class for {@link Operator}s.
@@ -8,25 +11,28 @@ import java.util.*;
 public class Operators {
 
     /**
-     * Find the innermost common parent of two operators.
+     * Find the innermost common {@link OperatorContainer} of two operators.
+     *
+     * @return the common {@link OperatorContainer} or {@code null} if none
      */
-    public static CompositeOperator getCommonParent(Operator o1, Operator o2) {
-        CompositeOperator commonParent = null;
+    public static OperatorContainer getCommonContainer(Operator o1, Operator o2) {
+        OperatorContainer commonContainer = null;
 
-        final Iterator<Operator> i1 = collectParents(o1, false).iterator();
-        final Iterator<Operator> i2 = collectParents(o2, false).iterator();
+        final Iterator<OperatorContainer> i1 = collectContainers(o1).iterator();
+        final Iterator<OperatorContainer> i2 = collectContainers(o2).iterator();
 
         while (i1.hasNext() && i2.hasNext()) {
-            final Operator parent1 = i1.next(), parent2 = i2.next();
-            if (parent1 != parent2) break;
-            commonParent = (CompositeOperator) parent1;
+            final OperatorContainer container1 = i1.next(), container2 = i2.next();
+            if (container1 != container2) break;
+            commonContainer = container1;
         }
 
-        return commonParent;
+        return commonContainer;
     }
 
     /**
      * Creates the hierachy of an operators wrt. {@link Operator#getParent()}.
+     *
      * @return the hierarchy with the first element being the top-level/outermost operator
      */
     public static List<Operator> collectParents(Operator operator, boolean includeSelf) {
@@ -41,7 +47,26 @@ public class Operators {
     }
 
     /**
+     * Creates the hierachy of an operators wrt. {@link Operator#getContainer()}.
+     *
+     * @return the hierarchy with the first element being the top-level/outermost container
+     */
+    public static List<OperatorContainer> collectContainers(Operator operator) {
+        List<OperatorContainer> result = new LinkedList<>();
+        while (operator != null) {
+            final OperatorContainer container = operator.getContainer();
+            if (container != null) {
+                result.add(container);
+            }
+            operator = operator.getParent();
+        }
+        Collections.reverse(result);
+        return result;
+    }
+
+    /**
      * Compares the inputs of two operators and passes quietly if they are identical.
+     *
      * @throws IllegalArgumentException if the operators differ in their inputs
      */
     public static void assertEqualInputs(Operator o1, Operator o2) throws IllegalArgumentException {
@@ -62,6 +87,7 @@ public class Operators {
 
     /**
      * Compares the outputs of two operators and passes quietly if they are identical.
+     *
      * @throws IllegalArgumentException if the operators differ in their outputs
      */
     public static void assertEqualOutputs(Operator o1, Operator o2) throws IllegalArgumentException {
@@ -80,4 +106,16 @@ public class Operators {
         }
     }
 
+    public static final Operator slotlessOperator(OperatorContainer container) {
+        return new OperatorBase(0, 0, container) {
+            @Override
+            public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+                throw new RuntimeException("Not implemented.");
+            }
+        };
+    }
+
+    public static final Operator slotlessOperator() {
+        return slotlessOperator(null);
+    }
 }

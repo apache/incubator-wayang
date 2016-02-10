@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * Test suite for the {@link SparkCollectionSource}.
  */
-public class SparkCollectionSourceTest {
+public class SparkCollectionSourceTest extends SparkOperatorTestBase {
 
     @Test
     public void testExecution() {
@@ -22,7 +22,7 @@ public class SparkCollectionSourceTest {
         SparkCollectionSource<Integer> collectionSource = new SparkCollectionSource<>(
                 inputValues,
                 DataSetType.createDefault(Integer.class));
-        final JavaRDDLike[] outputStreams = collectionSource.evaluate(new JavaRDDLike[0], new FunctionCompiler());
+        final JavaRDDLike[] outputStreams = collectionSource.evaluate(new JavaRDDLike[0], new FunctionCompiler(), this.sparkExecutor);
 
         Assert.assertEquals(1, outputStreams.length);
         JavaRDDLike outputStream = outputStreams[0];

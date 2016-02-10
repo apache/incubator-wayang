@@ -1,12 +1,13 @@
 package org.qcri.rheem.spark.operators;
 
+import org.apache.spark.SparkContext;
+import org.apache.spark.api.java.JavaRDDLike;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
-import org.qcri.rheem.spark.plugin.Activator;
-
-import org.apache.spark.api.java.JavaRDDLike;
+import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.platform.SparkPlatform;
 
 /**
  * Execution operator for the Java platform.
@@ -15,11 +16,8 @@ public interface SparkExecutionOperator extends ExecutionOperator {
 
     @Override
     default Platform getPlatform() {
-        return Activator.PLATFORM;
+        return SparkPlatform.getInstance();
     }
-
-
-    default JavaSparkContext getSC() {return Activator.sc;};
 
     /**
      * Evaluates this operator. Takes a set of Java {@link JavaRDDLike}s according to the operator inputs and produces
@@ -27,9 +25,9 @@ public interface SparkExecutionOperator extends ExecutionOperator {
      * execution.
      *
      * @param inputRdds {@link JavaRDDLike}s that satisfy the inputs of this operator
-     * @param compiler     compiles functions used by the operator
+     * @param compiler  compiles functions used by the operator
      * @return {@link JavaRDDLike}s that statisfy the outputs of this operator
      */
-    JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler);
+    JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor);
 
 }

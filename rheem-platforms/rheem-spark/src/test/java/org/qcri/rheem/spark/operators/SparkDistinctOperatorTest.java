@@ -27,7 +27,7 @@ public class SparkDistinctOperatorTest extends SparkOperatorTestBase{
                 );
 
         // Execute the distinct operator.
-        final JavaRDDLike[] outputStreams = distinctOperator.evaluate(new JavaRDD[]{inputStream}, new FunctionCompiler());
+        final JavaRDDLike[] outputStreams = distinctOperator.evaluate(new JavaRDD[]{inputStream}, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
         Assert.assertEquals(1, outputStreams.length);

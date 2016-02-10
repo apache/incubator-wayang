@@ -43,7 +43,7 @@ public class SparkMaterializedGroupByOperatorTest extends SparkOperatorTestBase 
                 );
 
         // Execute the reduce operator.
-        final JavaRDDLike[] outputRdds = collocateByOperator.evaluate(new JavaRDDLike[]{inputRdd}, new FunctionCompiler());
+        final JavaRDDLike[] outputRdds = collocateByOperator.evaluate(new JavaRDDLike[]{inputRdd}, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
         Assert.assertEquals(1, outputRdds.length);

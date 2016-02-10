@@ -6,6 +6,7 @@ import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.java.operators.JavaCollectionSource;
 import org.qcri.rheem.java.operators.JavaTextFileSource;
+import org.qcri.rheem.java.plugin.JavaPlatform;
 
 import java.text.CollationElementIterator;
 import java.util.Collection;
@@ -18,7 +19,8 @@ public class JavaCollectionSourceMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory()));
+        return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory(),
+                JavaPlatform.getInstance()));
     }
 
     private SubplanPattern createSubplanPattern() {

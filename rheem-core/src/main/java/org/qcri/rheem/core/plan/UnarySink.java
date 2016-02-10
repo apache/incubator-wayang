@@ -7,8 +7,8 @@ import org.qcri.rheem.core.types.DataSetType;
  */
 public abstract class UnarySink<T> extends OperatorBase implements ActualOperator {
 
-    public UnarySink(DataSetType type, CompositeOperator parent) {
-        super(1, 0, parent);
+    public UnarySink(DataSetType type, OperatorContainer container) {
+        super(1, 0, container);
         this.inputSlots[0] = new InputSlot<>("input", this, type);
     }
 

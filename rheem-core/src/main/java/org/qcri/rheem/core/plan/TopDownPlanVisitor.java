@@ -5,7 +5,7 @@ import java.util.Optional;
 /**
  * Visitor (as in the Visitor Pattern) for {@link PhysicalPlan}s.
  */
-public abstract class PlanVisitor<Payload, Return> {
+public abstract class TopDownPlanVisitor<Payload, Return> {
 
     public Return process(Operator operator, OutputSlot<?> fromOutputSlot, Payload payload) {
         final Optional<Return> returnOptional = prepareVisit(operator, fromOutputSlot, payload);
@@ -31,9 +31,9 @@ public abstract class PlanVisitor<Payload, Return> {
 
     public Return visit(Subplan subplan, OutputSlot<?> fromOutputSlot, Payload payload) {
         if (fromOutputSlot == null) {
-            return subplan.enter().accept(this, fromOutputSlot, payload);
+            return subplan.getSink().accept(this, fromOutputSlot, payload);
         } else {
-            final OutputSlot<Object> innerOutputSlot = subplan.enter(fromOutputSlot).unchecked();
+            final OutputSlot<Object> innerOutputSlot = subplan.traceOutput(fromOutputSlot).unchecked();
             return innerOutputSlot.getOwner().accept(this, innerOutputSlot, payload);
         }
     }

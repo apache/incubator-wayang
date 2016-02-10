@@ -11,6 +11,7 @@ import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.platform.SparkExecutor;
 
 /**
  * Spark implementation of the {@link JoinOperator}.
@@ -31,7 +32,7 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public JavaRDDLike[] evaluate (JavaRDDLike[] inputRdds, FunctionCompiler compiler) {
+    public JavaRDDLike[] evaluate (JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         if (inputRdds.length != 2) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }

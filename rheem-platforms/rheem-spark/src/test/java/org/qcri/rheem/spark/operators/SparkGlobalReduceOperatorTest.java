@@ -37,7 +37,7 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
                 );
 
         // Execute the reduce operator.
-        final JavaRDDLike[] outputStreams = globalReduce.evaluate(new JavaRDDLike[]{inputRdd}, new FunctionCompiler());
+        final JavaRDDLike[] outputStreams = globalReduce.evaluate(new JavaRDDLike[]{inputRdd}, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
         Assert.assertEquals(1, outputStreams.length);
@@ -65,7 +65,7 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
                 );
 
         // Execute the reduce operator.
-        final JavaRDDLike[] outputStreams = globalReduce.evaluate(new JavaRDDLike[]{inputRdd}, new FunctionCompiler());
+        final JavaRDDLike[] outputStreams = globalReduce.evaluate(new JavaRDDLike[]{inputRdd}, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
         Assert.assertEquals(1, outputStreams.length);

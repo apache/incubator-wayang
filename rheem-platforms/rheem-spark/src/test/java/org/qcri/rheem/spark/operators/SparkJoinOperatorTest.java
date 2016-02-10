@@ -41,7 +41,7 @@ public class SparkJoinOperatorTest extends SparkOperatorTestBase {
                                 "field1"));
 
         // Execute the sort operator.
-        final JavaRDDLike[] outputStreams = join.evaluate(new JavaRDD[]{inputStream0, inputStream1}, new FunctionCompiler());
+        final JavaRDDLike[] outputStreams = join.evaluate(new JavaRDD[]{inputStream0, inputStream1}, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
         Assert.assertEquals(1, outputStreams.length);

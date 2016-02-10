@@ -2,10 +2,7 @@ package org.qcri.rheem.core.mapping;
 
 import org.qcri.rheem.core.plan.*;
 
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A subplan pattern describes a class of subplans in a {@link org.qcri.rheem.core.plan.PhysicalPlan}.
@@ -64,7 +61,7 @@ public class SubplanPattern extends OperatorBase {
     }
 
     @Override
-    public <Payload, Return> Return accept(PlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+    public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
         throw new RuntimeException("Pattern does not accept visitors.");
     }
 
@@ -129,15 +126,19 @@ public class SubplanPattern extends OperatorBase {
                            OutputSlot<?> trackedOutputSlot,
                            SubplanMatch subplanMatch) {
 
-//            if (pattern.getNumInputs() > 1) {
-//                throw new RuntimeException("Cannot match pattern: Operator with more than one input not supported, yet.");
-//            }
+            if (pattern.getNumInputs() > 1 &&
+                    Arrays.stream(pattern.getAllInputs())
+                            .map(InputSlot::getOccupant)
+                            .filter(Objects::nonNull)
+                            .count() > 1) {
+                throw new RuntimeException("Cannot match pattern: Operator with more than one occupied input not supported, yet.");
+            }
 
             if (operator instanceof Subplan) {
                 if (trackedOutputSlot == null) {
-                    match(pattern, ((Subplan) operator).enter(), trackedOutputSlot, subplanMatch);
+                    match(pattern, ((Subplan) operator).getSink(), trackedOutputSlot, subplanMatch);
                 } else {
-                    final OutputSlot<?> innerOutputSlot = ((Subplan) operator).enter(trackedOutputSlot);
+                    final OutputSlot<?> innerOutputSlot = ((Subplan) operator).traceOutput(trackedOutputSlot);
                     match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatch);
                 }
 
@@ -145,9 +146,9 @@ public class SubplanPattern extends OperatorBase {
                 for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
                     SubplanMatch subplanMatchCopy = new SubplanMatch(subplanMatch);
                     if (trackedOutputSlot == null) {
-                        match(pattern, alternative.enter(), trackedOutputSlot, subplanMatchCopy);
+                        match(pattern, alternative.getSink(), trackedOutputSlot, subplanMatchCopy);
                     } else {
-                        final OutputSlot<?> innerOutputSlot = alternative.enter(trackedOutputSlot);
+                        final OutputSlot<?> innerOutputSlot = alternative.traceOutput(trackedOutputSlot);
                         match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatchCopy);
                     }
                 }

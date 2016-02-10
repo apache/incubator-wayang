@@ -29,7 +29,7 @@ public class SparkSortOperatorTest extends SparkOperatorTestBase {
                 );
 
         // Execute the sort operator.
-        final JavaRDDLike[] outputStreams = sortOperator.evaluate(new JavaRDDLike[]{inputStream}, new FunctionCompiler());
+        final JavaRDDLike[] outputStreams = sortOperator.evaluate(new JavaRDDLike[]{inputStream}, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
         Assert.assertEquals(1, outputStreams.length);

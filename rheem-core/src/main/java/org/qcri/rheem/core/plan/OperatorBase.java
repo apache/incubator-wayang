@@ -1,11 +1,16 @@
 package org.qcri.rheem.core.plan;
 
+import org.qcri.rheem.core.platform.Platform;
+
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Helper class for the implementation of the {@link Operator} interface.
  */
 public abstract class OperatorBase implements Operator {
 
-    private CompositeOperator parent;
+    private OperatorContainer container;
 
     private int epoch = FIRST_EPOCH;
 
@@ -13,14 +18,16 @@ public abstract class OperatorBase implements Operator {
 
     protected final OutputSlot<?>[] outputSlots;
 
-    public OperatorBase(InputSlot<?>[] inputSlots, OutputSlot<?>[] outputSlots, CompositeOperator parent) {
-        this.parent = parent;
+    private final Set<Platform> targetPlatforms = new HashSet<>(0);
+
+    public OperatorBase(InputSlot<?>[] inputSlots, OutputSlot<?>[] outputSlots, OperatorContainer container) {
+        this.container = container;
         this.inputSlots = inputSlots;
         this.outputSlots = outputSlots;
     }
 
-    public OperatorBase(int numInputSlots, int numOutputSlots, CompositeOperator parent) {
-        this(new InputSlot[numInputSlots], new OutputSlot[numOutputSlots], parent);
+    public OperatorBase(int numInputSlots, int numOutputSlots, OperatorContainer container) {
+        this(new InputSlot[numInputSlots], new OutputSlot[numOutputSlots], container);
     }
 
     @Override
@@ -34,13 +41,13 @@ public abstract class OperatorBase implements Operator {
     }
 
     @Override
-    public CompositeOperator getParent() {
-        return this.parent;
+    public OperatorContainer getContainer() {
+        return this.container;
     }
 
     @Override
-    public void setParent(CompositeOperator parent) {
-        this.parent = parent;
+    public void setContainer(OperatorContainer newContainer) {
+        this.container = newContainer;
     }
 
     @Override
@@ -69,5 +76,15 @@ public abstract class OperatorBase implements Operator {
                 this.getNumOutputs(),
 //                this.getParent() == null ? "top-level" : "nested",
                 this.hashCode());
+    }
+
+    @Override
+    public Set<Platform> getTargetPlatforms() {
+        return this.targetPlatforms;
+    }
+
+    @Override
+    public void addTargetPlatform(Platform platform) {
+        this.targetPlatforms.add(platform);
     }
 }

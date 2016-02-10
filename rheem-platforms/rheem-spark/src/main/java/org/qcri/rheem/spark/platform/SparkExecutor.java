@@ -1,6 +1,8 @@
 package org.qcri.rheem.spark.platform;
 
+import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDDLike;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.plan.Operator;
 import org.qcri.rheem.core.plan.OutputSlot;
@@ -10,12 +12,13 @@ import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 
 
-public class SparkExecutor implements Executor{
+public class SparkExecutor implements Executor {
 
-    public static final Executor.Factory FACTORY = () -> new SparkExecutor();
+    public static final Executor.Factory FACTORY = SparkExecutor::new;
+
+    public final JavaSparkContext sc = SparkPlatform.getInstance().getSparkContext();
 
     public FunctionCompiler compiler = new FunctionCompiler();
-
 
     @Override
     public void evaluate(ExecutionOperator executionOperator) {
@@ -52,6 +55,6 @@ public class SparkExecutor implements Executor{
             inputStreams[i] = outputStreams[outputSlotIndex];
         }
 
-        return operator.evaluate(inputStreams, this.compiler);
+        return operator.evaluate(inputStreams, this.compiler, this);
     }
 }
