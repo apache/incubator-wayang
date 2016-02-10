@@ -1,6 +1,5 @@
 package org.qcri.rheem.java.mapping;
 
-import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.Operator;

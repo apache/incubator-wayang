@@ -5,7 +5,6 @@ import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataUnitGroupType;
 
 import java.util.Iterator;
-import java.util.function.Function;
 
 /**
  * This descriptor pertains to functions that take multiple data units and aggregate them into a single data unit.
@@ -38,7 +37,7 @@ public abstract class AggregationDescriptor<InputType, OutputType> extends Funct
      * @param <Output> output type of the function
      * @return a function that can perform the reduce
      */
-    public abstract <Input, Output> Function<Iterator<Input>, Output> getJavaImplementation();
+    public abstract <Input, Output> FlatMapDescriptor.SerializableFunction<Iterator<Input>, Output> getJavaImplementation();
 
     /**
      * In generic code, we do not have the type parameter values of operators, functions etc. This method avoids casting issues.

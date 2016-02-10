@@ -1,4 +1,6 @@
 # IntelliJ
+**/.idea/workspace.xml
+.idea
 .idea/
 **/*.iml
 
@@ -7,3 +9,6 @@
 
 # Mac OS X
 **/.DS_Store
+
+# Misc
+hybrid/*

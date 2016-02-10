@@ -1,8 +1,8 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.ReduceByOperator;
-import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
@@ -56,6 +56,6 @@ public class JavaReduceByOperator<Type, KeyType>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaReduceByOperator<>(getType(), getKeyDescriptor(), getReduceDescriptor());
+        return new JavaReduceByOperator<>(this.getType(), this.getKeyDescriptor(), this.getReduceDescriptor());
     }
 }

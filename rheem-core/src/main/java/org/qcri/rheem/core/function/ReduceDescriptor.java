@@ -3,6 +3,7 @@ package org.qcri.rheem.core.function;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataUnitGroupType;
+import org.qcri.rheem.core.types.DataUnitType;
 
 import java.util.function.BinaryOperator;
 
@@ -16,22 +17,30 @@ public class ReduceDescriptor<Type> extends FunctionDescriptor {
 
     private final BasicDataUnitType<Type> outputType;
 
-    private final BinaryOperator<Type> javaImplementation;
+    private final SerializableBinaryOperator<Type> javaImplementation;
 
     public ReduceDescriptor(DataUnitGroupType<Type> inputType, BasicDataUnitType<Type> outputType,
-                            BinaryOperator<Type> javaImplementation) {
+                            SerializableBinaryOperator<Type> javaImplementation) {
         this(inputType, outputType, javaImplementation,
                 LoadEstimator.createFallback(1, 1),
                 LoadEstimator.createFallback(1, 1));
     }
 
     public ReduceDescriptor(DataUnitGroupType<Type> inputType, BasicDataUnitType<Type> outputType,
-                            BinaryOperator<Type> javaImplementation, LoadEstimator cpuLoadEstimator,
+                            SerializableBinaryOperator<Type> javaImplementation, LoadEstimator cpuLoadEstimator,
                             LoadEstimator memoryLoadEstimator) {
         super(cpuLoadEstimator, memoryLoadEstimator);
         this.inputType = inputType;
         this.outputType = outputType;
         this.javaImplementation = javaImplementation;
+    }
+
+    public ReduceDescriptor(Class<? extends Type> inputType, SerializableBinaryOperator<Type> javaImplementation) {
+        this(
+                DataUnitType.createGroupedUnchecked(inputType),
+                DataUnitType.createBasicUnchecked(inputType),
+                javaImplementation
+        );
     }
 
 

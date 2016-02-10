@@ -32,7 +32,7 @@ public class GroupByOperator<Input, Key> extends UnaryToUnaryOperator<Input, Ite
     }
 
     public TransformationDescriptor<Input, Key> getKeyDescriptor() {
-        return keyDescriptor;
+        return this.keyDescriptor;
     }
 
 }

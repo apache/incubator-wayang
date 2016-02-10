@@ -1,10 +1,14 @@
 package org.qcri.rheem.core.function;
 
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimate;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.plan.InputSlot;
 import org.qcri.rheem.core.plan.OutputSlot;
+
+import java.io.Serializable;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 
 /**
  * A function operates on single data units or collections of those.
@@ -20,7 +24,6 @@ public abstract class FunctionDescriptor {
         this.memoryLoadEstimator = memoryLoadEstimator;
     }
 
-
     /**
      * Estimate the CPU usage of this instance.
      *
@@ -32,6 +35,7 @@ public abstract class FunctionDescriptor {
                                          CardinalityEstimate[] outputCardinalities) {
         return this.cpuLoadEstimator.calculate(inputCardinalities, outputCardinalities);
     }
+
 
     /**
      * Estimate the RAM usage of this instance.
@@ -45,4 +49,18 @@ public abstract class FunctionDescriptor {
         return this.memoryLoadEstimator.calculate(inputCardinalities, outputCardinalities);
     }
 
+    /**
+     * Decorates the default {@link Function} with {@link Serializable}, which is required by some distributed frameworks.
+     */
+    @FunctionalInterface
+    public interface SerializableFunction<Input, Output> extends Function<Input, Output>, Serializable {
+
+    }
+
+    /**
+     * Decorates the default {@link Function} with {@link Serializable}, which is required by some distributed frameworks.
+     */
+    @FunctionalInterface
+    public interface SerializableBinaryOperator<Type> extends BinaryOperator<Type>, Serializable {
+    }
 }

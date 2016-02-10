@@ -2,13 +2,13 @@ package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
+import java.util.Iterator;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 /**
  * A flatmap operator represents semantics as they are known from frameworks, such as Spark and Flink. It pulls each
@@ -20,18 +20,18 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     /**
      * Function that this operator applies to the input elements.
      */
-    protected final TransformationDescriptor<InputType, Stream<OutputType>> functionDescriptor;
+    protected final FlatMapDescriptor<InputType, Iterator<OutputType>> functionDescriptor;
 
     /**
      * Creates a new instance.
      */
     public FlatMapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType,
-                           TransformationDescriptor<InputType, Stream<OutputType>> functionDescriptor) {
+                           FlatMapDescriptor<InputType, Iterator<OutputType>> functionDescriptor) {
         super(inputType, outputType, null);
         this.functionDescriptor = functionDescriptor;
     }
 
-    public TransformationDescriptor<InputType, Stream<OutputType>> getFunctionDescriptor() {
+    public FlatMapDescriptor<InputType, Iterator<OutputType>> getFunctionDescriptor() {
         return functionDescriptor;
     }
 

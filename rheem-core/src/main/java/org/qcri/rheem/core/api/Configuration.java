@@ -2,8 +2,8 @@ package org.qcri.rheem.core.api;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.configuration.*;
+import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.*;
@@ -11,7 +11,6 @@ import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.plan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
 
-import java.lang.reflect.Method;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -30,7 +29,7 @@ public class Configuration {
 
     private KeyValueProvider<Class<? extends Predicate>, Double> predicateSelectivityProvider;
 
-    private KeyValueProvider<TransformationDescriptor<?, ? extends Stream<?>>, Double> multimapSelectivityProvider;
+    private KeyValueProvider<FlatMapDescriptor<?, ?>, Double> multimapSelectivityProvider;
 
     private KeyValueProvider<ExecutionOperator, LoadProfileEstimator> operatorLoadProfileEstimatorProvider;
 
@@ -138,13 +137,13 @@ public class Configuration {
         }
         {
             // Safety net: provide a fallback selectivity.
-            KeyValueProvider<TransformationDescriptor<?, ? extends Stream<?>>, Double> fallbackProvider =
-                    new FunctionalKeyValueProvider<TransformationDescriptor<?, ? extends Stream<?>>, Double>(
+            KeyValueProvider<FlatMapDescriptor<?, ?>, Double> fallbackProvider =
+                    new FunctionalKeyValueProvider<FlatMapDescriptor<?, ?>, Double>(
                             predicateClass -> 1d
                     ).withSlf4jWarning("Creating fallback selectivity for {}.");
 
             // Customizable layer: Users can override manually.
-            KeyValueProvider<TransformationDescriptor<?, ? extends Stream<?>>, Double> overrideProvider =
+            KeyValueProvider<FlatMapDescriptor<?, ?>, Double> overrideProvider =
                     new MapBasedKeyValueProvider<>(fallbackProvider);
 
             configuration.setMultimapSelectivityProvider(overrideProvider);
@@ -235,12 +234,12 @@ public class Configuration {
         this.predicateSelectivityProvider = predicateSelectivityProvider;
     }
 
-    public KeyValueProvider<TransformationDescriptor<?, ? extends Stream<?>>, Double> getMultimapSelectivityProvider() {
+    public KeyValueProvider<FlatMapDescriptor<?, ?>, Double> getMultimapSelectivityProvider() {
         return multimapSelectivityProvider;
     }
 
     public void setMultimapSelectivityProvider(
-            KeyValueProvider<TransformationDescriptor<?, ? extends Stream<?>>, Double> multimapSelectivityProvider) {
+            KeyValueProvider<FlatMapDescriptor<?, ?>, Double> multimapSelectivityProvider) {
         this.multimapSelectivityProvider = multimapSelectivityProvider;
     }
 
