@@ -10,7 +10,10 @@ import java.util.Optional;
 
 /**
  * This sink prints all incoming data units to the {@code stdout}.
+ *
+ * @deprecated is a special case of {@link LocalCallbackSink}
  */
+@Deprecated
 public class StdoutSink<T> extends UnarySink<T> {
 
     public StdoutSink(DataSetType<T> inputType) {
