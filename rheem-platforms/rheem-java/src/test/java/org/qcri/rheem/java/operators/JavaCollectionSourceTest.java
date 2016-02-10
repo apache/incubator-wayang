@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Created by basti on 01/11/16.
+ * Test suite for the {@link JavCSou}.
  */
 public class JavaCollectionSourceTest {
 

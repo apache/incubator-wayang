@@ -1,7 +1,6 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
-import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
@@ -14,7 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Java implementation of the {@link ReduceByOperator}.
+ * Java implementation of the {@link MaterializedGroupByOperator}.
  */
 public class JavaMaterializedGroupByOperator<Type, KeyType>
         extends MaterializedGroupByOperator<Type, KeyType>

@@ -40,12 +40,13 @@ public class ReduceByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Type
     }
 
     public TransformationDescriptor<Type, Key> getKeyDescriptor() {
-        return keyDescriptor;
+        return this.keyDescriptor;
     }
 
     public ReduceDescriptor<Type> getReduceDescriptor() {
-        return reduceDescriptor;
+        return this.reduceDescriptor;
     }
+
 
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(

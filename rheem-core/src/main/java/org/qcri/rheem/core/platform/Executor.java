@@ -15,7 +15,7 @@ public interface Executor {
     /**
      * Factory for {@link Executor}s.
      */
-    public interface Factory {
+    interface Factory {
 
         /**
          * @return a new {@link Executor}

@@ -110,7 +110,7 @@ public class Operators {
         return new OperatorBase(0, 0, container) {
             @Override
             public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
-                throw new RuntimeException("Not implemented.");
+                throw new RuntimeException("Slotless operator should not be traversed.");
             }
         };
     }

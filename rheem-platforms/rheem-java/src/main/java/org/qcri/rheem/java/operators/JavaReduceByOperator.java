@@ -25,7 +25,7 @@ public class JavaReduceByOperator<Type, KeyType>
     /**
      * Creates a new instance.
      *
-     * @param type        type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
+     * @param type             type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
      * @param keyDescriptor    describes how to extract the key from data units
      * @param reduceDescriptor describes the reduction to be performed on the elements
      */
@@ -48,14 +48,14 @@ public class JavaReduceByOperator<Type, KeyType>
                         keyExtractor,
                         Collectors.reducing(reduceFunction)));
 
-        return new Stream[]{ reductionResult.values().stream()
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+        return new Stream[]{reductionResult.values().stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
         };
     }
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaReduceByOperator<>(getType(), getKeyDescriptor(), getReduceDescriptor());
+        return new JavaReduceByOperator<>(this.getType(), this.getKeyDescriptor(), this.getReduceDescriptor());
     }
 }

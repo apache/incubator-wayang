@@ -17,9 +17,9 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
 
     protected final BasicDataUnitType outputType;
 
-    private final Function<Input,Output> javaImplementation;
+    private final FlatMapDescriptor.SerializableFunction<Input,Output> javaImplementation;
 
-    public TransformationDescriptor(Function<Input, Output> javaImplementation,
+    public TransformationDescriptor(FlatMapDescriptor.SerializableFunction<Input, Output> javaImplementation,
                                        BasicDataUnitType inputType,
                                        BasicDataUnitType outputType) {
         this(javaImplementation, inputType, outputType,
@@ -27,7 +27,7 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
                 LoadEstimator.createFallback(1, 1));
     }
 
-    public TransformationDescriptor(Function<Input, Output> javaImplementation,
+    public TransformationDescriptor(FlatMapDescriptor.SerializableFunction<Input, Output> javaImplementation,
                                     BasicDataUnitType inputType,
                                     BasicDataUnitType outputType,
                                     LoadEstimator cpuLoadEstimator,

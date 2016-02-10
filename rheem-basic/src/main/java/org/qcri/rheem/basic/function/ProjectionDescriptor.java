@@ -1,5 +1,6 @@
 package org.qcri.rheem.basic.function;
 
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 
@@ -7,7 +8,6 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * This descriptor pertains to projections. It takes field names of the input type to describe the projection.
@@ -21,35 +21,51 @@ public class ProjectionDescriptor<Input, Output> extends TransformationDescripto
         this.fieldNames = Collections.unmodifiableList(Arrays.asList(fieldNames));
     }
 
-    private static <Input, Output> Function<Input, Output> createJavaImplementation(String[] fieldNames,
-                                                                                    BasicDataUnitType inputType) {
+    private static <Input, Output> FunctionDescriptor.SerializableFunction<Input, Output>
+    createJavaImplementation(String[] fieldNames, BasicDataUnitType inputType) {
         // Get the name of the field to be projected.
         if (fieldNames.length != 1) {
             throw new IllegalStateException("The projection descriptor currently supports only a single field.");
         }
         String fieldName = fieldNames[0];
-
-        // Get the input class.
-        final Class<?> typeClass = inputType.getTypeClass();
-
-        // Find the projection field via reflection.
-        final Field field;
-        try {
-            field = typeClass.getField(fieldName);
-        } catch (NoSuchFieldException e) {
-            throw new IllegalStateException("The configuration of the projection seems to be illegal.", e);
-        }
-
-        return in -> {
-            try {
-                return (Output) field.get(in);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException("Projection failed.", e);
-            }
-        };
+        return new JavaFunction<>(fieldName);
     }
 
     public List<String> getFieldNames() {
-        return fieldNames;
+        return this.fieldNames;
+    }
+
+    private static class JavaFunction<Input, Output> implements FunctionDescriptor.SerializableFunction<Input, Output> {
+
+        private final String fieldName;
+
+        private Field field;
+
+        private JavaFunction(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public Output apply(Input input) {
+            // Initialization code.
+            if (this.field == null) {
+                // Get the input class.
+                final Class<?> typeClass = input.getClass();
+
+                // Find the projection field via reflection.
+                try {
+                    this.field = typeClass.getField(this.fieldName);
+                } catch (NoSuchFieldException e) {
+                    throw new IllegalStateException("The configuration of the projection seems to be illegal.", e);
+                }
+            }
+
+            // Actual function.
+            try {
+                return (Output) this.field.get(input);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException("Illegal projection function.", e);
+            }
+        }
     }
 }

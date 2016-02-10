@@ -88,7 +88,7 @@ public class Canonicalizer<T> implements Set<T> {
 
     @Override
     public boolean retainAll(Collection<?> c) {
-        throw new RuntimeException("Not implemented");
+        throw new RuntimeException("#retainAll() is not implemented");
     }
 
     @Override
