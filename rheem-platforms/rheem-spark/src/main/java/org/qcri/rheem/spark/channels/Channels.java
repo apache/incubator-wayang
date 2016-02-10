@@ -1,5 +1,6 @@
 package org.qcri.rheem.spark.channels;
 
+import org.qcri.rheem.basic.channels.HdfsFile;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
@@ -19,7 +20,8 @@ public class Channels {
 
     static {
         CHANNEL_INITIALIZERS = new HashMap<>();
-        // TODO...
+        CHANNEL_INITIALIZERS.put(RddChannel.class, new RddChannel.Initializer());
+        CHANNEL_INITIALIZERS.put(HdfsFile.class, new HdfsFileInitializer());
     }
 
     private static List<Class<? extends Channel>> supportedChannels = null;
