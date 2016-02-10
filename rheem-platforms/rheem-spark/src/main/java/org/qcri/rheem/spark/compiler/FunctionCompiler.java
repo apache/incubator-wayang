@@ -4,16 +4,15 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 
 import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
-import org.qcri.rheem.core.function.KeyExtractorDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 
 
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
-import scala.Tuple2;
 
 import java.util.Iterator;
+import java.util.function.BinaryOperator;
 
 /**
  * A compiler translates Rheem functions into executable Java functions.
@@ -29,38 +28,20 @@ public class FunctionCompiler {
      * @return a compiled function
      */
     public <I, O> Function<I, O> compile(TransformationDescriptor<I, O> descriptor) {
-        return new Function<I, O>() {
-            @Override
-            public O call(I i) throws Exception {
-                return descriptor.getJavaImplementation().apply(i);
-            }
-        };
+        return new Transformator<>(descriptor.getJavaImplementation());
     }
 
     /**
      * Compile a key extraction.
      * @return a compiled function
      */
-    public <T,K> PairFunction <T, K, T> compile(KeyExtractorDescriptor<T, K> descriptor) {
-        return new PairFunction<T, K, T>() {
-            @Override
-            public Tuple2<K, T> call(T t) throws Exception {
-                K key = descriptor.getJavaImplementation().apply(t);
-                return new Tuple2<>(key, t);
-            }
-        };
+    public <T,K> PairFunction <T, K, T> compileToKeyExtractor(TransformationDescriptor<T, K> descriptor) {
+        return new KeyExtractor<>(descriptor.getJavaImplementation());
     }
 
 
     public <I, O> FlatMapFunction<I, O> compile(FlatMapDescriptor<I, Iterator<O>> descriptor) {
-        return new FlatMapFunction<I, O>() {
-            @Override
-            public Iterable<O> call(I i) throws Exception {
-                Iterator <O> sourceIterator =  descriptor.getJavaImplementation().apply(i);
-                Iterable<O> iterable = () -> sourceIterator;
-                return iterable;
-            }
-        };
+        return new FlatMapper<>(descriptor.getJavaImplementation());
 
     }
 
@@ -72,11 +53,77 @@ public class FunctionCompiler {
      * @return a compiled function
      */
     public <Type> Function2 <Type, Type, Type> compile(ReduceDescriptor<Type> descriptor) {
-        return new Function2<Type, Type, Type>()  {
-            @Override
-            public Type call(Type i0, Type i1) throws Exception {
-                return descriptor.getJavaImplementation().apply(i0, i1);
-            }
-        };
+        return new Reducer<>(descriptor.getJavaImplementation());
+    }
+
+    /**
+     * Spark function for transforming data quanta.
+     */
+    private static class Transformator<I, O> implements Function<I, O> {
+
+        private final java.util.function.Function<I, O> impl;
+
+        public Transformator(java.util.function.Function<I, O> impl) {
+            this.impl = impl;
+        }
+
+        @Override
+        public O call(I i) throws Exception {
+            return this.impl.apply(i);
+        }
+    }
+
+
+    /**
+     * Spark function for building pair RDDs.
+     */
+    private static class KeyExtractor<T, K> implements PairFunction<T, K, T> {
+
+        private final java.util.function.Function<T, K> impl;
+
+        public KeyExtractor(java.util.function.Function<T, K> impl) {
+            this.impl = impl;
+        }
+
+        @Override
+        public scala.Tuple2<K, T> call(T t) throws Exception {
+            K key = this.impl.apply(t);
+            return new scala.Tuple2<>(key, t);
+        }
+    }
+
+    /**
+     * Spark function for transforming data quanta.
+     */
+    private static class FlatMapper<I, O> implements FlatMapFunction<I, O> {
+
+        private final java.util.function.Function<I, Iterator<O>> impl;
+
+        public FlatMapper(java.util.function.Function<I, Iterator<O>> impl) {
+            this.impl = impl;
+        }
+
+        @Override
+        public Iterable<O> call(I i) throws Exception {
+            Iterator<O> sourceIterator =  this.impl.apply(i);
+            return () -> sourceIterator;
+        }
+    }
+
+    /**
+     * Spark function for aggregating data quanta.
+     */
+    private static class Reducer<Type> implements Function2<Type, Type, Type> {
+
+        private final BinaryOperator<Type> impl;
+
+        public Reducer(BinaryOperator<Type> impl) {
+            this.impl = impl;
+        }
+
+        @Override
+        public Type call(Type i0, Type i1) throws Exception {
+            return this.impl.apply(i0, i1);
+        }
     }
 }

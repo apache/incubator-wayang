@@ -5,7 +5,8 @@ import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 
 import java.util.Iterator;
-import java.util.function.BiFunction;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -38,14 +39,9 @@ public class FunctionCompiler {
      * @return a compiled function
      */
     public <I, O> Function<I, Stream<O>> compile(FlatMapDescriptor<I, Iterator<O>> descriptor) {
-        return new Function<I, Stream<O>>() {
-            @Override
-            public Stream<O> apply(I i) {
-                Iterator <O> sourceIterator =  descriptor.getJavaImplementation().apply(i);
-                Iterable<O> iterable = () -> sourceIterator;
-                Stream<O> targetStream = StreamSupport.stream(iterable.spliterator(), false);
-                return targetStream;
-            }
+        return input -> {
+            Iterator<O> sourceIterator = descriptor.getJavaImplementation().apply(input);
+            return StreamSupport.stream(Spliterators.spliteratorUnknownSize(sourceIterator, Spliterator.ORDERED), false);
         };
 
     }
@@ -54,7 +50,7 @@ public class FunctionCompiler {
      * Compile a reduction.
      *
      * @param descriptor describes the transformation
-     * @param <Type>        input/output type of the transformation
+     * @param <Type>     input/output type of the transformation
      * @return a compiled function
      */
     public <Type> BinaryOperator<Type> compile(ReduceDescriptor<Type> descriptor) {

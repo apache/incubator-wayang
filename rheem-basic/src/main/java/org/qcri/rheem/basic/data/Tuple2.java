@@ -1,11 +1,12 @@
 package org.qcri.rheem.basic.data;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * A type for tuples. Might be replaced by existing classes for this purpose, such as from the Scala library.
  */
-public class Tuple2<T0, T1> {
+public class Tuple2<T0, T1> implements Serializable {
 
     public T0 field0;
 

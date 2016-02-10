@@ -2,7 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.JoinOperator;
-import org.qcri.rheem.core.function.KeyExtractorDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
@@ -10,8 +10,6 @@ import org.qcri.rheem.java.compiler.FunctionCompiler;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.function.Supplier;
-
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,11 +22,10 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
 
     /**
      * Creates a new instance.
-     *
      */
-    public JavaJoinOperator(DataSetType <InputType0> inputType0, DataSetType inputType1,
-                            KeyExtractorDescriptor<InputType0, KeyType> keyDescriptor0,
-                            KeyExtractorDescriptor<InputType1, KeyType> keyDescriptor1) {
+    public JavaJoinOperator(DataSetType<InputType0> inputType0, DataSetType inputType1,
+                            TransformationDescriptor<InputType0, KeyType> keyDescriptor0,
+                            TransformationDescriptor<InputType1, KeyType> keyDescriptor1) {
 
         super(inputType0, inputType1, keyDescriptor0, keyDescriptor1);
     }
