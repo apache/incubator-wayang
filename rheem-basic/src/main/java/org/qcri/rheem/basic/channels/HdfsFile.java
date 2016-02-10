@@ -15,7 +15,7 @@ public class HdfsFile extends Channel {
 
     private Collection<String> paths = new LinkedList<>();
 
-    protected HdfsFile(ExecutionTask producer, int outputIndex) {
+    public HdfsFile(ExecutionTask producer, int outputIndex) {
         super(producer, outputIndex);
     }
 
