@@ -4,6 +4,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.FilterOperator;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
@@ -38,7 +39,7 @@ public class SparkFilterOperator<Type>
      *
      * @param type type of the dataset elements
      */
-    public SparkFilterOperator(DataSetType<Type> type, Predicate<Type> predicate) {
+    public SparkFilterOperator(DataSetType<Type> type, PredicateDescriptor<Type> predicate) {
         super(type, predicate);
     }
 
@@ -50,13 +51,13 @@ public class SparkFilterOperator<Type>
 
         final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputRdds[0];
 
-        final JavaRDD<Type> outputStream = inputStream.filter(new FilterWrapper<>(this.predicate));
+        final JavaRDD<Type> outputStream = inputStream.filter(new FilterWrapper<>(this.predicateDescriptor.getJavaImplementation()));
 
         return new JavaRDDLike[]{outputStream};
     }
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkFilterOperator<>(this.getInputType(), this.getFunctionDescriptor());
+        return new SparkFilterOperator<>(this.getInputType(), this.getPredicateDescriptor());
     }
 }

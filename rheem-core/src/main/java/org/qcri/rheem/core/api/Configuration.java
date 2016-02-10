@@ -4,6 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.configuration.*;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.*;
@@ -13,7 +14,6 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.Comparator;
-import java.util.function.Predicate;
 
 /**
  * Describes both the configuration of a {@link RheemContext} and {@link Job}s.
@@ -28,7 +28,7 @@ public class Configuration {
 
     private KeyValueProvider<OutputSlot<?>, CardinalityEstimator> cardinalityEstimatorProvider;
 
-    private KeyValueProvider<Class<? extends Predicate>, Double> predicateSelectivityProvider;
+    private KeyValueProvider<PredicateDescriptor, Double> predicateSelectivityProvider;
 
     private KeyValueProvider<FlatMapDescriptor<?, ?>, Double> multimapSelectivityProvider;
 
@@ -135,13 +135,13 @@ public class Configuration {
     private static void bootstrapSelectivityProviders(Configuration configuration) {
         {
             // Safety net: provide a fallback selectivity.
-            KeyValueProvider<Class<? extends Predicate>, Double> fallbackProvider =
-                    new FunctionalKeyValueProvider<Class<? extends Predicate>, Double>(
+            KeyValueProvider<PredicateDescriptor, Double> fallbackProvider =
+                    new FunctionalKeyValueProvider<PredicateDescriptor, Double>(
                             predicateClass -> 0.5d
                     ).withSlf4jWarning("Creating fallback selectivity for {}.");
 
             // Customizable layer: Users can override manually.
-            KeyValueProvider<Class<? extends Predicate>, Double> overrideProvider =
+            KeyValueProvider<PredicateDescriptor, Double> overrideProvider =
                     new MapBasedKeyValueProvider<>(fallbackProvider);
 
             configuration.setPredicateSelectivityProvider(overrideProvider);
@@ -259,12 +259,12 @@ public class Configuration {
         this.cardinalityEstimatorProvider = cardinalityEstimatorProvider;
     }
 
-    public KeyValueProvider<Class<? extends Predicate>, Double> getPredicateSelectivityProvider() {
+    public KeyValueProvider<PredicateDescriptor, Double> getPredicateSelectivityProvider() {
         return this.predicateSelectivityProvider;
     }
 
     public void setPredicateSelectivityProvider(
-            KeyValueProvider<Class<? extends Predicate>, Double> predicateSelectivityProvider) {
+            KeyValueProvider<PredicateDescriptor, Double> predicateSelectivityProvider) {
         this.predicateSelectivityProvider = predicateSelectivityProvider;
     }
 

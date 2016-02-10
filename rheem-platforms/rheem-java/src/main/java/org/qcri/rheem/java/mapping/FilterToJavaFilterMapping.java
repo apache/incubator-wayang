@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.FilterOperator;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.java.operators.JavaFilterOperator;
@@ -22,7 +23,7 @@ public class FilterToJavaFilterMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "filter", new FilterOperator<>(null, null), false);
+                "filter", new FilterOperator<>(null, (PredicateDescriptor) null), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -32,7 +33,7 @@ public class FilterToJavaFilterMapping implements Mapping {
         protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final FilterOperator<?> originalOperator = (FilterOperator<?>) subplanMatch.getMatch("filter").getOperator();
             return new JavaFilterOperator(originalOperator.getInputType(),
-                                            originalOperator.getFunctionDescriptor()).at(epoch);
+                                            originalOperator.getPredicateDescriptor()).at(epoch);
         }
     }
 }

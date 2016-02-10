@@ -63,8 +63,8 @@ public class CollectionProvider<Value> implements Iterable<Value> {
     }
 
     private Collection<Value> provideAll(Set<Value> containedValues, Set<Value> excludedValues) {
+        excludedValues.addAll(this.blacklist);
         this.whitelist.stream().filter(value -> !excludedValues.contains(value)).forEach(containedValues::add);
-        excludedValues.containsAll(this.blacklist);
         return this.parent == null ? containedValues : this.parent.provideAll(containedValues, excludedValues);
     }
 

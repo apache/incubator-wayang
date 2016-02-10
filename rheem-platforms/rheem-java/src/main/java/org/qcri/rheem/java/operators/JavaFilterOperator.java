@@ -1,11 +1,11 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.FilterOperator;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -21,8 +21,8 @@ public class JavaFilterOperator<Type>
      *
      * @param type type of the dataset elements
      */
-    public JavaFilterOperator(DataSetType<Type> type, Predicate<Type> predicate) {
-        super(type, predicate);
+    public JavaFilterOperator(DataSetType<Type> type, PredicateDescriptor<Type> predicateDescriptor) {
+        super(type, predicateDescriptor);
     }
 
     @Override
@@ -32,13 +32,13 @@ public class JavaFilterOperator<Type>
         }
 
         final Stream<Type> inputStream = inputStreams[0];
-        final Stream<Type> outputStream = inputStream.filter(this.predicate);
+        final Stream<Type> outputStream = inputStream.filter(this.predicateDescriptor.getJavaImplementation());
 
         return new Stream[]{outputStream};
     }
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaFilterOperator<>(this.getInputType(), this.getFunctionDescriptor());
+        return new JavaFilterOperator<>(this.getInputType(), this.getPredicateDescriptor());
     }
 }

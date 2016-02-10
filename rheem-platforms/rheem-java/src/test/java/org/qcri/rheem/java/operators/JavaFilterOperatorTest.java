@@ -2,7 +2,9 @@ package org.qcri.rheem.java.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -25,12 +27,7 @@ public class JavaFilterOperatorTest {
         JavaFilterOperator<Integer> filterOperator =
                 new JavaFilterOperator<>(
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        new Predicate<Integer>() {
-                            @Override
-                            public boolean test(Integer item) {
-                                return item > 0;
-                            }
-                        }
+                        new PredicateDescriptor<>(i -> i > 0, DataUnitType.createBasic(Integer.class))
                 );
 
         // Execute the distinct operator.

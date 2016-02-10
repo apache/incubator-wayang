@@ -114,7 +114,7 @@ public class RheemPlans {
 
         final DataSetType<String> stringDataSet = DataSetType.createDefault(String.class);
         CollectionSource<String> source1 = new CollectionSource<>(inputList1, stringDataSet);
-        CollectionSource<String> source2 = new CollectionSource<>(inputList1, stringDataSet);
+        CollectionSource<String> source2 = new CollectionSource<>(inputList2, stringDataSet);
 
         UnionAllOperator<String> coalesceOperator1 = new UnionAllOperator<>(stringDataSet);
         source1.connectTo(0, coalesceOperator1, 0);
