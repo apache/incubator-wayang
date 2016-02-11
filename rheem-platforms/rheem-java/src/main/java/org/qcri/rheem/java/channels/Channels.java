@@ -1,7 +1,6 @@
 package org.qcri.rheem.java.channels;
 
 import org.qcri.rheem.basic.channels.HdfsFile;
-import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.java.plugin.JavaPlatform;
@@ -44,12 +43,7 @@ public class Channels {
      */
     @SuppressWarnings("unchecked")
     public static <T extends Channel> ChannelInitializer<T> getChannelInitializer(Class<T> channelClass) {
-        final ChannelInitializer<?> channelInitializer = CHANNEL_INITIALIZERS.get(channelClass);
-        if (channelInitializer == null) {
-            throw new RheemException(String.format("%s does not work with %s.",
-                    JavaPlatform.class.getSimpleName(), channelClass.getSimpleName()));
-        }
-        return (ChannelInitializer<T>) channelInitializer;
+        return (ChannelInitializer<T>) CHANNEL_INITIALIZERS.get(channelClass);
     }
 
 

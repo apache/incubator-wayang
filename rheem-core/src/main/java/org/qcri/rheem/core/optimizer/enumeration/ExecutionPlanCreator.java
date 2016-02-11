@@ -31,22 +31,39 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
     }
 
     public boolean connect(ExecutionTask task1, int outputIndex, ExecutionTask task2, int inputIndex) {
-        final Class<Channel> channelClass = (Class<Channel>) this.pickChannelClass(task1, outputIndex, task2, inputIndex);
-        if (channelClass == null) {
-            return false;
-        }
-
         Channel channel = task1.getOutputChannel(outputIndex);
-        if (channel == null) {
+
+        if (channel != null) {
+            this.logger.warn("Resorting to existing channel {} for {}.", channel, task2);
+        } else {
+            final Class<Channel> channelClass = (Class<Channel>) this.pickChannelClass(task1, outputIndex, task2, inputIndex);
+            if (channelClass == null) {
+                this.logger.warn("Could not find an appropriate channel between {} and {}.", task1, task2);
+                return false;
+            }
             channel = this.setUpOutput(task1, outputIndex, channelClass);
         }
-        this.setUpInput(task2, inputIndex, channelClass, channel);
-        return true;
+
+        return this.setUpInput(task2, inputIndex, channel);
     }
 
-    private void setUpInput(ExecutionTask task2, int inputIndex, Class<Channel> channelClass, Channel channel) {
-        final ChannelInitializer<Channel> channelInitializer = task2.getOperator().getPlatform().getChannelInitializer(channelClass);
+
+    /**
+     * Connects a {@link Channel} to a given {@link ExecutionTask} input
+     *
+     * @param task2      whose input should be connected
+     * @param inputIndex the index of that input
+     * @param channel    the {@link Channel} to connect
+     * @return whether the connection was successful
+     */
+    private boolean setUpInput(ExecutionTask task2, int inputIndex, Channel channel) {
+        final ChannelInitializer<Channel> channelInitializer = task2.getOperator().getPlatform()
+                .getChannelInitializer((Class<Channel>) channel.getClass());
+        if (channelInitializer == null) {
+            return false;
+        }
         channelInitializer.setUpInput(channel, task2, inputIndex);
+        return true;
     }
 
     private Channel setUpOutput(ExecutionTask task1, int outputIndex, Class<? extends Channel> channelClass) {

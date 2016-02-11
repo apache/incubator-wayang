@@ -57,6 +57,8 @@ public abstract class Platform {
     /**
      * If this instance provides {@link ExecutionOperator}s, then this method provides the {@link ChannelInitializer}s
      * to connect them.
+     *
+     * @return the appropriate {@link ChannelInitializer} for the given {@link Channel} type or {@code null} if none
      */
     public abstract <T extends Channel> ChannelInitializer<T> getChannelInitializer(Class<T> channelClass);
 
