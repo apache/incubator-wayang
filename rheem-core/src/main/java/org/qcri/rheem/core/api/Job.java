@@ -55,10 +55,24 @@ public class Job {
         }
 
         // Get an execution plan.
+        long optimizerStartTime = System.currentTimeMillis();
         RheemPlan executionPlan = this.getExecutionPlan();
+        long optimizerFinishTime = System.currentTimeMillis();
+        this.logger.info("Optimization done in {}.", formatElapsedMillis(optimizerFinishTime - optimizerStartTime));
 
         // Take care of the execution.
         this.deployAndRun(executionPlan);
+    }
+
+    private String formatElapsedMillis(long millis) {
+        long ms = millis % 1000;
+        millis /= 1000;
+        long s = millis % 60;
+        millis /= 60;
+        long m = millis % 60;
+        millis /= 60;
+        long h = millis % 60;
+        return String.format("%d:%02d:%02d.%03d", h, m, s, ms);
     }
 
     /**
@@ -172,10 +186,12 @@ public class Job {
         }
 
         // Pick an execution plan.
+        // Make sure that an execution plan can be created.
         return executionPlans.stream()
+                .filter(plan -> plan.getExecutionPlan() != null)
                 .reduce((p1, p2) -> {
                     final TimeEstimate t1 = p1.getExecutionPlan().estimateExecutionTime(this.configuration);
-                    final TimeEstimate t2 = p1.getExecutionPlan().estimateExecutionTime(this.configuration);
+                    final TimeEstimate t2 = p2.getExecutionPlan().estimateExecutionTime(this.configuration);
                     return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
                 })
                 .map(plan -> {

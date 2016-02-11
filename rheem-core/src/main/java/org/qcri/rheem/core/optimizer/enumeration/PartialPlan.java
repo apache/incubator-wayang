@@ -154,8 +154,9 @@ public class PartialPlan {
                     .collect(Collectors.toList());
             Validate.notEmpty(startOperators, "Could not find start operators among the %d operators.", this.operators.size());
             final ExecutionPlanCreator executionPlanCreator = new ExecutionPlanCreator(startOperators, this);
-            executionPlanCreator.traverse();
-            this.executionPlan = new PreliminaryExecutionPlan(executionPlanCreator.getTerminalTasks());
+            if (executionPlanCreator.traverse()) {
+                this.executionPlan = new PreliminaryExecutionPlan(executionPlanCreator.getTerminalTasks());
+            }
         }
         return this.executionPlan;
     }

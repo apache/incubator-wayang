@@ -29,9 +29,10 @@ public abstract class AbstractTopologicalTraversal<Payload,
      *
      * @param payloads <i>Not needed so far... remove?</i> fed as parameters into the initially activated {@link Operator}s,
      *                 whereby indices of this array are matched with the parameter of {@link #getInitialActivations(int)}.
+     * @return whether the traversal was <i>not</i> aborted
      */
     @SafeVarargs
-    public final void traverse(Payload... payloads) {
+    public final boolean traverse(Payload... payloads) {
         try {
             final Queue<ActivatorType> activators = this.initializeActivatorQueue(payloads);
             do {
@@ -41,9 +42,11 @@ public abstract class AbstractTopologicalTraversal<Payload,
             } while (!activators.isEmpty());
         } catch (AbortException e) {
             this.logger.debug("Traversal aborted: {}", e.getMessage());
+            return false;
         } finally {
 //            this.reset();
         }
+        return true;
     }
 
     /**
