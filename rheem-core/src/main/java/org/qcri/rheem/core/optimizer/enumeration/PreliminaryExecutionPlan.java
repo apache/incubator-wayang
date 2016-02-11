@@ -37,7 +37,7 @@ public class PreliminaryExecutionPlan {
         return this.timeEstimate;
     }
 
-    private Set<ExecutionTask> collectAllTasks() {
+    public Set<ExecutionTask> collectAllTasks() {
         Set<ExecutionTask> collector = new HashSet<>();
         this.collectAllTasksAux(this.sinkTasks.stream(), collector);
         return collector;
@@ -77,5 +77,29 @@ public class PreliminaryExecutionPlan {
 
     public TimeEstimate getTimeEstimate() {
         return this.timeEstimate;
+    }
+
+    public ExecutionPlan toExecutionPlan() {
+        return new StageAssignmentTraversal(this).run();
+    }
+
+    public boolean isComplete() {
+        final Set<ExecutionTask> allTasks = this.collectAllTasks();
+        if (allTasks.isEmpty()) {
+            return false;
+        }
+        for (ExecutionTask task : allTasks) {
+            if (Arrays.stream(task.getOutputChannels()).anyMatch(Objects::isNull)) {
+                return false;
+            }
+            if (Arrays.stream(task.getInputChannels()).anyMatch(Objects::isNull)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public Collection<ExecutionTask> getSinkTasks() {
+        return this.sinkTasks;
     }
 }

@@ -49,9 +49,9 @@ public class ExecutionTask {
         return this.getInputChannels()[index];
     }
 
-    Channel setInputChannel(int index, Channel channel) {
+    void setInputChannel(int index, Channel channel) {
         Validate.isTrue(this.getInputChannel(index) == null);
-        return this.getInputChannels()[index];
+        this.getInputChannels()[index] = channel;
     }
 
     public Channel[] getOutputChannels() {
@@ -63,7 +63,8 @@ public class ExecutionTask {
     }
 
     void setOutputChannel(int index, Channel channel) {
-        Validate.isTrue(this.getOutputChannel(index) == null);
+        Validate.isTrue(this.getOutputChannel(index) == null, "Output channel %d of %s is already set to %s.",
+                index, this, this.getOutputChannel(index));
         this.getOutputChannels()[index] = channel;
     }
 

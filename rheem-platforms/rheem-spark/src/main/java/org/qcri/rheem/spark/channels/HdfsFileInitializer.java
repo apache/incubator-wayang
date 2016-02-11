@@ -17,7 +17,7 @@ public class HdfsFileInitializer implements ChannelInitializer<HdfsFile> {
     @Override
     public HdfsFile setUpOutput(ExecutionTask executionTask, int index) {
         // TODO: Implement correctly.
-        this.logger.warn("HdfsFiles are not support, yet.");
+//        this.logger.warn("HdfsFiles are not support, yet.");
         return new HdfsFile(executionTask, index);
 
     }
@@ -25,7 +25,7 @@ public class HdfsFileInitializer implements ChannelInitializer<HdfsFile> {
     @Override
     public void setUpInput(HdfsFile channel, ExecutionTask executionTask, int index) {
         // TODO: Implement correctly.
-        this.logger.warn("HdfsFiles are not support, yet.");
+//        this.logger.warn("HdfsFiles are not support, yet.");
         channel.addConsumer(executionTask, index);
     }
 

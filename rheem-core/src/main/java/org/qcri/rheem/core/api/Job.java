@@ -10,6 +10,7 @@ import org.qcri.rheem.core.optimizer.costs.TimeEstimationTraversal;
 import org.qcri.rheem.core.optimizer.enumeration.PartialPlan;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumeration;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerator;
+import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -58,7 +59,7 @@ public class Job {
         long optimizerStartTime = System.currentTimeMillis();
         RheemPlan executionPlan = this.getExecutionPlan();
         long optimizerFinishTime = System.currentTimeMillis();
-        this.logger.info("Optimization done in {}.", formatElapsedMillis(optimizerFinishTime - optimizerStartTime));
+        this.logger.info("Optimization done in {}.", this.formatElapsedMillis(optimizerFinishTime - optimizerStartTime));
 
         // Take care of the execution.
         this.deployAndRun(executionPlan);
@@ -187,7 +188,7 @@ public class Job {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        return executionPlans.stream()
+        final PartialPlan partialPlan = executionPlans.stream()
                 .filter(plan -> plan.getExecutionPlan() != null)
                 .reduce((p1, p2) -> {
                     final TimeEstimate t1 = p1.getExecutionPlan().estimateExecutionTime(this.configuration);
@@ -198,7 +199,10 @@ public class Job {
                     this.logger.info("Picked plan's cost estimate is {}.", plan.getExecutionPlan().estimateExecutionTime(this.configuration));
                     return plan;
                 })
-                .orElseThrow(IllegalStateException::new)
+                .orElseThrow(IllegalStateException::new);
+
+        final ExecutionPlan executionPlan = partialPlan.getExecutionPlan().toExecutionPlan();
+        return partialPlan
                 .toRheemPlan();
     }
 

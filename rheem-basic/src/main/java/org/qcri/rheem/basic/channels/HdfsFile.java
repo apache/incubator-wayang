@@ -32,4 +32,8 @@ public class HdfsFile extends Channel {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s%s", this.getClass().getSimpleName(), this.paths);
+    }
 }

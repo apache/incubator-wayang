@@ -30,9 +30,14 @@ public class ExecutionStage {
     private final Collection<ExecutionStage> successors = new LinkedList<>();
 
     /**
+     * Tasks that have to be done first when processing this instance.
+     */
+    private final Collection<ExecutionTask> startTasks = new LinkedList<>();
+
+    /**
      * Create a new instance and register it with the given {@link PlatformExecution}.
      */
-    public ExecutionStage(PlatformExecution platformExecution) {
+    ExecutionStage(PlatformExecution platformExecution) {
         this.platformExecution = platformExecution;
         this.platformExecution.addStage(this);
     }
@@ -57,5 +62,17 @@ public class ExecutionStage {
 
     public Collection<ExecutionStage> getSuccessors() {
         return this.successors;
+    }
+
+    public void addStartTask(ExecutionTask executionTask) {
+        this.startTasks.add(executionTask);
+    }
+
+    public Collection<ExecutionTask> getStartTasks() {
+        return this.startTasks;
+    }
+
+    public boolean isStartingStage() {
+        return this.predecessors.isEmpty();
     }
 }
