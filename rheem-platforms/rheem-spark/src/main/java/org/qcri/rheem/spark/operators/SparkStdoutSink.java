@@ -9,8 +9,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
-import java.util.function.Consumer;
-
 /**
  * Implementation of the {@link LocalCallbackSink} operator for the Java platform.
  */
