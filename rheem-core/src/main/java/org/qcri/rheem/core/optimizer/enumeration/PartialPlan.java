@@ -152,6 +152,7 @@ public class PartialPlan {
             final List<ExecutionOperator> startOperators = this.operators.stream()
                     .filter(this::isStartOperator)
                     .collect(Collectors.toList());
+            Validate.notEmpty(startOperators, "Could not find start operators among the %d operators.", this.operators.size());
             final ExecutionPlanCreator executionPlanCreator = new ExecutionPlanCreator(startOperators, this);
             executionPlanCreator.traverse();
             this.executionPlan = new PreliminaryExecutionPlan(executionPlanCreator.getTerminalTasks());

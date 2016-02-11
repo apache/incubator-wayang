@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -22,6 +23,7 @@ public class PreliminaryExecutionPlan {
     private TimeEstimate timeEstimate;
 
     public PreliminaryExecutionPlan(Collection<ExecutionTask> sinkTasks) {
+        Validate.notEmpty(sinkTasks, "Cannot build plan without sinks.");
         this.sinkTasks = sinkTasks;
     }
 
