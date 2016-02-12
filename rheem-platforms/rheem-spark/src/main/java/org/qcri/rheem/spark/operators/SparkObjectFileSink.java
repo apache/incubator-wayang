@@ -5,7 +5,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.UnarySource;
+import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
@@ -14,26 +14,27 @@ import org.qcri.rheem.spark.platform.SparkPlatform;
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a sequence file.
  *
- * @see SparkSequenceFileSink
+ * @see SparkObjectFileSource
  */
-public class SparkSequenceFileSource<T> extends UnarySource<T> implements SparkExecutionOperator {
+public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecutionOperator {
 
-    private final String sourcePath;
+    private final String targetPath;
 
-    public SparkSequenceFileSource(String sourcePath, DataSetType type) {
+    public SparkObjectFileSink(String targetPath, DataSetType type) {
         super(type, null);
-        this.sourcePath = sourcePath;
+        this.targetPath = targetPath;
     }
 
     @Override
     public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
-        Validate.isTrue(inputRdds.length == 0);
-        final JavaRDD<Object> rdd = sparkExecutor.sc.objectFile(this.sourcePath);
-        return new JavaRDDLike[] { rdd };
+        Validate.isTrue(inputRdds.length == 1);
+        JavaRDD<T> rdd = (JavaRDD<T>) inputRdds[0];
+        rdd.saveAsObjectFile(this.targetPath);
+        return new JavaRDDLike[0];
     }
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkSequenceFileSource<>(this.sourcePath, this.getType());
+        return new SparkObjectFileSink<>(this.targetPath, this.getType());
     }
 }

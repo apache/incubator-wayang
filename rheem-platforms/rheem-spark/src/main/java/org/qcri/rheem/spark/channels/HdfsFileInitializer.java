@@ -7,8 +7,8 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.operators.SparkSequenceFileSink;
-import org.qcri.rheem.spark.operators.SparkSequenceFileSource;
+import org.qcri.rheem.spark.operators.SparkObjectFileSink;
+import org.qcri.rheem.spark.operators.SparkObjectFileSource;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,14 +40,14 @@ public class HdfsFileInitializer implements ChannelInitializer<HdfsFile> {
 
     @Override
     public HdfsFile setUpOutput(ExecutionTask executionTask, int index) {
-        // Intercept with a SparkSequenceFileSink.
+        // Intercept with a SparkObjectFileSink.
         final ChannelInitializer<RddChannel> rddChannelInitializer = Channels.getChannelInitializer(RddChannel.class);
         Validate.notNull(rddChannelInitializer);
         final RddChannel rddChannel = rddChannelInitializer.setUpOutput(executionTask, index);
         final DataSetType<?> dataSetType = executionTask.getOperator().getOutput(index).getType();
         final String targetPath = pickTempPath();
-        SparkSequenceFileSink<?> sparkSequenceFileSink = new SparkSequenceFileSink<>(targetPath, dataSetType);
-        ExecutionTask sinkTask = new ExecutionTask(sparkSequenceFileSink, sparkSequenceFileSink.getNumInputs(), 1);
+        SparkObjectFileSink<?> sparkObjectFileSink = new SparkObjectFileSink<>(targetPath, dataSetType);
+        ExecutionTask sinkTask = new ExecutionTask(sparkObjectFileSink, sparkObjectFileSink.getNumInputs(), 1);
         rddChannelInitializer.setUpInput(rddChannel, sinkTask, 0);
 
         // Create the actual HdfsFile.
@@ -61,11 +61,11 @@ public class HdfsFileInitializer implements ChannelInitializer<HdfsFile> {
         Validate.isTrue(channel.getPaths().size() == 1);
         final String targetPath = channel.getPaths().stream().findAny().get();
 
-        // Intercept with a SparkSequenceFileSource.
+        // Intercept with a SparkObjectFileSource.
         // TODO: Improve management of data types, file paths, serialization formats etc.
         final DataSetType<?> dataSetType = channel.getProducer().getOperator().getInput(0).getType();
-        SparkSequenceFileSource<?> sparkSequenceFileSource = new SparkSequenceFileSource<>(targetPath, dataSetType);
-        ExecutionTask sourceTask = new ExecutionTask(sparkSequenceFileSource, 1, sparkSequenceFileSource.getNumOutputs());
+        SparkObjectFileSource<?> sparkObjectFileSource = new SparkObjectFileSource<>(targetPath, dataSetType);
+        ExecutionTask sourceTask = new ExecutionTask(sparkObjectFileSource, 1, sparkObjectFileSource.getNumOutputs());
         channel.addConsumer(sourceTask, 0);
 
         // Set up the actual input..

@@ -11,6 +11,7 @@
         <scala.version>2.10.4</scala.version>
         <scala.compat.version>2.10</scala.compat.version>
         <spark.version>1.6.0</spark.version>
+        <hadoop.version>2.2.0</hadoop.version>
     </properties>
 
     <groupId>org.qcri.rheem</groupId>
@@ -90,6 +91,11 @@
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-gelly-scala</artifactId>
                 <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.hadoop</groupId>
+                <artifactId>hadoop-common</artifactId>
+                <version>${hadoop.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.beust</groupId>

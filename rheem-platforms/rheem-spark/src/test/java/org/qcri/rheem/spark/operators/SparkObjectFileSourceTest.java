@@ -16,9 +16,9 @@ import java.util.*;
 import static org.mockito.Mockito.mock;
 
 /**
- * Test suite for {@link SparkSequenceFileSource}.
+ * Test suite for {@link SparkObjectFileSource}.
  */
-public class SparkSequenceFileSourceTest {
+public class SparkObjectFileSourceTest {
 
     @Test
     public void testWritingDoesNotFail() throws IOException {
@@ -30,7 +30,7 @@ public class SparkSequenceFileSourceTest {
 
             // Prepare the source.
             final URL inputUrl = this.getClass().getResource("/0-to-10000.sequence_file");
-            SparkSequenceFileSource<Integer> source = new SparkSequenceFileSource<>(
+            SparkObjectFileSource<Integer> source = new SparkObjectFileSource<>(
                     inputUrl.toString(), DataSetType.createDefault(Integer.class));
 
             // Execute.
@@ -39,7 +39,7 @@ public class SparkSequenceFileSourceTest {
             // Verify.
             Assert.assertTrue(outputRdds.length == 1);
 
-            Set<Integer> expectedValues = new HashSet<>(SparkSequenceFileSourceTest.enumerateRange(10000));
+            Set<Integer> expectedValues = new HashSet<>(SparkObjectFileSourceTest.enumerateRange(10000));
             final List<Integer> rddList = outputRdds[0].collect();
             for (Integer rddValue : rddList) {
                 Assert.assertTrue("Value: " + rddValue, expectedValues.remove(rddValue));

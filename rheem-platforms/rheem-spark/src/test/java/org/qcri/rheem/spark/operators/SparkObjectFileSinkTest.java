@@ -20,9 +20,9 @@ import java.util.List;
 import static org.mockito.Mockito.mock;
 
 /**
- * Test suite for {@link SparkSequenceFileSink}.
+ * Test suite for {@link SparkObjectFileSink}.
  */
-public class SparkSequenceFileSinkTest {
+public class SparkObjectFileSinkTest {
 
     @Test
     public void testWritingDoesNotFail() throws IOException {
@@ -38,7 +38,7 @@ public class SparkSequenceFileSinkTest {
             tempDir.toFile().deleteOnExit();
             Path targetFile = tempDir.resolve("testWritingDoesNotFail");
             final JavaRDD<Integer> integerRDD = sc.parallelize(enumerateRange(10000));
-            final SparkSequenceFileSink<Integer> sink = new SparkSequenceFileSink<>(
+            final SparkObjectFileSink<Integer> sink = new SparkObjectFileSink<>(
                     targetFile.toUri().toString(),
                     DataSetType.createDefault(Integer.class)
             );
