@@ -1,0 +1,64 @@
+package org.qcri.rheem.spark.operators;
+
+import org.apache.commons.lang3.Validate;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaRDDLike;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.junit.Assert;
+import org.junit.Test;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.platform.SparkPlatform;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.mockito.Mockito.mock;
+
+/**
+ * Test suite for {@link SparkSequenceFileSink}.
+ */
+public class SparkSequenceFileSinkTest {
+
+    @Test
+    public void testWritingDoesNotFail() throws IOException {
+        SparkExecutor sparkExecutor = null;
+        try {
+            // Prepare Spark.
+            final SparkPlatform sparkPlatform = SparkPlatform.getInstance();
+            sparkExecutor = (SparkExecutor) sparkPlatform.createExecutor();
+            final JavaSparkContext sc = sparkExecutor.sc;
+
+            // Prepare the sink.
+            Path tempDir = Files.createTempDirectory("rheem-spark");
+            tempDir.toFile().deleteOnExit();
+            Path targetFile = tempDir.resolve("testWritingDoesNotFail");
+            final JavaRDD<Integer> integerRDD = sc.parallelize(enumerateRange(10000));
+            final SparkSequenceFileSink<Integer> sink = new SparkSequenceFileSink<>(
+                    targetFile.toUri().toString(),
+                    DataSetType.createDefault(Integer.class)
+            );
+
+            // Execute.
+            final JavaRDDLike[] outputRdds =
+                    sink.evaluate(new JavaRDDLike[]{integerRDD}, mock(FunctionCompiler.class), sparkExecutor);
+            Assert.assertTrue(outputRdds.length == 0);
+        } finally {
+            if (sparkExecutor != null) sparkExecutor.dispose();
+        }
+
+    }
+
+    static List<Integer> enumerateRange(int to) {
+        Validate.isTrue(to >= 0);
+        List<Integer> range = new ArrayList<>(to);
+        for (int i = 0; i < to; i++) {
+            range.add(i);
+        }
+        return range;
+    }
+}
