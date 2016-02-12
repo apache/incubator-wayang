@@ -32,8 +32,12 @@ public class PlatformExecution {
         return this.platform;
     }
 
+    public ExecutionStage createStage(int sequenceNumber) {
+        return new ExecutionStage(this, sequenceNumber);
+    }
+
     public ExecutionStage createStage() {
-        return new ExecutionStage(this);
+        return this.createStage(-1);
     }
 
     @Override

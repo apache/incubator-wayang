@@ -22,7 +22,7 @@ public class StageAssignmentTraversal {
 
     private Queue<ExecutionTask> seeds;
 
-    private Map<ExecutionTask, InterimStage> assignedStages;
+    private Map<ExecutionTask, InterimStage> assignedInterimStages;
 
     private Map<ExecutionTask, Set<InterimStage>> requiredStages;
 
@@ -65,7 +65,7 @@ public class StageAssignmentTraversal {
 
     private void initializeRun() {
         this.seeds = new LinkedList<>(this.preliminaryExecutionPlan.getSinkTasks());
-        this.assignedStages = new HashMap<>();
+        this.assignedInterimStages = new HashMap<>();
         this.requiredStages = new HashMap<>();
         this.changedStages = new LinkedList<>();
         this.allStages = new LinkedList<>();
@@ -74,7 +74,7 @@ public class StageAssignmentTraversal {
     private void discoverInitialStages() {
         while (!this.seeds.isEmpty()) {
             final ExecutionTask task = this.seeds.poll();
-            if (this.assignedStages.containsKey(task)) {
+            if (this.assignedInterimStages.containsKey(task)) {
                 continue;
             }
             Platform platform = task.getOperator().getPlatform();
@@ -95,7 +95,7 @@ public class StageAssignmentTraversal {
     private void assign(ExecutionTask task, InterimStage newStage) {
         Validate.isTrue(task.getOperator().getPlatform().equals(newStage.getPlatform()));
         newStage.addTask(task);
-        final InterimStage oldStage = this.assignedStages.put(task, newStage);
+        final InterimStage oldStage = this.assignedInterimStages.put(task, newStage);
         Validate.isTrue(oldStage == null, "Reassigned %s from %s to %s.", task, oldStage, newStage);
         final HashSet<InterimStage> thisRequiredStages = new HashSet<>(4);
         thisRequiredStages.add(newStage);
@@ -108,7 +108,7 @@ public class StageAssignmentTraversal {
                 expandableStage.setOutbound(task);
             }
             for (ExecutionTask consumer : channel.getConsumers()) {
-                final InterimStage assignedStage = this.assignedStages.get(consumer);
+                final InterimStage assignedStage = this.assignedInterimStages.get(consumer);
                 if (assignedStage == null) {
                     this.handleTaskWithoutPlatformExecution(consumer, expandableStage);
                 }
@@ -120,7 +120,7 @@ public class StageAssignmentTraversal {
         for (Channel channel : task.getInputChannels()) {
             final ExecutionTask producer = channel.getProducer();
             Validate.notNull(producer);
-            final InterimStage assignedStage = this.assignedStages.get(producer);
+            final InterimStage assignedStage = this.assignedInterimStages.get(producer);
             if (assignedStage == null) {
                 this.handleTaskWithoutPlatformExecution(producer, expandableStage);
             }
@@ -156,7 +156,7 @@ public class StageAssignmentTraversal {
     }
 
     private void updateRequiredStages(ExecutionTask task, Set<InterimStage> markerSet, boolean isUpdateTask) {
-        final InterimStage currentStage = this.assignedStages.get(task);
+        final InterimStage currentStage = this.assignedInterimStages.get(task);
         markerSet.add(currentStage);
         if (isUpdateTask) {
             final Set<InterimStage> currentlyRequiredStages = this.requiredStages.get(task);
@@ -197,7 +197,7 @@ public class StageAssignmentTraversal {
             InterimStage newStage = stage.separate(separableTasks);
             this.changedStages.add(newStage);
             for (ExecutionTask separatedTask : newStage.getTasks()) {
-                this.assignedStages.put(separatedTask, newStage);
+                this.assignedInterimStages.put(separatedTask, newStage);
             }
             return true;
         }
@@ -216,7 +216,7 @@ public class StageAssignmentTraversal {
     private void assembleExecutionPlan(Map<InterimStage, ExecutionStage> finalStages,
                                        ExecutionStage successorExecutionStage,
                                        ExecutionTask currentExecutionTask) {
-        final InterimStage interimStage = this.assignedStages.get(currentExecutionTask);
+        final InterimStage interimStage = this.assignedInterimStages.get(currentExecutionTask);
         ExecutionStage executionStage = finalStages.get(interimStage);
         final boolean isUnseenStage;
         if (isUnseenStage = executionStage == null) {
@@ -234,7 +234,7 @@ public class StageAssignmentTraversal {
 
         for (Channel channel : currentExecutionTask.getInputChannels()) {
             final ExecutionTask predecessor = channel.getProducer();
-            assembleExecutionPlan(finalStages, executionStage, predecessor);
+            this.assembleExecutionPlan(finalStages, executionStage, predecessor);
         }
     }
 
@@ -255,6 +255,9 @@ public class StageAssignmentTraversal {
          */
         private final Set<ExecutionTask> outboundTasks = new HashSet<>();
 
+        /**
+         * Use for mark-and-sweep algorithms. (Specifically: mark changed stages)
+         */
         private boolean isMarked;
 
         /**
@@ -314,11 +317,6 @@ public class StageAssignmentTraversal {
             return new InterimStage(this.platformExecution, this.sequenceNumber + 1);
         }
 
-        @Override
-        public String toString() {
-            return String.format("InterimStage[%s:%d]", this.getPlatform().getName(), this.sequenceNumber);
-        }
-
         public void mark() {
             this.isMarked = true;
         }
@@ -329,25 +327,40 @@ public class StageAssignmentTraversal {
             return value;
         }
 
+        @Override
+        public String toString() {
+            return String.format("InterimStage[%s:%d]", this.getPlatform().getName(), this.sequenceNumber);
+        }
+
         public ExecutionStage toExecutionStage() {
-            final ExecutionStage executionStage = this.platformExecution.createStage();
+            final ExecutionStage executionStage = this.platformExecution.createStage(this.sequenceNumber);
             for (ExecutionTask task : this.allTasks) {
-                if (this.isStartTask(task)) {
-                    executionStage.addStartTask(task);
+                executionStage.addTask(task);
+                if (this.checkIfStartTask(task)) {
+                    executionStage.markAsStartTast(task);
+                } else if (this.checkIfTerminalTask(task)) {
+                    executionStage.markAsTerminalTask(task);
                 }
             }
             return executionStage;
         }
 
-        private boolean isStartTask(ExecutionTask task) {
-            if (task.getInputChannels().length == 0) {
-                return true;
-            }
-
+        private boolean checkIfStartTask(ExecutionTask task) {
             for (Channel channel : task.getInputChannels()) {
                 final ExecutionTask producer = channel.getProducer();
-                if (this.equals(StageAssignmentTraversal.this.assignedStages.get(producer))) {
+                if (this.equals(StageAssignmentTraversal.this.assignedInterimStages.get(producer))) {
                     return false;
+                }
+            }
+            return true;
+        }
+
+        private boolean checkIfTerminalTask(ExecutionTask task) {
+            for (Channel channel : task.getOutputChannels()) {
+                for (ExecutionTask consumer : channel.getConsumers()) {
+                    if (this.equals(StageAssignmentTraversal.this.assignedInterimStages.get(consumer))) {
+                        return false;
+                    }
                 }
             }
             return true;

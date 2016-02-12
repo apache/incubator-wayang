@@ -38,4 +38,19 @@ public class StreamChannel extends Channel {
             return false;
         }
     }
+
+    public static class Executor implements ChannelExecutor {
+
+        private Stream<?> stream;
+
+        @Override
+        public void acceptStream(Stream<?> stream) {
+            this.stream = stream;
+        }
+
+        @Override
+        public Stream<?> provideStream() {
+            return this.stream;
+        }
+    }
 }

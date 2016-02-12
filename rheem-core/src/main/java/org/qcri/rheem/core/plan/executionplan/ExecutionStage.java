@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.plan.executionplan;
 
+import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.Collection;
@@ -35,10 +36,21 @@ public class ExecutionStage {
     private final Collection<ExecutionTask> startTasks = new LinkedList<>();
 
     /**
+     * Tasks that have to be done last when processing this instance.
+     */
+    private final Collection<ExecutionTask> terminalTasks = new LinkedList<>();
+
+    /**
+     * For printing and debugging purposes only.
+     */
+    private final int sequenceNumber;
+
+    /**
      * Create a new instance and register it with the given {@link PlatformExecution}.
      */
-    ExecutionStage(PlatformExecution platformExecution) {
+    ExecutionStage(PlatformExecution platformExecution, int sequenceNumber) {
         this.platformExecution = platformExecution;
+        this.sequenceNumber = sequenceNumber;
         this.platformExecution.addStage(this);
     }
 
@@ -64,8 +76,18 @@ public class ExecutionStage {
         return this.successors;
     }
 
-    public void addStartTask(ExecutionTask executionTask) {
+    public void addTask(ExecutionTask task) {
+        task.setStage(this);
+    }
+
+    public void markAsStartTast(ExecutionTask executionTask) {
+        Validate.isTrue(executionTask.getStage() == this);
         this.startTasks.add(executionTask);
+    }
+
+    public void markAsTerminalTask(ExecutionTask executionTask) {
+        Validate.isTrue(executionTask.getStage() == this);
+        this.terminalTasks.add(executionTask);
     }
 
     public Collection<ExecutionTask> getStartTasks() {
@@ -74,5 +96,15 @@ public class ExecutionStage {
 
     public boolean isStartingStage() {
         return this.predecessors.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s:%d]", this.getClass().getSimpleName(), this.platformExecution.getPlatform().getName(),
+                this.sequenceNumber);
+    }
+
+    public Collection<ExecutionTask> getTerminalTasks() {
+        return terminalTasks;
     }
 }

@@ -15,7 +15,9 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,29 +59,18 @@ public class Job {
 
         // Get an execution plan.
         long optimizerStartTime = System.currentTimeMillis();
-        RheemPlan executionPlan = this.getExecutionPlan();
+        ExecutionPlan executionPlan = this.getExecutionPlan();
         long optimizerFinishTime = System.currentTimeMillis();
-        this.logger.info("Optimization done in {}.", this.formatElapsedMillis(optimizerFinishTime - optimizerStartTime));
+        this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
 
         // Take care of the execution.
         this.deployAndRun(executionPlan);
     }
 
-    private String formatElapsedMillis(long millis) {
-        long ms = millis % 1000;
-        millis /= 1000;
-        long s = millis % 60;
-        millis /= 60;
-        long m = millis % 60;
-        millis /= 60;
-        long h = millis % 60;
-        return String.format("%d:%02d:%02d.%03d", h, m, s, ms);
-    }
-
     /**
      * Determine a good/the best execution plan from a given {@link RheemPlan}.
      */
-    private RheemPlan getExecutionPlan() {
+    private ExecutionPlan getExecutionPlan() {
         // Apply the mappings to the plan to form a hyperplan.
         this.applyMappingsToRheemPlan();
 
@@ -172,7 +163,7 @@ public class Job {
     /**
      * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
      */
-    private RheemPlan extractExecutionPlan() {
+    private ExecutionPlan extractExecutionPlan() {
         // Defines the plan that we want to use in the end.
         final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
 
@@ -201,20 +192,15 @@ public class Job {
                 })
                 .orElseThrow(IllegalStateException::new);
 
-        final ExecutionPlan executionPlan = partialPlan.getExecutionPlan().toExecutionPlan();
-        return partialPlan
-                .toRheemPlan();
+        return partialPlan.getExecutionPlan().toExecutionPlan();
     }
 
     /**
      * Dummy implementation: Have the platforms execute the given execution plan.
      */
-    private void deployAndRun(RheemPlan executionPlan) {
-        for (Operator sink : executionPlan.getSinks()) {
-            final ExecutionOperator executableSink = (ExecutionOperator) sink;
-            final Platform platform = ((ExecutionOperator) sink).getPlatform();
-            platform.evaluate(executableSink);
-        }
+    private void deployAndRun(ExecutionPlan executionPlan) {
+        final CrossPlatformExecutor crossPlatformExecutor = new CrossPlatformExecutor();
+        crossPlatformExecutor.execute(executionPlan);
     }
 
     /**

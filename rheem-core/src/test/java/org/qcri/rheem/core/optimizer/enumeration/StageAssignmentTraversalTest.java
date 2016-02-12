@@ -123,6 +123,8 @@ public class StageAssignmentTraversalTest {
         ExecutionTask stage1Task1 = stage1.getStartTasks().stream().findAny().get();
         Assert.assertEquals(sourceTaskA, stage1Task1);
 
+        Assert.assertEquals(2, stage1.getSuccessors().size());
+
     }
 
 

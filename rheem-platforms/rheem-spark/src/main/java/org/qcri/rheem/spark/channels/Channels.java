@@ -15,12 +15,15 @@ import java.util.stream.Collectors;
  */
 public class Channels {
 
-    private static final Map<Class<? extends Channel>, ChannelInitializer<?>> CHANNEL_INITIALIZERS;
+    private static final Map<Class<? extends Channel>, ChannelTypeDescriptor<?>> CHANNEL_TYPE_DESCRIPTORS;
 
     static {
-        CHANNEL_INITIALIZERS = new HashMap<>();
-        CHANNEL_INITIALIZERS.put(RddChannel.class, new RddChannel.Initializer());
-        CHANNEL_INITIALIZERS.put(HdfsFile.class, new HdfsFileInitializer());
+        CHANNEL_TYPE_DESCRIPTORS = new HashMap<>();
+        CHANNEL_TYPE_DESCRIPTORS.put(RddChannel.class, new ChannelTypeDescriptor<>(
+                new RddChannel.Initializer(),
+                channel -> new RddChannel.Executor(channel.getConsumers().size() > 2)
+        ));
+//        CHANNEL_INITIALIZERS.put(HdfsFile.class, new HdfsFileInitializer());
     }
 
     private static List<Class<? extends Channel>> supportedChannels = null;
@@ -30,7 +33,7 @@ public class Channels {
      */
     public static List<Class<? extends Channel>> getSupportedChannels() {
         if (supportedChannels == null) {
-            supportedChannels = CHANNEL_INITIALIZERS.keySet().stream().collect(Collectors.toList());
+            supportedChannels = CHANNEL_TYPE_DESCRIPTORS.keySet().stream().collect(Collectors.toList());
         }
         return supportedChannels;
     }
@@ -42,7 +45,19 @@ public class Channels {
      */
     @SuppressWarnings("unchecked")
     public static <T extends Channel> ChannelInitializer<T> getChannelInitializer(Class<T> channelClass) {
-        return (ChannelInitializer<T>) CHANNEL_INITIALIZERS.get(channelClass);
+        final ChannelTypeDescriptor<?> channelTypeDescriptor = CHANNEL_TYPE_DESCRIPTORS.get(channelClass);
+        return channelTypeDescriptor == null ? null : (ChannelInitializer<T>) channelTypeDescriptor.getInitializer();
+    }
+
+    /**
+     * Retrieve a requested {@link ChannelInitializer}.
+     *
+     * @see SparkPlatform#getChannelInitializer(Class)
+     */
+    @SuppressWarnings("unchecked")
+    public static ChannelExecutor createChannelExecutor(Channel channel) {
+        final ChannelTypeDescriptor<?> channelTypeDescriptor = CHANNEL_TYPE_DESCRIPTORS.get(channel.getClass());
+        return channelTypeDescriptor == null ? null : channelTypeDescriptor.getExecutorFactory().apply(channel);
     }
 
 

@@ -31,6 +31,11 @@ public class ExecutionTask {
      */
     private final Channel[] outputChannels;
 
+    /**
+     * Captures if this instance is part of a {@link ExecutionStage} and of which.
+     */
+    private ExecutionStage stage;
+
     public ExecutionTask(ExecutionOperator operator) {
         this.operator = operator;
         this.inputChannels = new Channel[operator.getNumInputs()];
@@ -66,6 +71,14 @@ public class ExecutionTask {
         Validate.isTrue(this.getOutputChannel(index) == null, "Output channel %d of %s is already set to %s.",
                 index, this, this.getOutputChannel(index));
         this.getOutputChannels()[index] = channel;
+    }
+
+    public ExecutionStage getStage() {
+        return this.stage;
+    }
+
+    public void setStage(ExecutionStage stage) {
+        this.stage = stage;
     }
 
     @Override

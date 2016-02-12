@@ -1,6 +1,7 @@
 package org.qcri.rheem.spark.channels;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaRDDLike;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -35,6 +36,35 @@ public class RddChannel extends Channel {
         @Override
         public boolean isReusable() {
             return true;
+        }
+    }
+
+    public static class Executor implements ChannelExecutor {
+
+        private final boolean isCache;
+
+        private JavaRDDLike rdd;
+
+        public Executor(boolean isCache) {
+            this.isCache = isCache;
+        }
+
+        @Override
+        public void acceptRdd(JavaRDDLike rdd) {
+            this.rdd = rdd;
+            if (this.isCache) {
+                ((JavaRDD) this.rdd).cache();
+            }
+        }
+
+        @Override
+        public JavaRDDLike provideRdd() {
+            return this.rdd;
+        }
+
+        @Override
+        public void dispose() {
+            ((JavaRDD) this.rdd).unpersist();
         }
     }
 }
