@@ -2,10 +2,16 @@ package org.qcri.rheem.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.basic.operators.MapOperator;
+import org.qcri.rheem.basic.operators.StdoutSink;
+import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 

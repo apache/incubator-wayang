@@ -1,5 +1,6 @@
 package org.qcri.rheem.basic.channels;
 
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 
@@ -15,8 +16,8 @@ public class HdfsFile extends Channel {
 
     private Collection<String> paths = new LinkedList<>();
 
-    public HdfsFile(ExecutionTask producer, int outputIndex) {
-        super(producer, outputIndex);
+    public HdfsFile(ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
+        super(producer, outputIndex, cardinalityEstimate);
     }
 
     public void addPath(String path) {

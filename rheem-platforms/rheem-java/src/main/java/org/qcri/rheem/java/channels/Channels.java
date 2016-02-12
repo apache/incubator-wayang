@@ -1,5 +1,6 @@
 package org.qcri.rheem.java.channels;
 
+import org.qcri.rheem.basic.channels.HdfsFile;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.java.plugin.JavaPlatform;
@@ -26,7 +27,9 @@ public class Channels {
                 new StreamChannel.Initializer(),
                 channel -> new StreamChannel.Executor()
         ));
-//        CHANNEL_TYPE_DESCRIPTORS.put(HdfsFile.class, new HdfsFileInitializer());
+        CHANNEL_TYPE_DESCRIPTORS.put(HdfsFile.class, new ChannelTypeDescriptor<>(
+                new HdfsFileInitializer(), channel -> new HdfsFileInitializer.Executor((HdfsFile) channel)
+        ));
     }
 
     private static List<Class<? extends Channel>> supportedChannels = null;

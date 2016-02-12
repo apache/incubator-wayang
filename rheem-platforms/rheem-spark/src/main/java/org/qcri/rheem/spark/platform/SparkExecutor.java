@@ -40,7 +40,7 @@ public class SparkExecutor implements Executor {
 
     @Override
     public void dispose() {
-        establishedChannelExecutors.values().forEach(ChannelExecutor::dispose);
+        this.establishedChannelExecutors.values().forEach(ChannelExecutor::dispose);
     }
 
     private void execute(ExecutionTask executionTask) {
@@ -51,7 +51,7 @@ public class SparkExecutor implements Executor {
     }
 
     private JavaRDDLike[] obtainInputRdds(ExecutionTask executionTask) {
-        JavaRDDLike[] inputRdds = new JavaRDDLike[executionTask.getInputChannels().length];
+        JavaRDDLike[] inputRdds = new JavaRDDLike[executionTask.getOperator().getNumInputs()];
         for (int inputIndex = 0; inputIndex < inputRdds.length; inputIndex++) {
             Channel inputChannel = executionTask.getInputChannel(inputIndex);
             inputRdds[inputIndex] = this.getInputRddFor(inputChannel);
@@ -73,7 +73,7 @@ public class SparkExecutor implements Executor {
     }
 
     private void registerOutputRdds(JavaRDDLike[] outputStreams, ExecutionTask executionTask) {
-        for (int outputIndex = 0; outputIndex < executionTask.getOutputChannels().length; outputIndex++) {
+        for (int outputIndex = 0; outputIndex < executionTask.getOperator().getNumOutputs(); outputIndex++) {
             Channel channel = executionTask.getOutputChannels()[outputIndex];
             final ChannelExecutor channelExecutor = Channels.createChannelExecutor(channel);
             Validate.notNull(channelExecutor);

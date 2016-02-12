@@ -37,9 +37,13 @@ public class ExecutionTask {
     private ExecutionStage stage;
 
     public ExecutionTask(ExecutionOperator operator) {
+        this(operator, operator.getNumInputs(), operator.getNumOutputs());
+    }
+
+    public ExecutionTask(ExecutionOperator operator, int numInputChannels, int numOutputChannels) {
         this.operator = operator;
-        this.inputChannels = new Channel[operator.getNumInputs()];
-        this.outputChannels = new Channel[operator.getNumOutputs()];
+        this.inputChannels = new Channel[numInputChannels];
+        this.outputChannels = new Channel[numOutputChannels];
     }
 
     public ExecutionOperator getOperator() {

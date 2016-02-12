@@ -76,8 +76,7 @@ public class CrossPlatformExecutor {
         }
 
         private void disposeExecutorIfDone(PlatformExecution platformExecution, Executor executor) {
-            int numExecutedStages = this.executedStages.merge
-                    (platformExecution, 0, (count1, count2) -> count1 + count2);
+            int numExecutedStages = this.executedStages.merge(platformExecution, 1, (count1, count2) -> count1 + count2);
             if (numExecutedStages == platformExecution.getStages().size()) {
                 executor.dispose();
                 this.executors.remove(platformExecution);
@@ -87,7 +86,7 @@ public class CrossPlatformExecutor {
         private void tryToActivateSuccessors(ExecutionStage processedStage, Collection<ExecutionStage> newlyActivatedStages) {
             for (ExecutionStage succeedingStage : processedStage.getSuccessors()) {
                 final int newCompletedPredecessors =
-                        this.numCompletedPredecessors.merge(succeedingStage, 0, (count1, count2) -> count1 + count2);
+                        this.numCompletedPredecessors.merge(succeedingStage, 1, (count1, count2) -> count1 + count2);
                 if (newCompletedPredecessors == succeedingStage.getPredecessors().size()) {
                     newlyActivatedStages.add(succeedingStage);
                     this.numCompletedPredecessors.remove(succeedingStage);

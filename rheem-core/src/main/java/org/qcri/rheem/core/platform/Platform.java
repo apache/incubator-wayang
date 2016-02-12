@@ -44,6 +44,15 @@ public abstract class Platform {
         executor.evaluate(executionOperator);
     }
 
+    /**
+     * <i>Shortcut.</i> Creates an {@link Executor} using the {@link #getExecutorFactory()}.
+     * @return the {@link Executor}
+     */
+    public Executor createExecutor() {
+        Validate.isTrue(this.isExecutable());
+        return this.getExecutorFactory().create();
+    }
+
     public abstract Executor.Factory getExecutorFactory();
 
     public abstract Collection<Mapping> getMappings();

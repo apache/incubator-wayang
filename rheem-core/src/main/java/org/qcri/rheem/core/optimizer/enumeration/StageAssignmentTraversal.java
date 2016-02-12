@@ -216,20 +216,18 @@ public class StageAssignmentTraversal {
     private void assembleExecutionPlan(Map<InterimStage, ExecutionStage> finalStages,
                                        ExecutionStage successorExecutionStage,
                                        ExecutionTask currentExecutionTask) {
-        final InterimStage interimStage = this.assignedInterimStages.get(currentExecutionTask);
+        final InterimStage interimStage = this.assignedInterimStages.remove(currentExecutionTask);
+        if (interimStage == null) {
+            return;
+        }
         ExecutionStage executionStage = finalStages.get(interimStage);
-        final boolean isUnseenStage;
-        if (isUnseenStage = executionStage == null) {
+        if (executionStage == null) {
             executionStage = interimStage.toExecutionStage();
             finalStages.put(interimStage, executionStage);
         }
 
         if (successorExecutionStage != null && !executionStage.equals(successorExecutionStage)) {
             executionStage.addSuccessor(successorExecutionStage);
-        }
-
-        if (!isUnseenStage) {
-            return;
         }
 
         for (Channel channel : currentExecutionTask.getInputChannels()) {
