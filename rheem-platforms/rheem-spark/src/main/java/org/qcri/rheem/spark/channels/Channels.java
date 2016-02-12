@@ -23,7 +23,10 @@ public class Channels {
                 new RddChannel.Initializer(),
                 channel -> new RddChannel.Executor(channel.getConsumers().size() > 2)
         ));
-//        CHANNEL_INITIALIZERS.put(HdfsFile.class, new HdfsFileInitializer());
+        CHANNEL_TYPE_DESCRIPTORS.put(HdfsFile.class, new ChannelTypeDescriptor<>(
+                new HdfsFileInitializer(),
+                channel -> new HdfsFileInitializer.Executor((HdfsFile) channel))
+        );
     }
 
     private static List<Class<? extends Channel>> supportedChannels = null;
