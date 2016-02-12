@@ -3,7 +3,7 @@ package org.qcri.rheem.spark.operators;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
 import org.qcri.rheem.basic.operators.SortOperator;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
@@ -35,8 +35,7 @@ public class SparkSortOperator<Type>
         final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputRdds[0];
 
         // TODO: Better sort function!
-        final JavaRDD<Type> outputStream = inputStream.mapToPair(x->new Tuple2<Type,
-                Boolean>(x, true)).sortByKey().map(y-> y._1);
+        final JavaRDD<Type> outputStream = inputStream.mapToPair(x-> new Tuple2<>(x, true)).sortByKey().map(y-> y._1);
 
 
         return new JavaRDDLike[]{outputStream};
@@ -44,7 +43,7 @@ public class SparkSortOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkSortOperator<>(getInputType());
+        return new SparkSortOperator<>(this.getInputType());
     }
 
 }

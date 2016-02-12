@@ -51,14 +51,14 @@ public class Counter<T> implements Iterable<Map.Entry<T, Integer>> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         Counter<?> counter = (Counter<?>) o;
-        return Objects.equals(counts, counter.counts);
+        return Objects.equals(this.counts, counter.counts);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(counts);
+        return Objects.hash(this.counts);
     }
 
     @Override

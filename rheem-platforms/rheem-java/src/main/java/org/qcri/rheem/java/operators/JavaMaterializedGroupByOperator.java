@@ -2,7 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -48,6 +48,6 @@ public class JavaMaterializedGroupByOperator<Type, KeyType>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaMaterializedGroupByOperator<>(getType(), getKeyDescriptor());
+        return new JavaMaterializedGroupByOperator<>(this.getType(), this.getKeyDescriptor());
     }
 }

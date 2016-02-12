@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.mapping;
 
-import org.qcri.rheem.core.plan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.*;
@@ -47,11 +47,11 @@ public class SubplanMatch {
     }
 
     public Map<String, OperatorMatch> getOperatorMatches() {
-        return operatorMatches;
+        return this.operatorMatches;
     }
 
     public SubplanPattern getPattern() {
-        return pattern;
+        return this.pattern;
     }
 
     public OperatorMatch getInputMatch() {

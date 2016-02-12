@@ -3,12 +3,10 @@ package org.qcri.rheem.spark.operators;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
 import org.qcri.rheem.basic.operators.UnionAllOperator;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
-
-import java.util.stream.Stream;
 
 /**
  * Spark implementation of the {@link UnionAllOperator}.
@@ -40,6 +38,6 @@ public class SparkUnionAllOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkUnionAllOperator<>(getInputType0());
+        return new SparkUnionAllOperator<>(this.getInputType0());
     }
 }

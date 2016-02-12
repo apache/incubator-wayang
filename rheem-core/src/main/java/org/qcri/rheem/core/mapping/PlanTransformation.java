@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.mapping;
 
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +11,11 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * A plan transformation looks for a plan pattern in a {@link PhysicalPlan} and replaces it
- * with an alternative subplan.
+ * Looks for a {@link SubplanPattern} in a {@link RheemPlan} and replaces it with an alternative {@link Operator}s.
  */
 public class PlanTransformation {
 
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final SubplanPattern pattern;
 
@@ -53,19 +52,19 @@ public class PlanTransformation {
      * @return the number of applied transformations
      * @see Operator#getEpoch()
      */
-    public int transform(PhysicalPlan plan, int epoch) {
+    public int transform(RheemPlan plan, int epoch) {
         int numTransformations = 0;
-        List<SubplanMatch> matches = pattern.match(plan, epoch - 1);
+        List<SubplanMatch> matches = this.pattern.match(plan, epoch - 1);
         for (SubplanMatch match : matches) {
             final Operator replacement = this.replacementFactory.createReplacementSubplan(match, epoch);
 
             if (match.getInputMatch() == match.getOutputMatch()) {
-                logger.debug("Replacing {} with {} in epoch {}.",
+                this.logger.debug("Replacing {} with {} in epoch {}.",
                         match.getOutputMatch().getOperator(),
                         replacement,
                         epoch);
             } else {
-                logger.debug("Replacing {}..{} with {} in epoch {}.",
+                this.logger.debug("Replacing {}..{} with {} in epoch {}.",
                         match.getInputMatch().getOperator(),
                         match.getOutputMatch().getOperator(),
                         replacement,
@@ -77,9 +76,9 @@ public class PlanTransformation {
             }
 
             if (this.isReplacing) {
-                replace(plan, match, replacement);
+                this.replace(plan, match, replacement);
             } else {
-                introduceAlternative(plan, match, replacement);
+                this.introduceAlternative(plan, match, replacement);
             }
             numTransformations++;
         }
@@ -104,7 +103,7 @@ public class PlanTransformation {
         return match.getTargetPlatforms().get().containsAll(this.getTargetPlatforms());
     }
 
-    private void introduceAlternative(PhysicalPlan plan, SubplanMatch match, Operator replacement) {
+    private void introduceAlternative(RheemPlan plan, SubplanMatch match, Operator replacement) {
 
         // Wrap the match in a subplan.
         final Operator originalOutputOperator = match.getOutputMatch().getOperator();
@@ -132,9 +131,9 @@ public class PlanTransformation {
     }
 
     /**
-     * @deprecated use {@link #introduceAlternative(PhysicalPlan, SubplanMatch, Operator)}
+     * @deprecated use {@link #introduceAlternative(RheemPlan, SubplanMatch, Operator)}
      */
-    private void replace(PhysicalPlan plan, SubplanMatch match, Operator replacement) {
+    private void replace(RheemPlan plan, SubplanMatch match, Operator replacement) {
         // Disconnect the original input operator and insert the replacement input operator.
         final Operator originalInputOperator = match.getInputMatch().getOperator();
         for (int inputIndex = 0; inputIndex < originalInputOperator.getNumInputs(); inputIndex++) {

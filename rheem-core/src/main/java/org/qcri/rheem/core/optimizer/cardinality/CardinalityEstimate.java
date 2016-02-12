@@ -1,10 +1,10 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.optimizer.ProbabilisticIntervalEstimate;
-import org.qcri.rheem.core.plan.PhysicalPlan;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 
 /**
- * An estimate of cardinality within a {@link PhysicalPlan} expressed as a {@link ProbabilisticIntervalEstimate}.
+ * An estimate of cardinality within a {@link RheemPlan} expressed as a {@link ProbabilisticIntervalEstimate}.
  */
 public class CardinalityEstimate extends ProbabilisticIntervalEstimate {
 

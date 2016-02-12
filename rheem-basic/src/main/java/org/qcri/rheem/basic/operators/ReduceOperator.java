@@ -2,15 +2,12 @@ package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
-import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
+import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -44,7 +41,7 @@ public class ReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
 
     public ReduceDescriptor<Type> getReduceDescriptor() {
-        return reduceDescriptor;
+        return this.reduceDescriptor;
     }
 
     @Override

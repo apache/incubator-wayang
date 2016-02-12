@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.api;
 
-import org.qcri.rheem.core.plan.PhysicalPlan;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 public class RheemContext {
 
     @SuppressWarnings("unused")
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Configuration configuration = Configuration.createDefaultConfiguration(this);
 
@@ -27,20 +27,20 @@ public class RheemContext {
     /**
      * Execute a plan.
      *
-     * @param physicalPlan the plan to execute
+     * @param rheemPlan the plan to execute
      */
-    public void execute(PhysicalPlan physicalPlan) {
-        this.createJob(physicalPlan).execute();
+    public void execute(RheemPlan rheemPlan) {
+        this.createJob(rheemPlan).execute();
     }
 
     /**
-     * Create a new {@link Job} that should execute the given {@link PhysicalPlan} eventually.
+     * Create a new {@link Job} that should execute the given {@link RheemPlan} eventually.
      */
-    public Job createJob(PhysicalPlan physicalPlan) {
-        return new Job(this, physicalPlan);
+    public Job createJob(RheemPlan rheemPlan) {
+        return new Job(this, rheemPlan);
     }
 
     public Configuration getConfiguration() {
-        return configuration;
+        return this.configuration;
     }
 }

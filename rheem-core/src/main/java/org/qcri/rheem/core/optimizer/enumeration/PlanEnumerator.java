@@ -1,17 +1,18 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
- * The plan partitioner recursively dissects a {@link PhysicalPlan} into {@link PlanEnumeration}s and then assembles
+ * The plan partitioner recursively dissects a {@link RheemPlan} into {@link PlanEnumeration}s and then assembles
  * them.
  */
 public class PlanEnumerator {
@@ -19,12 +20,12 @@ public class PlanEnumerator {
     /**
      * Logger.
      */
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
-     * {@link CardinalityEstimate}s that can be used to assess plans.
+     * {@link Configuration} of the {@link Job} on whose behalf that this instance operates.
      */
-    private final Map<ExecutionOperator, TimeEstimate> timeEstimates;
+    private final Configuration configuration;
 
     /**
      * {@link PlanEnumerator.OperatorActivation}s that can be activated and should be followed to create branches.
@@ -36,7 +37,7 @@ public class PlanEnumerator {
      * create correct {@link PlanEnumeration}s by mapping the enumerates {@link Operator}s to the {@link OperatorAlternative}'s
      * slots.
      */
-    private OperatorAlternative.Alternative alternative = null;
+    private final OperatorAlternative.Alternative enumeratedAlternative;
 
     /**
      * Maintain {@link PlanEnumerator.OperatorActivation} for {@link Operator}s.
@@ -54,35 +55,43 @@ public class PlanEnumerator {
     private final Collection<PlanEnumerationPruningStrategy> pruningStrategies;
 
     /**
+     * Once this instance has been executed (via {@link #run()}, the result will be stored in this field. Prior to that,
+     * it is {@code null}.
+     */
+    private AtomicReference<PlanEnumeration> resultReference;
+
+    /**
      * Creates a new instance.
      *
-     * @param physicalPlan a hyperplan that should be used for enumeration.
+     * @param rheemPlan a hyperplan that should be used for enumeration.
      */
-    public PlanEnumerator(PhysicalPlan physicalPlan, Map<ExecutionOperator, TimeEstimate> timeEstimates) {
-        this(physicalPlan.collectReachableTopLevelSources(), timeEstimates, new LinkedList<>());
+    public PlanEnumerator(RheemPlan rheemPlan, Configuration configuration) {
+        this(rheemPlan.collectReachableTopLevelSources(), configuration, new LinkedList<>(), null);
     }
 
     /**
      * Fork constructor.
+     * <p>Forking happens to enumerate a certain {@link OperatorAlternative.Alternative} in a recursive manner.</p>
      */
-    private PlanEnumerator(OperatorAlternative.Alternative alternative,
-                           Map<ExecutionOperator, TimeEstimate> timeEstimates,
+    private PlanEnumerator(OperatorAlternative.Alternative enumeratedAlternative,
+                           Configuration configuration,
                            Collection<PlanEnumerationPruningStrategy> pruningStrategies) {
-        this(findStartOperators(alternative), timeEstimates, pruningStrategies);
-        this.alternative = alternative;
+        this(findStartOperators(enumeratedAlternative), configuration, pruningStrategies, enumeratedAlternative);
     }
 
     /**
-     * Basic constructor.
+     * Basic constructor that will always be called and initializes all fields.
      */
     private PlanEnumerator(Collection<Operator> startOperators,
-                           Map<ExecutionOperator, TimeEstimate> timeEstimates,
-                           Collection<PlanEnumerationPruningStrategy> pruningStrategies) {
+                           Configuration configuration,
+                           Collection<PlanEnumerationPruningStrategy> pruningStrategies,
+                           OperatorAlternative.Alternative enumeratedAlternative) {
         startOperators.stream()
                 .map(PlanEnumerator.OperatorActivation::new)
                 .forEach(this.activatedOperators::add);
-        this.timeEstimates = timeEstimates;
+        this.configuration = configuration;
         this.pruningStrategies = pruningStrategies;
+        this.enumeratedAlternative = enumeratedAlternative;
     }
 
     /**
@@ -102,19 +111,38 @@ public class PlanEnumerator {
     }
 
     /**
-     * Execute the enumeration.
+     * Produce the {@link PlanEnumeration} for the plan specified during the construction of this instance.
+     *
+     * @param isRequireResult whether the result is allowed to be {@code null}
+     * @return the result {@link PlanEnumeration} or {@code null} if none such exists
      */
-    public void run() {
-        this.logger.debug("Enumerating with the activated operators {}.", this.activatedOperators.stream()
-                .map(OperatorActivation::getOperator)
-                .collect(Collectors.toList()));
+    public PlanEnumeration enumerate(boolean isRequireResult) {
+        this.run();
+        final PlanEnumeration comprehensiveEnumeration = this.resultReference.get();
+        if (isRequireResult && comprehensiveEnumeration == null) {
+            throw new RheemException("Could not find a single execution plan.");
+        }
+        return comprehensiveEnumeration;
+    }
 
-        while (!this.activatedOperators.isEmpty()) {
-            // Create branches for all activated operators.
-            this.activatedOperators.forEach(this::enumerateBranchFrom);
+    /**
+     * Execute the enumeration. Needs only be run once and will be called by one of the result retrieval methods.
+     */
+    private synchronized void run() {
+        if (this.resultReference == null) {
+            this.logger.debug("Enumerating with the activated operators {}.", this.activatedOperators.stream()
+                    .map(OperatorActivation::getOperator)
+                    .collect(Collectors.toList()));
 
-            // Clean up the old activated operators and spawn the new ones.
-            updateActivatedOperator();
+            while (!this.activatedOperators.isEmpty()) {
+                // Create branches for all activated operators.
+                this.activatedOperators.forEach(this::enumerateBranchStartingFrom);
+
+                // Clean up the old activated operators and spawn the new ones.
+                this.updateActivatedOperator();
+            }
+
+            this.constructResultEnumeration();
         }
     }
 
@@ -123,19 +151,17 @@ public class PlanEnumerator {
      *
      * @param operatorActivation the activated {@link PlanEnumerator.OperatorActivation}
      */
-    private void enumerateBranchFrom(OperatorActivation operatorActivation) {
+    private void enumerateBranchStartingFrom(OperatorActivation operatorActivation) {
         // Start with the activated operator.
         Operator currentOperator = operatorActivation.activatableOperator;
-        logger.debug("Creating new branch starting at {}.", currentOperator);
+        this.logger.trace("Creating new branch starting at {}.", currentOperator);
+        List<Operator> branch = this.collectBranchOperatorsStartingFrom(currentOperator);
+        if (branch == null) {
+            return;
+        }
 
-        List<Operator> branch = determineBranch(currentOperator);
-
-//        PlanEnumeration branchEnumeration = PlanEnumeration.createFor(
-//                branch.get(0),
-//                branch.get(branch.size() - 1));
-
-        // Go over the branch and PlanEnumeration for it.
-        PlanEnumeration branchEnumeration = enumerateBranch(branch);
+        // Go over the branch and create a PlanEnumeration for it.
+        PlanEnumeration branchEnumeration = this.enumerateBranch(branch);
         if (branchEnumeration == null) {
             return;
         }
@@ -153,7 +179,7 @@ public class PlanEnumerator {
         }
 
         // Once we stopped, activate all successive operators.
-        if (!activateDownstreamOperators(branch, completeEnumeration)) {
+        if (!this.activateDownstreamOperators(branch, completeEnumeration)) {
             this.completedEnumerations.add(completeEnumeration);
         }
     }
@@ -162,23 +188,17 @@ public class PlanEnumerator {
      * Determine the branch (straight of operators) that begins at the given {@link Operator}.
      *
      * @param startOperator starts the branch
-     * @return the {@link Operator}s of the branch in their order of appearance
+     * @return the {@link Operator}s of the branch in their order of appearance or {@code null} if the branch is
+     * already known to not yield any enumerations
      */
-    private List<Operator> determineBranch(Operator startOperator) {
+    private List<Operator> collectBranchOperatorsStartingFrom(Operator startOperator) {
         List<Operator> branch = new LinkedList<>();
         Operator currentOperator = startOperator;
         while (true) {
-            this.logger.debug("Adding {} to the branch.", currentOperator);
-
-//            if (currentOperator.isAlternative()) {
-//                OperatorAlternative operatorAlternative = (OperatorAlternative) currentOperator;
-//                for (OperatorAlternative.Alternative alternative : operatorAlternative.getAlternatives()) {
-//                    System.out.println("Nesting branch because of alternative...");
-//                    new PlanEnumerator(findStartOperators(alternative)).run();
-//                    System.out.println("Finished nesting.");
-//                }
-//            }
-
+            if (!currentOperator.isAlternative() && !currentOperator.isExecutionOperator()) {
+                this.logger.debug("Detected invalid branch with {}.", currentOperator);
+                return null;
+            }
             branch.add(currentOperator);
             // Try to advance. This requires certain conditions, though.
             if (currentOperator.getNumOutputs() != 1) {
@@ -202,29 +222,25 @@ public class PlanEnumerator {
         return branch;
     }
 
+    /**
+     * Create a {@link PlanEnumeration} for the given {@code branch}.
+     *
+     * @param branch {@link List} of {@link Operator}s of the branch; ordered downstream
+     * @return a {@link PlanEnumeration} for the given {@code branch}
+     */
     private PlanEnumeration enumerateBranch(List<Operator> branch) {
         PlanEnumeration branchEnumeration = null;
-        for (Operator operator : branch) {
 
+        for (Operator operator : branch) {
             PlanEnumeration operatorEnumeration;
             if (operator.isAlternative()) {
-                operatorEnumeration = null;
-                for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
-                    final PlanEnumerator alternativeEnumerator = new PlanEnumerator(alternative, this.timeEstimates, this.pruningStrategies);
-                    alternativeEnumerator.run();
-                    final PlanEnumeration alternativeEnumeration = alternativeEnumerator.joinAllCompleteEnumerations();
-                    if (alternativeEnumeration != null) {
-                        if (operatorEnumeration == null) operatorEnumeration = alternativeEnumeration;
-                        else operatorEnumeration.subsume(alternativeEnumeration);
-                    }
-                }
-
+                operatorEnumeration = this.enumerateAlternative((OperatorAlternative) operator);
             } else {
                 if (!operator.isElementary()) {
                     throw new IllegalStateException("Expect elementary operator.");
                 }
                 if (!operator.isExecutionOperator()) {
-                    this.logger.debug("Detected non-execution branch... skipping.");
+                    this.logger.debug("Detected non-execution branch {}... skipping.", branch);
                     return null;
                 }
                 operatorEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) operator);
@@ -236,6 +252,38 @@ public class PlanEnumerator {
         }
 
         return branchEnumeration;
+    }
+
+    /**
+     * Create a {@link PlanEnumeration} for the given {@code operatorAlternative}.
+     *
+     * @param operatorAlternative {@link OperatorAlternative}s that should be enumerated
+     * @return a {@link PlanEnumeration} for the given {@code operatorAlternative}
+     */
+    private PlanEnumeration enumerateAlternative(OperatorAlternative operatorAlternative) {
+        PlanEnumeration result = null;
+        for (OperatorAlternative.Alternative alternative : operatorAlternative.getAlternatives()) {
+
+            // Recursively enumerate all alternatives.
+            final PlanEnumerator alternativeEnumerator = this.forkFor(alternative);
+            final PlanEnumeration alternativeEnumeration = alternativeEnumerator.enumerate(false);
+
+            if (alternativeEnumeration != null) {
+                if (result == null) result = alternativeEnumeration;
+                else result.unionInPlace(alternativeEnumeration);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Fork a new instance to enumerate the given {@code alternative}.
+     *
+     * @param alternative an {@link OperatorAlternative.Alternative} to be enumerated recursively
+     * @return the new instance
+     */
+    private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative) {
+        return new PlanEnumerator(alternative, this.configuration, this.pruningStrategies);
     }
 
     private boolean activateDownstreamOperators(List<Operator> branch, PlanEnumeration branchEnumeration) {
@@ -267,35 +315,29 @@ public class PlanEnumerator {
                 .forEach(this.activationCollector::remove);
     }
 
-    public PlanEnumeration getComprehensiveEnumeration() {
-        final PlanEnumeration comprehensiveEnumeration = this.joinAllCompleteEnumerations();
-        if (comprehensiveEnumeration == null) {
-            throw new RheemException("Could not find a single execution plan.");
-        }
-        return comprehensiveEnumeration;
-    }
-
     /**
-     * Creates a new instance by <ol>
-     * <li>escaping all terminal operations (in {@link #completedEnumerations}) from {@link #alternative} and</li>
+     * Creates the final {@link PlanEnumeration} by <ol>
+     * <li>escaping all terminal operations (in {@link #completedEnumerations}) from {@link #enumeratedAlternative} and</li>
      * <li>joining them.</li>
      * </ol>
-     *
-     * @return the new instance or {@code null} if none
+     * The result is stored in {@link #resultReference}. Note the outcome might be {@code null} if the traversed plan
+     * did not allow to construct a valid {@link PlanEnumeration}.
      */
-    private PlanEnumeration joinAllCompleteEnumerations() {
-        return this.completedEnumerations.stream()
-                .map(instance -> instance.escape(this.alternative))
+    private void constructResultEnumeration() {
+        final PlanEnumeration resultEnumeration = this.completedEnumerations.stream()
+                .map(instance -> instance.escape(this.enumeratedAlternative))
                 .reduce(PlanEnumeration::join)
                 .orElse(null);
+        this.resultReference = new AtomicReference<>(resultEnumeration);
     }
+
 
     public void addPruningStrategy(PlanEnumerationPruningStrategy strategy) {
         this.pruningStrategies.add(strategy);
     }
 
     private void prune(final PlanEnumeration planEnumeration) {
-        this.pruningStrategies.forEach(strategy -> strategy.prune(planEnumeration));
+        this.pruningStrategies.forEach(strategy -> strategy.prune(planEnumeration, this.configuration));
     }
 
     /**

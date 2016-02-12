@@ -1,7 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.UnionAllOperator;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -17,6 +17,7 @@ public class JavaUnionAllOperator<Type>
     /**
      * Creates a new instance.
      *
+     * @param type the type of the datasets to be coalesced
      */
     public JavaUnionAllOperator(DataSetType<Type> type) {
         super(type);
@@ -37,6 +38,6 @@ public class JavaUnionAllOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaUnionAllOperator<>(getInputType0());
+        return new JavaUnionAllOperator<>(this.getInputType0());
     }
 }

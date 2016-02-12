@@ -14,7 +14,7 @@ public abstract class DataUnitType<T> {
      * Tells whether this is a normal data unit type.
      */
     public boolean isPlain() {
-        return !isGroup();
+        return !this.isGroup();
     }
 
     public static <T> DataUnitGroupType<T> createGrouped(Class<T> cls) {

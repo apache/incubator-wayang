@@ -6,7 +6,7 @@ import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
+import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Optional;

@@ -2,7 +2,7 @@ package org.qcri.rheem.core.optimizer.costs;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
 import java.util.Arrays;
 import java.util.function.ToLongBiFunction;
@@ -67,8 +67,8 @@ public class DefaultLoadEstimator extends LoadEstimator {
         Validate.isTrue(outputEstimates.length == this.numOutputs || this.numOutputs == UNSPECIFIED_NUM_SLOTS,
                 "Received %d output estimates, require %d.", outputEstimates.length, this.numOutputs);
 
-        long[][] inputEstimateCombinations = enumerateCombinations(inputEstimates);
-        long[][] outputEstimateCombinations = enumerateCombinations(outputEstimates);
+        long[][] inputEstimateCombinations = this.enumerateCombinations(inputEstimates);
+        long[][] outputEstimateCombinations = this.enumerateCombinations(outputEstimates);
 
         long lowerEstimate = -1, upperEstimate = -1;
         for (int inputEstimateId = 0; inputEstimateId < inputEstimateCombinations.length; inputEstimateId++) {
@@ -86,7 +86,7 @@ public class DefaultLoadEstimator extends LoadEstimator {
             }
         }
 
-        double correctnessProbability = calculateJointProbability(inputEstimates, outputEstimates)
+        double correctnessProbability = this.calculateJointProbability(inputEstimates, outputEstimates)
                 * this.correctnessProbablity;
         return new LoadEstimate(lowerEstimate, upperEstimate, correctnessProbability);
     }

@@ -1,14 +1,13 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.plan.InputSlot;
-import org.qcri.rheem.core.plan.OperatorAlternative;
-import org.qcri.rheem.core.plan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.OperatorAlternative;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.util.Tuple;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public class AggregatingCardinalityPusher extends CardinalityPusher {
@@ -16,12 +15,11 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
     private final List<Tuple<OperatorAlternative.Alternative, CardinalityPusher>> pushPaths;
 
     public AggregatingCardinalityPusher(final OperatorAlternative operatorAlternative,
-                                        final Configuration configuration,
-                                        final Map<OutputSlot<?>, CardinalityEstimate> cache) {
-        super(operatorAlternative, cache);
+                                        final Configuration configuration) {
+        super(operatorAlternative);
         this.pushPaths = operatorAlternative.getAlternatives().stream()
                 .map(alternative -> {
-                    final CardinalityPusher pusher = alternative.getOperator().getCardinalityPusher(configuration, cache);
+                    final CardinalityPusher pusher = alternative.getOperator().getCardinalityPusher(configuration);
                     return new Tuple<>(alternative, pusher);
                 })
                 .collect(Collectors.toList());
@@ -44,9 +42,9 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
     private CardinalityEstimate[] pushThroughPath(Tuple<OperatorAlternative.Alternative, CardinalityPusher> pushPath,
                                                   Configuration configuration,
                                                   CardinalityEstimate[] inputEstimates) {
-        CardinalityEstimate[] translatedEstimates = translateInputEstimates(inputEstimates, pushPath.field0);
+        CardinalityEstimate[] translatedEstimates = this.translateInputEstimates(inputEstimates, pushPath.field0);
         final CardinalityEstimate[] outputEstimates = pushPath.field1.push(configuration, translatedEstimates);
-        return translateOutputEstimates(outputEstimates, pushPath.field0);
+        return this.translateOutputEstimates(outputEstimates, pushPath.field0);
     }
 
     private CardinalityEstimate[] translateInputEstimates(CardinalityEstimate[] inputEstimates,

@@ -9,8 +9,6 @@ import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Test suite for {@link SparkSortOperator}.

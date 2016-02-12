@@ -2,12 +2,12 @@ package org.qcri.rheem.core.mapping;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.plan.PhysicalPlan;
-import org.qcri.rheem.core.plan.UnarySink;
-import org.qcri.rheem.core.plan.UnarySource;
-import org.qcri.rheem.core.plan.test.TestSink;
-import org.qcri.rheem.core.plan.test.TestSource;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.plan.rheemplan.UnarySink;
+import org.qcri.rheem.core.plan.rheemplan.UnarySource;
+import org.qcri.rheem.core.plan.rheemplan.test.TestSink;
+import org.qcri.rheem.core.plan.rheemplan.test.TestSource;
 import org.qcri.rheem.core.test.TestDataUnit;
 import org.qcri.rheem.core.types.DataSetType;
 
@@ -24,7 +24,7 @@ public class SubplanPatternTest {
         UnarySource source = new TestSource(DataSetType.createDefault(TestDataUnit.class));
         UnarySink sink = new TestSink(DataSetType.createDefault(TestDataUnit.class));
         source.connectTo(0, sink, 0);
-        PhysicalPlan plan = new PhysicalPlan();
+        RheemPlan plan = new RheemPlan();
         plan.addSink(sink);
 
         // Build the pattern.
@@ -46,7 +46,7 @@ public class SubplanPatternTest {
         UnarySource source = new TestSource(DataSetType.createDefault(TestDataUnit.class));
         UnarySink sink = new TestSink(DataSetType.createDefault(TestDataUnit.class));
         source.connectTo(0, sink, 0);
-        PhysicalPlan plan = new PhysicalPlan();
+        RheemPlan plan = new RheemPlan();
         plan.addSink(sink);
 
         // Build the pattern.
@@ -68,7 +68,7 @@ public class SubplanPatternTest {
         UnarySource source = new TestSource(DataSetType.createDefault(TestDataUnit.class));
         UnarySink sink = new TestSink(DataSetType.createDefault(TestDataUnit.class));
         source.connectTo(0, sink, 0);
-        PhysicalPlan plan = new PhysicalPlan();
+        RheemPlan plan = new RheemPlan();
         plan.addSink(sink);
 
         // Build the pattern.

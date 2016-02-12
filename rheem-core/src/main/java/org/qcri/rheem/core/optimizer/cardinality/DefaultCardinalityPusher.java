@@ -2,22 +2,19 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.configuration.KeyValueProvider;
-import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.plan.OutputSlot;
-
-import java.util.Map;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
 public class DefaultCardinalityPusher extends CardinalityPusher {
 
     private final CardinalityEstimator[] cardinalityEstimators;
 
     public DefaultCardinalityPusher(Operator operator,
-                                    KeyValueProvider<OutputSlot<?>, CardinalityEstimator> estimationProvider,
-                                    Map<OutputSlot<?>, CardinalityEstimate> cache) {
-        super(operator, cache);
+                                    KeyValueProvider<OutputSlot<?>, CardinalityEstimator> estimationProvider) {
+        super(operator);
         this.cardinalityEstimators = new CardinalityEstimator[operator.getNumOutputs()];
         for (int outputIndex = 0; outputIndex < operator.getNumOutputs(); outputIndex++) {
-            initializeEstimator(operator, outputIndex, estimationProvider);
+            this.initializeEstimator(operator, outputIndex, estimationProvider);
         }
     }
 

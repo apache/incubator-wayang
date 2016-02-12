@@ -1,9 +1,9 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.ReduceByOperator;
-import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -25,7 +25,7 @@ public class JavaReduceByOperator<Type, KeyType>
     /**
      * Creates a new instance.
      *
-     * @param type        type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
+     * @param type             type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
      * @param keyDescriptor    describes how to extract the key from data units
      * @param reduceDescriptor describes the reduction to be performed on the elements
      */
@@ -48,9 +48,9 @@ public class JavaReduceByOperator<Type, KeyType>
                         keyExtractor,
                         Collectors.reducing(reduceFunction)));
 
-        return new Stream[]{ reductionResult.values().stream()
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+        return new Stream[]{reductionResult.values().stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
         };
     }
 

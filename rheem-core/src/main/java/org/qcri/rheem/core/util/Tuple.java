@@ -1,8 +1,5 @@
 package org.qcri.rheem.core.util;
 
-import org.qcri.rheem.core.plan.InputSlot;
-import org.qcri.rheem.core.plan.OutputSlot;
-
 import java.util.Objects;
 
 /**
@@ -24,15 +21,15 @@ public class Tuple<T0, T1> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         Tuple<?, ?> tuple = (Tuple<?, ?>) o;
-        return Objects.equals(field0, tuple.field0) &&
-                Objects.equals(field1, tuple.field1);
+        return Objects.equals(this.field0, tuple.field0) &&
+                Objects.equals(this.field1, tuple.field1);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(field0, field1);
+        return Objects.hash(this.field0, this.field1);
     }
 
     @Override
@@ -41,7 +38,7 @@ public class Tuple<T0, T1> {
     }
 
     public T0 getField0() {
-        return field0;
+        return this.field0;
     }
 
     public void setField0(T0 field0) {
@@ -49,7 +46,7 @@ public class Tuple<T0, T1> {
     }
 
     public T1 getField1() {
-        return field1;
+        return this.field1;
     }
 
     public void setField1(T1 field1) {

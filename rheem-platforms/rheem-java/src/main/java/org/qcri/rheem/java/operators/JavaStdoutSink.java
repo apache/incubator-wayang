@@ -1,7 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.StdoutSink;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -24,6 +24,6 @@ public class JavaStdoutSink<T> extends StdoutSink<T> implements JavaExecutionOpe
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaStdoutSink<>(getType());
+        return new JavaStdoutSink<>(this.getType());
     }
 }

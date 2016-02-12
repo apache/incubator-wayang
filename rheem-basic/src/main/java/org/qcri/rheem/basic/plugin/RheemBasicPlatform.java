@@ -5,6 +5,8 @@ import org.qcri.rheem.basic.mapping.MaterializedGroupByMapping;
 import org.qcri.rheem.basic.mapping.ReduceByMapping;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 
@@ -30,7 +32,7 @@ public class RheemBasicPlatform extends Platform {
 
     public RheemBasicPlatform() {
         super("Rheem Basic");
-        initMappings();
+        this.initMappings();
     }
 
     private void initMappings() {
@@ -47,6 +49,11 @@ public class RheemBasicPlatform extends Platform {
     @Override
     public Collection<Mapping> getMappings() {
         return this.mappings;
+    }
+
+    @Override
+    public <T extends Channel> ChannelInitializer<T> getChannelInitializer(Class<T> channelClass) {
+        throw new RheemException("Not supported: This platform has no execution operators.");
     }
 
     @Override

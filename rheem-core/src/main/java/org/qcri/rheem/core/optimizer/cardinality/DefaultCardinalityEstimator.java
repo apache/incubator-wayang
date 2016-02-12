@@ -2,11 +2,8 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.core.plan.OutputSlot;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.function.ToLongBiFunction;
 import java.util.function.ToLongFunction;
 
@@ -48,7 +45,7 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator {
             return new CardinalityEstimate(estimate, estimate, this.certaintyProb);
         }
 
-        long[] lowerAndUpperInputEstimates = extractEstimateValues(inputEstimates);
+        long[] lowerAndUpperInputEstimates = this.extractEstimateValues(inputEstimates);
 
         long lowerEstimate = -1, upperEstimate = -1;
         long[] currentInputEstimates = new long[this.numInputs];

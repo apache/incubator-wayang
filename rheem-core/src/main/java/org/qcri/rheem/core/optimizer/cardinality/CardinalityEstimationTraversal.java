@@ -2,10 +2,10 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.plan.InputSlot;
-import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.plan.OutputSlot;
-import org.qcri.rheem.core.plan.PlanTraversal;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.PlanTraversal;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +24,6 @@ public class CardinalityEstimationTraversal {
     private final List<Collection<Activation>> inputActivations;
 
     private final Collection<? extends Activator> sourceActivators;
-
-    private final Map<OutputSlot<?>, CardinalityEstimate> cache;
 
     /**
      * Creates an instance towards the given {@link OutputSlot} starting at the upstream-most possible
@@ -58,15 +56,13 @@ public class CardinalityEstimationTraversal {
      */
     public static CardinalityEstimationTraversal createPushTraversal(List<Collection<InputSlot<?>>> inputSlots,
                                                                      Collection<Operator> sourceOperators,
-                                                                     Configuration configuration,
-                                                                     Map<OutputSlot<?>, CardinalityEstimate> cache) {
+                                                                     Configuration configuration) {
         Validate.notNull(inputSlots);
         Validate.notNull(sourceOperators);
-        Validate.notNull(cache);
         Validate.notNull(configuration);
 
         // Starting from the an output, find all required inputs.
-        return new PusherBuilder(inputSlots, configuration, cache).build(sourceOperators);
+        return new PusherBuilder(inputSlots, configuration).build(sourceOperators);
     }
 
 
@@ -78,25 +74,22 @@ public class CardinalityEstimationTraversal {
      *                         the indices of the {@link Activation}s match those
      *                         of the {@link CardinalityEstimate}s
      * @param sourceActivators {@link Activator}s of source {@link CardinalityEstimator}
-     * @param cache
      */
     private CardinalityEstimationTraversal(final List<Collection<Activation>> inputActivations,
-                                           Collection<? extends Activator> sourceActivators,
-                                           Map<OutputSlot<?>, CardinalityEstimate> cache) {
+                                           Collection<? extends Activator> sourceActivators) {
         this.inputActivations = inputActivations;
         this.sourceActivators = sourceActivators;
-        this.cache = cache;
     }
 
 
     public Map<OutputSlot<?>, CardinalityEstimate> traverse(Configuration configuration, CardinalityEstimate... inputEstimates) {
-        final Queue<Activator> activators = initializeActivatorQueue(inputEstimates);
+        final Queue<Activator> activators = this.initializeActivatorQueue(inputEstimates);
         final Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates = new HashMap<>();
         do {
             final Activator activator = activators.poll();
-            activator.process(configuration, activators, this.cache, terminalEstimates);
+            activator.process(configuration, activators, terminalEstimates);
         } while (!activators.isEmpty());
-        reset();
+        this.reset();
         return terminalEstimates;
     }
 
@@ -155,12 +148,10 @@ public class CardinalityEstimationTraversal {
          * Execute this instance, thereby activating new instances and putting them on the queue.
          *
          * @param activatorQueue    accepts newly activated {@link CardinalityEstimator}s
-         * @param cache
          * @param terminalEstimates @return optionally the {@link CardinalityEstimate} of this round if there is no dependent {@link CardinalityEstimator}
          */
         protected abstract void process(Configuration configuration,
                                         Queue<Activator> activatorQueue,
-                                        Map<OutputSlot<?>, CardinalityEstimate> cache,
                                         Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates);
 
         protected void processDependentActivations(OutputSlot<?> outputSlot,
@@ -215,11 +206,7 @@ public class CardinalityEstimationTraversal {
         @Override
         protected void process(Configuration configuration,
                                Queue<Activator> activatorQueue,
-                               Map<OutputSlot<?>, CardinalityEstimate> cache,
                                Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates) {
-
-            // Cache should only be used when pushing.
-            Validate.isTrue(cache == null);
 
             // Do the local estimation.
             final CardinalityEstimate resultEstimate = this.estimator.estimate(configuration, this.inputEstimates);
@@ -250,23 +237,20 @@ public class CardinalityEstimationTraversal {
         private final Collection<Activation>[] dependentActivations;
 
         PusherActivator(Operator operator,
-                        Configuration configuration,
-                        Map<OutputSlot<?>, CardinalityEstimate> cache) {
+                        Configuration configuration) {
             super(operator.getNumInputs());
             this.dependentActivations = new Collection[operator.getNumOutputs()];
-            for (int outputIndex = 0; outputIndex < dependentActivations.length; outputIndex++) {
-                dependentActivations[outputIndex] = new LinkedList<>();
+            for (int outputIndex = 0; outputIndex < this.dependentActivations.length; outputIndex++) {
+                this.dependentActivations[outputIndex] = new LinkedList<>();
 
             }
-            this.pusher = operator.getCardinalityPusher(configuration, cache);
+            this.pusher = operator.getCardinalityPusher(configuration);
         }
 
         @Override
         protected void process(Configuration configuration,
                                Queue<Activator> activatorQueue,
-                               Map<OutputSlot<?>, CardinalityEstimate> cache,
                                Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates) {
-            Validate.notNull(cache);
 
             // Do the local estimation.
             final CardinalityEstimate[] resultEstimates = this.pusher.push(configuration, this.inputEstimates);
@@ -280,7 +264,7 @@ public class CardinalityEstimationTraversal {
                 }
 
                 // Cache!
-                cache.put(this.pusher.getOperator().getOutput(outputIndex), resultEstimate);
+                this.pusher.getOperator().getOutput(outputIndex).setCardinalityEstimate(resultEstimate);
 
                 // Trigger follow-up operators.
                 this.processDependentActivations(this.pusher.getOperator().getOutput(outputIndex),
@@ -323,18 +307,14 @@ public class CardinalityEstimationTraversal {
 
         final List<Collection<InputSlot<?>>> inputSlots;
 
-        final Map<OutputSlot<?>, CardinalityEstimate> cache;
-
         final Configuration configuration;
 
         protected boolean isAllPartialEstimatorsAvailable = true;
 
         private Builder(List<Collection<InputSlot<?>>> inputSlots,
-                        Configuration configuration,
-                        Map<OutputSlot<?>, CardinalityEstimate> cache) {
+                        Configuration configuration) {
             this.inputSlots = inputSlots;
             this.configuration = configuration;
-            this.cache = cache;
         }
 
         /**
@@ -409,7 +389,7 @@ public class CardinalityEstimationTraversal {
         private Map<OutputSlot<?>, EstimatorActivator> createdEstimatorActivators = new HashMap<>();
 
         private EstimatorBuilder(List<Collection<InputSlot<?>>> inputSlots, Configuration configuration) {
-            super(inputSlots, configuration, null);
+            super(inputSlots, configuration);
         }
 
         /**
@@ -442,17 +422,17 @@ public class CardinalityEstimationTraversal {
                     if (inputSlot.getOccupant() != null) {
                         continue;
                     }
-                    addActivation(requiredActivations, activator, inputSlot);
+                    this.addActivation(requiredActivations, activator, inputSlot);
                 }
             }).traverse(outputSlot.getOwner(), null, outputSlot);
 
-            final List<Collection<Activation>> alignedActivations = alignActivations(this.inputSlots, requiredActivations);
+            final List<Collection<Activation>> alignedActivations = this.alignActivations(this.inputSlots, requiredActivations);
             if (!requiredActivations.isEmpty()) {
                 LOGGER.warn("Could not build instance: unsatisfied required inputs");
                 return null;
             }
 
-            return new CardinalityEstimationTraversal(alignedActivations, sourceActivators, this.cache);
+            return new CardinalityEstimationTraversal(alignedActivations, sourceActivators);
         }
 
         protected void addAndRegisterActivator(OutputSlot<?> outputSlot) {
@@ -469,10 +449,10 @@ public class CardinalityEstimationTraversal {
             }
 
             // Register existing dependent activators.
-            registerDependentActivations(outputSlot, activator);
+            this.registerDependentActivations(outputSlot, activator);
 
             // Register with required activators.
-            registerAsDependentActivation(outputSlot, activator);
+            this.registerAsDependentActivation(outputSlot, activator);
 
         }
 
@@ -505,9 +485,8 @@ public class CardinalityEstimationTraversal {
         private Map<Operator, PusherActivator> createdPusherActivators = new HashMap<>();
 
         private PusherBuilder(List<Collection<InputSlot<?>>> inputSlots,
-                              Configuration configuration,
-                              Map<OutputSlot<?>, CardinalityEstimate> cache) {
-            super(inputSlots, configuration, cache);
+                              Configuration configuration) {
+            super(inputSlots, configuration);
         }
 
         /**
@@ -537,7 +516,7 @@ public class CardinalityEstimationTraversal {
                 final Operator owner = inputSlot.getOwner();
                 final Activator activator = this.createdPusherActivators.get(owner);
                 if (activator != null) {
-                    addActivation(requiredActivations, activator, inputSlot);
+                    this.addActivation(requiredActivations, activator, inputSlot);
                 }
             }
 
@@ -550,13 +529,13 @@ public class CardinalityEstimationTraversal {
                 }
             }
 
-            final List<Collection<Activation>> alignedActivations = alignActivations(this.inputSlots, requiredActivations);
+            final List<Collection<Activation>> alignedActivations = this.alignActivations(this.inputSlots, requiredActivations);
             if (!requiredActivations.isEmpty()) {
                 LOGGER.warn("Could not build instance: unsatisfied required inputs");
                 return null;
             }
 
-            return new CardinalityEstimationTraversal(alignedActivations, sourceActivators, this.cache);
+            return new CardinalityEstimationTraversal(alignedActivations, sourceActivators);
         }
 
         private void addAndRegisterActivator(OutputSlot<?> outputSlot) {
@@ -570,20 +549,21 @@ public class CardinalityEstimationTraversal {
             activator = this.createActivator(outputSlot);
 
             // Register existing dependent activators.
-            registerDependentActivations(outputSlot, activator);
+            this.registerDependentActivations(outputSlot, activator);
 
             // Register with required activators.
-            registerAsDependentActivation(outputSlot, activator);
+            this.registerAsDependentActivation(outputSlot, activator);
 
         }
 
+        @Override
         protected Activator getCachedActivator(OutputSlot<?> outputSlot) {
             return this.createdPusherActivators.get(outputSlot.getOwner());
         }
 
         protected Activator createActivator(OutputSlot<?> outputSlot) {
             final Operator operator = outputSlot.getOwner();
-            final PusherActivator pusherActivator = new PusherActivator(operator, this.configuration, this.cache);
+            final PusherActivator pusherActivator = new PusherActivator(operator, this.configuration);
             this.createdPusherActivators.put(operator, pusherActivator);
             return pusherActivator;
         }

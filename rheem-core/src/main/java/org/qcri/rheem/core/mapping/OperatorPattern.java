@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.mapping;
 
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 
 /**
  * An operator pattern matches to a class of operator instances.
@@ -38,8 +38,8 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
         if (this.isMatchSubclasses ?
                 this.operatorClass.isAssignableFrom(operator.getClass()) :
                 this.operatorClass.equals(operator.getClass())) {
-            checkSanity(operator);
-            return new OperatorMatch(this, operator); // todo
+            this.checkSanity(operator);
+            return new OperatorMatch(this, operator);
         }
 
         return null;
@@ -56,7 +56,7 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
 
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     @Override

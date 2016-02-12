@@ -1,13 +1,15 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDDLike;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.spark.channels.Channels;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
+
+import java.util.List;
 
 /**
  * Execution operator for the Java platform.
@@ -30,4 +32,13 @@ public interface SparkExecutionOperator extends ExecutionOperator {
      */
     JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor);
 
+    @Override
+    default List<Class<? extends Channel>> getSupportedInputChannels(int index) {
+        return Channels.getSupportedChannels();
+    }
+
+    @Override
+    default List<Class<? extends Channel>> getSupportedOutputChannels(int index) {
+        return Channels.getSupportedChannels();
+    }
 }

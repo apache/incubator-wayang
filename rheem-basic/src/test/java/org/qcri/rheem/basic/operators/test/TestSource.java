@@ -1,6 +1,6 @@
 package org.qcri.rheem.basic.operators.test;
 
-import org.qcri.rheem.core.plan.UnarySource;
+import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
 
 /**

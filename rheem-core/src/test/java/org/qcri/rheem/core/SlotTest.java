@@ -1,14 +1,15 @@
 package org.qcri.rheem.core;
 
 import org.junit.Test;
-import org.qcri.rheem.core.plan.test.TestSink;
-import org.qcri.rheem.core.plan.test.TestSource;
+import org.qcri.rheem.core.plan.rheemplan.Slot;
+import org.qcri.rheem.core.plan.rheemplan.test.TestSink;
+import org.qcri.rheem.core.plan.rheemplan.test.TestSource;
 import org.qcri.rheem.core.test.TestDataUnit;
 import org.qcri.rheem.core.test.TestDataUnit2;
 import org.qcri.rheem.core.types.DataSetType;
 
 /**
- * Test suite for {@link org.qcri.rheem.core.plan.Slot}s.
+ * Test suite for {@link Slot}s.
  */
 public class SlotTest {
 

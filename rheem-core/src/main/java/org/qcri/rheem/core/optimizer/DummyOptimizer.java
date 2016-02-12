@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +13,8 @@ import java.util.Optional;
 @Deprecated
 public class DummyOptimizer {
 
-    public PhysicalPlan buildExecutionPlan(PhysicalPlan rheemPlan) {
-        PhysicalPlan executionPlan = new PhysicalPlan();
+    public RheemPlan buildExecutionPlan(RheemPlan rheemPlan) {
+        RheemPlan executionPlan = new RheemPlan();
 
         Pass pass = new Pass();
         for (Operator sink : rheemPlan.getSinks()) {
@@ -36,7 +36,7 @@ public class DummyOptimizer {
         @Override
         protected Optional<Operator> prepareVisit(Operator operator, OutputSlot<?> fromOutputSlot, InputSlot<Object> pendingExecOpInputSlot) {
             // Simple case: we have already created the requested output slot.
-            if (fromOutputSlot != null && slotTranslation.containsKey(fromOutputSlot)) {
+            if (fromOutputSlot != null && this.slotTranslation.containsKey(fromOutputSlot)) {
                 final OutputSlot<Object> execOpOutputSlot = this.slotTranslation.get(fromOutputSlot).unchecked();
                 execOpOutputSlot.connectTo(pendingExecOpInputSlot);
                 return Optional.of(execOpOutputSlot.getOwner());
@@ -70,7 +70,7 @@ public class DummyOptimizer {
 
                 // We have a new operator -> we need to translate its children as well.
                 for (int inputIndex = 0; inputIndex < operatorAlternative.getNumInputs(); inputIndex++) {
-                    proceed(operatorAlternative, inputIndex, executionOperator.getInput(inputIndex).unchecked());
+                    this.proceed(operatorAlternative, inputIndex, executionOperator.getInput(inputIndex).unchecked());
                 }
 
             }

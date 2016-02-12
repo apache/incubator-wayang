@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * This class checks a {@link PhysicalPlan} for several sanity criteria:
+ * This class checks a {@link RheemPlan} for several sanity criteria:
  * <ol>
  * <li>{@link Subplan}s must only be used as top-level {@link Operator} of {@link OperatorAlternative.Alternative}</li>
  * <li>{@link Subplan}s must contain more than one {@link Operator}</li>
@@ -24,20 +24,20 @@ public class SanityChecker {
     /**
      * Is subject to the sanity checks.
      */
-    private final PhysicalPlan physicalPlan;
+    private final RheemPlan rheemPlan;
 
     /**
      * Create a new instance
      *
-     * @param physicalPlan is subject to sanity checks
+     * @param rheemPlan is subject to sanity checks
      */
-    public SanityChecker(PhysicalPlan physicalPlan) {
-        this.physicalPlan = physicalPlan;
+    public SanityChecker(RheemPlan rheemPlan) {
+        this.rheemPlan = rheemPlan;
     }
 
     public boolean checkAllCriteria() {
-        boolean isAllChecksPassed = checkProperSubplans();
-        isAllChecksPassed &= checkFlatAlternatives();
+        boolean isAllChecksPassed = this.checkProperSubplans();
+        isAllChecksPassed &= this.checkFlatAlternatives();
 
         return isAllChecksPassed;
     }
@@ -50,8 +50,8 @@ public class SanityChecker {
     public boolean checkProperSubplans() {
         final AtomicBoolean testOutcome = new AtomicBoolean(true);
         new PlanTraversal(true, false)
-            .withCallback(getProperSubplanCallback(testOutcome))
-            .traverse(physicalPlan.getSinks());
+            .withCallback(this.getProperSubplanCallback(testOutcome))
+            .traverse(this.rheemPlan.getSinks());
         return testOutcome.get();
     }
 
@@ -65,7 +65,7 @@ public class SanityChecker {
             if (operator.isSubplan()) {
                 this.logger.warn("Improper subplan usage detected at {}: not embedded in an alternative.", operator);
                 testOutcome.set(false);
-                checkSubplanNotASingleton((Subplan) operator, testOutcome);
+                this.checkSubplanNotASingleton((Subplan) operator, testOutcome);
             } else if (operator.isAlternative()) {
                 final OperatorAlternative operatorAlternative = (OperatorAlternative) operator;
                 operatorAlternative.getAlternatives().stream()
@@ -74,7 +74,7 @@ public class SanityChecker {
                         .map((subplan) -> (Subplan) subplan)
                         .forEach(subplan -> {
                             this.checkSubplanNotASingleton(subplan, testOutcome);
-                            traverse(subplan, this.getProperSubplanCallback(testOutcome));
+                            this.traverse(subplan, this.getProperSubplanCallback(testOutcome));
                         });
             }
         };
@@ -87,7 +87,7 @@ public class SanityChecker {
      * @param testOutcome carries the current test outcome and will be updated on problems
      */
     private void checkSubplanNotASingleton(Subplan subplan, final AtomicBoolean testOutcome) {
-        boolean isSingleton = traverse(subplan, PlanTraversal.Callback.NOP)
+        boolean isSingleton = this.traverse(subplan, PlanTraversal.Callback.NOP)
                 .getTraversedNodes()
                 .size() == 1;
         if (isSingleton) {
@@ -99,8 +99,8 @@ public class SanityChecker {
     public boolean checkFlatAlternatives() {
         AtomicBoolean testOutcome = new AtomicBoolean(true);
         new PlanTraversal(true, false)
-                .withCallback(getFlatAlternativeCallback(testOutcome))
-                .traverse(this.physicalPlan.getSinks());
+                .withCallback(this.getFlatAlternativeCallback(testOutcome))
+                .traverse(this.rheemPlan.getSinks());
         return testOutcome.get();
     }
 
@@ -116,7 +116,7 @@ public class SanityChecker {
                     } else if (alternativeOperator.isSubplan()) {
                         // We could check if there are singleton Subplans with an OperatorAlternative embedded,
                         // but this would violate the singleton Subplan rule anyway.
-                        traverse((Subplan) alternativeOperator, getFlatAlternativeCallback(testOutcome));
+                        this.traverse((Subplan) alternativeOperator, this.getFlatAlternativeCallback(testOutcome));
                     }
                 }
             }

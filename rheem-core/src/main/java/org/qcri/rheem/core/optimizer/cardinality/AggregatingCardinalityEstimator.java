@@ -2,12 +2,9 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.core.plan.OutputSlot;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * {@link CardinalityEstimator} implementation that can have multiple ways of calculating a {@link CardinalityEstimate}.

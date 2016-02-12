@@ -1,7 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -31,6 +31,6 @@ public class JavaLocalCallbackSink<T> extends LocalCallbackSink<T> implements Ja
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaLocalCallbackSink<>(this.callback, getType());
+        return new JavaLocalCallbackSink<>(this.callback, this.getType());
     }
 }

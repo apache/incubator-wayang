@@ -2,18 +2,15 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
-import org.apache.spark.rpc.netty.Inbox;
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Test suite for {@link SparkFilterOperator}.
@@ -29,7 +26,7 @@ public class SparkFilterOperatorTest extends SparkOperatorTestBase {
         SparkFilterOperator<Integer> filterOperator =
                 new SparkFilterOperator<>(
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        (Predicate<Integer> & Serializable) item -> item > 0
+                        new PredicateDescriptor<>(item -> (item > 0), DataUnitType.createBasic(Integer.class))
                 );
 
         // Execute the distinct operator.

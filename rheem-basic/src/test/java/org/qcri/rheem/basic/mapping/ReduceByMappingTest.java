@@ -12,10 +12,10 @@ import org.qcri.rheem.basic.operators.test.TestSource;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.mapping.PlanTransformation;
-import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.plan.PhysicalPlan;
-import org.qcri.rheem.core.plan.UnarySink;
-import org.qcri.rheem.core.plan.UnarySource;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.plan.rheemplan.UnarySink;
+import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 
@@ -53,7 +53,7 @@ public class ReduceByMappingTest {
 
         UnarySink<Tuple2<String, Integer>> sink = new TestSink<>(DataSetType.createDefaultUnchecked(Tuple2.class));
         reduce.connectTo(0, sink, 0);
-        PhysicalPlan plan = new PhysicalPlan();
+        RheemPlan plan = new RheemPlan();
         plan.addSink(sink);
 
         // Apply our mapping.

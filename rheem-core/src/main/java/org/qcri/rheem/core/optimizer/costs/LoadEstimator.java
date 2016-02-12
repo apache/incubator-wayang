@@ -14,7 +14,7 @@ public abstract class LoadEstimator {
             CardinalityEstimate[] outputEstimates);
 
     protected double calculateJointProbability(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
-        return calculateJointProbability(inputEstimates) * calculateJointProbability(outputEstimates);
+        return this.calculateJointProbability(inputEstimates) * this.calculateJointProbability(outputEstimates);
     }
 
     private double calculateJointProbability(CardinalityEstimate[] inputEstimates) {

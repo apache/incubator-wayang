@@ -3,7 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -55,7 +55,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaJoinOperator<>(getInputType0(), getInputType1(),
-                getKeyDescriptor0(), getKeyDescriptor1());
+        return new JavaJoinOperator<>(this.getInputType0(), this.getInputType1(),
+                this.getKeyDescriptor0(), this.getKeyDescriptor1());
     }
 }

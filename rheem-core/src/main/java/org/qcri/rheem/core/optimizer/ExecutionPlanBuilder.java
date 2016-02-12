@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.qcri.rheem.core.plan.*;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,12 +9,12 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * This class can be used to build an execution {@link org.qcri.rheem.core.plan.PhysicalPlan} in a bottom-up manner.
+ * This class can be used to build an execution {@link RheemPlan} in a bottom-up manner.
  * @deprecated
  */
 public class ExecutionPlanBuilder {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * This map keeps track of which (potentially alternative) outputs are already implemented via an {@link
@@ -87,10 +87,10 @@ public class ExecutionPlanBuilder {
         }
     }
 
-    public Optional<PhysicalPlan> build() {
+    public Optional<RheemPlan> build() {
         // See if there are sinks in the first place.
         if (this.sinks.isEmpty()) {
-            logger.debug("Discard plan without sinks.");
+            this.logger.debug("Discard plan without sinks.");
             return Optional.na();
         }
 
@@ -109,7 +109,7 @@ public class ExecutionPlanBuilder {
                         .getTraversedNodesWith(operator -> true)
         );
         if (!isAllConsumedOperatorInputsSatisfied.get()) {
-            logger.debug("Discard plan that comprises consumed operators with unsatisfied inputs.");
+            this.logger.debug("Discard plan that comprises consumed operators with unsatisfied inputs.");
             return Optional.na();
         }
 
@@ -128,7 +128,7 @@ public class ExecutionPlanBuilder {
                 ).traverse(this.sinks);
 
         // Build the plan.
-        final PhysicalPlan plan = new PhysicalPlan();
+        final RheemPlan plan = new RheemPlan();
         this.sinks.forEach(plan::addSink);
         return Optional.of(plan);
     }

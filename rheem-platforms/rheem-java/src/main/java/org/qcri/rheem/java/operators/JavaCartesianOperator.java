@@ -2,13 +2,11 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CartesianOperator;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.List;
-import java.util.function.Supplier;
-
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,6 +44,6 @@ public class JavaCartesianOperator<InputType0, InputType1>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaCartesianOperator<>(getInputType0(), getInputType1());
+        return new JavaCartesianOperator<>(this.getInputType0(), this.getInputType1());
     }
 }

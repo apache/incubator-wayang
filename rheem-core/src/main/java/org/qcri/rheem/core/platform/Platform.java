@@ -3,7 +3,9 @@ package org.qcri.rheem.core.platform;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -47,10 +49,18 @@ public abstract class Platform {
     public abstract Collection<Mapping> getMappings();
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public abstract boolean isExecutable();
+
+    /**
+     * If this instance provides {@link ExecutionOperator}s, then this method provides the {@link ChannelInitializer}s
+     * to connect them.
+     *
+     * @return the appropriate {@link ChannelInitializer} for the given {@link Channel} type or {@code null} if none
+     */
+    public abstract <T extends Channel> ChannelInitializer<T> getChannelInitializer(Class<T> channelClass);
 
     // TODO: Return some more descriptors about the state of the platform (e.g., available machines, RAM, ...)
 

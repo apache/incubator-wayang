@@ -47,7 +47,7 @@ public class DataSetType<T> {
     }
 
     public DataUnitType<T> getDataUnitType() {
-        return dataUnitType;
+        return this.dataUnitType;
     }
 
     /**
@@ -67,14 +67,14 @@ public class DataSetType<T> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         DataSetType<?> that = (DataSetType<?>) o;
-        return Objects.equals(dataUnitType, that.dataUnitType);
+        return Objects.equals(this.dataUnitType, that.dataUnitType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(dataUnitType);
+        return Objects.hash(this.dataUnitType);
     }
 
     @Override

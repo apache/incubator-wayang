@@ -4,7 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.plan.UnaryToUnaryOperator;
+import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Iterator;
@@ -32,7 +32,7 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     }
 
     public FlatMapDescriptor<InputType, Iterator<OutputType>> getFunctionDescriptor() {
-        return functionDescriptor;
+        return this.functionDescriptor;
     }
 
     @Override

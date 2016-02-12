@@ -5,7 +5,7 @@ import org.qcri.rheem.basic.operators.GroupByOperator;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.basic.operators.ReduceOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Collection;
@@ -20,7 +20,7 @@ public class GlobalReduceMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(createSubplanPattern(), new ReplacementFactory()));
+        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory()));
     }
 
     @SuppressWarnings("unchecked")

@@ -4,7 +4,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
 import org.qcri.rheem.basic.operators.CartesianOperator;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
@@ -41,6 +41,6 @@ public class SparkCartesianOperator<InputType0, InputType1>
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkCartesianOperator<>(getInputType0(), getInputType1());
+        return new SparkCartesianOperator<>(this.getInputType0(), this.getInputType1());
     }
 }

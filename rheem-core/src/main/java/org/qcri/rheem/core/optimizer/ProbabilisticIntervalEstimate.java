@@ -34,11 +34,11 @@ public class ProbabilisticIntervalEstimate {
     }
 
     public long getLowerEstimate() {
-        return lowerEstimate;
+        return this.lowerEstimate;
     }
 
     public long getUpperEstimate() {
-        return upperEstimate;
+        return this.upperEstimate;
     }
 
     public long getAverageEstimate() {
@@ -46,22 +46,22 @@ public class ProbabilisticIntervalEstimate {
     }
 
     public double getCorrectnessProbability() {
-        return correctnessProb;
+        return this.correctnessProb;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         ProbabilisticIntervalEstimate estimate = (ProbabilisticIntervalEstimate) o;
-        return Double.compare(estimate.correctnessProb, correctnessProb) == 0 &&
-                lowerEstimate == estimate.lowerEstimate &&
-                upperEstimate == estimate.upperEstimate;
+        return Double.compare(estimate.correctnessProb, this.correctnessProb) == 0 &&
+                this.lowerEstimate == estimate.lowerEstimate &&
+                this.upperEstimate == estimate.upperEstimate;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(correctnessProb, lowerEstimate, upperEstimate);
+        return Objects.hash(this.correctnessProb, this.lowerEstimate, this.upperEstimate);
     }
 
     @Override

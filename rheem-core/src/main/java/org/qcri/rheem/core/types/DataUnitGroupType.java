@@ -20,20 +20,20 @@ public class DataUnitGroupType<T> extends DataUnitType<Iterator<T>> {
     }
 
     public DataUnitType getBaseType() {
-        return baseType;
+        return this.baseType;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || this.getClass() != o.getClass()) return false;
         DataUnitGroupType that = (DataUnitGroupType) o;
-        return Objects.equals(baseType, that.baseType);
+        return Objects.equals(this.baseType, that.baseType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(baseType);
+        return Objects.hash(this.baseType);
     }
 
     @Override

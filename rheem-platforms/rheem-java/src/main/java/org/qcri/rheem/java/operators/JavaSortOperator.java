@@ -1,7 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.SortOperator;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -39,6 +39,6 @@ public class JavaSortOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaSortOperator<>(getInputType());
+        return new JavaSortOperator<>(this.getInputType());
     }
 }

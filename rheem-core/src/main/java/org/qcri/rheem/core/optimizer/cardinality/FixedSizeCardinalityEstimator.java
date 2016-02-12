@@ -1,11 +1,7 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.core.plan.Operator;
-import org.qcri.rheem.core.plan.OutputSlot;
-
-import java.util.Map;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 
 /**
  * {@link CardinalityEstimator} implementation for {@link Operator}s with a fix-sized output.

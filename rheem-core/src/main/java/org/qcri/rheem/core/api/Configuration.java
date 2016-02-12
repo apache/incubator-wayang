@@ -4,15 +4,16 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.configuration.*;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.*;
-import org.qcri.rheem.core.plan.ExecutionOperator;
-import org.qcri.rheem.core.plan.OutputSlot;
+import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
 
-import java.util.function.Predicate;
-import java.util.stream.Stream;
+import java.util.Comparator;
 
 /**
  * Describes both the configuration of a {@link RheemContext} and {@link Job}s.
@@ -27,7 +28,7 @@ public class Configuration {
 
     private KeyValueProvider<OutputSlot<?>, CardinalityEstimator> cardinalityEstimatorProvider;
 
-    private KeyValueProvider<Class<? extends Predicate>, Double> predicateSelectivityProvider;
+    private KeyValueProvider<PredicateDescriptor, Double> predicateSelectivityProvider;
 
     private KeyValueProvider<FlatMapDescriptor<?, ?>, Double> multimapSelectivityProvider;
 
@@ -36,8 +37,12 @@ public class Configuration {
     private KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider;
 
     private ConstantProvider<LoadProfileToTimeConverter> loadProfileToTimeConverterProvider;
-    
+
     private CollectionProvider<Platform> platformProvider;
+
+    private ConstantProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
+
+    private CollectionProvider<PlanEnumerationPruningStrategy> pruningStrategiesProvider;
 
     /**
      * Creates a new top-level instance.
@@ -80,6 +85,11 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider);
             this.loadProfileToTimeConverterProvider =
                     new ConstantProvider<>(this.parent.loadProfileToTimeConverterProvider);
+
+            // Providers for plan enumeration.
+            this.pruningStrategiesProvider = new CollectionProvider<>(this.parent.pruningStrategiesProvider);
+            this.timeEstimateComparatorProvider = new ConstantProvider<>(this.parent.timeEstimateComparatorProvider);
+
         }
     }
 
@@ -89,6 +99,7 @@ public class Configuration {
         bootstrapCardinalityEstimationProvider(configuration);
         bootstrapSelectivityProviders(configuration);
         bootstrapLoadAndTimeEstimatorProviders(configuration);
+        bootstrapPruningProviders(configuration);
         return configuration;
     }
 
@@ -124,13 +135,13 @@ public class Configuration {
     private static void bootstrapSelectivityProviders(Configuration configuration) {
         {
             // Safety net: provide a fallback selectivity.
-            KeyValueProvider<Class<? extends Predicate>, Double> fallbackProvider =
-                    new FunctionalKeyValueProvider<Class<? extends Predicate>, Double>(
+            KeyValueProvider<PredicateDescriptor, Double> fallbackProvider =
+                    new FunctionalKeyValueProvider<PredicateDescriptor, Double>(
                             predicateClass -> 0.5d
                     ).withSlf4jWarning("Creating fallback selectivity for {}.");
 
             // Customizable layer: Users can override manually.
-            KeyValueProvider<Class<? extends Predicate>, Double> overrideProvider =
+            KeyValueProvider<PredicateDescriptor, Double> overrideProvider =
                     new MapBasedKeyValueProvider<>(fallbackProvider);
 
             configuration.setPredicateSelectivityProvider(overrideProvider);
@@ -201,9 +212,32 @@ public class Configuration {
 
             configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
         }
+        {
+            ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
+                    new ConstantProvider<>(TimeEstimate.expectionValueComparator());
+            ConstantProvider<Comparator<TimeEstimate>> overrideProvider =
+                    new ConstantProvider<>(defaultProvider);
+            configuration.setTimeEstimateComparatorProvider(overrideProvider);
+        }
     }
 
-    
+    private static void bootstrapPruningProviders(Configuration configuration) {
+        {
+            // By default, no pruning is applied.
+            CollectionProvider<PlanEnumerationPruningStrategy> defaultProvider =
+                    new CollectionProvider<>();
+            configuration.setPruningStrategiesProvider(defaultProvider);
+
+        }
+        {
+            ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
+                    new ConstantProvider<>(TimeEstimate.expectionValueComparator());
+            ConstantProvider<Comparator<TimeEstimate>> overrideProvider =
+                    new ConstantProvider<>(defaultProvider);
+            configuration.setTimeEstimateComparatorProvider(overrideProvider);
+        }
+    }
+
 
     /**
      * Creates a child instance.
@@ -213,11 +247,11 @@ public class Configuration {
     }
 
     public RheemContext getRheemContext() {
-        return rheemContext;
+        return this.rheemContext;
     }
 
     public KeyValueProvider<OutputSlot<?>, CardinalityEstimator> getCardinalityEstimatorProvider() {
-        return cardinalityEstimatorProvider;
+        return this.cardinalityEstimatorProvider;
     }
 
     public void setCardinalityEstimatorProvider(
@@ -225,17 +259,17 @@ public class Configuration {
         this.cardinalityEstimatorProvider = cardinalityEstimatorProvider;
     }
 
-    public KeyValueProvider<Class<? extends Predicate>, Double> getPredicateSelectivityProvider() {
-        return predicateSelectivityProvider;
+    public KeyValueProvider<PredicateDescriptor, Double> getPredicateSelectivityProvider() {
+        return this.predicateSelectivityProvider;
     }
 
     public void setPredicateSelectivityProvider(
-            KeyValueProvider<Class<? extends Predicate>, Double> predicateSelectivityProvider) {
+            KeyValueProvider<PredicateDescriptor, Double> predicateSelectivityProvider) {
         this.predicateSelectivityProvider = predicateSelectivityProvider;
     }
 
     public KeyValueProvider<FlatMapDescriptor<?, ?>, Double> getMultimapSelectivityProvider() {
-        return multimapSelectivityProvider;
+        return this.multimapSelectivityProvider;
     }
 
     public void setMultimapSelectivityProvider(
@@ -244,7 +278,7 @@ public class Configuration {
     }
 
     public KeyValueProvider<ExecutionOperator, LoadProfileEstimator> getOperatorLoadProfileEstimatorProvider() {
-        return operatorLoadProfileEstimatorProvider;
+        return this.operatorLoadProfileEstimatorProvider;
     }
 
     public void setOperatorLoadProfileEstimatorProvider(KeyValueProvider<ExecutionOperator, LoadProfileEstimator> operatorLoadProfileEstimatorProvider) {
@@ -252,7 +286,7 @@ public class Configuration {
     }
 
     public ConstantProvider<LoadProfileToTimeConverter> getLoadProfileToTimeConverterProvider() {
-        return loadProfileToTimeConverterProvider;
+        return this.loadProfileToTimeConverterProvider;
     }
 
     public void setLoadProfileToTimeConverterProvider(ConstantProvider<LoadProfileToTimeConverter> loadProfileToTimeConverterProvider) {
@@ -260,7 +294,7 @@ public class Configuration {
     }
 
     public KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> getFunctionLoadProfileEstimatorProvider() {
-        return functionLoadProfileEstimatorProvider;
+        return this.functionLoadProfileEstimatorProvider;
     }
 
     public void setFunctionLoadProfileEstimatorProvider(KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider) {
@@ -268,10 +302,27 @@ public class Configuration {
     }
 
     public CollectionProvider<Platform> getPlatformProvider() {
-        return platformProvider;
+        return this.platformProvider;
     }
 
     public void setPlatformProvider(CollectionProvider<Platform> platformProvider) {
         this.platformProvider = platformProvider;
+    }
+
+    public ConstantProvider<Comparator<TimeEstimate>> getTimeEstimateComparatorProvider() {
+        return this.timeEstimateComparatorProvider;
+    }
+
+    public void setTimeEstimateComparatorProvider(ConstantProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider) {
+        this.timeEstimateComparatorProvider = timeEstimateComparatorProvider;
+    }
+
+
+    public CollectionProvider<PlanEnumerationPruningStrategy> getPruningStrategiesProvider() {
+        return this.pruningStrategiesProvider;
+    }
+
+    public void setPruningStrategiesProvider(CollectionProvider<PlanEnumerationPruningStrategy> pruningStrategiesProvider) {
+        this.pruningStrategiesProvider = pruningStrategiesProvider;
     }
 }

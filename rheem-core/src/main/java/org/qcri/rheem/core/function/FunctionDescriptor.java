@@ -3,8 +3,8 @@ package org.qcri.rheem.core.function;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
-import org.qcri.rheem.core.plan.InputSlot;
-import org.qcri.rheem.core.plan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
 import java.io.Serializable;
 import java.util.function.BinaryOperator;

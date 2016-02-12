@@ -4,7 +4,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
@@ -41,6 +41,6 @@ public class SparkMapOperator<InputType, OutputType>
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkMapOperator<>(getInputType(), getOutputType(), getFunctionDescriptor());
+        return new SparkMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
     }
 }

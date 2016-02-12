@@ -1,8 +1,11 @@
 package org.qcri.rheem.java.plugin;
 
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.java.channels.Channels;
 import org.qcri.rheem.java.mapping.*;
 import org.qcri.rheem.java.platform.JavaExecutor;
 
@@ -29,7 +32,7 @@ public class JavaPlatform extends Platform {
     
     private JavaPlatform() {
         super(PLATFORM_NAME);
-        initializeMappings();
+        this.initializeMappings();
     }
 
     private void initializeMappings() {
@@ -41,7 +44,6 @@ public class JavaPlatform extends Platform {
         this.mappings.add(new JavaLocalCallbackSinkMapping());
         this.mappings.add(new JavaGlobalReduceOperatorMapping());
         this.mappings.add(new JavaCollocateByOperatorMapping());
-        this.mappings.add(new JavaCoalesceOperatorMapping());
         this.mappings.add(new FlatMapToJavaFlatMapMapping());
         this.mappings.add(new CountToJavaCountMapping());
         this.mappings.add(new DistinctToJavaDistinctMapping());
@@ -64,5 +66,11 @@ public class JavaPlatform extends Platform {
     @Override
     public Executor.Factory getExecutorFactory() {
         return JavaExecutor.FACTORY;
+    }
+
+    @Override
+    public <T extends Channel> ChannelInitializer<T> getChannelInitializer(Class<T> channelClass) {
+        // Delegate.
+        return Channels.getChannelInitializer(channelClass);
     }
 }

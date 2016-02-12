@@ -1,7 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.DistinctOperator;
-import org.qcri.rheem.core.plan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -38,6 +38,6 @@ public class JavaDistinctOperator<Type>
 
     @Override
     public ExecutionOperator copy() {
-        return new JavaDistinctOperator<>(getInputType());
+        return new JavaDistinctOperator<>(this.getInputType());
     }
 }

@@ -5,18 +5,15 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
 import org.junit.Assert;
 import org.junit.Test;
-
-//TODO Fix this!
-//import org.qcri.rheem.basic.data.Tuple2;
-import scala.Tuple2;
-
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import scala.Tuple2;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+//TODO Fix this!
+//import org.qcri.rheem.basic.data.Tuple2;
 
 /**
  * Test suite for {@link SparkCartesianOperator}.
