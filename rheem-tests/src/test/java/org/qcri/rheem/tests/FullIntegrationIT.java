@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.java.plugin.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
@@ -31,6 +32,29 @@ public class FullIntegrationIT {
         // Build a Rheem plan.
         List<String> collector = new LinkedList<>();
         RheemPlan rheemPlan = RheemPlans.readWrite(RheemPlans.FILE_SOME_LINES_TXT, collector);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
+
+        // Have Rheem execute the plan.
+        rheemContext.execute(rheemPlan);
+
+        // Verify the plan result.
+        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        Assert.assertEquals(lines, collector);
+    }
+
+    @Test
+    public void testReadAndWriteCrossPlatform() throws URISyntaxException, IOException {
+        // Build a Rheem plan.
+        List<String> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.readWrite(RheemPlans.FILE_SOME_LINES_TXT, collector);
+        final Operator sink = rheemPlan.getSinks().stream().findFirst().get();
+        sink.addTargetPlatform(SparkPlatform.getInstance());
+        final Operator source = sink.getInputOperator(0);
+        source.addTargetPlatform(JavaPlatform.getInstance());
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();

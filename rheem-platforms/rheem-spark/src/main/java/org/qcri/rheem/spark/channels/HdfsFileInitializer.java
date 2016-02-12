@@ -4,6 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.apache.spark.api.java.JavaRDDLike;
 import org.qcri.rheem.basic.channels.HdfsFile;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.types.DataSetType;
@@ -47,11 +48,12 @@ public class HdfsFileInitializer implements ChannelInitializer<HdfsFile> {
         final DataSetType<?> dataSetType = executionTask.getOperator().getOutput(index).getType();
         final String targetPath = pickTempPath();
         SparkObjectFileSink<?> sparkObjectFileSink = new SparkObjectFileSink<>(targetPath, dataSetType);
+        sparkObjectFileSink.getInput(0).setCardinalityEstimate(Channel.extractCardinalityEstimate(executionTask, index));
         ExecutionTask sinkTask = new ExecutionTask(sparkObjectFileSink, sparkObjectFileSink.getNumInputs(), 1);
         rddChannelInitializer.setUpInput(rddChannel, sinkTask, 0);
 
         // Create the actual HdfsFile.
-        final HdfsFile hdfsFile = new HdfsFile(sinkTask, index);
+        final HdfsFile hdfsFile = new HdfsFile(sinkTask, index, Channel.extractCardinalityEstimate(executionTask, index));
         hdfsFile.addPath(targetPath);
         return hdfsFile;
     }
@@ -65,6 +67,7 @@ public class HdfsFileInitializer implements ChannelInitializer<HdfsFile> {
         // TODO: Improve management of data types, file paths, serialization formats etc.
         final DataSetType<?> dataSetType = channel.getProducer().getOperator().getInput(0).getType();
         SparkObjectFileSource<?> sparkObjectFileSource = new SparkObjectFileSource<>(targetPath, dataSetType);
+        sparkObjectFileSource.getOutput(0).setCardinalityEstimate(channel.getCardinalityEstimate());
         ExecutionTask sourceTask = new ExecutionTask(sparkObjectFileSource, 1, sparkObjectFileSource.getNumOutputs());
         channel.addConsumer(sourceTask, 0);
 

@@ -7,6 +7,10 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 /**
  * {@link FileSystem} implementation for the local file system.
@@ -49,6 +53,30 @@ public class LocalFileSystem implements FileSystem {
             return new FileInputStream(file);
         } catch (URISyntaxException e) {
             throw new IOException("Could not process the given URL.", e);
+        }
+    }
+
+    @Override
+    public boolean isDirectory(String url) {
+        try {
+            return toFile(url).isDirectory();
+        } catch (URISyntaxException | MalformedURLException e) {
+            this.logger.warn("Could not inspect directory.", e);
+            return false;
+        }
+    }
+
+    @Override
+    public Collection<String> listChildren(String url) {
+        try {
+            final File[] files = toFile(url).listFiles();
+            if (files == null) {
+                return Collections.emptyList();
+            }
+            return Arrays.stream(files).map(File::toURI).map(Object::toString).collect(Collectors.toList());
+        } catch (URISyntaxException | MalformedURLException e) {
+            this.logger.warn("Could not inspect directory.", e);
+            return Collections.emptyList();
         }
     }
 }

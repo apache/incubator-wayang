@@ -3,6 +3,7 @@ package org.qcri.rheem.core.util.fs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 
 /**
  * Abstraction for accessing a file system.
@@ -31,5 +32,9 @@ public interface FileSystem {
      * @throws IOException if the file cannot be accessed properly for whatever reason
      */
     InputStream open(String url) throws IOException;
+
+    boolean isDirectory(String url);
+
+    Collection<String> listChildren(String url);
 
 }

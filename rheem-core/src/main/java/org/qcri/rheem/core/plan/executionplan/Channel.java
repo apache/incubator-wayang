@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.plan.executionplan;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.LinkedList;
@@ -15,9 +16,20 @@ public abstract class Channel {
 
     protected final List<ExecutionTask> consumers = new LinkedList<>();
 
-    protected Channel(ExecutionTask producer, int outputIndex) {
+    private final CardinalityEstimate cardinalityEstimate;
+
+    protected Channel(ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
         this.producer = producer;
         this.producer.setOutputChannel(outputIndex, this);
+        this.cardinalityEstimate = cardinalityEstimate;
+    }
+
+    protected Channel(ExecutionTask producer, int outputIndex) {
+        this(producer, outputIndex, extractCardinalityEstimate(producer, outputIndex));
+    }
+
+    public static CardinalityEstimate extractCardinalityEstimate(ExecutionTask task, int outputIndex) {
+        return task.getOperator().getOutput(outputIndex).getCardinalityEstimate();
     }
 
     public void addConsumer(ExecutionTask consumer, int inputIndex) {
@@ -63,5 +75,9 @@ public abstract class Channel {
 
     public List<ExecutionTask> getConsumers() {
         return this.consumers;
+    }
+
+    public CardinalityEstimate getCardinalityEstimate() {
+        return this.cardinalityEstimate;
     }
 }

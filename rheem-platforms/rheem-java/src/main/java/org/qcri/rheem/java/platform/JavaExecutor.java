@@ -44,7 +44,7 @@ public class JavaExecutor implements Executor {
     }
 
     private Stream[] obtainInputStreams(ExecutionTask executionTask) {
-        Stream[] inputStreams = new Stream[executionTask.getInputChannels().length];
+        Stream[] inputStreams = new Stream[executionTask.getOperator().getNumInputs()];
         for (int inputIndex = 0; inputIndex < inputStreams.length; inputIndex++) {
             Channel inputChannel = executionTask.getInputChannel(inputIndex);
             inputStreams[inputIndex] = this.getInputStreamFor(inputChannel);
@@ -66,7 +66,7 @@ public class JavaExecutor implements Executor {
     }
 
     private void registerOutputStreams(Stream[] outputStreams, ExecutionTask executionTask) {
-        for (int outputIndex = 0; outputIndex < executionTask.getOutputChannels().length; outputIndex++) {
+        for (int outputIndex = 0; outputIndex < executionTask.getOperator().getNumOutputs(); outputIndex++) {
             Channel channel = executionTask.getOutputChannels()[outputIndex];
             final ChannelExecutor channelExecutor = Channels.createChannelExecutor(channel);
             Validate.notNull(channelExecutor);
