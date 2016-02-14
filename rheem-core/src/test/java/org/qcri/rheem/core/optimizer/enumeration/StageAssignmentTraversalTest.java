@@ -66,7 +66,16 @@ public class StageAssignmentTraversalTest {
 
         // Assign platforms.
         PreliminaryExecutionPlan preliminaryExecutionPlan = new PreliminaryExecutionPlan(Collections.singleton(sinkTaskA));
-        final ExecutionPlan run = new StageAssignmentTraversal(preliminaryExecutionPlan).run();
+        final ExecutionPlan executionPlan = new StageAssignmentTraversal(preliminaryExecutionPlan).run();
+        Assert.assertEquals(1, executionPlan.getStartingStages().size());
+
+        ExecutionStage stage1 = executionPlan.getStartingStages().stream().findAny().get();
+        Assert.assertEquals(1, stage1.getStartTasks().size());
+
+        ExecutionTask stage1Task1 = stage1.getStartTasks().stream().findAny().get();
+        Assert.assertEquals(sourceTaskA, stage1Task1);
+
+        Assert.assertEquals(2, stage1.getSuccessors().size());
     }
 
     @Test
@@ -74,9 +83,10 @@ public class StageAssignmentTraversalTest {
         final Platform mockedPlatformA = MockFactory.createPlatform("A");
         final Platform mockedPlatformB = MockFactory.createPlatform("B");
 
-        //           /----------------------------\
-        // source A <                              join A -> sink A
-        //           \-> map B -> map C -> map A -/
+        //             /-(map B)----------------(join B)-\
+        // (source A)-<           \           /           >-(sink A)
+        //             \------------(join A)-------------/
+        //  stage 1     stage 2      stage 3     stage 4    stage 5
 
         // Build up ExecutionTasks.
         final ExecutionOperator sourceOpA = MockFactory.createExecutionOperator("source A", 0, 1, mockedPlatformA);

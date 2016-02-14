@@ -25,4 +25,9 @@ public class TestChannel extends Channel {
     public boolean isReusable() {
         return this.isReusable;
     }
+
+    @Override
+    public boolean isExecutionBreaker() {
+        return super.isExecutionBreaker();
+    }
 }

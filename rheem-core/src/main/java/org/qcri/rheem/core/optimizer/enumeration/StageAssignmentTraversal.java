@@ -54,7 +54,7 @@ public class StageAssignmentTraversal {
         this.discoverInitialStages();
 
         // Refine stages as much as necessary
-        while (this.refineStages()) ;
+        this.refineStages();
         for (InterimStage stage : this.allStages) {
             this.logger.info("Final stage {}: {}", stage, stage.getTasks());
         }
@@ -100,6 +100,7 @@ public class StageAssignmentTraversal {
         final HashSet<InterimStage> thisRequiredStages = new HashSet<>(4);
         thisRequiredStages.add(newStage);
         this.requiredStages.put(task, thisRequiredStages);
+        this.logger.debug("Initially assigning {} to {}.", task, newStage);
     }
 
     private void expandDownstream(ExecutionTask task, InterimStage expandableStage) {
@@ -110,7 +111,7 @@ public class StageAssignmentTraversal {
             for (ExecutionTask consumer : channel.getConsumers()) {
                 final InterimStage assignedStage = this.assignedInterimStages.get(consumer);
                 if (assignedStage == null) {
-                    this.handleTaskWithoutPlatformExecution(consumer, expandableStage);
+                    this.handleTaskWithoutPlatformExecution(consumer, /*channel.isExecutionBreaker() ? null : */ expandableStage);
                 }
             }
         }
@@ -122,57 +123,74 @@ public class StageAssignmentTraversal {
             Validate.notNull(producer);
             final InterimStage assignedStage = this.assignedInterimStages.get(producer);
             if (assignedStage == null) {
-                this.handleTaskWithoutPlatformExecution(producer, expandableStage);
+                this.handleTaskWithoutPlatformExecution(producer, /*channel.isExecutionBreaker() ? null : */expandableStage);
             }
         }
     }
 
     private void handleTaskWithoutPlatformExecution(ExecutionTask task, InterimStage expandableStage) {
         final Platform operatorPlatform = task.getOperator().getPlatform();
-        if (operatorPlatform.equals(expandableStage.getPlatform())) {
+        if (expandableStage != null && operatorPlatform.equals(expandableStage.getPlatform())) {
             this.traverseTask(task, expandableStage);
         } else {
             this.seeds.add(task);
         }
     }
 
-    private boolean refineStages() {
-        // Update the precedence graph.
-        for (InterimStage currentStage : this.changedStages) {
-            for (ExecutionTask outboundTask : currentStage.getOutboundTasks()) {
-                updateRequiredStages(outboundTask, new HashSet<>(), false);
+    /**
+     * Refine the current {@link #changedStages} and put the result to {@link #allStages}.
+     */
+    private void refineStages() {
+        while (!this.changedStages.isEmpty()) {
+            // Update the precedence graph.
+            for (InterimStage currentStage : this.changedStages) {
+                for (ExecutionTask outboundTask : currentStage.getOutboundTasks()) {
+                    this.updateRequiredStages(outboundTask, new HashSet<>());
+                }
             }
-        }
-        this.changedStages.clear();
 
-        // Partition stages.
-        boolean isChange = false;
-        for (InterimStage stage : this.allStages) {
-            isChange |= this.partitionStage(stage);
+            // Partition stages.
+            this.changedStages.clear();
+            for (InterimStage stage : this.allStages) {
+                this.partitionStage(stage);
+            }
+            this.allStages.addAll(this.changedStages);
         }
-        this.allStages.addAll(this.changedStages);
-
-        return isChange;
     }
 
-    private void updateRequiredStages(ExecutionTask task, Set<InterimStage> markerSet, boolean isUpdateTask) {
+    /**
+     * Update the {@link #requiredStages} while recursively traversing downstream over {@link ExecutionTask}s.
+     * Also, mark its {@link InterimStage} ({@link InterimStage#mark()})
+     * to keep track of dependencies between the {@link InterimStage}s that we have been unaware of so far.
+     *
+     * @param task           which is to be traversed next
+     * @param requiredStages the required {@link InterimStage}s
+     */
+    private void updateRequiredStages(ExecutionTask task, Set<InterimStage> requiredStages) {
         final InterimStage currentStage = this.assignedInterimStages.get(task);
-        markerSet.add(currentStage);
-        if (isUpdateTask) {
-            final Set<InterimStage> currentlyRequiredStages = this.requiredStages.get(task);
-            if (!currentlyRequiredStages.addAll(markerSet)) {
-                return;
-            }
+        if (!requiredStages.contains(currentStage)) {
+            requiredStages = new HashSet<>(requiredStages);
+            requiredStages.add(currentStage);
+        }
+        final Set<InterimStage> currentlyRequiredStages = this.requiredStages.get(task);
+        if (currentlyRequiredStages.addAll(requiredStages)) {
+            this.logger.debug("Updated required stages of {} to {}.", task, currentlyRequiredStages);
             currentStage.mark();
         }
         for (Channel channel : task.getOutputChannels()) {
             for (ExecutionTask consumingTask : channel.getConsumers()) {
-                this.updateRequiredStages(consumingTask, markerSet, true);
+                this.updateRequiredStages(consumingTask, requiredStages);
             }
         }
     }
 
+
+    /**
+     * Partition the {@code stage} into two halves. All {@link ExecutionTask}s that do not have the minimum count of
+     * required {@link InterimStage}s will be put into a new {@link InterimStage}.
+     */
     private boolean partitionStage(InterimStage stage) {
+        // Short-cut: if the stage has not been marked, its required stages did not change.
         if (!stage.getAndResetMark()) {
             return false;
         }
@@ -190,10 +208,10 @@ public class StageAssignmentTraversal {
         }
 
         if (separableTasks.isEmpty()) {
-            this.logger.info("No separable tasks found in marked stage {}.", stage);
+            this.logger.debug("No separable tasks found in marked stage {}.", stage);
             return false;
         } else {
-            this.logger.info("Separating " + separableTasks + " from " + stage + "...");
+            this.logger.debug("Separating " + separableTasks + " from " + stage + "...");
             InterimStage newStage = stage.separate(separableTasks);
             this.changedStages.add(newStage);
             for (ExecutionTask separatedTask : newStage.getTasks()) {
@@ -216,17 +234,17 @@ public class StageAssignmentTraversal {
     private void assembleExecutionPlan(Map<InterimStage, ExecutionStage> finalStages,
                                        ExecutionStage successorExecutionStage,
                                        ExecutionTask currentExecutionTask) {
-        final InterimStage interimStage = this.assignedInterimStages.remove(currentExecutionTask);
-        if (interimStage == null) {
-            return;
-        }
+
+        final InterimStage interimStage = this.assignedInterimStages.get(currentExecutionTask);
         ExecutionStage executionStage = finalStages.get(interimStage);
         if (executionStage == null) {
             executionStage = interimStage.toExecutionStage();
             finalStages.put(interimStage, executionStage);
         }
 
-        if (successorExecutionStage != null && !executionStage.equals(successorExecutionStage)) {
+        if (successorExecutionStage != null
+                && !executionStage.equals(successorExecutionStage)
+                && !executionStage.getSuccessors().contains(successorExecutionStage)) {
             executionStage.addSuccessor(successorExecutionStage);
         }
 
@@ -308,6 +326,9 @@ public class StageAssignmentTraversal {
                     }
                 }
             }
+
+            // NB: We do not take care of maintaining the outbound tasks of this instance, because we do not need them
+            // any more.
             return newStage;
         }
 
@@ -317,6 +338,16 @@ public class StageAssignmentTraversal {
 
         public void mark() {
             this.isMarked = true;
+        }
+
+        public boolean isMarked() {
+            return this.isMarked;
+        }
+
+        public boolean getAndSetMark() {
+            final boolean value = this.isMarked;
+            this.isMarked = true;
+            return value;
         }
 
         public boolean getAndResetMark() {
