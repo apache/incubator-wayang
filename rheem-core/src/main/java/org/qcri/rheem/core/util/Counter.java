@@ -16,6 +16,10 @@ public class Counter<T> implements Iterable<Map.Entry<T, Integer>> {
         return this.counts.getOrDefault(element, 0);
     }
 
+    /**
+     * Counts the given {@code delta} for the given {@code element}.
+     * @return the new count
+     */
     public int add(T element, int delta) {
         final int currentCount = this.get(element);
         final int newCount = currentCount + delta;

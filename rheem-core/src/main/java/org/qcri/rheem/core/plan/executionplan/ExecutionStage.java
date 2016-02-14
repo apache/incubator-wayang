@@ -4,7 +4,9 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 
 /**
  * Resides within a {@link PlatformExecution} and represents the minimum execution unit that is controlled by Rheem.
@@ -106,5 +108,31 @@ public class ExecutionStage {
 
     public Collection<ExecutionTask> getTerminalTasks() {
         return terminalTasks;
+    }
+
+    public void toExtensiveString(StringBuilder sb) {
+        Set<ExecutionTask> seenTasks = new HashSet<>();
+        for (ExecutionTask startTask : this.startTasks) {
+            for (Channel inputChannel : startTask.getInputChannels()) {
+                sb.append(inputChannel).append(" => ").append(startTask).append('\n');
+            }
+            this.toExtensiveStringAux(startTask, seenTasks, sb);
+        }
+    }
+
+    private void toExtensiveStringAux(ExecutionTask task, Set<ExecutionTask> seenTasks, StringBuilder sb) {
+        if (!seenTasks.add(task)) {
+            return;
+        }
+        for (Channel channel : task.getOutputChannels()) {
+            for (ExecutionTask consumer : channel.getConsumers()) {
+                if (consumer.getStage() == this) {
+                    sb.append(task).append(" => ").append(channel).append(" => ").append(consumer).append('\n');
+                    this.toExtensiveStringAux(consumer, seenTasks, sb);
+                } else {
+                    sb.append(task).append(" => ").append(channel).append('\n');
+                }
+            }
+        }
     }
 }

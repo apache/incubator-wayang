@@ -33,7 +33,9 @@ public abstract class Channel {
     }
 
     public void addConsumer(ExecutionTask consumer, int inputIndex) {
-        Validate.isTrue(this.isReusable() || this.consumers.isEmpty());
+        Validate.isTrue(this.isReusable() || this.consumers.isEmpty(),
+                "Cannot add %s as consumer of non-reusable %s, there is already %s.",
+                consumer, this, this.consumers);
         this.consumers.add(consumer);
         consumer.setInputChannel(inputIndex, this);
     }
@@ -79,5 +81,10 @@ public abstract class Channel {
 
     public CardinalityEstimate getCardinalityEstimate() {
         return this.cardinalityEstimate;
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName();
     }
 }

@@ -5,6 +5,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.types.DataSetType;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -23,9 +24,22 @@ public class MockFactory {
         final ExecutionOperator mockedExecutionOperator = mock(ExecutionOperator.class, Answers.CALLS_REAL_METHODS);
         when(mockedExecutionOperator.toString()).thenReturn("ExecutionOperator[" + name + "]");
         when(mockedExecutionOperator.getPlatform()).thenReturn(platform);
-        when(mockedExecutionOperator.getAllInputs()).thenReturn(new InputSlot[numInputs]);
+
+        // Mock input slots.
+        final InputSlot[] inputSlots = new InputSlot[numInputs];
+        for (int inputIndex = 0; inputIndex < numInputs; inputIndex++) {
+            inputSlots[inputIndex] = new InputSlot("input-" + inputIndex, mockedExecutionOperator, mock(DataSetType.class));
+        }
+        when(mockedExecutionOperator.getAllInputs()).thenReturn(inputSlots);
         when(mockedExecutionOperator.getNumInputs()).thenCallRealMethod();
-        when(mockedExecutionOperator.getAllOutputs()).thenReturn(new OutputSlot[numOutputs]);
+
+        // Mock output slots.
+        final OutputSlot[] outputSlots = new OutputSlot[numOutputs];
+        for (int outputIndex = 0; outputIndex < numOutputs; outputIndex++) {
+            outputSlots[outputIndex] = new OutputSlot("output" + outputIndex, mockedExecutionOperator, mock(DataSetType.class));
+        }
+        when(mockedExecutionOperator.getAllOutputs()).thenReturn(outputSlots);
+        when(mockedExecutionOperator.getNumOutputs()).thenCallRealMethod();
         return mockedExecutionOperator;
     }
 

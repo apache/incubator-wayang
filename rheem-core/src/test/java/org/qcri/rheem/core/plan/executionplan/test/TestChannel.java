@@ -25,4 +25,5 @@ public class TestChannel extends Channel {
     public boolean isReusable() {
         return this.isReusable;
     }
+
 }
