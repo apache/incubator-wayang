@@ -1,8 +1,10 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.platform.Platform;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,11 +13,13 @@ import java.util.Set;
  */
 public abstract class OperatorBase implements Operator {
 
+    private final boolean isSupportingBroadcastInputs;
+
     private OperatorContainer container;
 
     private int epoch = FIRST_EPOCH;
 
-    protected final InputSlot<?>[] inputSlots;
+    protected InputSlot<?>[] inputSlots;
 
     protected final OutputSlot<?>[] outputSlots;
 
@@ -26,14 +30,16 @@ public abstract class OperatorBase implements Operator {
      */
     private TimeEstimate timeEstimate;
 
-    public OperatorBase(InputSlot<?>[] inputSlots, OutputSlot<?>[] outputSlots, OperatorContainer container) {
+    public OperatorBase(InputSlot<?>[] inputSlots, OutputSlot<?>[] outputSlots, boolean isSupportingBroadcastInputs,
+                        OperatorContainer container) {
         this.container = container;
+        this.isSupportingBroadcastInputs = isSupportingBroadcastInputs;
         this.inputSlots = inputSlots;
         this.outputSlots = outputSlots;
     }
 
-    public OperatorBase(int numInputSlots, int numOutputSlots, OperatorContainer container) {
-        this(new InputSlot[numInputSlots], new OutputSlot[numOutputSlots], container);
+    public OperatorBase(int numInputSlots, int numOutputSlots, boolean isSupportingBroadcastInputs, OperatorContainer container) {
+        this(new InputSlot[numInputSlots], new OutputSlot[numOutputSlots], isSupportingBroadcastInputs, container);
     }
 
     @Override
@@ -44,6 +50,30 @@ public abstract class OperatorBase implements Operator {
     @Override
     public OutputSlot<?>[] getAllOutputs() {
         return this.outputSlots;
+    }
+
+    @Override
+    public boolean isSupportingBroadcastInputs() {
+        return this.isSupportingBroadcastInputs;
+    }
+
+    @Override
+    public void addBroadcastInput(InputSlot<?> broadcastInput) {
+        Validate.isTrue(this.isSupportingBroadcastInputs(), "%s does not support broadcast inputs.", this);
+        Validate.isTrue(
+                Arrays.stream(this.getAllInputs()).noneMatch(input -> input.getName().equals(broadcastInput.getName())),
+                "The name %s is already taken in %s.", broadcastInput.getName(), this
+        );
+        Validate.isTrue(broadcastInput.isBroadcast());
+        final InputSlot<?>[] newInputs = new InputSlot<?>[this.getNumInputs() + 1];
+        System.arraycopy(this.getAllInputs(), 0, newInputs, 0, this.getNumInputs());
+        newInputs[this.getNumInputs()] = broadcastInput;
+        this.inputSlots = newInputs;
+    }
+
+    @Override
+    public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
+        return null;
     }
 
     @Override

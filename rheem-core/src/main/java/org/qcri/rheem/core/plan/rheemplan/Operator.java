@@ -16,22 +16,57 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * An operator is any node that within a data flow plan.
+ * An operator is any node that within a {@link RheemPlan}.
+ * <p>An operator is basically determined by
+ * <ul>
+ * <li>its type,</li>
+ * <li>its configuration,</li>
+ * <li>its {@link InputSlot}s, and</li>
+ * <li>its {@link OutputSlot}s.</li>
+ * </ul>
+ * The former two aspects are handled by subclassed, the latter two are basic features of every operator.</p>
+ * <p>{@link Slot}s are typed input and output declarations of each operator and can be connected to each other
+ * to form a full {@link RheemPlan}. Moreover, we distinguish between two kinds of {@link InputSlot}s:
+ * <ol>
+ * <li><b>Regular.</b>Each operator will have set up these {@link InputSlot}s already during its creation.
+ * They are indexed from 0 to the number of {@link InputSlot}s - 1.</li>
+ * <li><b>Broadcast.</b>Some operators permit for broadcast {@link InputSlot}s. These are dynamically added and
+ * will be indexed after the regular ones. Also, their execution semantics differ: Broadcast input data will be
+ * provided <i>before</i> the regular data.</li>
+ * </ol></p>
  */
 public interface Operator {
 
+    /**
+     * @return the number of {@link InputSlot}s of this instance; inclusive of broadcast {@link InputSlot}s
+     */
     default int getNumInputs() {
         return this.getAllInputs().length;
     }
 
+    /**
+     * @return the number of {@link OutputSlot}s of this instance
+     */
     default int getNumOutputs() {
         return this.getAllOutputs().length;
     }
 
+    /**
+     * @return the {@link InputSlot}s of this instance; inclusive of broadcast {@link InputSlot}s
+     */
     InputSlot<?>[] getAllInputs();
 
+    /**
+     * @return the {@link OutputSlot}s of this instance
+     */
     OutputSlot<?>[] getAllOutputs();
 
+    /**
+     * Retrieve an {@link InputSlot} of this instance using its index.
+     *
+     * @param index of the {@link InputSlot}
+     * @return the requested {@link InputSlot}
+     */
     default InputSlot<?> getInput(int index) {
         final InputSlot[] allInputs = this.getAllInputs();
         if (index < 0 || index >= allInputs.length) {
@@ -40,6 +75,12 @@ public interface Operator {
         return allInputs[index];
     }
 
+    /**
+     * Retrieve an {@link OutputSlot} of this instance using its index.
+     *
+     * @param index of the {@link OutputSlot}
+     * @return the requested {@link OutputSlot}
+     */
     default OutputSlot<?> getOutput(int index) {
         final OutputSlot[] allOutputs = this.getAllOutputs();
         if (index < 0 || index >= allOutputs.length) {
@@ -48,6 +89,12 @@ public interface Operator {
         return allOutputs[index];
     }
 
+    /**
+     * Retrieve an {@link InputSlot} of this instance by its name.
+     *
+     * @param name of the {@link InputSlot}
+     * @return the requested {@link InputSlot}
+     */
     default InputSlot<?> getInput(String name) {
         for (InputSlot inputSlot : this.getAllInputs()) {
             if (inputSlot.getName().equals(name)) return inputSlot;
@@ -55,12 +102,30 @@ public interface Operator {
         throw new IllegalArgumentException(String.format("No slot with such name: %s", name));
     }
 
+    /**
+     * Retrieve an {@link OutputSlot} of this instance by its name.
+     *
+     * @param name of the {@link OutputSlot}
+     * @return the requested {@link OutputSlot}
+     */
     default OutputSlot<?> getOutput(String name) {
         for (OutputSlot outputSlot : this.getAllOutputs()) {
             if (outputSlot.getName().equals(name)) return outputSlot;
         }
         throw new IllegalArgumentException(String.format("No slot with such name: %s", name));
     }
+
+    /**
+     * @return whether this instance permits broadcast {@link InputSlot}s besides their regular {@link InputSlot}s
+     */
+    boolean isSupportingBroadcastInputs();
+
+    /**
+     * Register an {@link InputSlot} as broadcast input of this instance.
+     *
+     * @param broadcastInput the {@link InputSlot} to be registered
+     */
+    void addBroadcastInput(InputSlot<?> broadcastInput);
 
     /**
      * Connect an output of this operator to the input of a second operator.

@@ -17,6 +17,11 @@ public class InputSlot<T> extends Slot<T> {
     private OutputSlot occupant;
 
     /**
+     * Tells whether this instance represents a broadcasted input.
+     */
+    private final boolean isBroadcast;
+
+    /**
      * Copy the {@link InputSlot}s of a given {@link Operator}.
      */
     public static void mock(Operator template, Operator mock) {
@@ -47,14 +52,31 @@ public class InputSlot<T> extends Slot<T> {
         }
     }
 
+    /**
+     * Creates a new instance that imitates the given {@code blueprint}, but for a different {@code owner}.
+     */
     public InputSlot(InputSlot blueprint, Operator owner) {
         this(blueprint.getName(), owner, blueprint.getType());
     }
 
+    /**
+     * Creates a new, non-broadcast instance.
+     */
     public InputSlot(String name, Operator owner, DataSetType type) {
-        super(name, owner, type);
+        this(name, owner, false, type);
     }
 
+    /**
+     * Creates a new instance.
+     */
+    public InputSlot(String name, Operator owner, boolean isBroadcast, DataSetType type) {
+        super(name, owner, type);
+        this.isBroadcast = isBroadcast;
+    }
+
+    /**
+     * Shortcut for {@link #InputSlot(InputSlot, Operator)}
+     */
     public InputSlot copyFor(Operator owner) {
         return new InputSlot(this, owner);
     }
@@ -107,5 +129,12 @@ public class InputSlot<T> extends Slot<T> {
         }
 
         return inputSlot;
+    }
+
+    /**
+     * @return whether this is a broadcast
+     */
+    public boolean isBroadcast() {
+        return this.isBroadcast;
     }
 }
