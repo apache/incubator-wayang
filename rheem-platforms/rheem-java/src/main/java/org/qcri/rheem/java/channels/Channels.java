@@ -5,7 +5,7 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.java.plugin.JavaPlatform;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -18,7 +18,7 @@ public class Channels {
     private static final Map<Class<? extends Channel>, ChannelTypeDescriptor<?>> CHANNEL_TYPE_DESCRIPTORS;
 
     static {
-        CHANNEL_TYPE_DESCRIPTORS = new HashMap<>();
+        CHANNEL_TYPE_DESCRIPTORS = new LinkedHashMap<>();
         CHANNEL_TYPE_DESCRIPTORS.put(CollectionChannel.class, new ChannelTypeDescriptor<>(
                 new CollectionChannel.Initializer(),
                 channel -> new CollectionChannel.Executor()

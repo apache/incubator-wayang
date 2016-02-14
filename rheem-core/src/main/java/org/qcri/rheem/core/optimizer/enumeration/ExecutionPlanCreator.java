@@ -42,6 +42,7 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
                 return false;
             }
             channel = this.setUpOutput(task1, outputIndex, channelClass);
+            this.logger.debug("Installing channel {} between {} and {}.", channel, task1, task2);
         }
 
         return this.setUpInput(task2, inputIndex, channel);
