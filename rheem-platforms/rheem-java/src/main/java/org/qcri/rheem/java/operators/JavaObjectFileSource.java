@@ -12,6 +12,8 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.fs.FileSystem;
+import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.plugin.JavaPlatform;
 import org.slf4j.LoggerFactory;
@@ -20,8 +22,8 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.Iterator;
-import java.util.Spliterators;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -44,12 +46,45 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
         Validate.isTrue(inputStreams.length == 0);
         SequenceFileIterator sequenceFileIterator;
         try {
-            sequenceFileIterator = new SequenceFileIterator<>(this.sourcePath);
+            final String path = this.findCorrectInputPath(this.sourcePath);
+            sequenceFileIterator = new SequenceFileIterator<>(path);
             Stream<?> sequenceFileStream =
                     StreamSupport.stream(Spliterators.spliteratorUnknownSize(sequenceFileIterator, 0), false);
             return new Stream[]{sequenceFileStream};
         } catch (IOException e) {
             throw new RheemException("Reading failed.", e);
+        }
+    }
+
+    /**
+     * Systems such as Spark do not produce a single output file often times. That method tries to detect such
+     * split object files to reassemble them correctly.
+     */
+    private String findCorrectInputPath(String ostensibleInputFile) {
+        final Optional<FileSystem> fileSystem = FileSystems.getFileSystem(ostensibleInputFile);
+
+        if (!fileSystem.isPresent()) {
+            LoggerFactory.getLogger(this.getClass()).warn("Could not inspect input file {}.", this.sourcePath);
+            return this.sourcePath;
+
+        } else if (fileSystem.get().isDirectory(this.sourcePath)) {
+            final Collection<String> children = fileSystem.get().listChildren(this.sourcePath);
+
+            // Look for Spark-like directory structure.
+            if (children.stream().anyMatch(child -> child.endsWith("_SUCCESS"))) {
+                final List<String> sparkFiles =
+                        children.stream().filter(child -> child.matches(".*/part-\\d{5}")).collect(Collectors.toList());
+                if (sparkFiles.size() != 1) {
+                    throw new RheemException("Illegal number of Spark result files: " + sparkFiles.size());
+                }
+                LoggerFactory.getLogger(this.getClass()).info("Using input path {} for {}.", sparkFiles.get(0), this);
+                return sparkFiles.get(0);
+            } else {
+                throw new RheemException("Could not identify directory structure: " + children);
+            }
+
+        } else {
+            return this.sourcePath;
         }
     }
 

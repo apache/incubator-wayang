@@ -62,6 +62,7 @@ public class Job {
         ExecutionPlan executionPlan = this.getExecutionPlan();
         long optimizerFinishTime = System.currentTimeMillis();
         this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
+        this.logger.info("Picked execution plan:\n{}", executionPlan.toExtensiveString());
 
         // Take care of the execution.
         this.deployAndRun(executionPlan);
