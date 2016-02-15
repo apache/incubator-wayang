@@ -9,10 +9,7 @@ import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -45,6 +42,20 @@ public interface Operator {
     }
 
     /**
+     * @return the number of non-broadcast {@link InputSlot}s of this instance
+     */
+    default int getNumRegularInputs() {
+        return this.getNumInputs() - this.getNumBroadcastInputs();
+    }
+
+    /**
+     * @return the number of broadcast {@link InputSlot}s of this instance
+     */
+    default int getNumBroadcastInputs() {
+        return (int) Arrays.stream(this.getAllInputs()).filter(InputSlot::isBroadcast).count();
+    }
+
+    /**
      * @return the number of {@link OutputSlot}s of this instance
      */
     default int getNumOutputs() {
@@ -69,9 +80,7 @@ public interface Operator {
      */
     default InputSlot<?> getInput(int index) {
         final InputSlot[] allInputs = this.getAllInputs();
-        if (index < 0 || index >= allInputs.length) {
-            throw new IllegalArgumentException(String.format("Illegal input index: %d.", index));
-        }
+        Validate.inclusiveBetween(0, allInputs.length - 1, index, "Illegal input index %d for %s.", index, this);
         return allInputs[index];
     }
 
@@ -141,6 +150,20 @@ public interface Operator {
             throw new IllegalArgumentException("Cannot connect slots: mismatching types");
         }
         outputSlot.connectTo(inputSlot);
+    }
+
+    /**
+     * Connect an output of this operator as a broadcast input of a second operator.
+     *
+     * @param thisOutputIndex index of the output slot to connect to
+     * @param that            operator to connect to
+     * @param broadcastName   name of the broadcast that will be used by the operator to identify the broadcast; must
+     *                        be unique among all {@link InputSlot}s
+     */
+    default void broadcastTo(int thisOutputIndex, Operator that, String broadcastName) {
+        final OutputSlot<?> output = this.getOutput(thisOutputIndex);
+        final InputSlot<?> broadcastInput = new InputSlot<>(broadcastName, that, true, output.getType());
+        that.addBroadcastInput(broadcastInput);
     }
 
 

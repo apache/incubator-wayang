@@ -2,7 +2,6 @@ package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.java.operators.JavaGlobalReduceOperator;
 import org.qcri.rheem.java.plugin.JavaPlatform;
 
@@ -11,14 +10,19 @@ import java.util.Collections;
 
 /**
  * Mapping from {@link GlobalReduceOperator} to {@link JavaGlobalReduceOperator}.
- * todo
  */
+@SuppressWarnings("unchecked")
 public class JavaGlobalReduceOperatorMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                JavaPlatform.getInstance()));
+        return Collections.singleton(
+                new PlanTransformation(
+                        this.createSubplanPattern(),
+                        this.createReplacementSubplanFactory(),
+                        JavaPlatform.getInstance()
+                )
+        );
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -27,15 +31,12 @@ public class JavaGlobalReduceOperatorMapping implements Mapping {
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final GlobalReduceOperator<?> originalOperator = (GlobalReduceOperator<?>) subplanMatch.getMatch("reduce").getOperator();
-            return new JavaGlobalReduceOperator<>(
-                    originalOperator.getType().unchecked(),
-                    originalOperator.getReduceDescriptor().unchecked()
-            ).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<JavaGlobalReduceOperator>(
+                (matchedOperator, epoch) -> new JavaGlobalReduceOperator<>(
+                        matchedOperator.getType(),
+                        matchedOperator.getReduceDescriptor()
+                ).at(epoch)
+        );
     }
 }

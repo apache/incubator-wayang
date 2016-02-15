@@ -2,7 +2,6 @@ package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.java.operators.JavaFlatMapOperator;
 import org.qcri.rheem.java.plugin.JavaPlatform;
 
@@ -12,12 +11,18 @@ import java.util.Collections;
 /**
  * Mapping from {@link FlatMapOperator} to {@link JavaFlatMapOperator}.
  */
+@SuppressWarnings("unchecked")
 public class FlatMapToJavaFlatMapMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                JavaPlatform.getInstance()));
+        return Collections.singleton(
+                new PlanTransformation(
+                        this.createSubplanPattern(),
+                        this.createReplacementSubplanFactory(),
+                        JavaPlatform.getInstance()
+                )
+        );
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -26,14 +31,13 @@ public class FlatMapToJavaFlatMapMapping implements Mapping {
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final FlatMapOperator<?, ?> originalOperator = (FlatMapOperator<?, ?>) subplanMatch.getMatch("flatMap").getOperator();
-            return new JavaFlatMapOperator(originalOperator.getInputType(),
-                    originalOperator.getOutputType(),
-                    originalOperator.getFunctionDescriptor()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<FlatMapOperator>(
+                (matchedOperator, epoch) -> new JavaFlatMapOperator<>(
+                        matchedOperator.getInputType(),
+                        matchedOperator.getOutputType(),
+                        matchedOperator.getFunctionDescriptor()
+                ).at(epoch)
+        );
     }
 }

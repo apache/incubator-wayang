@@ -11,8 +11,8 @@ public abstract class BinaryToUnaryOperator<InputType0, InputType1, OutputType> 
      * Creates a new instance.
      */
     public BinaryToUnaryOperator(DataSetType<InputType0> inputType0, DataSetType<InputType1> inputType1,
-                                 DataSetType<OutputType> outputType) {
-        super(2, 1, null);
+                                 DataSetType<OutputType> outputType, boolean isSupportingBroadcastInputs) {
+        super(2, 1, isSupportingBroadcastInputs, null);
         this.inputSlots[0] = new InputSlot<>("input0", this, inputType0);
         this.inputSlots[1] = new InputSlot<>("input1", this, inputType1);
         this.outputSlots[0] = new OutputSlot<>("output", this, outputType);

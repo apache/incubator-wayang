@@ -2,8 +2,8 @@ package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.spark.operators.SparkFlatMapOperator;
+import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -11,11 +11,18 @@ import java.util.Collections;
 /**
  * Mapping from {@link FlatMapOperator} to {@link SparkFlatMapOperator}.
  */
+@SuppressWarnings("unchecked")
 public class FlatMapToSparkFlatMapMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory()));
+        return Collections.singleton(
+                new PlanTransformation(
+                        this.createSubplanPattern(),
+                        this.createReplacementSubplanFactory(),
+                        SparkPlatform.getInstance()
+                )
+        );
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -24,14 +31,13 @@ public class FlatMapToSparkFlatMapMapping implements Mapping {
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final FlatMapOperator<?, ?> originalOperator = (FlatMapOperator<?, ?>) subplanMatch.getMatch("flatMap").getOperator();
-            return new SparkFlatMapOperator(originalOperator.getInputType(),
-                    originalOperator.getOutputType(),
-                    originalOperator.getFunctionDescriptor()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<FlatMapOperator>(
+                (matchedOperator, epoch) -> new SparkFlatMapOperator<>(
+                        matchedOperator.getInputType(),
+                        matchedOperator.getOutputType(),
+                        matchedOperator.getFunctionDescriptor()
+                ).at(epoch)
+        );
     }
 }

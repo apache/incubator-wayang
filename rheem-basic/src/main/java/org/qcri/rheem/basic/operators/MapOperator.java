@@ -26,7 +26,7 @@ public class MapOperator<InputType, OutputType> extends UnaryToUnaryOperator<Inp
      */
     public MapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType,
                        TransformationDescriptor<InputType, OutputType> functionDescriptor) {
-        super(inputType, outputType, null);
+        super(inputType, outputType, true, null);
         this.functionDescriptor = functionDescriptor;
     }
 

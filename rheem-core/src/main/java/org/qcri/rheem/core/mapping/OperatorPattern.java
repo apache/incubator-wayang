@@ -13,11 +13,19 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
 
     private final boolean isMatchSubclasses;
 
+    /**
+     * Creates a new instance.
+     * @param name used to identify the new instance (e.g., in {@link SubplanMatch}es)
+     * @param exampleOperator serves as template of the {@link Operator}s to match
+     * @param isMatchSubclasses whether to match subclasses of the {@code exampleOperator}
+     */
     public OperatorPattern(String name,
                            T exampleOperator,
                            boolean isMatchSubclasses) {
 
-        super(exampleOperator.getNumInputs(), exampleOperator.getNumOutputs(), null);
+        super(exampleOperator.getNumInputs(), exampleOperator.getNumOutputs(),
+                exampleOperator.isSupportingBroadcastInputs(),
+                null);
 
         this.name = name;
         InputSlot.mock(exampleOperator, this);
@@ -35,6 +43,8 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
      */
     public OperatorMatch match(Operator operator) {
         if (operator == null) return null;
+
+        // Only match by the class so far.
         if (this.isMatchSubclasses ?
                 this.operatorClass.isAssignableFrom(operator.getClass()) :
                 this.operatorClass.equals(operator.getClass())) {
@@ -46,8 +56,9 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
     }
 
     private void checkSanity(Operator operator) {
-        if (this.getNumInputs() != operator.getNumInputs()) {
-            throw new IllegalStateException("Matched an operator with different numbers of inputs.");
+        if (this.getNumRegularInputs() != operator.getNumRegularInputs()) {
+            throw new IllegalStateException(String.format("%s expected %d inputs, but matched %s with %d inputs.",
+                    this, this.getNumRegularInputs(), operator, operator.getNumRegularInputs()));
         }
         if (this.getNumOutputs() != operator.getNumOutputs()) {
             throw new IllegalStateException("Matched an operator with different numbers of outputs.");

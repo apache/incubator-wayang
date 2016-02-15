@@ -30,7 +30,7 @@ public class ReduceByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Type
     public ReduceByOperator(DataSetType<Type> type,
                             TransformationDescriptor<Type, Key> keyDescriptor,
                             ReduceDescriptor<Type> reduceDescriptor) {
-        super(type, type, null);
+        super(type, type, true, null);
         this.keyDescriptor = keyDescriptor;
         this.reduceDescriptor = reduceDescriptor;
     }

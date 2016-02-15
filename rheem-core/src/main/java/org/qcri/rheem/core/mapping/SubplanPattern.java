@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.mapping;
 
+import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.*;
 
 import java.util.*;
@@ -11,13 +13,10 @@ import java.util.*;
  */
 public class SubplanPattern extends OperatorBase {
 
+    /**
+     * Start and end {@link OperatorPattern} of this instance.
+     */
     private final OperatorPattern inputPattern, outputPattern;
-
-    public SubplanPattern(OperatorPattern inputPattern, OperatorPattern outputPattern) {
-        super(inputPattern.getAllInputs(), outputPattern.getAllOutputs(), null);
-        this.inputPattern = inputPattern;
-        this.outputPattern = outputPattern;
-    }
 
     /**
      * Creates a new instance that matches only a single operator.
@@ -39,6 +38,15 @@ public class SubplanPattern extends OperatorBase {
     public static final SubplanPattern fromOperatorPatterns(OperatorPattern inputOperatorPattern,
                                                             OperatorPattern outputOperatorPattern) {
         return new SubplanPattern(inputOperatorPattern, outputOperatorPattern);
+    }
+
+    /**
+     * Creates a new instance.
+     */
+    private SubplanPattern(OperatorPattern inputPattern, OperatorPattern outputPattern) {
+        super(inputPattern.getAllInputs(), outputPattern.getAllOutputs(), false, null);
+        this.inputPattern = inputPattern;
+        this.outputPattern = outputPattern;
     }
 
     /**
@@ -91,11 +99,22 @@ public class SubplanPattern extends OperatorBase {
          */
         private final int minEpoch;
 
+        /**
+         * Creates a new instance.
+         *
+         * @param minEpoch see {@link #minEpoch}
+         */
         public Matcher(int minEpoch) {
             this.minEpoch = minEpoch;
         }
 
+        /**
+         * Run this instance over the given {@link RheemPlan}.
+         *
+         * @return a {@link List} of all {@link SubplanMatch}es established by the run
+         */
         public List<SubplanMatch> match(RheemPlan plan) {
+            // Start an attempt to match from each operator that is upstream-reachable from one of the RheemPlan sinks.
             new PlanTraversal(true, false)
                     .withCallback(this::attemptMatchFrom)
                     .traverse(plan.getSinks());
@@ -109,9 +128,7 @@ public class SubplanPattern extends OperatorBase {
          * @param operator the operator that should be matched with the operator pattern
          */
         private void attemptMatchFrom(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
-            if (fromInputSlot != null) {
-                throw new IllegalStateException("Cannot handle downstream traversals.");
-            }
+            Validate.isTrue(fromInputSlot == null, "Cannot handle downstream traversals.");
 
             // Try to make a match starting from the currently visited operator.
             final SubplanMatch subplanMatch = new SubplanMatch(SubplanPattern.this);
@@ -120,21 +137,28 @@ public class SubplanPattern extends OperatorBase {
 
         /**
          * Recursively match the given operator pattern and operator including their input operators.
+         *
+         * @param pattern           the next {@link OperatorPattern} to match with
+         * @param operator          the {@link Operator} that should match with the {@code pattern}
+         * @param trackedOutputSlot the {@link OutputSlot} of the {@link Operator} that we are coming from
+         * @param subplanMatch      collects the {@link OperatorMatch}es on success
          */
         private void match(OperatorPattern pattern,
                            Operator operator,
                            OutputSlot<?> trackedOutputSlot,
                            SubplanMatch subplanMatch) {
 
+            // Make sure that nobody expects more from this instance than it can handle.
             if (pattern.getNumInputs() > 1 &&
                     Arrays.stream(pattern.getAllInputs())
                             .map(InputSlot::getOccupant)
                             .filter(Objects::nonNull)
                             .count() > 1) {
-                throw new RuntimeException("Cannot match pattern: Operator with more than one occupied input not supported, yet.");
+                throw new RheemException("Cannot match pattern: Operator with more than one occupied input not supported, yet.");
             }
 
             if (operator instanceof Subplan) {
+                // Delegate to the inner part of the Subplan.
                 if (trackedOutputSlot == null) {
                     this.match(pattern, ((Subplan) operator).getSink(), trackedOutputSlot, subplanMatch);
                 } else {
@@ -143,6 +167,7 @@ public class SubplanPattern extends OperatorBase {
                 }
 
             } else if (operator instanceof OperatorAlternative) {
+                // Delegate to all Alternatives of the OperatorAlternative.
                 for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
                     SubplanMatch subplanMatchCopy = new SubplanMatch(subplanMatch);
                     if (trackedOutputSlot == null) {
@@ -153,12 +178,12 @@ public class SubplanPattern extends OperatorBase {
                     }
                 }
 
-            } else if (operator instanceof OperatorAlternative.Alternative) {
-                throw new IllegalStateException("Should not match against " +
-                        OperatorAlternative.Alternative.class.getSimpleName());
-
             } else {
+                // We expect a regular Operator here.
                 // Try to match the co-iterated operator (pattern).
+                if (operator.getEpoch() < this.minEpoch) {
+                    return;
+                }
                 final OperatorMatch operatorMatch = pattern.match(operator);
                 if (operatorMatch == null) {
                     // If match was not successful, abort. NB: This might change if we have, like, real graph patterns.
@@ -167,14 +192,15 @@ public class SubplanPattern extends OperatorBase {
 
                 subplanMatch.addOperatorMatch(operatorMatch);
 
-                // Now we need to try to match all the input operator patterns.
-                boolean isTerminalOperator = true;
-                for (int inputIndex = 0; inputIndex < operator.getNumInputs(); inputIndex++) {
+                // Now we need to go further upstream and try to match all the input OperatorPatterns.
+                // NB: As of now, that should be exactly one (see top).
+                boolean hasInputOperatorPatterns = false;
+                for (int inputIndex = 0; inputIndex < pattern.getNumInputs(); inputIndex++) {
                     final OperatorPattern inputOperatorPattern = (OperatorPattern) pattern.getInputOperator(inputIndex);
                     if (inputOperatorPattern == null) {
                         continue;
                     }
-                    isTerminalOperator = false;
+                    hasInputOperatorPatterns = true;
                     final InputSlot<?> outerInputSlot = operator.getOutermostInputSlot(operator.getInput(inputIndex));
                     final OutputSlot<?> occupant = outerInputSlot.getOccupant();
                     if (occupant != null) {
@@ -183,7 +209,7 @@ public class SubplanPattern extends OperatorBase {
 
                 }
 
-                if (isTerminalOperator && subplanMatch.getMaximumEpoch() >= this.minEpoch) {
+                if (!hasInputOperatorPatterns) {
                     this.matches.add(subplanMatch);
                 }
             }

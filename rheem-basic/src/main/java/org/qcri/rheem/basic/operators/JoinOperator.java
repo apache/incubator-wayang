@@ -24,7 +24,7 @@ public class JoinOperator<InputType0, InputType1, Key>
                         DataSetType<InputType1> inputType1,
                         TransformationDescriptor<InputType0, Key> keyDescriptor0,
                         TransformationDescriptor<InputType1, Key> keyDescriptor1) {
-        super(inputType0, inputType1, JoinOperator.<InputType0, InputType1>createOutputDataSetType());
+        super(inputType0, inputType1, JoinOperator.<InputType0, InputType1>createOutputDataSetType(), true);
         this.keyDescriptor0 = keyDescriptor0;
         this.keyDescriptor1 = keyDescriptor1;
 

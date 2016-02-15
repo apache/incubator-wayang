@@ -42,7 +42,7 @@ public class OutputSlot<T> extends Slot<T> {
         }
     }
 
-    public OutputSlot(OutputSlot blueprint, Operator owner) {
+    public OutputSlot(Slot blueprint, Operator owner) {
         this(blueprint.getName(), owner, blueprint.getType());
     }
 

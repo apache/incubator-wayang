@@ -106,9 +106,11 @@ public abstract class OperatorBase implements Operator {
 
     @Override
     public String toString() {
-        return String.format("%s[%d->%d, id=%x]",
+        long numBroadcasts = Arrays.stream(this.getAllInputs()).filter(InputSlot::isBroadcast).count();
+        return String.format("%s[%d%s->%d, id=%x]",
                 this.getClass().getSimpleName(),
-                this.getNumInputs(),
+                this.getNumInputs() - numBroadcasts,
+                numBroadcasts == 0 ? "" : "+" + numBroadcasts,
                 this.getNumOutputs(),
 //                this.getParent() == null ? "top-level" : "nested",
                 this.hashCode());

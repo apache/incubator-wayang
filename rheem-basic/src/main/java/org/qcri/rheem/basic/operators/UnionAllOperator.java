@@ -24,7 +24,7 @@ public class UnionAllOperator<Type>
      * @param type the type of the datasets to be coalesced
      */
     public UnionAllOperator(DataSetType<Type> type) {
-        super(type, type, type);
+        super(type, type, type, false);
     }
 
     @Override

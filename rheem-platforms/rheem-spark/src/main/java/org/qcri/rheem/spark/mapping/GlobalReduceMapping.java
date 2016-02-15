@@ -4,19 +4,24 @@ import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.spark.operators.SparkGlobalReduceOperator;
+import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
  * Mapping from {@link GlobalReduceOperator} to {@link SparkGlobalReduceOperator}.
- * todo
  */
+@SuppressWarnings("unchecked")
 public class GlobalReduceMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory()));
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                SparkPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -25,15 +30,13 @@ public class GlobalReduceMapping implements Mapping {
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final GlobalReduceOperator<?> originalOperator = (GlobalReduceOperator<?>) subplanMatch.getMatch("reduce").getOperator();
-            return new SparkGlobalReduceOperator<>(
-                    originalOperator.getType().unchecked(),
-                    originalOperator.getReduceDescriptor().unchecked()
-            ).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<GlobalReduceOperator>(
+                (matchedOperator, epoch) -> new SparkGlobalReduceOperator<>(
+                        matchedOperator.getType(),
+                        matchedOperator.getReduceDescriptor()
+                ).at(epoch)
+        );
     }
+
 }

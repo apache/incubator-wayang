@@ -3,7 +3,6 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.java.operators.JavaMapOperator;
 import org.qcri.rheem.java.operators.JavaTextFileSource;
 import org.qcri.rheem.java.plugin.JavaPlatform;
@@ -14,12 +13,18 @@ import java.util.Collections;
 /**
  * Mapping from {@link TextFileSource} to {@link JavaTextFileSource}.
  */
+@SuppressWarnings("unchecked")
 public class MapOperatorToJavaMapOperatorMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                JavaPlatform.getInstance()));
+        return Collections.singleton(
+                new PlanTransformation(
+                        this.createSubplanPattern(),
+                        this.createReplacementSubplanFactory(),
+                        JavaPlatform.getInstance()
+                )
+        );
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -28,14 +33,14 @@ public class MapOperatorToJavaMapOperatorMapping implements Mapping {
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
 
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final MapOperator<?, ?> originalOperator = (MapOperator<?, ?>) subplanMatch.getMatch("map").getOperator();
-            return new JavaMapOperator(originalOperator.getInputType(),
-                    originalOperator.getOutputType(),
-                    originalOperator.getFunctionDescriptor()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<MapOperator>(
+                (matchedOperator, epoch) -> new JavaMapOperator<>(
+                        matchedOperator.getInputType(),
+                        matchedOperator.getOutputType(),
+                        matchedOperator.getFunctionDescriptor()
+                ).at(epoch)
+        );
     }
 }

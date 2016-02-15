@@ -55,8 +55,15 @@ public class InputSlot<T> extends Slot<T> {
     /**
      * Creates a new instance that imitates the given {@code blueprint}, but for a different {@code owner}.
      */
-    public InputSlot(InputSlot blueprint, Operator owner) {
+    public InputSlot(Slot blueprint, Operator owner) {
         this(blueprint.getName(), owner, blueprint.getType());
+    }
+
+    /**
+     * Creates a new instance that imitates the given {@code blueprint}, but for a different {@code owner}.
+     */
+    public InputSlot(InputSlot blueprint, Operator owner) {
+        this(blueprint.getName(), owner, blueprint.isBroadcast(), blueprint.getType());
     }
 
     /**
@@ -75,7 +82,7 @@ public class InputSlot<T> extends Slot<T> {
     }
 
     /**
-     * Shortcut for {@link #InputSlot(InputSlot, Operator)}
+     * Shortcut for {@link #InputSlot(Slot, Operator)}
      */
     public InputSlot copyFor(Operator owner) {
         return new InputSlot(this, owner);

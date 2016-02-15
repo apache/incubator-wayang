@@ -62,7 +62,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
      * @see #wrap(Operator, Operator)
      */
     private Subplan(Operator inputOperator, Operator outputOperator, OperatorContainer container) {
-        super(inputOperator.getNumInputs(), outputOperator.getNumOutputs(), container);
+        super(inputOperator.getNumInputs(), outputOperator.getNumOutputs(), false, container);
 
         this.inputOperator = inputOperator;
         this.outputOperator = outputOperator;

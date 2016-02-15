@@ -40,7 +40,10 @@ public class SlotMapping {
     }
 
     public void mapAllUpsteam(InputSlot[] sources, InputSlot[] targets) {
-        if (sources.length != targets.length) throw new IllegalArgumentException();
+        if (sources.length != targets.length) {
+            throw new IllegalArgumentException(String.format("Incompatible number of input slots between %s and %s.",
+                    Arrays.toString(sources), Arrays.toString(targets)));
+        }
         for (int i = 0; i < sources.length; i++) {
             this.mapUpstream(sources[i], targets[i]);
         }

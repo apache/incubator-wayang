@@ -7,9 +7,19 @@ import org.qcri.rheem.core.types.DataSetType;
  */
 public abstract class UnarySource<T> extends OperatorBase implements ActualOperator {
 
-    public UnarySource(DataSetType type, OperatorContainer container) {
-        super(0, 1, container);
+    /**
+     * Creates a new instance.
+     */
+    public UnarySource(DataSetType type, boolean isSupportingBroadcastInputs, OperatorContainer container) {
+        super(0, 1, isSupportingBroadcastInputs, container);
         this.outputSlots[0] = new OutputSlot<T>("output", this, type);
+    }
+
+    /**
+     * Creates a new instance that does not support broadcast {@link InputSlot}s.
+     */
+    public UnarySource(DataSetType type, OperatorContainer container) {
+        this(type, false, container);
     }
 
     public OutputSlot<T> getOutput() {

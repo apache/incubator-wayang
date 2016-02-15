@@ -15,7 +15,7 @@ import java.util.Optional;
 public class TestJoin<In1, In2, Out> extends OperatorBase implements ActualOperator {
 
     public TestJoin(DataSetType<In1> inputType1, DataSetType<In2> inputType2, DataSetType<Out> outputType) {
-        super(2, 1, null);
+        super(2, 1, false, null);
         this.inputSlots[0] = new InputSlot<>("in1", this, inputType1);
         this.inputSlots[1] = new InputSlot<>("in2", this, inputType2);
         this.outputSlots[0] = new OutputSlot<>("out", this, outputType);

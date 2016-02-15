@@ -107,7 +107,7 @@ public class Operators {
     }
 
     public static final Operator slotlessOperator(OperatorContainer container) {
-        return new OperatorBase(0, 0, container) {
+        return new OperatorBase(0, 0, false, container) {
             @Override
             public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
                 throw new RuntimeException("Slotless operator should not be traversed.");

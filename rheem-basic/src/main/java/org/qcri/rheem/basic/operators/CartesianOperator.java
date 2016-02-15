@@ -14,6 +14,6 @@ public class CartesianOperator<InputType0, InputType1>
 
 
     public CartesianOperator(DataSetType <InputType0> inputType0, DataSetType inputType1) {
-        super(inputType0, inputType1, DataSetType.createDefaultUnchecked(Tuple2.class));
+        super(inputType0, inputType1, DataSetType.createDefaultUnchecked(Tuple2.class), true);
     }
 }

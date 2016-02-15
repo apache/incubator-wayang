@@ -22,7 +22,7 @@ public class CountOperator<Type> extends UnaryToUnaryOperator<Type, Long> {
      * @param type type of the stream elements
      */
     public CountOperator(DataSetType<Type> type) {
-        super(type, DataSetType.createDefault(Long.class), null);
+        super(type, DataSetType.createDefault(Long.class), false, null);
     }
 
     @Override

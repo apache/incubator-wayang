@@ -54,7 +54,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
      * Creates a new instance with the same number of inputs and outputs and the same parent as the given operator.
      */
     private OperatorAlternative(Operator operator) {
-        super(operator.getNumInputs(), operator.getNumOutputs(), operator.getContainer());
+        super(operator.getNumInputs(), operator.getNumOutputs(), false, operator.getContainer());
     }
 
     public List<Alternative> getAlternatives() {

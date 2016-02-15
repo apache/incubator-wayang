@@ -27,7 +27,7 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
      */
     public FlatMapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType,
                            FlatMapDescriptor<InputType, Iterator<OutputType>> functionDescriptor) {
-        super(inputType, outputType, null);
+        super(inputType, outputType, true, null);
         this.functionDescriptor = functionDescriptor;
     }
 

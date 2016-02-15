@@ -26,7 +26,7 @@ public class MaterializedGroupByOperator<Type, Key> extends UnaryToUnaryOperator
      */
     public MaterializedGroupByOperator(DataSetType<Type> type,
                                        TransformationDescriptor<Type, Key> keyDescriptor) {
-        super(type, type, null);
+        super(type, type, false, null);
         this.keyDescriptor = keyDescriptor;
     }
 

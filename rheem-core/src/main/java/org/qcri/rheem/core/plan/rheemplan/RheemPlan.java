@@ -10,9 +10,15 @@ public class RheemPlan {
 
     private final Collection<Operator> sinks = new LinkedList<>();
 
+    public RheemPlan(Operator... sinks) {
+        for (Operator sink : sinks) {
+            this.addSink(sink);
+        }
+    }
+
     public void addSink(Operator sink) {
         if (!sink.isSink()) {
-            throw new IllegalArgumentException("Operator is not a sink.");
+            throw new IllegalArgumentException(String.format("%s is not a sink.", sink));
         }
         this.sinks.add(sink);
     }
