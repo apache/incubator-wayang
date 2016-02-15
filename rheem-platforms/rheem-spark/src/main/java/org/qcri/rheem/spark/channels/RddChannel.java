@@ -25,7 +25,14 @@ public class RddChannel extends Channel {
 
         @Override
         public RddChannel setUpOutput(ExecutionTask executionTask, int index) {
-            return new RddChannel(executionTask, index);
+            final Channel existingOutputChannel = executionTask.getOutputChannel(index);
+            if (existingOutputChannel == null) {
+                return new RddChannel(executionTask, index);
+            } else if (existingOutputChannel instanceof RddChannel) {
+                return (RddChannel) existingOutputChannel;
+            } else {
+                throw new IllegalStateException();
+            }
         }
 
         @Override

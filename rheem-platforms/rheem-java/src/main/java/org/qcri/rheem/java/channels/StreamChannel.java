@@ -25,7 +25,14 @@ public class StreamChannel extends Channel {
 
         @Override
         public StreamChannel setUpOutput(ExecutionTask executionTask, int index) {
-            return new StreamChannel(executionTask, index);
+            final Channel existingOutputChannel = executionTask.getOutputChannel(index);
+            if (existingOutputChannel == null) {
+                return new StreamChannel(executionTask, index);
+            } else if (existingOutputChannel instanceof StreamChannel) {
+                return (StreamChannel) existingOutputChannel;
+            } else {
+                throw new IllegalStateException();
+            }
         }
 
         @Override

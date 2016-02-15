@@ -34,4 +34,14 @@ public interface ChannelInitializer<T extends Channel> {
      * @return whether the {@link Channel}s managed by this instance are reusable
      */
     boolean isReusable();
+
+    /**
+     * Erases the type variable from this instance.
+     *
+     * @return this instance, casted
+     */
+    @SuppressWarnings("unchecked")
+    default ChannelInitializer<Channel> unchecked() {
+        return (ChannelInitializer<Channel>) this;
+    }
 }

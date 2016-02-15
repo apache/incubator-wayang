@@ -30,7 +30,14 @@ public class CollectionChannel extends Channel {
         public CollectionChannel setUpOutput(ExecutionTask executionTask, int index) {
             // TODO: We might need to add a "collector" operator or the like because this channel might introduce overhead.
             // Then we might also get rid of the ChannelExecutors.
-            return new CollectionChannel(executionTask, index);
+            final Channel existingOutputChannel = executionTask.getOutputChannel(index);
+            if (existingOutputChannel == null) {
+                return new CollectionChannel(executionTask, index);
+            } else if (existingOutputChannel instanceof CollectionChannel) {
+                return (CollectionChannel) existingOutputChannel;
+            } else {
+                throw new IllegalStateException();
+            }
         }
 
         @Override

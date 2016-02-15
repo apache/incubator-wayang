@@ -109,12 +109,13 @@ public abstract class AbstractTopologicalTraversal<Payload,
          * @param activatorQueue accepts newly activated {@link CardinalityEstimator}s
          */
         protected void process(Queue<Activator<TActivation>> activatorQueue) {
-
             Validate.isTrue(this.isActivationComplete());
-            if (!this.doWork()) {
+            Collection<TActivation> successorActivations = this.doWork();
+            if (successorActivations == null) {
                 throw new AbortException(String.format("%s requested to abort.", this));
             }
-            for (TActivation activation : this.getSuccessorActivations()) {
+
+            for (TActivation activation : successorActivations) {
                 final Activator<TActivation> activator = activation.getTargetActivator();
                 activator.accept(activation);
                 if (activator.isActivationComplete()) {
@@ -123,9 +124,12 @@ public abstract class AbstractTopologicalTraversal<Payload,
             }
         }
 
-        protected abstract Collection<TActivation> getSuccessorActivations();
-
-        protected abstract boolean doWork();
+        /**
+         * Performs the work to be done by this instance and defines the next {@link Activation}s.
+         *
+         * @return the newly produced {@link Activation}s or {@code null} if traversal should be aborted
+         */
+        protected abstract Collection<TActivation> doWork();
 
         protected abstract void accept(TActivation activation);
 
