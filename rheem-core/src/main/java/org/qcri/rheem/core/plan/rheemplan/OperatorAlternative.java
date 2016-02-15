@@ -34,7 +34,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     public static OperatorAlternative wrap(Operator operator) {
         OperatorAlternative operatorAlternative = new OperatorAlternative(operator);
 
-        InputSlot.mock(operator, operatorAlternative);
+        InputSlot.mock(operator, operatorAlternative, false);
         InputSlot.stealConnections(operator, operatorAlternative);
 
         OutputSlot.mock(operator, operatorAlternative);

@@ -25,13 +25,22 @@ public class InputSlot<T> extends Slot<T> {
      * Copy the {@link InputSlot}s of a given {@link Operator}.
      */
     public static void mock(Operator template, Operator mock) {
+        mock(template, mock, true);
+    }
+
+    /**
+     * Copy the {@link InputSlot}s of a given {@link Operator}.
+     */
+    public static void mock(Operator template, Operator mock, boolean isKeepBroadcastStatus) {
         if (template.getNumInputs() != mock.getNumInputs()) {
             throw new IllegalArgumentException("Cannot mock inputs: Mismatching number of inputs.");
         }
 
         InputSlot[] mockSlots = mock.getAllInputs();
         for (int i = 0; i < template.getNumInputs(); i++) {
-            mockSlots[i] = template.getInput(i).copyFor(mock);
+            mockSlots[i] = isKeepBroadcastStatus ?
+                    template.getInput(i).copyFor(mock) :
+                    template.getInput(i).copyAsNonBroadcastFor(mock);
         }
     }
 
@@ -86,6 +95,13 @@ public class InputSlot<T> extends Slot<T> {
      */
     public InputSlot copyFor(Operator owner) {
         return new InputSlot(this, owner);
+    }
+
+    /**
+     * As {@link #copyFor(Operator)}, but ensures that the copy will not be marked as broadcast.
+     */
+    public InputSlot copyAsNonBroadcastFor(Operator owner) {
+        return new InputSlot(this.getName(), owner, false, this.getType());
     }
 
     /**

@@ -58,17 +58,19 @@ public abstract class OperatorBase implements Operator {
     }
 
     @Override
-    public void addBroadcastInput(InputSlot<?> broadcastInput) {
+    public int addBroadcastInput(InputSlot<?> broadcastInput) {
         Validate.isTrue(this.isSupportingBroadcastInputs(), "%s does not support broadcast inputs.", this);
         Validate.isTrue(
                 Arrays.stream(this.getAllInputs()).noneMatch(input -> input.getName().equals(broadcastInput.getName())),
                 "The name %s is already taken in %s.", broadcastInput.getName(), this
         );
         Validate.isTrue(broadcastInput.isBroadcast());
-        final InputSlot<?>[] newInputs = new InputSlot<?>[this.getNumInputs() + 1];
-        System.arraycopy(this.getAllInputs(), 0, newInputs, 0, this.getNumInputs());
-        newInputs[this.getNumInputs()] = broadcastInput;
+        final int oldNumInputSlots = this.getNumInputs();
+        final InputSlot<?>[] newInputs = new InputSlot<?>[oldNumInputSlots + 1];
+        System.arraycopy(this.getAllInputs(), 0, newInputs, 0, oldNumInputSlots);
+        newInputs[oldNumInputSlots] = broadcastInput;
         this.inputSlots = newInputs;
+        return oldNumInputSlots;
     }
 
     @Override

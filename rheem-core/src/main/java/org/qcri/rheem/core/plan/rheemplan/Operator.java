@@ -133,8 +133,9 @@ public interface Operator {
      * Register an {@link InputSlot} as broadcast input of this instance.
      *
      * @param broadcastInput the {@link InputSlot} to be registered
+     * @return the assigned index of the {@link InputSlot}
      */
-    void addBroadcastInput(InputSlot<?> broadcastInput);
+    int addBroadcastInput(InputSlot<?> broadcastInput);
 
     /**
      * Connect an output of this operator to the input of a second operator.
@@ -163,7 +164,8 @@ public interface Operator {
     default void broadcastTo(int thisOutputIndex, Operator that, String broadcastName) {
         final OutputSlot<?> output = this.getOutput(thisOutputIndex);
         final InputSlot<?> broadcastInput = new InputSlot<>(broadcastName, that, true, output.getType());
-        that.addBroadcastInput(broadcastInput);
+        final int broadcastIndex = that.addBroadcastInput(broadcastInput);
+        this.connectTo(thisOutputIndex, that, broadcastIndex);
     }
 
 
