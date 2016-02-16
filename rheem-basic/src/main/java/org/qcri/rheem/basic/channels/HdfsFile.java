@@ -1,5 +1,6 @@
 package org.qcri.rheem.basic.channels;
 
+import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -26,6 +27,16 @@ public class HdfsFile extends Channel {
 
     public Collection<String> getPaths() {
         return this.paths;
+    }
+
+    /**
+     * If there is only a single element on {@link #getPaths()}, retrieves it. Otherwise, fails.
+     *
+     * @return the single element from {@link #getPaths()}
+     */
+    public String getSinglePath() {
+        Validate.isTrue(this.paths.size() == 1);
+        return this.paths.iterator().next();
     }
 
     @Override

@@ -43,8 +43,6 @@ public abstract class AbstractTopologicalTraversal<Payload,
         } catch (AbortException e) {
             this.logger.debug("Traversal aborted: {}", e.getMessage());
             return false;
-        } finally {
-//            this.reset();
         }
         return true;
     }
@@ -74,20 +72,6 @@ public abstract class AbstractTopologicalTraversal<Payload,
     protected abstract Collection<ActivatorType> getInitialActivators();
 
     protected abstract Collection<ActivationType> getInitialActivations(int index);
-
-//    protected abstract int getNumActivations();
-//
-//    private void reset() {
-//        for (int i = 0; i < this.getNumActivations(); i++) {
-//            this.getInitialActivations(i).forEach(this::reset);
-//        }
-//        this.getInitialActivators().forEach(Activator::reset);
-//    }
-
-//    private void reset(Activation activation) {
-//        final Activator activator = activation.targetActivator;
-//        activator.reset();
-//    }
 
     /**
      * Wraps a {@link CardinalityEstimator}, thereby caching its input {@link CardinalityEstimate}s and keeping track
@@ -133,8 +117,6 @@ public abstract class AbstractTopologicalTraversal<Payload,
 
         protected abstract void accept(TActivation activation);
 
-//        protected abstract void reset();
-
         @Override
         public String toString() {
             return String.format("%s[%s]", this.getClass().getSimpleName(), this.operator);
@@ -155,8 +137,6 @@ public abstract class AbstractTopologicalTraversal<Payload,
         protected TActivator getTargetActivator() {
             return this.targetActivator;
         }
-
-//        protected abstract void reset();
 
     }
 

@@ -28,6 +28,11 @@ public interface Executor {
     void dispose();
 
     /**
+     * @return the {@link Platform} this instance belongs to
+     */
+    Platform getPlatform();
+
+    /**
      * Factory for {@link Executor}s.
      */
     interface Factory {

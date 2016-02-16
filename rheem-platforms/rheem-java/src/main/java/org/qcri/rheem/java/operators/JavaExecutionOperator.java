@@ -3,7 +3,6 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.java.channels.Channels;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.plugin.JavaPlatform;
 
@@ -16,7 +15,7 @@ import java.util.stream.Stream;
 public interface JavaExecutionOperator extends ExecutionOperator {
 
     @Override
-    default Platform getPlatform() {
+    default JavaPlatform getPlatform() {
         return JavaPlatform.getInstance();
     }
 
@@ -33,11 +32,15 @@ public interface JavaExecutionOperator extends ExecutionOperator {
 
     @Override
     default List<Class<? extends Channel>> getSupportedInputChannels(int index) {
-        return Channels.getSupportedChannels();
+        if (this.getInput(index).isBroadcast()) {
+            return this.getPlatform().getChannelManager().getSupportedBroadcastChannels();
+        } else {
+            return this.getPlatform().getChannelManager().getSupportedChannels();
+        }
     }
 
     @Override
     default List<Class<? extends Channel>> getSupportedOutputChannels(int index) {
-        return Channels.getSupportedChannels();
+        return this.getPlatform().getChannelManager().getSupportedChannels();
     }
 }

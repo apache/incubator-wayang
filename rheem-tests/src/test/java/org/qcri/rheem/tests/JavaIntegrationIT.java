@@ -1,11 +1,17 @@
 package org.qcri.rheem.tests;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.qcri.rheem.basic.operators.CollectionSource;
+import org.qcri.rheem.basic.operators.FilterOperator;
+import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.plugin.JavaPlatform;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
@@ -13,10 +19,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -177,6 +180,36 @@ public class JavaIntegrationIT {
     public void testDiverseScenario2() throws URISyntaxException {
         // Build the RheemPlan.
         RheemPlan rheemPlan = RheemPlans.diverseScenario2(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+    }
+
+    @Ignore
+    @Test
+    public void testBroadcasts() {
+        Collection<Integer> broadcastedValues = Arrays.asList(1, 2, 3, 4);
+        Collection<Integer> mainValues = Arrays.asList(2, 4, 6, 2);
+        List<Integer> collectedValues = new ArrayList<>();
+        List<Integer> expectedValues = Arrays.asList(2, 2, 4);
+
+        final DataSetType<Integer> integerDataSetType = DataSetType.createDefault(Integer.class);
+        CollectionSource<Integer> broadcastSource = new CollectionSource<>(broadcastedValues,
+                integerDataSetType);
+        CollectionSource<Integer> mainSource = new CollectionSource<>(mainValues,
+                integerDataSetType);
+        FilterOperator<Integer> semijoin = new FilterOperator<>(integerDataSetType, (val -> true));
+        final LocalCallbackSink<Integer> collectingSink = LocalCallbackSink.createCollectingSink(collectedValues,
+                integerDataSetType);
+
+        mainSource.connectTo(0, semijoin, 0);
+        broadcastSource.broadcastTo(0, semijoin, "allowed values");
+        semijoin.connectTo(0, collectingSink, 0);
+
+        RheemPlan rheemPlan = new RheemPlan(collectingSink);
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();

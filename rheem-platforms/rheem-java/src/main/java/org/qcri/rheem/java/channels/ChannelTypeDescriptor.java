@@ -8,18 +8,18 @@ import java.util.function.Function;
 /**
  * Describes a certain type of {@link Channel}.
  */
-public class ChannelTypeDescriptor<T extends Channel> {
+public class ChannelTypeDescriptor {
 
-    private final ChannelInitializer<T> initializer;
+    private final ChannelInitializer initializer;
 
     private final Function<Channel, ChannelExecutor> executorFactory;
 
-    public ChannelTypeDescriptor(ChannelInitializer<T> initializer, Function<Channel, ChannelExecutor> executorFactory) {
+    public ChannelTypeDescriptor(ChannelInitializer initializer, Function<Channel, ChannelExecutor> executorFactory) {
         this.initializer = initializer;
         this.executorFactory = executorFactory;
     }
 
-    public ChannelInitializer<T> getInitializer() {
+    public ChannelInitializer getInitializer() {
         return this.initializer;
     }
 

@@ -191,7 +191,7 @@ public class Job {
                     this.logger.info("Picked plan's cost estimate is {}.", plan.getExecutionPlan().estimateExecutionTime(this.configuration));
                     return plan;
                 })
-                .orElseThrow(IllegalStateException::new);
+                .orElseThrow(() -> new IllegalStateException("Could not find an execution plan."));
 
         return partialPlan.getExecutionPlan().toExecutionPlan();
     }

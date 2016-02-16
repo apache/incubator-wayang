@@ -5,7 +5,6 @@ import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,7 +23,7 @@ public class CollectionChannel extends Channel {
         return true;
     }
 
-    public static class Initializer implements ChannelInitializer<CollectionChannel> {
+    public static class Initializer implements ChannelInitializer {
 
         @Override
         public CollectionChannel setUpOutput(ExecutionTask executionTask, int index) {
@@ -36,18 +35,26 @@ public class CollectionChannel extends Channel {
             } else if (existingOutputChannel instanceof CollectionChannel) {
                 return (CollectionChannel) existingOutputChannel;
             } else {
-                throw new IllegalStateException();
+                throw new IllegalStateException(String.format(
+                        "Expected %s, encountered %s.", CollectionChannel.class.getSimpleName(), existingOutputChannel
+                ));
             }
         }
 
         @Override
-        public void setUpInput(CollectionChannel collectionChannel, ExecutionTask executionTask, int index) {
-            collectionChannel.addConsumer(executionTask, index);
+        public void setUpInput(Channel channel, ExecutionTask executionTask, int index) {
+            assert channel instanceof CollectionChannel;
+            channel.addConsumer(executionTask, index);
         }
 
         @Override
         public boolean isReusable() {
             return true;
+        }
+
+        @Override
+        public boolean isInternal() {
+            return false;
         }
     }
 

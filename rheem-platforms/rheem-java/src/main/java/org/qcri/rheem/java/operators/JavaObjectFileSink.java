@@ -76,6 +76,10 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
         return new JavaObjectFileSink<>(this.targetPath, this.getType());
     }
 
+    public String getTargetPath() {
+        return this.targetPath;
+    }
+
     /**
      * Utility to chunk a {@link Stream} into portions of fixed size.
      */

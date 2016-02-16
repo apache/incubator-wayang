@@ -23,11 +23,6 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
     }
 
     @Override
-    public Platform getPlatform() {
-        return JavaPlatform.getInstance();
-    }
-
-    @Override
     public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
         URL url;
         try {

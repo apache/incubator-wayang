@@ -12,25 +12,28 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
-import org.qcri.rheem.spark.channels.Channels;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
 
 public class SparkExecutor implements Executor {
 
-    public static final Executor.Factory FACTORY = SparkExecutor::new;
-
-    public final JavaSparkContext sc = SparkPlatform.getInstance().getSparkContext();
+    public final JavaSparkContext sc;
 
     public FunctionCompiler compiler = new FunctionCompiler();
 
     private Map<Channel, ChannelExecutor> establishedChannelExecutors = new HashMap<>();
+
+    private final SparkPlatform platform;
+
+    public SparkExecutor(SparkPlatform platform) {
+        this.platform = platform;
+        this.sc = this.platform.getSparkContext();
+    }
 
     @Override
     public void execute(ExecutionStage stage) {
@@ -41,6 +44,11 @@ public class SparkExecutor implements Executor {
     @Override
     public void dispose() {
         this.establishedChannelExecutors.values().forEach(ChannelExecutor::dispose);
+    }
+
+    @Override
+    public SparkPlatform getPlatform() {
+        return this.platform;
     }
 
     private void execute(ExecutionTask executionTask) {
@@ -75,7 +83,7 @@ public class SparkExecutor implements Executor {
     private void registerOutputRdds(JavaRDDLike[] outputStreams, ExecutionTask executionTask) {
         for (int outputIndex = 0; outputIndex < executionTask.getOperator().getNumOutputs(); outputIndex++) {
             Channel channel = executionTask.getOutputChannels()[outputIndex];
-            final ChannelExecutor channelExecutor = Channels.createChannelExecutor(channel);
+            final ChannelExecutor channelExecutor = this.getPlatform().getChannelManager().createChannelExecutor(channel);
             Validate.notNull(channelExecutor);
             channelExecutor.acceptRdd(outputStreams[outputIndex]);
             this.establishedChannelExecutors.put(channel, channelExecutor);

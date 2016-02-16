@@ -2,7 +2,6 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
@@ -23,7 +22,7 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
         ExecutionPlanCreator.Activator,
         ExecutionPlanCreator.Activation> {
 
-    private final Map<Operator, Activator> activators = new HashMap<>();
+    private final Map<ExecutionOperator, Activator> activators = new HashMap<>();
 
     private final Collection<Activator> startActivators;
 
@@ -31,9 +30,15 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
 
     private final Collection<ExecutionTask> terminalTasks = new LinkedList<>();
 
+    private final Map<ExecutionOperator, ExecutionTask> executionTasks = new HashMap<>();
+
     public ExecutionPlanCreator(Collection<ExecutionOperator> startOperators, PartialPlan partialPlan) {
         this.partialPlan = partialPlan;
         this.startActivators = startOperators.stream().map(Activator::new).collect(Collectors.toList());
+    }
+
+    private ExecutionTask getOrCreateExecutionTask(ExecutionOperator executionOperator) {
+        return this.executionTasks.computeIfAbsent(executionOperator, ExecutionTask::new);
     }
 
     @Override
@@ -59,7 +64,7 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
 
         private ExecutionTask executionTask;
 
-        public Activator(Operator operator) {
+        public Activator(ExecutionOperator operator) {
             super(operator);
             this.activations = new Activation[operator.getNumInputs()];
         }
@@ -71,17 +76,13 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
 
         @Override
         protected Collection<Activation> doWork() {
-            this.executionTask = new ExecutionTask((ExecutionOperator) this.operator);
+            this.executionTask = ExecutionPlanCreator.this.getOrCreateExecutionTask((ExecutionOperator) this.operator);
             final Platform platform = ((ExecutionOperator) this.operator).getPlatform();
-
-            for (int inputIndex = 0; inputIndex < this.activations.length; inputIndex++) {
-                this.establishInputChannel(inputIndex, platform);
-            }
 
             // Create a Channel for each OutputSlot of the wrapped Operator.
             Collection<Activation> collector = new LinkedList<>();
             for (int outputIndex = 0; outputIndex < this.operator.getNumOutputs(); outputIndex++) {
-                if (this.establishOutputChannel(outputIndex, platform, collector)) return null;
+                if (!this.establishCollections(outputIndex, platform, collector)) return null;
             }
 
             // If we could not create any Activation, then we safe the current operator.
@@ -92,80 +93,50 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
             return collector;
         }
 
-        private void establishInputChannel(int inputIndex, Platform platform) {
-            final Activation activation = this.activations[inputIndex];
-            final ChannelInitializer<Channel> channelInitializer = platform
-                    .getChannelInitializer(activation.channel.getClass())
-                    .unchecked();
-            if (channelInitializer == null) {
-                throw new IllegalStateException(String.format("Inappropriate input %s selected for %s.",
-                        activation.channel, this.operator));
+        private boolean establishCollections(int outputIndex, Platform platform, Collection<Activation> collector) {
+            // Collect all InputSlots that are connected to the current OutputSlot.
+            final List<InputSlot<Object>> targetInputs = this.operator
+                    .getOutermostOutputSlots(this.operator.getOutput(outputIndex).unchecked())
+                    .stream()
+                    .flatMap(output -> output.getOccupiedSlots().stream())
+                    .flatMap(this::findExecutionOperatorInputs)
+                    .collect(Collectors.toList());
+
+            // Create the activations already.
+            for (InputSlot<Object> targetInput : targetInputs) {
+                this.createActivation(targetInput, collector);
             }
-            channelInitializer.setUpInput(activation.channel, this.executionTask, inputIndex);
+
+            final List<Tuple<ExecutionTask, Integer>> targetExecutionTasks =
+                    targetInputs.stream()
+                            .map(input -> new Tuple<>(
+                                    ExecutionPlanCreator.this.getOrCreateExecutionTask((ExecutionOperator) input.getOwner()),
+                                    input.getIndex()
+                            ))
+                            .collect(Collectors.toList());
+
+
+            // Create the connections.
+            return platform.getChannelManager().connect(this.executionTask, outputIndex, targetExecutionTasks);
         }
 
-        private boolean establishOutputChannel(int outputIndex, Platform platform, Collection<Activation> collector) {
-            // Collect all InputSlots that are connectected to the current OutputSlot.
-            final List<InputSlot<Object>> fedInputs =
-                    this.operator.getOutermostOutputSlots(this.operator.getOutput(outputIndex).unchecked()).stream()
-                            .flatMap(output -> output.getOccupiedSlots().stream())
-                            .flatMap(input -> {
-                                final Operator owner = input.getOwner();
-                                if (!owner.isAlternative()) {
-                                    return Stream.of(input);
-                                }
-                                OperatorAlternative.Alternative alternative =
-                                        ExecutionPlanCreator.this.partialPlan.getChosenAlternative((OperatorAlternative) owner);
-                                if (alternative == null) {
-                                    ExecutionPlanCreator.this.logger.warn(
-                                            "Deciding upon output channels for {} before having settled all follow-up alternatives.",
-                                            this.operator);
-                                    return Stream.empty();
-                                }
-                                return alternative.followInput(input).stream();
-                            })
-                            .collect(Collectors.toList());
-
-            final List<InputSlot<Object>> internalInputs =
-                    fedInputs.stream()
-                            .filter(input -> ((ExecutionOperator) input.getOwner()).getPlatform().equals(platform))
-                            .collect(Collectors.toList());
-
-            final List<InputSlot<Object>> externalInputs =
-                    fedInputs.stream()
-                            .filter(input -> !((ExecutionOperator) input.getOwner()).getPlatform().equals(platform))
-                            .collect(Collectors.toList());
-
-            final Tuple<Class<? extends Channel>[], Class<? extends Channel>[]> pickedChannelClassTuple =
-                    platform.pickChannelClasses((ExecutionOperator) this.operator, outputIndex, internalInputs, externalInputs);
-            if (pickedChannelClassTuple == null) {
+        private Stream<? extends InputSlot<Object>> findExecutionOperatorInputs(InputSlot<Object> input) {
+            final Operator owner = input.getOwner();
+            if (!owner.isAlternative()) {
+                return Stream.of(input);
+            }
+            OperatorAlternative.Alternative alternative =
+                    ExecutionPlanCreator.this.partialPlan.getChosenAlternative((OperatorAlternative) owner);
+            if (alternative == null) {
                 ExecutionPlanCreator.this.logger.warn(
-                        "Could not find an appropriate channel between {} and {}.", this.operator,
-                        fedInputs.stream().map(InputSlot::getOwner).collect(Collectors.toList()));
-                return true;
+                        "Deciding upon output channels for {} before having settled all follow-up alternatives.",
+                        this.operator);
+                return Stream.empty();
             }
-            final Class<? extends Channel>[] internalClasses = pickedChannelClassTuple.field0;
-            final Class<? extends Channel>[] externalClasses = pickedChannelClassTuple.field1;
-
-            for (int i = 0; i < internalClasses.length; i++) {
-                Class<? extends Channel> internalClass = internalClasses[i];
-                final InputSlot<Object> input = internalInputs.get(i);
-                final ChannelInitializer<? extends Channel> channelInitializer = platform.getChannelInitializer(internalClass);
-                final Channel channel = channelInitializer.setUpOutput(this.executionTask, outputIndex);
-                this.createActivation(channel, input, collector);
-            }
-
-            for (int i = 0; i < externalClasses.length; i++) {
-                Class<? extends Channel> externalClass = externalClasses[i];
-                final InputSlot<Object> input = externalInputs.get(i);
-                final ChannelInitializer<? extends Channel> channelInitializer = platform.getChannelInitializer(externalClass);
-                final Channel channel = channelInitializer.setUpOutput(this.executionTask, outputIndex);
-                this.createActivation(channel, input, collector);
-            }
-            return false;
+            return alternative.followInput(input).stream().flatMap(this::findExecutionOperatorInputs);
         }
 
-        private void createActivation(Channel channel, InputSlot<Object> targetInput, Collection<Activation> collector) {
+        private void createActivation(InputSlot<Object> targetInput, Collection<Activation> collector) {
             final Operator targetOperator = targetInput.getOwner();
             if (targetOperator.isAlternative()) {
                 OperatorAlternative.Alternative alternative =
@@ -173,13 +144,13 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
                 if (alternative != null) {
                     final Collection<InputSlot<Object>> innerTargetInputs = alternative.followInput(targetInput);
                     for (InputSlot<Object> innerTargetInput : innerTargetInputs) {
-                        this.createActivation(channel, innerTargetInput, collector);
+                        this.createActivation(innerTargetInput, collector);
                     }
                 }
             } else if (targetOperator.isExecutionOperator()) {
                 final Activator activator =
-                        ExecutionPlanCreator.this.activators.computeIfAbsent(targetOperator, Activator::new);
-                collector.add(new Activation(activator, channel, targetInput.getIndex()));
+                        ExecutionPlanCreator.this.activators.computeIfAbsent((ExecutionOperator) targetOperator, Activator::new);
+                collector.add(new Activation(activator, targetInput.getIndex()));
             } else {
                 throw new IllegalStateException("Unexpected operator: " + targetOperator);
             }
@@ -198,13 +169,10 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
      */
     public static class Activation extends AbstractTopologicalTraversal.Activation<Activator> {
 
-        private final Channel channel;
-
         private final int inputIndex;
 
-        protected Activation(Activator targetActivator, Channel channel, int inputIndex) {
+        protected Activation(Activator targetActivator, int inputIndex) {
             super(targetActivator);
-            this.channel = channel;
             this.inputIndex = inputIndex;
         }
 

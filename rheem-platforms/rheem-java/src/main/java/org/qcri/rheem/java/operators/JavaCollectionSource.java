@@ -21,11 +21,6 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
     }
 
     @Override
-    public Platform getPlatform() {
-        return JavaPlatform.getInstance();
-    }
-
-    @Override
     public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
         return new Stream[] { this.collection.stream() };
     }

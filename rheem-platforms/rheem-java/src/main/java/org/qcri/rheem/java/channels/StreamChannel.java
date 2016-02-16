@@ -21,29 +21,39 @@ public class StreamChannel extends Channel {
         return false;
     }
 
-    public static class Initializer implements ChannelInitializer<StreamChannel> {
+    public static class Initializer implements ChannelInitializer {
 
         @Override
-        public StreamChannel setUpOutput(ExecutionTask executionTask, int index) {
+        public Channel setUpOutput(ExecutionTask executionTask, int index) {
             final Channel existingOutputChannel = executionTask.getOutputChannel(index);
             if (existingOutputChannel == null) {
                 return new StreamChannel(executionTask, index);
             } else if (existingOutputChannel instanceof StreamChannel) {
-                return (StreamChannel) existingOutputChannel;
+                return existingOutputChannel;
+            } else if (existingOutputChannel instanceof CollectionChannel) {
+                // That's fine as well. The decision to use a StreamChannel has been overridden.
+                return existingOutputChannel;
             } else {
                 throw new IllegalStateException();
             }
         }
 
         @Override
-        public void setUpInput(StreamChannel collectionChannel, ExecutionTask executionTask, int index) {
-            collectionChannel.addConsumer(executionTask, index);
+        public void setUpInput(Channel channel, ExecutionTask executionTask, int index) {
+            assert channel instanceof StreamChannel;
+            channel.addConsumer(executionTask, index);
         }
 
         @Override
         public boolean isReusable() {
             return false;
         }
+
+        @Override
+        public boolean isInternal() {
+            return true;
+        }
+
     }
 
     public static class Executor implements ChannelExecutor {

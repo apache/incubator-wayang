@@ -7,6 +7,7 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
+import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 
@@ -52,8 +53,8 @@ public class RheemBasicPlatform extends Platform {
     }
 
     @Override
-    public <T extends Channel> ChannelInitializer<T> getChannelInitializer(Class<T> channelClass) {
-        throw new RheemException("Not supported: This platform has no execution operators.");
+    protected ChannelManager createChannelManager() {
+        return null;
     }
 
     @Override

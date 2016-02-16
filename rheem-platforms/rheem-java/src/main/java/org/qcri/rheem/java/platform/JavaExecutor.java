@@ -10,9 +10,9 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.Channels;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
+import org.qcri.rheem.java.plugin.JavaPlatform;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -24,11 +24,20 @@ import java.util.stream.Stream;
  */
 public class JavaExecutor implements Executor {
 
-    public static final Executor.Factory FACTORY = JavaExecutor::new;
+    private final JavaPlatform platform;
 
     public FunctionCompiler compiler = new FunctionCompiler();
 
     private Map<Channel, ChannelExecutor> establishedChannelExecutors = new HashMap<>();
+
+    public JavaExecutor(JavaPlatform javaPlatform) {
+        this.platform = javaPlatform;
+    }
+
+    @Override
+    public JavaPlatform getPlatform() {
+        return this.platform;
+    }
 
     @Override
     public void execute(ExecutionStage stage) {
@@ -68,7 +77,7 @@ public class JavaExecutor implements Executor {
     private void registerOutputStreams(Stream[] outputStreams, ExecutionTask executionTask) {
         for (int outputIndex = 0; outputIndex < executionTask.getOperator().getNumOutputs(); outputIndex++) {
             Channel channel = executionTask.getOutputChannels()[outputIndex];
-            final ChannelExecutor channelExecutor = Channels.createChannelExecutor(channel);
+            final ChannelExecutor channelExecutor = this.getPlatform().getChannelManager().createChannelExecutor(channel);
             Validate.notNull(channelExecutor);
             channelExecutor.acceptStream(outputStreams[outputIndex]);
             this.establishedChannelExecutors.put(channel, channelExecutor);

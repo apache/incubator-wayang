@@ -37,4 +37,8 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
     public ExecutionOperator copy() {
         return new SparkObjectFileSink<>(this.targetPath, this.getType());
     }
+
+    public String getTargetPath() {
+        return this.targetPath;
+    }
 }

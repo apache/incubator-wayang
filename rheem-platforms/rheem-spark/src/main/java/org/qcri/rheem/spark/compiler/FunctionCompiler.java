@@ -30,9 +30,10 @@ public class FunctionCompiler {
 
     /**
      * Compile a key extraction.
+     *
      * @return a compiled function
      */
-    public <T,K> PairFunction <T, K, T> compileToKeyExtractor(TransformationDescriptor<T, K> descriptor) {
+    public <T, K> PairFunction<T, K, T> compileToKeyExtractor(TransformationDescriptor<T, K> descriptor) {
         return new KeyExtractor<>(descriptor.getJavaImplementation());
     }
 
@@ -46,10 +47,10 @@ public class FunctionCompiler {
      * Compile a reduction.
      *
      * @param descriptor describes the transformation
-     * @param <Type>        input/output type of the transformation
+     * @param <Type>     input/output type of the transformation
      * @return a compiled function
      */
-    public <Type> Function2 <Type, Type, Type> compile(ReduceDescriptor<Type> descriptor) {
+    public <Type> Function2<Type, Type, Type> compile(ReduceDescriptor<Type> descriptor) {
         return new Reducer<>(descriptor.getJavaImplementation());
     }
 
@@ -102,7 +103,7 @@ public class FunctionCompiler {
 
         @Override
         public Iterable<O> call(I i) throws Exception {
-            Iterator<O> sourceIterator =  this.impl.apply(i);
+            Iterator<O> sourceIterator = this.impl.apply(i);
             return () -> sourceIterator;
         }
     }
