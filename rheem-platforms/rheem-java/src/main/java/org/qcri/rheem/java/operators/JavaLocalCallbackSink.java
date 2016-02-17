@@ -3,6 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.function.Consumer;
@@ -23,10 +24,11 @@ public class JavaLocalCallbackSink<T> extends LocalCallbackSink<T> implements Ja
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        final Stream<T> inputStream = inputStreams[0];
-        inputStream.forEach(this.callback);
-        return new Stream[0];
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
+
+        inputs[0].<T>provideStream().forEach(this.callback);
     }
 
     @Override

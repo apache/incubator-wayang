@@ -8,10 +8,12 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.function.Function;
 
 /**
  * Java implementation of the {@link org.qcri.rheem.basic.operators.MapOperator}.
@@ -30,15 +32,14 @@ public class JavaMapOperator<InputType, OutputType>
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 1) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final Stream<InputType> inputStream = (Stream<InputType>) inputStreams[0];
-        final Stream<OutputType> outputStream = inputStream.map(compiler.compile(this.functionDescriptor));
+        final Function<InputType, OutputType> function = compiler.compile(this.functionDescriptor);
+        JavaExecutor.openFunction(this, function, inputs);
 
-        return new Stream[]{outputStream};
+        outputs[0].acceptStream(inputs[0].<InputType>provideStream().map(function));
     }
 
     @Override

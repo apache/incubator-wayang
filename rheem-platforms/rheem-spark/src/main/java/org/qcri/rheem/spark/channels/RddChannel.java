@@ -21,15 +21,23 @@ public class RddChannel extends Channel {
         return true;
     }
 
-    static class Initializer implements ChannelInitializer<RddChannel> {
+    static class Initializer implements ChannelInitializer {
 
         @Override
-        public RddChannel setUpOutput(ExecutionTask executionTask, int index) {
-            return new RddChannel(executionTask, index);
+        public Channel setUpOutput(ExecutionTask executionTask, int index) {
+            final Channel existingOutputChannel = executionTask.getOutputChannel(index);
+            if (existingOutputChannel == null) {
+                return new RddChannel(executionTask, index);
+            } else if (existingOutputChannel instanceof RddChannel) {
+                return existingOutputChannel;
+            } else {
+                throw new IllegalStateException();
+            }
         }
 
         @Override
-        public void setUpInput(RddChannel channel, ExecutionTask executionTask, int index) {
+        public void setUpInput(Channel channel, ExecutionTask executionTask, int index) {
+            assert channel instanceof RddChannel;
             channel.addConsumer(executionTask, index);
         }
 
@@ -37,34 +45,11 @@ public class RddChannel extends Channel {
         public boolean isReusable() {
             return true;
         }
+
+        @Override
+        public boolean isInternal() {
+            return true;
+        }
     }
 
-    public static class Executor implements ChannelExecutor {
-
-        private final boolean isCache;
-
-        private JavaRDDLike rdd;
-
-        public Executor(boolean isCache) {
-            this.isCache = isCache;
-        }
-
-        @Override
-        public void acceptRdd(JavaRDDLike rdd) {
-            this.rdd = rdd;
-            if (this.isCache) {
-                ((JavaRDD) this.rdd).cache();
-            }
-        }
-
-        @Override
-        public JavaRDDLike provideRdd() {
-            return this.rdd;
-        }
-
-        @Override
-        public void dispose() {
-            ((JavaRDD) this.rdd).unpersist();
-        }
-    }
 }

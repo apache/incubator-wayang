@@ -10,6 +10,7 @@ import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
@@ -32,26 +33,25 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public JavaRDDLike[] evaluate (JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
-        if (inputRdds.length != 2) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final JavaRDD<InputType0> inputStream0 = (JavaRDD<InputType0>) inputRdds[0];
-        final JavaRDD<InputType1> inputStream1 = (JavaRDD<InputType1>) inputRdds[1];
+        final JavaRDD<InputType0> inputRdd0 = inputs[0].provideRdd();
+        final JavaRDD<InputType1> inputRdd1 = inputs[1].provideRdd();
 
         final PairFunction<InputType0, KeyType, InputType0> keyExtractor0 = compiler.compileToKeyExtractor(this.keyDescriptor0);
         final PairFunction<InputType1, KeyType, InputType1> keyExtractor1 = compiler.compileToKeyExtractor(this.keyDescriptor1);
-        JavaPairRDD<KeyType, InputType0> pairStream0 = inputStream0.mapToPair(keyExtractor0);
-        JavaPairRDD<KeyType, InputType1> pairStream1 = inputStream1.mapToPair(keyExtractor1);
+        JavaPairRDD<KeyType, InputType0> pairStream0 = inputRdd0.mapToPair(keyExtractor0);
+        JavaPairRDD<KeyType, InputType1> pairStream1 = inputRdd1.mapToPair(keyExtractor1);
 
         final JavaPairRDD<KeyType, scala.Tuple2<InputType0, InputType1>> outputPair = pairStream0.join(pairStream1);
 
         // convert from scala tuple to rheem tuple
-        final JavaRDD<Tuple2<InputType0, InputType1>> outputStream = outputPair
+        final JavaRDD<Tuple2<InputType0, InputType1>> outputRdd = outputPair
                 .map(new TupleConverter<>());
 
-        return new JavaRDDLike[]{outputStream};
+        outputs[0].acceptRdd(outputRdd);
     }
 
     @Override

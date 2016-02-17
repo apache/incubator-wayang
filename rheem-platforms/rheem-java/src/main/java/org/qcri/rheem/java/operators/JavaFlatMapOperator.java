@@ -4,10 +4,15 @@ import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.Iterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.function.Function;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Java implementation of the {@link FlatMapOperator}.
@@ -22,20 +27,28 @@ public class JavaFlatMapOperator<InputType, OutputType>
      * @param functionDescriptor
      */
     public JavaFlatMapOperator(DataSetType inputType, DataSetType outputType,
-                               FlatMapDescriptor<InputType, Iterator<OutputType>> functionDescriptor) {
+                               FlatMapDescriptor<InputType, OutputType> functionDescriptor) {
         super(inputType, outputType, functionDescriptor);
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 1) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final Stream<InputType> inputStream = (Stream<InputType>) inputStreams[0];
-        final Stream<OutputType> outputStream = inputStream.flatMap(compiler.compile(this.functionDescriptor));
+        final Function<InputType, Iterable<OutputType>> flatmapFunction = compiler.compile(this.functionDescriptor);
+        JavaExecutor.openFunction(this, flatmapFunction, inputs);
 
-        return new Stream[]{outputStream};
+        outputs[0].acceptStream(
+                inputs[0].<InputType>provideStream().flatMap(dataQuantum ->
+                        StreamSupport.stream(
+                                Spliterators.spliteratorUnknownSize(
+                                        flatmapFunction.apply(dataQuantum).iterator(),
+                                        Spliterator.ORDERED),
+                                false
+                        )
+                )
+        );
     }
 
     @Override

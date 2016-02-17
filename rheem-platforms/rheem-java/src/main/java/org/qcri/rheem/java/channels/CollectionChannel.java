@@ -5,7 +5,6 @@ import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,23 +23,38 @@ public class CollectionChannel extends Channel {
         return true;
     }
 
-    public static class Initializer implements ChannelInitializer<CollectionChannel> {
+    public static class Initializer implements ChannelInitializer {
 
         @Override
         public CollectionChannel setUpOutput(ExecutionTask executionTask, int index) {
             // TODO: We might need to add a "collector" operator or the like because this channel might introduce overhead.
             // Then we might also get rid of the ChannelExecutors.
-            return new CollectionChannel(executionTask, index);
+            final Channel existingOutputChannel = executionTask.getOutputChannel(index);
+            if (existingOutputChannel == null) {
+                return new CollectionChannel(executionTask, index);
+            } else if (existingOutputChannel instanceof CollectionChannel) {
+                return (CollectionChannel) existingOutputChannel;
+            } else {
+                throw new IllegalStateException(String.format(
+                        "Expected %s, encountered %s.", CollectionChannel.class.getSimpleName(), existingOutputChannel
+                ));
+            }
         }
 
         @Override
-        public void setUpInput(CollectionChannel collectionChannel, ExecutionTask executionTask, int index) {
-            collectionChannel.addConsumer(executionTask, index);
+        public void setUpInput(Channel channel, ExecutionTask executionTask, int index) {
+            assert channel instanceof CollectionChannel;
+            channel.addConsumer(executionTask, index);
         }
 
         @Override
         public boolean isReusable() {
             return true;
+        }
+
+        @Override
+        public boolean isInternal() {
+            return false;
         }
     }
 
@@ -54,6 +68,23 @@ public class CollectionChannel extends Channel {
         }
 
         @Override
+        public void acceptCollection(Collection<?> collection) {
+            this.collection = collection;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Collection<?> provideCollection() {
+            return this.collection;
+        }
+
+        @Override
+        public boolean canProvideCollection() {
+            return true;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
         public Stream<?> provideStream() {
             return this.collection.stream();
         }

@@ -17,9 +17,9 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
 
     protected final BasicDataUnitType outputType;
 
-    private final SerializableFunction<Input, Output> javaImplementation;
+    private final SerializableFunction<Input, Iterable<Output>> javaImplementation;
 
-    public FlatMapDescriptor(SerializableFunction<Input, Output> javaImplementation,
+    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
                              BasicDataUnitType inputType,
                              BasicDataUnitType outputType) {
         this(javaImplementation, inputType, outputType,
@@ -27,7 +27,7 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
                 LoadEstimator.createFallback(1, 1));
     }
 
-    public FlatMapDescriptor(SerializableFunction<Input, Output> javaImplementation,
+    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
                              BasicDataUnitType inputType,
                              BasicDataUnitType outputType,
                              LoadEstimator cpuLoadEstimator,
@@ -44,7 +44,7 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
      *
      * @return a function that can perform the reduce
      */
-    public Function<Input, Output> getJavaImplementation() {
+    public Function<Input, Iterable<Output>> getJavaImplementation() {
         return this.javaImplementation;
     }
 

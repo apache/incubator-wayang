@@ -3,12 +3,11 @@ package org.qcri.rheem.tests;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.java.plugin.JavaPlatform;
+import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
@@ -100,7 +99,6 @@ public class FullIntegrationIT {
 
     }
 
-    @Ignore("Known issue: need to choose channels appropriately in cases of more than one consumer.")
     @Test
     public void testMultiSourceAndMultiSink() throws URISyntaxException {
         // Define some input data.
@@ -132,7 +130,6 @@ public class FullIntegrationIT {
         Assert.assertEquals(expectedOutcome2, collector2);
     }
 
-    @Ignore("Known issue: need to choose channels appropriately in cases of more than one consumer.")
     @Test
     public void testMultiSourceAndHoleAndMultiSink() throws URISyntaxException {
         // Define some input data.

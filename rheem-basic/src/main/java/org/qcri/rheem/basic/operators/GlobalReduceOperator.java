@@ -25,7 +25,7 @@ public class GlobalReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type>
      */
     public GlobalReduceOperator(DataSetType<Type> type,
                                 ReduceDescriptor<Type> reduceDescriptor) {
-        super(type, type, null);
+        super(type, type, true, null);
         this.reduceDescriptor = reduceDescriptor;
     }
 

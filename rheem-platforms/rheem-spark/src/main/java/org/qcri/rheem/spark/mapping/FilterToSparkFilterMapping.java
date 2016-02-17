@@ -5,6 +5,7 @@ import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.spark.operators.SparkFilterOperator;
+import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -12,11 +13,18 @@ import java.util.Collections;
 /**
  * Mapping from {@link FilterOperator} to {@link SparkFilterOperator}.
  */
+@SuppressWarnings("unchecked")
 public class FilterToSparkFilterMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory()));
+        return Collections.singleton(
+                new PlanTransformation(
+                        this.createSubplanPattern(),
+                        this.createReplacementSubplanFactory(),
+                        SparkPlatform.getInstance()
+                )
+        );
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -25,13 +33,12 @@ public class FilterToSparkFilterMapping implements Mapping {
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final FilterOperator<?> originalOperator = (FilterOperator<?>) subplanMatch.getMatch("filter").getOperator();
-            return new SparkFilterOperator(originalOperator.getInputType(),
-                                            originalOperator.getPredicateDescriptor()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<FilterOperator>(
+                (matchedOperator, epoch) -> new SparkFilterOperator<>(
+                        matchedOperator.getType(),
+                        matchedOperator.getPredicateDescriptor()
+                ).at(epoch)
+        );
     }
 }

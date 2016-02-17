@@ -7,9 +7,19 @@ import org.qcri.rheem.core.types.DataSetType;
  */
 public abstract class UnarySink<T> extends OperatorBase implements ActualOperator {
 
-    public UnarySink(DataSetType type, OperatorContainer container) {
-        super(1, 0, container);
+    /**
+     * Creates a new instance.
+     */
+    public UnarySink(DataSetType type, boolean isSupportingBroadcastInputs, OperatorContainer container) {
+        super(1, 0, isSupportingBroadcastInputs, container);
         this.inputSlots[0] = new InputSlot<>("input", this, type);
+    }
+
+    /**
+     * Creates a new instance that does not support broadcast {@link InputSlot}s.
+     */
+    public UnarySink(DataSetType type, OperatorContainer container) {
+        this(type, false, container);
     }
 
     public InputSlot<T> getInput() {

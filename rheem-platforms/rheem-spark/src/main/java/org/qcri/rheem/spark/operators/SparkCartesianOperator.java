@@ -1,11 +1,11 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CartesianOperator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
@@ -26,17 +26,18 @@ public class SparkCartesianOperator<InputType0, InputType1>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
-        if (inputRdds.length != 2) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
-        final JavaRDD<InputType0> inputStream0 = (JavaRDD<InputType0>) inputRdds[0];
-        final JavaRDD<InputType1> inputStream1 = (JavaRDD<InputType1>) inputRdds[1];
-
-        final JavaPairRDD<InputType0, InputType1> outputStream = inputStream0.cartesian(inputStream1);
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
 
-        return new JavaRDDLike[]{outputStream};
+        final JavaRDD<InputType0> rdd0 = inputs[0].<InputType0>provideRdd();
+        final JavaRDD<InputType1> rdd1 = inputs[1].<InputType1>provideRdd();
+        final JavaRDD<Tuple2<InputType0, InputType1>> crossProduct = rdd0
+                .cartesian(rdd1)
+                .map(scalaTuple -> new Tuple2<>(scalaTuple._1, scalaTuple._2));
+
+        outputs[0].acceptRdd(crossProduct);
     }
 
     @Override

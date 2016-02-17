@@ -6,6 +6,8 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.TestChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -40,14 +42,18 @@ public class JavaJoinOperatorTest {
                                 DataUnitType.createBasic(String.class),
                                 "field1"));
 
-        // Execute the sort operator.
-        final Stream[] outputStreams = join.evaluate(new Stream[]{inputStream0, inputStream1},
-                new FunctionCompiler());
+        // Execute.
+        ChannelExecutor[] inputs = new ChannelExecutor[]{
+                new TestChannelExecutor(inputStream0),
+                new TestChannelExecutor(inputStream1)
+        };
+        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+        join.evaluate(inputs, outputs, new FunctionCompiler());
 
         // Verify the outcome.
-        Assert.assertEquals(1, outputStreams.length);
-        final List<Tuple2> result =
-                ((Stream<Tuple2<Tuple2, Tuple2>>) outputStreams[0]).collect(Collectors.toList());
+        final List<Tuple2<Tuple2<Integer, String>, Tuple2<String, Integer>>> result =
+                outputs[0].<Tuple2<Tuple2<Integer, String>, Tuple2<String, Integer>>>provideStream()
+                .collect(Collectors.toList());
         Assert.assertEquals(5, result.size());
         Assert.assertEquals(result.get(0), new Tuple2(new Tuple2(1,"b"), new Tuple2("x", 1)));
         Assert.assertEquals(result.get(1), new Tuple2(new Tuple2(1,"b"), new Tuple2("y", 1)));

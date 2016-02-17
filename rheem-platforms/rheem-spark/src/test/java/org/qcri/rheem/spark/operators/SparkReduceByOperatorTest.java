@@ -1,7 +1,6 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
@@ -9,6 +8,8 @@ import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.TestChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -46,12 +47,19 @@ public class SparkReduceByOperatorTest extends SparkOperatorTestBase {
                                     return a;
                                 }));
 
-        // Execute the reduce operator.
-        final JavaRDDLike[] outputRdds = reduceByOperator.evaluate(new JavaRDDLike[]{inputRdd}, new FunctionCompiler(), this.sparkExecutor);
+        // Set up the ChannelExecutors.
+        final ChannelExecutor[] inputs = new ChannelExecutor[]{
+                new TestChannelExecutor(inputRdd)
+        };
+        final ChannelExecutor[] outputs = new ChannelExecutor[]{
+                new TestChannelExecutor()
+        };
+
+        // Execute.
+        reduceByOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
-        Assert.assertEquals(1, outputRdds.length);
-        final Iterable<Tuple2<String, Integer>> result = outputRdds[0].collect();
+        final Iterable<Tuple2<String, Integer>> result = outputs[0].<Tuple2<String, Integer>>provideRdd().collect();
         final Set<Tuple2<String, Integer>> resultSet = new HashSet<>();
         result.forEach(resultSet::add);
         final Tuple2[] expectedResults = {

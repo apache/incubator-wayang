@@ -18,6 +18,15 @@ public abstract class Platform {
 
     private final String name;
 
+    private final ChannelManager channelManager = this.createChannelManager();
+
+    /**
+     * Loads a specific {@link Platform} implementation. For platforms to interoperate with this method, they must
+     * provide a {@code static}, parameterless method {@code getInstance()} that returns their singleton instance.
+     *
+     * @param platformClassName the class name of the {@link Platform}
+     * @return the {@link Platform} instance
+     */
     public static Platform load(String platformClassName) {
         final Class<?> platformClass;
         try {
@@ -29,7 +38,7 @@ public abstract class Platform {
         }
     }
 
-    public Platform(String name) {
+    protected Platform(String name) {
         this.name = name;
     }
 
@@ -46,6 +55,7 @@ public abstract class Platform {
 
     /**
      * <i>Shortcut.</i> Creates an {@link Executor} using the {@link #getExecutorFactory()}.
+     *
      * @return the {@link Executor}
      */
     public Executor createExecutor() {
@@ -64,12 +74,20 @@ public abstract class Platform {
     public abstract boolean isExecutable();
 
     /**
-     * If this instance provides {@link ExecutionOperator}s, then this method provides the {@link ChannelInitializer}s
+     * @return the instance that should be returned by {@link #getChannelManager()}
+     */
+    protected abstract ChannelManager createChannelManager();
+
+    /**
+     * If this instance provides {@link ExecutionOperator}s, then this method provides a {@link ChannelManager}
      * to connect them.
      *
-     * @return the appropriate {@link ChannelInitializer} for the given {@link Channel} type or {@code null} if none
+     * @return the {@link ChannelManager} of this instance or {@code null} if none
      */
-    public abstract <T extends Channel> ChannelInitializer<T> getChannelInitializer(Class<T> channelClass);
+    public ChannelManager getChannelManager() {
+        return this.channelManager;
+    }
+
 
     // TODO: Return some more descriptors about the state of the platform (e.g., available machines, RAM, ...)
 
@@ -77,4 +95,5 @@ public abstract class Platform {
     public String toString() {
         return String.format("Platform[%s]", this.getName());
     }
+
 }

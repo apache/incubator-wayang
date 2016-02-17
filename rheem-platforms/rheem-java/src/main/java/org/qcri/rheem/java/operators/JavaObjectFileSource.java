@@ -14,8 +14,9 @@ import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.qcri.rheem.java.plugin.JavaPlatform;
+import org.qcri.rheem.java.JavaPlatform;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
@@ -42,15 +43,16 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        Validate.isTrue(inputStreams.length == 0);
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert outputs.length == this.getNumOutputs();
+
         SequenceFileIterator sequenceFileIterator;
         try {
             final String path = this.findCorrectInputPath(this.sourcePath);
             sequenceFileIterator = new SequenceFileIterator<>(path);
             Stream<?> sequenceFileStream =
                     StreamSupport.stream(Spliterators.spliteratorUnknownSize(sequenceFileIterator, 0), false);
-            return new Stream[]{sequenceFileStream};
+            outputs[0].acceptStream(sequenceFileStream);
         } catch (IOException e) {
             throw new RheemException("Reading failed.", e);
         }

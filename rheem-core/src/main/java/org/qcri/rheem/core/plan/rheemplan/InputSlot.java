@@ -17,16 +17,30 @@ public class InputSlot<T> extends Slot<T> {
     private OutputSlot occupant;
 
     /**
+     * Tells whether this instance represents a broadcasted input.
+     */
+    private final boolean isBroadcast;
+
+    /**
      * Copy the {@link InputSlot}s of a given {@link Operator}.
      */
     public static void mock(Operator template, Operator mock) {
+        mock(template, mock, true);
+    }
+
+    /**
+     * Copy the {@link InputSlot}s of a given {@link Operator}.
+     */
+    public static void mock(Operator template, Operator mock, boolean isKeepBroadcastStatus) {
         if (template.getNumInputs() != mock.getNumInputs()) {
             throw new IllegalArgumentException("Cannot mock inputs: Mismatching number of inputs.");
         }
 
         InputSlot[] mockSlots = mock.getAllInputs();
         for (int i = 0; i < template.getNumInputs(); i++) {
-            mockSlots[i] = template.getInput(i).copyFor(mock);
+            mockSlots[i] = isKeepBroadcastStatus ?
+                    template.getInput(i).copyFor(mock) :
+                    template.getInput(i).copyAsNonBroadcastFor(mock);
         }
     }
 
@@ -47,16 +61,47 @@ public class InputSlot<T> extends Slot<T> {
         }
     }
 
-    public InputSlot(InputSlot blueprint, Operator owner) {
+    /**
+     * Creates a new instance that imitates the given {@code blueprint}, but for a different {@code owner}.
+     */
+    public InputSlot(Slot blueprint, Operator owner) {
         this(blueprint.getName(), owner, blueprint.getType());
     }
 
-    public InputSlot(String name, Operator owner, DataSetType type) {
-        super(name, owner, type);
+    /**
+     * Creates a new instance that imitates the given {@code blueprint}, but for a different {@code owner}.
+     */
+    public InputSlot(InputSlot blueprint, Operator owner) {
+        this(blueprint.getName(), owner, blueprint.isBroadcast(), blueprint.getType());
     }
 
+    /**
+     * Creates a new, non-broadcast instance.
+     */
+    public InputSlot(String name, Operator owner, DataSetType type) {
+        this(name, owner, false, type);
+    }
+
+    /**
+     * Creates a new instance.
+     */
+    public InputSlot(String name, Operator owner, boolean isBroadcast, DataSetType type) {
+        super(name, owner, type);
+        this.isBroadcast = isBroadcast;
+    }
+
+    /**
+     * Shortcut for {@link #InputSlot(Slot, Operator)}
+     */
     public InputSlot copyFor(Operator owner) {
         return new InputSlot(this, owner);
+    }
+
+    /**
+     * As {@link #copyFor(Operator)}, but ensures that the copy will not be marked as broadcast.
+     */
+    public InputSlot copyAsNonBroadcastFor(Operator owner) {
+        return new InputSlot(this.getName(), owner, false, this.getType());
     }
 
     /**
@@ -107,5 +152,12 @@ public class InputSlot<T> extends Slot<T> {
         }
 
         return inputSlot;
+    }
+
+    /**
+     * @return whether this is a broadcast
+     */
+    public boolean isBroadcast() {
+        return this.isBroadcast;
     }
 }

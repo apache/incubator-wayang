@@ -3,6 +3,8 @@ package org.qcri.rheem.java.operators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.TestChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -26,13 +28,13 @@ public class JavaCountOperatorTest {
                         DataSetType.createDefaultUnchecked(Integer.class)
                 );
 
-        // Execute the count operator.
-        final Stream[] outputStreams = countOperator.evaluate(new Stream[]{inputStream}, new FunctionCompiler());
+        // Execute.
+        ChannelExecutor[] inputs = new ChannelExecutor[]{new TestChannelExecutor(inputStream)};
+        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+        countOperator.evaluate(inputs, outputs, new FunctionCompiler());
 
         // Verify the outcome.
-        Assert.assertEquals(1, outputStreams.length);
-        final List<Integer> result =
-                ((Stream<Integer>) outputStreams[0]).collect(Collectors.toList());
+        final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());
         Assert.assertEquals(1, result.size());
         Assert.assertEquals(Long.valueOf(5), result.get(0));
 

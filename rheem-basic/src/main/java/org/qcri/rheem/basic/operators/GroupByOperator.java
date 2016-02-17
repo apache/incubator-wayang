@@ -27,7 +27,7 @@ public class GroupByOperator<Input, Key> extends UnaryToUnaryOperator<Input, Ite
      */
     public GroupByOperator(TransformationDescriptor<Input, Key> keyDescriptor,
                            DataSetType<Input> inputType, DataSetType<Iterator<Input>> outputType) {
-        super(inputType, outputType, null);
+        super(inputType, outputType, false, null);
         this.keyDescriptor = keyDescriptor;
     }
 

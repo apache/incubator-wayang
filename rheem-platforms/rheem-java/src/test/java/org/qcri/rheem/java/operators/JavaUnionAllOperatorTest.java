@@ -3,6 +3,8 @@ package org.qcri.rheem.java.operators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.TestChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -25,14 +27,17 @@ public class JavaUnionAllOperatorTest {
         JavaUnionAllOperator<Integer> unionAllOperator =
                 new JavaUnionAllOperator<>(DataSetType.createDefaultUnchecked(Integer.class));
 
-        // Execute the sort operator.
-        final Stream[] outputStreams = unionAllOperator.evaluate(
-                new Stream[]{inputStream0, inputStream1}, new FunctionCompiler());
+        // Execute.
+        ChannelExecutor[] inputs = new ChannelExecutor[]{
+                new TestChannelExecutor(inputStream0),
+                new TestChannelExecutor(inputStream1)
+        };
+        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+        unionAllOperator.evaluate(inputs, outputs, new FunctionCompiler());
 
         // Verify the outcome.
-        Assert.assertEquals(1, outputStreams.length);
-        final List<Integer> result =
-                ((Stream<Integer>) outputStreams[0]).collect(Collectors.toList());
+        final List<Integer> result = outputs[0].<Integer>provideStream()
+                .collect(Collectors.toList());
         Assert.assertEquals(9, result.size());
         Assert.assertEquals(Arrays.asList(6, 0, 1, 1, 5, 2, 1, 1, 9), result);
 

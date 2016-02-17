@@ -7,7 +7,6 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.Iterator;
 import java.util.Optional;
 
 /**
@@ -20,18 +19,18 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     /**
      * Function that this operator applies to the input elements.
      */
-    protected final FlatMapDescriptor<InputType, Iterator<OutputType>> functionDescriptor;
+    protected final FlatMapDescriptor<InputType, OutputType> functionDescriptor;
 
     /**
      * Creates a new instance.
      */
     public FlatMapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType,
-                           FlatMapDescriptor<InputType, Iterator<OutputType>> functionDescriptor) {
-        super(inputType, outputType, null);
+                           FlatMapDescriptor<InputType, OutputType> functionDescriptor) {
+        super(inputType, outputType, true, null);
         this.functionDescriptor = functionDescriptor;
     }
 
-    public FlatMapDescriptor<InputType, Iterator<OutputType>> getFunctionDescriptor() {
+    public FlatMapDescriptor<InputType, OutputType> getFunctionDescriptor() {
         return this.functionDescriptor;
     }
 

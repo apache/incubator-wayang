@@ -37,7 +37,7 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * @param type type of the dataunit elements
      */
     public FilterOperator(DataSetType<Type> type, PredicateDescriptor<Type> predicateDescriptor) {
-        super(type, type, null);
+        super(type, type, true, null);
         this.predicateDescriptor = predicateDescriptor;
     }
 
@@ -51,6 +51,10 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
         return Optional.of(new FilterOperator.CardinalityEstimator());
+    }
+
+    public DataSetType getType() {
+        return this.getInputType();
     }
 
     /**

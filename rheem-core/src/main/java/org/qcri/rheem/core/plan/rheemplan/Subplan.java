@@ -38,7 +38,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         Subplan newSubplan = new Subplan(inputOperator, outputOperator, commonContainer);
 
         // Copy the interface of the input operator, steal its connections, and map the slots.
-        InputSlot.mock(inputOperator, newSubplan);
+        InputSlot.mock(inputOperator, newSubplan, false);
         InputSlot.stealConnections(inputOperator, newSubplan);
         newSubplan.slotMapping.mapAllUpsteam(inputOperator.getAllInputs(), newSubplan.inputSlots);
 
@@ -62,7 +62,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
      * @see #wrap(Operator, Operator)
      */
     private Subplan(Operator inputOperator, Operator outputOperator, OperatorContainer container) {
-        super(inputOperator.getNumInputs(), outputOperator.getNumOutputs(), container);
+        super(inputOperator.getNumInputs(), outputOperator.getNumOutputs(), false, container);
 
         this.inputOperator = inputOperator;
         this.outputOperator = outputOperator;

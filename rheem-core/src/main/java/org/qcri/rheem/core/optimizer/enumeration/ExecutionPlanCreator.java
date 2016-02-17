@@ -2,13 +2,18 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.OperatorAlternative;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
+import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.Tuple;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Creates an {@link PreliminaryExecutionPlan} from a {@link PartialPlan}.
@@ -17,7 +22,7 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
         ExecutionPlanCreator.Activator,
         ExecutionPlanCreator.Activation> {
 
-    private final Map<Operator, Activator> activators = new HashMap<>();
+    private final Map<ExecutionOperator, Activator> activators = new HashMap<>();
 
     private final Collection<Activator> startActivators;
 
@@ -25,73 +30,15 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
 
     private final Collection<ExecutionTask> terminalTasks = new LinkedList<>();
 
+    private final Map<ExecutionOperator, ExecutionTask> executionTasks = new HashMap<>();
+
     public ExecutionPlanCreator(Collection<ExecutionOperator> startOperators, PartialPlan partialPlan) {
         this.partialPlan = partialPlan;
         this.startActivators = startOperators.stream().map(Activator::new).collect(Collectors.toList());
     }
 
-    public boolean connect(ExecutionTask task1, int outputIndex, ExecutionTask task2, int inputIndex) {
-        Channel channel = task1.getOutputChannel(outputIndex);
-
-        if (channel != null) {
-            this.logger.warn("Resorting to existing channel {} for {}.", channel, task2);
-        } else {
-            final Class<Channel> channelClass = (Class<Channel>) this.pickChannelClass(task1, outputIndex, task2, inputIndex);
-            if (channelClass == null) {
-                this.logger.warn("Could not find an appropriate channel between {} and {}.", task1, task2);
-                return false;
-            }
-            channel = this.setUpOutput(task1, outputIndex, channelClass);
-            this.logger.debug("Installing channel {} between {} and {}.", channel, task1, task2);
-        }
-
-        return this.setUpInput(task2, inputIndex, channel);
-    }
-
-
-    /**
-     * Connects a {@link Channel} to a given {@link ExecutionTask} input
-     *
-     * @param task2      whose input should be connected
-     * @param inputIndex the index of that input
-     * @param channel    the {@link Channel} to connect
-     * @return whether the connection was successful
-     */
-    private boolean setUpInput(ExecutionTask task2, int inputIndex, Channel channel) {
-        final ChannelInitializer<Channel> channelInitializer = task2.getOperator().getPlatform()
-                .getChannelInitializer((Class<Channel>) channel.getClass());
-        if (channelInitializer == null) {
-            return false;
-        }
-        channelInitializer.setUpInput(channel, task2, inputIndex);
-        return true;
-    }
-
-    private Channel setUpOutput(ExecutionTask task1, int outputIndex, Class<? extends Channel> channelClass) {
-        final ChannelInitializer<? extends Channel> channelInitializer = task1.getOperator().getPlatform().getChannelInitializer(channelClass);
-        return channelInitializer.setUpOutput(task1, outputIndex);
-    }
-
-    private Class<? extends Channel> pickChannelClass(ExecutionTask task1, int outputIndex, ExecutionTask task2, int inputIndex) {
-        final ExecutionOperator op1 = task1.getOperator();
-        final ExecutionOperator op2 = task2.getOperator();
-        final boolean requestReusableChannel = op1.getOutermostOutputSlots(op1.getOutput(outputIndex)).stream()
-                .flatMap(outputSlot -> outputSlot.getOccupiedSlots().stream())
-                .count() > 1;
-        final List<Class<? extends Channel>> supportedOutputChannels = op1.getSupportedOutputChannels(outputIndex);
-        final List<Class<? extends Channel>> supportedInputChannels = op2.getSupportedInputChannels(inputIndex);
-        for (Class<? extends Channel> channelClass : supportedOutputChannels) {
-            if (requestReusableChannel && !this.checkIfReusable(op1, channelClass)) continue;
-            if (supportedInputChannels.contains(channelClass)) {
-                return channelClass;
-            }
-        }
-        return null;
-    }
-
-    private boolean checkIfReusable(ExecutionOperator operator, Class<? extends Channel> channelClass) {
-        final ChannelInitializer<? extends Channel> channelInitializer = operator.getPlatform().getChannelInitializer(channelClass);
-        return channelInitializer.isReusable();
+    private ExecutionTask getOrCreateExecutionTask(ExecutionOperator executionOperator) {
+        return this.executionTasks.computeIfAbsent(executionOperator, ExecutionTask::new);
     }
 
     @Override
@@ -117,7 +64,7 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
 
         private ExecutionTask executionTask;
 
-        public Activator(Operator operator) {
+        public Activator(ExecutionOperator operator) {
             super(operator);
             this.activations = new Activation[operator.getNumInputs()];
         }
@@ -128,38 +75,14 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
         }
 
         @Override
-        protected boolean doWork() {
-            this.executionTask = new ExecutionTask((ExecutionOperator) this.operator);
-            for (int inputIndex = 0; inputIndex < this.activations.length; inputIndex++) {
-                final Activation activation = this.activations[inputIndex];
-                final ExecutionTask predecessorTask = activation.executionTask;
-                boolean isConnected = ExecutionPlanCreator.this.connect(
-                        predecessorTask, activation.outputIndex, this.executionTask, activation.inputIndex);
-                if (!isConnected) {
-                    ExecutionPlanCreator.this.logger.info("Could not connect {} to {}.", predecessorTask, this.executionTask);
-                    return false;
-                }
-            }
-            return true;
-        }
+        protected Collection<Activation> doWork() {
+            this.executionTask = ExecutionPlanCreator.this.getOrCreateExecutionTask((ExecutionOperator) this.operator);
+            final Platform platform = ((ExecutionOperator) this.operator).getPlatform();
 
-        @Override
-        protected Collection<Activation> getSuccessorActivations() {
-            // Make sure, we are set up correctly.
-            Validate.notNull(this.executionTask);
-
-            // For each outermost OutputSlot of this instance's #operator...
+            // Create a Channel for each OutputSlot of the wrapped Operator.
             Collection<Activation> collector = new LinkedList<>();
             for (int outputIndex = 0; outputIndex < this.operator.getNumOutputs(); outputIndex++) {
-                final Collection<OutputSlot<Object>> outputs =
-                        this.operator.getOutermostOutputSlots(this.operator.getOutput(outputIndex).unchecked());
-                for (OutputSlot<Object> output : outputs) {
-                    // ...and for each InputSlot fed by such an OutputSlot...
-                    for (InputSlot<Object> input : output.getOccupiedSlots()) {
-                        // ...add a new Activation.
-                        this.createActivation(outputIndex, input, collector);
-                    }
-                }
+                if (!this.establishCollections(outputIndex, platform, collector)) return null;
             }
 
             // If we could not create any Activation, then we safe the current operator.
@@ -170,7 +93,50 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
             return collector;
         }
 
-        private void createActivation(int thisOutputIndex, InputSlot<Object> targetInput, Collection<Activation> collector) {
+        private boolean establishCollections(int outputIndex, Platform platform, Collection<Activation> collector) {
+            // Collect all InputSlots that are connected to the current OutputSlot.
+            final List<InputSlot<Object>> targetInputs = this.operator
+                    .getOutermostOutputSlots(this.operator.getOutput(outputIndex).unchecked())
+                    .stream()
+                    .flatMap(output -> output.getOccupiedSlots().stream())
+                    .flatMap(this::findExecutionOperatorInputs)
+                    .collect(Collectors.toList());
+
+            // Create the activations already.
+            for (InputSlot<Object> targetInput : targetInputs) {
+                this.createActivation(targetInput, collector);
+            }
+
+            final List<Tuple<ExecutionTask, Integer>> targetExecutionTasks =
+                    targetInputs.stream()
+                            .map(input -> new Tuple<>(
+                                    ExecutionPlanCreator.this.getOrCreateExecutionTask((ExecutionOperator) input.getOwner()),
+                                    input.getIndex()
+                            ))
+                            .collect(Collectors.toList());
+
+
+            // Create the connections.
+            return platform.getChannelManager().connect(this.executionTask, outputIndex, targetExecutionTasks);
+        }
+
+        private Stream<? extends InputSlot<Object>> findExecutionOperatorInputs(InputSlot<Object> input) {
+            final Operator owner = input.getOwner();
+            if (!owner.isAlternative()) {
+                return Stream.of(input);
+            }
+            OperatorAlternative.Alternative alternative =
+                    ExecutionPlanCreator.this.partialPlan.getChosenAlternative((OperatorAlternative) owner);
+            if (alternative == null) {
+                ExecutionPlanCreator.this.logger.warn(
+                        "Deciding upon output channels for {} before having settled all follow-up alternatives.",
+                        this.operator);
+                return Stream.empty();
+            }
+            return alternative.followInput(input).stream().flatMap(this::findExecutionOperatorInputs);
+        }
+
+        private void createActivation(InputSlot<Object> targetInput, Collection<Activation> collector) {
             final Operator targetOperator = targetInput.getOwner();
             if (targetOperator.isAlternative()) {
                 OperatorAlternative.Alternative alternative =
@@ -178,13 +144,13 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
                 if (alternative != null) {
                     final Collection<InputSlot<Object>> innerTargetInputs = alternative.followInput(targetInput);
                     for (InputSlot<Object> innerTargetInput : innerTargetInputs) {
-                        this.createActivation(thisOutputIndex, innerTargetInput, collector);
+                        this.createActivation(innerTargetInput, collector);
                     }
                 }
             } else if (targetOperator.isExecutionOperator()) {
                 final Activator activator =
-                        ExecutionPlanCreator.this.activators.computeIfAbsent(targetOperator, Activator::new);
-                collector.add(new Activation(activator, this.executionTask, thisOutputIndex, targetInput.getIndex()));
+                        ExecutionPlanCreator.this.activators.computeIfAbsent((ExecutionOperator) targetOperator, Activator::new);
+                collector.add(new Activation(activator, targetInput.getIndex()));
             } else {
                 throw new IllegalStateException("Unexpected operator: " + targetOperator);
             }
@@ -205,14 +171,8 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
 
         private final int inputIndex;
 
-        private final int outputIndex;
-
-        private final ExecutionTask executionTask;
-
-        protected Activation(Activator targetActivator, ExecutionTask executionTask, int outputIndex, int inputIndex) {
+        protected Activation(Activator targetActivator, int inputIndex) {
             super(targetActivator);
-            this.executionTask = executionTask;
-            this.outputIndex = outputIndex;
             this.inputIndex = inputIndex;
         }
 

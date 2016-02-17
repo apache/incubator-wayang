@@ -44,7 +44,7 @@ public class StageAssignmentTraversal {
                 }
             }
         }
-        Validate.isTrue(preliminaryExecutionPlan.isComplete());
+        assert preliminaryExecutionPlan.isComplete();
         this.preliminaryExecutionPlan = preliminaryExecutionPlan;
     }
 

@@ -12,7 +12,7 @@ public class TestCustomMapOperator<InputType, OutputType> extends UnaryToUnaryOp
      * Creates a new instance.
      */
     public TestCustomMapOperator(DataSetType inputType, DataSetType outputType) {
-        super(inputType, outputType, null);
+        super(inputType, outputType, true, null);
     }
 
 }

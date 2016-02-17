@@ -35,7 +35,7 @@ public class ReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      */
     public ReduceOperator(ReduceDescriptor<Type> reduceDescriptor,
                           DataSetType<Type> inputType, DataSetType<Type> outputType) {
-        super(inputType, outputType, null);
+        super(inputType, outputType, true, null);
         this.reduceDescriptor = reduceDescriptor;
     }
 

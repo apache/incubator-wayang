@@ -4,6 +4,7 @@ import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.List;
@@ -31,19 +32,17 @@ public class JavaMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 1) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final Stream<Type> inputStream = inputStreams[0];
         final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor);
-        final Map<KeyType, List<Type>> collocation = inputStream.collect(
+        final Map<KeyType, List<Type>> collocation = inputs[0].<Type>provideStream().collect(
                 Collectors.groupingBy(
                         keyExtractor,
                         Collectors.toList())); // Not sure if this is thread-safe... Will we use #parallelStream()?
 
-        return new Stream[]{collocation.values().stream()};
+        outputs[0].acceptCollection(collocation.values());
     }
 
     @Override
