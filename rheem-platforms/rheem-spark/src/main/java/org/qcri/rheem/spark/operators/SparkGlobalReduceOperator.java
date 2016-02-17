@@ -1,6 +1,7 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function2;
 import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -23,11 +24,11 @@ public class SparkGlobalReduceOperator<Type>
     /**
      * Creates a new instance.
      *
-     * @param type type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
+     * @param type             type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
      * @param reduceDescriptor describes the reduction to be performed on the elements
      */
     public SparkGlobalReduceOperator(DataSetType<Type> type,
-                                    ReduceDescriptor<Type> reduceDescriptor) {
+                                     ReduceDescriptor<Type> reduceDescriptor) {
         super(type, reduceDescriptor);
     }
 
@@ -36,8 +37,7 @@ public class SparkGlobalReduceOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final FunctionCompiler.Reducer<Type> reduceFunction = compiler.compile(this.reduceDescriptor);
-        SparkExecutor.openFunction(this, reduceFunction.getRheemFunction(), inputs);
+        final Function2<Type, Type, Type> reduceFunction = compiler.compile(this.reduceDescriptor, this, inputs);
 
         final JavaRDD<Type> inputRdd = inputs[0].provideRdd();
         List<Type> outputList = Collections.singletonList(inputRdd.reduce(reduceFunction));

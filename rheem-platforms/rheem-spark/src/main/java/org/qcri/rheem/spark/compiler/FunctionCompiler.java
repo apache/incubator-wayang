@@ -4,11 +4,10 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
-import org.qcri.rheem.core.function.FlatMapDescriptor;
-import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.spark.operators.SparkFilterOperator;
+import org.qcri.rheem.core.function.*;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutionContext;
+import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 
 import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
@@ -19,15 +18,21 @@ import java.util.function.Predicate;
 public class FunctionCompiler {
 
     /**
-     * Compile a transformation.
-     *
-     * @param descriptor describes the transformation
-     * @param <I>        input type of the transformation
-     * @param <O>        output type of the transformation
-     * @return a compiled function
+     * Create an appropriate {@link Function} for deploying the given {@link TransformationDescriptor}
+     * on Apache Spark.
      */
-    public <I, O> Transformator<I, O> compile(TransformationDescriptor<I, O> descriptor) {
-        return new Transformator<>(descriptor.getJavaImplementation());
+    public <I, O> Function<I, O> compile(TransformationDescriptor<I, O> descriptor,
+                                         SparkExecutionOperator operator,
+                                         ChannelExecutor[] inputs) {
+        final java.util.function.Function<I, O> javaImplementation = descriptor.getJavaImplementation();
+        if (javaImplementation instanceof FunctionDescriptor.ExtendedSerializableFunction) {
+            return new ExtendedFunctionAdapter<>(
+                    (FunctionDescriptor.ExtendedSerializableFunction<I, O>) javaImplementation,
+                    new SparkExecutionContext(operator, inputs)
+            );
+        } else {
+            return new FunctionAdapter<>(javaImplementation);
+        }
     }
 
     /**
@@ -40,45 +45,58 @@ public class FunctionCompiler {
     }
 
 
-    public <I, O> FlatMapper<I, O> compile(FlatMapDescriptor<I, O> descriptor) {
-        return new FlatMapper<>(descriptor.getJavaImplementation());
-
+    /**
+     * Create an appropriate {@link Function} for deploying the given {@link TransformationDescriptor}
+     * on Apache Spark.
+     */
+    public <I, O> FlatMapFunction<I, O> compile(FlatMapDescriptor<I, O> descriptor,
+                                                          SparkExecutionOperator operator,
+                                                          ChannelExecutor[] inputs) {
+        final java.util.function.Function<I, Iterable<O>> javaImplementation = descriptor.getJavaImplementation();
+        if (javaImplementation instanceof FunctionDescriptor.ExtendedSerializableFunction) {
+            return new ExtendedFunctionAdapter2<>(
+                    (FunctionDescriptor.ExtendedSerializableFunction<I, Iterable<O>>) javaImplementation,
+                    new SparkExecutionContext(operator, inputs)
+            );
+        } else {
+            return new FunctionAdapter2<>(javaImplementation);
+        }
     }
 
     /**
-     * Compile a reduction.
-     *
-     * @param descriptor describes the transformation
-     * @param <Type>     input/output type of the transformation
-     * @return a compiled function
+     * Create an appropriate {@link Function} for deploying the given {@link ReduceDescriptor}
+     * on Apache Spark.
      */
-    public <Type> Reducer<Type> compile(ReduceDescriptor<Type> descriptor) {
-        return new Reducer<>(descriptor.getJavaImplementation());
-    }
-
-    public <Type> FilterWrapper<Type> compile(PredicateDescriptor<Type> predicateDescriptor) {
-        return new FilterWrapper<>(predicateDescriptor.getJavaImplementation());
+    public <T> Function2<T, T, T> compile(ReduceDescriptor<T> descriptor,
+                                                   SparkExecutionOperator operator,
+                                                   ChannelExecutor[] inputs) {
+        final BinaryOperator<T> javaImplementation = descriptor.getJavaImplementation();
+        if (javaImplementation instanceof FunctionDescriptor.ExtendedSerializableBinaryOperator) {
+            return new ExtendedBinaryOperatorAdapter<>(
+                    (FunctionDescriptor.ExtendedSerializableBinaryOperator<T>) javaImplementation,
+                    new SparkExecutionContext(operator, inputs)
+            );
+        } else {
+            return new BinaryOperatorAdapter<>(javaImplementation);
+        }
     }
 
     /**
-     * Spark function for transforming data quanta.
+     * Create an appropriate {@link Function}-based predicate for deploying the given {@link PredicateDescriptor}
+     * on Apache Spark.
      */
-    public static class Transformator<I, O> implements Function<I, O>, RheemSparkFunction {
-
-        private final java.util.function.Function<I, O> impl;
-
-        public Transformator(java.util.function.Function<I, O> impl) {
-            this.impl = impl;
-        }
-
-        @Override
-        public O call(I i) throws Exception {
-            return this.impl.apply(i);
-        }
-
-        @Override
-        public Object getRheemFunction() {
-            return this.impl;
+    public <Type> Function<Type, Boolean> compile(
+            PredicateDescriptor<Type> predicateDescriptor,
+            SparkExecutionOperator operator,
+            ChannelExecutor[] inputs) {
+        final Predicate<Type> javaImplementation = predicateDescriptor.getJavaImplementation();
+        if (javaImplementation instanceof PredicateDescriptor.ExtendedSerializablePredicate) {
+            return new ExtendedPredicateAdapater<>(
+                    (PredicateDescriptor.ExtendedSerializablePredicate<Type>) javaImplementation,
+                    new SparkExecutionContext(operator, inputs)
+            );
+        } else {
+            return new PredicateAdapter<>(javaImplementation);
         }
     }
 
@@ -106,27 +124,6 @@ public class FunctionCompiler {
         }
     }
 
-    /**
-     * Spark function for transforming data quanta.
-     */
-    public static class FlatMapper<I, O> implements FlatMapFunction<I, O>, RheemSparkFunction {
-
-        private final java.util.function.Function<I, Iterable<O>> impl;
-
-        public FlatMapper(java.util.function.Function<I, Iterable<O>> impl) {
-            this.impl = impl;
-        }
-
-        @Override
-        public Iterable<O> call(I i) throws Exception {
-            return this.impl.apply(i);
-        }
-
-        @Override
-        public Object getRheemFunction() {
-            return this.impl;
-        }
-    }
 
     /**
      * Spark function for aggregating data quanta.
@@ -150,25 +147,6 @@ public class FunctionCompiler {
         }
     }
 
-
-    public static class FilterWrapper<Type> implements Function<Type, Boolean>, RheemSparkFunction {
-
-        private Predicate<Type> impl;
-
-        public FilterWrapper(Predicate<Type> impl) {
-            this.impl = impl;
-        }
-
-        @Override
-        public Boolean call(Type el) throws Exception {
-            return this.impl.test(el);
-        }
-
-        @Override
-        public Object getRheemFunction() {
-            return this.impl;
-        }
-    }
 
     /**
      * Describes functions coming from Rheem, designated for Spark.

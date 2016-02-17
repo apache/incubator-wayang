@@ -9,11 +9,8 @@ import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.types.DataUnitType;
-import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
@@ -190,7 +187,6 @@ public class SparkIntegrationIT {
         rheemContext.execute(rheemPlan);
     }
 
-    @Ignore
     @Test
     public void testBroadcasts() {
         Collection<Integer> broadcastedValues = Arrays.asList(1, 2, 3, 4);
@@ -199,29 +195,11 @@ public class SparkIntegrationIT {
         List<Integer> expectedValues = Arrays.asList(2, 2, 4);
 
         final DataSetType<Integer> integerDataSetType = DataSetType.createDefault(Integer.class);
-        CollectionSource<Integer> broadcastSource = new CollectionSource<>(broadcastedValues,
-                integerDataSetType);
-        CollectionSource<Integer> mainSource = new CollectionSource<>(mainValues,
-                integerDataSetType);
-        FilterOperator<Integer> semijoin = new FilterOperator<>(
-                integerDataSetType,
-                new PredicateDescriptor.ExtendedSerializablePredicate<Integer>() {
-
-                    private Set<Integer> allowedInts;
-
-                    @Override
-                    public void open(ExecutionContext ctx) {
-                        this.allowedInts = new HashSet<>(ctx.<Integer>getBroadcast("allowed values"));
-                    }
-
-                    @Override
-                    public boolean test(Integer integer) {
-                        return this.allowedInts.contains(integer);
-                    }
-                }
-        );
-        final LocalCallbackSink<Integer> collectingSink = LocalCallbackSink.createCollectingSink(collectedValues,
-                integerDataSetType);
+        CollectionSource<Integer> broadcastSource = new CollectionSource<>(broadcastedValues, integerDataSetType);
+        CollectionSource<Integer> mainSource = new CollectionSource<>(mainValues, integerDataSetType);
+        FilterOperator<Integer> semijoin = new FilterOperator<>(integerDataSetType, new SemijoinFunction());
+        final LocalCallbackSink<Integer> collectingSink =
+                LocalCallbackSink.createCollectingSink(collectedValues, integerDataSetType);
 
         mainSource.connectTo(0, semijoin, 0);
         broadcastSource.broadcastTo(0, semijoin, "allowed values");
@@ -237,5 +215,20 @@ public class SparkIntegrationIT {
 
         Collections.sort(collectedValues);
         Assert.assertEquals(expectedValues, collectedValues);
+    }
+
+    private static class SemijoinFunction implements PredicateDescriptor.ExtendedSerializablePredicate<Integer> {
+
+        private Set<Integer> allowedInts;
+
+        @Override
+        public void open(ExecutionContext ctx) {
+            this.allowedInts = new HashSet<>(ctx.<Integer>getBroadcast("allowed values"));
+        }
+
+        @Override
+        public boolean test(Integer integer) {
+            return this.allowedInts.contains(integer);
+        }
     }
 }

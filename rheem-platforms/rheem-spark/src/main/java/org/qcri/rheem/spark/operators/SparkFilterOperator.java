@@ -1,6 +1,7 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -32,11 +33,10 @@ public class SparkFilterOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final FunctionCompiler.FilterWrapper<Type> filterFunction = compiler.compile(this.predicateDescriptor);
-        SparkExecutor.openFunction(this, filterFunction.getRheemFunction(), inputs);
+        final Function<Type, Boolean> filterFunction = compiler.compile(this.predicateDescriptor, this, inputs);
 
         final JavaRDD<Type> inputRdd = inputs[0].<Type>provideRdd();
-        final JavaRDD<Type> outputRdd = inputRdd.filter(new FunctionCompiler.FilterWrapper<>(this.predicateDescriptor.getJavaImplementation()));
+        final JavaRDD<Type> outputRdd = inputRdd.filter(filterFunction);
         outputs[0].acceptRdd(outputRdd);
     }
 

@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
+import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -36,7 +37,8 @@ public class SparkMapOperator<InputType, OutputType>
         // TODO: Correct open method.
 
         final JavaRDD<InputType> inputRdd = inputs[0].provideRdd();
-        final JavaRDD<OutputType> outputRdd = inputRdd.map(compiler.compile(this.functionDescriptor));
+        final Function<InputType, OutputType> mapFunctions = compiler.compile(this.functionDescriptor, this, inputs);
+        final JavaRDD<OutputType> outputRdd = inputRdd.map(mapFunctions);
 
         outputs[0].acceptRdd(outputRdd);
     }

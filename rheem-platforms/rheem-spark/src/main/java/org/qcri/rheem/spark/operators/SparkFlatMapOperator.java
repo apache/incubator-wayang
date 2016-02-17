@@ -1,7 +1,6 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
@@ -10,8 +9,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
-
-import java.util.Iterator;
 
 
 /**
@@ -36,8 +33,8 @@ public class SparkFlatMapOperator<InputType, OutputType>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final FunctionCompiler.FlatMapper<InputType, OutputType> flatMapFunction = compiler.compile(this.functionDescriptor);
-        SparkExecutor.openFunction(this, flatMapFunction.getRheemFunction(), inputs);
+        final FlatMapFunction<InputType, OutputType> flatMapFunction =
+                compiler.compile(this.functionDescriptor, this, inputs);
 
         final JavaRDD<InputType> inputRdd = inputs[0].<InputType>provideRdd();
         final JavaRDD<OutputType> outputRdd = inputRdd.flatMap(flatMapFunction);

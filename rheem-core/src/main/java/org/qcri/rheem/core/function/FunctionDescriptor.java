@@ -54,7 +54,13 @@ public abstract class FunctionDescriptor {
      */
     @FunctionalInterface
     public interface SerializableFunction<Input, Output> extends Function<Input, Output>, Serializable {
+    }
 
+
+    /**
+     * Extends a {@link SerializableFunction} to an {@link ExtendedFunction}.
+     */
+    public interface ExtendedSerializableFunction<Input, Output> extends SerializableFunction<Input, Output>, ExtendedFunction {
     }
 
     /**
@@ -62,5 +68,11 @@ public abstract class FunctionDescriptor {
      */
     @FunctionalInterface
     public interface SerializableBinaryOperator<Type> extends BinaryOperator<Type>, Serializable {
+    }
+
+    /**
+     * Extends a {@link SerializableBinaryOperator} to an {@link ExtendedFunction}.
+     */
+    public interface ExtendedSerializableBinaryOperator<Type> extends SerializableBinaryOperator<Type>, ExtendedFunction {
     }
 }

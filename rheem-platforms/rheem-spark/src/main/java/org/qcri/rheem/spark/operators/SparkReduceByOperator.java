@@ -40,7 +40,7 @@ public class SparkReduceByOperator<Type, KeyType>
 
         final JavaRDD<Type> inputStream = inputs[0].provideRdd();
         final PairFunction<Type, KeyType, Type> keyExtractor = compiler.compileToKeyExtractor(this.keyDescriptor);
-        Function2<Type, Type, Type> reduceFunc = compiler.compile(this.reduceDescriptor);
+        Function2<Type, Type, Type> reduceFunc = compiler.compile(this.reduceDescriptor, this, inputs);
         final JavaRDD<Type> outputRdd = inputStream.mapToPair(keyExtractor)
                 .reduceByKey(reduceFunc)
                 .map(new TupleConverter<>());

@@ -37,7 +37,7 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
         assert outputs.length == this.getNumOutputs();
 
         final JavaRDD<Type> inputRdd = inputs[0].provideRdd();
-        final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor);
+        final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor, this, inputs);
         final Function<scala.Tuple2<KeyType, Iterable<Type>>, Iterable<Type>> projector = new GroupProjector<>();
         final JavaRDD<Iterable<Type>> outputRdd = inputRdd
                 .groupBy(keyExtractor)
