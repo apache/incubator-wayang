@@ -32,7 +32,8 @@ public class PlanEnumeration {
 
     /**
      * Combinations of {@link OutputSlot}s and {@link InputSlot}, where the former is served by this instance and the
-     * latter is not yet assigned in this instance.
+     * latter is not yet assigned in this instance. If there is no such {@link InputSlot} (because we are enumerating
+     * an {@link OperatorAlternative.Alternative}, then we put {@code null} instead of it.
      */
     final Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots;
 
@@ -106,10 +107,10 @@ public class PlanEnumeration {
             for (OutputSlot outputSlot : outputOperator.getAllOutputs()) {
                 List<InputSlot> inputSlots = outputSlot.getOccupiedSlots();
                 if (inputSlots.isEmpty()) {
-                    inputSlots = Collections.singletonList(null);
-                    for (InputSlot inputSlot : inputSlots) {
-                        instance.servingOutputSlots.add(new Tuple<>(outputSlot, inputSlot));
-                    }
+                    inputSlots = Collections.singletonList(null); // InputSlot is probably in a surrounding plan.
+                }
+                for (InputSlot inputSlot : inputSlots) {
+                    instance.servingOutputSlots.add(new Tuple<>(outputSlot, inputSlot));
                 }
             }
         }
