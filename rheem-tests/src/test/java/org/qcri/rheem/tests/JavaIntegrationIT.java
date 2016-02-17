@@ -189,7 +189,6 @@ public class JavaIntegrationIT {
         rheemContext.execute(rheemPlan);
     }
 
-    @Ignore
     @Test
     public void testBroadcasts() {
         Collection<Integer> broadcastedValues = Arrays.asList(1, 2, 3, 4);

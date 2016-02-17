@@ -7,6 +7,7 @@ import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import scala.Tuple2;
@@ -31,20 +32,19 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
-        if (inputRdds.length != 1) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final JavaRDD<Type> inputRdd = (JavaRDD<Type>) inputRdds[0];
+        final JavaRDD<Type> inputRdd = inputs[0].provideRdd();
         final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor);
         final Function<scala.Tuple2<KeyType, Iterable<Type>>, Iterable<Type>> projector = new GroupProjector<>();
-        final JavaRDDLike outputRdd = inputRdd
+        final JavaRDD<Iterable<Type>> outputRdd = inputRdd
                 .groupBy(keyExtractor)
                 .map(projector);
 
         // TODO: MaterializedGroupByOperator actually prescribes to return Iterators, not Iterables.
-        return new JavaRDDLike[]{outputRdd};
+        outputs[0].acceptRdd(outputRdd);
     }
 
     @Override

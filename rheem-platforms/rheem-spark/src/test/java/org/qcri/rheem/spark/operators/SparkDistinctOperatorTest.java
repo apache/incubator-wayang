@@ -5,6 +5,8 @@ import org.apache.spark.api.java.JavaRDDLike;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.TestChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -26,13 +28,19 @@ public class SparkDistinctOperatorTest extends SparkOperatorTestBase{
                         DataSetType.createDefaultUnchecked(Integer.class)
                 );
 
-        // Execute the distinct operator.
-        final JavaRDDLike[] outputStreams = distinctOperator.evaluate(new JavaRDD[]{inputStream}, new FunctionCompiler(), this.sparkExecutor);
+        // Set up the ChannelExecutors.
+        final ChannelExecutor[] inputs = new ChannelExecutor[]{
+                new TestChannelExecutor(inputStream)
+        };
+        final ChannelExecutor[] outputs = new ChannelExecutor[]{
+                new TestChannelExecutor()
+        };
+
+        // Execute.
+        distinctOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
-        Assert.assertEquals(1, outputStreams.length);
-        final List<Integer> result =
-                ((JavaRDD<Integer>) outputStreams[0]).collect();
+        final List<Integer> result = outputs[0].<Integer>provideRdd().collect();
         Assert.assertEquals(4, result.size());
         Assert.assertEquals(Arrays.asList(0, 1, 6, 2), result);
 

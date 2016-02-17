@@ -1,15 +1,15 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,18 +32,19 @@ public class SparkGlobalReduceOperator<Type>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
-        if (inputRdds.length != 1) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputRdds[0];
+        final FunctionCompiler.Reducer<Type> reduceFunction = compiler.compile(this.reduceDescriptor);
+        SparkExecutor.openFunction(this, reduceFunction.getRheemFunction(), inputs);
 
-        final Type output = inputStream.reduce(compiler.compile(this.reduceDescriptor));
-        List<Type> data = Arrays.asList(output);
+        final JavaRDD<Type> inputRdd = inputs[0].provideRdd();
+        List<Type> outputList = Collections.singletonList(inputRdd.reduce(reduceFunction));
         // FIXME: This is likely inefficient. The SparkExecutor should be capable of handling these primitive values and put them into RDDs on demand only. However, let's see if this is really a problem.
-        JavaRDD<Type> outputStream = sparkExecutor.sc.parallelize(data);
-        return new JavaRDDLike[]{outputStream};
+        JavaRDD<Type> outputRdd = sparkExecutor.sc.parallelize(outputList);
+
+        outputs[0].acceptRdd(outputRdd);
     }
 
     @Override

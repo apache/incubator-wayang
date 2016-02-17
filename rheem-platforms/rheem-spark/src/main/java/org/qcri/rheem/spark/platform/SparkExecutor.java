@@ -1,18 +1,18 @@
 package org.qcri.rheem.spark.platform;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.SparkChannelManager;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 
 import java.util.Collection;
@@ -41,37 +41,38 @@ public class SparkExecutor implements Executor {
         terminalTasks.forEach(this::execute);
     }
 
-    @Override
-    public void dispose() {
-        this.establishedChannelExecutors.values().forEach(ChannelExecutor::dispose);
-    }
-
-    @Override
-    public SparkPlatform getPlatform() {
-        return this.platform;
-    }
-
     private void execute(ExecutionTask executionTask) {
-        JavaRDDLike[] inputRdds = obtainInputRdds(executionTask);
+        ChannelExecutor[] inputs = this.obtainInputs(executionTask);
         final SparkExecutionOperator sparkExecutionOperator = (SparkExecutionOperator) executionTask.getOperator();
-        JavaRDDLike[] outputRdds = sparkExecutionOperator.evaluate(inputRdds, this.compiler, this);
-        registerOutputRdds(outputRdds, executionTask);
+        ChannelExecutor[] outputs = this.createOutputExecutors(executionTask);
+        sparkExecutionOperator.evaluate(inputs, outputs, this.compiler, this);
+        this.registerChannelExecutor(outputs, executionTask);
     }
 
-    private JavaRDDLike[] obtainInputRdds(ExecutionTask executionTask) {
-        JavaRDDLike[] inputRdds = new JavaRDDLike[executionTask.getOperator().getNumInputs()];
-        for (int inputIndex = 0; inputIndex < inputRdds.length; inputIndex++) {
-            Channel inputChannel = executionTask.getInputChannel(inputIndex);
-            inputRdds[inputIndex] = this.getInputRddFor(inputChannel);
+    private ChannelExecutor[] createOutputExecutors(ExecutionTask executionTask) {
+        final SparkChannelManager channelManager = this.getPlatform().getChannelManager();
+        ChannelExecutor[] channelExecutors = new ChannelExecutor[executionTask.getOutputChannels().length];
+        for (int outputIndex = 0; outputIndex < channelExecutors.length; outputIndex++) {
+            final Channel output = executionTask.getOutputChannel(outputIndex);
+            channelExecutors[outputIndex] = channelManager.createChannelExecutor(output);
         }
-        return inputRdds;
+        return channelExecutors;
     }
 
-    private JavaRDDLike getInputRddFor(Channel channel) {
+    private ChannelExecutor[] obtainInputs(ExecutionTask executionTask) {
+        ChannelExecutor[] inputs = new ChannelExecutor[executionTask.getOperator().getNumInputs()];
+        for (int inputIndex = 0; inputIndex < inputs.length; inputIndex++) {
+            Channel input = executionTask.getInputChannel(inputIndex);
+            inputs[inputIndex] = this.getOrEstablishChannelExecutor(input);
+        }
+        return inputs;
+    }
+
+    private ChannelExecutor getOrEstablishChannelExecutor(Channel channel) {
         for (int numTry = 0; numTry < 2; numTry++) {
             final ChannelExecutor channelExecutor = this.establishedChannelExecutors.get(channel);
             if (channelExecutor != null) {
-                return channelExecutor.provideRdd();
+                return channelExecutor;
             }
 
             this.execute(channel.getProducer());
@@ -80,51 +81,34 @@ public class SparkExecutor implements Executor {
         throw new RheemException("Execution failed: could not obtain data for " + channel);
     }
 
-    private void registerOutputRdds(JavaRDDLike[] outputStreams, ExecutionTask executionTask) {
+    private void registerChannelExecutor(ChannelExecutor[] outputs, ExecutionTask executionTask) {
         for (int outputIndex = 0; outputIndex < executionTask.getOperator().getNumOutputs(); outputIndex++) {
-            Channel channel = executionTask.getOutputChannels()[outputIndex];
-            final ChannelExecutor channelExecutor = this.getPlatform().getChannelManager().createChannelExecutor(channel);
+            Channel channel = executionTask.getOutputChannel(outputIndex);
+            final ChannelExecutor channelExecutor = outputs[outputIndex];
             Validate.notNull(channelExecutor);
-            channelExecutor.acceptRdd(outputStreams[outputIndex]);
             this.establishedChannelExecutors.put(channel, channelExecutor);
         }
     }
 
-    @Override
-    public void evaluate(ExecutionOperator executionOperator) {
-        if (!executionOperator.isSink()) {
-            throw new IllegalArgumentException("Cannot evaluate execution operator: it is not a sink");
+    public static void openFunction(SparkExecutionOperator operator, Object function, ChannelExecutor[] inputs) {
+        if (function instanceof ExtendedFunction) {
+            ExtendedFunction extendedFunction = (ExtendedFunction) function;
+            extendedFunction.open(new SparkExecutionContext(operator, inputs));
         }
-
-        if (!(executionOperator instanceof SparkExecutionOperator)) {
-            throw new IllegalStateException(String.format("Cannot evaluate execution operator: " +
-                    "Execution plan contains non-Java operator %s.", executionOperator));
-        }
-
-        this.evaluate0((SparkExecutionOperator) executionOperator);
     }
 
-    private JavaRDDLike[] evaluate0(SparkExecutionOperator operator) {
-        // Resolve all the input streams for this operator.
-        JavaRDDLike[] inputStreams = new JavaRDDLike[operator.getNumInputs()];
-        for (int i = 0; i < inputStreams.length; i++) {
-            final OutputSlot outputSlot = operator.getInput(i).getOccupant();
-            if (outputSlot == null) {
-                throw new IllegalStateException("Cannot evaluate execution operator: There is an unsatisfied input.");
-            }
+    @Override
+    public void dispose() {
+        this.establishedChannelExecutors.values().forEach(ChannelExecutor::dispose);
+    }
 
-            final Operator inputOperator = outputSlot.getOwner();
-            if (!(inputOperator instanceof SparkExecutionOperator)) {
-                throw new IllegalStateException(String.format("Cannot evaluate execution operator: " +
-                        "Execution plan contains non-Spark operator %s.", inputOperator));
-            }
+    @Override
+    public void evaluate(ExecutionOperator executionOperator) {
+        throw new RuntimeException("Method not supported anymore.");
+    }
 
-            JavaRDDLike[] outputStreams = this.evaluate0((SparkExecutionOperator) inputOperator);
-            int outputSlotIndex = 0;
-            for (; outputSlot != inputOperator.getOutput(outputSlotIndex); outputSlotIndex++) ;
-            inputStreams[i] = outputStreams[outputSlotIndex];
-        }
-
-        return operator.evaluate(inputStreams, this.compiler, this);
+    @Override
+    public SparkPlatform getPlatform() {
+        return this.platform;
     }
 }

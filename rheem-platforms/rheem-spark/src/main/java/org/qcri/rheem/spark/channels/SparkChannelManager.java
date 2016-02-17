@@ -28,15 +28,20 @@ public class SparkChannelManager extends DefaultChannelManager {
     private final List<Class<? extends Channel>> allSupportedChannels = new LinkedList<>();
 
     public SparkChannelManager(Platform platform) {
-        super(platform, RddChannel.class, null); // TODO: Devise broadcast channel.
+        super(platform, RddChannel.class, BroadcastChannel.class);
         this.initializeChannelTypeDescriptors();
     }
 
     private void initializeChannelTypeDescriptors() {
         this.addChannel(RddChannel.class,
                 new RddChannel.Initializer(),
-                channel -> new RddChannel.Executor(false),
+                channel -> new ChannelExecutor.ForRDD(channel.getConsumers().size() > 1),
                 true, false);
+
+        this.addChannel(BroadcastChannel.class,
+                new BroadcastChannel.Initializer(),
+                channel -> new ChannelExecutor.ForBroadcast(),
+                false, true);
 
         this.addChannel(HdfsFile.class,
                 new HdfsFileInitializer(),

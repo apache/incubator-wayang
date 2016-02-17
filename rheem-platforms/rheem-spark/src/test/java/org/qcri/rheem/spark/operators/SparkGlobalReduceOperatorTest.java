@@ -9,6 +9,8 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.TestChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -36,12 +38,19 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
                         )
                 );
 
-        // Execute the reduce operator.
-        final JavaRDDLike[] outputStreams = globalReduce.evaluate(new JavaRDDLike[]{inputRdd}, new FunctionCompiler(), this.sparkExecutor);
+        // Set up the ChannelExecutors.
+        final ChannelExecutor[] inputs = new ChannelExecutor[]{
+                new TestChannelExecutor(inputRdd)
+        };
+        final ChannelExecutor[] outputs = new ChannelExecutor[]{
+                new TestChannelExecutor()
+        };
+
+        // Execute.
+        globalReduce.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
-        Assert.assertEquals(1, outputStreams.length);
-        final List<Integer> result = outputStreams[0].collect();
+        final List<Integer> result = outputs[0].<Integer>provideRdd().collect();
         Assert.assertEquals(1, result.size());
         Assert.assertEquals(Integer.valueOf((10 + 1) * (10 / 2)), result.get(0)); // Props to Gauss!
 
@@ -64,12 +73,19 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
                         )
                 );
 
-        // Execute the reduce operator.
-        final JavaRDDLike[] outputStreams = globalReduce.evaluate(new JavaRDDLike[]{inputRdd}, new FunctionCompiler(), this.sparkExecutor);
+        // Set up the ChannelExecutors.
+        final ChannelExecutor[] inputs = new ChannelExecutor[]{
+                new TestChannelExecutor(inputRdd)
+        };
+        final ChannelExecutor[] outputs = new ChannelExecutor[]{
+                new TestChannelExecutor()
+        };
+
+        // Execute.
+        globalReduce.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
-        Assert.assertEquals(1, outputStreams.length);
-        final List<Integer> result = outputStreams[0].collect();
+        final List<Integer> result = outputs[0].<Integer>provideRdd().collect();
         Assert.assertEquals(1, result.size());
         Assert.assertEquals(Integer.valueOf((10 + 1) * (10 / 2)), result.get(0)); // Props to Gauss!
 

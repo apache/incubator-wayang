@@ -52,32 +52,4 @@ public class RddChannel extends Channel {
         }
     }
 
-    public static class Executor implements ChannelExecutor {
-
-        private final boolean isCache;
-
-        private JavaRDDLike rdd;
-
-        public Executor(boolean isCache) {
-            this.isCache = isCache;
-        }
-
-        @Override
-        public void acceptRdd(JavaRDDLike rdd) {
-            this.rdd = rdd;
-            if (this.isCache) {
-                ((JavaRDD) this.rdd).cache();
-            }
-        }
-
-        @Override
-        public JavaRDDLike provideRdd() {
-            return this.rdd;
-        }
-
-        @Override
-        public void dispose() {
-            ((JavaRDD) this.rdd).unpersist();
-        }
-    }
 }

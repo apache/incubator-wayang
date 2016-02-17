@@ -1,24 +1,21 @@
 package org.qcri.rheem.spark.operators;
 
-import org.qcri.rheem.basic.operators.TextFileSource;
+import org.apache.spark.broadcast.Broadcast;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
-import java.util.Collection;
+import java.util.List;
 
 /**
- * Provides a {@link Collection} to a Spark job.
+ * Takes care of creating a {@link Broadcast} that can be used later on.
  */
-public class SparkTextFileSource extends TextFileSource implements SparkExecutionOperator {
+public class SparkBroadcastOperator extends OperatorBase implements SparkExecutionOperator {
 
-    public SparkTextFileSource(String inputUrl, String encoding) {
-        super(inputUrl, encoding);
-    }
-
-    public SparkTextFileSource(String inputUrl) {
-        super(inputUrl);
+    public SparkBroadcastOperator() {
+        super(1, 1, false, null);
     }
 
     @Override
@@ -26,11 +23,13 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        outputs[0].acceptRdd(sparkExecutor.sc.textFile(this.getInputUrl()));
+        final List<?> collect = inputs[0].provideRdd().collect();
+        final Broadcast<?> broadcast = sparkExecutor.sc.broadcast(collect);
+        outputs[0].acceptBroadcast(broadcast);
     }
 
     @Override
     public ExecutionOperator copy() {
-        return new SparkTextFileSource(this.getInputUrl(), this.getEncoding());
+        return new SparkBroadcastOperator();
     }
 }

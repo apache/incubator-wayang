@@ -1,10 +1,9 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
@@ -22,9 +21,11 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
-        Validate.isTrue(inputRdds.length == 0);
-        return new JavaRDDLike[] { sparkExecutor.sc.parallelize(this.getCollectionAsList()) };
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
+
+        outputs[0].acceptRdd(sparkExecutor.sc.parallelize(this.getCollectionAsList()));
     }
 
     private List<Type> getCollectionAsList() {

@@ -1,7 +1,8 @@
 package org.qcri.rheem.spark.channels;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.spark.api.java.JavaRDDLike;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.broadcast.Broadcast;
 import org.qcri.rheem.basic.channels.HdfsFile;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
@@ -148,18 +149,28 @@ public class HdfsFileInitializer implements ChannelInitializer {
         }
 
         @Override
-        public void acceptRdd(JavaRDDLike rdd) {
+        public void acceptRdd(JavaRDD<?> rdd) throws RheemException {
             Validate.isTrue(rdd == null);
         }
 
         @Override
-        public JavaRDDLike provideRdd() {
+        public void acceptBroadcast(Broadcast broadcast) {
+            throw new RuntimeException("Does not accept broadcasts.");
+        }
+
+        @Override
+        public <T> JavaRDD<T> provideRdd() {
             return null;
         }
 
         @Override
+        public <T> Broadcast<T> provideBroadcast() {
+            throw new RuntimeException("Does not provide broadcasts.");
+        }
+
+        @Override
         public void dispose() {
-            for (String path : hdfsFile.getPaths()) {
+            for (String path : this.hdfsFile.getPaths()) {
                 try {
                     // TODO: delete HDFS files
                     final Path pathToDelete = Paths.get(new URI(path));

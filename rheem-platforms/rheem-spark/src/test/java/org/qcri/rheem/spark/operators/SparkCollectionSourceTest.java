@@ -4,6 +4,8 @@ import org.apache.spark.api.java.JavaRDDLike;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.TestChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -22,11 +24,17 @@ public class SparkCollectionSourceTest extends SparkOperatorTestBase {
         SparkCollectionSource<Integer> collectionSource = new SparkCollectionSource<>(
                 inputValues,
                 DataSetType.createDefault(Integer.class));
-        final JavaRDDLike[] outputStreams = collectionSource.evaluate(new JavaRDDLike[0], new FunctionCompiler(), this.sparkExecutor);
 
-        Assert.assertEquals(1, outputStreams.length);
-        JavaRDDLike outputStream = outputStreams[0];
-        final Set<Integer> outputValues = new HashSet<>((List<Integer>) outputStream.collect());
+        // Set up the ChannelExecutors.
+        final ChannelExecutor[] inputs = new ChannelExecutor[]{};
+        final ChannelExecutor[] outputs = new ChannelExecutor[]{
+                new TestChannelExecutor()
+        };
+
+        // Execute.
+        collectionSource.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+
+        final Set<Integer> outputValues = new HashSet<>(outputs[0].<Integer>provideRdd().collect());
         Assert.assertEquals(outputValues, inputValues);
     }
 }

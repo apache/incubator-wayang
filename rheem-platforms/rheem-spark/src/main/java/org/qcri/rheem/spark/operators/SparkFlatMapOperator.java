@@ -2,10 +2,12 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaRDDLike;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
@@ -30,15 +32,16 @@ public class SparkFlatMapOperator<InputType, OutputType>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
-        if (inputRdds.length != 1) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final JavaRDD<InputType> inputStream = (JavaRDD<InputType>) inputRdds[0];
-        final JavaRDD<OutputType> outputStream = inputStream.flatMap(compiler.compile(this.functionDescriptor));
+        final FunctionCompiler.FlatMapper<InputType, OutputType> flatMapFunction = compiler.compile(this.functionDescriptor);
+        SparkExecutor.openFunction(this, flatMapFunction.getRheemFunction(), inputs);
 
-        return new JavaRDDLike[]{outputStream};
+        final JavaRDD<InputType> inputRdd = inputs[0].<InputType>provideRdd();
+        final JavaRDD<OutputType> outputRdd = inputRdd.flatMap(flatMapFunction);
+        outputs[0].acceptRdd(outputRdd);
     }
 
     @Override

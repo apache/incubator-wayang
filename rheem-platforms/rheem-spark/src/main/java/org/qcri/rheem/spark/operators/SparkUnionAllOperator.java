@@ -1,10 +1,10 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.qcri.rheem.basic.operators.UnionAllOperator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
@@ -24,16 +24,15 @@ public class SparkUnionAllOperator<Type>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
-        if (inputRdds.length != 2) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final JavaRDD<Type> inputStream0 = (JavaRDD<Type>) inputRdds[0];
-        final JavaRDD<Type> inputStream1 = (JavaRDD<Type>) inputRdds[1];
-        final JavaRDD<Type> outputStream = inputStream0.union(inputStream1);
+        final JavaRDD<Type> inputRdd0 = inputs[0].provideRdd();
+        final JavaRDD<Type> inputRdd1 = inputs[1].provideRdd();
+        final JavaRDD<Type> outputRdd = inputRdd0.union(inputRdd1);
 
-        return new JavaRDDLike[]{outputStream};
+        outputs[0].acceptRdd(outputRdd);
     }
 
     @Override

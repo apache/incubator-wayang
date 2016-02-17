@@ -1,10 +1,10 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.commons.lang3.Validate;
-import org.apache.spark.api.java.JavaRDDLike;
+import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
@@ -25,11 +25,12 @@ public class SparkLocalCallbackSink<T> extends LocalCallbackSink<T> implements S
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
-        Validate.isTrue(inputRdds.length == 1);
-        final JavaRDDLike inputRdd = inputRdds[0];
-        ((JavaRDDLike<T, ?>) inputRdd).toLocalIterator().forEachRemaining(this.callback::accept);
-        return new JavaRDDLike[0];
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
+
+        final JavaRDD<T> inputRdd = inputs[0].provideRdd();
+        inputRdd.toLocalIterator().forEachRemaining(this.callback::accept);
     }
 
     @Override

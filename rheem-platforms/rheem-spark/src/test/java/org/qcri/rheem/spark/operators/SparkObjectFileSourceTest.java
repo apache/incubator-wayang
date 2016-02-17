@@ -5,6 +5,8 @@ import org.apache.spark.api.java.JavaRDDLike;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.TestChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
@@ -18,7 +20,7 @@ import static org.mockito.Mockito.mock;
 /**
  * Test suite for {@link SparkObjectFileSource}.
  */
-public class SparkObjectFileSourceTest {
+public class SparkObjectFileSourceTest extends SparkOperatorTestBase {
 
     @Test
     public void testWritingDoesNotFail() throws IOException {
@@ -33,14 +35,19 @@ public class SparkObjectFileSourceTest {
             SparkObjectFileSource<Integer> source = new SparkObjectFileSource<>(
                     inputUrl.toString(), DataSetType.createDefault(Integer.class));
 
+            // Set up the ChannelExecutors.
+            final ChannelExecutor[] inputs = new ChannelExecutor[]{
+            };
+            final ChannelExecutor[] outputs = new ChannelExecutor[]{
+                    new TestChannelExecutor()
+            };
+
             // Execute.
-            final JavaRDDLike[] outputRdds = source.evaluate(new JavaRDDLike[0], mock(FunctionCompiler.class), sparkExecutor);
+            source.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
             // Verify.
-            Assert.assertTrue(outputRdds.length == 1);
-
             Set<Integer> expectedValues = new HashSet<>(SparkObjectFileSourceTest.enumerateRange(10000));
-            final List<Integer> rddList = outputRdds[0].collect();
+            final List<Integer> rddList = outputs[0].<Integer>provideRdd().collect();
             for (Integer rddValue : rddList) {
                 Assert.assertTrue("Value: " + rddValue, expectedValues.remove(rddValue));
             }

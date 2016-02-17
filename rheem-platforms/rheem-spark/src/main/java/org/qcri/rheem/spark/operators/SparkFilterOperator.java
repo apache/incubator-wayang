@@ -1,16 +1,13 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
-import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
-
-import java.util.function.Predicate;
 
 /**
  * Spark implementation of the {@link FilterOperator}.
@@ -20,19 +17,6 @@ public class SparkFilterOperator<Type>
         implements SparkExecutionOperator {
 
 
-    public static class FilterWrapper<Type> implements Function<Type, Boolean> {
-
-        private Predicate<Type> rheemPredicate;
-
-        public FilterWrapper(Predicate<Type> rheemPredicate) {
-            this.rheemPredicate = rheemPredicate;
-        }
-
-        @Override
-        public Boolean call(Type el) throws Exception {
-            return this.rheemPredicate.test(el);
-        }
-    }
 
     /**
      * Creates a new instance.
@@ -44,16 +28,16 @@ public class SparkFilterOperator<Type>
     }
 
     @Override
-    public JavaRDDLike[] evaluate(JavaRDDLike[] inputRdds, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
-        if (inputRdds.length != 1) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final JavaRDD<Type> inputStream = (JavaRDD<Type>) inputRdds[0];
+        final FunctionCompiler.FilterWrapper<Type> filterFunction = compiler.compile(this.predicateDescriptor);
+        SparkExecutor.openFunction(this, filterFunction.getRheemFunction(), inputs);
 
-        final JavaRDD<Type> outputStream = inputStream.filter(new FilterWrapper<>(this.predicateDescriptor.getJavaImplementation()));
-
-        return new JavaRDDLike[]{outputStream};
+        final JavaRDD<Type> inputRdd = inputs[0].<Type>provideRdd();
+        final JavaRDD<Type> outputRdd = inputRdd.filter(new FunctionCompiler.FilterWrapper<>(this.predicateDescriptor.getJavaImplementation()));
+        outputs[0].acceptRdd(outputRdd);
     }
 
     @Override
