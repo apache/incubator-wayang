@@ -5,7 +5,9 @@ import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Map;
 import java.util.Optional;
@@ -35,23 +37,21 @@ public class JavaReduceByOperator<Type, KeyType>
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 1) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final Stream<Type> inputStream = inputStreams[0];
         final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor);
         final BinaryOperator<Type> reduceFunction = compiler.compile(this.reduceDescriptor);
-        final Map<KeyType, Optional<Type>> reductionResult = inputStream.collect(
-                Collectors.groupingBy(
-                        keyExtractor,
-                        Collectors.reducing(reduceFunction)));
+        JavaExecutor.openFunction(this, reduceFunction, inputs);
 
-        return new Stream[]{reductionResult.values().stream()
+        final Map<KeyType, Optional<Type>> reductionResult = inputs[0].<Type>provideStream().collect(
+                Collectors.groupingBy(keyExtractor, Collectors.reducing(reduceFunction)));
+        final Stream<Type> finishedStream = reductionResult.values().stream()
                 .filter(Optional::isPresent)
-                .map(Optional::get)
-        };
+                .map(Optional::get);
+
+        outputs[0].acceptStream(finishedStream);
     }
 
     @Override

@@ -25,7 +25,7 @@ public class SparkFlatMapOperator<InputType, OutputType>
      * @param functionDescriptor
      */
     public SparkFlatMapOperator(DataSetType inputType, DataSetType outputType,
-                                FlatMapDescriptor<InputType, Iterator<OutputType>> functionDescriptor) {
+                                FlatMapDescriptor<InputType, OutputType> functionDescriptor) {
         super(inputType, outputType, functionDescriptor);
     }
 

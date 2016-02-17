@@ -68,6 +68,23 @@ public class CollectionChannel extends Channel {
         }
 
         @Override
+        public void acceptCollection(Collection<?> collection) {
+            this.collection = collection;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Collection<?> provideCollection() {
+            return this.collection;
+        }
+
+        @Override
+        public boolean canProvideCollection() {
+            return true;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
         public Stream<?> provideStream() {
             return this.collection.stream();
         }

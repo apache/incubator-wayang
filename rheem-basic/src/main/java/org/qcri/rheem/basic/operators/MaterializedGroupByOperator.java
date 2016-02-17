@@ -14,9 +14,9 @@ import java.util.Optional;
 /**
  * This operator collocates the data units in a data set w.r.t. a key function.
  */
-public class MaterializedGroupByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Iterator<Type>> {
+public class MaterializedGroupByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Iterable<Type>> {
 
-    protected final TransformationDescriptor keyDescriptor;
+    protected final TransformationDescriptor<Type, Key> keyDescriptor;
 
     /**
      * Creates a new instance.

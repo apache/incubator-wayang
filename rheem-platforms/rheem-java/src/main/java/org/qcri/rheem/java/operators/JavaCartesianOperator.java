@@ -4,9 +4,10 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CartesianOperator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -19,27 +20,32 @@ public class JavaCartesianOperator<InputType0, InputType1>
 
     /**
      * Creates a new instance.
-     *
      */
     public JavaCartesianOperator(DataSetType<InputType0> inputType0, DataSetType<InputType1> inputType1) {
         super(inputType0, inputType1);
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 2) {
+    @SuppressWarnings("unchecked")
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        if (inputs.length != 2) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }
-        final Stream<InputType0> inputStream0 = (Stream<InputType0>) inputStreams[0];
-        final Stream<InputType1> inputStream1 = (Stream<InputType1>) inputStreams[1];
 
-        // Hack to avoid consuming stream more than once, collect it as a list.
-        // TODO remove this hack
-        final List<InputType1> input1 = inputStream1.collect(Collectors.toList());
-        final Stream outputStream =
-                inputStream0.flatMap(e1 -> input1.stream().map(e2 -> new Tuple2<>(e1, e2)));
-
-        return new Stream[]{outputStream};
+        if (inputs[0].canProvideCollection()) {
+            final Collection<InputType0> collection = (Collection<InputType0>) inputs[0].provideCollection();
+            final Stream<InputType1> stream = (Stream<InputType1>) inputs[1].provideStream();
+            outputs[0].acceptStream(stream.flatMap(e1 -> collection.stream().map(e0 -> new Tuple2<InputType0, InputType1>(e0, e1))));
+        } else if (inputs[1].canProvideCollection()) {
+            final Stream<InputType0> stream = (Stream<InputType0>) inputs[0].provideStream();
+            final Collection<InputType1> collection = (Collection<InputType1>) inputs[1].provideCollection();
+            outputs[0].acceptStream(stream.flatMap(e0 -> collection.stream().map(e1 -> new Tuple2<InputType0, InputType1>(e0, e1))));
+        } else {
+            // Fallback: Materialize one side.
+            final Collection<InputType0> collection = (Collection<InputType0>) inputs[0].provideStream().collect(Collectors.toList());
+            final Stream<InputType1> stream = (Stream<InputType1>) inputs[1].provideStream();
+            outputs[0].acceptStream(stream.flatMap(e1 -> collection.stream().map(e0 -> new Tuple2<InputType0, InputType1>(e0, e1))));
+        }
     }
 
     @Override

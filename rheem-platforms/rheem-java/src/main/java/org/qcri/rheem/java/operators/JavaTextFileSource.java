@@ -1,9 +1,9 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.TextFileSource;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.qcri.rheem.java.plugin.JavaPlatform;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +23,10 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
+
         URL url;
         try {
             url = new URL(this.getInputUrl());
@@ -33,9 +36,9 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         if ("file".equals(url.getProtocol())) {
             final Path path = new File(url.getPath()).toPath();
             try {
-                return new Stream[]{Files.lines(path)};
+                outputs[0].acceptStream(Files.lines(path));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RheemException("Reading failed.", e);
             }
         } else {
             throw new RuntimeException(String.format("Unsupported URL: %s", url));

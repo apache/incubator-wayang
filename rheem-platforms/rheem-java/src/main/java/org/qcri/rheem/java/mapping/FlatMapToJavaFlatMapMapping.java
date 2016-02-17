@@ -3,7 +3,7 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.java.operators.JavaFlatMapOperator;
-import org.qcri.rheem.java.plugin.JavaPlatform;
+import org.qcri.rheem.java.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

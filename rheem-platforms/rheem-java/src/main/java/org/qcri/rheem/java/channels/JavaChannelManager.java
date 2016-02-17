@@ -6,7 +6,7 @@ import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.DefaultChannelManager;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.java.plugin.JavaPlatform;
+import org.qcri.rheem.java.JavaPlatform;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;

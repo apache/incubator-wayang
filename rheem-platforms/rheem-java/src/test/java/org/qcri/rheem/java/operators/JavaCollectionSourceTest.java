@@ -3,6 +3,8 @@ package org.qcri.rheem.java.operators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.TestChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -11,8 +13,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 /**
- * Test suite for the {@link JavCSou}.
+ * Test suite for the {@link JavaCollectionSource}.
  */
 public class JavaCollectionSourceTest {
 
@@ -22,11 +28,14 @@ public class JavaCollectionSourceTest {
         JavaCollectionSource collectionSource = new JavaCollectionSource(
                 inputValues, 
                 DataSetType.createDefault(Integer.class));
-        final Stream[] outputStreams = collectionSource.evaluate(new Stream[0], new FunctionCompiler());
-        
-        Assert.assertEquals(1, outputStreams.length);
-        Stream<?> outputStream = outputStreams[0];
-        final Set<Object> outputValues = outputStream.collect(Collectors.toSet());
+        ChannelExecutor[] inputs = new ChannelExecutor[0];
+        ChannelExecutor[] outputs = new ChannelExecutor[] { new TestChannelExecutor()};
+
+        collectionSource.evaluate(inputs, outputs, new FunctionCompiler());
+
+        final Set<Object> outputValues = outputs[0].provideStream().collect(Collectors.toSet());
         Assert.assertEquals(outputValues, inputValues);
     }
+
+
 }

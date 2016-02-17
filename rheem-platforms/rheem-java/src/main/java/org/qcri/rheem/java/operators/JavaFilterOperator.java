@@ -4,9 +4,11 @@ import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.stream.Stream;
+import java.util.function.Predicate;
 
 /**
  * Java implementation of the {@link FilterOperator}.
@@ -26,15 +28,15 @@ public class JavaFilterOperator<Type>
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 1) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    @SuppressWarnings("unchecked")
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final Stream<Type> inputStream = inputStreams[0];
-        final Stream<Type> outputStream = inputStream.filter(this.predicateDescriptor.getJavaImplementation());
+        final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
+        JavaExecutor.openFunction(this, filterFunction, inputs);
 
-        return new Stream[]{outputStream};
+        outputs[0].acceptStream(inputs[0].<Type>provideStream().filter(filterFunction));
     }
 
     @Override

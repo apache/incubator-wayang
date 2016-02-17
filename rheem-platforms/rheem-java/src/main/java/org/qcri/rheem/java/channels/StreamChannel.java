@@ -1,10 +1,12 @@
 package org.qcri.rheem.java.channels;
 
+import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
+import java.util.Collection;
 import java.util.stream.Stream;
 
 /**
@@ -66,8 +68,25 @@ public class StreamChannel extends Channel {
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public Stream<?> provideStream() {
             return this.stream;
+        }
+
+        @Override
+        public void acceptCollection(Collection<?> collection) {
+            this.stream = collection.stream();
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Collection<?> provideCollection() {
+            throw new RuntimeException("Not available for this channel type.");
+        }
+
+        @Override
+        public boolean canProvideCollection() {
+            return false;
         }
     }
 }

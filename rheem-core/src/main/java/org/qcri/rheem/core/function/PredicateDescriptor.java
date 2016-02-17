@@ -57,4 +57,8 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
     public interface SerializablePredicate<T> extends Predicate<T>, Serializable {
 
     }
+
+    public interface ExtendedSerializablePredicate<T> extends SerializablePredicate<T>, ExtendedFunction {
+
+    }
 }

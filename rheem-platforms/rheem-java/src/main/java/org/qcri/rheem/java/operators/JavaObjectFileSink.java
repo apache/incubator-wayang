@@ -13,8 +13,9 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.qcri.rheem.java.plugin.JavaPlatform;
+import org.qcri.rheem.java.JavaPlatform;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -37,9 +38,8 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        Validate.isTrue(inputStreams.length == 1);
-        Stream<T> inputStream = (Stream<T>) inputStreams[0];
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == this.getNumInputs();
 
         // Prepare Hadoop's SequenceFile.Writer.
         final SequenceFile.Writer.Option fileOption = SequenceFile.Writer.file(new Path(this.targetPath));
@@ -62,13 +62,11 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
                     throw new RuntimeIOException("Writing or serialization failed.", e);
                 }
             });
-            inputStream.forEach(streamChunker::push);
+            inputs[0].provideStream().forEach(streamChunker::push);
             streamChunker.fire();
         } catch (IOException | RuntimeIOException e) {
             throw new RheemException("Could not write stream to sequence file.", e);
         }
-
-        return new Stream[0];
     }
 
     @Override

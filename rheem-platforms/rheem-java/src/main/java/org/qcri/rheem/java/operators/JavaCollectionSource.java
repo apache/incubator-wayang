@@ -3,13 +3,11 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.qcri.rheem.java.plugin.JavaPlatform;
 
 import java.util.Collection;
-import java.util.stream.Stream;
 
 /**
  * This is execution operator implements the {@link TextFileSource}.
@@ -21,8 +19,11 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        return new Stream[] { this.collection.stream() };
+    @SuppressWarnings("unchecked")
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == 0;
+        assert outputs.length == 1;
+        outputs[0].acceptStream(this.getCollection().stream());
     }
 
     @Override

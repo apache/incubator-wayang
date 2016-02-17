@@ -6,6 +6,8 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.TestChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -34,13 +36,13 @@ public class JavaGlobalReduceOperatorTest {
                         )
                 );
 
-        // Execute the reduce operator.
-        final Stream[] outputStreams = globalReduce.evaluate(new Stream[]{inputStream}, new FunctionCompiler());
+        // Execute.
+        ChannelExecutor[] inputs = new ChannelExecutor[]{new TestChannelExecutor(inputStream)};
+        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+        globalReduce.evaluate(inputs, outputs, new FunctionCompiler());
 
         // Verify the outcome.
-        Assert.assertEquals(1, outputStreams.length);
-        final List<Integer> result =
-                ((Stream<Integer>) outputStreams[0]).collect(Collectors.toList());
+        final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());
         Assert.assertEquals(1, result.size());
         Assert.assertEquals(Integer.valueOf((10 + 1) * (10 / 2)), result.get(0)); // Props to Gauss!
 
@@ -63,12 +65,12 @@ public class JavaGlobalReduceOperatorTest {
                 );
 
         // Execute the reduce operator.
-        final Stream[] outputStreams = globalReduce.evaluate(new Stream[]{inputStream}, new FunctionCompiler());
+        ChannelExecutor[] inputs = new ChannelExecutor[]{new TestChannelExecutor(inputStream)};
+        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+        globalReduce.evaluate(inputs, outputs, new FunctionCompiler());
 
         // Verify the outcome.
-        Assert.assertEquals(1, outputStreams.length);
-        final List<Integer> result =
-                ((Stream<Integer>) outputStreams[0]).collect(Collectors.toList());
+        final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());
         Assert.assertEquals(0, result.size());
 
     }

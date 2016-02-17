@@ -3,8 +3,10 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.CountOperator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
+import java.util.Collections;
 import java.util.stream.Stream;
 
 /**
@@ -25,15 +27,12 @@ public class JavaCountOperator<Type>
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 1) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final Stream<Type> inputStream = inputStreams[0];
-        final Long count = inputStream.count();
-
-        return new Stream[]{Stream.of(count)};
+        final long count = inputs[0].provideStream().count();
+        outputs[0].acceptCollection(Collections.singleton(count));
     }
 
     @Override

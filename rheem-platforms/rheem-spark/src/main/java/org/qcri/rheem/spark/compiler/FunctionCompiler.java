@@ -8,7 +8,6 @@ import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 
-import java.util.Iterator;
 import java.util.function.BinaryOperator;
 
 /**
@@ -38,7 +37,7 @@ public class FunctionCompiler {
     }
 
 
-    public <I, O> FlatMapFunction<I, O> compile(FlatMapDescriptor<I, Iterator<O>> descriptor) {
+    public <I, O> FlatMapFunction<I, O> compile(FlatMapDescriptor<I, O> descriptor) {
         return new FlatMapper<>(descriptor.getJavaImplementation());
 
     }
@@ -95,16 +94,15 @@ public class FunctionCompiler {
      */
     private static class FlatMapper<I, O> implements FlatMapFunction<I, O> {
 
-        private final java.util.function.Function<I, Iterator<O>> impl;
+        private final java.util.function.Function<I, Iterable<O>> impl;
 
-        public FlatMapper(java.util.function.Function<I, Iterator<O>> impl) {
+        public FlatMapper(java.util.function.Function<I, Iterable<O>> impl) {
             this.impl = impl;
         }
 
         @Override
         public Iterable<O> call(I i) throws Exception {
-            Iterator<O> sourceIterator = this.impl.apply(i);
-            return () -> sourceIterator;
+            return this.impl.apply(i);
         }
     }
 

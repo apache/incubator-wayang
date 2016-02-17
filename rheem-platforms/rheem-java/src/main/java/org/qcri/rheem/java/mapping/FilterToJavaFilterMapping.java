@@ -1,13 +1,10 @@
 package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.FilterOperator;
-import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.java.operators.JavaFilterOperator;
-import org.qcri.rheem.java.operators.JavaMapOperator;
-import org.qcri.rheem.java.plugin.JavaPlatform;
+import org.qcri.rheem.java.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

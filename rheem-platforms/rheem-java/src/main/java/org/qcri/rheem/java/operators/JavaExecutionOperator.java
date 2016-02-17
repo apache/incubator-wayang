@@ -2,9 +2,9 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.qcri.rheem.java.plugin.JavaPlatform;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -24,11 +24,11 @@ public interface JavaExecutionOperator extends ExecutionOperator {
      * a set of {@link Stream}s according to the operator outputs -- unless the operator is a sink, then it triggers
      * execution.
      *
-     * @param inputStreams {@link Stream}s that satisfy the inputs of this operator
-     * @param compiler     compiles functions used by the operator
-     * @return {@link Stream}s that statisfy the outputs of this operator
+     * @param inputs   {@link ChannelExecutor}s that satisfy the inputs of this operator
+     * @param inputs   {@link ChannelExecutor}s that collect the outputs of this operator
+     * @param compiler compiles functions used by the operator
      */
-    Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler);
+    void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler);
 
     @Override
     default List<Class<? extends Channel>> getSupportedInputChannels(int index) {

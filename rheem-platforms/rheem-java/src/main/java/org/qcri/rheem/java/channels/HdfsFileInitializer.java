@@ -9,13 +9,14 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaObjectFileSink;
 import org.qcri.rheem.java.operators.JavaObjectFileSource;
-import org.qcri.rheem.java.plugin.JavaPlatform;
+import org.qcri.rheem.java.JavaPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.stream.Stream;
 
 /**
@@ -145,13 +146,29 @@ public class HdfsFileInitializer implements ChannelInitializer {
 
         @Override
         public void acceptStream(Stream<?> stream) {
-            Validate.isTrue(stream == null);
+            assert stream == null;
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public Stream<?> provideStream() {
             return null;
         }
 
+        @Override
+        public void acceptCollection(Collection<?> collection) {
+            assert collection == null;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Collection<?> provideCollection() {
+            return null;
+        }
+
+        @Override
+        public boolean canProvideCollection() {
+            return true;
+        }
     }
 }

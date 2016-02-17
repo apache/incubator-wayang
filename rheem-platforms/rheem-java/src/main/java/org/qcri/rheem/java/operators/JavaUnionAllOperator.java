@@ -3,6 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.UnionAllOperator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.stream.Stream;
@@ -24,16 +25,11 @@ public class JavaUnionAllOperator<Type>
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 2) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
-        final Stream<Type> inputStream0 = (Stream<Type>) inputStreams[0];
-        final Stream<Type> inputStream1 = (Stream<Type>) inputStreams[1];
-        final Stream<Type> outputStream = Stream.concat(inputStream0, inputStream1);
-
-        return new Stream[]{outputStream};
+        outputs[0].acceptStream(Stream.concat(inputs[0].provideStream(), inputs[1].provideStream()));
     }
 
     @Override

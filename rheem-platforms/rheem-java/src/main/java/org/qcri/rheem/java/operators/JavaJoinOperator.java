@@ -3,14 +3,14 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -31,26 +31,59 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public Stream[] evaluate(Stream[] inputStreams, FunctionCompiler compiler) {
-        if (inputStreams.length != 2) {
-            throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
-        }
-        final Stream<InputType0> inputStream0 = (Stream<InputType0>) inputStreams[0];
-        final Stream<InputType1> inputStream1 = (Stream<InputType1>) inputStreams[1];
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
 
         final Function<InputType0, KeyType> keyExtractor0 = compiler.compile(this.keyDescriptor0);
         final Function<InputType1, KeyType> keyExtractor1 = compiler.compile(this.keyDescriptor1);
 
+        final CardinalityEstimate cardinalityEstimate0 = this.getInput(0).getCardinalityEstimate();
+        final CardinalityEstimate cardinalityEstimate1 = this.getInput(0).getCardinalityEstimate();
 
-        // Hack to avoid consuming stream more than once, collect it as a list.
-        // TODO remove this hack
-        final List<InputType1> input1 = inputStream1.collect(Collectors.toList());
-        final Stream outputStream =
-                inputStream0.flatMap(e0 -> input1.stream()
-                        .filter(e1 -> Objects.equals(keyExtractor0.apply(e0), keyExtractor1.apply(e1)))
-                        .map(e1 -> new Tuple2<>(e0, e1)));
+        final Stream<Tuple2<InputType0, InputType1>> joinStream;
 
-        return new Stream[]{outputStream};
+        boolean isMaterialize0 = cardinalityEstimate0 != null &&
+                cardinalityEstimate1 != null &&
+                cardinalityEstimate0.getUpperEstimate() <= cardinalityEstimate1.getUpperEstimate();
+
+        if (isMaterialize0) {
+            final int expectedNumElements =
+                    (int) (cardinalityEstimate0.getUpperEstimate() - cardinalityEstimate0.getLowerEstimate()) / 2;
+            Map<KeyType, Collection<InputType0>> probeTable = new HashMap<>(expectedNumElements);
+            inputs[0].<InputType0>provideStream().forEach(dataQuantum0 ->
+                    probeTable.compute(keyExtractor0.apply(dataQuantum0),
+                            (key, value) -> {
+                                value = value == null ? new LinkedList<>() : value;
+                                value.add(dataQuantum0);
+                                return value;
+                            }
+                    )
+            );
+            joinStream = inputs[1].<InputType1>provideStream().flatMap(dataQuantum1 ->
+                    probeTable.getOrDefault(keyExtractor1.apply(dataQuantum1), Collections.emptyList()).stream()
+                            .map(dataQuantum0 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
+
+        } else {
+            final int expectedNumElements = cardinalityEstimate1 == null ?
+                    1000 :
+                    (int) (cardinalityEstimate1.getUpperEstimate() - cardinalityEstimate1.getLowerEstimate()) / 2;
+            Map<KeyType, Collection<InputType1>> probeTable = new HashMap<>(expectedNumElements);
+            inputs[1].<InputType1>provideStream().forEach(dataQuantum1 ->
+                    probeTable.compute(keyExtractor1.apply(dataQuantum1),
+                            (key, value) -> {
+                                value = value == null ? new LinkedList<>() : value;
+                                value.add(dataQuantum1);
+                                return value;
+                            }
+                    )
+            );
+            joinStream = inputs[0].<InputType0>provideStream().flatMap(dataQuantum0 ->
+                    probeTable.getOrDefault(keyExtractor0.apply(dataQuantum0), Collections.emptyList()).stream()
+                            .map(dataQuantum1 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
+        }
+
+        outputs[0].acceptStream(joinStream);
     }
 
     @Override

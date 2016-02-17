@@ -4,6 +4,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.TestChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -28,16 +30,19 @@ public class JavaCartesianOperatorTest {
                         DataSetType.createDefaultUnchecked(Integer.class),
                         DataSetType.createDefaultUnchecked(String.class));
 
-        // Execute the sort operator.
-        final Stream[] outputStreams = cartesianOperator.evaluate(new Stream[]{inputStream0, inputStream1},
-                new FunctionCompiler());
+        // Execute.
+        ChannelExecutor[] inputs = new ChannelExecutor[]{
+                new TestChannelExecutor(inputStream0),
+                new TestChannelExecutor(inputStream1)
+        };
+        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+        cartesianOperator.evaluate(inputs, outputs, new FunctionCompiler());
 
         // Verify the outcome.
-        Assert.assertEquals(1, outputStreams.length);
-        final List<Tuple2<Integer, String>> result =
-                ((Stream<Tuple2<Integer, String>>) outputStreams[0]).collect(Collectors.toList());
+        final List<Tuple2<Integer, String>> result = outputs[0].<Tuple2<Integer, String>>provideStream()
+                .collect(Collectors.toList());
         Assert.assertEquals(6, result.size());
-        Assert.assertEquals(result.get(0), new Tuple2(1,"a"));
+        Assert.assertEquals(result.get(0), new Tuple2(1, "a"));
 
     }
 

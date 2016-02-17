@@ -1,4 +1,4 @@
-package org.qcri.rheem.java.plugin;
+package org.qcri.rheem.java;
 
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.platform.ChannelManager;
@@ -6,7 +6,7 @@ import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.java.channels.JavaChannelManager;
 import org.qcri.rheem.java.mapping.*;
-import org.qcri.rheem.java.platform.JavaExecutor;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Collection;
 import java.util.LinkedList;

@@ -4,8 +4,10 @@ import org.apache.commons.lang3.Validate;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.TestChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.qcri.rheem.java.platform.JavaExecutor;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.io.IOException;
 import java.net.URL;
@@ -14,9 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * Test suite for {@link JavaObjectFileSource}.
@@ -32,16 +31,19 @@ public class JavaObjectFileSourceTest {
             JavaObjectFileSource<Integer> source = new JavaObjectFileSource<>(
                     inputUrl.toString(), DataSetType.createDefault(Integer.class));
 
+
             // Execute.
-            final Stream[] outputStreams = source.evaluate(new Stream[0], mock(FunctionCompiler.class));
+            ChannelExecutor[] inputs = new ChannelExecutor[]{};
+            ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+            source.evaluate(inputs, outputs, new FunctionCompiler());
 
             // Verify.
-            Assert.assertTrue(outputStreams.length == 1);
-
             Set<Integer> expectedValues = new HashSet<>(JavaObjectFileSourceTest.enumerateRange(10000));
-            final List rddList = (List<Integer>) outputStreams[0].collect(Collectors.toList());
-            for (Object rddValue : rddList) {
-                Assert.assertTrue("Value: " + rddValue, expectedValues.remove(rddValue));
+            // Verify the outcome.
+            final List<Integer> result = outputs[0].<Integer>provideStream()
+                    .collect(Collectors.toList());
+            for (Object value : result) {
+                Assert.assertTrue("Value: " + value, expectedValues.remove(value));
             }
             Assert.assertEquals(0, expectedValues.size());
         } finally {

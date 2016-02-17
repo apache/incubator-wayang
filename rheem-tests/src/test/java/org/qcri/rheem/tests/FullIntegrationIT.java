@@ -3,12 +3,11 @@ package org.qcri.rheem.tests;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.java.plugin.JavaPlatform;
+import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 

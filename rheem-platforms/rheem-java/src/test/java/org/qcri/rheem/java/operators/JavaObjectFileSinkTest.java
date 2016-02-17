@@ -4,6 +4,8 @@ import org.apache.commons.lang3.Validate;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.TestChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.io.IOException;
@@ -33,10 +35,10 @@ public class JavaObjectFileSinkTest {
         );
 
         // Execute.
-        final Stream[] outputRdds =
-                sink.evaluate(new Stream[]{integerStream}, mock(FunctionCompiler.class));
-        Assert.assertTrue(outputRdds.length == 0);
-    }
+        ChannelExecutor[] inputs = new ChannelExecutor[]{new TestChannelExecutor(integerStream)};
+        ChannelExecutor[] outputs = new ChannelExecutor[]{};
+        sink.evaluate(inputs, outputs, new FunctionCompiler());
+}
 
     static List<Integer> enumerateRange(int to) {
         Validate.isTrue(to >= 0);

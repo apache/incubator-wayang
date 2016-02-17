@@ -6,13 +6,14 @@ import org.junit.Test;
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
-import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.ExecutionContext;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.plugin.JavaPlatform;
+import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
 import java.io.IOException;
@@ -201,7 +202,23 @@ public class JavaIntegrationIT {
                 integerDataSetType);
         CollectionSource<Integer> mainSource = new CollectionSource<>(mainValues,
                 integerDataSetType);
-        FilterOperator<Integer> semijoin = new FilterOperator<>(integerDataSetType, (val -> true));
+        FilterOperator<Integer> semijoin = new FilterOperator<>(
+                integerDataSetType,
+                new PredicateDescriptor.ExtendedSerializablePredicate<Integer>() {
+
+                    private Set<Integer> allowedInts;
+
+                    @Override
+                    public void open(ExecutionContext ctx) {
+                        this.allowedInts = new HashSet<>(ctx.<Integer>getBroadcast("allowed values"));
+                    }
+
+                    @Override
+                    public boolean test(Integer integer) {
+                        return this.allowedInts.contains(integer);
+                    }
+                }
+        );
         final LocalCallbackSink<Integer> collectingSink = LocalCallbackSink.createCollectingSink(collectedValues,
                 integerDataSetType);
 
@@ -216,5 +233,8 @@ public class JavaIntegrationIT {
         rheemContext.register(JavaPlatform.getInstance());
 
         rheemContext.execute(rheemPlan);
+
+        Collections.sort(collectedValues);
+        Assert.assertEquals(expectedValues, collectedValues);
     }
 }
