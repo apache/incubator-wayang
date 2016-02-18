@@ -6,7 +6,6 @@ import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.channels.ChannelExecutor;
@@ -14,9 +13,7 @@ import org.qcri.rheem.java.channels.JavaChannelManager;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Dummy executor for the Java platform.
@@ -29,6 +26,8 @@ public class JavaExecutor implements Executor {
 
     private Map<Channel, ChannelExecutor> establishedChannelExecutors = new HashMap<>();
 
+    private Set<Channel> instrumentedChannels = new HashSet<>();
+
     public JavaExecutor(JavaPlatform javaPlatform) {
         this.platform = javaPlatform;
     }
@@ -39,12 +38,23 @@ public class JavaExecutor implements Executor {
     }
 
     @Override
-    public void execute(ExecutionStage stage) {
+    public ExecutionProfile execute(ExecutionStage stage) {
         final Collection<ExecutionTask> terminalTasks = stage.getTerminalTasks();
         terminalTasks.forEach(this::execute);
+        return this.assembleExecutionProfile();
     }
 
     private void execute(ExecutionTask executionTask) {
+        // Instrument all stage-outbound channels.
+        for (Channel channel : executionTask.getOutputChannels()) {
+            if (channel.getConsumers().stream().anyMatch(consumer -> consumer.getStage() != executionTask.getStage())) {
+                channel.markForInstrumentation();
+            }
+            if (channel.isMarkedForInstrumentation()) {
+                this.instrumentedChannels.add(channel);
+            }
+        }
+
         ChannelExecutor[] inputChannels = this.obtainInputChannels(executionTask);
         final JavaExecutionOperator javaExecutionOperator = (JavaExecutionOperator) executionTask.getOperator();
         ChannelExecutor[] outputChannels = this.createOutputChannelExecutors(executionTask);
@@ -85,7 +95,7 @@ public class JavaExecutor implements Executor {
     }
 
     private void registerChannelExecutor(ChannelExecutor[] outputChannels, ExecutionTask executionTask) {
-        for (int outputIndex = 0; outputIndex < executionTask.getOperator().getNumOutputs(); outputIndex++) {
+        for (int outputIndex = 0; outputIndex < executionTask.getOutputChannels().length; outputIndex++) {
             Channel channel = executionTask.getOutputChannels()[outputIndex];
             final ChannelExecutor channelExecutor = outputChannels[outputIndex];
             Validate.notNull(channelExecutor);
@@ -93,16 +103,22 @@ public class JavaExecutor implements Executor {
         }
     }
 
+    private ExecutionProfile assembleExecutionProfile() {
+        ExecutionProfile executionProfile = new ExecutionProfile();
+        final Map<Channel, Long> cardinalities = executionProfile.getCardinalities();
+        for (Channel channel : this.instrumentedChannels) {
+            final ChannelExecutor channelExecutor = this.establishedChannelExecutors.get(channel);
+            assert channelExecutor != null : String.format("Could not find a Channel executor for %s.", channel);
+            cardinalities.put(channel, channelExecutor.getCardinality());
+        }
+        return executionProfile;
+    }
+
     public static void openFunction(JavaExecutionOperator operator, Object function, ChannelExecutor[] inputs) {
         if (function instanceof ExtendedFunction) {
             ExtendedFunction extendedFunction = (ExtendedFunction) function;
             extendedFunction.open(new JavaExecutionContext(operator, inputs));
         }
-    }
-
-    @Override
-    public void evaluate(ExecutionOperator executionOperator) {
-        throw new RuntimeException("evaluate() is not supported any more.");
     }
 
     @Override

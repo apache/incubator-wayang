@@ -1,5 +1,6 @@
 package org.qcri.rheem.java.operators;
 
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.java.JavaPlatform;
@@ -42,5 +43,9 @@ public interface JavaExecutionOperator extends ExecutionOperator {
     @Override
     default List<Class<? extends Channel>> getSupportedOutputChannels(int index) {
         return this.getPlatform().getChannelManager().getSupportedChannels();
+    }
+
+    default void instrumentSink(ChannelExecutor channelExecutor) {
+        throw new RheemException(String.format("Cannot instrument %s.", this));
     }
 }

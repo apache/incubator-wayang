@@ -70,9 +70,13 @@ public class CrossPlatformExecutor {
 
         private void execute(ExecutionStage stage, Executor executor) {
             long startTime = System.currentTimeMillis();
-            executor.execute(stage);
+            final Executor.ExecutionProfile executionProfile = executor.execute(stage);
             long finishTime = System.currentTimeMillis();
             CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime));
+            executionProfile.getCardinalities().forEach((channel, cardinality) ->
+                    CrossPlatformExecutor.this.logger.info("Cardinality of {}: actual {}, estimated {}",
+                            channel, cardinality, channel.getCardinalityEstimate())
+            );
         }
 
         private void disposeExecutorIfDone(PlatformExecution platformExecution, Executor executor) {

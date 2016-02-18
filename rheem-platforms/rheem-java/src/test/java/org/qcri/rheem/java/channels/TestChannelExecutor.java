@@ -1,5 +1,7 @@
 package org.qcri.rheem.java.channels;
 
+import org.qcri.rheem.core.api.exception.RheemException;
+
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,5 +51,15 @@ public class TestChannelExecutor implements ChannelExecutor {
     @Override
     public boolean canProvideCollection() {
         return true;
+    }
+
+    @Override
+    public long getCardinality() throws RheemException {
+        throw new RuntimeException("Not implemented.");
+    }
+
+    @Override
+    public void markForInstrumentation() {
+        throw new RuntimeException("Not implemented.");
     }
 }

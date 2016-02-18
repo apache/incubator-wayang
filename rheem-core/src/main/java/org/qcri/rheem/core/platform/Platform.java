@@ -43,17 +43,6 @@ public abstract class Platform {
     }
 
     /**
-     * Dummy interface for executing plans. This will definitively change in the real implementation.
-     *
-     * @param executionOperator the execution operator whose result should be evaluated
-     */
-    public void evaluate(ExecutionOperator executionOperator) {
-        Validate.isTrue(this.isExecutable());
-        final Executor executor = this.getExecutorFactory().create();
-        executor.evaluate(executionOperator);
-    }
-
-    /**
      * <i>Shortcut.</i> Creates an {@link Executor} using the {@link #getExecutorFactory()}.
      *
      * @return the {@link Executor}

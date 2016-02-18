@@ -33,11 +33,11 @@ public class JavaChannelManager extends DefaultChannelManager {
     private void initializeChannelTypeDescriptors() {
         this.addChannel(StreamChannel.class,
                 new StreamChannel.Initializer(),
-                channel -> new StreamChannel.Executor(),
+                channel -> new StreamChannel.Executor(channel.isMarkedForInstrumentation()),
                 true, false);
         this.addChannel(CollectionChannel.class,
                 new CollectionChannel.Initializer(),
-                channel -> new CollectionChannel.Executor(),
+                channel -> new CollectionChannel.Executor(channel.isMarkedForInstrumentation()),
                 true, true);
         this.addChannel(HdfsFile.class,
                 new HdfsFileInitializer(),

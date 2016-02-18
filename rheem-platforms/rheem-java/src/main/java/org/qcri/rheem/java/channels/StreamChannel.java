@@ -1,6 +1,6 @@
 package org.qcri.rheem.java.channels;
 
-import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -62,9 +62,24 @@ public class StreamChannel extends Channel {
 
         private Stream<?> stream;
 
+        private boolean isMarkedForInstrumentation;
+
+        private long cardinality = -1;
+
+        public Executor(boolean isMarkedForInstrumentation) {
+            this.isMarkedForInstrumentation = isMarkedForInstrumentation;
+        }
+
         @Override
         public void acceptStream(Stream<?> stream) {
             this.stream = stream;
+            if (this.isMarkedForInstrumentation) {
+                this.stream = this.stream.filter(dataQuantum -> {
+                    this.cardinality += 1;
+                    return true;
+                })
+                .onClose(() -> this.cardinality++);
+            }
         }
 
         @Override
@@ -75,6 +90,9 @@ public class StreamChannel extends Channel {
 
         @Override
         public void acceptCollection(Collection<?> collection) {
+            if (this.isMarkedForInstrumentation) {
+                this.cardinality = collection.size();
+            }
             this.stream = collection.stream();
         }
 
@@ -88,5 +106,17 @@ public class StreamChannel extends Channel {
         public boolean canProvideCollection() {
             return false;
         }
+
+        @Override
+        public long getCardinality() throws RheemException {
+            assert this.isMarkedForInstrumentation;
+            return this.cardinality;
+        }
+
+        @Override
+        public void markForInstrumentation() {
+            this.isMarkedForInstrumentation = true;
+        }
     }
+
 }

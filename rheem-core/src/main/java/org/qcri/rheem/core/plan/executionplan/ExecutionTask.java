@@ -58,6 +58,10 @@ public class ExecutionTask {
         return this.getInputChannels()[index];
     }
 
+    /**
+     * Sets an input {@link Channel} for this instance. Consider using {@link Channel#addConsumer(ExecutionTask, int)}
+     * instead.
+     */
     void setInputChannel(int index, Channel channel) {
         Validate.isTrue(this.getInputChannel(index) == null);
         this.getInputChannels()[index] = channel;
@@ -71,6 +75,10 @@ public class ExecutionTask {
         return this.getOutputChannels()[index];
     }
 
+    /**
+     * Sets an output {@link Channel} for this instance. Consider using {@link Channel#Channel(ExecutionTask, int)}
+     * and derivatives instead.
+     */
     void setOutputChannel(int index, Channel channel) {
         Validate.isTrue(this.getOutputChannel(index) == null, "Output channel %d of %s is already set to %s.",
                 index, this, this.getOutputChannel(index));

@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.java.operators.JavaObjectFileSink;
 import org.qcri.rheem.java.operators.JavaObjectFileSource;
 import org.qcri.rheem.java.JavaPlatform;
@@ -140,8 +141,15 @@ public class HdfsFileInitializer implements ChannelInitializer {
 
         private final HdfsFile hdfsFile;
 
+        private boolean isMarkedForInstrumentation;
+
+        private long cardinality = -1;
+
         public Executor(HdfsFile hdfsFile) {
             this.hdfsFile = hdfsFile;
+            if (this.hdfsFile.isMarkedForInstrumentation()) {
+                this.markForInstrumentation();
+            }
         }
 
         @Override
@@ -169,6 +177,22 @@ public class HdfsFileInitializer implements ChannelInitializer {
         @Override
         public boolean canProvideCollection() {
             return true;
+        }
+
+        @Override
+        public long getCardinality() throws RheemException {
+            assert this.isMarkedForInstrumentation;
+            return this.cardinality;
+        }
+
+        @Override
+        public void markForInstrumentation() {
+            this.isMarkedForInstrumentation = true;
+            ((JavaExecutionOperator) this.hdfsFile.getProducer().getOperator()).instrumentSink(this);
+        }
+
+        public void setCardinality(long cardinality) {
+            this.cardinality = cardinality;
         }
     }
 }

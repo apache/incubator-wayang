@@ -102,7 +102,10 @@ public class ExecutionStage {
 
     @Override
     public String toString() {
-        return String.format("%s[%s:%d]", this.getClass().getSimpleName(), this.platformExecution.getPlatform().getName(),
+        return String.format("%s[%s-%d:%d]",
+                this.getClass().getSimpleName(),
+                this.platformExecution.getPlatform().getName(),
+                this.platformExecution.getSequenceNumber(),
                 this.sequenceNumber);
     }
 
@@ -135,4 +138,5 @@ public class ExecutionStage {
             }
         }
     }
+
 }

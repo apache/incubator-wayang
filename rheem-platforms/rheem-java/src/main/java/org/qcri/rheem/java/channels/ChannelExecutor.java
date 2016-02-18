@@ -1,5 +1,6 @@
 package org.qcri.rheem.java.channels;
 
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 
 import java.util.Collection;
@@ -42,5 +43,18 @@ public interface ChannelExecutor {
      * @return whether this instance can provide its result via {@link #provideCollection()}
      */
     boolean canProvideCollection();
+
+    /**
+     * @return the cardinality measured by this instance or {@code -1} if for some reason no cardinality was measured
+     * @throws RheemException if the corresponding {@link Channel} is not marked for instrumentation
+     */
+    long getCardinality() throws RheemException;
+
+    /**
+     * Declares that this instance should be instrumented in order to collect statistics during execution.
+     *
+     * @see #getCardinality()
+     */
+    void markForInstrumentation();
 
 }

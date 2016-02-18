@@ -18,6 +18,8 @@ public abstract class Channel {
 
     private final CardinalityEstimate cardinalityEstimate;
 
+    private boolean isMarkedForInstrumentation = false;
+
     protected Channel(ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
         this.producer = producer;
         this.producer.setOutputChannel(outputIndex, this);
@@ -32,6 +34,12 @@ public abstract class Channel {
         return task.getOperator().getOutput(outputIndex).getCardinalityEstimate();
     }
 
+    /**
+     * Set up a consumer {@link ExecutionTask} for this instance.
+     *
+     * @param consumer   the new consumer
+     * @param inputIndex the input index for this instance into the consumer
+     */
     public void addConsumer(ExecutionTask consumer, int inputIndex) {
         Validate.isTrue(this.isReusable() || this.consumers.isEmpty(),
                 "Cannot add %s as consumer of non-reusable %s, there is already %s.",
@@ -81,6 +89,14 @@ public abstract class Channel {
 
     public CardinalityEstimate getCardinalityEstimate() {
         return this.cardinalityEstimate;
+    }
+
+    public boolean isMarkedForInstrumentation() {
+        return this.isMarkedForInstrumentation;
+    }
+
+    public void markForInstrumentation() {
+        this.isMarkedForInstrumentation = true;
     }
 
     @Override

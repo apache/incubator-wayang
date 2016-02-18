@@ -1,7 +1,12 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * An executor executes {@link ExecutionOperator}s.
@@ -9,18 +14,12 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 public interface Executor {
 
     /**
-     * Evaluate an execution operator. This is only a dummy implementation!
-     *
-     * @deprecated use {@link #execute(ExecutionStage)}
-     */
-    void evaluate(ExecutionOperator executionOperator);
-
-    /**
      * Executes the given {@code stage}.
      *
      * @param stage should be executed; must be executable by this instance, though
+     * @return collected metadata from instrumentation
      */
-    void execute(ExecutionStage stage);
+    ExecutionProfile execute(ExecutionStage stage);
 
     /**
      * Releases any instances acquired by this instance to execute {@link ExecutionStage}s.
@@ -31,6 +30,18 @@ public interface Executor {
      * @return the {@link Platform} this instance belongs to
      */
     Platform getPlatform();
+
+    /**
+     * Contains metadata from an instrumented execution.
+     */
+    class ExecutionProfile {
+
+        private final Map<Channel, Long> cardinalities = new HashMap<>();
+
+        public Map<Channel, Long> getCardinalities() {
+            return this.cardinalities;
+        }
+    }
 
     /**
      * Factory for {@link Executor}s.

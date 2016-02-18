@@ -1,7 +1,6 @@
 package org.qcri.rheem.java.operators;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.commons.lang3.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
@@ -13,9 +12,10 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.HdfsFileInitializer;
+import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -29,6 +29,8 @@ import java.util.stream.Stream;
  * @see JavaObjectFileSource
  */
 public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecutionOperator {
+
+    private HdfsFileInitializer.Executor outputChannelExecutor;
 
     private final String targetPath;
 
@@ -64,6 +66,9 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
             });
             inputs[0].provideStream().forEach(streamChunker::push);
             streamChunker.fire();
+            if (this.outputChannelExecutor != null) {
+                this.outputChannelExecutor.setCardinality(streamChunker.numPushedObjects);
+            }
         } catch (IOException | RuntimeIOException e) {
             throw new RheemException("Could not write stream to sequence file.", e);
         }
@@ -72,6 +77,11 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
     @Override
     public ExecutionOperator copy() {
         return new JavaObjectFileSink<>(this.targetPath, this.getType());
+    }
+
+    @Override
+    public void instrumentSink(ChannelExecutor channelExecutor) {
+        this.outputChannelExecutor = (HdfsFileInitializer.Executor) channelExecutor;
     }
 
     public String getTargetPath() {
@@ -89,6 +99,8 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
 
         private int nextIndex;
 
+        private long numPushedObjects = 0L;
+
         public StreamChunker(int chunkSize, BiConsumer<Object[], Integer> action) {
             this.action = action;
             this.chunk = new Object[chunkSize];
@@ -99,6 +111,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
          * Add a new element to the current chunk. Fire, if the chunk is complete.
          */
         public void push(Object obj) {
+            this.numPushedObjects++;
             this.chunk[this.nextIndex] = obj;
             if (++this.nextIndex >= this.chunk.length) {
                 this.fire();
@@ -114,5 +127,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
                 this.nextIndex = 0;
             }
         }
+
+
     }
 }

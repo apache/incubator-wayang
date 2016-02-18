@@ -14,6 +14,8 @@ import org.qcri.rheem.spark.channels.SparkChannelManager;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -21,6 +23,8 @@ import java.util.Map;
 
 
 public class SparkExecutor implements Executor {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public final JavaSparkContext sc;
 
@@ -36,9 +40,12 @@ public class SparkExecutor implements Executor {
     }
 
     @Override
-    public void execute(ExecutionStage stage) {
+    public ExecutionProfile execute(ExecutionStage stage) {
         final Collection<ExecutionTask> terminalTasks = stage.getTerminalTasks();
         terminalTasks.forEach(this::execute);
+
+        this.logger.warn("ExecutionProfiles not yet implemented for {}.", this);
+        return new ExecutionProfile();
     }
 
     private void execute(ExecutionTask executionTask) {
@@ -90,21 +97,9 @@ public class SparkExecutor implements Executor {
         }
     }
 
-    public static void openFunction(SparkExecutionOperator operator, Object function, ChannelExecutor[] inputs) {
-        if (function instanceof ExtendedFunction) {
-            ExtendedFunction extendedFunction = (ExtendedFunction) function;
-            extendedFunction.open(new SparkExecutionContext(operator, inputs));
-        }
-    }
-
     @Override
     public void dispose() {
         this.establishedChannelExecutors.values().forEach(ChannelExecutor::dispose);
-    }
-
-    @Override
-    public void evaluate(ExecutionOperator executionOperator) {
-        throw new RuntimeException("Method not supported anymore.");
     }
 
     @Override
