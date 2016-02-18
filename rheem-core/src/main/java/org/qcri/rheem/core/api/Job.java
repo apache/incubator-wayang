@@ -15,8 +15,9 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.platform.Breakpoint;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.ExecutionProfile;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,13 +35,30 @@ public class Job {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    /**
+     * Guardian to avoid re-execution.
+     */
     private final AtomicBoolean hasBeenExecuted = new AtomicBoolean(false);
 
+    /**
+     * References the {@link RheemContext} that spawned this instance.
+     */
     private final RheemContext rheemContext;
 
+    /**
+     * {@link Job}-level {@link Configuration} based on the {@link RheemContext}-level configuration.
+     */
     private final Configuration configuration;
 
+    /**
+     * The {@link RheemPlan} to be executed by this instance.
+     */
     private final RheemPlan rheemPlan;
+
+    /**
+     * Executes the optimized {@link ExecutionPlan}.
+     */
+    private CrossPlatformExecutor crossPlatformExecutor;
 
     Job(RheemContext rheemContext, RheemPlan rheemPlan) {
         this.rheemContext = rheemContext;
@@ -58,29 +76,39 @@ public class Job {
         }
 
         // Get an execution plan.
-        long optimizerStartTime = System.currentTimeMillis();
-        ExecutionPlan executionPlan = this.getExecutionPlan();
-        long optimizerFinishTime = System.currentTimeMillis();
-        this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
-        this.logger.info("Picked execution plan:\n{}", executionPlan.toExtensiveString());
+        ExecutionPlan executionPlan = this.createInitialExecutionPlan();
 
         // Take care of the execution.
-        this.deployAndRun(executionPlan);
+        this.crossPlatformExecutor = new CrossPlatformExecutor();
+
+        while (true) {
+            final CrossPlatformExecutor.State state = this.deployAndRun(executionPlan);
+            if (state.isComplete()) return;
+
+            executionPlan = this.reoptimize(executionPlan, state);
+        }
     }
 
     /**
      * Determine a good/the best execution plan from a given {@link RheemPlan}.
      */
-    private ExecutionPlan getExecutionPlan() {
+    private ExecutionPlan createInitialExecutionPlan() {
+        long optimizerStartTime = System.currentTimeMillis();
+
         // Apply the mappings to the plan to form a hyperplan.
         this.applyMappingsToRheemPlan();
 
         // Make the cardinality estimation pass.
         this.estimateCardinalities();
-//        this.estimateExecutionTimes();
 
         // Enumerate plans and pick the best one.
-        return this.extractExecutionPlan();
+        final ExecutionPlan executionPlan = this.extractExecutionPlan();
+
+        long optimizerFinishTime = System.currentTimeMillis();
+        this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
+        this.logger.info("Picked execution plan:\n{}", executionPlan.toExtensiveString());
+
+        return executionPlan;
     }
 
     /**
@@ -101,7 +129,6 @@ public class Job {
         this.checkHyperplanSanity();
     }
 
-
     /**
      * Gather all available {@link PlanTransformation}s from the {@link #configuration}.
      */
@@ -111,6 +138,7 @@ public class Job {
                 .flatMap(mapping -> mapping.getTransformations().stream())
                 .collect(Collectors.toList());
     }
+
 
     /**
      * Apply all {@code transformations} to the {@code plan}.
@@ -144,10 +172,18 @@ public class Job {
     private void estimateCardinalities() {
         CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this.configuration);
         cardinalityEstimatorManager.pushCardinalityEstimation(this.rheemPlan);
-//        final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates = cardinalityEstimatorManager.getCache();
-//        cardinalityEstimates.entrySet().stream().forEach(entry ->
-//                this.logger.debug("Cardinality estimate for {}: {}", entry.getKey(), entry.getValue()));
-//        return cardinalityEstimates;
+    }
+
+
+
+    /**
+     * Go over the given {@link RheemPlan} and update the cardinalities of data being passed between its
+     * {@link Operator}s using the given {@link ExecutionProfile}.
+     */
+    private void reestimateCardinalities(ExecutionProfile executionProfile) {
+        // TODO
+//        CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this.configuration);
+//        cardinalityEstimatorManager.pushUpdateCardinalityEstimation(this.rheemPlan, executionProfile.getCardinalities());
     }
 
     /**
@@ -199,9 +235,16 @@ public class Job {
     /**
      * Dummy implementation: Have the platforms execute the given execution plan.
      */
-    private void deployAndRun(ExecutionPlan executionPlan) {
-        final CrossPlatformExecutor crossPlatformExecutor = new CrossPlatformExecutor();
-        crossPlatformExecutor.execute(executionPlan);
+    private CrossPlatformExecutor.State deployAndRun(ExecutionPlan executionPlan) {
+        Breakpoint breakpoint = new Breakpoint();
+        executionPlan.getStartingStages().forEach(breakpoint::breakAfter);
+        this.crossPlatformExecutor.setBreakpoint(breakpoint);
+        return this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
+    }
+
+    private ExecutionPlan reoptimize(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
+
+        return executionPlan;
     }
 
     /**

@@ -10,6 +10,11 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * Pushes a input {@link CardinalityEstimate}s through an {@link Operator} and yields its output
+ * {@link CardinalityEstimate}s. As an important side-effect, {@link Operator}s will store their
+ * {@link CardinalityEstimate}s.
+ */
 public abstract class CardinalityPusher {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());

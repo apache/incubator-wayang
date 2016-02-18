@@ -1,12 +1,7 @@
 package org.qcri.rheem.core.platform;
 
-import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * An executor executes {@link ExecutionOperator}s.
@@ -30,18 +25,6 @@ public interface Executor {
      * @return the {@link Platform} this instance belongs to
      */
     Platform getPlatform();
-
-    /**
-     * Contains metadata from an instrumented execution.
-     */
-    class ExecutionProfile {
-
-        private final Map<Channel, Long> cardinalities = new HashMap<>();
-
-        public Map<Channel, Long> getCardinalities() {
-            return this.cardinalities;
-        }
-    }
 
     /**
      * Factory for {@link Executor}s.
