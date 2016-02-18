@@ -288,7 +288,7 @@ public class WordCountIT {
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(Tuple2.class)
                 ));
-        flatMapOperator.addTargetPlatform(SparkPlatform.getInstance());
+        mapOperator.addTargetPlatform(SparkPlatform.getInstance());
 
 
         // groupby the key (word) and add up the values (frequency)

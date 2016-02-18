@@ -47,16 +47,16 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
      */
     private class CardinalityEstimator implements org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator {
 
-        public static final double DEFAULT_SELECTIVITY_CORRECTNESS = 0.1;
+        public static final double DEFAULT_SELECTIVITY_CORRECTNESS = 0.9;
 
         /**
          * We expect selectivities to be between {@value #DEFAULT_SELECTIVITY_DEVIATION} and {@code 1/}{@value #DEFAULT_SELECTIVITY_DEVIATION}.
          */
-        public static final double DEFAULT_SELECTIVITY_DEVIATION = 0.01;
+        public static final double DEFAULT_SELECTIVITY_DEVIATION = 0.1;
 
         @Override
         public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
-            Validate.isTrue(FlatMapOperator.this.getNumInputs() == inputEstimates.length);
+            assert FlatMapOperator.this.getNumInputs() == inputEstimates.length;
             final CardinalityEstimate inputEstimate = inputEstimates[0];
 
             final Optional<Double> selectivity = configuration.getMultimapSelectivityProvider().optionallyProvideFor(
