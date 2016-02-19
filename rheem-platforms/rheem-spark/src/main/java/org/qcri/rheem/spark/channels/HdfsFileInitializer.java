@@ -64,6 +64,7 @@ public class HdfsFileInitializer implements ChannelInitializer {
         // Create the actual HdfsFile.
         final HdfsFile hdfsFile = new HdfsFile(sinkTask, index, Channel.extractCardinalityEstimate(sourceTask, index));
         hdfsFile.addPath(((SparkObjectFileSink<?>) sinkTask.getOperator()).getTargetPath());
+        hdfsFile.addSibling(internalChannel);
         return hdfsFile;
     }
 
@@ -106,8 +107,9 @@ public class HdfsFileInitializer implements ChannelInitializer {
 
         // Set up the actual input..
         final ChannelInitializer internalChannelInitializer = SparkPlatform.getInstance().getChannelManager().getChannelInitializer(RddChannel.class);
-        Validate.notNull(internalChannelInitializer);
+        assert internalChannelInitializer !=  null;
         final Channel internalChannel = internalChannelInitializer.setUpOutput(sourceTask, 0);
+        internalChannel.addSibling(hdfsFile);
         internalChannelInitializer.setUpInput(internalChannel, targetTask, inputIndex);
     }
 

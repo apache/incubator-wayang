@@ -59,6 +59,7 @@ public class HdfsFileInitializer implements ChannelInitializer {
         // Create the actual HdfsFile.
         final HdfsFile hdfsFile = new HdfsFile(sinkTask, index, Channel.extractCardinalityEstimate(sourceTask, index));
         hdfsFile.addPath(((JavaObjectFileSink<?>) sinkTask.getOperator()).getTargetPath());
+        hdfsFile.addSibling(internalChannel);
         return hdfsFile;
     }
 
@@ -91,7 +92,6 @@ public class HdfsFileInitializer implements ChannelInitializer {
     public void setUpInput(Channel channel, ExecutionTask targetTask, int inputIndex) {
         HdfsFile hdfsFile = (HdfsFile) channel;
         assert hdfsFile.getPaths().size() == 1 : "We support only single HDFS files so far.";
-        final String targetPath = hdfsFile.getPaths().stream().findAny().get();
 
         // NB: We always put the HDFS file contents into a Collection. That's not necessary if we don't broadcast
         // and use it only once.
@@ -105,6 +105,7 @@ public class HdfsFileInitializer implements ChannelInitializer {
                 .getChannelInitializer(CollectionChannel.class);
         Validate.notNull(internalChannelInitializer);
         final Channel internalChannel = internalChannelInitializer.setUpOutput(sourceTask, 0);
+        internalChannel.addSibling(hdfsFile);
         internalChannelInitializer.setUpInput(internalChannel, targetTask, inputIndex);
     }
 

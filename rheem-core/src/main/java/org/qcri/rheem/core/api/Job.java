@@ -180,10 +180,10 @@ public class Job {
      * Go over the given {@link RheemPlan} and update the cardinalities of data being passed between its
      * {@link Operator}s using the given {@link ExecutionProfile}.
      */
-    private void reestimateCardinalities(ExecutionProfile executionProfile) {
+    private void reestimateCardinalities(CrossPlatformExecutor.State executionState) {
         // TODO
-//        CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this.configuration);
-//        cardinalityEstimatorManager.pushUpdateCardinalityEstimation(this.rheemPlan, executionProfile.getCardinalities());
+        CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this.configuration);
+        cardinalityEstimatorManager.pushCardinalityUpdates(this.rheemPlan, executionState);
     }
 
     /**
@@ -243,7 +243,7 @@ public class Job {
     }
 
     private ExecutionPlan reoptimize(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
-
+        this.reestimateCardinalities(state);
         return executionPlan;
     }
 

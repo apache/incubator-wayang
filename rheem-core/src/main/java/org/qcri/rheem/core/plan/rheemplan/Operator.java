@@ -2,10 +2,7 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
-import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
-import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.*;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.LoggerFactory;
 
@@ -411,4 +408,19 @@ public interface Operator {
      * @return the targeted {@link Platform}s or an empty {@link Set} if there is no such restriction
      */
     void addTargetPlatform(Platform platform);
+
+    /**
+     * Set the {@link CardinalityEstimate} of an {@link OutputSlot} and propagate it to
+     * <ul>
+     * <li>fed {@link InputSlot}s (which in turn are asked to propagate) and</li>
+     * <li>inner, mapped {@link OutputSlot}s.</li>
+     * </ul>
+     */
+    void propagateOutputCardinality(int outputIndex, CardinalityEstimate cardinalityEstimate);
+
+    /**
+     * Set the {@link CardinalityEstimate} of an {@link InputSlot} and propagate it to inner, mapped {@link InputSlot}s.
+     */
+    void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate);
+
 }

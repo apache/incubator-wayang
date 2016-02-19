@@ -2,10 +2,15 @@ package org.qcri.rheem.core.plan.executionplan;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.platform.Platform;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Models the data movement between to {@link ExecutionTask}s.
@@ -19,6 +24,13 @@ public abstract class Channel {
     private final CardinalityEstimate cardinalityEstimate;
 
     private boolean isMarkedForInstrumentation = false;
+
+    /**
+     * Other {@link Channel}s that represent the same {@link OutputSlot}-to-{@link InputSlot} connection from a
+     * {@link RheemPlan} and share properties such as {@link #cardinalityEstimate}.
+     */
+    private Set<Channel> siblings = new HashSet<>(2);
+
 
     protected Channel(ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
         this.producer = producer;
@@ -92,7 +104,13 @@ public abstract class Channel {
     }
 
     public boolean isMarkedForInstrumentation() {
-        return this.isMarkedForInstrumentation;
+        return withSiblings()
+                .anyMatch(sibling -> sibling.isMarkedForInstrumentation);
+
+    }
+
+    private Stream<Channel> withSiblings() {
+        return Stream.concat(Stream.of(this), this.siblings.stream());
     }
 
     public void markForInstrumentation() {
@@ -102,5 +120,43 @@ public abstract class Channel {
     @Override
     public String toString() {
         return this.getClass().getSimpleName();
+    }
+
+    /**
+     * Acquaints the given instance with this instance and all existing {@link #siblings}.
+     */
+    public void addSibling(Channel sibling) {
+        this.withSiblings().forEach(olderSibling -> olderSibling.relateTo(sibling));
+    }
+
+    /**
+     * Makes this and the given instance siblings.
+     */
+    private void relateTo(Channel sibling) {
+        this.siblings.add(sibling);
+        sibling.siblings.add(this);
+    }
+
+    /**
+     * @return all {@link InputSlot}s and {@link OutputSlot}s that are represented by this instance and its
+     * {@link #siblings}
+     */
+    public Collection<Slot<?>> getCorrespondingSlots() {
+        return this.withSiblings()
+                .map(Channel::getCorrespondingSlotsLocal)
+                .reduce(Stream.empty(), Stream::concat)
+                .collect(Collectors.toList());
+    }
+
+    private Stream<Slot<?>> getCorrespondingSlotsLocal() {
+        final Stream<? extends OutputSlot<?>> outputSlotStream =
+                streamNullable(this.getProducer().getOutputSlotFor(this));
+        final Stream<? extends InputSlot<?>> inputSlotStream
+                = this.consumers.stream().flatMap(consumer -> streamNullable(consumer.getInputSlotFor(this)));
+        return Stream.concat(inputSlotStream, outputSlotStream);
+    }
+
+    private static <T> Stream<T> streamNullable(T nullable) {
+        return nullable == null ? Stream.empty() : Stream.of(nullable);
     }
 }

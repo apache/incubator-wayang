@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.platform.Platform;
 
@@ -140,5 +141,20 @@ public abstract class OperatorBase implements Operator {
             throw new IllegalStateException("Cannot set time estimate for non-execution operator " + this);
         }
         this.timeEstimate = timeEstimate;
+    }
+
+    @Override
+    public void propagateOutputCardinality(int outputIndex, CardinalityEstimate cardinalityEstimate) {
+        final OutputSlot<?> output = this.getOutput(outputIndex);
+        output.setCardinalityEstimate(cardinalityEstimate);
+        for (InputSlot<?> inputSlot : output.getOccupiedSlots()) {
+            final int inputIndex = inputSlot.getIndex();
+            inputSlot.getOwner().propagateInputCardinality(inputIndex, cardinalityEstimate);
+        }
+    }
+
+    @Override
+    public void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate) {
+        this.getInput(inputIndex).setCardinalityEstimate(cardinalityEstimate);
     }
 }
