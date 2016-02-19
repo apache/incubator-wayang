@@ -183,7 +183,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
         }
 
         @Override
-        public CompositeOperator toOperator() {
+        public OperatorAlternative toOperator() {
             return OperatorAlternative.this;
         }
 

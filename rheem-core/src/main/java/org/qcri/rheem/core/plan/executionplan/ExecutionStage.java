@@ -3,10 +3,8 @@ package org.qcri.rheem.core.plan.executionplan;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.platform.Platform;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Resides within a {@link PlatformExecution} and represents the minimum execution unit that is controlled by Rheem.
@@ -46,6 +44,7 @@ public class ExecutionStage {
      * For printing and debugging purposes only.
      */
     private final int sequenceNumber;
+    private Stream<ExecutionTask> allTasks;
 
     /**
      * Create a new instance and register it with the given {@link PlatformExecution}.
@@ -139,4 +138,22 @@ public class ExecutionStage {
         }
     }
 
+    /**
+     * Collects all {@link ExecutionTask}s of this instance.
+     */
+    public Set<ExecutionTask> getAllTasks() {
+        final Queue<ExecutionTask> nextTasks = new LinkedList<>(this.startTasks);
+        final Set<ExecutionTask> allTasks = new HashSet<>();
+
+        while (!nextTasks.isEmpty()) {
+            final ExecutionTask task = nextTasks.poll();
+            if (allTasks.add(task) && !this.terminalTasks.contains(task)) {
+                Arrays.stream(task.getOutputChannels())
+                        .flatMap(channel -> channel.getConsumers().stream())
+                        .forEach(nextTasks::add);
+            }
+        }
+        assert allTasks.stream().allMatch(task -> task.getStage() == this);
+        return allTasks;
+    }
 }

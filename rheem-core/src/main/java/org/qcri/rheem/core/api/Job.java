@@ -60,6 +60,9 @@ public class Job {
      */
     private CrossPlatformExecutor crossPlatformExecutor;
 
+    /**
+     * Creates a new instance.
+     */
     Job(RheemContext rheemContext, RheemPlan rheemPlan) {
         this.rheemContext = rheemContext;
         this.configuration = this.rheemContext.getConfiguration().fork();
@@ -83,8 +86,7 @@ public class Job {
 
         while (true) {
             final CrossPlatformExecutor.State state = this.deployAndRun(executionPlan);
-            if (state.isComplete()) return;
-
+            if (state.isComplete()) break;
             executionPlan = this.reoptimize(executionPlan, state);
         }
     }
@@ -205,8 +207,7 @@ public class Job {
         final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
 
         // Enumerate all possible plan.
-        final PlanEnumerator planEnumerator = new PlanEnumerator(this.rheemPlan, this.configuration);
-        this.configuration.getPruningStrategiesProvider().forEach(planEnumerator::addPruningStrategy);
+        final PlanEnumerator planEnumerator = this.createPlanEnumerator();
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
         final Collection<PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
         this.logger.info("Enumerated {} plans.", executionPlans.size());
@@ -216,20 +217,33 @@ public class Job {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        final PartialPlan partialPlan = executionPlans.stream()
-                .filter(plan -> plan.getExecutionPlan() != null)
-                .reduce((p1, p2) -> {
-                    final TimeEstimate t1 = p1.getExecutionPlan().estimateExecutionTime(this.configuration);
-                    final TimeEstimate t2 = p2.getExecutionPlan().estimateExecutionTime(this.configuration);
-                    return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
-                })
-                .map(plan -> {
-                    this.logger.info("Picked plan's cost estimate is {}.", plan.getExecutionPlan().estimateExecutionTime(this.configuration));
-                    return plan;
-                })
-                .orElseThrow(() -> new IllegalStateException("Could not find an execution plan."));
+        final PartialPlan partialPlan = pickBestExecutionPlan(timeEstimateComparator, executionPlans);
 
         return partialPlan.getExecutionPlan().toExecutionPlan();
+    }
+
+    private PartialPlan pickBestExecutionPlan(Comparator<TimeEstimate> timeEstimateComparator, Collection<PartialPlan> executionPlans) {
+        return executionPlans.stream()
+                    .filter(plan -> plan.getExecutionPlan() != null)
+                    .reduce((p1, p2) -> {
+                        final TimeEstimate t1 = p1.getExecutionPlan().estimateExecutionTime(this.configuration);
+                        final TimeEstimate t2 = p2.getExecutionPlan().estimateExecutionTime(this.configuration);
+                        return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
+                    })
+                    .map(plan -> {
+                        this.logger.info("Picked plan's cost estimate is {}.", plan.getExecutionPlan().estimateExecutionTime(this.configuration));
+                        return plan;
+                    })
+                    .orElseThrow(() -> new IllegalStateException("Could not find an execution plan."));
+    }
+
+    /**
+     * Creates a new {@link PlanEnumerator} for the {@link #rheemPlan} and {@link #configuration}.
+     */
+    private PlanEnumerator createPlanEnumerator() {
+        final PlanEnumerator planEnumerator = new PlanEnumerator(this.rheemPlan, this.configuration);
+        this.configuration.getPruningStrategiesProvider().forEach(planEnumerator::addPruningStrategy);
+        return planEnumerator;
     }
 
     /**
@@ -244,7 +258,33 @@ public class Job {
 
     private ExecutionPlan reoptimize(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
         this.reestimateCardinalities(state);
+        this.updateExecutionPlan(executionPlan, state);
         return executionPlan;
+    }
+
+    /**
+     * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
+     * @param executionPlan
+     * @param state
+     */
+    private ExecutionPlan updateExecutionPlan(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
+        // Defines the plan that we want to use in the end.
+        final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
+
+        // Enumerate all possible plan.
+        final PlanEnumerator planEnumerator = this.createPlanEnumerator();
+        final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(state, true);
+        final Collection<PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
+        this.logger.info("Enumerated {} plans.", executionPlans.size());
+        for (PartialPlan partialPlan : executionPlans) {
+            this.logger.debug("Plan with operators: {}", partialPlan.getOperators());
+        }
+
+        // Pick an execution plan.
+        // Make sure that an execution plan can be created.
+        final PartialPlan partialPlan = pickBestExecutionPlan(timeEstimateComparator, executionPlans);
+
+        return partialPlan.getExecutionPlan().toExecutionPlan();
     }
 
     /**
