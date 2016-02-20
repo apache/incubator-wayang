@@ -34,7 +34,7 @@ public class SparkLocalCallbackSink<T> extends LocalCallbackSink<T> implements S
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkLocalCallbackSink<>(this.callback, this.getType());
     }
 }

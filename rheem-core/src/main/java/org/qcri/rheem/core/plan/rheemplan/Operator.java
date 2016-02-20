@@ -241,6 +241,21 @@ public interface Operator {
     }
 
     /**
+     * Retrieve the {@link InputSlot} of the enclosing {@link OperatorContainer} that represents the given one.
+     *
+     * @param input the slot to track
+     * @return the outer {@link InputSlot} or {@code null} if none
+     * @see #getParent()
+     */
+    default <T> InputSlot<T> getOuterInputSlot(InputSlot<T> input) {
+        assert this.isOwnerOf(input);
+
+        // Try to exit through the parent.
+        final OperatorContainer container = this.getContainer();
+        return container != null ? container.traceInput(input) : null;
+    }
+
+    /**
      * Retrieve the outermost {@link OutputSlot}s if this operator is nested in other operators.
      *
      * @param output the slot to track

@@ -26,6 +26,11 @@ public interface ExecutionOperator extends ActualOperator {
     ExecutionOperator copy();
 
     /**
+     * @return this instance or, if it was derived via {@link #copy()}, the original instance
+     */
+    ExecutionOperator getOriginal();
+
+    /**
      * Developers of {@link ExecutionOperator}s can provide a default {@link LoadProfileEstimator} via this method.
      *
      * @param configuration in which the {@link LoadProfile} should be estimated.

@@ -1,6 +1,5 @@
 package org.qcri.rheem.core.plan.executionplan;
 
-import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -17,11 +16,25 @@ import java.util.stream.Stream;
  */
 public abstract class Channel {
 
+    /**
+     * Produces the data flowing through this instance.
+     */
     protected final ExecutionTask producer;
 
+    /**
+     * Consuming {@link ExecutionTask}s of this instance.
+     */
     protected final List<ExecutionTask> consumers = new LinkedList<>();
 
+    /**
+     * Estimated incurring cardinality of this instance on execution.
+     */
     private final CardinalityEstimate cardinalityEstimate;
+
+    /**
+     * Mimed instance. Nullable.
+     */
+    private final Channel original;
 
     private boolean isMarkedForInstrumentation = false;
 
@@ -32,14 +45,40 @@ public abstract class Channel {
     private Set<Channel> siblings = new HashSet<>(2);
 
 
+    /**
+     * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}. The
+     * {@link CardinalityEstimate} for the instance is retrieved from the {@code producer}.
+     *
+     * @param producer    produces the data for the instance
+     * @param outputIndex index of this instance within the {@code producer}
+     */
+    protected Channel(ExecutionTask producer, int outputIndex) {
+        this(producer, outputIndex, extractCardinalityEstimate(producer, outputIndex));
+    }
+
+    /**
+     * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}.
+     *
+     * @param producer            produces the data for the instance
+     * @param outputIndex         index of this instance within the {@code producer}
+     * @param cardinalityEstimate a {@link CardinalityEstimate} for this instance
+     */
     protected Channel(ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
         this.producer = producer;
         this.producer.setOutputChannel(outputIndex, this);
         this.cardinalityEstimate = cardinalityEstimate;
+        this.original = null;
     }
 
-    protected Channel(ExecutionTask producer, int outputIndex) {
-        this(producer, outputIndex, extractCardinalityEstimate(producer, outputIndex));
+    /**
+     * Creates a new, hierarchical instance. Mimes the {@code original}'s properties except for the {@link #consumers}.
+     *
+     * @param original the original instance whose properties will be mimed
+     */
+    protected Channel(Channel original) {
+        this.original = original.getOriginal();
+        this.producer = original.getProducer();
+        this.cardinalityEstimate = original.getCardinalityEstimate();
     }
 
     public static CardinalityEstimate extractCardinalityEstimate(ExecutionTask task, int outputIndex) {
@@ -53,11 +92,13 @@ public abstract class Channel {
      * @param inputIndex the input index for this instance into the consumer
      */
     public void addConsumer(ExecutionTask consumer, int inputIndex) {
-        Validate.isTrue(this.isReusable() || this.consumers.isEmpty(),
-                "Cannot add %s as consumer of non-reusable %s, there is already %s.",
-                consumer, this, this.consumers);
-        this.consumers.add(consumer);
-        consumer.setInputChannel(inputIndex, this);
+        if (!this.consumers.contains(consumer)) {
+            assert this.isReusable() || this.consumers.isEmpty() :
+                    String.format("Cannot add %s as consumer of non-reusable %s, there is already %s.",
+                            consumer, this, this.consumers);
+            this.consumers.add(consumer);
+            consumer.setInputChannel(inputIndex, this);
+        }
     }
 
     /**
@@ -156,7 +197,67 @@ public abstract class Channel {
         return Stream.concat(inputSlotStream, outputSlotStream);
     }
 
+    /**
+     * @return an empty {@link Stream} if given {@code null}, otherwise a singleton {@link Stream}
+     */
     private static <T> Stream<T> streamNullable(T nullable) {
         return nullable == null ? Stream.empty() : Stream.of(nullable);
+    }
+
+    /**
+     * Scrap any consumer {@link ExecutionTask}s and sibling {@link Channel}s that are not within the given
+     * {@link ExecutionStage}s.
+     */
+    public void retain(Set<ExecutionStage> retainableStages) {
+        this.consumers.removeIf(consumer -> !retainableStages.contains(retainableStages));
+        for (Iterator<Channel> i = this.siblings.iterator(); i.hasNext(); ) {
+            final Channel sibling = i.next();
+            if (!retainableStages.contains(sibling.getProducer().getStage())) {
+                i.remove();
+                sibling.siblings.remove(this);
+            }
+        }
+    }
+
+    /**
+     * Create a copy of this instance. Mimics everything apart from the consumers.
+     */
+    public abstract Channel copy();
+
+    /**
+     * @return if this is not a copy, then this instance, otherwise the root original instance
+     */
+    public Channel getOriginal() {
+        return this.original == null ? this : this.original;
+    }
+
+    /**
+     * Tells whether this instance is a copy.
+     *
+     * @see #copy()
+     * @see #getOriginal()
+     */
+    public boolean isCopy() {
+        return this.original != null;
+    }
+
+    /**
+     * Merges this instance into the original instance ({@link #getOriginal()}.
+     * <p>The consumers of the original instance are cleared and replaced with the consumers of this instance.
+     * For all other properties, the original and this instance should agree.</p>
+     */
+    public void mergeIntoOriginal() {
+        if (!this.isCopy()) return;
+        this.getOriginal().copyConsumersFrom(this);
+    }
+
+    /**
+     * Copies the consumers of the given {@code channel} into this instance.
+     */
+    private void copyConsumersFrom(Channel channel) {
+        assert this.consumers.isEmpty();
+        for (ExecutionTask consumer : new ArrayList<>(channel.getConsumers())) {
+            consumer.exchangeInputChannel(channel, this);
+        }
     }
 }

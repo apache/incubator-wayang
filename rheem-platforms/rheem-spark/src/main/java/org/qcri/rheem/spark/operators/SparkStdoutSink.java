@@ -30,7 +30,7 @@ public class SparkStdoutSink<T> extends StdoutSink<T> implements SparkExecutionO
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkStdoutSink<>(this.getType());
     }
 }

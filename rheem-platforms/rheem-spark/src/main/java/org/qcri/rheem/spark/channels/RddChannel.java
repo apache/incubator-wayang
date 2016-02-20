@@ -16,9 +16,18 @@ public class RddChannel extends Channel {
         super(producer, outputIndex);
     }
 
+    private RddChannel(RddChannel parent) {
+        super(parent);
+    }
+
     @Override
     public boolean isReusable() {
         return true;
+    }
+
+    @Override
+    public RddChannel copy() {
+        return new RddChannel(this);
     }
 
     static class Initializer implements ChannelInitializer {

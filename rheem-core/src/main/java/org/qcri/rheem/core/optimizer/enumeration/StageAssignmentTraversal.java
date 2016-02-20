@@ -9,7 +9,11 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
- * Created by basti on 02/11/16.
+ * Builds an {@link ExecutionPlan} from a {@link PreliminaryExecutionPlan}.
+ * <p>Specifically, subdivides the {@link ExecutionTask}s into {@link PlatformExecution} and {@link ExecutionStage}s,
+ * thereby discarding already executed {@link ExecutionTask}s. As of now, these are recognized as producers of
+ * {@link Channel}s that are copied. This is because of {@link ExecutionPlanCreator} that copies {@link Channel}s
+ * to different alternative {@link ExecutionPlan}s on top of existing fixed {@link ExecutionTask}s.</p>
  */
 public class StageAssignmentTraversal {
 
@@ -49,14 +53,18 @@ public class StageAssignmentTraversal {
     }
 
     public synchronized ExecutionPlan run() {
+        return this.run(Collections.emptySet());
+    }
+
+    public synchronized ExecutionPlan run(Set<ExecutionStage> existingStages) {
         // Create initial stages.
         this.initializeRun();
-        this.discoverInitialStages();
+        this.discoverInitialStages(existingStages);
 
         // Refine stages as much as necessary
         this.refineStages();
         for (InterimStage stage : this.allStages) {
-            this.logger.info("Final stage {}: {}", stage, stage.getTasks());
+            this.logger.debug("Final stage {}: {}", stage, stage.getTasks());
         }
 
         // Assemble the ExecutionPlan.
@@ -71,19 +79,30 @@ public class StageAssignmentTraversal {
         this.allStages = new LinkedList<>();
     }
 
-    private void discoverInitialStages() {
+    private void discoverInitialStages(Set<ExecutionStage> existingStages) {
+        for (ExecutionStage existingStage : existingStages) {
+            final ExecutionStageAdapter interimStage = new ExecutionStageAdapter(existingStage);
+            for (ExecutionTask task : interimStage.getTasks()) {
+                this.assignedInterimStages.put(task, interimStage);
+            }
+            this.allStages.add(interimStage);
+        }
         while (!this.seeds.isEmpty()) {
             final ExecutionTask task = this.seeds.poll();
             if (this.assignedInterimStages.containsKey(task)) {
                 continue;
             }
             Platform platform = task.getOperator().getPlatform();
-            PlatformExecution platformExecution = new PlatformExecution(platform);
-            InterimStage initialStage = new InterimStage(platformExecution);
-            this.allStages.add(initialStage);
-            this.traverseTask(task, initialStage);
+            if (task.getStage() != null && existingStages.contains(task.getStage())) {
+                continue;
+            } else {
+                PlatformExecution platformExecution = new PlatformExecution(platform);
+                InterimStage initialStage = new InterimStageImpl(platformExecution);
+                this.allStages.add(initialStage);
+                this.changedStages.add(initialStage);
+                this.traverseTask(task, initialStage);
+            }
         }
-        this.changedStages.addAll(this.allStages);
     }
 
     private void traverseTask(ExecutionTask task, InterimStage interimStage) {
@@ -119,6 +138,7 @@ public class StageAssignmentTraversal {
 
     private void expandUpstream(ExecutionTask task, InterimStage expandableStage) {
         for (Channel channel : task.getInputChannels()) {
+            if (!this.shouldVisitProducerOf(channel)) continue;
             final ExecutionTask producer = channel.getProducer();
             Validate.notNull(producer);
             final InterimStage assignedStage = this.assignedInterimStages.get(producer);
@@ -249,12 +269,44 @@ public class StageAssignmentTraversal {
         }
 
         for (Channel channel : currentExecutionTask.getInputChannels()) {
-            final ExecutionTask predecessor = channel.getProducer();
-            this.assembleExecutionPlan(finalStages, executionStage, predecessor);
+            if (this.shouldVisitProducerOf(channel)) {
+                final ExecutionTask predecessor = channel.getProducer();
+                this.assembleExecutionPlan(finalStages, executionStage, predecessor);
+            }
         }
     }
 
-    private class InterimStage {
+    /**
+     * Tells whether the producer of the given {@link Channel} (and its producers in turn) should be considered.
+     */
+    private boolean shouldVisitProducerOf(Channel channel) {
+        // We do not follow copied Channels, because they mark the border to already executed ExecutionTasks.
+        return !channel.isCopy();
+    }
+
+    private interface InterimStage {
+
+        Set<ExecutionTask> getTasks();
+
+        Platform getPlatform();
+
+        void addTask(ExecutionTask task);
+
+        void setOutbound(ExecutionTask task);
+
+        ExecutionStage toExecutionStage();
+
+        InterimStage separate(Set<ExecutionTask> separableTasks);
+
+        boolean getAndResetMark();
+
+        void mark();
+
+        Set<ExecutionTask> getOutboundTasks();
+
+    }
+
+    private class InterimStageImpl implements InterimStage {
 
         /**
          * The {@link PlatformExecution} to that this instance belongs to.
@@ -284,36 +336,42 @@ public class StageAssignmentTraversal {
         /**
          * Creates a new instance.
          */
-        public InterimStage(PlatformExecution platformExecution) {
+        public InterimStageImpl(PlatformExecution platformExecution) {
             this(platformExecution, 0);
         }
 
-        private InterimStage(PlatformExecution platformExecution, int sequenceNumber) {
+        private InterimStageImpl(PlatformExecution platformExecution, int sequenceNumber) {
             this.platformExecution = platformExecution;
             this.sequenceNumber = sequenceNumber;
         }
 
+        @Override
         public Platform getPlatform() {
             return this.platformExecution.getPlatform();
         }
 
+        @Override
         public void addTask(ExecutionTask task) {
             this.allTasks.add(task);
         }
 
+        @Override
         public void setOutbound(ExecutionTask task) {
             Validate.isTrue(this.allTasks.contains(task));
             this.outboundTasks.add(task);
         }
 
+        @Override
         public Set<ExecutionTask> getOutboundTasks() {
             return this.outboundTasks;
         }
 
+        @Override
         public Set<ExecutionTask> getTasks() {
             return this.allTasks;
         }
 
+        @Override
         public InterimStage separate(Set<ExecutionTask> separableTasks) {
             InterimStage newStage = this.createSplit();
             for (Iterator<ExecutionTask> i = this.allTasks.iterator(); i.hasNext(); ) {
@@ -333,23 +391,15 @@ public class StageAssignmentTraversal {
         }
 
         public InterimStage createSplit() {
-            return new InterimStage(this.platformExecution, this.sequenceNumber + 1);
+            return new InterimStageImpl(this.platformExecution, this.sequenceNumber + 1);
         }
 
+        @Override
         public void mark() {
             this.isMarked = true;
         }
 
-        public boolean isMarked() {
-            return this.isMarked;
-        }
-
-        public boolean getAndSetMark() {
-            final boolean value = this.isMarked;
-            this.isMarked = true;
-            return value;
-        }
-
+        @Override
         public boolean getAndResetMark() {
             final boolean value = this.isMarked;
             this.isMarked = false;
@@ -361,6 +411,7 @@ public class StageAssignmentTraversal {
             return String.format("InterimStage[%s:%d]", this.getPlatform().getName(), this.sequenceNumber);
         }
 
+        @Override
         public ExecutionStage toExecutionStage() {
             final ExecutionStage executionStage = this.platformExecution.createStage(this.sequenceNumber);
             for (ExecutionTask task : this.allTasks) {
@@ -393,6 +444,64 @@ public class StageAssignmentTraversal {
                 }
             }
             return true;
+        }
+    }
+
+    private static class ExecutionStageAdapter implements InterimStage {
+
+        private final ExecutionStage executionStage;
+
+        private boolean isMarked = false;
+
+        public ExecutionStageAdapter(ExecutionStage executionStage) {
+            this.executionStage = executionStage;
+        }
+
+        @Override
+        public Set<ExecutionTask> getTasks() {
+            return this.executionStage.getAllTasks();
+        }
+
+        @Override
+        public Platform getPlatform() {
+            return this.executionStage.getPlatformExecution().getPlatform();
+        }
+
+        @Override
+        public void addTask(ExecutionTask task) {
+            throw new RuntimeException("Unmodifiable.");
+        }
+
+        @Override
+        public void setOutbound(ExecutionTask task) {
+            throw new RuntimeException("Unmodifiable.");
+        }
+
+        @Override
+        public ExecutionStage toExecutionStage() {
+            return this.executionStage;
+        }
+
+        @Override
+        public InterimStage separate(Set<ExecutionTask> separableTasks) {
+            throw new RuntimeException("Unmodifiable.");
+        }
+
+        @Override
+        public boolean getAndResetMark() {
+            boolean wasMarked = this.isMarked;
+            this.isMarked = false;
+            return wasMarked;
+        }
+
+        @Override
+        public void mark() {
+            this.isMarked = true;
+        }
+
+        @Override
+        public Set<ExecutionTask> getOutboundTasks() {
+            return new HashSet<>(this.executionStage.getTerminalTasks());
         }
     }
 

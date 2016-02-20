@@ -67,8 +67,23 @@ public class ExecutionTask {
      * instead.
      */
     void setInputChannel(int index, Channel channel) {
-        Validate.isTrue(this.getInputChannel(index) == null);
+        assert channel == null || this.getInputChannel(index) == null;
         this.getInputChannels()[index] = channel;
+    }
+
+    /**
+     * Exchanges input {@link Channel}. Will also update the {@link Channel}'s consumers appropriately.
+     */
+    public void exchangeInputChannel(Channel currentChannel, Channel newChannel) {
+        for (int inputIndex = 0; inputIndex < this.getNumInputChannels(); inputIndex++) {
+            if (this.getInputChannel(inputIndex) == currentChannel) {
+                currentChannel.getConsumers().remove(this);
+                this.setInputChannel(inputIndex, null);
+                newChannel.addConsumer(this, inputIndex);
+                return;
+            }
+        }
+        throw new IllegalArgumentException(String.format("%s is not an input of %s.", currentChannel, this));
     }
 
     public Channel[] getOutputChannels() {

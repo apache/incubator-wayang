@@ -4,7 +4,6 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * Resides within a {@link PlatformExecution} and represents the minimum execution unit that is controlled by Rheem.
@@ -28,7 +27,7 @@ public class ExecutionStage {
     /**
      * Directly succeeding instances (have to be executed after this instance).
      */
-    private final Collection<ExecutionStage> successors = new LinkedList<>();
+    private final Set<ExecutionStage> successors = new HashSet<>();
 
     /**
      * Tasks that have to be done first when processing this instance.
@@ -44,7 +43,6 @@ public class ExecutionStage {
      * For printing and debugging purposes only.
      */
     private final int sequenceNumber;
-    private Stream<ExecutionTask> allTasks;
 
     /**
      * Create a new instance and register it with the given {@link PlatformExecution}.
@@ -61,8 +59,9 @@ public class ExecutionStage {
      * @param that a new successor of this instance
      */
     public void addSuccessor(ExecutionStage that) {
-        this.successors.add(that);
-        that.predecessors.add(this);
+        if (this.successors.add(that)) {
+            that.predecessors.add(this);
+        }
     }
 
     public PlatformExecution getPlatformExecution() {
@@ -147,13 +146,23 @@ public class ExecutionStage {
 
         while (!nextTasks.isEmpty()) {
             final ExecutionTask task = nextTasks.poll();
+            assert task.getStage() == this;
             if (allTasks.add(task) && !this.terminalTasks.contains(task)) {
                 Arrays.stream(task.getOutputChannels())
                         .flatMap(channel -> channel.getConsumers().stream())
                         .forEach(nextTasks::add);
             }
         }
-        assert allTasks.stream().allMatch(task -> task.getStage() == this);
         return allTasks;
+    }
+
+    public void retainSuccessors(Set<ExecutionStage> retainableStages) {
+        for (Iterator<ExecutionStage> i = this.successors.iterator(); i.hasNext(); ) {
+            final ExecutionStage successor = i.next();
+            if (!retainableStages.contains(successor)) {
+                i.remove();
+                successor.predecessors.remove(this);
+            }
+        }
     }
 }

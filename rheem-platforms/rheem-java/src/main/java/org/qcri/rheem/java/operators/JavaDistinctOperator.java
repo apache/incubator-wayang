@@ -34,7 +34,7 @@ public class JavaDistinctOperator<Type>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaDistinctOperator<>(this.getInputType());
     }
 }

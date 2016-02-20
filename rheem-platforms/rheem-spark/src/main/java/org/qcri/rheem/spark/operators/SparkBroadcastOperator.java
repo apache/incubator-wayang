@@ -39,7 +39,7 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkBroadcastOperator<>(this.getType());
     }
 }

@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.util;
 
+import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -68,5 +70,13 @@ public class Counter<T> implements Iterable<Map.Entry<T, Integer>> {
     @Override
     public Iterator<Map.Entry<T, Integer>> iterator() {
         return this.counts.entrySet().iterator();
+    }
+
+    public void remove(T element) {
+        this.counts.remove(element);
+    }
+
+    public void clear() {
+        this.counts.clear();
     }
 }

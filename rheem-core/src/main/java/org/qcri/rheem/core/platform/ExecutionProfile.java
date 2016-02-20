@@ -17,6 +17,6 @@ public class ExecutionProfile {
     }
 
     public void merge(ExecutionProfile that) {
-        this.cardinalities.putAll(that.cardinalities);
+        if (that != null) this.cardinalities.putAll(that.cardinalities);
     }
 }

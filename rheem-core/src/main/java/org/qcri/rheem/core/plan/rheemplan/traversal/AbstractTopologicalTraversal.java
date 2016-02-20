@@ -1,6 +1,5 @@
 package org.qcri.rheem.core.plan.rheemplan.traversal;
 
-import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
@@ -35,6 +34,7 @@ public abstract class AbstractTopologicalTraversal<Payload,
     public final boolean traverse(Payload... payloads) {
         try {
             final Queue<ActivatorType> activators = this.initializeActivatorQueue(payloads);
+            assert !activators.isEmpty();
             do {
                 final ActivatorType activator = activators.poll();
                 // Without this double-cast, we run into a compiler bug: https://bugs.openjdk.java.net/browse/JDK-8131744
@@ -56,7 +56,7 @@ public abstract class AbstractTopologicalTraversal<Payload,
         Queue<ActivatorType> activatorQueue = new LinkedList<>(this.getInitialActivators());
 
         // Fire Activations satisfied from the payloads.
-        for (int i = 0; i < payloads.length; i++) {
+        for (int i = 0; i < this.getNumInitialActivations(); i++) {
             final Collection<ActivationType> activations = this.getInitialActivations(i);
             for (ActivationType activation : activations) {
                 ActivatorType activator = activation.getTargetActivator();
@@ -72,6 +72,8 @@ public abstract class AbstractTopologicalTraversal<Payload,
     protected abstract Collection<ActivatorType> getInitialActivators();
 
     protected abstract Collection<ActivationType> getInitialActivations(int index);
+
+    protected abstract int getNumInitialActivations();
 
     /**
      * Wraps a {@link CardinalityEstimator}, thereby caching its input {@link CardinalityEstimate}s and keeping track
@@ -93,7 +95,7 @@ public abstract class AbstractTopologicalTraversal<Payload,
          * @param activatorQueue accepts newly activated {@link CardinalityEstimator}s
          */
         protected void process(Queue<Activator<TActivation>> activatorQueue) {
-            Validate.isTrue(this.isActivationComplete());
+            assert this.isActivationComplete() : String.format("Cannot process %s: activation not complete.", this);
             Collection<TActivation> successorActivations = this.doWork();
             if (successorActivations == null) {
                 throw new AbortException(String.format("%s requested to abort.", this));
@@ -143,7 +145,7 @@ public abstract class AbstractTopologicalTraversal<Payload,
     /**
      * Declares that the current traversal should be aborted.
      */
-    protected static class AbortException extends RheemException {
+    public static class AbortException extends RheemException {
 
         public AbortException(String message) {
             super(message);

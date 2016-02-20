@@ -48,7 +48,7 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkMaterializedGroupByOperator<>(this.getType(), this.getKeyDescriptor());
     }
 

@@ -75,7 +75,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaObjectFileSink<>(this.targetPath, this.getType());
     }
 

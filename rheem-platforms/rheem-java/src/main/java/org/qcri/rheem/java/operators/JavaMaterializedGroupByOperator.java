@@ -46,7 +46,7 @@ public class JavaMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaMaterializedGroupByOperator<>(this.getType(), this.getKeyDescriptor());
     }
 }

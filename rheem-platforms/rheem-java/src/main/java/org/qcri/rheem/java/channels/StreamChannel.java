@@ -18,9 +18,18 @@ public class StreamChannel extends Channel {
         super(producer, outputIndex);
     }
 
+    private StreamChannel(StreamChannel parent) {
+        super(parent);
+    }
+
     @Override
     public boolean isReusable() {
         return false;
+    }
+
+    @Override
+    public StreamChannel copy() {
+        return new StreamChannel(this);
     }
 
     public static class Initializer implements ChannelInitializer {

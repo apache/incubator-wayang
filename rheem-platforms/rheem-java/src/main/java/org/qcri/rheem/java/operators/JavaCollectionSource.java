@@ -27,7 +27,7 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaCollectionSource(this.getCollection(), this.getType());
     }
 }

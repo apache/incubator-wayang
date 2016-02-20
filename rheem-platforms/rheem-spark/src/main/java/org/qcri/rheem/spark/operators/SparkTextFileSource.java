@@ -30,7 +30,7 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkTextFileSource(this.getInputUrl(), this.getEncoding());
     }
 }

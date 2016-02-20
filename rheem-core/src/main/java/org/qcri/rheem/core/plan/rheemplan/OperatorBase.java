@@ -26,6 +26,8 @@ public abstract class OperatorBase implements Operator {
 
     private final Set<Platform> targetPlatforms = new HashSet<>(0);
 
+    private ExecutionOperator original;
+
     /**
      * Can assign a {@link TimeEstimate} to {@link ExecutionOperator}s.
      */
@@ -156,5 +158,27 @@ public abstract class OperatorBase implements Operator {
     @Override
     public void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate) {
         this.getInput(inputIndex).setCardinalityEstimate(cardinalityEstimate);
+    }
+
+    /**
+     * @see ExecutionOperator#copy()
+     */
+    public ExecutionOperator copy() {
+        assert this.isExecutionOperator();
+        ExecutionOperator copy = this.createCopy();
+        ((OperatorBase) copy).original = this.getOriginal();
+        return copy;
+    }
+
+    protected ExecutionOperator createCopy() {
+        throw new RuntimeException("Not implemented.");
+    }
+
+    /**
+     * @see ExecutionOperator#getOriginal()
+     */
+    public ExecutionOperator getOriginal() {
+        assert this.isExecutionOperator();
+        return this.original == null ? (ExecutionOperator) this : this.original;
     }
 }

@@ -41,7 +41,7 @@ public class SparkFilterOperator<Type>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkFilterOperator<>(this.getInputType(), this.getPredicateDescriptor());
     }
 }

@@ -36,7 +36,7 @@ public class JavaCountOperator<Type>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaCountOperator<>(this.getInputType());
     }
 }

@@ -91,7 +91,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaObjectFileSource<>(this.sourcePath, this.getType());
     }
 

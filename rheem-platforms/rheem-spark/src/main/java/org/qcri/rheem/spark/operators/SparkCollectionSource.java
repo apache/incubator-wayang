@@ -37,7 +37,7 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkCollectionSource<>(this.getCollection(), this.getType());
     }
 }

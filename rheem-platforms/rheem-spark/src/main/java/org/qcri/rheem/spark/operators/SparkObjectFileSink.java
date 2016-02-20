@@ -30,7 +30,7 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkObjectFileSink<>(this.targetPath, this.getType());
     }
 

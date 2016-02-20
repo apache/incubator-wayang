@@ -20,11 +20,18 @@ public class PreliminaryExecutionPlan {
 
     private final Collection<ExecutionTask> sinkTasks;
 
+    private final Set<Channel> inputChannels;
+
     private TimeEstimate timeEstimate;
 
     public PreliminaryExecutionPlan(Collection<ExecutionTask> sinkTasks) {
+        this(sinkTasks, Collections.emptySet());
+    }
+
+    public PreliminaryExecutionPlan(Collection<ExecutionTask> sinkTasks, Set<Channel> inputChannels) {
         Validate.notEmpty(sinkTasks, "Cannot build plan without sinks.");
         this.sinkTasks = sinkTasks;
+        this.inputChannels = inputChannels;
     }
 
     public TimeEstimate estimateExecutionTime(Configuration configuration) {
@@ -80,7 +87,11 @@ public class PreliminaryExecutionPlan {
     }
 
     public ExecutionPlan toExecutionPlan() {
-        return new StageAssignmentTraversal(this).run();
+        return this.toExecutionPlan(Collections.emptySet());
+    }
+
+    public ExecutionPlan toExecutionPlan(Set<ExecutionStage> existingStages) {
+        return new StageAssignmentTraversal(this).run(existingStages);
     }
 
     public boolean isComplete() {
@@ -101,5 +112,9 @@ public class PreliminaryExecutionPlan {
 
     public Collection<ExecutionTask> getSinkTasks() {
         return this.sinkTasks;
+    }
+
+    public Set<Channel> getInputChannels() {
+        return this.inputChannels;
     }
 }

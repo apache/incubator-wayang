@@ -34,7 +34,7 @@ public class JavaSortOperator<Type>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaSortOperator<>(this.getInputType());
     }
 }

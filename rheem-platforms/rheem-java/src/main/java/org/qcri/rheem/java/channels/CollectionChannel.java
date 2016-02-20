@@ -19,9 +19,18 @@ public class CollectionChannel extends Channel {
         super(producer, outputIndex);
     }
 
+    private CollectionChannel(CollectionChannel parent) {
+        super(parent);
+    }
+
     @Override
     public boolean isReusable() {
         return true;
+    }
+
+    @Override
+    public CollectionChannel copy() {
+        return new CollectionChannel(this);
     }
 
     public static class Initializer implements ChannelInitializer {

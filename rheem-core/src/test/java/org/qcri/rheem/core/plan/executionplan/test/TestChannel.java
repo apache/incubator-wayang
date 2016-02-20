@@ -26,4 +26,8 @@ public class TestChannel extends Channel {
         return this.isReusable;
     }
 
+    @Override
+    public Channel copy() {
+        throw new RuntimeException("Not implemented.");
+    }
 }

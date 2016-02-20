@@ -33,7 +33,7 @@ public class JavaUnionAllOperator<Type>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaUnionAllOperator<>(this.getInputType0());
     }
 }
