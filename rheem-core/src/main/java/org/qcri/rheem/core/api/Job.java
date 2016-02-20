@@ -266,7 +266,7 @@ public class Job {
             state.getCompletedStages().stream()
                     .flatMap(stage -> stage.getSuccessors().stream())
                     .filter(stage -> !state.getCompletedStages().contains(stage))
-                    .forEach(breakpoint::breakAt);
+                    .forEach(breakpoint::breakAfter);
         }
         this.crossPlatformExecutor.setBreakpoint(breakpoint);
         return this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);

@@ -64,6 +64,7 @@ public class CrossPlatformExecutor {
     public void prepare(ExecutionPlan executionPlan) {
         this.predecessorCounter.clear();
         this.activatedStages.clear();
+        this.suspendedStages.clear();
         this.activatedStages.addAll(executionPlan.getStartingStages());
         this.executionProfile = new ExecutionProfile();
     }
