@@ -5,6 +5,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.platform.Platform;
 
 /**
  * Serves as an adapter to include {@link ExecutionOperator}s, which are usually parts of {@link RheemPlan}s, in
@@ -153,5 +154,12 @@ public class ExecutionTask {
             }
         }
         throw new IllegalArgumentException(String.format("%s does not belong to %s.", channel, this));
+    }
+
+    /**
+     * @return the {@link Platform} for the encased {@link ExecutionOperator}
+     */
+    public Platform getPlatform() {
+        return this.operator.getPlatform();
     }
 }

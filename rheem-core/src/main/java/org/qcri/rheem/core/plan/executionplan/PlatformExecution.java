@@ -5,6 +5,7 @@ import org.qcri.rheem.core.platform.Platform;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -53,5 +54,9 @@ public class PlatformExecution {
 
     int getSequenceNumber() {
         return this.sequenceNumber;
+    }
+
+    public void retain(Set<ExecutionStage> retainableStages) {
+        this.stages.retainAll(retainableStages);
     }
 }

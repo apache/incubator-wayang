@@ -220,7 +220,8 @@ public abstract class Channel {
     }
 
     /**
-     * Create a copy of this instance. Mimics everything apart from the consumers.
+     * Create a copy of this instance. Mimics everything apart from the consumers. Also delimits already executed
+     * {@link ExecutionTask}s and those that are not executed yet. Be careful when revising this invariant.
      */
     public abstract Channel copy();
 
@@ -232,7 +233,8 @@ public abstract class Channel {
     }
 
     /**
-     * Tells whether this instance is a copy.
+     * Tells whether this instance is a copy. If so, it delimits already executed
+     * {@link ExecutionTask}s and those that are not executed yet. Be careful when revising this invariant.
      *
      * @see #copy()
      * @see #getOriginal()

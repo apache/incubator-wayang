@@ -39,6 +39,9 @@ public class CrossPlatformExecutor {
      */
     private Counter<PlatformExecution> executionStageCounter = new Counter<>();
 
+    /**
+     * Keeps track of {@link ExecutionStage}s that have actually been executed by this instance.
+     */
     private Set<ExecutionStage> completedStages = new HashSet<>();
 
     /**
@@ -63,9 +66,12 @@ public class CrossPlatformExecutor {
      */
     public void prepare(ExecutionPlan executionPlan) {
         this.predecessorCounter.clear();
+        this.executionStageCounter.clear();
+
         this.activatedStages.clear();
         this.suspendedStages.clear();
         this.activatedStages.addAll(executionPlan.getStartingStages());
+
         this.executionProfile = new ExecutionProfile();
     }
 
@@ -112,18 +118,20 @@ public class CrossPlatformExecutor {
      * @return whether the {@link ExecutionStage} was really executed
      */
     private boolean execute(ExecutionStage activatedStage) {
-        if (!this.completedStages.contains(activatedStage)) {
+        final boolean shouldExecute = this.completedStages.contains(activatedStage);
+        if (!shouldExecute) {
             Executor executor = this.getOrCreateExecutorFor(activatedStage);
             final ExecutionProfile executionProfile = this.submit(activatedStage, executor);
             this.executionProfile.merge(executionProfile);
             this.completedStages.add(activatedStage);
-            this.disposeExecutorIfDone(activatedStage.getPlatformExecution(), executor);
-            return true;
 
         } else {
             CrossPlatformExecutor.this.logger.info("Skipping already executed {}.", activatedStage);
-            return false;
         }
+
+        this.disposeExecutorIfDone(activatedStage.getPlatformExecution());
+
+        return shouldExecute;
     }
 
     private Executor getOrCreateExecutorFor(ExecutionStage stage) {
@@ -155,11 +163,15 @@ public class CrossPlatformExecutor {
      * Increments the {@link #executionStageCounter} for the given {@link PlatformExecution} and disposes
      * {@link Executor}s if it is no longer needed.
      */
-    private void disposeExecutorIfDone(PlatformExecution platformExecution, Executor executor) {
+    private void disposeExecutorIfDone(PlatformExecution platformExecution) {
         int numExecutedStages = this.executionStageCounter.increment(platformExecution);
         if (numExecutedStages == platformExecution.getStages().size()) {
-            executor.dispose();
-            this.executors.remove(platformExecution);
+            // Be cautious: In replay mode, we do not want to re-summon the Executor.
+            final Executor executor = this.executors.get(platformExecution);
+            if (executor != null) {
+                executor.dispose();
+                this.executors.remove(platformExecution);
+            }
         }
     }
 

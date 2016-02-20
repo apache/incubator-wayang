@@ -53,13 +53,9 @@ public class StageAssignmentTraversal {
     }
 
     public synchronized ExecutionPlan run() {
-        return this.run(Collections.emptySet());
-    }
-
-    public synchronized ExecutionPlan run(Set<ExecutionStage> existingStages) {
         // Create initial stages.
         this.initializeRun();
-        this.discoverInitialStages(existingStages);
+        this.discoverInitialStages();
 
         // Refine stages as much as necessary
         this.refineStages();
@@ -72,36 +68,63 @@ public class StageAssignmentTraversal {
     }
 
     private void initializeRun() {
-        this.seeds = new LinkedList<>(this.preliminaryExecutionPlan.getSinkTasks());
+        this.seeds = new LinkedList<>();
         this.assignedInterimStages = new HashMap<>();
         this.requiredStages = new HashMap<>();
         this.changedStages = new LinkedList<>();
         this.allStages = new LinkedList<>();
     }
 
-    private void discoverInitialStages(Set<ExecutionStage> existingStages) {
-        for (ExecutionStage existingStage : existingStages) {
-            final ExecutionStageAdapter interimStage = new ExecutionStageAdapter(existingStage);
-            for (ExecutionTask task : interimStage.getTasks()) {
-                this.assignedInterimStages.put(task, interimStage);
+    private void discoverInitialStages() {
+        // Find seeds.
+        final Set<ExecutionTask> newTasks = new HashSet<>();
+        final Queue<ExecutionTask> stagedTasks = new LinkedList<>(this.preliminaryExecutionPlan.getSinkTasks());
+        while (!stagedTasks.isEmpty()) {
+            final ExecutionTask task = stagedTasks.poll();
+            if (!newTasks.add(task)) continue;
+            for (Channel inputChannel : task.getInputChannels()) {
+                if (!this.shouldVisitProducerOf(inputChannel)) { // Barrier.
+                    final ExecutionTask producer = inputChannel.getProducer();
+                    // Most important seeds are those that might need to use an existing PlatformExecution.
+                    if (producer.getPlatform().equals(task.getPlatform()) &&
+                            producer.getPlatform().isSinglePlatformExecutionPossible(producer, inputChannel, task)) {
+                        this.createStageFor(task, producer.getStage().getPlatformExecution());
+                    }
+                } else {
+                    stagedTasks.add(inputChannel.getProducer());
+                }
             }
-            this.allStages.add(interimStage);
         }
+
+        this.seeds.addAll(newTasks);
         while (!this.seeds.isEmpty()) {
             final ExecutionTask task = this.seeds.poll();
-            if (this.assignedInterimStages.containsKey(task)) {
-                continue;
+            this.createStageFor(task, null);
+        }
+
+        assert newTasks.stream().allMatch(this.assignedInterimStages::containsKey);
+    }
+
+    /**
+     * Starts building an {@link InterimStage} starting from the given {@link ExecutionTask}. If a {@link PlatformExecution}
+     * is provided, the {@link InterimStage} will be associated with it. Eventually, also {@link #seeds} will be planted
+     * for adjacent {@link InterimStage}s.
+     */
+    private void createStageFor(ExecutionTask task, PlatformExecution platformExecution) {
+        if (this.assignedInterimStages.containsKey(task)) {
+            return;
+        }
+        Platform platform = task.getOperator().getPlatform();
+        if (task.getStage() != null) {
+            return;
+        } else {
+            if (platformExecution == null) {
+                platformExecution = new PlatformExecution(platform);
             }
-            Platform platform = task.getOperator().getPlatform();
-            if (task.getStage() != null && existingStages.contains(task.getStage())) {
-                continue;
-            } else {
-                PlatformExecution platformExecution = new PlatformExecution(platform);
-                InterimStage initialStage = new InterimStageImpl(platformExecution);
-                this.allStages.add(initialStage);
-                this.changedStages.add(initialStage);
-                this.traverseTask(task, initialStage);
-            }
+            InterimStage initialStage = new InterimStageImpl(platformExecution);
+            this.allStages.add(initialStage);
+            this.changedStages.add(initialStage);
+            this.traverseTask(task, initialStage);
         }
     }
 
@@ -112,14 +135,14 @@ public class StageAssignmentTraversal {
     }
 
     private void assign(ExecutionTask task, InterimStage newStage) {
-        Validate.isTrue(task.getOperator().getPlatform().equals(newStage.getPlatform()));
+        assert task.getOperator().getPlatform().equals(newStage.getPlatform());
         newStage.addTask(task);
         final InterimStage oldStage = this.assignedInterimStages.put(task, newStage);
-        Validate.isTrue(oldStage == null, "Reassigned %s from %s to %s.", task, oldStage, newStage);
+        assert oldStage == null : String.format("Reassigned %s from %s to %s.", task, oldStage, newStage);
         final HashSet<InterimStage> thisRequiredStages = new HashSet<>(4);
         thisRequiredStages.add(newStage);
         this.requiredStages.put(task, thisRequiredStages);
-        this.logger.debug("Initially assigning {} to {}.", task, newStage);
+        this.logger.info("Initially assigning {} to {}.", task, newStage);
     }
 
     private void expandDownstream(ExecutionTask task, InterimStage expandableStage) {

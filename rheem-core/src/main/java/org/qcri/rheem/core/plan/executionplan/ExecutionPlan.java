@@ -55,9 +55,8 @@ public class ExecutionPlan {
                     channel.retain(retainableStages);
                 }
             }
-        }
-        for (ExecutionStage retainableStage : retainableStages) {
-            retainableStage.retainSuccessors(retainableStages);
+            stage.retainSuccessors(retainableStages);
+            stage.getPlatformExecution().retain(retainableStages);
         }
     }
 
@@ -94,6 +93,7 @@ public class ExecutionPlan {
             final ExecutionStage producerStage = original.getProducer().getStage();
             for (ExecutionTask consumer : original.getConsumers()) {
                 final ExecutionStage consumerStage = consumer.getStage();
+                assert producerStage != null : String.format("No stage found for %s.", producerStage);
                 producerStage.addSuccessor(consumerStage);
             }
         }

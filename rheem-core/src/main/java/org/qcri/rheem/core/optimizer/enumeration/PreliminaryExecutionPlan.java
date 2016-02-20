@@ -87,11 +87,7 @@ public class PreliminaryExecutionPlan {
     }
 
     public ExecutionPlan toExecutionPlan() {
-        return this.toExecutionPlan(Collections.emptySet());
-    }
-
-    public ExecutionPlan toExecutionPlan(Set<ExecutionStage> existingStages) {
-        return new StageAssignmentTraversal(this).run(existingStages);
+        return new StageAssignmentTraversal(this).run();
     }
 
     public boolean isComplete() {
