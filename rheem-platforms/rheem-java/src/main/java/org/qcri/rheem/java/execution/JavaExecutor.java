@@ -13,13 +13,17 @@ import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.channels.JavaChannelManager;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 /**
- * Dummy executor for the Java platform.
+ * {@link Executor} implementation for the {@link JavaPlatform}.
  */
 public class JavaExecutor implements Executor {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final JavaPlatform platform;
 
@@ -49,7 +53,8 @@ public class JavaExecutor implements Executor {
         // Instrument all stage-outbound channels.
         for (Channel channel : executionTask.getOutputChannels()) {
             if (channel.getConsumers().stream().anyMatch(consumer -> consumer.getStage() != executionTask.getStage())) {
-                channel.markForInstrumentation();
+                this.logger.debug("Marking {} for instrumentation.", channel);
+                channel.markForInstrumentation(); // TODO: Instrumentation should be done in the CrossPlatformExecutor.
             }
             if (channel.isMarkedForInstrumentation()) {
                 this.instrumentedChannels.add(channel);
@@ -110,8 +115,12 @@ public class JavaExecutor implements Executor {
         for (Channel channel : this.instrumentedChannels) {
             final ChannelExecutor channelExecutor = this.establishedChannelExecutors.get(channel);
             assert channelExecutor != null : String.format("Could not find a Channel executor for %s.", channel);
-            cardinalities.put(channel, channelExecutor.getCardinality());
-        }
+            final long cardinality = channelExecutor.getCardinality();
+            if (cardinality == -1) {
+                this.logger.warn("No cardinality available for {}, although it was requested.", channel);
+            } else {
+                cardinalities.put(channel, cardinality);
+            }        }
         return executionProfile;
     }
 

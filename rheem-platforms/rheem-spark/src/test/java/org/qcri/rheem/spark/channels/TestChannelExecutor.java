@@ -48,4 +48,9 @@ public class TestChannelExecutor implements ChannelExecutor {
     public void dispose() {
         // Meh.
     }
+
+    @Override
+    public long getCardinality() throws RheemException {
+        return -1; // Meh.
+    }
 }

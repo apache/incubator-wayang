@@ -1,9 +1,12 @@
 package org.qcri.rheem.spark.channels;
 
+import org.apache.spark.Accumulator;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.broadcast.Broadcast;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.spark.operators.SparkBroadcastOperator;
+import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -47,21 +50,41 @@ public interface ChannelExecutor {
     void dispose();
 
     /**
+     * @return the cardinality measured by this instance or {@code -1} if for some reason no cardinality was measured
+     * @throws RheemException if the corresponding {@link Channel} is not marked for instrumentation
+     */
+    long getCardinality() throws RheemException;
+
+    /**
      * {@link ChannelExecutor} implementation for {@link JavaRDD}s.
      */
     class ForRDD implements ChannelExecutor {
+
+        private final SparkExecutor sparkExecutor;
+
+        private final RddChannel channel;
 
         private JavaRDD<?> rdd;
 
         private final boolean isCaching;
 
-        public ForRDD(boolean isCaching) {
+        private Accumulator<Integer> accumulator;
+
+        public ForRDD(Channel channel, boolean isCaching, SparkExecutor sparkExecutor) {
+            this.channel = (RddChannel) channel;
             this.isCaching = isCaching;
+            this.sparkExecutor = sparkExecutor;
         }
 
         @Override
         public void acceptRdd(JavaRDD<?> rdd) throws RheemException {
-            this.rdd = rdd;
+            if (this.channel.isMarkedForInstrumentation()) {
+                final Accumulator<Integer> accumulator = this.sparkExecutor.sc.accumulator(0);
+                this.rdd = rdd.filter(dataQuantum -> { accumulator.add(1); return true; });
+                this.accumulator = accumulator;
+            } else {
+                this.rdd = rdd;
+            }
             if (this.isCaching) {
                 this.rdd.cache();
             }
@@ -94,6 +117,14 @@ public interface ChannelExecutor {
                 }
             }
         }
+
+        @Override
+        public long getCardinality() throws RheemException {
+            if (!this.channel.isMarkedForInstrumentation()) {
+                return -1;
+            }
+            return this.accumulator.value();
+        }
     }
 
     /**
@@ -101,7 +132,13 @@ public interface ChannelExecutor {
      */
     class ForBroadcast implements ChannelExecutor {
 
+        private final BroadcastChannel channel;
+
         private Broadcast<?> broadcast;
+
+        public ForBroadcast(Channel channel) {
+            this.channel = (BroadcastChannel) channel;
+        }
 
         @Override
         public void acceptRdd(JavaRDD<?> rdd) throws RheemException {
@@ -134,6 +171,11 @@ public interface ChannelExecutor {
                     LoggerFactory.getLogger(this.getClass()).warn("Destroying broadcast failed.", t);
                 }
             }
+        }
+
+        @Override
+        public long getCardinality() throws RheemException {
+            return ((SparkBroadcastOperator<?>) this.channel.getProducer().getOperator()).getMeasuredCardinality();
         }
     }
 }

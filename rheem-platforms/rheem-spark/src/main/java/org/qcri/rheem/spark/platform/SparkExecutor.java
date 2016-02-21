@@ -1,6 +1,5 @@
 package org.qcri.rheem.spark.platform;
 
-import org.apache.commons.lang3.Validate;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
@@ -15,11 +14,11 @@ import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-
+/**
+ * {@link Executor} implementation for the {@link SparkPlatform}.
+ */
 public class SparkExecutor implements Executor {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -39,17 +38,23 @@ public class SparkExecutor implements Executor {
 
     @Override
     public ExecutionProfile execute(ExecutionStage stage) {
+        // Instrument all stage-outbound channels.
+        for (Channel channel : stage.getOutboundChannels()) {
+            this.logger.debug("Marking {} for instrumentation.", channel);
+            channel.markForInstrumentation(); // TODO: Instrumentation should be done in the CrossPlatformExecutor.
+        }
         final Collection<ExecutionTask> terminalTasks = stage.getTerminalTasks();
         terminalTasks.forEach(this::execute);
 
-        this.logger.warn("ExecutionProfiles not yet implemented for {}.", this);
-        return new ExecutionProfile();
+        return this.assembleExecutionProfile();
     }
 
     private void execute(ExecutionTask executionTask) {
+        // We want to enforce a top-down creation order of the ChannelExecutors.
+        ChannelExecutor[] outputs = this.createOutputExecutors(executionTask);
         ChannelExecutor[] inputs = this.obtainInputs(executionTask);
         final SparkExecutionOperator sparkExecutionOperator = (SparkExecutionOperator) executionTask.getOperator();
-        ChannelExecutor[] outputs = this.createOutputExecutors(executionTask);
+        this.logger.debug("Evaluating {}...", sparkExecutionOperator);
         sparkExecutionOperator.evaluate(inputs, outputs, this.compiler, this);
         this.registerChannelExecutor(outputs, executionTask);
     }
@@ -58,8 +63,9 @@ public class SparkExecutor implements Executor {
         final SparkChannelManager channelManager = this.getPlatform().getChannelManager();
         ChannelExecutor[] channelExecutors = new ChannelExecutor[executionTask.getOutputChannels().length];
         for (int outputIndex = 0; outputIndex < channelExecutors.length; outputIndex++) {
-            final Channel output = executionTask.getOutputChannel(outputIndex);
-            channelExecutors[outputIndex] = channelManager.createChannelExecutor(output);
+            final Channel outputChannel = executionTask.getOutputChannel(outputIndex);
+            final ChannelExecutor channelExecutor = channelManager.createChannelExecutor(outputChannel, this);
+            channelExecutors[outputIndex] = channelExecutor;
         }
         return channelExecutors;
     }
@@ -90,9 +96,26 @@ public class SparkExecutor implements Executor {
         for (int outputIndex = 0; outputIndex < executionTask.getOperator().getNumOutputs(); outputIndex++) {
             Channel channel = executionTask.getOutputChannel(outputIndex);
             final ChannelExecutor channelExecutor = outputs[outputIndex];
-            Validate.notNull(channelExecutor);
+            assert channelExecutor != null;
             this.establishedChannelExecutors.put(channel, channelExecutor);
         }
+    }
+
+    private ExecutionProfile assembleExecutionProfile() {
+        ExecutionProfile executionProfile = new ExecutionProfile();
+        final Map<Channel, Long> cardinalities = executionProfile.getCardinalities();
+        for (Map.Entry<Channel, ChannelExecutor> entry : this.establishedChannelExecutors.entrySet()) {
+            final Channel channel = entry.getKey();
+            if (!channel.isMarkedForInstrumentation()) continue;
+            final ChannelExecutor channelExecutor = entry.getValue();
+            final long cardinality = channelExecutor.getCardinality();
+            if (cardinality == -1) {
+                this.logger.warn("No cardinality available for {}, although it was requested.", channel);
+            } else {
+                cardinalities.put(channel, cardinality);
+            }
+        }
+        return executionProfile;
     }
 
     @Override

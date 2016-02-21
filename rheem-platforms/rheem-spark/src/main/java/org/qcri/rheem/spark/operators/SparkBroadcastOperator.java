@@ -17,6 +17,10 @@ import java.util.List;
  */
 public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkExecutionOperator {
 
+    private boolean isMarkedForInstrumentation;
+
+    private long measuredCardinality = -1;
+
     public SparkBroadcastOperator(DataSetType<Type> type) {
         super(1, 1, false, null);
         this.inputSlots[0] = new InputSlot<>("input", this, type);
@@ -29,6 +33,7 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
         assert outputs.length == this.getNumOutputs();
 
         final List<?> collect = inputs[0].provideRdd().collect();
+        this.measuredCardinality = this.isMarkedForInstrumentation ? collect.size() : -1;
         final Broadcast<?> broadcast = sparkExecutor.sc.broadcast(collect);
         outputs[0].acceptBroadcast(broadcast);
     }
@@ -41,5 +46,13 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
     @Override
     protected ExecutionOperator createCopy() {
         return new SparkBroadcastOperator<>(this.getType());
+    }
+
+    public void markForInstrumentation() {
+        this.isMarkedForInstrumentation = true;
+    }
+
+    public long getMeasuredCardinality() {
+        return this.measuredCardinality;
     }
 }

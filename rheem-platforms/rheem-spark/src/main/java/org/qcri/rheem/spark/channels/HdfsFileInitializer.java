@@ -182,5 +182,10 @@ public class HdfsFileInitializer implements ChannelInitializer {
                 }
             }
         }
+
+        @Override
+        public long getCardinality() throws RheemException {
+            return -1;
+        }
     }
 }

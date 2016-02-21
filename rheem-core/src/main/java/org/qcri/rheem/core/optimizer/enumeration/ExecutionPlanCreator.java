@@ -87,7 +87,7 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
                 Channel channelCopy = channel.copy();
                 this.inputChannels.add(channelCopy);
                 for (InputSlot<?> consumerInput : consumerInputs) {
-                    logger.info("Intercepting {}->{}.", producerOutput, consumerInput);
+                    this.logger.debug("Intercepting {}->{}.", producerOutput, consumerInput);
                     final ExecutionOperator consumerOperator = (ExecutionOperator) consumerInput.getOwner();
                     final Activator consumerActivator = this.activators.computeIfAbsent(consumerOperator, Activator::new);
                     final ExecutionTask consumerTask = this.getOrCreateExecutionTask(consumerOperator);

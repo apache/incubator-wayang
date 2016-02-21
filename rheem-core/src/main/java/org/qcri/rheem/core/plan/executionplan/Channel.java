@@ -6,6 +6,7 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.platform.Platform;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -155,12 +156,15 @@ public abstract class Channel {
     }
 
     public void markForInstrumentation() {
-        this.isMarkedForInstrumentation = true;
+        this.withSiblings().forEach(channel -> {
+            channel.isMarkedForInstrumentation = true;
+            LoggerFactory.getLogger(this.getClass()).info("Marked {} for instrumentation.", channel);
+        });
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName();
+        return String.format("%s[%s->%s]", this.getClass().getSimpleName(), this.getProducer(), this.getConsumers());
     }
 
     /**

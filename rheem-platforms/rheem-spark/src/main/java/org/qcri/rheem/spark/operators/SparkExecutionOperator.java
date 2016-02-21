@@ -44,4 +44,10 @@ public interface SparkExecutionOperator extends ExecutionOperator {
     default List<Class<? extends Channel>> getSupportedOutputChannels(int index) {
         return this.getPlatform().getChannelManager().getAllSupportedChannels();
     }
+
+//    default void instrument(boolean shouldInstrument) {
+//        if (shouldInstrument) {
+//            throw new RuntimeException(String.format("%s#instrument(true) not yet implemented!", this));
+//        }
+//    }
 }

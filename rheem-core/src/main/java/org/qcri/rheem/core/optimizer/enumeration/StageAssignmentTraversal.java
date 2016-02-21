@@ -142,7 +142,7 @@ public class StageAssignmentTraversal {
         final HashSet<InterimStage> thisRequiredStages = new HashSet<>(4);
         thisRequiredStages.add(newStage);
         this.requiredStages.put(task, thisRequiredStages);
-        this.logger.info("Initially assigning {} to {}.", task, newStage);
+        this.logger.debug("Initially assigning {} to {}.", task, newStage);
     }
 
     private void expandDownstream(ExecutionTask task, InterimStage expandableStage) {

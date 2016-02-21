@@ -154,7 +154,7 @@ public class CrossPlatformExecutor {
             this.completedStages.add(activatedStage);
 
         } else {
-            CrossPlatformExecutor.this.logger.info("Skipping already executed {}.", activatedStage);
+            CrossPlatformExecutor.this.logger.debug("Skipping already executed {}.", activatedStage);
         }
 
         this.disposeExecutorIfDone(activatedStage.getPlatformExecution());
