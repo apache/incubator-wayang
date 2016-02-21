@@ -148,7 +148,9 @@ public class ExecutionStage {
         Set<ExecutionTask> seenTasks = new HashSet<>();
         for (ExecutionTask startTask : this.startTasks) {
             for (Channel inputChannel : startTask.getInputChannels()) {
-                sb.append(inputChannel).append(" => ").append(startTask).append('\n');
+                sb.append(this.prettyPrint(inputChannel))
+                        .append(" => ")
+                        .append(this.prettyPrint(startTask)).append('\n');
             }
             this.toExtensiveStringAux(startTask, seenTasks, sb);
         }
@@ -161,13 +163,27 @@ public class ExecutionStage {
         for (Channel channel : task.getOutputChannels()) {
             for (ExecutionTask consumer : channel.getConsumers()) {
                 if (consumer.getStage() == this) {
-                    sb.append(task).append(" => ").append(channel).append(" => ").append(consumer).append('\n');
+                    sb.append(this.prettyPrint(task))
+                            .append(" => ")
+                            .append(this.prettyPrint(channel))
+                            .append(" => ")
+                            .append(this.prettyPrint(consumer)).append('\n');
                     this.toExtensiveStringAux(consumer, seenTasks, sb);
                 } else {
-                    sb.append(task).append(" => ").append(channel).append('\n');
+                    sb.append(this.prettyPrint(task))
+                            .append(" => ")
+                            .append(this.prettyPrint(channel)).append('\n');
                 }
             }
         }
+    }
+
+    private String prettyPrint(Channel channel) {
+        return channel.getClass().getSimpleName();
+    }
+
+    private String prettyPrint(ExecutionTask task) {
+        return task.getOperator().toString();
     }
 
     /**

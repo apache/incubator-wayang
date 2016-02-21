@@ -146,8 +146,7 @@ public abstract class Channel {
     }
 
     public boolean isMarkedForInstrumentation() {
-        return withSiblings()
-                .anyMatch(sibling -> sibling.isMarkedForInstrumentation);
+        return this.withSiblings().anyMatch(sibling -> sibling.isMarkedForInstrumentation);
 
     }
 
@@ -158,7 +157,7 @@ public abstract class Channel {
     public void markForInstrumentation() {
         this.withSiblings().forEach(channel -> {
             channel.isMarkedForInstrumentation = true;
-            LoggerFactory.getLogger(this.getClass()).info("Marked {} for instrumentation.", channel);
+            LoggerFactory.getLogger(this.getClass()).debug("Marked {} for instrumentation.", channel);
         });
     }
 
