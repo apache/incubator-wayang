@@ -183,6 +183,7 @@ public class ExecutionStage {
             if (allTasks.add(task) && !this.terminalTasks.contains(task)) {
                 Arrays.stream(task.getOutputChannels())
                         .flatMap(channel -> channel.getConsumers().stream())
+                        .filter(consumer -> consumer.getStage() == this)
                         .forEach(nextTasks::add);
             }
         }
