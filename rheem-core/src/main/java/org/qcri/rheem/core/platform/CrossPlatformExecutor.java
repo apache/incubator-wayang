@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
@@ -17,7 +18,10 @@ public class CrossPlatformExecutor {
 
     public final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private Breakpoint breakpoint;
+    /**
+     * Aggregates user-defined {@link Breakpoint}s. Will be cleared after each execution.
+     */
+    private ConjunctiveBreakpoint breakpoint = new ConjunctiveBreakpoint();
 
     /**
      * Number of completed predecessors per {@link ExecutionStage}.
@@ -57,7 +61,7 @@ public class CrossPlatformExecutor {
     public State executeUntilBreakpoint(ExecutionPlan executionPlan) {
         this.prepare(executionPlan);
         this.runToBreakpoint();
-        this.setBreakpoint(null);
+        this.breakpoint = new ConjunctiveBreakpoint();
         return this.captureState();
     }
 
@@ -78,28 +82,52 @@ public class CrossPlatformExecutor {
     private void runToBreakpoint() {
         // Start execution traversal.
         final long startTime = System.currentTimeMillis();
-        int numExecutedStages = 0;
+        int numExecutedStages = 0, numSkippedStages = 0;
         Collection<ExecutionStage> newlyActivatedStages = new LinkedList<>();
+        int lastNumSkippedStages = 0;
+        boolean isBreakpointsDisabled = false;
         do {
             while (!this.activatedStages.isEmpty()) {
                 final ExecutionStage nextStage = this.activatedStages.poll();
 
                 // Check if #breakpoint permits the execution.
-                if (this.suspendIfBreakpointRequest(nextStage)) continue;
+                if (!this.completedStages.contains(nextStage)
+                        && !isBreakpointsDisabled
+                        && this.suspendIfBreakpointRequest(nextStage)) {
+                    continue;
+                }
 
                 // Otherwise, execute the stage.
                 if (this.execute(nextStage)) {
                     numExecutedStages++;
+                } else {
+                    numSkippedStages++;
                 }
                 this.tryToActivateSuccessors(nextStage, newlyActivatedStages);
-
             }
-            this.activatedStages.addAll(newlyActivatedStages);
-            newlyActivatedStages.clear();
+            // Safety net to recover from illegal Breakpoint configurations.
+            if (!isBreakpointsDisabled && numExecutedStages == 0 && numSkippedStages == lastNumSkippedStages) {
+                this.logger.warn("Could not execute a single stage. Will retry with disabled breakpoints.");
+                isBreakpointsDisabled = true;
+                this.activatedStages.addAll(this.suspendedStages);
+                this.suspendedStages.clear();
+            } else {
+                this.activatedStages.addAll(newlyActivatedStages);
+                newlyActivatedStages.clear();
+                isBreakpointsDisabled = false;
+                lastNumSkippedStages = numSkippedStages;
+            }
         } while (!this.activatedStages.isEmpty());
         final long finishTime = System.currentTimeMillis();
-        CrossPlatformExecutor.this.logger.info("Executed {} stages in {}.",
-                numExecutedStages, Formats.formatDuration(finishTime - startTime));
+        CrossPlatformExecutor.this.logger.info("Executed {} stages (and skipped {}) in {}.",
+                numExecutedStages, numSkippedStages, Formats.formatDuration(finishTime - startTime));
+
+        // Sanity check. TODO: Should be an assertion, shouldn't it?
+        if (numExecutedStages == 0) {
+            throw new RheemException("Could not execute a single stage. Are the Rheem plan and breakpoints correct?");
+        }
+
+        this.breakpoint = new ConjunctiveBreakpoint();
     }
 
 
@@ -118,8 +146,8 @@ public class CrossPlatformExecutor {
      * @return whether the {@link ExecutionStage} was really executed
      */
     private boolean execute(ExecutionStage activatedStage) {
-        final boolean shouldExecute = this.completedStages.contains(activatedStage);
-        if (!shouldExecute) {
+        final boolean shouldExecute = !this.completedStages.contains(activatedStage);
+        if (shouldExecute) {
             Executor executor = this.getOrCreateExecutorFor(activatedStage);
             final ExecutionProfile executionProfile = this.submit(activatedStage, executor);
             this.executionProfile.merge(executionProfile);
@@ -153,7 +181,7 @@ public class CrossPlatformExecutor {
         long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime));
         executionProfile.getCardinalities().forEach((channel, cardinality) ->
-                CrossPlatformExecutor.this.logger.info("Cardinality of {}: actual {}, estimated {}",
+                CrossPlatformExecutor.this.logger.debug("Cardinality of {}: actual {}, estimated {}",
                         channel, cardinality, channel.getCardinalityEstimate())
         );
         return executionProfile;
@@ -189,8 +217,8 @@ public class CrossPlatformExecutor {
         }
     }
 
-    public void setBreakpoint(Breakpoint breakpoint) {
-        this.breakpoint = breakpoint;
+    public void extendBreakpoint(Breakpoint breakpoint) {
+        this.breakpoint.addConjunct(breakpoint);
     }
 
     /**

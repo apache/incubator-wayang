@@ -4,6 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Resides within a {@link PlatformExecution} and represents the minimum execution unit that is controlled by Rheem.
@@ -90,6 +91,9 @@ public class ExecutionStage {
         this.terminalTasks.add(executionTask);
     }
 
+    /**
+     * All tasks with exclusively inbound input {@link Channel}s
+     */
     public Collection<ExecutionTask> getStartTasks() {
         return this.startTasks;
     }
@@ -107,8 +111,37 @@ public class ExecutionStage {
                 this.sequenceNumber);
     }
 
+    /**
+     * All tasks with exclusively outbound output {@link Channel}s
+     */
     public Collection<ExecutionTask> getTerminalTasks() {
         return terminalTasks;
+    }
+
+    /**
+     * @return all {@link Channel}s of this instance that connect to other {@link ExecutionStage}s
+     */
+    public Collection<Channel> getOutboundChannels() {
+        return this.getAllTasks().stream()
+                .flatMap(task ->
+                        Arrays.stream(task.getOutputChannels()).filter(channel ->
+                                channel.getConsumers().stream().anyMatch(consumer -> consumer.getStage() != this)
+                        )
+                ).collect(Collectors.toList());
+
+    }
+
+    /**
+     * @return all {@link Channel}s of this instance that connect from other {@link ExecutionStage}s
+     */
+    public Collection<Channel> getInboundChannels() {
+        return this.getAllTasks().stream()
+                .flatMap(task ->
+                        Arrays.stream(task.getInputChannels()).filter(
+                                channel -> channel.getProducer().getStage() != this
+                        )
+                ).collect(Collectors.toList());
+
     }
 
     public void toExtensiveString(StringBuilder sb) {

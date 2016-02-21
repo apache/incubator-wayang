@@ -18,9 +18,10 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.core.platform.Breakpoint;
+import org.qcri.rheem.core.platform.CardinalityBreakpoint;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.platform.FixBreakpoint;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -256,7 +257,7 @@ public class Job {
      * Dummy implementation: Have the platforms execute the given execution plan.
      */
     private CrossPlatformExecutor.State execute(ExecutionPlan executionPlan) {
-        Breakpoint breakpoint = new Breakpoint();
+        FixBreakpoint breakpoint = new FixBreakpoint();
         if (this.crossPlatformExecutor == null) {
             this.crossPlatformExecutor = new CrossPlatformExecutor();
             executionPlan.getStartingStages().forEach(breakpoint::breakAfter);
@@ -268,7 +269,8 @@ public class Job {
                     .filter(stage -> !state.getCompletedStages().contains(stage))
                     .forEach(breakpoint::breakAfter);
         }
-        this.crossPlatformExecutor.setBreakpoint(breakpoint);
+        this.crossPlatformExecutor.extendBreakpoint(breakpoint);
+        this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(.5, 10.)); // 50% within order of magnitude
         return this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
     }
 
@@ -314,7 +316,7 @@ public class Job {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        final PartialPlan partialPlan = pickBestExecutionPlan(timeEstimateComparator, executionPlans, executionPlan,
+        final PartialPlan partialPlan = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, executionPlan,
                 openChannels, completedStages);
 
         final ExecutionPlan executionPlanExpansion = partialPlan.getExecutionPlan().toExecutionPlan();

@@ -448,6 +448,10 @@ public class StageAssignmentTraversal {
             return executionStage;
         }
 
+        /**
+         * Checks if <i>all</i> input {@link Channel}s of the given {@code task} are outbound w.r.t. to the
+         * {@link InterimStage}.
+         */
         private boolean checkIfStartTask(ExecutionTask task) {
             for (Channel channel : task.getInputChannels()) {
                 final ExecutionTask producer = channel.getProducer();
@@ -458,6 +462,10 @@ public class StageAssignmentTraversal {
             return true;
         }
 
+        /**
+         * Checks if <i>all</i> output {@link Channel}s of the given {@code task} are outbound w.r.t. to the
+         * {@link InterimStage}.
+         */
         private boolean checkIfTerminalTask(ExecutionTask task) {
             for (Channel channel : task.getOutputChannels()) {
                 for (ExecutionTask consumer : channel.getConsumers()) {

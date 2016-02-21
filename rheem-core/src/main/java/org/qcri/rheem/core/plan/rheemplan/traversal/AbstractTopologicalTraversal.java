@@ -34,7 +34,9 @@ public abstract class AbstractTopologicalTraversal<Payload,
     public final boolean traverse(Payload... payloads) {
         try {
             final Queue<ActivatorType> activators = this.initializeActivatorQueue(payloads);
-            assert !activators.isEmpty();
+            if (activators.isEmpty()) {
+                throw new AbortException("No activators available.");
+            }
             do {
                 final ActivatorType activator = activators.poll();
                 // Without this double-cast, we run into a compiler bug: https://bugs.openjdk.java.net/browse/JDK-8131744
