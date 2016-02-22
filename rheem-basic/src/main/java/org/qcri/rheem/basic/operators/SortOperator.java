@@ -30,7 +30,7 @@ public class SortOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return Optional.of(new DefaultCardinalityEstimator(1d, 1, inputCards -> inputCards[0]));
+        return Optional.of(new DefaultCardinalityEstimator(1d, 1, this.isSupportingBroadcastInputs(), inputCards -> inputCards[0]));
     }
 
 }

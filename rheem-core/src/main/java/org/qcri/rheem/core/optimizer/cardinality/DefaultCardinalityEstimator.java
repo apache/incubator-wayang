@@ -1,6 +1,5 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
-import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 
 import java.util.Arrays;
@@ -18,27 +17,38 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator {
 
     private final ToLongBiFunction<long[], Configuration> singlePointEstimator;
 
+    /**
+     * If {@code true}, receiving more than {@link #numInputs} is also fine.
+     */
+    private final boolean isAllowMoreInputs;
+
     public DefaultCardinalityEstimator(double certaintyProb,
                                        int numInputs,
+                                       boolean isAllowMoreInputs,
                                        ToLongFunction<long[]> singlePointEstimator) {
         this(certaintyProb,
                 numInputs,
+                isAllowMoreInputs,
                 (inputCards, rheemContext) -> singlePointEstimator.applyAsLong(inputCards));
     }
 
     public DefaultCardinalityEstimator(double certaintyProb,
                                        int numInputs,
+                                       boolean isAllowMoreInputs,
                                        ToLongBiFunction<long[], Configuration> singlePointEstimator) {
         this.certaintyProb = certaintyProb;
         this.numInputs = numInputs;
         this.singlePointEstimator = singlePointEstimator;
+        this.isAllowMoreInputs = isAllowMoreInputs;
     }
 
 
     @Override
     public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
-        Validate.isTrue(inputEstimates.length == this.numInputs, "Received %d input estimates, require %d.",
-                inputEstimates.length, this.numInputs);
+        assert inputEstimates.length == this.numInputs
+                || (this.isAllowMoreInputs && inputEstimates.length > this.numInputs) :
+                String.format("Received %d input estimates, require %d%s.",
+                        inputEstimates.length, this.numInputs, this.isAllowMoreInputs ? "+" : "");
 
         if (this.numInputs == 0) {
             final long estimate = this.singlePointEstimator.applyAsLong(new long[0], configuration);

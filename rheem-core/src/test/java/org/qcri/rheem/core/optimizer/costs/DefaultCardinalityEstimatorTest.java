@@ -33,6 +33,7 @@ public class DefaultCardinalityEstimatorTest {
         CardinalityEstimator estimator = new DefaultCardinalityEstimator(
                 0.9,
                 2,
+                false,
                 singlePointEstimator
         );
 
