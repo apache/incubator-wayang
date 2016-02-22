@@ -57,4 +57,11 @@ public interface ChannelExecutor {
      */
     void markForInstrumentation();
 
+    /**
+     * Request this instance to pull the data for its {@link Channel} if this has not happened yet.
+     *
+     * @return whether the execution really took place
+     */
+    boolean ensureExecution();
+
 }

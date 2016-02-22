@@ -133,5 +133,11 @@ public class CollectionChannel extends Channel {
         public void markForInstrumentation() {
             this.isMarkedForInstrumentation = true;
         }
+
+        @Override
+        public boolean ensureExecution() {
+            assert this.collection != null;
+            return true;
+        }
     }
 }

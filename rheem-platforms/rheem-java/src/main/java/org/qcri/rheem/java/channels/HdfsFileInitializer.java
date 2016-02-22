@@ -146,6 +146,8 @@ public class HdfsFileInitializer implements ChannelInitializer {
 
         private long cardinality = -1;
 
+        private boolean wasTriggered = false;
+
         public Executor(HdfsFile hdfsFile) {
             this.hdfsFile = hdfsFile;
             if (this.hdfsFile.isMarkedForInstrumentation()) {
@@ -156,22 +158,26 @@ public class HdfsFileInitializer implements ChannelInitializer {
         @Override
         public void acceptStream(Stream<?> stream) {
             assert stream == null;
+            this.wasTriggered = true;
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public Stream<?> provideStream() {
+            assert this.wasTriggered;
             return null;
         }
 
         @Override
         public void acceptCollection(Collection<?> collection) {
+            this.wasTriggered = true;
             assert collection == null;
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public Collection<?> provideCollection() {
+            assert this.wasTriggered;
             return null;
         }
 
@@ -194,6 +200,11 @@ public class HdfsFileInitializer implements ChannelInitializer {
 
         public void setCardinality(long cardinality) {
             this.cardinality = cardinality;
+        }
+
+        @Override
+        public boolean ensureExecution() {
+            return this.wasTriggered;
         }
     }
 }

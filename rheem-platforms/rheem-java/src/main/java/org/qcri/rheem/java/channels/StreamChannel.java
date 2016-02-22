@@ -159,6 +159,13 @@ public class StreamChannel extends Channel {
         public void markForInstrumentation() {
             this.isMarkedForInstrumentation = true;
         }
+
+        @Override
+        public boolean ensureExecution() {
+            assert this.stream != null;
+            // We cannot ensure execution. For this purpose, we would need a CollectionChannel.
+            return false;
+        }
     }
 
 }

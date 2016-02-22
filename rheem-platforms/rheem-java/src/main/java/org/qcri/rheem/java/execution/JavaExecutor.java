@@ -45,8 +45,22 @@ public class JavaExecutor implements Executor {
     @Override
     public ExecutionProfile execute(ExecutionStage stage) {
         final Collection<ExecutionTask> terminalTasks = stage.getTerminalTasks();
-        terminalTasks.forEach(this::execute);
+        for (ExecutionTask terminalTask : terminalTasks) {
+            forceExecution(terminalTask);
+        }
         return this.assembleExecutionProfile();
+    }
+
+    private void forceExecution(ExecutionTask terminalTask) {
+        this.execute(terminalTask);
+        for (Channel outputChannel : terminalTask.getOutputChannels()) {
+            final ChannelExecutor channelExecutor = this.establishedChannelExecutors.get(outputChannel);
+            assert channelExecutor != null;
+            if (!channelExecutor.ensureExecution()) {
+                this.logger.warn("Could not force execution of {}. This might break the execution or " +
+                        "cause side-effects with the re-optimization.", outputChannel);
+            }
+        }
     }
 
     private void execute(ExecutionTask executionTask) {

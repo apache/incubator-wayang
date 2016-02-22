@@ -62,4 +62,9 @@ public class TestChannelExecutor implements ChannelExecutor {
     public void markForInstrumentation() {
         throw new RuntimeException("Not implemented.");
     }
+
+    @Override
+    public boolean ensureExecution() {
+        throw new RuntimeException("Not implemented.");
+    }
 }
