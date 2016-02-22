@@ -5,7 +5,9 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -40,17 +42,6 @@ public abstract class Platform {
 
     protected Platform(String name) {
         this.name = name;
-    }
-
-    /**
-     * Dummy interface for executing plans. This will definitively change in the real implementation.
-     *
-     * @param executionOperator the execution operator whose result should be evaluated
-     */
-    public void evaluate(ExecutionOperator executionOperator) {
-        Validate.isTrue(this.isExecutable());
-        final Executor executor = this.getExecutorFactory().create();
-        executor.evaluate(executionOperator);
     }
 
     /**
@@ -94,6 +85,14 @@ public abstract class Platform {
     @Override
     public String toString() {
         return String.format("Platform[%s]", this.getName());
+    }
+
+    public boolean isSinglePlatformExecutionPossible(ExecutionTask producerTask, Channel channel, ExecutionTask consumerTask) {
+        assert producerTask.getOperator().getPlatform() == this;
+        assert consumerTask.getOperator().getPlatform() == this;
+
+        // Overwrite as necessary.
+        return true;
     }
 
 }

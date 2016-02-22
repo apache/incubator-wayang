@@ -48,7 +48,7 @@ public class SparkGlobalReduceOperator<Type>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkGlobalReduceOperator<>(this.getInputType(), this.getReduceDescriptor());
     }
 }

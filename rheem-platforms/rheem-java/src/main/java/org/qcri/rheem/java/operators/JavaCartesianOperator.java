@@ -3,6 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CartesianOperator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
@@ -33,23 +34,23 @@ public class JavaCartesianOperator<InputType0, InputType1>
         }
 
         if (inputs[0].canProvideCollection()) {
-            final Collection<InputType0> collection = (Collection<InputType0>) inputs[0].provideCollection();
-            final Stream<InputType1> stream = (Stream<InputType1>) inputs[1].provideStream();
+            final Collection<InputType0> collection = inputs[0].provideCollection();
+            final Stream<InputType1> stream = inputs[1].provideStream();
             outputs[0].acceptStream(stream.flatMap(e1 -> collection.stream().map(e0 -> new Tuple2<InputType0, InputType1>(e0, e1))));
         } else if (inputs[1].canProvideCollection()) {
-            final Stream<InputType0> stream = (Stream<InputType0>) inputs[0].provideStream();
-            final Collection<InputType1> collection = (Collection<InputType1>) inputs[1].provideCollection();
+            final Stream<InputType0> stream = inputs[0].provideStream();
+            final Collection<InputType1> collection = inputs[1].provideCollection();
             outputs[0].acceptStream(stream.flatMap(e0 -> collection.stream().map(e1 -> new Tuple2<InputType0, InputType1>(e0, e1))));
         } else {
             // Fallback: Materialize one side.
             final Collection<InputType0> collection = (Collection<InputType0>) inputs[0].provideStream().collect(Collectors.toList());
-            final Stream<InputType1> stream = (Stream<InputType1>) inputs[1].provideStream();
+            final Stream<InputType1> stream = inputs[1].provideStream();
             outputs[0].acceptStream(stream.flatMap(e1 -> collection.stream().map(e0 -> new Tuple2<InputType0, InputType1>(e0, e1))));
         }
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaCartesianOperator<>(this.getInputType0(), this.getInputType1());
     }
 }

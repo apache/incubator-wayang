@@ -55,7 +55,7 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkJoinOperator<>(this.getInputType0(), this.getInputType1(),
                 this.getKeyDescriptor0(), this.getKeyDescriptor1());
     }

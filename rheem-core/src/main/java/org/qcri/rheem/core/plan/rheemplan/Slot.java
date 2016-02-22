@@ -30,6 +30,11 @@ abstract public class Slot<T> {
      */
     private CardinalityEstimate cardinalityEstimate;
 
+    /**
+     * Allows for marking this instance.
+     */
+    private boolean isMarked = false;
+
     protected Slot(String name, Operator owner, DataSetType<T> type) {
         this.name = name;
         this.owner = owner;
@@ -97,9 +102,34 @@ abstract public class Slot<T> {
      * @param cardinalityEstimate the {@link CardinalityEstimate} to assign
      */
     public void setCardinalityEstimate(CardinalityEstimate cardinalityEstimate) {
-        if (this.cardinalityEstimate != null) {
-            LoggerFactory.getLogger(this.getClass()).warn("Reassigning cardinality.");
+        boolean isUpdate = this.cardinalityEstimate == null || !this.cardinalityEstimate.equals(cardinalityEstimate);
+        if (isUpdate) {
+            LoggerFactory.getLogger(this.getClass())
+                    .trace("Updating cardinality of {} from {} to {}.", this, this.cardinalityEstimate, cardinalityEstimate);
+            this.cardinalityEstimate = cardinalityEstimate;
+            this.mark();
         }
-        this.cardinalityEstimate = cardinalityEstimate;
+    }
+
+    /**
+     * Set the mark of this instance. Used to communicate changes in the {@link CardinalityEstimate}.
+     * Will also be triggered by {@link #setCardinalityEstimate(CardinalityEstimate)}.
+     */
+    public void mark() {
+        this.isMarked = true;
+    }
+
+    /**
+     * Retrieves the mark of this instance, then clears it.
+     * Used to communicate changes in the {@link CardinalityEstimate}.
+     */
+    public boolean getAndClearMark() {
+        boolean wasMarked = this.isMarked;
+        this.isMarked = false;
+        return wasMarked;
+    }
+
+    public boolean isMarked() {
+        return this.isMarked;
     }
 }

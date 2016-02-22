@@ -26,7 +26,7 @@ public class JavaStdoutSink<T> extends StdoutSink<T> implements JavaExecutionOpe
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaStdoutSink<>(this.getType());
     }
 }

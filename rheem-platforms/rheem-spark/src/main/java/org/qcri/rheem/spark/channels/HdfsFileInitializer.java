@@ -64,6 +64,7 @@ public class HdfsFileInitializer implements ChannelInitializer {
         // Create the actual HdfsFile.
         final HdfsFile hdfsFile = new HdfsFile(sinkTask, index, Channel.extractCardinalityEstimate(sourceTask, index));
         hdfsFile.addPath(((SparkObjectFileSink<?>) sinkTask.getOperator()).getTargetPath());
+        hdfsFile.addSibling(internalChannel);
         return hdfsFile;
     }
 
@@ -106,8 +107,9 @@ public class HdfsFileInitializer implements ChannelInitializer {
 
         // Set up the actual input..
         final ChannelInitializer internalChannelInitializer = SparkPlatform.getInstance().getChannelManager().getChannelInitializer(RddChannel.class);
-        Validate.notNull(internalChannelInitializer);
+        assert internalChannelInitializer !=  null;
         final Channel internalChannel = internalChannelInitializer.setUpOutput(sourceTask, 0);
+        internalChannel.addSibling(hdfsFile);
         internalChannelInitializer.setUpInput(internalChannel, targetTask, inputIndex);
     }
 
@@ -144,13 +146,16 @@ public class HdfsFileInitializer implements ChannelInitializer {
 
         private final HdfsFile hdfsFile;
 
+        private boolean wasTriggered = false;
+
         public Executor(HdfsFile hdfsFile) {
             this.hdfsFile = hdfsFile;
         }
 
         @Override
         public void acceptRdd(JavaRDD<?> rdd) throws RheemException {
-            Validate.isTrue(rdd == null);
+            assert rdd == null;
+            this.wasTriggered = true;
         }
 
         @Override
@@ -179,6 +184,16 @@ public class HdfsFileInitializer implements ChannelInitializer {
                     LoggerFactory.getLogger(this.getClass()).error("Could not delete {}.", path);
                 }
             }
+        }
+
+        @Override
+        public long getCardinality() throws RheemException {
+            return -1;
+        }
+
+        @Override
+        public boolean ensureExecution() {
+            return this.wasTriggered;
         }
     }
 }

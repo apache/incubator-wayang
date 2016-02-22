@@ -6,13 +6,14 @@ import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.DefaultChannelManager;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * {@link ChannelManager} of the {@link SparkPlatform}.
@@ -35,23 +36,24 @@ public class SparkChannelManager extends DefaultChannelManager {
     private void initializeChannelTypeDescriptors() {
         this.addChannel(RddChannel.class,
                 new RddChannel.Initializer(),
-                channel -> new ChannelExecutor.ForRDD(channel.getConsumers().size() > 1),
+                (channel, sparkExecutor) ->
+                        new ChannelExecutor.ForRDD(channel, channel.getConsumers().size() > 1, sparkExecutor),
                 true, false);
 
         this.addChannel(BroadcastChannel.class,
                 new BroadcastChannel.Initializer(),
-                channel -> new ChannelExecutor.ForBroadcast(),
+                (channel, sparkExecutor) -> new ChannelExecutor.ForBroadcast(channel),
                 false, true);
 
         this.addChannel(HdfsFile.class,
                 new HdfsFileInitializer(),
-                channel -> new HdfsFileInitializer.Executor((HdfsFile) channel),
+                (channel, sparkExecutor) -> new HdfsFileInitializer.Executor((HdfsFile) channel),
                 true, false);
     }
 
     private void addChannel(Class<? extends Channel> channelClass,
                             ChannelInitializer channelInitializer,
-                            Function<Channel, ChannelExecutor> executorFactory,
+                            BiFunction<Channel, SparkExecutor, ChannelExecutor> executorFactory,
                             boolean isRegularChannel,
                             boolean isBroadcastChannel) {
         final ChannelTypeDescriptor channelTypeDescriptor = new ChannelTypeDescriptor(channelInitializer, executorFactory);
@@ -82,7 +84,7 @@ public class SparkChannelManager extends DefaultChannelManager {
         return this.allSupportedChannels;
     }
 
-    public ChannelExecutor createChannelExecutor(Channel channel) {
-        return this.channelTypeDescriptors.get(channel.getClass()).getExecutorFactory().apply(channel);
+    public ChannelExecutor createChannelExecutor(Channel channel, SparkExecutor sparkExecutor) {
+        return this.channelTypeDescriptors.get(channel.getClass()).getExecutorFactory().apply(channel, sparkExecutor);
     }
 }

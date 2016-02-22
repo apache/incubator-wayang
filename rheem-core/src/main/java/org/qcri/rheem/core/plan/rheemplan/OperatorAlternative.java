@@ -1,10 +1,7 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityEstimator;
-import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityPusher;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -108,6 +105,27 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
         }
     }
 
+    @Override
+    public void propagateOutputCardinality(int outputIndex, CardinalityEstimate cardinalityEstimate) {
+        super.propagateOutputCardinality(outputIndex, cardinalityEstimate);
+        this.getAlternatives().forEach(alternative -> alternative.propagateCardinality(this.getOutput(outputIndex)));
+    }
+
+    @Override
+    public void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate) {
+        super.propagateInputCardinality(inputIndex, cardinalityEstimate);
+        this.getAlternatives().forEach(alternative -> alternative.propagateCardinality(this.getInput(inputIndex)));
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%dx like %s, %x]",
+                this.getClass().getSimpleName(),
+                this.alternatives.size(),
+                this.alternatives.get(0).getOperator(),
+                this.hashCode());
+    }
+
     /**
      * Represents an alternative subplan for the enclosing {@link OperatorAlternative}.
      */
@@ -165,7 +183,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
         }
 
         @Override
-        public CompositeOperator toOperator() {
+        public OperatorAlternative toOperator() {
             return OperatorAlternative.this;
         }
 

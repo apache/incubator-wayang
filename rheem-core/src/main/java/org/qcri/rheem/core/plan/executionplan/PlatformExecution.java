@@ -5,11 +5,17 @@ import org.qcri.rheem.core.platform.Platform;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Complete data flow on a single platform, that consists of multiple {@link ExecutionStage}s.
  */
 public class PlatformExecution {
+
+    private static final AtomicInteger SEQUENCE_NUMBER_GENERATOR = new AtomicInteger(0);
+
+    private final int sequenceNumber;
 
     private Collection<ExecutionStage> stages = new LinkedList<>();
 
@@ -17,6 +23,7 @@ public class PlatformExecution {
 
     public PlatformExecution(Platform platform) {
         this.platform = platform;
+        this.sequenceNumber = SEQUENCE_NUMBER_GENERATOR.getAndIncrement();
     }
 
     void addStage(ExecutionStage stage) {
@@ -43,5 +50,13 @@ public class PlatformExecution {
     @Override
     public String toString() {
         return String.format("%s[%s]", this.getClass().getSimpleName(), this.platform);
+    }
+
+    int getSequenceNumber() {
+        return this.sequenceNumber;
+    }
+
+    public void retain(Set<ExecutionStage> retainableStages) {
+        this.stages.retainAll(retainableStages);
     }
 }

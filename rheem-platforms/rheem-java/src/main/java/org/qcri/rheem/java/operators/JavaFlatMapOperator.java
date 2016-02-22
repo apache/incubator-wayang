@@ -52,7 +52,7 @@ public class JavaFlatMapOperator<InputType, OutputType>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaFlatMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
     }
 }

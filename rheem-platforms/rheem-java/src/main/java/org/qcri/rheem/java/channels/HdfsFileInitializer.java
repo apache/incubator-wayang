@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.java.operators.JavaObjectFileSink;
 import org.qcri.rheem.java.operators.JavaObjectFileSource;
 import org.qcri.rheem.java.JavaPlatform;
@@ -58,6 +59,7 @@ public class HdfsFileInitializer implements ChannelInitializer {
         // Create the actual HdfsFile.
         final HdfsFile hdfsFile = new HdfsFile(sinkTask, index, Channel.extractCardinalityEstimate(sourceTask, index));
         hdfsFile.addPath(((JavaObjectFileSink<?>) sinkTask.getOperator()).getTargetPath());
+        hdfsFile.addSibling(internalChannel);
         return hdfsFile;
     }
 
@@ -90,7 +92,6 @@ public class HdfsFileInitializer implements ChannelInitializer {
     public void setUpInput(Channel channel, ExecutionTask targetTask, int inputIndex) {
         HdfsFile hdfsFile = (HdfsFile) channel;
         assert hdfsFile.getPaths().size() == 1 : "We support only single HDFS files so far.";
-        final String targetPath = hdfsFile.getPaths().stream().findAny().get();
 
         // NB: We always put the HDFS file contents into a Collection. That's not necessary if we don't broadcast
         // and use it only once.
@@ -104,6 +105,7 @@ public class HdfsFileInitializer implements ChannelInitializer {
                 .getChannelInitializer(CollectionChannel.class);
         Validate.notNull(internalChannelInitializer);
         final Channel internalChannel = internalChannelInitializer.setUpOutput(sourceTask, 0);
+        internalChannel.addSibling(hdfsFile);
         internalChannelInitializer.setUpInput(internalChannel, targetTask, inputIndex);
     }
 
@@ -140,35 +142,69 @@ public class HdfsFileInitializer implements ChannelInitializer {
 
         private final HdfsFile hdfsFile;
 
+        private boolean isMarkedForInstrumentation;
+
+        private long cardinality = -1;
+
+        private boolean wasTriggered = false;
+
         public Executor(HdfsFile hdfsFile) {
             this.hdfsFile = hdfsFile;
+            if (this.hdfsFile.isMarkedForInstrumentation()) {
+                this.markForInstrumentation();
+            }
         }
 
         @Override
         public void acceptStream(Stream<?> stream) {
             assert stream == null;
+            this.wasTriggered = true;
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public Stream<?> provideStream() {
+            assert this.wasTriggered;
             return null;
         }
 
         @Override
         public void acceptCollection(Collection<?> collection) {
+            this.wasTriggered = true;
             assert collection == null;
         }
 
         @Override
         @SuppressWarnings("unchecked")
         public Collection<?> provideCollection() {
+            assert this.wasTriggered;
             return null;
         }
 
         @Override
         public boolean canProvideCollection() {
             return true;
+        }
+
+        @Override
+        public long getCardinality() throws RheemException {
+            assert this.isMarkedForInstrumentation;
+            return this.cardinality;
+        }
+
+        @Override
+        public void markForInstrumentation() {
+            this.isMarkedForInstrumentation = true;
+            ((JavaExecutionOperator) this.hdfsFile.getProducer().getOperator()).instrumentSink(this);
+        }
+
+        public void setCardinality(long cardinality) {
+            this.cardinality = cardinality;
+        }
+
+        @Override
+        public boolean ensureExecution() {
+            return this.wasTriggered;
         }
     }
 }

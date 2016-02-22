@@ -52,6 +52,12 @@ public class CompositeCardinalityPusher extends CardinalityPusher {
     }
 
     @Override
+    protected boolean canUpdate() {
+        // We always try to update because there might be internal updates.
+        return true;
+    }
+
+    @Override
     protected CardinalityEstimate[] doPush(Configuration configuration, CardinalityEstimate... inputEstimates) {
         final Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates =
                 this.traversal.traverse(configuration, inputEstimates);

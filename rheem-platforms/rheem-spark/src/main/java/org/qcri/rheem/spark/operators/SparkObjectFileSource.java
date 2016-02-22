@@ -79,7 +79,7 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
 
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkObjectFileSource<>(this.sourcePath, this.getType());
     }
 }

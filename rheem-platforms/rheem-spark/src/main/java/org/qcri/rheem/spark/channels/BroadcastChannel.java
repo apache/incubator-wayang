@@ -21,9 +21,28 @@ public class BroadcastChannel extends Channel {
         super(producer, outputIndex, cardinalityEstimate);
     }
 
+    private BroadcastChannel(BroadcastChannel parent) {
+        super(parent);
+    }
+
     @Override
     public boolean isReusable() {
         return IS_REUSABLE;
+    }
+
+    @Override
+    public boolean isInterStageCapable() {
+        return IS_REUSABLE;
+    }
+
+    @Override
+    public boolean isInterPlatformCapable() {
+        return IS_REUSABLE & !IS_INTERNAL;
+    }
+
+    @Override
+    public BroadcastChannel copy() {
+        return new BroadcastChannel(this);
     }
 
     public static class Initializer implements ChannelInitializer {

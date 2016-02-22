@@ -43,7 +43,7 @@ public class JavaMapOperator<InputType, OutputType>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
     }
 

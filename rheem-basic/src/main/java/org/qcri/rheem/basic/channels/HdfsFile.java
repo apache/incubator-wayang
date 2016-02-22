@@ -15,10 +15,19 @@ import java.util.LinkedList;
  */
 public class HdfsFile extends Channel {
 
+    private static final boolean IS_REUSABLE = true;
+
+    private static final boolean IS_INTERNAL = false;
+
     private Collection<String> paths = new LinkedList<>();
 
     public HdfsFile(ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
         super(producer, outputIndex, cardinalityEstimate);
+    }
+
+    private HdfsFile(HdfsFile parent) {
+        super(parent);
+        this.paths.addAll(parent.getPaths());
     }
 
     public void addPath(String path) {
@@ -41,7 +50,22 @@ public class HdfsFile extends Channel {
 
     @Override
     public boolean isReusable() {
-        return true;
+        return IS_REUSABLE;
+    }
+
+    @Override
+    public boolean isInterStageCapable() {
+        return IS_REUSABLE;
+    }
+
+    @Override
+    public boolean isInterPlatformCapable() {
+        return IS_REUSABLE & !IS_INTERNAL;
+    }
+
+    @Override
+    public HdfsFile copy() {
+        return new HdfsFile(this);
     }
 
     @Override

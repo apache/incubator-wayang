@@ -147,15 +147,11 @@ public class Configuration {
             configuration.setPredicateSelectivityProvider(overrideProvider);
         }
         {
-            // Safety net: provide a fallback selectivity.
-            KeyValueProvider<FlatMapDescriptor<?, ?>, Double> fallbackProvider =
-                    new FunctionalKeyValueProvider<FlatMapDescriptor<?, ?>, Double>(
-                            predicateClass -> 1d
-                    ).withSlf4jWarning("Creating fallback selectivity for {}.");
+            // No safety net here.
 
             // Customizable layer: Users can override manually.
             KeyValueProvider<FlatMapDescriptor<?, ?>, Double> overrideProvider =
-                    new MapBasedKeyValueProvider<>(fallbackProvider);
+                    new MapBasedKeyValueProvider<>(null);
 
             configuration.setMultimapSelectivityProvider(overrideProvider);
         }

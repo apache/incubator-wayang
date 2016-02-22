@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+
 import java.util.Collection;
 
 /**
@@ -47,14 +49,15 @@ public interface OperatorContainer {
     <T> OutputSlot<T> traceOutput(OutputSlot<T> outputSlot);
 
     /**
-     * @return the {@link CompositeOperator} that corresponds to this instance
+     * @return the {@link CompositeOperator} that corresponds to this instance, <i>not</i> any of the contained
+     * {@link Operator}s
      */
     CompositeOperator toOperator();
 
 
     /**
      * Return the {@link InputSlot} that represents the given {@code inputSlot}. NB: This method assumes the given
-     * {@code inputSlot} has no occupent (see {@link InputSlot#getOccupant()}).
+     * {@code inputSlot} has no occupant (see {@link InputSlot#getOccupant()}).
      *
      * @param inputSlot the {@link InputSlot} of a contained {@link Operator} that is to be resolved
      * @return the {@link InputSlot} that represents the given {@code inputSlot} or {@code null} if there is none
@@ -69,4 +72,26 @@ public interface OperatorContainer {
      * represent the given {@code outputSlot} or {@code null} if none
      */
     <T> Collection<OutputSlot<T>> followOutput(OutputSlot<T> outputSlot);
+
+    /**
+     * Propagates the {@link CardinalityEstimate} of the given {@link InputSlot} to inner, mapped {@link InputSlot}s
+     */
+    default void propagateCardinality(InputSlot<?> inputSlot) {
+        assert inputSlot.getOwner() == this.toOperator();
+        final Collection<? extends InputSlot<?>> innerInputs = this.followInput(inputSlot);
+        for (InputSlot<?> innerInput : innerInputs) {
+            innerInput.getOwner().propagateInputCardinality(innerInput.getIndex(), inputSlot.getCardinalityEstimate());
+        }
+    }
+
+    /**
+     * Propagates the {@link CardinalityEstimate} of the given {@link OutputSlot} to inner, mapped {@link OutputSlot}s
+     */
+    default void propagateCardinality(OutputSlot<?> outputSlot) {
+        assert outputSlot.getOwner() == this.toOperator();
+        final OutputSlot<?> innerOutput = this.traceOutput(outputSlot);
+        if (innerOutput != null) {
+            innerOutput.getOwner().propagateOutputCardinality(innerOutput.getIndex(), outputSlot.getCardinalityEstimate());
+        }
+    }
 }

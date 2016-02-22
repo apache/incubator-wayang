@@ -9,18 +9,12 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 public interface Executor {
 
     /**
-     * Evaluate an execution operator. This is only a dummy implementation!
-     *
-     * @deprecated use {@link #execute(ExecutionStage)}
-     */
-    void evaluate(ExecutionOperator executionOperator);
-
-    /**
      * Executes the given {@code stage}.
      *
      * @param stage should be executed; must be executable by this instance, though
+     * @return collected metadata from instrumentation
      */
-    void execute(ExecutionStage stage);
+    ExecutionProfile execute(ExecutionStage stage);
 
     /**
      * Releases any instances acquired by this instance to execute {@link ExecutionStage}s.

@@ -25,4 +25,12 @@ public interface ChannelManager {
      */
     ChannelInitializer getChannelInitializer(Class<? extends Channel> channelClass);
 
+    /**
+     * Exchange the given {@link Channel} with one that is capable of inter-stage processing.
+     *
+     * @param channel the {@link Channel} to be exchanged
+     * @return whether the exchanged succeeded
+     */
+    boolean exchangeWithInterstageCapable(Channel channel);
+
 }

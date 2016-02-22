@@ -3,10 +3,8 @@ package org.qcri.rheem.core.plan.executionplan;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.platform.Platform;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Resides within a {@link PlatformExecution} and represents the minimum execution unit that is controlled by Rheem.
@@ -30,7 +28,7 @@ public class ExecutionStage {
     /**
      * Directly succeeding instances (have to be executed after this instance).
      */
-    private final Collection<ExecutionStage> successors = new LinkedList<>();
+    private final Set<ExecutionStage> successors = new HashSet<>();
 
     /**
      * Tasks that have to be done first when processing this instance.
@@ -48,6 +46,11 @@ public class ExecutionStage {
     private final int sequenceNumber;
 
     /**
+     * Tells whether this instance has already been put into execution.
+     */
+    private boolean wasExecuted = false;
+
+    /**
      * Create a new instance and register it with the given {@link PlatformExecution}.
      */
     ExecutionStage(PlatformExecution platformExecution, int sequenceNumber) {
@@ -62,8 +65,9 @@ public class ExecutionStage {
      * @param that a new successor of this instance
      */
     public void addSuccessor(ExecutionStage that) {
-        this.successors.add(that);
-        that.predecessors.add(this);
+        if (this.successors.add(that)) {
+            that.predecessors.add(this);
+        }
     }
 
     public PlatformExecution getPlatformExecution() {
@@ -92,6 +96,9 @@ public class ExecutionStage {
         this.terminalTasks.add(executionTask);
     }
 
+    /**
+     * All tasks with exclusively inbound input {@link Channel}s
+     */
     public Collection<ExecutionTask> getStartTasks() {
         return this.startTasks;
     }
@@ -102,19 +109,60 @@ public class ExecutionStage {
 
     @Override
     public String toString() {
-        return String.format("%s[%s:%d]", this.getClass().getSimpleName(), this.platformExecution.getPlatform().getName(),
+        return String.format("%s[%s-%d:%d]",
+                this.getClass().getSimpleName(),
+                this.platformExecution.getPlatform().getName(),
+                this.platformExecution.getSequenceNumber(),
                 this.sequenceNumber);
     }
 
+    /**
+     * All tasks with exclusively outbound output {@link Channel}s
+     */
     public Collection<ExecutionTask> getTerminalTasks() {
         return terminalTasks;
+    }
+
+    /**
+     * @return all {@link Channel}s of this instance that connect to other {@link ExecutionStage}s
+     */
+    public Collection<Channel> getOutboundChannels() {
+        return this.getAllTasks().stream()
+                .flatMap(task ->
+                        Arrays.stream(task.getOutputChannels()).filter(channel ->
+                                channel.getConsumers().stream().anyMatch(consumer -> consumer.getStage() != this)
+                        )
+                ).collect(Collectors.toList());
+
+    }
+
+    /**
+     * @return all {@link Channel}s of this instance that connect from other {@link ExecutionStage}s
+     */
+    public Collection<Channel> getInboundChannels() {
+        return this.getAllTasks().stream()
+                .flatMap(task ->
+                        Arrays.stream(task.getInputChannels()).filter(
+                                channel -> channel.getProducer().getStage() != this
+                        )
+                ).collect(Collectors.toList());
+
+    }
+
+    public String toExtensiveString() {
+        final StringBuilder sb = new StringBuilder();
+        this.toExtensiveString(sb);
+        if (sb.charAt(sb.length() - 1) == '\n') sb.setLength(sb.length() - 1);
+        return sb.toString();
     }
 
     public void toExtensiveString(StringBuilder sb) {
         Set<ExecutionTask> seenTasks = new HashSet<>();
         for (ExecutionTask startTask : this.startTasks) {
             for (Channel inputChannel : startTask.getInputChannels()) {
-                sb.append(inputChannel).append(" => ").append(startTask).append('\n');
+                sb.append(this.prettyPrint(inputChannel))
+                        .append(" => ")
+                        .append(this.prettyPrint(startTask)).append('\n');
             }
             this.toExtensiveStringAux(startTask, seenTasks, sb);
         }
@@ -127,12 +175,64 @@ public class ExecutionStage {
         for (Channel channel : task.getOutputChannels()) {
             for (ExecutionTask consumer : channel.getConsumers()) {
                 if (consumer.getStage() == this) {
-                    sb.append(task).append(" => ").append(channel).append(" => ").append(consumer).append('\n');
+                    sb.append(this.prettyPrint(task))
+                            .append(" => ")
+                            .append(this.prettyPrint(channel))
+                            .append(" => ")
+                            .append(this.prettyPrint(consumer)).append('\n');
                     this.toExtensiveStringAux(consumer, seenTasks, sb);
                 } else {
-                    sb.append(task).append(" => ").append(channel).append('\n');
+                    sb.append(this.prettyPrint(task))
+                            .append(" => ")
+                            .append(this.prettyPrint(channel)).append('\n');
                 }
             }
         }
+    }
+
+    private String prettyPrint(Channel channel) {
+        return channel.getClass().getSimpleName();
+    }
+
+    private String prettyPrint(ExecutionTask task) {
+        return task.getOperator().toString();
+    }
+
+    /**
+     * Collects all {@link ExecutionTask}s of this instance.
+     */
+    public Set<ExecutionTask> getAllTasks() {
+        final Queue<ExecutionTask> nextTasks = new LinkedList<>(this.startTasks);
+        final Set<ExecutionTask> allTasks = new HashSet<>();
+
+        while (!nextTasks.isEmpty()) {
+            final ExecutionTask task = nextTasks.poll();
+            assert task.getStage() == this;
+            if (allTasks.add(task) && !this.terminalTasks.contains(task)) {
+                Arrays.stream(task.getOutputChannels())
+                        .flatMap(channel -> channel.getConsumers().stream())
+                        .filter(consumer -> consumer.getStage() == this)
+                        .forEach(nextTasks::add);
+            }
+        }
+        return allTasks;
+    }
+
+    public void retainSuccessors(Set<ExecutionStage> retainableStages) {
+        for (Iterator<ExecutionStage> i = this.successors.iterator(); i.hasNext(); ) {
+            final ExecutionStage successor = i.next();
+            if (!retainableStages.contains(successor)) {
+                i.remove();
+                successor.predecessors.remove(this);
+            }
+        }
+    }
+
+    public boolean wasExecuted() {
+        return this.wasExecuted;
+    }
+
+    public void setWasExecuted(boolean wasExecuted) {
+        this.wasExecuted = wasExecuted;
     }
 }

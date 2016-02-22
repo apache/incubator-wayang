@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
@@ -51,6 +52,11 @@ public class PlanEnumeration {
     final Collection<PartialPlan> partialPlans;
 
     /**
+     *
+     */
+    final Map<ExecutionOperator, ExecutionTask> executedTasks;
+
+    /**
      * Creates a new instance.
      */
     public PlanEnumeration() {
@@ -63,7 +69,7 @@ public class PlanEnumeration {
     private PlanEnumeration(Set<OperatorAlternative> scope,
                             Set<InputSlot> requestedInputSlots,
                             Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots) {
-        this(scope, requestedInputSlots, servingOutputSlots, new LinkedList<>());
+        this(scope, requestedInputSlots, servingOutputSlots, new LinkedList<>(), new HashMap<>());
     }
 
     /**
@@ -72,11 +78,13 @@ public class PlanEnumeration {
     private PlanEnumeration(Set<OperatorAlternative> scope,
                             Set<InputSlot> requestedInputSlots,
                             Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots,
-                            Collection<PartialPlan> partialPlans) {
+                            Collection<PartialPlan> partialPlans,
+                            Map<ExecutionOperator, ExecutionTask> executedTasks) {
         this.scope = scope;
         this.requestedInputSlots = requestedInputSlots;
         this.servingOutputSlots = servingOutputSlots;
         this.partialPlans = partialPlans;
+        this.executedTasks = executedTasks;
     }
 
     /**
@@ -199,11 +207,17 @@ public class PlanEnumeration {
         //---------------------------\\
         // NOP: We ignore them so far.
 
+        //-----------------------//
+        // Set up #executedTasks \\
+        //-----------------------//
+        final Map<ExecutionOperator, ExecutionTask> executedTasks = new HashMap<>(this.executedTasks);
+        executedTasks.putAll(that.executedTasks);
+
         //----------------------\\
         // Set up #partialPlans \\
         //----------------------\\
         PlanEnumeration planEnumeration =
-                new PlanEnumeration(newScope, requestedInputSlots, servingOutputSlots, new LinkedList<>());
+                new PlanEnumeration(newScope, requestedInputSlots, servingOutputSlots, new LinkedList<>(), executedTasks);
         this.joinPartialPlansUsingNestedLoops(that, planEnumeration);
 
         // Build the instance.

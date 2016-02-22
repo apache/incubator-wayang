@@ -36,7 +36,7 @@ public class SparkUnionAllOperator<Type>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkUnionAllOperator<>(this.getInputType0());
     }
 }

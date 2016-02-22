@@ -40,7 +40,7 @@ public class JavaFilterOperator<Type>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaFilterOperator<>(this.getInputType(), this.getPredicateDescriptor());
     }
 }

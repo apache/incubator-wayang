@@ -41,7 +41,7 @@ public class SparkCartesianOperator<InputType0, InputType1>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkCartesianOperator<>(this.getInputType0(), this.getInputType1());
     }
 }

@@ -122,6 +122,10 @@ public abstract class DefaultChannelManager implements ChannelManager {
         return this.getChannelInitializer(channelClass);
     }
 
+    @Override
+    public boolean exchangeWithInterstageCapable(Channel channel) {
+        return false;
+    }
 
     // LEGACY CODE --- MAYBE WE NEED IT SOMETIME.
 

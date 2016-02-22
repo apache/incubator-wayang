@@ -55,7 +55,7 @@ public class JavaReduceByOperator<Type, KeyType>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new JavaReduceByOperator<>(this.getType(), this.getKeyDescriptor(), this.getReduceDescriptor());
     }
 }

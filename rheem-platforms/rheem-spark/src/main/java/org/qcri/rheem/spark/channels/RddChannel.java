@@ -12,13 +12,36 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
  */
 public class RddChannel extends Channel {
 
+    private static final boolean IS_REUSABLE = true;
+
+    private static final boolean IS_INTERNAL = true;
+
     protected RddChannel(ExecutionTask producer, int outputIndex) {
         super(producer, outputIndex);
     }
 
+    private RddChannel(RddChannel parent) {
+        super(parent);
+    }
+
     @Override
     public boolean isReusable() {
-        return true;
+        return IS_REUSABLE;
+    }
+
+    @Override
+    public boolean isInterStageCapable() {
+        return IS_REUSABLE;
+    }
+
+    @Override
+    public boolean isInterPlatformCapable() {
+        return IS_REUSABLE & !IS_INTERNAL;
+    }
+
+    @Override
+    public RddChannel copy() {
+        return new RddChannel(this);
     }
 
     static class Initializer implements ChannelInitializer {

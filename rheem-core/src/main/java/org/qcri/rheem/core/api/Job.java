@@ -10,20 +10,24 @@ import org.qcri.rheem.core.optimizer.costs.TimeEstimationTraversal;
 import org.qcri.rheem.core.optimizer.enumeration.PartialPlan;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumeration;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerator;
+import org.qcri.rheem.core.optimizer.enumeration.StageAssignmentTraversal;
+import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
+import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.platform.CardinalityBreakpoint;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.platform.FixBreakpoint;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -34,14 +38,44 @@ public class Job {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    /**
+     * Guardian to avoid re-execution.
+     */
     private final AtomicBoolean hasBeenExecuted = new AtomicBoolean(false);
 
+    /**
+     * References the {@link RheemContext} that spawned this instance.
+     */
     private final RheemContext rheemContext;
 
+    /**
+     * {@link Job}-level {@link Configuration} based on the {@link RheemContext}-level configuration.
+     */
     private final Configuration configuration;
 
+    /**
+     * The {@link RheemPlan} to be executed by this instance.
+     */
     private final RheemPlan rheemPlan;
 
+    /**
+     * Executes the optimized {@link ExecutionPlan}.
+     */
+    private CrossPlatformExecutor crossPlatformExecutor;
+
+    private final double minConfidence = 5., maxSpread = .7;
+
+    private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
+            (producerTask, channel, consumerTask) -> {
+                final CardinalityEstimate ce = channel.getCardinalityEstimate();
+                return ce.getCorrectnessProbability() >= this.minConfidence
+                        && CardinalityBreakpoint.calculateSpread(ce) <= this.maxSpread;
+            };
+
+
+    /**
+     * Creates a new instance.
+     */
     Job(RheemContext rheemContext, RheemPlan rheemPlan) {
         this.rheemContext = rheemContext;
         this.configuration = this.rheemContext.getConfiguration().fork();
@@ -58,29 +92,36 @@ public class Job {
         }
 
         // Get an execution plan.
-        long optimizerStartTime = System.currentTimeMillis();
-        ExecutionPlan executionPlan = this.getExecutionPlan();
-        long optimizerFinishTime = System.currentTimeMillis();
-        this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
-        this.logger.info("Picked execution plan:\n{}", executionPlan.toExtensiveString());
+        ExecutionPlan executionPlan = this.createInitialExecutionPlan();
 
         // Take care of the execution.
-        this.deployAndRun(executionPlan);
+        CrossPlatformExecutor.State state = this.execute(executionPlan);
+        while (!state.isComplete()) {
+            this.reoptimize(executionPlan, state);
+            state = this.execute(executionPlan);
+        }
     }
 
     /**
      * Determine a good/the best execution plan from a given {@link RheemPlan}.
      */
-    private ExecutionPlan getExecutionPlan() {
+    private ExecutionPlan createInitialExecutionPlan() {
+        long optimizerStartTime = System.currentTimeMillis();
+
         // Apply the mappings to the plan to form a hyperplan.
         this.applyMappingsToRheemPlan();
 
         // Make the cardinality estimation pass.
         this.estimateCardinalities();
-//        this.estimateExecutionTimes();
 
         // Enumerate plans and pick the best one.
-        return this.extractExecutionPlan();
+        final ExecutionPlan executionPlan = this.extractExecutionPlan();
+
+        long optimizerFinishTime = System.currentTimeMillis();
+        this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
+        this.logger.debug("Picked execution plan:\n{}", executionPlan.toExtensiveString());
+
+        return executionPlan;
     }
 
     /**
@@ -100,7 +141,6 @@ public class Job {
         // Check that the mappings have been applied properly.
         this.checkHyperplanSanity();
     }
-
 
     /**
      * Gather all available {@link PlanTransformation}s from the {@link #configuration}.
@@ -125,6 +165,7 @@ public class Job {
                 .sum();
     }
 
+
     /**
      * Check that the given {@link RheemPlan} is as we expect it to be in the following steps.
      */
@@ -144,11 +185,18 @@ public class Job {
     private void estimateCardinalities() {
         CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this.configuration);
         cardinalityEstimatorManager.pushCardinalityEstimation(this.rheemPlan);
-//        final Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates = cardinalityEstimatorManager.getCache();
-//        cardinalityEstimates.entrySet().stream().forEach(entry ->
-//                this.logger.debug("Cardinality estimate for {}: {}", entry.getKey(), entry.getValue()));
-//        return cardinalityEstimates;
     }
+
+    /**
+     * Go over the given {@link RheemPlan} and update the cardinalities of data being passed between its
+     * {@link Operator}s using the given {@link ExecutionProfile}.
+     */
+    private void reestimateCardinalities(CrossPlatformExecutor.State executionState) {
+        // TODO
+        CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this.configuration);
+        cardinalityEstimatorManager.pushCardinalityUpdates(this.rheemPlan, executionState);
+    }
+
 
     /**
      * Go over the given {@link RheemPlan} and estimate the execution times of its {@link ExecutionOperator}s.
@@ -169,8 +217,7 @@ public class Job {
         final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
 
         // Enumerate all possible plan.
-        final PlanEnumerator planEnumerator = new PlanEnumerator(this.rheemPlan, this.configuration);
-        this.configuration.getPruningStrategiesProvider().forEach(planEnumerator::addPruningStrategy);
+        final PlanEnumerator planEnumerator = this.createPlanEnumerator(null);
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
         final Collection<PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
         this.logger.info("Enumerated {} plans.", executionPlans.size());
@@ -180,8 +227,20 @@ public class Job {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        final PartialPlan partialPlan = executionPlans.stream()
-                .filter(plan -> plan.getExecutionPlan() != null)
+        final PartialPlan partialPlan = pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
+
+        return partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
+    }
+
+    private PartialPlan pickBestExecutionPlan(Comparator<TimeEstimate> timeEstimateComparator,
+                                              Collection<PartialPlan> executionPlans,
+                                              ExecutionPlan existingPlan,
+                                              Set<Channel> openChannels,
+                                              Set<ExecutionStage> executedStages) {
+        return executionPlans.stream()
+                .filter(plan -> (existingPlan == null ?
+                        plan.createExecutionPlan() :
+                        plan.createExecutionPlan(existingPlan, openChannels, executedStages)) != null)
                 .reduce((p1, p2) -> {
                     final TimeEstimate t1 = p1.getExecutionPlan().estimateExecutionTime(this.configuration);
                     final TimeEstimate t2 = p2.getExecutionPlan().estimateExecutionTime(this.configuration);
@@ -192,16 +251,93 @@ public class Job {
                     return plan;
                 })
                 .orElseThrow(() -> new IllegalStateException("Could not find an execution plan."));
+    }
 
-        return partialPlan.getExecutionPlan().toExecutionPlan();
+    /**
+     * Creates a new {@link PlanEnumerator} for the {@link #rheemPlan} and {@link #configuration}.
+     */
+    private PlanEnumerator createPlanEnumerator(ExecutionPlan existingPlan) {
+        final PlanEnumerator planEnumerator = existingPlan == null ?
+                new PlanEnumerator(this.rheemPlan, this.configuration) :
+                new PlanEnumerator(this.rheemPlan, this.configuration, existingPlan);
+        this.configuration.getPruningStrategiesProvider().forEach(planEnumerator::addPruningStrategy);
+        return planEnumerator;
     }
 
     /**
      * Dummy implementation: Have the platforms execute the given execution plan.
      */
-    private void deployAndRun(ExecutionPlan executionPlan) {
-        final CrossPlatformExecutor crossPlatformExecutor = new CrossPlatformExecutor();
-        crossPlatformExecutor.execute(executionPlan);
+    private CrossPlatformExecutor.State execute(ExecutionPlan executionPlan) {
+        FixBreakpoint breakpoint = new FixBreakpoint();
+        if (this.crossPlatformExecutor == null) {
+            this.crossPlatformExecutor = new CrossPlatformExecutor();
+            executionPlan.getStartingStages().forEach(breakpoint::breakAfter);
+
+        } else {
+            final CrossPlatformExecutor.State state = this.crossPlatformExecutor.captureState();
+            state.getCompletedStages().stream()
+                    .flatMap(stage -> stage.getSuccessors().stream())
+                    .filter(stage -> !state.getCompletedStages().contains(stage))
+                    .forEach(breakpoint::breakAfter);
+        }
+        this.crossPlatformExecutor.extendBreakpoint(breakpoint);
+        this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(this.maxSpread, this.minConfidence));
+        return this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
+    }
+
+    private void reoptimize(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
+        long optimizerStartTime = System.currentTimeMillis();
+
+        this.reestimateCardinalities(state);
+        this.updateExecutionPlan(executionPlan, state);
+
+        long optimizerFinishTime = System.currentTimeMillis();
+        this.logger.info("Re-optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
+        this.logger.debug("Picked execution plan:\n{}", executionPlan.toExtensiveString());
+    }
+
+    /**
+     * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
+     *
+     * @param executionPlan
+     * @param state
+     */
+    private void updateExecutionPlan(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
+        // Defines the plan that we want to use in the end.
+        final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
+
+        // Find and copy the open Channels.
+        final Set<ExecutionStage> completedStages = state.getCompletedStages();
+        final Set<ExecutionTask> completedTasks = completedStages.stream()
+                .flatMap(stage -> stage.getAllTasks().stream())
+                .collect(Collectors.toSet());
+
+        // Find Channels that have yet to be consumed by unexecuted ExecutionTasks.
+        // This must be done before scrapping the unexecuted ExecutionTasks!
+        final Set<Channel> openChannels = completedTasks.stream()
+                .flatMap(task -> Arrays.stream(task.getOutputChannels()))
+                .filter(channel -> channel.getConsumers().stream().anyMatch(consumer -> !completedTasks.contains(consumer)))
+                .collect(Collectors.toSet());
+
+        // Scrap unexecuted bits of the plan.
+        executionPlan.retain(completedStages);
+
+        // Enumerate all possible plan.
+        final PlanEnumerator planEnumerator = this.createPlanEnumerator(executionPlan);
+        final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
+        final Collection<PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
+        this.logger.info("Enumerated {} plans.", executionPlans.size());
+        for (PartialPlan partialPlan : executionPlans) {
+            this.logger.debug("Plan with operators: {}", partialPlan.getOperators());
+        }
+
+        // Pick an execution plan.
+        // Make sure that an execution plan can be created.
+        final PartialPlan partialPlan = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, executionPlan,
+                openChannels, completedStages);
+
+        final ExecutionPlan executionPlanExpansion = partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
+        executionPlan.expand(executionPlanExpansion);
     }
 
     /**

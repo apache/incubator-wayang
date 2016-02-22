@@ -2,10 +2,7 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
-import org.qcri.rheem.core.plan.rheemplan.PlanTraversal;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -253,24 +250,16 @@ public class CardinalityEstimationTraversal {
                                Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates) {
 
             // Do the local estimation.
-            final CardinalityEstimate[] resultEstimates = this.pusher.push(configuration, this.inputEstimates);
+            this.pusher.push(configuration);
 
-
-            for (int outputIndex = 0; outputIndex < resultEstimates.length; outputIndex++) {
-                // If we could not produce an estimate, we skip.
-                CardinalityEstimate resultEstimate = resultEstimates[outputIndex];
-                if (resultEstimate == null) {
-                    continue;
-                }
-
-                // Cache!
-                this.pusher.getOperator().getOutput(outputIndex).setCardinalityEstimate(resultEstimate);
-
+            for (int outputIndex = 0; outputIndex < this.pusher.getOperator().getNumOutputs(); outputIndex++) {
                 // Trigger follow-up operators.
                 this.processDependentActivations(this.pusher.getOperator().getOutput(outputIndex),
-                        resultEstimate, this.dependentActivations[outputIndex], activatorQueue, terminalEstimates);
+                        this.pusher.getOperator().getOutput(outputIndex).getCardinalityEstimate(),
+                        this.dependentActivations[outputIndex],
+                        activatorQueue,
+                        terminalEstimates);
             }
-
         }
 
         @Override

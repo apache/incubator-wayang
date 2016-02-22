@@ -3,6 +3,8 @@ package org.qcri.rheem.core.optimizer.enumeration;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The plan partitioner recursively dissects a {@link RheemPlan} into {@link PlanEnumeration}s and then assembles
@@ -61,12 +64,49 @@ public class PlanEnumerator {
     private AtomicReference<PlanEnumeration> resultReference;
 
     /**
+     * {@link OperatorAlternative}s that have been settled already and must be respected during enumeration.
+     */
+    private final Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives;
+
+    /**
+     * {@Link ExecutionTask}s that have already been executed.
+     */
+    private final Map<ExecutionOperator, ExecutionTask> executedTasks;
+
+    /**
      * Creates a new instance.
      *
      * @param rheemPlan a hyperplan that should be used for enumeration.
      */
     public PlanEnumerator(RheemPlan rheemPlan, Configuration configuration) {
-        this(rheemPlan.collectReachableTopLevelSources(), configuration, new LinkedList<>(), null);
+        this(rheemPlan.collectReachableTopLevelSources(),
+                configuration,
+                new LinkedList<>(),
+                null,
+                Collections.emptyMap(),
+                Collections.emptyMap());
+    }
+
+    /**
+     * Creates a new instance, thereby encorporating already executed parts of the {@code rheemPlan}.
+     *
+     * @param rheemPlan a hyperplan that should be used for enumeration.
+     * @param baseplan  an {@link ExecutionPlan} that has been already executed (for re-optimization)
+     */
+    public PlanEnumerator(RheemPlan rheemPlan, Configuration configuration, ExecutionPlan baseplan) {
+        this(rheemPlan.collectReachableTopLevelSources(),
+                configuration,
+                new LinkedList<>(),
+                null,
+                new HashMap<>(),
+                new HashMap<>());
+
+        final Set<ExecutionTask> executedTasks = baseplan.collectAllTasks();
+        executedTasks.forEach(task -> this.executedTasks.put(task.getOperator(), task));
+        executedTasks.stream()
+                .map(ExecutionTask::getOperator)
+                .flatMap(this::streamPickedAlternatives)
+                .forEach(alternative -> this.presettledAlternatives.put(alternative.toOperator(), alternative));
     }
 
     /**
@@ -75,8 +115,16 @@ public class PlanEnumerator {
      */
     private PlanEnumerator(OperatorAlternative.Alternative enumeratedAlternative,
                            Configuration configuration,
-                           Collection<PlanEnumerationPruningStrategy> pruningStrategies) {
-        this(findStartOperators(enumeratedAlternative), configuration, pruningStrategies, enumeratedAlternative);
+                           Collection<PlanEnumerationPruningStrategy> pruningStrategies,
+                           Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
+                           Map<ExecutionOperator, ExecutionTask> executedTasks) {
+        this(findStartOperators(enumeratedAlternative),
+                configuration,
+                pruningStrategies,
+                enumeratedAlternative,
+                presettledAlternatives,
+                executedTasks
+        );
     }
 
     /**
@@ -85,13 +133,17 @@ public class PlanEnumerator {
     private PlanEnumerator(Collection<Operator> startOperators,
                            Configuration configuration,
                            Collection<PlanEnumerationPruningStrategy> pruningStrategies,
-                           OperatorAlternative.Alternative enumeratedAlternative) {
+                           OperatorAlternative.Alternative enumeratedAlternative,
+                           Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
+                           Map<ExecutionOperator, ExecutionTask> executedTasks) {
         startOperators.stream()
                 .map(PlanEnumerator.OperatorActivation::new)
                 .forEach(this.activatedOperators::add);
         this.configuration = configuration;
         this.pruningStrategies = pruningStrategies;
         this.enumeratedAlternative = enumeratedAlternative;
+        this.presettledAlternatives = presettledAlternatives;
+        this.executedTasks = executedTasks;
     }
 
     /**
@@ -123,6 +175,14 @@ public class PlanEnumerator {
             throw new RheemException("Could not find a single execution plan.");
         }
         return comprehensiveEnumeration;
+    }
+
+    private Stream<OperatorAlternative.Alternative> streamPickedAlternatives(Operator operator) {
+        final OperatorContainer container = operator.getContainer();
+        if (container == null) return Stream.empty();
+        OperatorAlternative.Alternative alternative = (OperatorAlternative.Alternative) container;
+        final OperatorAlternative operatorAlternative = alternative.toOperator();
+        return Stream.concat(Stream.of(alternative), this.streamPickedAlternatives(operatorAlternative));
     }
 
     /**
@@ -262,7 +322,11 @@ public class PlanEnumerator {
      */
     private PlanEnumeration enumerateAlternative(OperatorAlternative operatorAlternative) {
         PlanEnumeration result = null;
-        for (OperatorAlternative.Alternative alternative : operatorAlternative.getAlternatives()) {
+        final List<OperatorAlternative.Alternative> alternatives =
+                this.presettledAlternatives == null || !this.presettledAlternatives.containsKey(operatorAlternative) ?
+                        operatorAlternative.getAlternatives() :
+                        Collections.singletonList(this.presettledAlternatives.get(operatorAlternative));
+        for (OperatorAlternative.Alternative alternative : alternatives) {
 
             // Recursively enumerate all alternatives.
             final PlanEnumerator alternativeEnumerator = this.forkFor(alternative);
@@ -283,7 +347,11 @@ public class PlanEnumerator {
      * @return the new instance
      */
     private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative) {
-        return new PlanEnumerator(alternative, this.configuration, this.pruningStrategies);
+        return new PlanEnumerator(alternative,
+                this.configuration,
+                this.pruningStrategies,
+                this.presettledAlternatives,
+                this.executedTasks);
     }
 
     private boolean activateDownstreamOperators(List<Operator> branch, PlanEnumeration branchEnumeration) {
@@ -315,6 +383,7 @@ public class PlanEnumerator {
                 .forEach(this.activationCollector::remove);
     }
 
+
     /**
      * Creates the final {@link PlanEnumeration} by <ol>
      * <li>escaping all terminal operations (in {@link #completedEnumerations}) from {@link #enumeratedAlternative} and</li>
@@ -331,12 +400,12 @@ public class PlanEnumerator {
         this.resultReference = new AtomicReference<>(resultEnumeration);
     }
 
-
     public void addPruningStrategy(PlanEnumerationPruningStrategy strategy) {
         this.pruningStrategies.add(strategy);
     }
 
     private void prune(final PlanEnumeration planEnumeration) {
+//        planEnumeration.getPartialPlans().forEach(partialPlan -> partialPlan.createExecutionPlan(this.executedTasks));
         this.pruningStrategies.forEach(strategy -> strategy.prune(planEnumeration, this.configuration));
     }
 

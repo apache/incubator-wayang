@@ -42,7 +42,7 @@ public class SparkFlatMapOperator<InputType, OutputType>
     }
 
     @Override
-    public ExecutionOperator copy() {
+    protected ExecutionOperator createCopy() {
         return new SparkFlatMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
     }
 }

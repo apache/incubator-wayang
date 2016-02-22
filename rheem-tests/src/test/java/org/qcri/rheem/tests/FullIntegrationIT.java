@@ -171,7 +171,6 @@ public class FullIntegrationIT {
         rheemContext.execute(rheemPlan);
     }
 
-    @Ignore("Strange bug with missing file pending...")
     @Test
     public void testDiverseScenario2() throws URISyntaxException {
         // Build the RheemPlan.
