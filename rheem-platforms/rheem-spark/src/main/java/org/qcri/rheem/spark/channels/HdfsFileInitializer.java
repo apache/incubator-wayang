@@ -146,13 +146,16 @@ public class HdfsFileInitializer implements ChannelInitializer {
 
         private final HdfsFile hdfsFile;
 
+        private boolean wasTriggered = false;
+
         public Executor(HdfsFile hdfsFile) {
             this.hdfsFile = hdfsFile;
         }
 
         @Override
         public void acceptRdd(JavaRDD<?> rdd) throws RheemException {
-            Validate.isTrue(rdd == null);
+            assert rdd == null;
+            this.wasTriggered = true;
         }
 
         @Override
@@ -186,6 +189,11 @@ public class HdfsFileInitializer implements ChannelInitializer {
         @Override
         public long getCardinality() throws RheemException {
             return -1;
+        }
+
+        @Override
+        public boolean ensureExecution() {
+            return this.wasTriggered;
         }
     }
 }

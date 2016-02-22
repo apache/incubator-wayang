@@ -56,6 +56,13 @@ public interface ChannelExecutor {
     long getCardinality() throws RheemException;
 
     /**
+     * Request this instance to pull the data for its {@link Channel} if this has not happened yet.
+     *
+     * @return whether the execution really took place
+     */
+    boolean ensureExecution();
+
+    /**
      * {@link ChannelExecutor} implementation for {@link JavaRDD}s.
      */
     class ForRDD implements ChannelExecutor {
@@ -80,7 +87,10 @@ public interface ChannelExecutor {
         public void acceptRdd(JavaRDD<?> rdd) throws RheemException {
             if (this.channel.isMarkedForInstrumentation()) {
                 final Accumulator<Integer> accumulator = this.sparkExecutor.sc.accumulator(0);
-                this.rdd = rdd.filter(dataQuantum -> { accumulator.add(1); return true; });
+                this.rdd = rdd.filter(dataQuantum -> {
+                    accumulator.add(1);
+                    return true;
+                });
                 this.accumulator = accumulator;
             } else {
                 this.rdd = rdd;
@@ -125,7 +135,16 @@ public interface ChannelExecutor {
             }
             return this.accumulator.value();
         }
+
+        @Override
+        public boolean ensureExecution() {
+            // TODO: This right-here is blunt.
+            LoggerFactory.getLogger(this.getClass()).warn("Bluntly forcing execution on {}.", this.rdd);
+            this.rdd.cache().foreachPartition((i) -> {});
+            return true;
+        }
     }
+
 
     /**
      * {@link ChannelExecutor} implementation for {@link Broadcast}s.
@@ -176,6 +195,11 @@ public interface ChannelExecutor {
         @Override
         public long getCardinality() throws RheemException {
             return ((SparkBroadcastOperator<?>) this.channel.getProducer().getOperator()).getMeasuredCardinality();
+        }
+
+        @Override
+        public boolean ensureExecution() {
+            return this.broadcast != null;
         }
     }
 }

@@ -46,7 +46,7 @@ public class JavaExecutor implements Executor {
     public ExecutionProfile execute(ExecutionStage stage) {
         final Collection<ExecutionTask> terminalTasks = stage.getTerminalTasks();
         for (ExecutionTask terminalTask : terminalTasks) {
-            forceExecution(terminalTask);
+            this.forceExecution(terminalTask);
         }
         return this.assembleExecutionProfile();
     }
@@ -55,7 +55,7 @@ public class JavaExecutor implements Executor {
         this.execute(terminalTask);
         for (Channel outputChannel : terminalTask.getOutputChannels()) {
             final ChannelExecutor channelExecutor = this.establishedChannelExecutors.get(outputChannel);
-            assert channelExecutor != null;
+            assert channelExecutor != null : String.format("Could not find an executor for %s.", outputChannel);
             if (!channelExecutor.ensureExecution()) {
                 this.logger.warn("Could not force execution of {}. This might break the execution or " +
                         "cause side-effects with the re-optimization.", outputChannel);
@@ -115,7 +115,7 @@ public class JavaExecutor implements Executor {
     }
 
     private void registerChannelExecutor(ChannelExecutor[] outputChannels, ExecutionTask executionTask) {
-        for (int outputIndex = 0; outputIndex < executionTask.getOutputChannels().length; outputIndex++) {
+        for (int outputIndex = 0; outputIndex < executionTask.getNumOuputChannels(); outputIndex++) {
             Channel channel = executionTask.getOutputChannels()[outputIndex];
             final ChannelExecutor channelExecutor = outputChannels[outputIndex];
             Validate.notNull(channelExecutor);

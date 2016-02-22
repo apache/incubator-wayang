@@ -44,9 +44,21 @@ public class SparkExecutor implements Executor {
             channel.markForInstrumentation(); // TODO: Instrumentation should be done in the CrossPlatformExecutor.
         }
         final Collection<ExecutionTask> terminalTasks = stage.getTerminalTasks();
-        terminalTasks.forEach(this::execute);
+        terminalTasks.forEach(this::forceExecution);
 
         return this.assembleExecutionProfile();
+    }
+
+    private void forceExecution(ExecutionTask terminalTask) {
+        this.execute(terminalTask);
+        for (Channel outputChannel : terminalTask.getOutputChannels()) {
+            final ChannelExecutor channelExecutor = this.establishedChannelExecutors.get(outputChannel);
+            assert channelExecutor != null : String.format("Could not find an executor for %s.", outputChannel);
+            if (!channelExecutor.ensureExecution()) {
+                this.logger.warn("Could not force execution of {}. This might break the execution or " +
+                        "cause side-effects with the re-optimization.", outputChannel);
+            }
+        }
     }
 
     private void execute(ExecutionTask executionTask) {
@@ -93,7 +105,7 @@ public class SparkExecutor implements Executor {
     }
 
     private void registerChannelExecutor(ChannelExecutor[] outputs, ExecutionTask executionTask) {
-        for (int outputIndex = 0; outputIndex < executionTask.getOperator().getNumOutputs(); outputIndex++) {
+        for (int outputIndex = 0; outputIndex < executionTask.getNumOuputChannels(); outputIndex++) {
             Channel channel = executionTask.getOutputChannel(outputIndex);
             final ChannelExecutor channelExecutor = outputs[outputIndex];
             assert channelExecutor != null;
