@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Builds an {@link ExecutionPlan} from a {@link PreliminaryExecutionPlan}.
@@ -24,15 +25,45 @@ public class StageAssignmentTraversal {
      */
     private final PreliminaryExecutionPlan preliminaryExecutionPlan;
 
+    /**
+     * Maintains {@link ExecutionTask}s that might not yet be assigned to an {@link InterimStage} and must be explored.
+     */
     private Queue<ExecutionTask> seeds;
 
+    /**
+     * Assigns {@link ExecutionTask}s with {@link InterimStage}s.
+     */
     private Map<ExecutionTask, InterimStage> assignedInterimStages;
 
+    /**
+     * Keeps track of {@link InterimStage}s that must be executed before executing a certain {@link ExecutionTask}.
+     */
     private Map<ExecutionTask, Set<InterimStage>> requiredStages;
 
-    private Collection<InterimStage> allStages, changedStages;
+    /**
+     * Zero or more {@link StageSplittingCriterion}s to further refine {@link ExecutionStage}s.
+     */
+    private Collection<StageSplittingCriterion> additionalSplittingCriteria;
 
-    public StageAssignmentTraversal(PreliminaryExecutionPlan preliminaryExecutionPlan) {
+    /**
+     * All {@link InterimStage}s created by this instance.
+     */
+    private Collection<InterimStage> allStages;
+
+    /**
+     * Newly created {@link InterimStage}s that might be subject to refinement still.
+     */
+    private Collection<InterimStage> newStages;
+
+    /**
+     * Creates a new instance.
+     *
+     * @param preliminaryExecutionPlan    should be converted into a {@link ExecutionPlan}
+     * @param additionalSplittingCriteria to create splits beside the precedence-based splitting
+     */
+    public StageAssignmentTraversal(PreliminaryExecutionPlan preliminaryExecutionPlan,
+                                    StageSplittingCriterion... additionalSplittingCriteria) {
+        // Some sanity checks.
         final Set<ExecutionTask> executionTasks = preliminaryExecutionPlan.collectAllTasks();
         for (ExecutionTask executionTask : executionTasks) {
             for (int i = 0; i < executionTask.getInputChannels().length; i++) {
@@ -50,8 +81,15 @@ public class StageAssignmentTraversal {
         }
         assert preliminaryExecutionPlan.isComplete();
         this.preliminaryExecutionPlan = preliminaryExecutionPlan;
+
+        this.additionalSplittingCriteria = Arrays.asList(additionalSplittingCriteria);
     }
 
+    /**
+     * Perform the assignment.
+     *
+     * @return the {@link ExecutionPlan} for the {@link PreliminaryExecutionPlan} specified in the constructor
+     */
     public synchronized ExecutionPlan run() {
         // Create initial stages.
         this.initializeRun();
@@ -67,42 +105,59 @@ public class StageAssignmentTraversal {
         return this.assembleExecutionPlan();
     }
 
+    /**
+     * Sets up fields.
+     */
     private void initializeRun() {
         this.seeds = new LinkedList<>();
         this.assignedInterimStages = new HashMap<>();
         this.requiredStages = new HashMap<>();
-        this.changedStages = new LinkedList<>();
+        this.newStages = new LinkedList<>();
         this.allStages = new LinkedList<>();
     }
 
+    /**
+     * Create an initial assignment for each {@link ExecutionTask}, thereby keeping track of existing
+     * {@link PlatformExecution}s.
+     */
     private void discoverInitialStages() {
-        // Find seeds.
-        final Set<ExecutionTask> newTasks = new HashSet<>();
+        // ExecutionTasks which have to be assigned an InterimStage.
+        final Set<ExecutionTask> relevantTasks = new HashSet<>();
+
+        // ExecutionTasks that staged for exploration.
         final Queue<ExecutionTask> stagedTasks = new LinkedList<>(this.preliminaryExecutionPlan.getSinkTasks());
+
+        // Run until all ExecutionTasks have been checked.
         while (!stagedTasks.isEmpty()) {
             final ExecutionTask task = stagedTasks.poll();
-            if (!newTasks.add(task)) continue;
+            if (!relevantTasks.add(task)) continue;
+
             for (Channel inputChannel : task.getInputChannels()) {
                 if (!this.shouldVisitProducerOf(inputChannel)) { // Barrier.
                     final ExecutionTask producer = inputChannel.getProducer();
-                    // Most important seeds are those that might need to use an existing PlatformExecution.
+                    // Most important seeds are those that might need to use an existing PlatformExecution:
+                    /// We need to create their InterimStages immediately to reuse the PlatformExecution before
+                    /// ExecutionTasks are assigned to other InterimStages.
                     if (producer.getPlatform().equals(task.getPlatform()) &&
                             producer.getPlatform().isSinglePlatformExecutionPossible(producer, inputChannel, task)) {
                         this.createStageFor(task, producer.getStage().getPlatformExecution());
                     }
                 } else {
+                    // Otherwise, just stage.
                     stagedTasks.add(inputChannel.getProducer());
                 }
             }
         }
 
-        this.seeds.addAll(newTasks);
+        // Now, we can assign all InterimStages with new PlatformExecutions.
+        this.seeds.addAll(relevantTasks);
         while (!this.seeds.isEmpty()) {
             final ExecutionTask task = this.seeds.poll();
             this.createStageFor(task, null);
         }
 
-        assert newTasks.stream().allMatch(this.assignedInterimStages::containsKey);
+        // Make sure that we didn't blunder.
+        assert relevantTasks.stream().allMatch(this.assignedInterimStages::containsKey);
     }
 
     /**
@@ -122,18 +177,32 @@ public class StageAssignmentTraversal {
                 platformExecution = new PlatformExecution(platform);
             }
             InterimStage initialStage = new InterimStageImpl(platformExecution);
-            this.allStages.add(initialStage);
-            this.changedStages.add(initialStage);
+            addStage(initialStage);
             this.traverseTask(task, initialStage);
         }
     }
 
+    /**
+     * Adds an {@link InterimStage} byt putting it on {@link #allStages} and {@link #newStages}.
+     */
+    private void addStage(InterimStage stage) {
+        this.newStages.add(stage);
+        this.allStages.add(stage);
+    }
+
+    /**
+     * Assign the given {@link ExecutionTask} to the given {@link InterimStage}s, then handle adjacent {@link ExecutionTask}s.
+     */
     private void traverseTask(ExecutionTask task, InterimStage interimStage) {
         this.assign(task, interimStage);
         this.expandDownstream(task, interimStage);
         this.expandUpstream(task, interimStage);
     }
 
+    /**
+     * Assign the given {@link ExecutionTask} to the given {@link InterimStage}s and set up {@link #requiredStages}
+     * for it.
+     */
     private void assign(ExecutionTask task, InterimStage newStage) {
         assert task.getOperator().getPlatform().equals(newStage.getPlatform());
         newStage.addTask(task);
@@ -145,6 +214,10 @@ public class StageAssignmentTraversal {
         this.logger.debug("Initially assigning {} to {}.", task, newStage);
     }
 
+    /**
+     * Handle the downstream neighbors of the given {@code task}. Either expand the {@code expandableStage} or
+     * plant new {@link #seeds}.
+     */
     private void expandDownstream(ExecutionTask task, InterimStage expandableStage) {
         for (Channel channel : task.getOutputChannels()) {
             if (channel.isExecutionBreaker()) {
@@ -159,11 +232,15 @@ public class StageAssignmentTraversal {
         }
     }
 
+    /**
+     * Handle the upstream neighbors of the given {@code task}. Either expand the {@code expandableStage} or
+     * plant new {@link #seeds}.
+     */
     private void expandUpstream(ExecutionTask task, InterimStage expandableStage) {
         for (Channel channel : task.getInputChannels()) {
             if (!this.shouldVisitProducerOf(channel)) continue;
             final ExecutionTask producer = channel.getProducer();
-            Validate.notNull(producer);
+            assert producer != null;
             final InterimStage assignedStage = this.assignedInterimStages.get(producer);
             if (assignedStage == null) {
                 this.handleTaskWithoutPlatformExecution(producer, /*channel.isExecutionBreaker() ? null : */expandableStage);
@@ -171,6 +248,9 @@ public class StageAssignmentTraversal {
         }
     }
 
+    /**
+     * Handle a given {@code task}. Either expand the {@code expandableStage} or plant new {@link #seeds}.
+     */
     private void handleTaskWithoutPlatformExecution(ExecutionTask task, InterimStage expandableStage) {
         final Platform operatorPlatform = task.getOperator().getPlatform();
         if (expandableStage != null && operatorPlatform.equals(expandableStage.getPlatform())) {
@@ -181,23 +261,61 @@ public class StageAssignmentTraversal {
     }
 
     /**
-     * Refine the current {@link #changedStages} and put the result to {@link #allStages}.
+     * Refine the current {@link #newStages} and put the result to {@link #allStages}.
      */
     private void refineStages() {
-        while (!this.changedStages.isEmpty()) {
+        // Apply the #additionalSplittingCriteria at first.
+        for (InterimStage stage : new ArrayList<>(this.newStages)) {
+            this.applySplittingCriteria(stage);
+        }
+
+        while (!this.newStages.isEmpty()) {
             // Update the precedence graph.
-            for (InterimStage currentStage : this.changedStages) {
+            for (InterimStage currentStage : this.newStages) {
                 for (ExecutionTask outboundTask : currentStage.getOutboundTasks()) {
                     this.updateRequiredStages(outboundTask, new HashSet<>());
                 }
             }
 
-            // Partition stages.
-            this.changedStages.clear();
-            for (InterimStage stage : this.allStages) {
+            // Partition stages. Might yield #newStages.
+            this.newStages.clear();
+            for (InterimStage stage : new ArrayList<>(this.allStages)) {
                 this.partitionStage(stage);
             }
-            this.allStages.addAll(this.changedStages);
+        }
+    }
+
+    /**
+     * Applies all {@link #additionalSplittingCriteria} to the given {@code stage}, thereby refining it.
+     */
+    private void applySplittingCriteria(InterimStage stage) {
+        Set<ExecutionTask> separableTasks = new HashSet<>();
+        Queue<ExecutionTask> taskQueue = new LinkedList<>(stage.getStartTasks());
+        Set<ExecutionTask> seenTasks = new HashSet<>();
+        while (!taskQueue.isEmpty()) {
+            final ExecutionTask task = taskQueue.poll();
+            boolean isSplittableTask = separableTasks.contains(task);
+            if (seenTasks.add(task)) {
+                for (Channel channel : task.getOutputChannels()) {
+                    for (ExecutionTask consumerTask : channel.getConsumers()) {
+                        if (this.assignedInterimStages.get(consumerTask) != stage) {
+                            continue;
+                        }
+                        if (isSplittableTask || this.additionalSplittingCriteria.stream().anyMatch(
+                                criterion -> criterion.shouldSplit(task, channel, consumerTask)
+                        )) {
+                            separableTasks.add(consumerTask);
+                        }
+                        taskQueue.add(consumerTask);
+                    }
+                }
+            }
+        }
+
+        if (!separableTasks.isEmpty()) {
+            assert separableTasks.size() < stage.getTasks().size();
+            final InterimStage separatedStage = this.splitStage(stage, separableTasks);
+            this.applySplittingCriteria(separatedStage);
         }
     }
 
@@ -254,14 +372,25 @@ public class StageAssignmentTraversal {
             this.logger.debug("No separable tasks found in marked stage {}.", stage);
             return false;
         } else {
-            this.logger.debug("Separating " + separableTasks + " from " + stage + "...");
-            InterimStage newStage = stage.separate(separableTasks);
-            this.changedStages.add(newStage);
-            for (ExecutionTask separatedTask : newStage.getTasks()) {
-                this.assignedInterimStages.put(separatedTask, newStage);
-            }
+            this.splitStage(stage, separableTasks);
             return true;
         }
+    }
+
+    /**
+     * Splits the given {@link ExecutionTask}s from the {@link InterimStage} to form a new {@link InterimStage},
+     * which will be added to {@link #newStages}. Also. {@link #assignedInterimStages} will be updated.
+     *
+     * @return the new {@link InterimStage}
+     */
+    private InterimStage splitStage(InterimStage stage, Set<ExecutionTask> separableTasks) {
+        this.logger.debug("Separating " + separableTasks + " from " + stage + "...");
+        InterimStage newStage = stage.separate(separableTasks);
+        this.addStage(newStage);
+        for (ExecutionTask separatedTask : newStage.getTasks()) {
+            this.assignedInterimStages.put(separatedTask, newStage);
+        }
+        return newStage;
     }
 
     private ExecutionPlan assembleExecutionPlan() {
@@ -307,6 +436,9 @@ public class StageAssignmentTraversal {
         return !channel.isCopy();
     }
 
+    /**
+     * Intermediate step towards {@link ExecutionStage}s. Supports some build utilites and can be split.
+     */
     private interface InterimStage {
 
         Set<ExecutionTask> getTasks();
@@ -327,6 +459,7 @@ public class StageAssignmentTraversal {
 
         Set<ExecutionTask> getOutboundTasks();
 
+        Collection<ExecutionTask> getStartTasks();
     }
 
     private class InterimStageImpl implements InterimStage {
@@ -390,6 +523,11 @@ public class StageAssignmentTraversal {
         }
 
         @Override
+        public Collection<ExecutionTask> getStartTasks() {
+            return this.getTasks().stream().filter(this::checkIfStartTask).collect(Collectors.toList());
+        }
+
+        @Override
         public Set<ExecutionTask> getTasks() {
             return this.allTasks;
         }
@@ -441,10 +579,13 @@ public class StageAssignmentTraversal {
                 executionStage.addTask(task);
                 if (this.checkIfStartTask(task)) {
                     executionStage.markAsStartTast(task);
-                } else if (this.checkIfTerminalTask(task)) {
+                }
+                if (this.checkIfTerminalTask(task)) {
                     executionStage.markAsTerminalTask(task);
                 }
             }
+            assert !executionStage.getTerminalTasks().isEmpty() :
+                    String.format("No terminal tasks among %s.", this.allTasks);
             return executionStage;
         }
 
@@ -478,62 +619,78 @@ public class StageAssignmentTraversal {
         }
     }
 
-    private static class ExecutionStageAdapter implements InterimStage {
+//    private static class ExecutionStageAdapter implements InterimStage {
+//
+//        private final ExecutionStage executionStage;
+//
+//        private boolean isMarked = false;
+//
+//        public ExecutionStageAdapter(ExecutionStage executionStage) {
+//            this.executionStage = executionStage;
+//        }
+//
+//        @Override
+//        public Set<ExecutionTask> getTasks() {
+//            return this.executionStage.getAllTasks();
+//        }
+//
+//        @Override
+//        public Platform getPlatform() {
+//            return this.executionStage.getPlatformExecution().getPlatform();
+//        }
+//
+//        @Override
+//        public void addTask(ExecutionTask task) {
+//            throw new RuntimeException("Unmodifiable.");
+//        }
+//
+//        @Override
+//        public void setOutbound(ExecutionTask task) {
+//            throw new RuntimeException("Unmodifiable.");
+//        }
+//
+//        @Override
+//        public ExecutionStage toExecutionStage() {
+//            return this.executionStage;
+//        }
+//
+//        @Override
+//        public InterimStage separate(Set<ExecutionTask> separableTasks) {
+//            throw new RuntimeException("Unmodifiable.");
+//        }
+//
+//        @Override
+//        public boolean getAndResetMark() {
+//            boolean wasMarked = this.isMarked;
+//            this.isMarked = false;
+//            return wasMarked;
+//        }
+//
+//        @Override
+//        public void mark() {
+//            this.isMarked = true;
+//        }
+//
+//        @Override
+//        public Set<ExecutionTask> getOutboundTasks() {
+//            return new HashSet<>(this.executionStage.getTerminalTasks());
+//        }
+//    }
+//
 
-        private final ExecutionStage executionStage;
+    /**
+     * Criterion to futher split {@link InterimStage} besides precedence.
+     */
+    public interface StageSplittingCriterion {
 
-        private boolean isMarked = false;
+        /**
+         * Tells whether two adjacent {@link ExecutionTask}s of the same current {@link InterimStage} should be placed
+         * in different {@link ExecutionStage}s.
+         *
+         * @return {@code true} if the {@link ExecutionTask}s must be separated, {@code false} if it is not necessary
+         */
+        boolean shouldSplit(ExecutionTask producerTask, Channel channel, ExecutionTask consumerTask);
 
-        public ExecutionStageAdapter(ExecutionStage executionStage) {
-            this.executionStage = executionStage;
-        }
-
-        @Override
-        public Set<ExecutionTask> getTasks() {
-            return this.executionStage.getAllTasks();
-        }
-
-        @Override
-        public Platform getPlatform() {
-            return this.executionStage.getPlatformExecution().getPlatform();
-        }
-
-        @Override
-        public void addTask(ExecutionTask task) {
-            throw new RuntimeException("Unmodifiable.");
-        }
-
-        @Override
-        public void setOutbound(ExecutionTask task) {
-            throw new RuntimeException("Unmodifiable.");
-        }
-
-        @Override
-        public ExecutionStage toExecutionStage() {
-            return this.executionStage;
-        }
-
-        @Override
-        public InterimStage separate(Set<ExecutionTask> separableTasks) {
-            throw new RuntimeException("Unmodifiable.");
-        }
-
-        @Override
-        public boolean getAndResetMark() {
-            boolean wasMarked = this.isMarked;
-            this.isMarked = false;
-            return wasMarked;
-        }
-
-        @Override
-        public void mark() {
-            this.isMarked = true;
-        }
-
-        @Override
-        public Set<ExecutionTask> getOutboundTasks() {
-            return new HashSet<>(this.executionStage.getTerminalTasks());
-        }
     }
 
 }

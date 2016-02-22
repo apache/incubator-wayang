@@ -86,8 +86,8 @@ public class PreliminaryExecutionPlan {
         return this.timeEstimate;
     }
 
-    public ExecutionPlan toExecutionPlan() {
-        return new StageAssignmentTraversal(this).run();
+    public ExecutionPlan toExecutionPlan(StageAssignmentTraversal.StageSplittingCriterion... splittingCriteria) {
+        return new StageAssignmentTraversal(this, splittingCriteria).run();
     }
 
     public boolean isComplete() {

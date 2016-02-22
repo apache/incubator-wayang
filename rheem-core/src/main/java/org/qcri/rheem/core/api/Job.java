@@ -10,6 +10,7 @@ import org.qcri.rheem.core.optimizer.costs.TimeEstimationTraversal;
 import org.qcri.rheem.core.optimizer.enumeration.PartialPlan;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumeration;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerator;
+import org.qcri.rheem.core.optimizer.enumeration.StageAssignmentTraversal;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
@@ -62,6 +63,16 @@ public class Job {
      */
     private CrossPlatformExecutor crossPlatformExecutor;
 
+    private final double minConfidence = 5., maxSpread = .7;
+
+    private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
+            (producerTask, channel, consumerTask) -> {
+                final CardinalityEstimate ce = channel.getCardinalityEstimate();
+                return ce.getCorrectnessProbability() >= this.minConfidence
+                        && CardinalityBreakpoint.calculateSpread(ce) <= this.maxSpread;
+            };
+
+
     /**
      * Creates a new instance.
      */
@@ -108,7 +119,7 @@ public class Job {
 
         long optimizerFinishTime = System.currentTimeMillis();
         this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
-        this.logger.info("Picked execution plan:\n{}", executionPlan.toExtensiveString());
+        this.logger.debug("Picked execution plan:\n{}", executionPlan.toExtensiveString());
 
         return executionPlan;
     }
@@ -218,7 +229,7 @@ public class Job {
         // Make sure that an execution plan can be created.
         final PartialPlan partialPlan = pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
 
-        return partialPlan.getExecutionPlan().toExecutionPlan();
+        return partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
     }
 
     private PartialPlan pickBestExecutionPlan(Comparator<TimeEstimate> timeEstimateComparator,
@@ -270,13 +281,19 @@ public class Job {
                     .forEach(breakpoint::breakAfter);
         }
         this.crossPlatformExecutor.extendBreakpoint(breakpoint);
-        this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(.5, 10.)); // 50% within order of magnitude
+        this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(this.maxSpread, this.minConfidence));
         return this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
     }
 
     private void reoptimize(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
+        long optimizerStartTime = System.currentTimeMillis();
+
         this.reestimateCardinalities(state);
         this.updateExecutionPlan(executionPlan, state);
+
+        long optimizerFinishTime = System.currentTimeMillis();
+        this.logger.info("Re-optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
+        this.logger.debug("Picked execution plan:\n{}", executionPlan.toExtensiveString());
     }
 
     /**
@@ -319,7 +336,7 @@ public class Job {
         final PartialPlan partialPlan = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, executionPlan,
                 openChannels, completedStages);
 
-        final ExecutionPlan executionPlanExpansion = partialPlan.getExecutionPlan().toExecutionPlan();
+        final ExecutionPlan executionPlanExpansion = partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);
     }
 

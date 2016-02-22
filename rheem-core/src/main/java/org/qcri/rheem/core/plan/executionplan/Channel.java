@@ -37,6 +37,9 @@ public abstract class Channel {
      */
     private final Channel original;
 
+    /**
+     * Flag whether this instance should be instrumented to detect its actual cardinality.
+     */
     private boolean isMarkedForInstrumentation = false;
 
     /**
@@ -108,6 +111,17 @@ public abstract class Channel {
      * @return whether this instance can have multiple consumers
      */
     public abstract boolean isReusable();
+
+    /**
+     * Declares whether this instance can be shared among two different {@link ExecutionStage}s (of the same
+     * {@link PlatformExecution}, though).
+     */
+    public abstract boolean isInterStageCapable();
+
+    /**
+     * Declares whether this instance can be shared among two different {@link PlatformExecution}s.
+     */
+    public abstract boolean isInterPlatformCapable();
 
     /**
      * Tells whether this instance connects different {@link PlatformExecution}s. The answer is not necessarily

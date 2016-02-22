@@ -12,6 +12,8 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
  */
 public class CardinalityBreakpoint implements Breakpoint {
 
+    private static final double SPREAD_SMOOTHING = 10000d;
+
     private final double minConfidence;
 
     private final double maxSpread;
@@ -39,8 +41,9 @@ public class CardinalityBreakpoint implements Breakpoint {
                 && this.calculateSpread(cardinalityEstimate) <= this.maxSpread;
     }
 
-    private double calculateSpread(CardinalityEstimate cardinalityEstimate) {
-        return ((double) cardinalityEstimate.getUpperEstimate()) / ((double) cardinalityEstimate.getLowerEstimate());
+    public static double calculateSpread(CardinalityEstimate cardinalityEstimate) {
+        return ((double) cardinalityEstimate.getUpperEstimate() + SPREAD_SMOOTHING)
+                / ((double) cardinalityEstimate.getLowerEstimate() + SPREAD_SMOOTHING);
     }
 
 }

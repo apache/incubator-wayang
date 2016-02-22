@@ -30,7 +30,7 @@ public class ExecutionPlan {
         while (!activatedStages.isEmpty()) {
             while (!activatedStages.isEmpty()) {
                 final ExecutionStage stage = activatedStages.poll();
-                sb.append(">>> ").append(stage).append(":\n");
+                sb.append(stage.wasExecuted() ? "***" : ">>> ").append(stage).append(":\n");
                 stage.toExtensiveString(sb);
                 sb.append("\n");
 

@@ -77,7 +77,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
                 final List<String> sparkFiles =
                         children.stream().filter(child -> child.matches(".*/part-\\d{5}")).collect(Collectors.toList());
                 if (sparkFiles.size() != 1) {
-                    throw new RheemException("Illegal number of Spark result files: " + sparkFiles.size());
+                    throw new RheemException("Illegal number of Spark result files: " + sparkFiles);
                 }
                 LoggerFactory.getLogger(this.getClass()).info("Using input path {} for {}.", sparkFiles.get(0), this);
                 return sparkFiles.get(0);

@@ -46,6 +46,11 @@ public class ExecutionStage {
     private final int sequenceNumber;
 
     /**
+     * Tells whether this instance has already been put into execution.
+     */
+    private boolean wasExecuted = false;
+
+    /**
      * Create a new instance and register it with the given {@link PlatformExecution}.
      */
     ExecutionStage(PlatformExecution platformExecution, int sequenceNumber) {
@@ -144,6 +149,13 @@ public class ExecutionStage {
 
     }
 
+    public String toExtensiveString() {
+        final StringBuilder sb = new StringBuilder();
+        this.toExtensiveString(sb);
+        if (sb.charAt(sb.length() - 1) == '\n') sb.setLength(sb.length() - 1);
+        return sb.toString();
+    }
+
     public void toExtensiveString(StringBuilder sb) {
         Set<ExecutionTask> seenTasks = new HashSet<>();
         for (ExecutionTask startTask : this.startTasks) {
@@ -214,5 +226,13 @@ public class ExecutionStage {
                 successor.predecessors.remove(this);
             }
         }
+    }
+
+    public boolean wasExecuted() {
+        return this.wasExecuted;
+    }
+
+    public void setWasExecuted(boolean wasExecuted) {
+        this.wasExecuted = wasExecuted;
     }
 }

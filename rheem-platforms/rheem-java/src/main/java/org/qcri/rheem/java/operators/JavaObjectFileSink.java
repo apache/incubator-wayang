@@ -16,6 +16,7 @@ import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.channels.HdfsFileInitializer;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -69,6 +70,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
             if (this.outputChannelExecutor != null) {
                 this.outputChannelExecutor.setCardinality(streamChunker.numPushedObjects);
             }
+            LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", this.targetPath);
         } catch (IOException | RuntimeIOException e) {
             throw new RheemException("Could not write stream to sequence file.", e);
         }

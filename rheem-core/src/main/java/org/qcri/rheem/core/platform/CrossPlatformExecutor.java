@@ -44,14 +44,15 @@ public class CrossPlatformExecutor {
     private Counter<PlatformExecution> executionStageCounter = new Counter<>();
 
     /**
-     * Keeps track of {@link ExecutionStage}s that have actually been executed by this instance.
-     */
-    private Set<ExecutionStage> completedStages = new HashSet<>();
-
-    /**
      * We keep them around if we want to go on without re-optimization.
      */
     private Collection<ExecutionStage> suspendedStages = new LinkedList<>();
+
+
+    /**
+     * Keeps track of {@link ExecutionStage}s that have actually been executed by this instance.
+     */
+    private Set<ExecutionStage> completedStages = new HashSet<>();
 
     private ExecutionProfile executionProfile;
 
@@ -91,7 +92,7 @@ public class CrossPlatformExecutor {
                 final ExecutionStage nextStage = this.activatedStages.poll();
 
                 // Check if #breakpoint permits the execution.
-                if (!this.completedStages.contains(nextStage)
+                if (!nextStage.wasExecuted()
                         && !isBreakpointsDisabled
                         && this.suspendIfBreakpointRequest(nextStage)) {
                     continue;
@@ -146,11 +147,12 @@ public class CrossPlatformExecutor {
      * @return whether the {@link ExecutionStage} was really executed
      */
     private boolean execute(ExecutionStage activatedStage) {
-        final boolean shouldExecute = !this.completedStages.contains(activatedStage);
+        final boolean shouldExecute = !activatedStage.wasExecuted();
         if (shouldExecute) {
             Executor executor = this.getOrCreateExecutorFor(activatedStage);
             final ExecutionProfile executionProfile = this.submit(activatedStage, executor);
             this.executionProfile.merge(executionProfile);
+            activatedStage.setWasExecuted(true);
             this.completedStages.add(activatedStage);
 
         } else {
@@ -176,6 +178,7 @@ public class CrossPlatformExecutor {
      */
     private ExecutionProfile submit(ExecutionStage stage, Executor executor) {
         CrossPlatformExecutor.this.logger.info("Start executing {}.", stage);
+        CrossPlatformExecutor.this.logger.info("Stage plan:\n{}", stage.toExtensiveString());
         long startTime = System.currentTimeMillis();
         final ExecutionProfile executionProfile = executor.execute(stage);
         long finishTime = System.currentTimeMillis();

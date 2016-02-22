@@ -31,6 +31,16 @@ public class BroadcastChannel extends Channel {
     }
 
     @Override
+    public boolean isInterStageCapable() {
+        return IS_REUSABLE;
+    }
+
+    @Override
+    public boolean isInterPlatformCapable() {
+        return IS_REUSABLE & !IS_INTERNAL;
+    }
+
+    @Override
     public BroadcastChannel copy() {
         return new BroadcastChannel(this);
     }

@@ -15,6 +15,10 @@ import java.util.stream.Stream;
  */
 public class CollectionChannel extends Channel {
 
+    private static final boolean IS_REUSABLE = true;
+
+    private static final boolean IS_INTERNAL = true;
+
     protected CollectionChannel(ExecutionTask producer, int outputIndex) {
         super(producer, outputIndex);
     }
@@ -25,7 +29,17 @@ public class CollectionChannel extends Channel {
 
     @Override
     public boolean isReusable() {
-        return true;
+        return IS_REUSABLE;
+    }
+
+    @Override
+    public boolean isInterStageCapable() {
+        return IS_REUSABLE;
+    }
+
+    @Override
+    public boolean isInterPlatformCapable() {
+        return IS_REUSABLE & !IS_INTERNAL;
     }
 
     @Override

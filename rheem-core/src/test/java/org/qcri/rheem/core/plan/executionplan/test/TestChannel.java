@@ -10,6 +10,8 @@ public class TestChannel extends Channel {
 
     private final boolean isReusable;
 
+    private final boolean isInternal;
+
     /**
      * Creates a new instance.
      *
@@ -19,6 +21,7 @@ public class TestChannel extends Channel {
     public TestChannel(ExecutionTask producer, int outputIndex, boolean isReusable) {
         super(producer, outputIndex);
         this.isReusable = isReusable;
+        this.isInternal = true;
     }
 
     @Override
@@ -26,6 +29,15 @@ public class TestChannel extends Channel {
         return this.isReusable;
     }
 
+    @Override
+    public boolean isInterStageCapable() {
+        return this.isReusable;
+    }
+
+    @Override
+    public boolean isInterPlatformCapable() {
+        return this.isReusable & !this.isInternal;
+    }
     @Override
     public Channel copy() {
         throw new RuntimeException("Not implemented.");
