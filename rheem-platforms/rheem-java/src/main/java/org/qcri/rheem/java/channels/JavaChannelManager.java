@@ -76,4 +76,13 @@ public class JavaChannelManager extends DefaultChannelManager {
     public ChannelExecutor createChannelExecutor(Channel channel) {
         return this.channelTypeDescriptors.get(channel.getClass()).getExecutorFactory().apply(channel);
     }
+
+    @Override
+    public boolean exchangeWithInterstageCapable(Channel channel) {
+        if (channel instanceof StreamChannel) {
+            ((StreamChannel) channel).exchangeWith(this.getChannelInitializer(CollectionChannel.class));
+            return true;
+        }
+        return super.exchangeWithInterstageCapable(channel);
+    }
 }

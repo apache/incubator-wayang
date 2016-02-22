@@ -9,6 +9,7 @@ import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,7 +21,7 @@ public abstract class Channel {
     /**
      * Produces the data flowing through this instance.
      */
-    protected final ExecutionTask producer;
+    protected ExecutionTask producer;
 
     /**
      * Consuming {@link ExecutionTask}s of this instance.
@@ -164,7 +165,7 @@ public abstract class Channel {
 
     }
 
-    private Stream<Channel> withSiblings() {
+    protected Stream<Channel> withSiblings() {
         return Stream.concat(Stream.of(this), this.siblings.stream());
     }
 
@@ -185,6 +186,36 @@ public abstract class Channel {
      */
     public void addSibling(Channel sibling) {
         this.withSiblings().forEach(olderSibling -> olderSibling.relateTo(sibling));
+    }
+
+    /**
+     * Detaches this instance from all its {@link #siblings}.
+     */
+    public void removeSiblings() {
+        this.removeSiblingsWhere((channel) -> true);
+    }
+    /**
+     * Detaches this instance from all its {@link #siblings}.
+     */
+    public void removeSiblingsWhere(Predicate<Channel> condition) {
+        // Detach with siblings.
+        List<Channel> removedSiblings = new LinkedList<>();
+        for (Iterator<Channel> i = this.siblings.iterator(); i.hasNext(); ) {
+            final Channel sibling = i.next();
+            if (condition.test(sibling)) {
+                i.remove();
+                sibling.siblings.remove(this);
+                removedSiblings.add(sibling);
+            }
+        }
+
+        // Bring the lingering and former siblings into a consistent state.
+        for (Channel sibling : this.siblings) {
+            sibling.siblings.removeAll(removedSiblings);
+        }
+        for (Channel removedSibling : removedSiblings) {
+            removedSibling.siblings.removeAll(this.siblings);
+        }
     }
 
     /**
@@ -227,13 +258,7 @@ public abstract class Channel {
      */
     public void retain(Set<ExecutionStage> retainableStages) {
         this.consumers.removeIf(consumer -> !retainableStages.contains(retainableStages));
-        for (Iterator<Channel> i = this.siblings.iterator(); i.hasNext(); ) {
-            final Channel sibling = i.next();
-            if (!retainableStages.contains(sibling.getProducer().getStage())) {
-                i.remove();
-                sibling.siblings.remove(this);
-            }
-        }
+        this.removeSiblingsWhere((sibling) -> !retainableStages.contains(sibling.getProducer().getStage()));
     }
 
     /**
@@ -278,5 +303,9 @@ public abstract class Channel {
         for (ExecutionTask consumer : new ArrayList<>(channel.getConsumers())) {
             consumer.exchangeInputChannel(channel, this);
         }
+    }
+
+    public void setProducer(ExecutionTask producer) {
+        this.producer = producer;
     }
 }

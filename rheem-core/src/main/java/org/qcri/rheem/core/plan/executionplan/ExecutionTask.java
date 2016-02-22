@@ -100,6 +100,40 @@ public class ExecutionTask {
     }
 
     /**
+     * Removes the given {@link Channel} as output of this instance.
+     *
+     * @return the former output index the {@link Channel}
+     */
+    public int removeOutputChannel(Channel outputChannel) {
+        int outputIndex;
+        for (outputIndex = 0; outputIndex < this.getNumOuputChannels(); outputIndex++) {
+            if (this.getOutputChannel(outputIndex) == outputChannel) {
+                this.getOutputChannels()[outputIndex] = null;
+                outputChannel.setProducer(null);
+                return outputIndex;
+            }
+        }
+        throw new IllegalArgumentException(String.format("%s is not an output of %s.", outputChannel, this));
+    }
+
+    /**
+     * Removes the given {@link Channel} as input of this instance.
+     *
+     * @return the former input index the {@link Channel}
+     */
+    public int removeInputChannel(Channel inputChannel) {
+        int inputIndex;
+        for (inputIndex = 0; inputIndex < this.getNumInputChannels(); inputIndex++) {
+            if (this.getInputChannel(inputIndex) == inputChannel) {
+                this.getInputChannels()[inputIndex] = null;
+                inputChannel.getConsumers().remove(this);
+                return inputIndex;
+            }
+        }
+        throw new IllegalArgumentException(String.format("%s is not an input of %s.", inputChannel, this));
+    }
+
+    /**
      * Sets an output {@link Channel} for this instance. Consider using {@link Channel#Channel(ExecutionTask, int)}
      * and derivatives instead.
      */

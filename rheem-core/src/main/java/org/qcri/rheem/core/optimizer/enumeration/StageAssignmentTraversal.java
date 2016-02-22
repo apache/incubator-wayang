@@ -545,9 +545,23 @@ public class StageAssignmentTraversal {
                     }
                 }
             }
+            // Exchange Channels where necessary.
+            for (ExecutionTask task : this.allTasks) {
+                for (int outputIndex = 0; outputIndex < task.getNumOuputChannels(); outputIndex++) {
+                    Channel outputChannel = task.getOutputChannels()[outputIndex];
+                    boolean isInterStageRequired = outputChannel.getConsumers().stream()
+                            .anyMatch(consumer -> !this.allTasks.contains(consumer));
+                    if (!isInterStageRequired) continue;
+                    this.outboundTasks.add(task);
+                    if (outputChannel.isInterStageCapable()) continue;
+                    if (!task.getOperator().getPlatform().getChannelManager()
+                            .exchangeWithInterstageCapable(outputChannel)) {
+                        StageAssignmentTraversal.this.logger.warn("Could not exchange {} with an interstage-capable channel.",
+                                outputChannel);
+                    }
+                }
+            }
 
-            // NB: We do not take care of maintaining the outbound tasks of this instance, because we do not need them
-            // any more.
             return newStage;
         }
 

@@ -46,6 +46,25 @@ public class StreamChannel extends Channel {
         return new StreamChannel(this);
     }
 
+    public Channel exchangeWith(ChannelInitializer channelInitializer) {
+        final ExecutionTask producer = this.producer;
+        final int outputIndex = this.producer.removeOutputChannel(this);
+        final Channel replacementChannel = channelInitializer.setUpOutput(producer, outputIndex);
+
+        for (ExecutionTask consumer : this.consumers) {
+            int inputIndex = consumer.removeInputChannel(this);
+            channelInitializer.setUpInput(replacementChannel, consumer, inputIndex);
+        }
+
+        if (this.isMarkedForInstrumentation()) {
+            replacementChannel.markForInstrumentation();
+        }
+        this.addSibling(replacementChannel);
+        this.removeSiblings();
+
+        return replacementChannel;
+    }
+
     public static class Initializer implements ChannelInitializer {
 
         @Override
