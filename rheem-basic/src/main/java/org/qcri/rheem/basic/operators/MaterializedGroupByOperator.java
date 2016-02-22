@@ -44,7 +44,8 @@ public class MaterializedGroupByOperator<Type, Key> extends UnaryToUnaryOperator
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
         // TODO: Come up with a decent way to estimate the "distinctness" of reduction keys.
-        return Optional.of(new DefaultCardinalityEstimator(0.5d, 1, inputCards -> (long) (inputCards[0] * 0.1)));
+        return Optional.of(new DefaultCardinalityEstimator(0.5d, 1, this.isSupportingBroadcastInputs(),
+                inputCards -> (long) (inputCards[0] * 0.1)));
     }
 
 }

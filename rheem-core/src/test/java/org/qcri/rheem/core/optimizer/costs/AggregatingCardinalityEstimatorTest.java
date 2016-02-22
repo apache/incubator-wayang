@@ -19,8 +19,8 @@ public class AggregatingCardinalityEstimatorTest {
 
     @Test
     public void testEstimate() {
-        CardinalityEstimator partialEstimator1 = new DefaultCardinalityEstimator(0.9, 1, cards -> cards[0] * 2);
-        CardinalityEstimator partialEstimator2 = new DefaultCardinalityEstimator(0.8, 1, cards -> cards[0] * 3);
+        CardinalityEstimator partialEstimator1 = new DefaultCardinalityEstimator(0.9, 1, false, cards -> cards[0] * 2);
+        CardinalityEstimator partialEstimator2 = new DefaultCardinalityEstimator(0.8, 1, false, cards -> cards[0] * 3);
         CardinalityEstimator estimator = new AggregatingCardinalityEstimator(
                 Arrays.asList(partialEstimator1, partialEstimator2)
         );

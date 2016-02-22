@@ -29,6 +29,6 @@ public class TestJoin<In1, In2, Out> extends OperatorBase implements ActualOpera
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
                                                                   Configuration configuration) {
-        return Optional.of(new DefaultCardinalityEstimator(0.7d, 2, (cards) -> cards[0] * cards[1]));
+        return Optional.of(new DefaultCardinalityEstimator(0.7d, 2, false, (cards) -> cards[0] * cards[1]));
     }
 }

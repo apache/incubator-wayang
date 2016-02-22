@@ -5,13 +5,17 @@ import org.junit.Test;
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExecutionContext;
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
@@ -223,6 +227,60 @@ public class JavaIntegrationIT {
         mainSource.connectTo(0, semijoin, 0);
         broadcastSource.broadcastTo(0, semijoin, "allowed values");
         semijoin.connectTo(0, collectingSink, 0);
+
+        RheemPlan rheemPlan = new RheemPlan(collectingSink);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+
+        Collections.sort(collectedValues);
+        Assert.assertEquals(expectedValues, collectedValues);
+    }
+
+    @Test
+    public void testBroadcasts2() {
+        Collection<Integer> broadcastedValues = Arrays.asList(9);
+        Collection<Integer> mainValues = Arrays.asList(2, 4, 6, 2);
+        List<Integer> collectedValues = new ArrayList<>();
+        List<Integer> expectedValues = Arrays.asList(18, 18, 36, 54);
+
+        final DataSetType<Integer> integerDataSetType = DataSetType.createDefault(Integer.class);
+        CollectionSource<Integer> broadcastSource = new CollectionSource<>(broadcastedValues,
+                integerDataSetType);
+        CollectionSource<Integer> mainSource = new CollectionSource<>(mainValues,
+                integerDataSetType);
+        MapOperator<Integer, Integer> mulitply = new MapOperator<>(
+                integerDataSetType,
+                integerDataSetType,
+                new TransformationDescriptor<>(
+                        new FunctionDescriptor.ExtendedSerializableFunction<Integer, Integer>() {
+
+                            private int coefficient;
+
+                            @Override
+                            public void open(ExecutionContext ctx) {
+                                final Collection<Integer> broadcast = ctx.<Integer>getBroadcast("allowed values");
+                                this.coefficient = broadcast.stream().findAny().get();
+                            }
+
+                            @Override
+                            public Integer apply(Integer integer) {
+                                return this.coefficient * integer;
+                            }
+                        },
+                        DataUnitType.createBasic(Integer.class),
+                        DataUnitType.createBasic(Integer.class)
+                )
+        );
+        final LocalCallbackSink<Integer> collectingSink = LocalCallbackSink.createCollectingSink(collectedValues,
+                integerDataSetType);
+
+        mainSource.connectTo(0, mulitply, 0);
+        broadcastSource.broadcastTo(0, mulitply, "allowed values");
+        mulitply.connectTo(0, collectingSink, 0);
 
         RheemPlan rheemPlan = new RheemPlan(collectingSink);
 

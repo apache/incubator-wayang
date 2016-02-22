@@ -24,6 +24,6 @@ public class TestMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
                                                                   Configuration configuration) {
         Validate.isTrue(outputIndex == 0);
-        return Optional.of(new DefaultCardinalityEstimator(1d, 1, cards -> cards[0]));
+        return Optional.of(new DefaultCardinalityEstimator(1d, 1, true, cards -> cards[0]));
     }
 }

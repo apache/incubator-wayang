@@ -32,7 +32,8 @@ public class UnionAllOperator<Type>
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return Optional.of(new DefaultCardinalityEstimator(1d, 2, inputCards -> inputCards[0] + inputCards[1]));
+        return Optional.of(new DefaultCardinalityEstimator(1d, 2, this.isSupportingBroadcastInputs(),
+                inputCards -> inputCards[0] + inputCards[1]));
     }
 
     public OutputSlot<?> getOutput() {

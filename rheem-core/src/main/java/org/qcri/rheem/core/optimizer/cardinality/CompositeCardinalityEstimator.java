@@ -32,7 +32,7 @@ public class CompositeCardinalityEstimator implements CardinalityEstimator {
         final OutputSlot<?> innerOutput = subplan.traceOutput(subplanOutput);
         if (innerOutput == null) {
             return Optional.of(
-                    new DefaultCardinalityEstimator(1d, subplan.getNumInputs(), inputCards -> 0L));
+                    new DefaultCardinalityEstimator(1d, subplan.getNumInputs(), false, inputCards -> 0L));
         }
 
         final List<Collection<InputSlot<?>>> innerInputs = Arrays.stream(subplan.getAllInputs())

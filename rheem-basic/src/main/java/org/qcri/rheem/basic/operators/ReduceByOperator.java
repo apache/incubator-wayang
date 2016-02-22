@@ -57,6 +57,7 @@ public class ReduceByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Type
         return Optional.of(new DefaultCardinalityEstimator(
                 0.5d,
                 1,
+                this.isSupportingBroadcastInputs(),
                 inputCards -> (long) (inputCards[0] * 0.1)));
     }
 }

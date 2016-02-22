@@ -32,6 +32,7 @@ public class DistinctOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
         // TODO: Come up with a dynamic estimator.
         // Assume with a confidence of 0.7 that 70% of the data quanta are pairwise distinct.
-        return Optional.of(new DefaultCardinalityEstimator(0.7d, 1, inputCards -> (long) (inputCards[0] * 0.7d)));
+        return Optional.of(new DefaultCardinalityEstimator(0.7d, 1, this.isSupportingBroadcastInputs(),
+                inputCards -> (long) (inputCards[0] * 0.7d)));
     }
 }
