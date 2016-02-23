@@ -36,7 +36,6 @@ public class JavaPlatform extends Platform {
 
     private void initializeMappings() {
         this.mappings.add(new TextFileSourceToJavaTextFileSourceMapping());
-        this.mappings.add(new StdoutSinkToJavaStdoutSinkMapping());
         this.mappings.add(new MapOperatorToJavaMapOperatorMapping());
         this.mappings.add(new ReduceByOperatorToJavaReduceByOperatorMapping());
         this.mappings.add(new JavaCollectionSourceMapping());

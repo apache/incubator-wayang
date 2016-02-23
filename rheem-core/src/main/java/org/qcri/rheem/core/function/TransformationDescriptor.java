@@ -13,11 +13,31 @@ import java.util.function.Function;
  */
 public class TransformationDescriptor<Input, Output> extends FunctionDescriptor {
 
-    protected final BasicDataUnitType inputType;
+    protected final BasicDataUnitType<Input> inputType;
 
-    protected final BasicDataUnitType outputType;
+    protected final BasicDataUnitType<Output> outputType;
 
     private final FlatMapDescriptor.SerializableFunction<Input,Output> javaImplementation;
+
+    public TransformationDescriptor(FlatMapDescriptor.SerializableFunction<Input, Output> javaImplementation,
+                                       Class<Input> inputTypeClass,
+                                       Class<Output> outputTypeClass) {
+        this(javaImplementation,
+                BasicDataUnitType.createBasic(inputTypeClass),
+                BasicDataUnitType.createBasic(outputTypeClass));
+    }
+
+    public TransformationDescriptor(FlatMapDescriptor.SerializableFunction<Input, Output> javaImplementation,
+                                    Class<Input> inputTypeClass,
+                                    Class<Output> outputTypeClass,
+                                    LoadEstimator cpuLoadEstimator,
+                                    LoadEstimator ramLoadEstimator) {
+        this(javaImplementation,
+                BasicDataUnitType.createBasic(inputTypeClass),
+                BasicDataUnitType.createBasic(outputTypeClass),
+                cpuLoadEstimator,
+                ramLoadEstimator);
+    }
 
     public TransformationDescriptor(FlatMapDescriptor.SerializableFunction<Input, Output> javaImplementation,
                                        BasicDataUnitType inputType,
@@ -56,5 +76,13 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
     @SuppressWarnings("unchecked")
     public TransformationDescriptor<Object, Object> unchecked() {
         return (TransformationDescriptor<Object, Object>) this;
+    }
+
+    public BasicDataUnitType<Input> getInputType() {
+        return this.inputType;
+    }
+
+    public BasicDataUnitType<Output> getOutputType() {
+        return this.outputType;
     }
 }

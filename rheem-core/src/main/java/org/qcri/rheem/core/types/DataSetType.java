@@ -1,6 +1,5 @@
 package org.qcri.rheem.core.types;
 
-import java.util.Iterator;
 import java.util.Objects;
 
 /**
@@ -24,6 +23,13 @@ public class DataSetType<T> {
     /**
      * Creates a flat data set that contains basic data units. This is the normal case.
      */
+    public static <T> DataSetType<T> createDefault(BasicDataUnitType<T> dataUnitType) {
+        return new DataSetType<>(dataUnitType);
+    }
+
+    /**
+     * Creates a flat data set that contains basic data units. This is the normal case.
+     */
     public static <T> DataSetType<T> createDefaultUnchecked(Class<?> dataUnitClass) {
         return new DataSetType<>(new BasicDataUnitType<>(dataUnitClass));
     }
@@ -31,15 +37,30 @@ public class DataSetType<T> {
     /**
      * Creates a data set that contains groups of data units.
      */
-    public static <T> DataSetType<Iterator<T>> createGrouped(Class<? extends T> dataUnitClass) {
+    public static <T> DataSetType<Iterable<T>> createGrouped(Class<? extends T> dataUnitClass) {
         return new DataSetType<>(new DataUnitGroupType<>(new BasicDataUnitType<>(dataUnitClass)));
     }
+
+    /**
+     * Creates a new data set type that contains groups of data units.
+     */
+    public static <T> DataSetType<Iterable<T>> createGrouped(BasicDataUnitType<T> inputType) {
+        return new DataSetType<>(new DataUnitGroupType<>(inputType));
+    }
+
     /**
      *
      * Creates a data set that contains groups of data units.
      */
-    public static <T> DataSetType<Iterator<T>> createGroupedUnchecked(Class<?> dataUnitClass) {
+    public static <T> DataSetType<Iterable<T>> createGroupedUnchecked(Class<?> dataUnitClass) {
         return new DataSetType<>(new DataUnitGroupType<>(new BasicDataUnitType<>(dataUnitClass)));
+    }
+
+    /**
+     * Returns a null type.
+     */
+    public static <T> DataSetType<T> none() {
+        return null;
     }
 
     protected DataSetType(DataUnitType dataUnitType) {
@@ -58,6 +79,16 @@ public class DataSetType<T> {
     @SuppressWarnings("unchecked")
     public DataSetType<Object> unchecked() {
         return (DataSetType<Object>) this;
+    }
+
+    /**
+     * In generic code, we do not have the type parameter values of operators, functions etc. This method avoids casting issues.
+     *
+     * @return this instance with type parameters set to {@link Iterable}{@code <}{@link Object}{@code >}
+     */
+    @SuppressWarnings("unchecked")
+    public DataSetType<Iterable<Object>> uncheckedGroup() {
+        return (DataSetType<Iterable<Object>>) this;
     }
 
     public boolean isCompatibleTo(DataSetType otherDataSetType) {

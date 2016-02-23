@@ -11,7 +11,6 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.function.BinaryOperator;
-import java.util.stream.Stream;
 
 /**
  * Java implementation of the {@link GlobalReduceOperator}.
@@ -29,7 +28,7 @@ public class JavaGlobalReduceOperator<Type>
      */
     public JavaGlobalReduceOperator(DataSetType<Type> type,
                                     ReduceDescriptor<Type> reduceDescriptor) {
-        super(type, reduceDescriptor);
+        super(reduceDescriptor, type);
     }
 
     @Override

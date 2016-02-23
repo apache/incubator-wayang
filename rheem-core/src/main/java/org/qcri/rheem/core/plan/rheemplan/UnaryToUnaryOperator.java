@@ -29,7 +29,7 @@ public abstract class UnaryToUnaryOperator<InputType, OutputType> extends Operat
         return this.getInput().getType();
     }
 
-    public DataSetType getOutputType() {
+    public DataSetType<OutputType> getOutputType() {
         return this.getOutput().getType();
     }
 }

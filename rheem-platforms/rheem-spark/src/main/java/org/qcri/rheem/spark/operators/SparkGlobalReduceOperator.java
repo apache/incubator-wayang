@@ -29,7 +29,7 @@ public class SparkGlobalReduceOperator<Type>
      */
     public SparkGlobalReduceOperator(DataSetType<Type> type,
                                      ReduceDescriptor<Type> reduceDescriptor) {
-        super(type, reduceDescriptor);
+        super(reduceDescriptor, type);
     }
 
     @Override

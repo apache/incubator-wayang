@@ -27,6 +27,15 @@ public class UnionAllOperator<Type>
         super(type, type, type, false);
     }
 
+    /**
+     * Creates a new instance.
+     *
+     * @param typeClass the type of the datasets to be coalesced
+     */
+    public UnionAllOperator(Class<Type> typeClass) {
+        this(DataSetType.createDefault(typeClass));
+    }
+
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(
             final int outputIndex,

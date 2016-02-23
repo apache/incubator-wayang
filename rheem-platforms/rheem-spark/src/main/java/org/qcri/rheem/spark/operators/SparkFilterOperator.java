@@ -25,7 +25,7 @@ public class SparkFilterOperator<Type>
      * @param type type of the dataset elements
      */
     public SparkFilterOperator(DataSetType<Type> type, PredicateDescriptor<Type> predicate) {
-        super(type, predicate);
+        super(predicate, type);
     }
 
     @Override

@@ -2,6 +2,7 @@ package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaFlatMapOperator;
 import org.qcri.rheem.java.JavaPlatform;
 
@@ -27,7 +28,7 @@ public class FlatMapToJavaFlatMapMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "flatMap", new FlatMapOperator<>(null, null, null), false);
+                "flatMap", new FlatMapOperator<>(null, DataSetType.none(), DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

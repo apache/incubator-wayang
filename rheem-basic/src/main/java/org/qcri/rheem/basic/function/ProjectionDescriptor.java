@@ -16,6 +16,14 @@ public class ProjectionDescriptor<Input, Output> extends TransformationDescripto
 
     private final List<String> fieldNames;
 
+    public ProjectionDescriptor(Class<Input> inputTypeClass,
+                                Class<Output> outputTypeClass,
+                                String... fieldNames) {
+        this(BasicDataUnitType.createBasic(inputTypeClass),
+                BasicDataUnitType.createBasic(outputTypeClass),
+                fieldNames);
+    }
+
     public ProjectionDescriptor(BasicDataUnitType inputType, BasicDataUnitType outputType, String... fieldNames) {
         super(createJavaImplementation(fieldNames, inputType), inputType, outputType);
         this.fieldNames = Collections.unmodifiableList(Arrays.asList(fieldNames));

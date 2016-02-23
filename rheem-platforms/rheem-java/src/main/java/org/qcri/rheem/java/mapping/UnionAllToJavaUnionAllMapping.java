@@ -3,6 +3,7 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.UnionAllOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaUnionAllOperator;
 import org.qcri.rheem.java.JavaPlatform;
 
@@ -22,7 +23,7 @@ public class UnionAllToJavaUnionAllMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "unionAll", new UnionAllOperator<>(null), false);
+                "unionAll", new UnionAllOperator<>(DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

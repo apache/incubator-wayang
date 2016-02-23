@@ -18,6 +18,10 @@ public class CollectionSource<T> extends UnarySource<T> implements ActualOperato
 
     protected final Collection<T> collection;
 
+    public CollectionSource(Collection<T> collection, Class<T> typeClass) {
+        this(collection, DataSetType.createDefault(typeClass));
+    }
+
     public CollectionSource(Collection<T> collection, DataSetType<T> type) {
         super(type, null);
         this.collection = collection;

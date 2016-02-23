@@ -1,7 +1,6 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
@@ -12,6 +11,8 @@ import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import scala.Tuple2;
 
+import java.util.Iterator;
+
 
 /**
  * Spark implementation of the {@link MaterializedGroupByOperator}.
@@ -21,14 +22,10 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
         implements SparkExecutionOperator {
 
 
-    /**
-     * Creates a new instance.
-     *
-     * @param type          type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
-     * @param keyDescriptor describes how to extract the key from data units
-     */
-    public SparkMaterializedGroupByOperator(DataSetType<Type> type, TransformationDescriptor<Type, KeyType> keyDescriptor) {
-        super(type, keyDescriptor);
+    public SparkMaterializedGroupByOperator(TransformationDescriptor<Type, KeyType> keyDescriptor,
+                                            DataSetType<Type> inputType,
+                                            DataSetType<Iterable<Type>> outputType) {
+        super(keyDescriptor, inputType, outputType);
     }
 
     @Override
@@ -49,7 +46,7 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkMaterializedGroupByOperator<>(this.getType(), this.getKeyDescriptor());
+        return new SparkMaterializedGroupByOperator<>(this.getKeyDescriptor(), this.getInputType(), this.getOutputType());
     }
 
     private static class GroupProjector<Key, Type> implements Function<scala.Tuple2<Key, Iterable<Type>>, Iterable<Type>> {

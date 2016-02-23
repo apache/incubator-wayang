@@ -3,6 +3,7 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaMapOperator;
 import org.qcri.rheem.java.operators.JavaTextFileSource;
 import org.qcri.rheem.java.JavaPlatform;
@@ -29,7 +30,7 @@ public class MapOperatorToJavaMapOperatorMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "map", new MapOperator<>(null, null, null), false);
+                "map", new MapOperator<>(null, DataSetType.none(), DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

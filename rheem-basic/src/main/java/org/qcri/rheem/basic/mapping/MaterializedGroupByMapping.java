@@ -38,8 +38,10 @@ public class MaterializedGroupByMapping implements Mapping {
             final GroupByOperator groupBy = (GroupByOperator) subplanMatch.getMatch("groupBy").getOperator();
 
             return new MaterializedGroupByOperator<>(
+                    groupBy.getKeyDescriptor(),
                     groupBy.getInputType(),
-                    groupBy.getKeyDescriptor()).at(epoch);
+                    groupBy.getOutputType()
+            ).at(epoch);
         }
     }
 
