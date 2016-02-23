@@ -43,8 +43,8 @@ public class GlobalReduceMapping implements Mapping {
             final ReduceOperator reduce = (ReduceOperator) subplanMatch.getMatch("reduce").getOperator();
 
             return new GlobalReduceOperator<>(
-                    reduce.getInputType(),
-                    reduce.getReduceDescriptor()).at(epoch);
+                    reduce.getReduceDescriptor(), reduce.getInputType()
+            ).at(epoch);
         }
     }
 

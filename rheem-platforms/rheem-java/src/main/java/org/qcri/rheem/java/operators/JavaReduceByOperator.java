@@ -33,7 +33,7 @@ public class JavaReduceByOperator<Type, KeyType>
      */
     public JavaReduceByOperator(DataSetType<Type> type, TransformationDescriptor<Type, KeyType> keyDescriptor,
                                 ReduceDescriptor<Type> reduceDescriptor) {
-        super(type, keyDescriptor, reduceDescriptor);
+        super(keyDescriptor, reduceDescriptor, type);
     }
 
     @Override

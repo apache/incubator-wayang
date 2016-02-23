@@ -25,6 +25,15 @@ public class DistinctOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         super(type, type, false, null);
     }
 
+    /**
+     * Creates a new instance.
+     *
+     * @param typeClass type of the dataunit elements
+     */
+    public DistinctOperator(Class<Type> typeClass) {
+        this(DataSetType.createDefault(typeClass));
+    }
+
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(
             final int outputIndex,

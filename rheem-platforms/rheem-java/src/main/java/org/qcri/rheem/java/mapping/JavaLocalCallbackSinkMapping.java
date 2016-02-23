@@ -3,6 +3,7 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 import org.qcri.rheem.java.JavaPlatform;
 
@@ -22,7 +23,7 @@ public class JavaLocalCallbackSinkMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "sink", new LocalCallbackSink<>(null, null), false);
+                "sink", new LocalCallbackSink<>(null, DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

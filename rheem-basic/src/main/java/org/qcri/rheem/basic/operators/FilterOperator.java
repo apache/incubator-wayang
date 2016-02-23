@@ -9,7 +9,6 @@ import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Optional;
-import java.util.function.Predicate;
 
 
 /**
@@ -24,11 +23,20 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
     /**
      * Creates a new instance.
-     *
-     * @param type type of the dataunit elements
      */
-    public FilterOperator(DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
-        this(type, new PredicateDescriptor<>(predicateDescriptor, (BasicDataUnitType) type.getDataUnitType()));
+    public FilterOperator(PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor, Class<Type> typeClass) {
+        this(new PredicateDescriptor<>(predicateDescriptor, BasicDataUnitType.createBasic(typeClass)));
+    }
+
+    /**
+     * Creates a new instance.
+     */
+    public FilterOperator(PredicateDescriptor<Type> predicateDescriptor) {
+        super(DataSetType.createDefault(predicateDescriptor.getInputType()),
+                DataSetType.createDefault(predicateDescriptor.getInputType()),
+                true,
+                null);
+        this.predicateDescriptor = predicateDescriptor;
     }
 
     /**
@@ -36,7 +44,16 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      *
      * @param type type of the dataunit elements
      */
-    public FilterOperator(DataSetType<Type> type, PredicateDescriptor<Type> predicateDescriptor) {
+    public FilterOperator(DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
+        this(new PredicateDescriptor<>(predicateDescriptor, (BasicDataUnitType) type.getDataUnitType()), type);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param type type of the dataunit elements
+     */
+    public FilterOperator(PredicateDescriptor<Type> predicateDescriptor, DataSetType<Type> type) {
         super(type, type, true, null);
         this.predicateDescriptor = predicateDescriptor;
     }

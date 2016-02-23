@@ -1,7 +1,6 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.junit.Assert;
 import org.junit.Test;
@@ -13,7 +12,9 @@ import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.channels.TestChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -38,11 +39,12 @@ public class SparkMaterializedGroupByOperatorTest extends SparkOperatorTestBase 
         // Build the reduce operator.
         SparkMaterializedGroupByOperator<Tuple2<String, Integer>, String> collocateByOperator =
                 new SparkMaterializedGroupByOperator<>(
-                        DataSetType.createDefaultUnchecked(Tuple2.class),
                         new ProjectionDescriptor<>(
                                 DataUnitType.createBasicUnchecked(Tuple2.class),
                                 DataUnitType.createBasicUnchecked(Tuple2.class),
-                                "field0")
+                                "field0"),
+                        DataSetType.createDefaultUnchecked(Tuple2.class),
+                        DataSetType.createGroupedUnchecked(Tuple2.class)
                 );
 
         // Set up the ChannelExecutors.

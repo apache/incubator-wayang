@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Java implementation of the {@link MaterializedGroupByOperator}.
@@ -21,14 +20,10 @@ public class JavaMaterializedGroupByOperator<Type, KeyType>
         implements JavaExecutionOperator {
 
 
-    /**
-     * Creates a new instance.
-     *
-     * @param type          type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
-     * @param keyDescriptor describes how to extract the key from data units
-     */
-    public JavaMaterializedGroupByOperator(DataSetType<Type> type, TransformationDescriptor<Type, KeyType> keyDescriptor) {
-        super(type, keyDescriptor);
+    public JavaMaterializedGroupByOperator(TransformationDescriptor<Type, KeyType> keyDescriptor,
+                                           DataSetType<Type> inputType,
+                                           DataSetType<Iterable<Type>> outputType) {
+        super(keyDescriptor, inputType, outputType);
     }
 
     @Override
@@ -47,6 +42,6 @@ public class JavaMaterializedGroupByOperator<Type, KeyType>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaMaterializedGroupByOperator<>(this.getType(), this.getKeyDescriptor());
+        return new JavaMaterializedGroupByOperator<>(this.getKeyDescriptor(), this.getInputType(), this.getOutputType());
     }
 }

@@ -2,6 +2,7 @@ package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaGlobalReduceOperator;
 import org.qcri.rheem.java.JavaPlatform;
 
@@ -27,7 +28,7 @@ public class JavaGlobalReduceOperatorMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "reduce", new GlobalReduceOperator<>(null, null), false);
+                "reduce", new GlobalReduceOperator<>(null, DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

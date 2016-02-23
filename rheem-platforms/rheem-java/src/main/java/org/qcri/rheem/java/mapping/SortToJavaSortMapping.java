@@ -3,6 +3,7 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.SortOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaSortOperator;
 import org.qcri.rheem.java.JavaPlatform;
 
@@ -22,7 +23,7 @@ public class SortToJavaSortMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "sort", new SortOperator<>(null), false);
+                "sort", new SortOperator<>(DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

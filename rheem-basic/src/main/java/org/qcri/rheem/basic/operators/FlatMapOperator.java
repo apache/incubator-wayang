@@ -3,6 +3,7 @@ package org.qcri.rheem.basic.operators;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
@@ -24,8 +25,29 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     /**
      * Creates a new instance.
      */
-    public FlatMapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType,
-                           FlatMapDescriptor<InputType, OutputType> functionDescriptor) {
+    public FlatMapOperator(FlatMapDescriptor<InputType, OutputType> functionDescriptor) {
+        super(DataSetType.createDefault(functionDescriptor.getInputType()),
+                DataSetType.createDefault(functionDescriptor.getOutputType()),
+                true,
+                null);
+        this.functionDescriptor = functionDescriptor;
+    }
+
+    /**
+     * Creates a new instance.
+     */
+    public FlatMapOperator(FunctionDescriptor.SerializableFunction<InputType, Iterable<OutputType>> function,
+                           Class<InputType> inputTypeClass,
+                           Class<OutputType> outputTypeClass) {
+        this (new FlatMapDescriptor<>(function, inputTypeClass, outputTypeClass));
+    }
+
+    /**
+     * Creates a new instance.
+     */
+    public FlatMapOperator(FlatMapDescriptor<InputType, OutputType> functionDescriptor,
+                           DataSetType<InputType> inputType,
+                           DataSetType<OutputType> outputType) {
         super(inputType, outputType, true, null);
         this.functionDescriptor = functionDescriptor;
     }

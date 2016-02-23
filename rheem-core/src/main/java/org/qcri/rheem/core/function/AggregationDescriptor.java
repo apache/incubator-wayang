@@ -3,6 +3,7 @@ package org.qcri.rheem.core.function;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataUnitGroupType;
+import org.qcri.rheem.core.types.DataUnitType;
 
 import java.util.Iterator;
 
@@ -15,10 +16,29 @@ public abstract class AggregationDescriptor<InputType, OutputType> extends Funct
 
     private final BasicDataUnitType<OutputType> outputType;
 
+    // TODO: What about aggregation functions?
+
     public AggregationDescriptor(DataUnitGroupType<InputType> inputType, BasicDataUnitType<OutputType> outputType) {
         this(inputType, outputType,
                 LoadEstimator.createFallback(1, 1),
                 LoadEstimator.createFallback(1, 1));
+    }
+
+    public AggregationDescriptor(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass) {
+        this(inputTypeClass,
+                outputTypeClass,
+                LoadEstimator.createFallback(1, 1),
+                LoadEstimator.createFallback(1, 1));
+    }
+
+    public AggregationDescriptor(Class<InputType> inputTypeClass,
+                                 Class<OutputType> outputTypeClass,
+                                 LoadEstimator cpuLoadEstimator,
+                                 LoadEstimator memoryLoadEstimator) {
+        this(DataUnitType.createGrouped(inputTypeClass),
+                DataUnitType.createBasic(outputTypeClass),
+                cpuLoadEstimator,
+                memoryLoadEstimator);
     }
 
     public AggregationDescriptor(DataUnitGroupType<InputType> inputType, BasicDataUnitType<OutputType> outputType,
@@ -47,5 +67,13 @@ public abstract class AggregationDescriptor<InputType, OutputType> extends Funct
     @SuppressWarnings("unchecked")
     public AggregationDescriptor<Object, Object> unchecked() {
         return (AggregationDescriptor<Object, Object>) this;
+    }
+
+    public DataUnitGroupType<InputType> getInputType() {
+        return this.inputType;
+    }
+
+    public BasicDataUnitType<OutputType> getOutputType() {
+        return this.outputType;
     }
 }

@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkFlatMapOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -27,7 +28,7 @@ public class FlatMapToSparkFlatMapMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "flatMap", new FlatMapOperator<>(null, null, null), false);
+                "flatMap", new FlatMapOperator<>(null, DataSetType.none(), DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

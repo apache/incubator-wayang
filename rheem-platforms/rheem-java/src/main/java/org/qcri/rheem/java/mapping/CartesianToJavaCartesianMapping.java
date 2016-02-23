@@ -2,6 +2,7 @@ package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.CartesianOperator;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaCartesianOperator;
 import org.qcri.rheem.java.JavaPlatform;
 
@@ -22,7 +23,7 @@ public class CartesianToJavaCartesianMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "cartesian", new CartesianOperator<>(null, null), false);
+                "cartesian", new CartesianOperator<>(null, DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

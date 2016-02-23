@@ -2,10 +2,12 @@ package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
+import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Optional;
@@ -19,15 +21,33 @@ public class GlobalReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type>
 
     /**
      * Creates a new instance.
+     */
+    public GlobalReduceOperator(FunctionDescriptor.SerializableBinaryOperator<Type> reduceFunction,
+                                Class<Type> typeClass) {
+        this(new ReduceDescriptor<>(reduceFunction, typeClass));
+    }
+
+    /**
+     * Creates a new instance.
      *
-     * @param type             type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
      * @param reduceDescriptor describes the reduction to be performed on the elements
      */
-    public GlobalReduceOperator(DataSetType<Type> type,
-                                ReduceDescriptor<Type> reduceDescriptor) {
+    public GlobalReduceOperator(ReduceDescriptor<Type> reduceDescriptor) {
+        this(reduceDescriptor, DataSetType.createDefault(
+                (BasicDataUnitType<Type>) reduceDescriptor.getInputType().getBaseType()));
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param reduceDescriptor describes the reduction to be performed on the elements
+     * @param type             type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
+     */
+    public GlobalReduceOperator(ReduceDescriptor<Type> reduceDescriptor, DataSetType<Type> type) {
         super(type, type, true, null);
         this.reduceDescriptor = reduceDescriptor;
     }
+
 
     public DataSetType<Type> getType() {
         return this.getInputType();

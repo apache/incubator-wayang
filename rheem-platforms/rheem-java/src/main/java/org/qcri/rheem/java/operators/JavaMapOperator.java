@@ -28,7 +28,7 @@ public class JavaMapOperator<InputType, OutputType>
      * @param functionDescriptor
      */
     public JavaMapOperator(DataSetType inputType, DataSetType outputType, TransformationDescriptor<InputType, OutputType> functionDescriptor) {
-        super(inputType, outputType, functionDescriptor);
+        super(functionDescriptor, inputType, outputType);
     }
 
     @Override

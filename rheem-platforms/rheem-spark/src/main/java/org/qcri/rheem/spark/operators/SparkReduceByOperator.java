@@ -30,7 +30,7 @@ public class SparkReduceByOperator<Type, KeyType>
      */
     public SparkReduceByOperator(DataSetType<Type> type, TransformationDescriptor<Type, KeyType> keyDescriptor,
                                  ReduceDescriptor<Type> reduceDescriptor) {
-        super(type, keyDescriptor, reduceDescriptor);
+        super(keyDescriptor, reduceDescriptor, type);
     }
 
     @Override

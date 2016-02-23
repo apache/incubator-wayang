@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.mapping;
 import org.qcri.rheem.basic.operators.CartesianOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkCartesianOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -22,7 +23,7 @@ public class CartesianToSparkCartesianMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "cartesian", new CartesianOperator<>(null, null), false);
+                "cartesian", new CartesianOperator<>(DataSetType.none(), DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
