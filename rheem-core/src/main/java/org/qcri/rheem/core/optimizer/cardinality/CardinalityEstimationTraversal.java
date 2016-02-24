@@ -83,6 +83,7 @@ public class CardinalityEstimationTraversal {
         final Queue<Activator> activators = this.initializeActivatorQueue(inputEstimates);
         final Map<OutputSlot<?>, CardinalityEstimate> terminalEstimates = new HashMap<>();
         do {
+            assert !activators.isEmpty() : String.format("No source activators. (input activations: %s)", this.inputActivations);
             final Activator activator = activators.poll();
             activator.process(configuration, activators, terminalEstimates);
         } while (!activators.isEmpty());

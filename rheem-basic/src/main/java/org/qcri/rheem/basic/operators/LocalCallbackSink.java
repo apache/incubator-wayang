@@ -30,7 +30,7 @@ public class LocalCallbackSink<T> extends UnarySink<T> {
     }
 
     public static <T> LocalCallbackSink<T> createStdoutSink(Class<T> typeClass) {
-        return new LocalCallbackSink<>(System.out::print, typeClass);
+        return new LocalCallbackSink<>(System.out::println, typeClass);
     }
 
     /**
