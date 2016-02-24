@@ -42,11 +42,11 @@ public class OutputSlot<T> extends Slot<T> {
         }
     }
 
-    public OutputSlot(Slot blueprint, Operator owner) {
+    public OutputSlot(Slot<T> blueprint, Operator owner) {
         this(blueprint.getName(), owner, blueprint.getType());
     }
 
-    public OutputSlot(String name, Operator owner, DataSetType type) {
+    public OutputSlot(String name, Operator owner, DataSetType<T> type) {
         super(name, owner, type);
     }
 
@@ -60,7 +60,7 @@ public class OutputSlot<T> extends Slot<T> {
     }
 
     public OutputSlot copyFor(Operator owner) {
-        return new OutputSlot(this, owner);
+        return new OutputSlot<>(this, owner);
     }
 
     /**
