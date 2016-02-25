@@ -1,10 +1,14 @@
 package org.qcri.rheem.basic.channels;
 
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Objects;
@@ -30,6 +34,17 @@ public class FileChannel extends Channel {
     private FileChannel(FileChannel parent) {
         super(parent);
         this.paths.addAll(parent.getPaths());
+    }
+
+    public static String pickTempPath() {
+        // TODO: Do this properly via the configuration.
+        try {
+            final Path tempDirectory = Files.createTempDirectory("rheem-filechannels");
+            Path tempPath = tempDirectory.resolve("data");
+            return tempPath.toUri().toString();
+        } catch (IOException e) {
+            throw new RheemException(e);
+        }
     }
 
     public void addPath(String path) {
@@ -73,6 +88,11 @@ public class FileChannel extends Channel {
     @Override
     public String toString() {
         return String.format("%s%s", this.getClass().getSimpleName(), this.paths);
+    }
+
+    @Override
+    public FileChannel.Descriptor getDescriptor() {
+        return (FileChannel.Descriptor) super.getDescriptor();
     }
 
     /**

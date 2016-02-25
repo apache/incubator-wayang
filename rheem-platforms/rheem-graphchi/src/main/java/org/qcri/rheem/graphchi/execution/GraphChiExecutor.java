@@ -5,7 +5,6 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.ExecutionProfile;
 import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.core.util.Canonicalizer;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
 import org.qcri.rheem.graphchi.operators.GraphChiOperator;
 
@@ -17,8 +16,6 @@ import java.util.*;
 public class GraphChiExecutor implements Executor {
 
     private final GraphChiPlatform platform;
-
-    private Canonicalizer<Channel> channels;
 
     public GraphChiExecutor(GraphChiPlatform platform) {
         this.platform = platform;
@@ -41,7 +38,7 @@ public class GraphChiExecutor implements Executor {
                     .forEach(scheduledTasks::add);
         }
 
-        return null;
+        return new ExecutionProfile();
     }
 
     /**

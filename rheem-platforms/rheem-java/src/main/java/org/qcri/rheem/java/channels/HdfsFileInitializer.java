@@ -9,15 +9,10 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.operators.JavaExecutionOperator;
-import org.qcri.rheem.java.operators.JavaObjectFileSink;
-import org.qcri.rheem.java.operators.JavaObjectFileSource;
+import org.qcri.rheem.java.operators.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.stream.Stream;
 
@@ -25,18 +20,9 @@ import java.util.stream.Stream;
  * Sets up {@link FileChannel} usage in the {@link JavaPlatform}.
  */
 public class HdfsFileInitializer implements ChannelInitializer {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static String pickTempPath() {
-        // TODO: Do this properly via the configuration.
-        try {
-            final Path tempDirectory = Files.createTempDirectory("rheem-java");
-            Path tempPath = tempDirectory.resolve("data");
-            return tempPath.toUri().toString();
-        } catch (IOException e) {
-            throw new RheemException(e);
-        }
-    }
+    @SuppressWarnings("unused")
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
     public Channel setUpOutput(ChannelDescriptor fileDescriptor, ExecutionTask sourceTask, int index) {
@@ -47,7 +33,19 @@ public class HdfsFileInitializer implements ChannelInitializer {
         final Channel internalChannel = streamChannelInitializer.setUpOutput(StreamChannel.DESCRIPTOR, sourceTask, index);
 
         // Create a sink to write the HDFS file.
-        ExecutionTask sinkTask = this.setUpJavaObjectFileSink(sourceTask, index, internalChannel);
+        ExecutionTask sinkTask;
+        final String targetPath = FileChannel.pickTempPath();
+        final String serialization = ((FileChannel.Descriptor) fileDescriptor).getSerialization();
+        switch (serialization) {
+            case "object-file":
+                sinkTask = this.setUpJavaObjectFileSink(sourceTask, index, internalChannel, targetPath);
+                break;
+            case "tsv":
+                sinkTask = this.setUpTsvFileSink(sourceTask, index, internalChannel, targetPath);
+                break;
+            default:
+                throw new IllegalStateException(String.format("Unsupported serialization: \"%s\"", serialization));
+        }
 
         // Check if the final FileChannel already exists.
         assert sinkTask.getOutputChannels().length == 1;
@@ -60,12 +58,12 @@ public class HdfsFileInitializer implements ChannelInitializer {
         // Create the actual FileChannel.
         final FileChannel fileChannel = new FileChannel((FileChannel.Descriptor) fileDescriptor, sinkTask, index,
                 Channel.extractCardinalityEstimate(sourceTask, index));
-        fileChannel.addPath(((JavaObjectFileSink<?>) sinkTask.getOperator()).getTargetPath());
+        fileChannel.addPath(targetPath);
         fileChannel.addSibling(internalChannel);
         return fileChannel;
     }
 
-    private ExecutionTask setUpJavaObjectFileSink(ExecutionTask sourceTask, int outputIndex, Channel internalChannel) {
+    private ExecutionTask setUpJavaObjectFileSink(ExecutionTask sourceTask, int outputIndex, Channel internalChannel, String targetPath) {
         // Check if the Channel already is consumed by a JavaObjectFileSink.
         for (ExecutionTask consumerTask : internalChannel.getConsumers()) {
             if (consumerTask.getOperator() instanceof JavaObjectFileSink<?>) {
@@ -75,7 +73,6 @@ public class HdfsFileInitializer implements ChannelInitializer {
 
         // Create the JavaObjectFileSink.
         final DataSetType<?> dataSetType = sourceTask.getOperator().getOutput(outputIndex).getType();
-        final String targetPath = pickTempPath();
         JavaObjectFileSink<?> javaObjectFileSink = new JavaObjectFileSink<>(targetPath, dataSetType);
         javaObjectFileSink.getInput(0).setCardinalityEstimate(Channel.extractCardinalityEstimate(sourceTask, outputIndex));
         ExecutionTask sinkTask = new ExecutionTask(javaObjectFileSink, javaObjectFileSink.getNumInputs(), 1);
@@ -90,17 +87,54 @@ public class HdfsFileInitializer implements ChannelInitializer {
         return sinkTask;
     }
 
+    private ExecutionTask setUpTsvFileSink(ExecutionTask sourceTask, int outputIndex, Channel internalChannel, String targetPath) {
+        // Check if the Channel already is consumed by a JavaObjectFileSink.
+        for (ExecutionTask consumerTask : internalChannel.getConsumers()) {
+            if (consumerTask.getOperator() instanceof JavaTsvFileSink<?>) {
+                return consumerTask;
+            }
+        }
+
+        // Create the JavaObjectFileSink.
+        final DataSetType<?> dataSetType = sourceTask.getOperator().getOutput(outputIndex).getType();
+        JavaTsvFileSink<?> javaTsvFileSink = new JavaTsvFileSink<>(targetPath, dataSetType);
+        javaTsvFileSink.getInput(0).setCardinalityEstimate(Channel.extractCardinalityEstimate(sourceTask, outputIndex));
+        ExecutionTask sinkTask = new ExecutionTask(javaTsvFileSink, javaTsvFileSink.getNumInputs(), 1);
+
+        // Connect it to the internalChannel.
+        final ChannelInitializer channelInitializer = javaTsvFileSink
+                .getPlatform()
+                .getChannelManager()
+                .getChannelInitializer(internalChannel.getDescriptor());
+        channelInitializer.setUpInput(internalChannel, sinkTask, 0);
+
+        return sinkTask;
+    }
+
     @Override
     public void setUpInput(Channel channel, ExecutionTask targetTask, int inputIndex) {
         FileChannel fileChannel = (FileChannel) channel;
-        assert fileChannel.getPaths().size() == 1 : "We support only single HDFS files so far.";
+        assert fileChannel.getPaths().size() == 1 :
+                String.format("We support only single HDFS files so far (found %d).", fileChannel.getPaths().size());
 
         // NB: We always put the HDFS file contents into a Collection. That's not necessary if we don't broadcast
         // and use it only once.
 
         // Intercept with a JavaObjectFileSource.
-        // TODO: Improve management of data types, file paths, serialization formats etc.
-        ExecutionTask sourceTask = this.setUpJavaObjectFileSource(fileChannel);
+
+        ExecutionTask sourceTask;
+        final String serialization = fileChannel.getDescriptor().getSerialization();
+        switch (serialization) {
+            case "object-file":
+                sourceTask = this.setUpJavaObjectFileSource(fileChannel);
+                break;
+            case "tsv":
+                sourceTask = this.setUpTsvFileSource(fileChannel);
+                break;
+            default:
+                throw new IllegalStateException(
+                        String.format("%s cannot handle \"%s\" serialization.", targetTask.getPlatform(), serialization));
+        }
 
         // Set up the actual input..
         final ChannelInitializer internalChannelInitializer = targetTask.getOperator().getPlatform().getChannelManager()
@@ -125,6 +159,25 @@ public class HdfsFileInitializer implements ChannelInitializer {
         JavaObjectFileSource<?> javaObjectFileSource = new JavaObjectFileSource<>(fileChannel.getSinglePath(), dataSetType);
         javaObjectFileSource.getOutput(0).setCardinalityEstimate(fileChannel.getCardinalityEstimate());
         ExecutionTask sourceTask = new ExecutionTask(javaObjectFileSource, 1, javaObjectFileSource.getNumOutputs());
+        fileChannel.addConsumer(sourceTask, 0);
+
+        return sourceTask;
+    }
+
+    private ExecutionTask setUpTsvFileSource(FileChannel fileChannel) {
+        // Check if there is already is a JavaTsvFileSource in place.
+        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
+            if (consumerTask.getOperator() instanceof JavaTsvFileSource<?>) {
+                return consumerTask;
+            }
+        }
+
+        // Create the JavaObjectFileSink.
+        // FIXME: This is neither elegant nor sound, as we make assumptions on the FileChannel producer.
+        final DataSetType<?> dataSetType = fileChannel.getProducer().getOperator().getInput(0).getType();
+        JavaTsvFileSource<?> tsvSource = new JavaTsvFileSource<>(fileChannel.getSinglePath(), dataSetType);
+        tsvSource.getOutput(0).setCardinalityEstimate(fileChannel.getCardinalityEstimate());
+        ExecutionTask sourceTask = new ExecutionTask(tsvSource, 1, tsvSource.getNumOutputs());
         fileChannel.addConsumer(sourceTask, 0);
 
         return sourceTask;

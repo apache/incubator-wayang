@@ -6,8 +6,10 @@ import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.graphchi.channels.ChannelManager;
 import org.qcri.rheem.graphchi.execution.GraphChiExecutor;
+import org.qcri.rheem.graphchi.mappings.PageRankMapping;
 
 import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * GraphChi {@link Platform} for Rheem.
@@ -16,13 +18,23 @@ public class GraphChiPlatform extends Platform {
 
     private static Platform instance;
 
+    private final Collection<Mapping> mappings = new LinkedList<>();
+
     protected GraphChiPlatform() {
         super("GraphChi");
+        this.initialize();
+    }
 
+    /**
+     * Initializes this instance.
+     */
+    private void initialize() {
         // Set up.
         CompressedIO.disableCompression();
         GraphChiPlatform.class.getClassLoader().setClassAssertionStatus(
                 "edu.cmu.graphchi.preprocessing.FastSharder", false);
+
+        this.mappings.add(new PageRankMapping());
     }
 
     public static Platform getInstance() {
@@ -39,7 +51,7 @@ public class GraphChiPlatform extends Platform {
 
     @Override
     public Collection<Mapping> getMappings() {
-        return null;
+        return this.mappings;
     }
 
     @Override

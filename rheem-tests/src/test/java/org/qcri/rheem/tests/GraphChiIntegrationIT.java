@@ -11,6 +11,7 @@ import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
+import org.qcri.rheem.graphchi.GraphChiPlatform;
 import org.qcri.rheem.java.JavaPlatform;
 
 import java.util.*;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * Integration tests for the integration of GraphChi with Rheem.
  */
-public class GraphChiIntergationIT {
+public class GraphChiIntegrationIT {
 
     @Test
     public void testPageRank() {
@@ -54,6 +55,7 @@ public class GraphChiIntergationIT {
 
         // Load the adjacency list.
         final CollectionSource<char[]> adjacencySource = new CollectionSource<>(adjacencies, char[].class);
+        adjacencySource.setName("adjacency source");
 
         // Split the adjacency list into an edge list.
         FlatMapOperator<char[], Tuple2<Character, Character>> adjacencySplitter = new FlatMapOperator<>(
@@ -68,6 +70,7 @@ public class GraphChiIntergationIT {
                         DataUnitType.createBasic(char[].class),
                         DataUnitType.<Tuple2<Character, Character>>createBasicUnchecked(Tuple2.class))
         );
+        adjacencySplitter.setName("adjacency splitter");
         adjacencySource.connectTo(0, adjacencySplitter, 0);
 
         // Extract the vertices from the edge list.
@@ -83,10 +86,12 @@ public class GraphChiIntergationIT {
                         DataUnitType.createBasic(Character.class)
                 )
         );
+        vertexSplitter.setName("vertex splitter");
         adjacencySplitter.connectTo(0, vertexSplitter, 0);
 
         // Find the distinct vertices.
         DistinctOperator<Character> vertexCanonicalizer = new DistinctOperator<>(Character.class);
+        vertexCanonicalizer.setName("vertex canonicalizer");
         vertexSplitter.connectTo(0, vertexCanonicalizer, 0);
 
         // Assign an ID to each distinct vertex.
@@ -97,8 +102,10 @@ public class GraphChiIntergationIT {
                         DataUnitType.<Tuple2<Character, Integer>>createBasicUnchecked(Tuple2.class)
                 )
         );
+        zipWithId.setName("zip with ID");
         vertexCanonicalizer.connectTo(0, zipWithId, 0);
 
+        // Base the edge list on vertex IDs.
         MapOperator<Tuple2<Character, Character>, Tuple2<Integer, Integer>> translate = new MapOperator<>(
                 new TransformationDescriptor<>(
                         new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Character, Character>, Tuple2<Integer, Integer>>() {
@@ -121,19 +128,54 @@ public class GraphChiIntergationIT {
                         DataUnitType.<Tuple2<Integer, Integer>>createBasicUnchecked(Tuple2.class)
                 )
         );
+        translate.setName("translate");
         adjacencySplitter.connectTo(0, translate, 0);
         zipWithId.broadcastTo(0, translate, "vertex IDs");
 
+        // Run the PageRank algorithm.
+        PageRankOperator pageRank = new PageRankOperator(20);
+        pageRank.setName("PageRank");
+        translate.connectTo(0, pageRank, 0);
+
+        // Back-translate the page ranks.
+        MapOperator<Tuple2<Integer, Float>, Tuple2<Character, Float>> backtranslate = new MapOperator<>(
+                new TransformationDescriptor<>(
+                        new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Integer, Float>, Tuple2<Character, Float>>() {
+
+                            private Map<Integer, Character> dictionary;
+
+                            @Override
+                            public void open(ExecutionContext ctx) {
+                                this.dictionary = ctx.<Tuple2<Character, Integer>>getBroadcast("vertex IDs").stream()
+                                        .map(Tuple2::swap)
+                                        .collect(
+                                        Collectors.toMap(Tuple2::getField0, Tuple2::getField1)
+                                );
+                            }
+
+                            @Override
+                            public Tuple2<Character, Float> apply(Tuple2<Integer, Float> in) {
+                                return new Tuple2<>(this.dictionary.get(in.field0), in.field1);
+                            }
+                        },
+                        DataUnitType.<Tuple2<Integer, Float>>createBasicUnchecked(Tuple2.class),
+                        DataUnitType.<Tuple2<Character, Float>>createBasicUnchecked(Tuple2.class)
+                )
+        );
+        backtranslate.setName("bracktranslate");
+        pageRank.connectTo(0, backtranslate, 0);
+        zipWithId.broadcastTo(0, backtranslate, "vertex IDs");
 
         LocalCallbackSink callbackSink = LocalCallbackSink.createStdoutSink(
-                DataSetType.<Tuple2<Integer, Integer>>createDefaultUnchecked(Tuple2.class));
-        translate.connectTo(0, callbackSink, 0);
-
+                DataSetType.<Tuple2<Character, Float>>createDefaultUnchecked(Tuple2.class));
+        callbackSink.setName("sink");
+        backtranslate.connectTo(0, callbackSink, 0);
 
         RheemPlan rheemPlan = new RheemPlan(callbackSink);
 
         RheemContext rc = new RheemContext();
         rc.register(JavaPlatform.getInstance());
+        rc.register(GraphChiPlatform.getInstance());
 
         rc.execute(rheemPlan);
 

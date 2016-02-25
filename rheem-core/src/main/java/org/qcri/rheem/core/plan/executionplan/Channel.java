@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
@@ -18,6 +19,8 @@ import java.util.stream.Stream;
  * Models the data movement between to {@link ExecutionTask}s.
  */
 public abstract class Channel {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * Was used to set up this instance.
@@ -268,7 +271,7 @@ public abstract class Channel {
      * {@link ExecutionStage}s.
      */
     public void retain(Set<ExecutionStage> retainableStages) {
-        this.consumers.removeIf(consumer -> !retainableStages.contains(retainableStages));
+        this.consumers.removeIf(consumer -> !retainableStages.contains(consumer.getStage()));
         this.removeSiblingsWhere((sibling) -> !retainableStages.contains(sibling.getProducer().getStage()));
     }
 
@@ -310,8 +313,12 @@ public abstract class Channel {
      * Copies the consumers of the given {@code channel} into this instance.
      */
     private void copyConsumersFrom(Channel channel) {
-        assert this.consumers.isEmpty();
+        assert channel.getOriginal() == this;
         for (ExecutionTask consumer : new ArrayList<>(channel.getConsumers())) {
+            // We must take care not to copy back channels, that we already have in the original.
+            assert this.consumers.stream()
+                    .noneMatch(existingConsumer -> existingConsumer.getOperator().equals(consumer.getOperator())) :
+                    String.format("Overlap in existing %s and new %s.", this.consumers, channel.getConsumers());
             consumer.exchangeInputChannel(channel, this);
         }
     }
@@ -321,6 +328,6 @@ public abstract class Channel {
     }
 
     public ChannelDescriptor getDescriptor() {
-        return descriptor;
+        return this.descriptor;
     }
 }

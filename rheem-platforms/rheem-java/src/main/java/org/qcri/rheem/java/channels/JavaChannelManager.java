@@ -44,6 +44,10 @@ public class JavaChannelManager extends DefaultChannelManager {
                 new HdfsFileInitializer(),
                 channel -> new HdfsFileInitializer.Executor((FileChannel) channel),
                 true, true);
+        this.addChannel(new FileChannel.Descriptor("hdfs", "tsv"),
+                new HdfsFileInitializer(),
+                channel -> new HdfsFileInitializer.Executor((FileChannel) channel),
+                true, true);
     }
 
     private void addChannel(ChannelDescriptor channelClass,

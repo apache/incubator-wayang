@@ -109,11 +109,12 @@ public class ExecutionStage {
 
     @Override
     public String toString() {
-        return String.format("%s[%s-%d:%d]",
+        return String.format("%s[%s-%d:%d-%6x]",
                 this.getClass().getSimpleName(),
                 this.platformExecution.getPlatform().getName(),
                 this.platformExecution.getSequenceNumber(),
-                this.sequenceNumber);
+                this.sequenceNumber,
+                this.hashCode());
     }
 
     /**

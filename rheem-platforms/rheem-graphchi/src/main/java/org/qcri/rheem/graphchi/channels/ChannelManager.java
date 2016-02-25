@@ -25,7 +25,7 @@ public class ChannelManager extends DefaultChannelManager {
                 HDFS_TSV_DESCRIPTOR,
                 HDFS_TSV_DESCRIPTOR);
 
-        this.channelInitializers.put(HDFS_TSV_DESCRIPTOR, new HdfsFiles.Initializer());
+        this.channelInitializers.put(HDFS_TSV_DESCRIPTOR, new FileChannels.Initializer());
     }
 
     @Override

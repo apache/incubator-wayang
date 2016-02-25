@@ -12,7 +12,8 @@ public class Tuple2<T0, T1> implements Serializable {
 
     public T1 field1;
 
-    public Tuple2() { }
+    public Tuple2() {
+    }
 
     public Tuple2(T0 field0, T1 field1) {
         this.field0 = field0;
@@ -44,5 +45,12 @@ public class Tuple2<T0, T1> implements Serializable {
 
     public T1 getField1() {
         return this.field1;
+    }
+
+    /**
+     * @return a new instance with the fields of this instance swapped
+     */
+    public Tuple2<T1, T0> swap() {
+        return new Tuple2<>(this.field1, this.field0);
     }
 }

@@ -50,7 +50,7 @@ public class ExecutionPlan {
      */
     public void retain(Set<ExecutionStage> retainableStages) {
         for (ExecutionStage stage : retainableStages) {
-            for (ExecutionTask terminalTask : stage.getTerminalTasks()) {
+            for (ExecutionTask terminalTask : stage.getAllTasks()) {
                 for (Channel channel : terminalTask.getOutputChannels()) {
                     channel.retain(retainableStages);
                 }
@@ -93,8 +93,12 @@ public class ExecutionPlan {
             final ExecutionStage producerStage = original.getProducer().getStage();
             for (ExecutionTask consumer : original.getConsumers()) {
                 final ExecutionStage consumerStage = consumer.getStage();
-                assert producerStage != null : String.format("No stage found for %s.", producerStage);
-                producerStage.addSuccessor(consumerStage);
+                assert producerStage != null : String.format("No stage found for %s.", original.getProducer());
+                assert consumerStage != null : String.format("No stage found for %s.", consumer);
+                // Equal stages possible on "partially open" Channels.
+                if (producerStage != consumerStage) {
+                    producerStage.addSuccessor(consumerStage);
+                }
             }
         }
     }

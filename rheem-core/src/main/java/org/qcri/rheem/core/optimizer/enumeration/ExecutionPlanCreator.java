@@ -86,7 +86,15 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
             if (!consumerInputs.isEmpty()) {
                 Channel channelCopy = channel.copy();
                 this.inputChannels.add(channelCopy);
+                // If the channel was only "partially open", then we need to consider not to re-create existing ExecutionTasks.
+                final Set<InputSlot<?>> connectedInputSlots = channel.getConsumers().stream()
+                        .map(consumer -> consumer.getInputSlotFor(channel))
+                        .collect(Collectors.toSet());
                 for (InputSlot<?> consumerInput : consumerInputs) {
+                    if (connectedInputSlots.contains(consumerInput)) {
+                        this.logger.debug("Not creating ExecutionTasks for {}.", consumerInput);
+                        continue;
+                    }
                     this.logger.debug("Intercepting {}->{}.", producerOutput, consumerInput);
                     final ExecutionOperator consumerOperator = (ExecutionOperator) consumerInput.getOwner();
                     final Activator consumerActivator = this.activators.computeIfAbsent(consumerOperator, Activator::new);

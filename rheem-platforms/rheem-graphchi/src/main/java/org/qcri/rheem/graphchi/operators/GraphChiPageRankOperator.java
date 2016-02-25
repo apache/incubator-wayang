@@ -8,15 +8,12 @@ import edu.cmu.graphchi.preprocessing.FastSharder;
 import edu.cmu.graphchi.preprocessing.VertexIdTranslate;
 import edu.cmu.graphchi.vertexdata.VertexAggregator;
 import org.qcri.rheem.basic.channels.FileChannel;
+import org.qcri.rheem.basic.operators.PageRankOperator;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
@@ -31,15 +28,16 @@ import java.util.List;
 /**
  * PageRank {@link Operator} implementation for the {@link GraphChiPlatform}.
  */
-public class GraphChiPageRankOperator extends OperatorBase implements GraphChiOperator {
+public class GraphChiPageRankOperator extends PageRankOperator implements GraphChiOperator {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public GraphChiPageRankOperator() {
-        super(1, 1, false, null);
-        // TODO: Which datatype should we impose?
-        this.inputSlots[0] = new InputSlot<>("input", this, DataSetType.createDefault(Object.class));
-        this.outputSlots[0] = new OutputSlot<>("input", this, DataSetType.createDefault(Object.class));
+    public GraphChiPageRankOperator(int numIterations) {
+        super(numIterations);
+    }
+
+    public GraphChiPageRankOperator(PageRankOperator pageRankOperator) {
+        super(pageRankOperator.getNumIterations());
     }
 
     @Override
@@ -76,28 +74,22 @@ public class GraphChiPageRankOperator extends OperatorBase implements GraphChiOp
 
         // Run GraphChi.
         GraphChiEngine<Float, Float> engine = new GraphChiEngine<>(graphName, numShards);
-        engine.setEdataConverter(new
-
-                FloatConverter()
-
-        );
-        engine.setVertexDataConverter(new
-
-                FloatConverter()
-
-        );
+        engine.setEdataConverter(new FloatConverter());
+        engine.setVertexDataConverter(new FloatConverter());
         engine.setModifiesInedges(false); // Important optimization
-        engine.run(new Pagerank(), 4);
+        engine.run(new Pagerank(), this.numIterations);
 
         // Output results.
         final FileSystem outFs = FileSystems.getFileSystem(outputFileChannel.getSinglePath()).get();
-        try (final DataOutputStream dos = new DataOutputStream(outFs.create(outputFileChannel.getSinglePath()))) {
+        try (final OutputStreamWriter writer = new OutputStreamWriter(outFs.create(outputFileChannel.getSinglePath()))) {
             VertexIdTranslate trans = engine.getVertexIdTranslate();
             VertexAggregator.foreach(engine.numVertices(), graphName, new FloatConverter(),
                     (vertexId, vertexValue) -> {
                         try {
-                            dos.writeInt(trans.backward(vertexId));
-                            dos.writeFloat(vertexValue);
+                            writer.write(String.valueOf(trans.backward(vertexId)));
+                            writer.write('\t');
+                            writer.write(String.valueOf(vertexValue));
+                            writer.write('\n');
                         } catch (IOException e) {
                             throw new UncheckedIOException(e);
                         }
@@ -106,8 +98,6 @@ public class GraphChiPageRankOperator extends OperatorBase implements GraphChiOp
         } catch (UncheckedIOException e) {
             throw e.getCause();
         }
-
-
     }
 
     /**
@@ -145,4 +135,5 @@ public class GraphChiPageRankOperator extends OperatorBase implements GraphChiOp
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(ChannelManager.HDFS_TSV_DESCRIPTOR);
     }
+
 }

@@ -36,7 +36,7 @@ public class GraphChiPageRankOperatorTest {
         tempFile.deleteOnExit();
         outputFile.addPath(tempFile.toURI().toString());
 
-        final GraphChiPageRankOperator graphChiPageRankOperator = new GraphChiPageRankOperator();
+        final GraphChiPageRankOperator graphChiPageRankOperator = new GraphChiPageRankOperator(20);
         graphChiPageRankOperator.execute(new Channel[]{inputFile}, new Channel[]{outputFile});
     }
 
