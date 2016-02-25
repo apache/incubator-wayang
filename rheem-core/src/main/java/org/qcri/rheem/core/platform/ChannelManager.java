@@ -20,10 +20,10 @@ public interface ChannelManager {
     /**
      * Provides a {@link ChannelInitializer} for the given {@link Channel} class.
      *
-     * @param channelClass the {@link Channel} class
+     * @param channelDescriptor describes a type of {@link Channel}
      * @return the {@link ChannelInitializer}
      */
-    ChannelInitializer getChannelInitializer(Class<? extends Channel> channelClass);
+    ChannelInitializer getChannelInitializer(ChannelDescriptor channelDescriptor);
 
     /**
      * Exchange the given {@link Channel} with one that is capable of inter-stage processing.

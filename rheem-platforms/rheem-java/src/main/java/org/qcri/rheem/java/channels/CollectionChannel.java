@@ -4,6 +4,7 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
@@ -19,8 +20,13 @@ public class CollectionChannel extends Channel {
 
     private static final boolean IS_INTERNAL = true;
 
-    protected CollectionChannel(ExecutionTask producer, int outputIndex) {
-        super(producer, outputIndex);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(CollectionChannel.class);
+
+    protected CollectionChannel(ChannelDescriptor channelDescriptor,
+                                ExecutionTask producer,
+                                int outputIndex) {
+        super(channelDescriptor, producer, outputIndex);
+        assert channelDescriptor == DESCRIPTOR;
     }
 
     private CollectionChannel(CollectionChannel parent) {
@@ -50,12 +56,14 @@ public class CollectionChannel extends Channel {
     public static class Initializer implements ChannelInitializer {
 
         @Override
-        public CollectionChannel setUpOutput(ExecutionTask executionTask, int index) {
+        public CollectionChannel setUpOutput(ChannelDescriptor descriptor, ExecutionTask executionTask, int index) {
+            assert descriptor == DESCRIPTOR;
+
             // TODO: We might need to add a "collector" operator or the like because this channel might introduce overhead.
             // Then we might also get rid of the ChannelExecutors.
             final Channel existingOutputChannel = executionTask.getOutputChannel(index);
             if (existingOutputChannel == null) {
-                return new CollectionChannel(executionTask, index);
+                return new CollectionChannel(descriptor, executionTask, index);
             } else if (existingOutputChannel instanceof CollectionChannel) {
                 return (CollectionChannel) existingOutputChannel;
             } else {

@@ -4,6 +4,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.spark.operators.SparkBroadcastOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
@@ -17,8 +18,13 @@ public class BroadcastChannel extends Channel {
 
     private static final boolean IS_INTERNAL = true;
 
-    protected BroadcastChannel(ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
-        super(producer, outputIndex, cardinalityEstimate);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(BroadcastChannel.class);
+
+    protected BroadcastChannel(ChannelDescriptor descriptor,
+                               ExecutionTask producer,
+                               int outputIndex,
+                               CardinalityEstimate cardinalityEstimate) {
+        super(descriptor, producer, outputIndex, cardinalityEstimate);
     }
 
     private BroadcastChannel(BroadcastChannel parent) {
@@ -48,13 +54,15 @@ public class BroadcastChannel extends Channel {
     public static class Initializer implements ChannelInitializer {
 
         @Override
-        public Channel setUpOutput(ExecutionTask executionTask, int index) {
+        public Channel setUpOutput(ChannelDescriptor descriptor, ExecutionTask executionTask, int index) {
             assert executionTask.getOperator().getPlatform() == SparkPlatform.getInstance();
 
             // Set up an intermediate Channel at first.
             final Platform platform = executionTask.getOperator().getPlatform();
-            final ChannelInitializer rddChannelInitializer = platform.getChannelManager().getChannelInitializer(RddChannel.class);
-            final Channel rddChannel = rddChannelInitializer.setUpOutput(executionTask, index);
+            final ChannelInitializer rddChannelInitializer = platform
+                    .getChannelManager()
+                    .getChannelInitializer(RddChannel.DESCRIPTOR);
+            final Channel rddChannel = rddChannelInitializer.setUpOutput(RddChannel.DESCRIPTOR, executionTask, index);
 
             // Next, broadcast the data.
             final ExecutionTask broadcastTask = rddChannel.getConsumers().stream()
@@ -74,7 +82,7 @@ public class BroadcastChannel extends Channel {
                 assert broadcastTask.getOutputChannel(0) instanceof BroadcastChannel;
                 return broadcastTask.getOutputChannel(0);
             } else {
-                return new BroadcastChannel(broadcastTask, 0, rddChannel.getCardinalityEstimate());
+                return new BroadcastChannel(descriptor, broadcastTask, 0, rddChannel.getCardinalityEstimate());
             }
         }
 

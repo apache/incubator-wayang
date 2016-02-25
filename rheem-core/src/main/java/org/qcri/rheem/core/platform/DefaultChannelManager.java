@@ -17,17 +17,17 @@ public abstract class DefaultChannelManager implements ChannelManager {
 
     private final Platform platform;
 
-    private final Class<? extends Channel> reusableInternalChannelInitializerClass;
+    private final ChannelDescriptor reusableInternalChannelDescriptor;
 
-    private final Class<? extends Channel> nonreusableInternalChannelInitializerClass;
+    private final ChannelDescriptor nonreusableInternalChannelDescriptor;
 
     public DefaultChannelManager(Platform platform,
-                                 Class<? extends Channel> reusableInternalChannelInitializerClass,
-                                 Class<? extends Channel> nonreusableInternalChannelInitializerClass) {
+                                 ChannelDescriptor reusableInternalChannelDescriptor,
+                                 ChannelDescriptor nonreusableInternalChannelDescriptor) {
         Validate.notNull(platform);
         this.platform = platform;
-        this.reusableInternalChannelInitializerClass = reusableInternalChannelInitializerClass;
-        this.nonreusableInternalChannelInitializerClass = nonreusableInternalChannelInitializerClass;
+        this.reusableInternalChannelDescriptor = reusableInternalChannelDescriptor;
+        this.nonreusableInternalChannelDescriptor = nonreusableInternalChannelDescriptor;
     }
 
     @Override
@@ -36,34 +36,34 @@ public abstract class DefaultChannelManager implements ChannelManager {
         assert sourceOperator.getPlatform().equals(this.platform);
 
         // Gather all supported output Channel classes.
-        final List<Class<? extends Channel>> supportedOutputChannels = sourceOperator.getSupportedOutputChannels(outputIndex);
+        final List<ChannelDescriptor> supportedOutputChannels = sourceOperator.getSupportedOutputChannels(outputIndex);
 
         // Find the best-matching Channel class for each input.
-        List<Class<? extends Channel>> pickedChannelClasses = new ArrayList<>(targetDescriptors.size());
+        List<ChannelDescriptor> pickedChannelDescriptors = new ArrayList<>(targetDescriptors.size());
         for (Tuple<ExecutionTask, Integer> targetDescriptor : targetDescriptors) {
             final ExecutionTask targetTask = targetDescriptor.getField0();
             final ExecutionOperator targetOperator = targetTask.getOperator();
             final Integer inputIndex = targetDescriptor.getField1();
-            final List<Class<? extends Channel>> supportedInputChannels =
+            final List<ChannelDescriptor> supportedInputChannels =
                     targetOperator.getSupportedInputChannels(inputIndex);
 
-            Class<? extends Channel> pickedClass = this.pickChannelClass(supportedOutputChannels, supportedInputChannels);
-            if (pickedClass == null) {
+            ChannelDescriptor pickChannelDescriptor = this.pickChannelDescriptor(supportedOutputChannels, supportedInputChannels);
+            if (pickChannelDescriptor == null) {
                 return false;
             } else {
-                pickedChannelClasses.add(pickedClass);
+                pickedChannelDescriptors.add(pickChannelDescriptor);
             }
         }
 
         // Find out if we need a reusable internal Channel at first. This is the case if we have multiple consumers.
-        int numDistinctExternalChannels = (int) pickedChannelClasses.stream()
+        int numDistinctExternalChannels = (int) pickedChannelDescriptors.stream()
                 .filter(pickedClass -> !this.getChannelInitializer(pickedClass).isInternal())
                 .distinct()
                 .count();
-        int numInternalChannels = (int) pickedChannelClasses.stream()
+        int numInternalChannels = (int) pickedChannelDescriptors.stream()
                 .filter(pickedClass -> this.getChannelInitializer(pickedClass).isInternal())
                 .count();
-        boolean hasInternalReusableChannel = pickedChannelClasses.stream()
+        boolean hasInternalReusableChannel = pickedChannelDescriptors.stream()
                 .filter(pickedClass -> this.getChannelInitializer(pickedClass).isInternal())
                 .map(pickedClass -> this.getChannelInitializer(pickedClass).isReusable())
                 .reduce(true, (a, b) -> a & b);
@@ -71,17 +71,17 @@ public abstract class DefaultChannelManager implements ChannelManager {
                 (numDistinctExternalChannels + numInternalChannels) > 1;
 
         // Pick the internal channel.
-        final ChannelInitializer internalChannelInitializer =
-                this.getInternalChannelInitializer(isRequestReusableInternalChannel);
-        internalChannelInitializer.setUpOutput(sourceTask, outputIndex);
+        final ChannelDescriptor internalChannelDescriptor = this.getInternalChannelDescriptor(isRequestReusableInternalChannel);
+        final ChannelInitializer internalChannelInitializer = this.getChannelInitializer(internalChannelDescriptor);
+        internalChannelInitializer.setUpOutput(internalChannelDescriptor, sourceTask, outputIndex);
 
         // Once, we have settled upon the internal Channel, let the ChannelInitializer do their work, assuming that
         // they will now incorporate it.
         for (int targetId = 0; targetId < targetDescriptors.size(); targetId++) {
             // Set up Channel as output.
-            final Class<? extends Channel> pickedChannelClass = pickedChannelClasses.get(targetId);
-            final ChannelInitializer sourceInitializer = this.getChannelInitializer(pickedChannelClass);
-            final Channel channel = sourceInitializer.setUpOutput(sourceTask, outputIndex);
+            final ChannelDescriptor pickedChannelDescriptor = pickedChannelDescriptors.get(targetId);
+            final ChannelInitializer sourceInitializer = this.getChannelInitializer(pickedChannelDescriptor);
+            final Channel channel = sourceInitializer.setUpOutput(pickedChannelDescriptor, sourceTask, outputIndex);
 
             // Connect to the target ExecutionTask.
             // TODO: Allow the target Platform to plan Channels together (e.g., reading HDFS only once).
@@ -90,7 +90,7 @@ public abstract class DefaultChannelManager implements ChannelManager {
             final ExecutionOperator targetOperator = targetTask.getOperator();
             final Integer inputIndex = targetDescriptor.getField1();
             final ChannelManager targetChannelManager = targetOperator.getPlatform().getChannelManager();
-            final ChannelInitializer targetInitializer = targetChannelManager.getChannelInitializer(channel.getClass());
+            final ChannelInitializer targetInitializer = targetChannelManager.getChannelInitializer(channel.getDescriptor());
             targetInitializer.setUpInput(channel, targetTask, inputIndex);
         }
 
@@ -104,9 +104,9 @@ public abstract class DefaultChannelManager implements ChannelManager {
      * @param supportedInputChannels  a {@link List} of (input) {@link Channel} classes
      * @return the picked {@link Channel} class or {@code null} if none was picked
      */
-    protected Class<? extends Channel> pickChannelClass(List<Class<? extends Channel>> supportedOutputChannels,
-                                                        List<Class<? extends Channel>> supportedInputChannels) {
-        for (Class<? extends Channel> supportedOutputChannel : supportedOutputChannels) {
+    protected ChannelDescriptor pickChannelDescriptor(List<ChannelDescriptor> supportedOutputChannels,
+                                                      List<ChannelDescriptor> supportedInputChannels) {
+        for (ChannelDescriptor supportedOutputChannel : supportedOutputChannels) {
             if (supportedInputChannels.contains(supportedOutputChannel)) {
                 return supportedOutputChannel;
             }
@@ -115,11 +115,10 @@ public abstract class DefaultChannelManager implements ChannelManager {
     }
 
 
-    protected ChannelInitializer getInternalChannelInitializer(boolean isRequestReusable) {
-        Class<? extends Channel> channelClass =  isRequestReusable ?
-                this.reusableInternalChannelInitializerClass :
-                this.nonreusableInternalChannelInitializerClass;
-        return this.getChannelInitializer(channelClass);
+    protected ChannelDescriptor getInternalChannelDescriptor(boolean isRequestReusable) {
+        return isRequestReusable ?
+                this.reusableInternalChannelDescriptor :
+                this.nonreusableInternalChannelDescriptor;
     }
 
     @Override
@@ -135,15 +134,15 @@ public abstract class DefaultChannelManager implements ChannelManager {
 //     * @param size the size of the {@link List}
 //     * @return the {@link List}
 //     */
-//    private List<Class<? extends Channel>> createNullList(int size) {
-//        List<Class<? extends Channel>> nullList = new ArrayList<>(size);
+//    private List<ChannelDescriptor> createNullList(int size) {
+//        List<ChannelDescriptor> nullList = new ArrayList<>(size);
 //        for (int i = 0; i < size; i++) {
 //            nullList.add(null);
 //        }
 //        return nullList;
 //    }
 //
-//    public Tuple<Class<? extends Channel>[], Class<? extends Channel>[]>
+//    public Tuple<ChannelDescriptor[], ChannelDescriptor[]>
 //    pickChannelClasses(ExecutionOperator operator,
 //                       int outputIndex,
 //                       List<InputSlot<Object>> internalInputs,
@@ -151,10 +150,10 @@ public abstract class DefaultChannelManager implements ChannelManager {
 //        // NB: Default implementation. Override as required.
 //
 //        // Gather all supported output Channel classes.
-//        final List<Class<? extends Channel>> supportedOutputChannels = operator.getSupportedOutputChannels(outputIndex);
+//        final List<ChannelDescriptor> supportedOutputChannels = operator.getSupportedOutputChannels(outputIndex);
 //
 //        // Try to find a common Channel for all external inputs.
-//        final Class<? extends Channel>[] externalChannels = this.pickChannelClasses(
+//        final ChannelDescriptor[] externalChannels = this.pickChannelClasses(
 //                supportedOutputChannels, externalInputs, false);
 //        if (externalChannels == null) return null;
 //
@@ -162,7 +161,7 @@ public abstract class DefaultChannelManager implements ChannelManager {
 //        boolean isRequestReusable = (externalChannels.length == 0 && internalInputs.size() < 2) ||
 //                (this.hasOnlySingleClass(externalChannels) && internalInputs.isEmpty());
 //
-//        final Class<? extends Channel>[] internalChannels = this.pickChannelClasses(
+//        final ChannelDescriptor[] internalChannels = this.pickChannelClasses(
 //                supportedOutputChannels, internalInputs, isRequestReusable);
 //        if (internalChannels == null) {
 //            return null;
@@ -171,18 +170,18 @@ public abstract class DefaultChannelManager implements ChannelManager {
 //        return new Tuple<>(internalChannels, externalChannels);
 //    }
 //
-//    private Class<? extends Channel>[] pickChannelClasses(List<Class<? extends Channel>> outputChannelClasses,
+//    private ChannelDescriptor[] pickChannelClasses(List<ChannelDescriptor> outputChannelClasses,
 //                                                          List<InputSlot<Object>> inputs,
 //                                                          boolean isRequestReusable) {
-//        List<Class<? extends Channel>> permittedChannels = isRequestReusable ?
+//        List<ChannelDescriptor> permittedChannels = isRequestReusable ?
 //                outputChannelClasses.stream()
 //                        .filter(channelClass -> this.getChannelInitializer(channelClass).isReusable())
 //                        .collect(Collectors.toList()) :
 //                outputChannelClasses;
-//        final List<List<Class<? extends Channel>>> inputChannelClassLists = inputs.stream()
+//        final List<List<ChannelDescriptor>> inputChannelClassLists = inputs.stream()
 //                .map(input -> ((ExecutionOperator) input.getOwner()).getSupportedInputChannels(input.getIndex()))
 //                .collect(Collectors.toList());
-//        final Class<? extends Channel>[] pickedChannels = this.pickChannelClasses(permittedChannels, inputChannelClassLists);
+//        final ChannelDescriptor[] pickedChannels = this.pickChannelClasses(permittedChannels, inputChannelClassLists);
 //        if (pickedChannels == null) {
 //            return null;
 //        }
@@ -197,18 +196,18 @@ public abstract class DefaultChannelManager implements ChannelManager {
 //     * @return an array containing the picked classes, aligned with {@code inputChannelClassLists}, or {@code null}
 //     * if a full match was not possible
 //     */
-//    protected Class<? extends Channel>[] pickChannelClasses(List<Class<? extends Channel>> outputChannelClasses,
-//                                                            List<List<Class<? extends Channel>>> inputChannelClassLists) {
+//    protected ChannelDescriptor[] pickChannelClasses(List<ChannelDescriptor> outputChannelClasses,
+//                                                            List<List<ChannelDescriptor>> inputChannelClassLists) {
 //
 //        // Keep track of the picked classes and how often it has been picked.
 //        // NB: This greedy algorithm might be improved.
-//        Class<? extends Channel>[] pickedChannelClasses = new Class[inputChannelClassLists.size()];
+//        ChannelDescriptor[] pickedChannelClasses = new Class[inputChannelClassLists.size()];
 //        int[] maxMatches = new int[inputChannelClassLists.size()];
-//        for (Class<? extends Channel> supportedOutputChannel : outputChannelClasses) {
+//        for (ChannelDescriptor supportedOutputChannel : outputChannelClasses) {
 //            boolean[] matches = new boolean[inputChannelClassLists.size()];
 //            int numMatches = 0;
 //            for (int i = 0; i < inputChannelClassLists.size(); i++) {
-//                final List<Class<? extends Channel>> classes = inputChannelClassLists.get(i);
+//                final List<ChannelDescriptor> classes = inputChannelClassLists.get(i);
 //                if ((matches[i] = classes.contains(supportedOutputChannel))) {
 //                    numMatches++;
 //                }
@@ -221,7 +220,7 @@ public abstract class DefaultChannelManager implements ChannelManager {
 //            }
 //        }
 //
-//        for (Class<? extends Channel> pickedChannelClass : pickedChannelClasses) {
+//        for (ChannelDescriptor pickedChannelClass : pickedChannelClasses) {
 //            if (pickedChannelClass == null) return null;
 //        }
 //

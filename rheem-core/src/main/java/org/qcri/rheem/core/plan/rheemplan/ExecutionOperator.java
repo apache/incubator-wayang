@@ -5,6 +5,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.List;
@@ -47,7 +48,7 @@ public interface ExecutionOperator extends ActualOperator {
      * @param index the index of the {@link InputSlot}
      * @return an {@link List} of {@link Channel}s' {@link Class}es, ordered by their preference of use
      */
-    List<Class<? extends Channel>> getSupportedInputChannels(int index);
+    List<ChannelDescriptor> getSupportedInputChannels(int index);
 
     /**
      * Display the supported {@link Channel}s for a certain {@link OutputSlot}.
@@ -55,7 +56,7 @@ public interface ExecutionOperator extends ActualOperator {
      * @param index the index of the {@link OutputSlot}
      * @return an {@link List} of {@link Channel}s' {@link Class}es, ordered by their preference of use
      */
-    List<Class<? extends Channel>> getSupportedOutputChannels(int index);
+    List<ChannelDescriptor> getSupportedOutputChannels(int index);
 
     /**
      * Get the {@link TimeEstimate} associated to this instance.

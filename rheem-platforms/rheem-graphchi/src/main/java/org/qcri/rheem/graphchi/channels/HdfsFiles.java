@@ -1,23 +1,24 @@
 package org.qcri.rheem.graphchi.channels;
 
-import org.qcri.rheem.basic.channels.HdfsFile;
+import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
 
 /**
- * Helpers for dealing with {@link HdfsFile}s on the {@link GraphChiPlatform}.
+ * Helpers for dealing with {@link FileChannel}s on the {@link GraphChiPlatform}.
  */
 public class HdfsFiles {
 
     /**
-     * Initializes {@link HdfsFile}s for use with the {@link GraphChiPlatform}.
+     * Initializes {@link FileChannel}s for use with the {@link GraphChiPlatform}.
      */
     public static class Initializer implements ChannelInitializer {
 
         @Override
-        public Channel setUpOutput(ExecutionTask executionTask, int index) {
+        public Channel setUpOutput(ChannelDescriptor channelDescriptor, ExecutionTask executionTask, int index) {
             throw new RuntimeException("Implement me."); // TODO
         }
 

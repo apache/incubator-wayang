@@ -1,8 +1,8 @@
 package org.qcri.rheem.graphchi.channels;
 
-import org.qcri.rheem.basic.channels.HdfsFile;
-import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.DefaultChannelManager;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
 
@@ -14,21 +14,22 @@ import java.util.Map;
  */
 public class ChannelManager extends DefaultChannelManager {
 
+    public static final FileChannel.Descriptor HDFS_TSV_DESCRIPTOR = new FileChannel.Descriptor("hdfs", "tsv");
     /**
      * {@link ChannelInitializer}s by class.
      */
-    private final Map<Class<? extends Channel>, ChannelInitializer> channelInitializers = new HashMap<>();
+    private final Map<ChannelDescriptor, ChannelInitializer> channelInitializers = new HashMap<>();
 
     public ChannelManager(GraphChiPlatform graphChiPlatform) {
         super(graphChiPlatform,
-                HdfsFile.class,
-                HdfsFile.class);
+                HDFS_TSV_DESCRIPTOR,
+                HDFS_TSV_DESCRIPTOR);
 
-        this.channelInitializers.put(HdfsFile.class, new HdfsFiles.Initializer());
+        this.channelInitializers.put(HDFS_TSV_DESCRIPTOR, new HdfsFiles.Initializer());
     }
 
     @Override
-    public ChannelInitializer getChannelInitializer(Class<? extends Channel> channelClass) {
+    public ChannelInitializer getChannelInitializer(ChannelDescriptor channelClass) {
         return this.channelInitializers.get(channelClass);
     }
 

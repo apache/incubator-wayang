@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.plan.executionplan;
 
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
 
 /**
@@ -13,11 +14,12 @@ public interface ChannelInitializer {
      * {@link Channel}. However, if it encounters already set-up {@link Channel}s, the implementation is free to
      * reuse them if appropriate or even necessary.
      *
+     * @param descriptor    describes the {@link Channel} to be created
      * @param executionTask that should output to the new {@link Channel}
      * @param index         the output index of the {@code executionTask} that should feed the {@link Channel}
      * @return the newly created and set-up or reused {@link Channel}
      */
-    Channel setUpOutput(ExecutionTask executionTask, int index);
+    Channel setUpOutput(ChannelDescriptor descriptor, ExecutionTask executionTask, int index);
 
     /**
      * <i>Optional operation.</i> Implements the {@link Channel} on the {@code index}-th output of the given

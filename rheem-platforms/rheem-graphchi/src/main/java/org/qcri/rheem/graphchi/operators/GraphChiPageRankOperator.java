@@ -7,25 +7,26 @@ import edu.cmu.graphchi.engine.GraphChiEngine;
 import edu.cmu.graphchi.preprocessing.FastSharder;
 import edu.cmu.graphchi.preprocessing.VertexIdTranslate;
 import edu.cmu.graphchi.vertexdata.VertexAggregator;
-import org.qcri.rheem.basic.channels.HdfsFile;
+import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
+import org.qcri.rheem.graphchi.channels.ChannelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 /**
  * PageRank {@link Operator} implementation for the {@link GraphChiPlatform}.
@@ -46,18 +47,18 @@ public class GraphChiPageRankOperator extends OperatorBase implements GraphChiOp
         assert inputChannels.length == this.getNumInputs();
         assert outputChannels.length == this.getNumOutputs();
 
-        final HdfsFile inputHdfsFile = (HdfsFile) inputChannels[0];
-        final HdfsFile outputHdfsFile = (HdfsFile) outputChannels[0];
+        final FileChannel inputFileChannel = (FileChannel) inputChannels[0];
+        final FileChannel outputFileChannel = (FileChannel) outputChannels[0];
         try {
-            this.runGraphChi(inputHdfsFile, outputHdfsFile);
+            this.runGraphChi(inputFileChannel, outputFileChannel);
         } catch (IOException e) {
             throw new RheemException(String.format("Running %s failed.", this), e);
         }
     }
 
-    private void runGraphChi(HdfsFile inputHdfsFile, HdfsFile outputHdfsFile) throws IOException {
+    private void runGraphChi(FileChannel inputFileChannel, FileChannel outputFileChannel) throws IOException {
 
-        final String inputPath = inputHdfsFile.getSinglePath();
+        final String inputPath = inputFileChannel.getSinglePath();
         final FileSystem inputFs = FileSystems.getFileSystem(inputPath).get();
 
         // Create shards.
@@ -89,8 +90,8 @@ public class GraphChiPageRankOperator extends OperatorBase implements GraphChiOp
         engine.run(new Pagerank(), 4);
 
         // Output results.
-        final FileSystem outFs = FileSystems.getFileSystem(outputHdfsFile.getSinglePath()).get();
-        try (final DataOutputStream dos = new DataOutputStream(outFs.create(outputHdfsFile.getSinglePath()))) {
+        final FileSystem outFs = FileSystems.getFileSystem(outputFileChannel.getSinglePath()).get();
+        try (final DataOutputStream dos = new DataOutputStream(outFs.create(outputFileChannel.getSinglePath()))) {
             VertexIdTranslate trans = engine.getVertexIdTranslate();
             VertexAggregator.foreach(engine.numVertices(), graphName, new FloatConverter(),
                     (vertexId, vertexValue) -> {
@@ -136,12 +137,12 @@ public class GraphChiPageRankOperator extends OperatorBase implements GraphChiOp
     }
 
     @Override
-    public List<Class<? extends Channel>> getSupportedInputChannels(int index) {
-        return Collections.singletonList(HdfsFile.class);
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        return Collections.singletonList(ChannelManager.HDFS_TSV_DESCRIPTOR);
     }
 
     @Override
-    public List<Class<? extends Channel>> getSupportedOutputChannels(int index) {
-        return Collections.singletonList(HdfsFile.class);
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        return Collections.singletonList(ChannelManager.HDFS_TSV_DESCRIPTOR);
     }
 }

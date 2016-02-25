@@ -94,7 +94,7 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
                     consumerActivator.executionTask = consumerTask;
                     final Platform consumerPlatform = consumerTask.getOperator().getPlatform();
                     final ChannelInitializer channelInitializer =
-                            consumerPlatform.getChannelManager().getChannelInitializer(channelCopy.getClass());
+                            consumerPlatform.getChannelManager().getChannelInitializer(channelCopy.getDescriptor());
                     if (channelInitializer == null) {
                         throw new AbortException(String.format("Cannot connect %s to %s.", channel, consumerTask));
                     }

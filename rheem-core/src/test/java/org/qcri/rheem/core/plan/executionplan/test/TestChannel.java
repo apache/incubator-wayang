@@ -2,6 +2,7 @@ package org.qcri.rheem.core.plan.executionplan.test;
 
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 
 /**
  * {@link Channel} implementation that can be used for test purposes.
@@ -16,10 +17,10 @@ public class TestChannel extends Channel {
      * Creates a new instance.
      *
      * @param isReusable whether this instance {@link #isReusable()}
-     * @see Channel#Channel(ExecutionTask, int)
+     * @see Channel#Channel(ChannelDescriptor, ExecutionTask, int)
      */
     public TestChannel(ExecutionTask producer, int outputIndex, boolean isReusable) {
-        super(producer, outputIndex);
+        super(null, producer, outputIndex);
         this.isReusable = isReusable;
         this.isInternal = true;
     }
