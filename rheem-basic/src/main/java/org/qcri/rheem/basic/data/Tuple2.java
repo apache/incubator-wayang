@@ -37,4 +37,12 @@ public class Tuple2<T0, T1> implements Serializable {
     public String toString() {
         return String.format("(%s, %s)", this.field0, this.field1);
     }
+
+    public T0 getField0() {
+        return this.field0;
+    }
+
+    public T1 getField1() {
+        return this.field1;
+    }
 }
