@@ -19,8 +19,9 @@ import static org.mockito.Mockito.when;
  */
 public class GraphChiPageRankOperatorTest {
 
-    @Test(expected = AssertionError.class) // GraphChi throws an AssertionError, although we are using it correctly.
+    @Test
     public void testExecution() throws IOException {
+        // Ensure that the GraphChiPlatform is initialized.
         GraphChiPlatform.getInstance();
 
         final ExecutionOperator outputOperator = mock(ExecutionOperator.class);

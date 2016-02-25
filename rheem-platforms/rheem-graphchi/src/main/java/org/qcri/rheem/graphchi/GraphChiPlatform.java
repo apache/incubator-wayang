@@ -18,7 +18,11 @@ public class GraphChiPlatform extends Platform {
 
     protected GraphChiPlatform() {
         super("GraphChi");
+
+        // Set up.
         CompressedIO.disableCompression();
+        GraphChiPlatform.class.getClassLoader().setClassAssertionStatus(
+                "edu.cmu.graphchi.preprocessing.FastSharder", false);
     }
 
     public static Platform getInstance() {
