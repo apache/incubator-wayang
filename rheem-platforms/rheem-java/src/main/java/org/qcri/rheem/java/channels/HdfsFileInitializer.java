@@ -120,8 +120,7 @@ public class HdfsFileInitializer implements ChannelInitializer {
         // NB: We always put the HDFS file contents into a Collection. That's not necessary if we don't broadcast
         // and use it only once.
 
-        // Intercept with a JavaObjectFileSource.
-
+        // Intercept with a reader for the file.
         ExecutionTask sourceTask;
         final String serialization = fileChannel.getDescriptor().getSerialization();
         switch (serialization) {

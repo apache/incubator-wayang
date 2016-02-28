@@ -50,6 +50,11 @@ public class SparkChannelManager extends DefaultChannelManager {
                 new HdfsFileInitializer(),
                 (channel, sparkExecutor) -> new HdfsFileInitializer.Executor((FileChannel) channel),
                 true, false);
+
+        this.addChannel(new FileChannel.Descriptor("hdfs", "tsv"),
+                new HdfsFileInitializer(),
+                (channel, sparkExecutor) -> new HdfsFileInitializer.Executor((FileChannel) channel),
+                true, false);
     }
 
     private void addChannel(ChannelDescriptor channelClass,

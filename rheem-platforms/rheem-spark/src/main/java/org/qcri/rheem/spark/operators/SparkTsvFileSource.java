@@ -6,6 +6,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
@@ -29,7 +30,8 @@ public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecut
     public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor executor) {
         assert outputs.length == this.getNumOutputs();
 
-        final JavaRDD<T> dataQuantaRdd = executor.sc.textFile(this.sourcePath)
+        final String actualInputPath = FileSystems.findActualSingleInputPath(this.sourcePath);
+        final JavaRDD<T> dataQuantaRdd = executor.sc.textFile(actualInputPath)
                 .map(line -> {
                     // TODO: Important. Enrich type informations to create the correct parser!
                     int tabPos = line.indexOf('\t');
