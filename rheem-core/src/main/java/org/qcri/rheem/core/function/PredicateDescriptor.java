@@ -39,7 +39,7 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
      *
      * @return a function that can perform the reduce
      */
-    public Predicate<Input> getJavaImplementation() {
+    public SerializablePredicate<Input> getJavaImplementation() {
         return this.javaImplementation;
     }
 
