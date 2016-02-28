@@ -72,8 +72,8 @@ public class CardinalityRepository {
      */
     public void store(OutputSlot<?> output, long cardinality, RheemPlan rheemPlan) {
         assert output.getCardinalityEstimate().isExactly(cardinality)
-                : String.format("Expected a measured cardinality for %s; found %s.",
-                output, output.getCardinalityEstimate());
+                : String.format("Expected a measured cardinality of %d for %s; found %s.",
+                cardinality, output, output.getCardinalityEstimate());
 
         final Operator owner = output.getOwner();
         final InputSlot<?>[] allInputs = owner.getAllInputs();

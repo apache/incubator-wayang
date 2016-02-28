@@ -98,12 +98,11 @@ public class Job {
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
 
             // Take care of the execution.
-            CrossPlatformExecutor.State state = this.execute(executionPlan);
-            while (!state.isComplete()) {
-                this.reoptimize(executionPlan, state);
+            CrossPlatformExecutor.State state = null;
+            while (state == null || !state.isComplete()) {
                 state = this.execute(executionPlan);
+                this.postProcess(executionPlan, state);
             }
-
         } finally {
             this.releaseResources();
         }
@@ -299,11 +298,17 @@ public class Job {
         return state;
     }
 
-    private void reoptimize(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
+    /**
+     * Injects the cardinalities obtained from {@link Channel} instrumentation, potentially updates the {@link ExecutionPlan}
+     * through re-optimization, and collects measured data.
+     */
+    private void postProcess(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
         long optimizerStartTime = System.currentTimeMillis();
 
         this.reestimateCardinalities(state);
-        this.updateExecutionPlan(executionPlan, state);
+        if (!state.isComplete()) {
+            this.updateExecutionPlan(executionPlan, state);
+        }
 
         // Collect any instrumentation results for the future.
         final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
