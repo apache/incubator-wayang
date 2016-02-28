@@ -1,9 +1,11 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
+import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.Counter;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
@@ -48,6 +50,11 @@ public class CrossPlatformExecutor {
      */
     private Collection<ExecutionStage> suspendedStages = new LinkedList<>();
 
+    /**
+     * Marks {@link Channel}s for instrumentation.
+     */
+    private final InstrumentationStrategy instrumentationStrategy;
+
 
     /**
      * Keeps track of {@link ExecutionStage}s that have actually been executed by this instance.
@@ -55,6 +62,10 @@ public class CrossPlatformExecutor {
     private Set<ExecutionStage> completedStages = new HashSet<>();
 
     private ExecutionProfile executionProfile;
+
+    public CrossPlatformExecutor(InstrumentationStrategy instrumentationStrategy) {
+        this.instrumentationStrategy = instrumentationStrategy;
+    }
 
     /**
      * Execute the given {@link ExecutionPlan}.
@@ -149,6 +160,7 @@ public class CrossPlatformExecutor {
     private boolean execute(ExecutionStage activatedStage) {
         final boolean shouldExecute = !activatedStage.wasExecuted();
         if (shouldExecute) {
+            this.instrumentationStrategy.applyTo(activatedStage);
             Executor executor = this.getOrCreateExecutorFor(activatedStage);
             final ExecutionProfile executionProfile = this.submit(activatedStage, executor);
             this.executionProfile.merge(executionProfile);

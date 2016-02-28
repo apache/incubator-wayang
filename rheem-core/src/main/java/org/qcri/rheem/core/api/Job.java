@@ -24,6 +24,7 @@ import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.platform.ExecutionProfile;
 import org.qcri.rheem.core.platform.FixBreakpoint;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
+import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -277,7 +278,8 @@ public class Job {
         // Set up appropriate Breakpoints.
         FixBreakpoint breakpoint = new FixBreakpoint();
         if (this.crossPlatformExecutor == null) {
-            this.crossPlatformExecutor = new CrossPlatformExecutor();
+            final InstrumentationStrategy instrumentation = this.configuration.getInstrumentationStrategyProvider().provide();
+            this.crossPlatformExecutor = new CrossPlatformExecutor(instrumentation);
             executionPlan.getStartingStages().forEach(breakpoint::breakAfter);
 
         } else {

@@ -185,7 +185,7 @@ public abstract class Channel {
     public void markForInstrumentation() {
         this.withSiblings().forEach(channel -> {
             channel.isMarkedForInstrumentation = true;
-            LoggerFactory.getLogger(this.getClass()).debug("Marked {} for instrumentation.", channel);
+            LoggerFactory.getLogger(this.getClass()).error("Marked {} for instrumentation.", channel);
         });
     }
 
