@@ -55,7 +55,12 @@ public class CardinalityRepository {
             final long cardinality = entry.getValue();
             for (Slot<?> slot : channel.getCorrespondingSlots()) {
                 if (slot instanceof OutputSlot<?>) {
-                    this.store((OutputSlot<?>) slot, cardinality, rheemPlan);
+                    for (OutputSlot<Object> outputSlot : ((OutputSlot<?>) slot).unchecked().collectRelatedSlots()) {
+                        if (!outputSlot.getOwner().isElementary() || outputSlot.getOwner().isSource()) {
+                            continue;
+                        }
+                        this.store(outputSlot, cardinality, rheemPlan);
+                    }
                 }
             }
         }

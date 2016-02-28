@@ -3,6 +3,8 @@ package org.qcri.rheem.core.plan.rheemplan;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * An output slot declares an output of an {@link Operator}.
@@ -120,5 +122,22 @@ public class OutputSlot<T> extends Slot<T> {
         }
 
         return resolvedOutputs;
+    }
+
+    /**
+     * Collects all {@link OutputSlot}s that are related to this instance via {@link OperatorContainer}s.
+     *
+     * @return all the matching {@link OutputSlot}s
+     */
+    public Set<OutputSlot<T>> collectRelatedSlots() {
+        return this.getOwner().getOutermostOutputSlots(this).stream().flatMap(
+                outerOutput -> {
+                    final Operator outerOperator = outerOutput.getOwner();
+                    return Stream.concat(
+                            Stream.of(outerOutput),
+                            outerOperator.collectMappedOutputSlots(outerOutput).stream()
+                    );
+                }
+        ).collect(Collectors.toSet());
     }
 }

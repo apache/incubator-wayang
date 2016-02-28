@@ -5,6 +5,7 @@ import org.qcri.rheem.core.optimizer.cardinality.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This operator encapsulates operators that are alternative to each other.
@@ -115,6 +116,23 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     public void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate) {
         super.propagateInputCardinality(inputIndex, cardinalityEstimate);
         this.getAlternatives().forEach(alternative -> alternative.propagateCardinality(this.getInput(inputIndex)));
+    }
+
+    @Override
+    public <T> Set<OutputSlot<T>> collectMappedOutputSlots(OutputSlot<T> output) {
+        return Stream.concat(
+                Stream.of(output),
+                this.alternatives.stream().flatMap(alternative -> this.streamMappedOutputSlots(alternative, output))
+        ).collect(Collectors.toSet());
+    }
+
+    private <T> Stream<OutputSlot<T>> streamMappedOutputSlots(
+            OperatorAlternative.Alternative alternative,
+            OutputSlot<T> output) {
+        final OutputSlot<T> innerOutput = alternative.traceOutput(output);
+        return innerOutput == null ?
+                Stream.empty() :
+                innerOutput.getOwner().collectMappedOutputSlots(innerOutput).stream();
     }
 
     @Override
