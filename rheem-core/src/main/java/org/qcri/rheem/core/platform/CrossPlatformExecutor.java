@@ -236,6 +236,10 @@ public class CrossPlatformExecutor {
         return new State(this);
     }
 
+    public void shutdown() {
+        this.executors.values().forEach(Executor::dispose);
+    }
+
     /**
      * Intermediate state of an interrupted execution of an {@link ExecutionPlan}.
      */

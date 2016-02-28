@@ -92,14 +92,19 @@ public class Job {
             throw new RheemException("Job has already been executed.");
         }
 
-        // Get an execution plan.
-        ExecutionPlan executionPlan = this.createInitialExecutionPlan();
+        try {
+            // Get an execution plan.
+            ExecutionPlan executionPlan = this.createInitialExecutionPlan();
 
-        // Take care of the execution.
-        CrossPlatformExecutor.State state = this.execute(executionPlan);
-        while (!state.isComplete()) {
-            this.reoptimize(executionPlan, state);
-            state = this.execute(executionPlan);
+            // Take care of the execution.
+            CrossPlatformExecutor.State state = this.execute(executionPlan);
+            while (!state.isComplete()) {
+                this.reoptimize(executionPlan, state);
+                state = this.execute(executionPlan);
+            }
+
+        } finally {
+            this.releaseResources();
         }
     }
 
@@ -166,7 +171,6 @@ public class Job {
                 .sum();
     }
 
-
     /**
      * Check that the given {@link RheemPlan} is as we expect it to be in the following steps.
      */
@@ -178,6 +182,7 @@ public class Job {
             throw new IllegalStateException("Hyperplan is not in an expected state.");
         }
     }
+
 
     /**
      * Go over the given {@link RheemPlan} and estimate the cardinalities of data being passed between its
@@ -198,7 +203,6 @@ public class Job {
         cardinalityEstimatorManager.pushCardinalityUpdates(this.rheemPlan, executionState);
     }
 
-
     /**
      * Go over the given {@link RheemPlan} and estimate the execution times of its {@link ExecutionOperator}s.
      */
@@ -209,6 +213,7 @@ public class Job {
                 this.logger.debug("Time estimate for {}: {}", entry.getKey(), entry.getValue()));
         return timeEstimates;
     }
+
 
     /**
      * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
@@ -350,6 +355,15 @@ public class Job {
 
         final ExecutionPlan executionPlanExpansion = partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);
+    }
+
+    /**
+     * Asks this instance to release its critical resources to avoid resource leaks and to enhance durability and
+     * consistency of accessed resources.
+     */
+    private void releaseResources() {
+        this.rheemContext.getCardinalityRepository().sleep();
+        if (this.crossPlatformExecutor != null) this.crossPlatformExecutor.shutdown();
     }
 
     /**
