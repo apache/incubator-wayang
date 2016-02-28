@@ -1,7 +1,9 @@
 package org.qcri.rheem.core.api;
 
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +14,11 @@ public class RheemContext {
 
     @SuppressWarnings("unused")
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    /**
+     * Stores input/output cardinalities to provide better {@link CardinalityEstimator}s over time.
+     */
+    private CardinalityRepository cardinalityRepository;
 
     private final Configuration configuration = Configuration.createDefaultConfiguration(this);
 
@@ -42,5 +49,12 @@ public class RheemContext {
 
     public Configuration getConfiguration() {
         return this.configuration;
+    }
+
+    public CardinalityRepository getCardinalityRepository() {
+        if (this.cardinalityRepository == null) {
+            this.cardinalityRepository = new CardinalityRepository("rheem/cards.txt");
+        }
+        return this.cardinalityRepository;
     }
 }

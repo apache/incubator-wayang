@@ -23,6 +23,7 @@ import org.qcri.rheem.core.platform.CardinalityBreakpoint;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.platform.ExecutionProfile;
 import org.qcri.rheem.core.platform.FixBreakpoint;
+import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -268,6 +269,7 @@ public class Job {
      * Dummy implementation: Have the platforms execute the given execution plan.
      */
     private CrossPlatformExecutor.State execute(ExecutionPlan executionPlan) {
+        // Set up appropriate Breakpoints.
         FixBreakpoint breakpoint = new FixBreakpoint();
         if (this.crossPlatformExecutor == null) {
             this.crossPlatformExecutor = new CrossPlatformExecutor();
@@ -282,7 +284,12 @@ public class Job {
         }
         this.crossPlatformExecutor.extendBreakpoint(breakpoint);
         this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(this.maxSpread, this.minConfidence));
-        return this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
+
+        // Trigger the execution.
+        final CrossPlatformExecutor.State state = this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
+
+        // Return the state.
+        return state;
     }
 
     private void reoptimize(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
@@ -290,6 +297,11 @@ public class Job {
 
         this.reestimateCardinalities(state);
         this.updateExecutionPlan(executionPlan, state);
+
+        // Collect any instrumentation results for the future.
+        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
+        cardinalityRepository.storeAll(state.getProfile(), this.rheemPlan);
+
 
         long optimizerFinishTime = System.currentTimeMillis();
         this.logger.info("Re-optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
