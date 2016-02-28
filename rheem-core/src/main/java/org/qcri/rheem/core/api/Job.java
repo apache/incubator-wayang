@@ -127,6 +127,8 @@ public class Job {
         this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
         this.logger.debug("Picked execution plan:\n{}", executionPlan.toExtensiveString());
 
+        assert executionPlan.isSane();
+
         return executionPlan;
     }
 
@@ -362,6 +364,8 @@ public class Job {
 
         final ExecutionPlan executionPlanExpansion = partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);
+
+        assert executionPlan.isSane();
     }
 
     /**

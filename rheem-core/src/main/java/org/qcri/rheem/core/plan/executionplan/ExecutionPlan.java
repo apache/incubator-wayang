@@ -1,14 +1,19 @@
 package org.qcri.rheem.core.plan.executionplan;
 
 import org.qcri.rheem.core.util.Counter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents an executable, cross-platform data flow. Consists of muliple {@link PlatformExecution}s.
  */
 public class ExecutionPlan {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * All {@link ExecutionStage}s without predecessors that need be executed at first.
@@ -111,6 +116,36 @@ public class ExecutionPlan {
                 .flatMap(task -> Arrays.stream(task.getInputChannels()))
                 .filter(Channel::isCopy)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Implements various sanity checks. Problems are logged.
+     */
+    public boolean isSane() {
+        // 1. Check if every ExecutionTask is assigned an ExecutionStage.
+        final Set<ExecutionTask> allTasks = this.collectAllTasks();
+        boolean isAllTasksAssigned = allTasks.stream().allMatch(task -> task.getStage() != null);
+        if (!isAllTasksAssigned) {
+            this.logger.error("There are tasks without stages.");
+        }
+
+        final Set<Channel> allChannels = allTasks.stream()
+                .flatMap(task -> Stream.concat(Arrays.stream(task.getInputChannels()), Arrays.stream(task.getOutputChannels())))
+                .collect(Collectors.toSet());
+
+        boolean isAllChannelsOriginal = allChannels.stream()
+                .allMatch(channel -> !channel.isCopy());
+        if (!isAllChannelsOriginal) {
+            this.logger.error("There are channels that are copies.");
+        }
+
+        boolean isAllSiblingsConsistent = allChannels.stream()
+                .allMatch(channel -> channel.withSiblings(false).allMatch(allChannels::contains));
+        if (!isAllSiblingsConsistent) {
+            this.logger.error("There are siblings that are not part of the plan.");
+        }
+
+        return isAllTasksAssigned && isAllChannelsOriginal && isAllSiblingsConsistent;
     }
 
 }
