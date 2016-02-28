@@ -1,10 +1,10 @@
 package org.qcri.rheem.core.plan.executionplan;
 
-import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
 
 /**
@@ -134,11 +134,11 @@ public class ExecutionTask {
     }
 
     /**
-     * Sets an output {@link Channel} for this instance. Consider using {@link Channel#Channel(ExecutionTask, int)}
-     * and derivatives instead.
+     * Sets an output {@link Channel} for this instance. Consider using
+     * {@link Channel#Channel(ChannelDescriptor, ExecutionTask, int)} and derivatives instead.
      */
     void setOutputChannel(int index, Channel channel) {
-        Validate.isTrue(this.getOutputChannel(index) == null, "Output channel %d of %s is already set to %s.",
+        assert this.getOutputChannel(index) == null : String.format("Output channel %d of %s is already set to %s.",
                 index, this, this.getOutputChannel(index));
         this.getOutputChannels()[index] = channel;
     }

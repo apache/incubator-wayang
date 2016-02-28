@@ -12,6 +12,7 @@
         <scala.compat.version>2.10</scala.compat.version>
         <spark.version>1.6.0</spark.version>
         <hadoop.version>2.2.0</hadoop.version>
+        <graphchi.version>0.2.2</graphchi.version>
     </properties>
 
     <groupId>org.qcri.rheem</groupId>
@@ -54,6 +55,7 @@
         </dependency>
     </dependencies>
     <dependencyManagement>
+        <!-- Apache Spark -->
         <dependencies>
             <dependency>
                 <groupId>org.apache.spark</groupId>
@@ -77,6 +79,8 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
+            <!-- Apache Flink -->
             <dependency>
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-scala</artifactId>
@@ -92,6 +96,8 @@
                 <artifactId>flink-gelly-scala</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
+
+            <!-- Apache Hadoop -->
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-common</artifactId>
@@ -103,6 +109,14 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
+            <!-- GraphChi: Note might be necessary to build it manually. -->
+            <dependency>
+                <groupId>org.graphchi</groupId>
+                <artifactId>graphchi-java</artifactId>
+                <version>${graphchi.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.beust</groupId>
                 <artifactId>jcommander</artifactId>

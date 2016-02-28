@@ -29,6 +29,11 @@ public abstract class OperatorBase implements Operator {
     private ExecutionOperator original;
 
     /**
+     * Optional name. Helpful for debugging.
+     */
+    private String name;
+
+    /**
      * Can assign a {@link TimeEstimate} to {@link ExecutionOperator}s.
      */
     private TimeEstimate timeEstimate;
@@ -111,6 +116,9 @@ public abstract class OperatorBase implements Operator {
 
     @Override
     public String toString() {
+        if (this.name != null) {
+            return String.format("%s[%s]", this.getClass().getSimpleName(), this.name);
+        }
         long numBroadcasts = Arrays.stream(this.getAllInputs()).filter(InputSlot::isBroadcast).count();
         return String.format("%s[%d%s->%d, id=%x]",
                 this.getClass().getSimpleName(),
@@ -180,5 +188,15 @@ public abstract class OperatorBase implements Operator {
     public ExecutionOperator getOriginal() {
         assert this.isExecutionOperator();
         return this.original == null ? (ExecutionOperator) this : this.original;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <Self extends OperatorBase> Self setName(String name) {
+        this.name = name;
+        return (Self) this;
     }
 }

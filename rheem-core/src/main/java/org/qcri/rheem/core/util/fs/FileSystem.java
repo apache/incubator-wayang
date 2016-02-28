@@ -3,6 +3,7 @@ package org.qcri.rheem.core.util.fs;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 
 /**
@@ -32,6 +33,15 @@ public interface FileSystem {
      * @throws IOException if the file cannot be accessed properly for whatever reason
      */
     InputStream open(String url) throws IOException;
+
+    /**
+     * Opens the file specified in the given {@code url} for (over-)writing.
+     *
+     * @param url points to the file to be created
+     * @return an {@link OutputStream} that allows writing to the specified file
+     * @throws IOException if the file cannot be created properly for whatever reason
+     */
+    OutputStream create(String url) throws IOException;
 
     boolean isDirectory(String url);
 

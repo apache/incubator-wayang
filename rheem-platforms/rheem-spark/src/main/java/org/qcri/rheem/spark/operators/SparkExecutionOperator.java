@@ -1,8 +1,8 @@
 package org.qcri.rheem.spark.operators;
 
-import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
@@ -33,7 +33,7 @@ public interface SparkExecutionOperator extends ExecutionOperator {
     void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor);
 
     @Override
-    default List<Class<? extends Channel>> getSupportedInputChannels(int index) {
+    default List<ChannelDescriptor> getSupportedInputChannels(int index) {
         final InputSlot<?> input = this.getInput(index);
         return input.isBroadcast() ?
                 this.getPlatform().getChannelManager().getSupportedBroadcastChannels() :
@@ -41,7 +41,7 @@ public interface SparkExecutionOperator extends ExecutionOperator {
     }
 
     @Override
-    default List<Class<? extends Channel>> getSupportedOutputChannels(int index) {
+    default List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return this.getPlatform().getChannelManager().getAllSupportedChannels();
     }
 

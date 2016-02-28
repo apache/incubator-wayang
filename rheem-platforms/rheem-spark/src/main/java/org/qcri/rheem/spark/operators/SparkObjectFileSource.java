@@ -40,43 +40,10 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
     public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert outputs.length == this.getNumOutputs();
 
-        final JavaRDD<Object> rdd = sparkExecutor.sc.objectFile(this.findCorrectInputPath(this.sourcePath));
+        final String actualInputPath = FileSystems.findActualSingleInputPath(this.sourcePath);
+        final JavaRDD<Object> rdd = sparkExecutor.sc.objectFile(actualInputPath);
         outputs[0].acceptRdd(rdd);
     }
-
-
-    /**
-     * Systems such as Spark do not produce a single output file often times. That method tries to detect such
-     * split object files to reassemble them correctly.
-     */
-    private String findCorrectInputPath(String ostensibleInputFile) {
-        final Optional<FileSystem> fileSystem = FileSystems.getFileSystem(ostensibleInputFile);
-
-        if (!fileSystem.isPresent()) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not inspect input file {}.", this.sourcePath);
-            return this.sourcePath;
-
-        } else if (fileSystem.get().isDirectory(this.sourcePath)) {
-            final Collection<String> children = fileSystem.get().listChildren(this.sourcePath);
-
-            // Look for Spark-like directory structure.
-            if (children.stream().anyMatch(child -> child.endsWith("_SUCCESS"))) {
-                final List<String> sparkFiles =
-                        children.stream().filter(child -> child.matches(".*/part-\\d{5}")).collect(Collectors.toList());
-                if (sparkFiles.size() != 1) {
-                    throw new RheemException("Illegal number of Spark result files: " + sparkFiles.size());
-                }
-                LoggerFactory.getLogger(this.getClass()).info("Using input path {} for {}.", sparkFiles.get(0), this);
-                return sparkFiles.get(0);
-            } else {
-                throw new RheemException("Could not identify directory structure: " + children);
-            }
-
-        } else {
-            return this.sourcePath;
-        }
-    }
-
 
     @Override
     protected ExecutionOperator createCopy() {

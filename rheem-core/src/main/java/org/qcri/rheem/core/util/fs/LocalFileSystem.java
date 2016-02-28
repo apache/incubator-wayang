@@ -57,6 +57,22 @@ public class LocalFileSystem implements FileSystem {
     }
 
     @Override
+    public OutputStream create(String url) throws IOException {
+        File file = null;
+        try {
+            file = toFile(url);
+            return new FileOutputStream(file, false);
+        } catch (URISyntaxException e) {
+            throw new IOException("Could not process the given URL.", e);
+        } catch (IOException e) {
+            if (file != null) {
+                file.delete();
+            }
+            throw e;
+        }
+    }
+
+    @Override
     public boolean isDirectory(String url) {
         try {
             return toFile(url).isDirectory();
