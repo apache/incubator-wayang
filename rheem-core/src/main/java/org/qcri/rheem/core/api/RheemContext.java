@@ -1,9 +1,15 @@
 package org.qcri.rheem.core.api;
 
+import org.apache.commons.lang3.StringUtils;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.util.Arrays;
 
 /**
  * This is the entry point for users to work with Rheem.
@@ -12,6 +18,11 @@ public class RheemContext {
 
     @SuppressWarnings("unused")
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    /**
+     * Stores input/output cardinalities to provide better {@link CardinalityEstimator}s over time.
+     */
+    private CardinalityRepository cardinalityRepository;
 
     private final Configuration configuration = Configuration.createDefaultConfiguration(this);
 
@@ -42,5 +53,16 @@ public class RheemContext {
 
     public Configuration getConfiguration() {
         return this.configuration;
+    }
+
+    public CardinalityRepository getCardinalityRepository() {
+        if (this.cardinalityRepository == null) {
+            final File repoFile = new File(StringUtils.join(
+                    Arrays.asList(System.getProperty("user.home"), ".rheem", "cardinality-repository.json"),
+                    File.separator
+            ));
+            this.cardinalityRepository = new CardinalityRepository(repoFile.getPath());
+        }
+        return this.cardinalityRepository;
     }
 }

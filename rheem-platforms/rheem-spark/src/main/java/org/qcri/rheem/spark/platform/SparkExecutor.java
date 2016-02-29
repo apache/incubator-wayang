@@ -38,11 +38,6 @@ public class SparkExecutor implements Executor {
 
     @Override
     public ExecutionProfile execute(ExecutionStage stage) {
-        // Instrument all stage-outbound channels.
-        for (Channel channel : stage.getOutboundChannels()) {
-            this.logger.debug("Marking {} for instrumentation.", channel);
-            channel.markForInstrumentation(); // TODO: Instrumentation should be done in the CrossPlatformExecutor.
-        }
         final Collection<ExecutionTask> terminalTasks = stage.getTerminalTasks();
         terminalTasks.forEach(this::forceExecution);
 

@@ -95,6 +95,7 @@ public abstract class Channel {
     protected Channel(Channel original) {
         this.descriptor = original.getDescriptor();
         this.original = original.getOriginal();
+        assert this.original == null || !this.original.isCopy();
         this.producer = original.getProducer();
         this.cardinalityEstimate = original.getCardinalityEstimate();
     }
@@ -174,16 +175,19 @@ public abstract class Channel {
     }
 
     public boolean isMarkedForInstrumentation() {
-        return this.withSiblings().anyMatch(sibling -> sibling.isMarkedForInstrumentation);
+        return this.withSiblings(false).anyMatch(sibling -> sibling.isMarkedForInstrumentation);
 
     }
 
-    protected Stream<Channel> withSiblings() {
-        return Stream.concat(Stream.of(this), this.siblings.stream());
+    protected Stream<Channel> withSiblings(boolean isWithConcurrentModification) {
+        return Stream.concat(
+                Stream.of(this),
+                (isWithConcurrentModification ? new ArrayList<>(this.siblings) : this.siblings).stream()
+        );
     }
 
     public void markForInstrumentation() {
-        this.withSiblings().forEach(channel -> {
+        this.withSiblings(false).forEach(channel -> {
             channel.isMarkedForInstrumentation = true;
             LoggerFactory.getLogger(this.getClass()).debug("Marked {} for instrumentation.", channel);
         });
@@ -198,7 +202,12 @@ public abstract class Channel {
      * Acquaints the given instance with this instance and all existing {@link #siblings}.
      */
     public void addSibling(Channel sibling) {
-        this.withSiblings().forEach(olderSibling -> olderSibling.relateTo(sibling));
+        final ArrayList<Channel> siblingSiblings = new ArrayList<>(sibling.siblings);
+        this.withSiblings(true).forEach(olderSibling ->
+                siblingSiblings.forEach(siblingSibling ->
+                        olderSibling.relateTo(siblingSibling)
+                )
+        );
     }
 
     /**
@@ -245,7 +254,7 @@ public abstract class Channel {
      * {@link #siblings}
      */
     public Collection<Slot<?>> getCorrespondingSlots() {
-        return this.withSiblings()
+        return this.withSiblings(false)
                 .map(Channel::getCorrespondingSlotsLocal)
                 .reduce(Stream.empty(), Stream::concat)
                 .collect(Collectors.toList());
@@ -307,6 +316,7 @@ public abstract class Channel {
     public void mergeIntoOriginal() {
         if (!this.isCopy()) return;
         this.getOriginal().copyConsumersFrom(this);
+        this.getOriginal().adoptSiblings(this);
     }
 
     /**
@@ -321,6 +331,14 @@ public abstract class Channel {
                     String.format("Overlap in existing %s and new %s.", this.consumers, channel.getConsumers());
             consumer.exchangeInputChannel(channel, this);
         }
+    }
+
+    /**
+     * Copies the consumers of the given {@code channel} into this instance.
+     */
+    private void adoptSiblings(Channel channel) {
+        this.addSibling(channel);
+        this.removeSiblingsWhere(sibling -> sibling == channel);
     }
 
     public void setProducer(ExecutionTask producer) {

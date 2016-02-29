@@ -9,6 +9,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CompositeCardinalityPusher;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A subplan encapsulates connected operators as a single operator.
@@ -231,6 +232,17 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
                 .flatMap(inputSlot -> this.slotMapping.resolveDownstream(inputSlot).stream())
                 .map(InputSlot::getOwner)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public <T> Set<OutputSlot<T>> collectMappedOutputSlots(OutputSlot<T> output) {
+        final OutputSlot<T> innerOutput = this.traceOutput(output);
+        return Stream.concat(
+                Stream.of(output),
+                innerOutput == null ?
+                        Stream.empty() :
+                        innerOutput.getOwner().collectMappedOutputSlots(innerOutput).stream()
+        ).collect(Collectors.toSet());
     }
 
     @Override

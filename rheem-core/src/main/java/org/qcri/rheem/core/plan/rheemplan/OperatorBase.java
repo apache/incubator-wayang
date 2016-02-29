@@ -6,6 +6,7 @@ import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -166,6 +167,19 @@ public abstract class OperatorBase implements Operator {
     @Override
     public void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate) {
         this.getInput(inputIndex).setCardinalityEstimate(cardinalityEstimate);
+    }
+
+    @Override
+    public <T> Set<OutputSlot<T>> collectMappedOutputSlots(OutputSlot<T> output) {
+        // Default implementation for elementary instances.
+        assert this.isElementary();
+        assert output.getOwner() == this;
+        return Collections.singleton(output);
+    }
+
+    @Override
+    public <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input) {
+        throw new RuntimeException("Implement me.");
     }
 
     /**

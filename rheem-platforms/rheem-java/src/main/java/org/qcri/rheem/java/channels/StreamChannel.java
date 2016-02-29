@@ -114,7 +114,10 @@ public class StreamChannel extends Channel {
 
         private boolean isMarkedForInstrumentation;
 
-        private long cardinality = -1;
+        // In principle, we could use Stream#onClose() to make sure that we really counted the cardinality (so as to
+        // detect, when the cardinality is 0 because the #stream has not been fully executed for whatever reason).
+        // However, this would require to call Stream#close() on all methods.
+        private long cardinality = 0;
 
         public Executor(boolean isMarkedForInstrumentation) {
             this.isMarkedForInstrumentation = isMarkedForInstrumentation;
@@ -127,8 +130,7 @@ public class StreamChannel extends Channel {
                 this.stream = this.stream.filter(dataQuantum -> {
                     this.cardinality += 1;
                     return true;
-                })
-                        .onClose(() -> this.cardinality++);
+                });
             }
         }
 
