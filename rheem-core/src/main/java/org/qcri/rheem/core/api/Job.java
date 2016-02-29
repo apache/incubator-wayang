@@ -118,7 +118,7 @@ public class Job {
         this.applyMappingsToRheemPlan();
 
         // Make the cardinality estimation pass.
-        //this.estimateCardinalities();
+        this.estimateCardinalities();
 
         // Enumerate plans and pick the best one.
         final ExecutionPlan executionPlan = this.extractExecutionPlan();
@@ -246,27 +246,27 @@ public class Job {
                                               Set<Channel> openChannels,
                                               Set<ExecutionStage> executedStages) {
         // pick first one
-        PartialPlan plan = executionPlans.iterator().next();
-        if (existingPlan == null) {
-            plan.createExecutionPlan();
-        }
-        else plan.createExecutionPlan(existingPlan, openChannels, executedStages);
-        return plan;
+//        PartialPlan plan = executionPlans.iterator().next();
+//        if (existingPlan == null) {
+//            plan.createExecutionPlan();
+//        }
+//        else plan.createExecutionPlan(existingPlan, openChannels, executedStages);
+//        return plan;
 
-//        return executionPlans.stream()
-//                .filter(plan -> (existingPlan == null ?
-//                        plan.createExecutionPlan() :
-//                        plan.createExecutionPlan(existingPlan, openChannels, executedStages)) != null)
-//                .reduce((p1, p2) -> {
-//                    final TimeEstimate t1 = p1.getExecutionPlan().estimateExecutionTime(this.configuration);
-//                    final TimeEstimate t2 = p2.getExecutionPlan().estimateExecutionTime(this.configuration);
-//                    return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
-//                })
-//                .map(plan -> {
-//                    this.logger.info("Picked plan's cost estimate is {}.", plan.getExecutionPlan().estimateExecutionTime(this.configuration));
-//                    return plan;
-//                })
-//                .orElseThrow(() -> new IllegalStateException("Could not find an execution plan."));
+        return executionPlans.stream()
+                .filter(plan -> (existingPlan == null ?
+                        plan.createExecutionPlan() :
+                        plan.createExecutionPlan(existingPlan, openChannels, executedStages)) != null)
+                .reduce((p1, p2) -> {
+                    final TimeEstimate t1 = p1.getExecutionPlan().estimateExecutionTime(this.configuration);
+                    final TimeEstimate t2 = p2.getExecutionPlan().estimateExecutionTime(this.configuration);
+                    return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
+                })
+                .map(plan -> {
+                    this.logger.info("Picked plan's cost estimate is {}.", plan.getExecutionPlan().estimateExecutionTime(this.configuration));
+                    return plan;
+                })
+                .orElseThrow(() -> new IllegalStateException("Could not find an execution plan."));
     }
 
     /**

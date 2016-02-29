@@ -96,7 +96,7 @@ public class StageAssignmentTraversal {
         this.discoverInitialStages();
 
         // Refine stages as much as necessary
-        //this.refineStages();
+        this.refineStages();
         for (InterimStage stage : this.allStages) {
             this.logger.debug("Final stage {}: {}", stage, stage.getTasks());
         }
