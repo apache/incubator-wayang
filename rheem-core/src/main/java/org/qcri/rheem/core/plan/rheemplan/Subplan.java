@@ -28,6 +28,11 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     private Operator source, sink;
 
     /**
+     * Whether this instance wraps a loop. If so, then its contained {@link Operator}s might be treated differently.
+     */
+    private boolean isWrapLoop = false;
+
+    /**
      * Wrap the given operators in a new instance (unless its a single operator),
      * thereby redirecting cut off connections through this subplan.
      */
@@ -283,4 +288,11 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         return CompositeCardinalityPusher.createFor(this, configuration);
     }
 
+    public boolean isWrapLoop() {
+        return this.isWrapLoop;
+    }
+
+    public void setWrapLoop(boolean wrapLoop) {
+        this.isWrapLoop = wrapLoop;
+    }
 }
