@@ -28,7 +28,7 @@ public class FilterToJavaFilterMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "filter", new FilterOperator<>(null, (PredicateDescriptor) null), false);
+                "filter", new FilterOperator<>((PredicateDescriptor) null, null), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

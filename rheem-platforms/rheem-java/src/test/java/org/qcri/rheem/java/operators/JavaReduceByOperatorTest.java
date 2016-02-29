@@ -36,12 +36,12 @@ public class JavaReduceByOperatorTest {
                                 DataUnitType.createBasic(String.class),
                                 "field0"),
                         new ReduceDescriptor<>(
-                                DataUnitType.createGroupedUnchecked(Tuple2.class),
-                                DataUnitType.createBasicUnchecked(Tuple2.class),
                                 (a, b) -> {
                                     a.field1 += b.field1;
                                     return a;
-                                }));
+                                }, DataUnitType.createGroupedUnchecked(Tuple2.class),
+                                DataUnitType.createBasicUnchecked(Tuple2.class)
+                        ));
 
         ChannelExecutor[] inputs = new ChannelExecutor[]{new TestChannelExecutor(inputStream)};
         ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};

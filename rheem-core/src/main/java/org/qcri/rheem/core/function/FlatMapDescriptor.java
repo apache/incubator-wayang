@@ -2,6 +2,7 @@ package org.qcri.rheem.core.function;
 
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
+import org.qcri.rheem.core.types.DataUnitType;
 
 import java.util.function.Function;
 
@@ -13,12 +14,31 @@ import java.util.function.Function;
  */
 public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
 
-    protected final BasicDataUnitType inputType;
+    protected final BasicDataUnitType<Input> inputType;
 
-    protected final BasicDataUnitType outputType;
+    protected final BasicDataUnitType<Output> outputType;
 
     private final SerializableFunction<Input, Iterable<Output>> javaImplementation;
 
+    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
+                             Class<Input> inputTypeClass,
+                             Class<Output> outputTypeClass) {
+        this(javaImplementation, DataUnitType.createBasic(inputTypeClass), DataUnitType.createBasic(outputTypeClass));
+    }
+
+    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
+                             Class<Input> inputTypeClass,
+                             Class<Output> outputTypeClass,
+                             LoadEstimator cpuLoadEstimator,
+                             LoadEstimator ramLoadEstimator) {
+        this(javaImplementation,
+                DataUnitType.createBasic(inputTypeClass),
+                DataUnitType.createBasic(outputTypeClass),
+                cpuLoadEstimator,
+                ramLoadEstimator);
+    }
+
+    @Deprecated
     public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
                              BasicDataUnitType inputType,
                              BasicDataUnitType outputType) {
@@ -27,6 +47,7 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
                 LoadEstimator.createFallback(1, 1));
     }
 
+    @Deprecated
     public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
                              BasicDataUnitType inputType,
                              BasicDataUnitType outputType,
@@ -58,4 +79,11 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
         return (FlatMapDescriptor<Object, Object>) this;
     }
 
+    public BasicDataUnitType<Input> getInputType() {
+        return this.inputType;
+    }
+
+    public BasicDataUnitType<Output> getOutputType() {
+        return this.outputType;
+    }
 }

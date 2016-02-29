@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.mapping;
 import org.qcri.rheem.basic.operators.DistinctOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkDistinctOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -22,7 +23,7 @@ public class DistinctToSparkDistinctMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "distinct", new DistinctOperator<>(null), false);
+                "distinct", new DistinctOperator<>(DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

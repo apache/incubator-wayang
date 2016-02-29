@@ -30,9 +30,8 @@ public class JavaGlobalReduceOperatorTest {
                 new JavaGlobalReduceOperator<>(
                         DataSetType.createDefaultUnchecked(Tuple2.class),
                         new ReduceDescriptor<>(
-                                DataUnitType.createGrouped(Integer.class),
-                                DataUnitType.createBasic(Integer.class),
-                                (a, b) -> a + b
+                                (a, b) -> a + b, DataUnitType.createGrouped(Integer.class),
+                                DataUnitType.createBasic(Integer.class)
                         )
                 );
 
@@ -58,9 +57,8 @@ public class JavaGlobalReduceOperatorTest {
                 new JavaGlobalReduceOperator<>(
                         DataSetType.createDefaultUnchecked(Tuple2.class),
                         new ReduceDescriptor<>(
-                                DataUnitType.createGrouped(Integer.class),
-                                DataUnitType.createBasic(Integer.class),
-                                (a, b) -> a + b
+                                (a, b) -> a + b, DataUnitType.createGrouped(Integer.class),
+                                DataUnitType.createBasic(Integer.class)
                         )
                 );
 

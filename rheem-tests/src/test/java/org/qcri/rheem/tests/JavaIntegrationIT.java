@@ -265,8 +265,6 @@ public class JavaIntegrationIT {
         CollectionSource<Integer> mainSource = new CollectionSource<>(mainValues,
                 integerDataSetType);
         MapOperator<Integer, Integer> mulitply = new MapOperator<>(
-                integerDataSetType,
-                integerDataSetType,
                 new TransformationDescriptor<>(
                         new FunctionDescriptor.ExtendedSerializableFunction<Integer, Integer>() {
 
@@ -285,7 +283,8 @@ public class JavaIntegrationIT {
                         },
                         DataUnitType.createBasic(Integer.class),
                         DataUnitType.createBasic(Integer.class)
-                )
+                ), integerDataSetType,
+                integerDataSetType
         );
         final LocalCallbackSink<Integer> collectingSink = LocalCallbackSink.createCollectingSink(collectedValues,
                 integerDataSetType);

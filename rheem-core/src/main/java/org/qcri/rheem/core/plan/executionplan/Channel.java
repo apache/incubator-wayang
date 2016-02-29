@@ -5,7 +5,9 @@ import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
@@ -17,6 +19,13 @@ import java.util.stream.Stream;
  * Models the data movement between to {@link ExecutionTask}s.
  */
 public abstract class Channel {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    /**
+     * Was used to set up this instance.
+     */
+    private final ChannelDescriptor descriptor;
 
     /**
      * Produces the data flowing through this instance.
@@ -54,21 +63,24 @@ public abstract class Channel {
      * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}. The
      * {@link CardinalityEstimate} for the instance is retrieved from the {@code producer}.
      *
+     * @param descriptor  used to create this instance
      * @param producer    produces the data for the instance
      * @param outputIndex index of this instance within the {@code producer}
      */
-    protected Channel(ExecutionTask producer, int outputIndex) {
-        this(producer, outputIndex, extractCardinalityEstimate(producer, outputIndex));
+    protected Channel(ChannelDescriptor descriptor, ExecutionTask producer, int outputIndex) {
+        this(descriptor, producer, outputIndex, extractCardinalityEstimate(producer, outputIndex));
     }
 
     /**
      * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}.
      *
+     * @param descriptor          used to create this instance
      * @param producer            produces the data for the instance
      * @param outputIndex         index of this instance within the {@code producer}
      * @param cardinalityEstimate a {@link CardinalityEstimate} for this instance
      */
-    protected Channel(ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
+    protected Channel(ChannelDescriptor descriptor, ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
+        this.descriptor = descriptor;
         this.producer = producer;
         this.producer.setOutputChannel(outputIndex, this);
         this.cardinalityEstimate = cardinalityEstimate;
@@ -81,6 +93,7 @@ public abstract class Channel {
      * @param original the original instance whose properties will be mimed
      */
     protected Channel(Channel original) {
+        this.descriptor = original.getDescriptor();
         this.original = original.getOriginal();
         this.producer = original.getProducer();
         this.cardinalityEstimate = original.getCardinalityEstimate();
@@ -194,6 +207,7 @@ public abstract class Channel {
     public void removeSiblings() {
         this.removeSiblingsWhere((channel) -> true);
     }
+
     /**
      * Detaches this instance from all its {@link #siblings}.
      */
@@ -257,7 +271,7 @@ public abstract class Channel {
      * {@link ExecutionStage}s.
      */
     public void retain(Set<ExecutionStage> retainableStages) {
-        this.consumers.removeIf(consumer -> !retainableStages.contains(retainableStages));
+        this.consumers.removeIf(consumer -> !retainableStages.contains(consumer.getStage()));
         this.removeSiblingsWhere((sibling) -> !retainableStages.contains(sibling.getProducer().getStage()));
     }
 
@@ -299,13 +313,21 @@ public abstract class Channel {
      * Copies the consumers of the given {@code channel} into this instance.
      */
     private void copyConsumersFrom(Channel channel) {
-        assert this.consumers.isEmpty();
+        assert channel.getOriginal() == this;
         for (ExecutionTask consumer : new ArrayList<>(channel.getConsumers())) {
+            // We must take care not to copy back channels, that we already have in the original.
+            assert this.consumers.stream()
+                    .noneMatch(existingConsumer -> existingConsumer.getOperator().equals(consumer.getOperator())) :
+                    String.format("Overlap in existing %s and new %s.", this.consumers, channel.getConsumers());
             consumer.exchangeInputChannel(channel, this);
         }
     }
 
     public void setProducer(ExecutionTask producer) {
         this.producer = producer;
+    }
+
+    public ChannelDescriptor getDescriptor() {
+        return this.descriptor;
     }
 }

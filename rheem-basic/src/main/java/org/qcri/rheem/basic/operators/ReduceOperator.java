@@ -23,7 +23,7 @@ public class ReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      */
     public static <Type> ReduceOperator<Type> createGroupedReduce(
             ReduceDescriptor<Type> reduceDescriptor,
-            DataSetType<? extends Iterator<Type>> inputType,
+            DataSetType<? extends Iterable<Type>> inputType,
             DataSetType<Type> outputType) {
         return new ReduceOperator<>(reduceDescriptor, (DataSetType<Type>) inputType, outputType);
     }

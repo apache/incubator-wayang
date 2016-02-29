@@ -24,7 +24,7 @@ public class JavaFilterOperator<Type>
      * @param type type of the dataset elements
      */
     public JavaFilterOperator(DataSetType<Type> type, PredicateDescriptor<Type> predicateDescriptor) {
-        super(type, predicateDescriptor);
+        super(predicateDescriptor, type);
     }
 
     @Override

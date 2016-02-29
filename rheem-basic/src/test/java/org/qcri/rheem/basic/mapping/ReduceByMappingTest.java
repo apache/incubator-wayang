@@ -41,9 +41,9 @@ public class ReduceByMappingTest {
         source.connectTo(0, groupBy, 0);
 
         final ReduceDescriptor<Tuple2<String, Integer>> reduceDescriptor = new ReduceDescriptor<>(
-                DataUnitType.createGroupedUnchecked(Tuple2.class),
-                DataUnitType.createBasicUnchecked(Tuple2.class),
-                (a, b) -> a);
+                (a, b) -> a, DataUnitType.createGroupedUnchecked(Tuple2.class),
+                DataUnitType.createBasicUnchecked(Tuple2.class)
+        );
         ReduceOperator<Tuple2<String, Integer>> reduce = ReduceOperator.createGroupedReduce(
                 reduceDescriptor,
                 DataSetType.createGroupedUnchecked(Tuple2.class),

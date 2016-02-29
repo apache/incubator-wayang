@@ -213,9 +213,14 @@ public class CrossPlatformExecutor {
     private void tryToActivateSuccessors(ExecutionStage processedStage, Collection<ExecutionStage> collector) {
         for (ExecutionStage succeedingStage : processedStage.getSuccessors()) {
             final int newCompletedPredecessors = this.predecessorCounter.increment(succeedingStage);
+            this.logger.info("{} activated {} to {}/{}.", processedStage, succeedingStage, newCompletedPredecessors,
+                    succeedingStage.getPredecessors().size());
             if (newCompletedPredecessors == succeedingStage.getPredecessors().size()) {
                 collector.add(succeedingStage);
                 this.predecessorCounter.remove(succeedingStage);
+            } else {
+                assert newCompletedPredecessors < succeedingStage.getPredecessors().size() :
+                String.format("Activated %s to often.", succeedingStage);
             }
         }
     }

@@ -2,7 +2,7 @@ package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkMapOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -28,7 +28,7 @@ public class MapOperatorToSparkMapOperatorMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "map", new MapOperator<>(null, null, null), false);
+                "map", new MapOperator<>(null, DataSetType.none(), DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

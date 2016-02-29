@@ -19,7 +19,7 @@ public class DataUnitGroupType<T> extends DataUnitType<Iterator<T>> {
         return true;
     }
 
-    public DataUnitType getBaseType() {
+    public DataUnitType<T> getBaseType() {
         return this.baseType;
     }
 

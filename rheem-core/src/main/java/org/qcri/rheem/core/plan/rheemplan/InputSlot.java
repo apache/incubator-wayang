@@ -14,7 +14,7 @@ public class InputSlot<T> extends Slot<T> {
     /**
      * Output slot of another operator that is connected to this input slot.
      */
-    private OutputSlot occupant;
+    private OutputSlot<T> occupant;
 
     /**
      * Tells whether this instance represents a broadcasted input.
@@ -64,28 +64,28 @@ public class InputSlot<T> extends Slot<T> {
     /**
      * Creates a new instance that imitates the given {@code blueprint}, but for a different {@code owner}.
      */
-    public InputSlot(Slot blueprint, Operator owner) {
+    public InputSlot(Slot<T> blueprint, Operator owner) {
         this(blueprint.getName(), owner, blueprint.getType());
     }
 
     /**
      * Creates a new instance that imitates the given {@code blueprint}, but for a different {@code owner}.
      */
-    public InputSlot(InputSlot blueprint, Operator owner) {
+    public InputSlot(InputSlot<T> blueprint, Operator owner) {
         this(blueprint.getName(), owner, blueprint.isBroadcast(), blueprint.getType());
     }
 
     /**
      * Creates a new, non-broadcast instance.
      */
-    public InputSlot(String name, Operator owner, DataSetType type) {
+    public InputSlot(String name, Operator owner, DataSetType<T> type) {
         this(name, owner, false, type);
     }
 
     /**
      * Creates a new instance.
      */
-    public InputSlot(String name, Operator owner, boolean isBroadcast, DataSetType type) {
+    public InputSlot(String name, Operator owner, boolean isBroadcast, DataSetType<T> type) {
         super(name, owner, type);
         this.isBroadcast = isBroadcast;
     }
@@ -93,15 +93,15 @@ public class InputSlot<T> extends Slot<T> {
     /**
      * Shortcut for {@link #InputSlot(Slot, Operator)}
      */
-    public InputSlot copyFor(Operator owner) {
-        return new InputSlot(this, owner);
+    public InputSlot<T> copyFor(Operator owner) {
+        return new InputSlot<>(this, owner);
     }
 
     /**
      * As {@link #copyFor(Operator)}, but ensures that the copy will not be marked as broadcast.
      */
-    public InputSlot copyAsNonBroadcastFor(Operator owner) {
-        return new InputSlot(this.getName(), owner, false, this.getType());
+    public InputSlot<T> copyAsNonBroadcastFor(Operator owner) {
+        return new InputSlot<>(this.getName(), owner, false, this.getType());
     }
 
     /**
@@ -113,7 +113,7 @@ public class InputSlot<T> extends Slot<T> {
      * @see OutputSlot#connectTo(InputSlot)
      * @see OutputSlot#disconnectFrom(InputSlot)
      */
-    InputSlot setOccupant(OutputSlot outputSlot) {
+    InputSlot<T> setOccupant(OutputSlot<T> outputSlot) {
         this.occupant = outputSlot;
         return this;
     }

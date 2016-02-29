@@ -31,11 +31,12 @@ public class JavaMaterializedGroupByOperatorTest {
         // Build the reduce operator.
         JavaMaterializedGroupByOperator<Tuple2<String, Integer>, String> collocateByOperator =
                 new JavaMaterializedGroupByOperator<>(
-                        DataSetType.createDefaultUnchecked(Tuple2.class),
                         new ProjectionDescriptor<>(
                                 DataUnitType.createBasicUnchecked(Tuple2.class),
                                 DataUnitType.createBasicUnchecked(Tuple2.class),
-                                "field0")
+                                "field0"),
+                        DataSetType.createDefaultUnchecked(Tuple2.class),
+                        DataSetType.createGroupedUnchecked(Tuple2.class)
                 );
 
         // Execute.

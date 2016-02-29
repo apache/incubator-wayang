@@ -1,8 +1,9 @@
 package org.qcri.rheem.java.channels;
 
-import org.qcri.rheem.basic.channels.HdfsFile;
+import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.DefaultChannelManager;
 import org.qcri.rheem.core.platform.Platform;
@@ -19,33 +20,37 @@ import java.util.function.Function;
  */
 public class JavaChannelManager extends DefaultChannelManager {
 
-    private final Map<Class<? extends Channel>, ChannelTypeDescriptor> channelTypeDescriptors = new LinkedHashMap<>();
+    private final Map<ChannelDescriptor, ChannelTypeDescriptor> channelTypeDescriptors = new LinkedHashMap<>();
 
-    private final List<Class<? extends Channel>> supportedChannels = new LinkedList<>();
+    private final List<ChannelDescriptor> supportedChannels = new LinkedList<>();
 
-    private final List<Class<? extends Channel>> supportedBroadcastChannels = new LinkedList<>();
+    private final List<ChannelDescriptor> supportedBroadcastChannels = new LinkedList<>();
 
     public JavaChannelManager(Platform platform) {
-        super(platform, CollectionChannel.class, StreamChannel.class);
+        super(platform, CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
         this.initializeChannelTypeDescriptors();
     }
 
     private void initializeChannelTypeDescriptors() {
-        this.addChannel(StreamChannel.class,
+        this.addChannel(StreamChannel.DESCRIPTOR,
                 new StreamChannel.Initializer(),
                 channel -> new StreamChannel.Executor(channel.isMarkedForInstrumentation()),
                 true, false);
-        this.addChannel(CollectionChannel.class,
+        this.addChannel(CollectionChannel.DESCRIPTOR,
                 new CollectionChannel.Initializer(),
                 channel -> new CollectionChannel.Executor(channel.isMarkedForInstrumentation()),
                 true, true);
-        this.addChannel(HdfsFile.class,
+        this.addChannel(new FileChannel.Descriptor("hdfs", "object-file"),
                 new HdfsFileInitializer(),
-                channel -> new HdfsFileInitializer.Executor((HdfsFile) channel),
+                channel -> new HdfsFileInitializer.Executor((FileChannel) channel),
+                true, true);
+        this.addChannel(new FileChannel.Descriptor("hdfs", "tsv"),
+                new HdfsFileInitializer(),
+                channel -> new HdfsFileInitializer.Executor((FileChannel) channel),
                 true, true);
     }
 
-    private void addChannel(Class<? extends Channel> channelClass,
+    private void addChannel(ChannelDescriptor channelClass,
                             ChannelInitializer channelInitializer,
                             Function<Channel, ChannelExecutor> executorFactory,
                             boolean isRegularChannel,
@@ -60,27 +65,27 @@ public class JavaChannelManager extends DefaultChannelManager {
         }
     }
 
-    public List<Class<? extends Channel>> getSupportedChannels() {
+    public List<ChannelDescriptor> getSupportedChannels() {
         return this.supportedChannels;
     }
 
-    public List<Class<? extends Channel>> getSupportedBroadcastChannels() {
+    public List<ChannelDescriptor> getSupportedBroadcastChannels() {
         return this.supportedBroadcastChannels;
     }
 
     @Override
-    public ChannelInitializer getChannelInitializer(Class<? extends Channel> channelClass) {
+    public ChannelInitializer getChannelInitializer(ChannelDescriptor channelClass) {
         return this.channelTypeDescriptors.get(channelClass).getInitializer();
     }
 
     public ChannelExecutor createChannelExecutor(Channel channel) {
-        return this.channelTypeDescriptors.get(channel.getClass()).getExecutorFactory().apply(channel);
+        return this.channelTypeDescriptors.get(channel.getDescriptor()).getExecutorFactory().apply(channel);
     }
 
     @Override
     public boolean exchangeWithInterstageCapable(Channel channel) {
         if (channel instanceof StreamChannel) {
-            ((StreamChannel) channel).exchangeWith(this.getChannelInitializer(CollectionChannel.class));
+            ((StreamChannel) channel).exchangeWith(CollectionChannel.DESCRIPTOR);
             return true;
         }
         return super.exchangeWithInterstageCapable(channel);

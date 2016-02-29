@@ -4,6 +4,8 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
@@ -18,8 +20,11 @@ public class StreamChannel extends Channel {
 
     private static final boolean IS_INTERNAL = true;
 
-    protected StreamChannel(ExecutionTask producer, int outputIndex) {
-        super(producer, outputIndex);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(StreamChannel.class);
+
+    protected StreamChannel(ChannelDescriptor descriptor, ExecutionTask producer, int outputIndex) {
+        super(descriptor, producer, outputIndex);
+        assert descriptor == DESCRIPTOR;
     }
 
     private StreamChannel(StreamChannel parent) {
@@ -46,10 +51,13 @@ public class StreamChannel extends Channel {
         return new StreamChannel(this);
     }
 
-    public Channel exchangeWith(ChannelInitializer channelInitializer) {
+    public Channel exchangeWith(ChannelDescriptor descriptor) {
+        ChannelInitializer channelInitializer = JavaPlatform.getInstance()
+                .getChannelManager()
+                .getChannelInitializer(descriptor);
         final ExecutionTask producer = this.producer;
         final int outputIndex = this.producer.removeOutputChannel(this);
-        final Channel replacementChannel = channelInitializer.setUpOutput(producer, outputIndex);
+        final Channel replacementChannel = channelInitializer.setUpOutput(descriptor, producer, outputIndex);
 
         for (ExecutionTask consumer : this.consumers) {
             int inputIndex = consumer.removeInputChannel(this);
@@ -68,10 +76,10 @@ public class StreamChannel extends Channel {
     public static class Initializer implements ChannelInitializer {
 
         @Override
-        public Channel setUpOutput(ExecutionTask executionTask, int index) {
+        public Channel setUpOutput(ChannelDescriptor descriptor, ExecutionTask executionTask, int index) {
             final Channel existingOutputChannel = executionTask.getOutputChannel(index);
             if (existingOutputChannel == null) {
-                return new StreamChannel(executionTask, index);
+                return new StreamChannel(descriptor, executionTask, index);
             } else if (existingOutputChannel instanceof StreamChannel) {
                 return existingOutputChannel;
             } else if (existingOutputChannel instanceof CollectionChannel) {
@@ -120,7 +128,7 @@ public class StreamChannel extends Channel {
                     this.cardinality += 1;
                     return true;
                 })
-                .onClose(() -> this.cardinality++);
+                        .onClose(() -> this.cardinality++);
             }
         }
 

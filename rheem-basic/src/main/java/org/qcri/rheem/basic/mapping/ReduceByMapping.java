@@ -51,9 +51,8 @@ public class ReduceByMapping implements Mapping {
             final ReduceOperator reduce = (ReduceOperator) subplanMatch.getMatch("reduce").getOperator();
 
             return new ReduceByOperator<>(
-                    groupBy.getInputType(),
-                    groupBy.getKeyDescriptor(),
-                    reduce.getReduceDescriptor()).at(epoch);
+                    groupBy.getKeyDescriptor(), reduce.getReduceDescriptor(), groupBy.getInputType()
+            ).at(epoch);
         }
     }
 

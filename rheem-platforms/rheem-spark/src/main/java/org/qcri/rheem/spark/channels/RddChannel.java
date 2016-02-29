@@ -1,10 +1,10 @@
 package org.qcri.rheem.spark.channels;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 
 /**
  * Describes the situation where one {@link JavaRDD} is operated on, producing a further {@link JavaRDD}.
@@ -16,8 +16,13 @@ public class RddChannel extends Channel {
 
     private static final boolean IS_INTERNAL = true;
 
-    protected RddChannel(ExecutionTask producer, int outputIndex) {
-        super(producer, outputIndex);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(RddChannel.class);
+
+    protected RddChannel(ChannelDescriptor descriptor,
+                         ExecutionTask producer,
+                         int outputIndex) {
+        super(descriptor, producer, outputIndex);
+        assert descriptor == DESCRIPTOR;
     }
 
     private RddChannel(RddChannel parent) {
@@ -47,10 +52,10 @@ public class RddChannel extends Channel {
     static class Initializer implements ChannelInitializer {
 
         @Override
-        public Channel setUpOutput(ExecutionTask executionTask, int index) {
+        public Channel setUpOutput(ChannelDescriptor descriptor, ExecutionTask executionTask, int index) {
             final Channel existingOutputChannel = executionTask.getOutputChannel(index);
             if (existingOutputChannel == null) {
-                return new RddChannel(executionTask, index);
+                return new RddChannel(descriptor, executionTask, index);
             } else if (existingOutputChannel instanceof RddChannel) {
                 return existingOutputChannel;
             } else {
