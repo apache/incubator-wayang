@@ -447,4 +447,15 @@ public interface Operator {
      * Collect all inner {@link InputSlot}s that are mapped to the given {@link InputSlot}.
      */
     <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input);
+
+    /**
+     * Identify this instance as the head of a loop. It is the only kind of {@link Operator} that can cause
+     * data flow cycles.
+     *
+     * @return whether this instance is the head of a loop
+     */
+    default boolean isLoopHead() {
+        return this instanceof LoopHeadOperator;
+    }
+
 }

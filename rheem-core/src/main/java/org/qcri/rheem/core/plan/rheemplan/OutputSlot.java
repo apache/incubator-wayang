@@ -36,11 +36,19 @@ public class OutputSlot<T> extends Slot<T> {
         }
 
         for (int i = 0; i < victim.getNumOutputs(); i++) {
-            final List<? extends InputSlot<?>> occupiedSlots = new ArrayList<>(victim.getOutput(i).getOccupiedSlots());
-            for (InputSlot<?> occupiedSlot : occupiedSlots) {
-                victim.getOutput(i).unchecked().disconnectFrom(occupiedSlot.unchecked());
-                thief.getOutput(i).unchecked().connectTo(occupiedSlot.unchecked());
-            }
+            thief.getOutput(i).unchecked().stealOccupiedSlots(victim.getOutput(i).unchecked());
+        }
+    }
+
+
+    /**
+     * Takes away the occupied {@link InputSlot}s of the {@code victim} and connects it to this instance.
+     */
+    public void stealOccupiedSlots(OutputSlot<T> victim) {
+        final List<InputSlot<T>> occupiedSlots = new ArrayList<>(victim.getOccupiedSlots());
+        for (InputSlot<T> occupiedSlot : occupiedSlots) {
+            victim.disconnectFrom(occupiedSlot);
+            this.connectTo(occupiedSlot);
         }
     }
 

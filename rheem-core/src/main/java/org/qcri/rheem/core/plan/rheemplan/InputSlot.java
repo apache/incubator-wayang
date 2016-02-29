@@ -53,11 +53,19 @@ public class InputSlot<T> extends Slot<T> {
         }
 
         for (int i = 0; i < victim.getNumInputs(); i++) {
-            final OutputSlot<?> occupant = victim.getInput(i).getOccupant();
-            if (occupant != null) {
-                occupant.unchecked().disconnectFrom(victim.getInput(i).unchecked());
-                occupant.unchecked().connectTo(thief.getInput(i).unchecked());
-            }
+            thief.getInput(i).unchecked().stealOccupant(victim.getInput(i).unchecked());
+        }
+    }
+
+    /**
+     * Takes away the occupant {@link OutputSlot} of the {@code victim} and connects it to this instance.
+     */
+    public void stealOccupant(InputSlot<T> victim) {
+        assert this.getOccupant() == null;
+        final OutputSlot<T> occupant = victim.getOccupant();
+        if (occupant != null) {
+            occupant.disconnectFrom(victim);
+            occupant.connectTo(this);
         }
     }
 
