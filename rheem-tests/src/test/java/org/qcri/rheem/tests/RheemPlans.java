@@ -2,6 +2,7 @@ package org.qcri.rheem.tests;
 
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
@@ -11,6 +12,7 @@ import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -268,6 +270,53 @@ public class RheemPlans {
         upperCaseOperator.connectTo(0, distinctLinesOperator, 0);
         distinctLinesOperator.connectTo(0, stdoutSink, 0);
 
+
+        // Create the RheemPlan.
+        RheemPlan rheemPlan = new RheemPlan();
+        rheemPlan.addSink(stdoutSink);
+        return rheemPlan;
+    }
+
+    private static Integer increment(Integer k) {
+        return k++;
+    }
+    /**
+     * Same loop counter.
+     */
+    public static RheemPlan diverseScenario4(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
+        // Build a Rheem plan.
+        TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
+        TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
+        MapOperator<Integer, Integer> counter = new MapOperator<>(
+                DataSetType.createDefault(Integer.class),
+                DataSetType.createDefault(Integer.class),
+                new TransformationDescriptor<>(
+                        RheemPlans::increment,
+                        DataUnitType.createBasic(Integer.class),
+                        DataUnitType.createBasic(Integer.class)));
+        UnionAllOperator<String> unionOperator = new UnionAllOperator<>(DataSetType.createDefault(String.class));
+        StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
+
+        LoopOperator<String, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(String.class),
+                DataSetType.createDefault(Integer.class),
+                new PredicateDescriptor.SerializablePredicate<Collection<Integer>>() {
+                    @Override
+                    public boolean test(Collection<Integer> collection) {
+                        if (collection.iterator().next()>=10){
+                            return true;
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                });
+
+        // Union 10 times then output
+        loopOperator.initialize(textFileSource1, 0);
+        loopOperator.beginIteration(unionOperator, counter);
+        textFileSource2.connectTo(0, unionOperator, 1);
+        loopOperator.endIteration(unionOperator, counter);
+        loopOperator.outputConnectTo(stdoutSink, 0);
 
         // Create the RheemPlan.
         RheemPlan rheemPlan = new RheemPlan();

@@ -193,6 +193,18 @@ public class JavaIntegrationIT {
     }
 
     @Test
+    public void testDiverseScenario4() throws URISyntaxException {
+        // Build the RheemPlan.
+        RheemPlan rheemPlan = RheemPlans.diverseScenario4(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+    }
+
+    @Test
     public void testBroadcasts() {
         Collection<Integer> broadcastedValues = Arrays.asList(1, 2, 3, 4);
         Collection<Integer> mainValues = Arrays.asList(2, 4, 6, 2);
