@@ -5,6 +5,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 
 import java.util.Optional;
 
@@ -15,6 +16,10 @@ public class TestSource<T> extends UnarySource<T> {
 
     public TestSource(DataSetType outputType) {
         super(outputType, null);
+    }
+
+    public TestSource(Class<?> dataQuantumClass) {
+        this(DataSetType.createDefault(DataUnitType.createBasic(dataQuantumClass)));
     }
 
     @Override

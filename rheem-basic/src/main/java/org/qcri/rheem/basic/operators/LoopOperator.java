@@ -9,17 +9,24 @@ import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * This operator has three inputs and three outputs.
  */
-public class LoopOperator<InputType, ConvergenceType> extends OperatorBase implements ActualOperator {
+public class LoopOperator<InputType, ConvergenceType> extends OperatorBase implements ActualOperator, LoopHeadOperator {
+
     public enum State {
         NOT_STARTED, RUNNING, FINISHED
     }
+
+    public static final int INITIAL_INPUT_INDEX = 0;
+    public static final int CONVERGENCE_INPUT_INDEX = 1;
+    public static final int ITERATION_INPUT_INDEX = 2;
+
+    public static final int ITERATION_OUTPUT_INDEX = 0;
+    public static final int CONVERGENCE_OUTPUT_INDEX= 1;
+    public static final int FINAL_OUTPUT_INDEX= 2;
 
     /**
      * Function that this operator applies to the input elements.
@@ -51,61 +58,59 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
                         PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
         super(3, 3, true, null);
         this.criterionDescriptor = criterionDescriptor;
-        this.inputSlots[0] = new InputSlot<>("initialInput", this, inputType);
-        this.inputSlots[1] = new InputSlot<>("convergenceInput", this, convergenceType);
-        this.inputSlots[2] = new InputSlot<>("iterationInput", this, inputType);
+        this.inputSlots[INITIAL_INPUT_INDEX] = new InputSlot<>("initialInput", this, inputType);
+        this.inputSlots[CONVERGENCE_INPUT_INDEX] = new InputSlot<>("convergenceInput", this, convergenceType);
+        this.inputSlots[ITERATION_INPUT_INDEX] = new InputSlot<>("iterationInput", this, inputType);
 
-        this.outputSlots[0] = new OutputSlot<>("iterationOutput", this, inputType);
-        this.outputSlots[1] = new OutputSlot<>("convergenceOutput", this, convergenceType);
-        this.outputSlots[2] = new OutputSlot<>("output", this, inputType);
+        this.outputSlots[ITERATION_OUTPUT_INDEX] = new OutputSlot<>("iterationOutput", this, inputType);
+        this.outputSlots[CONVERGENCE_OUTPUT_INDEX] = new OutputSlot<>("convergenceOutput", this, convergenceType);
+        this.outputSlots[FINAL_OUTPUT_INDEX] = new OutputSlot<>("output", this, inputType);
         this.state = State.NOT_STARTED;
     }
 
 
     public DataSetType<InputType> getInputType() {
-        return ((InputSlot<InputType>) this.getInput(0)).getType();
+        return ((InputSlot<InputType>) this.getInput(INITIAL_INPUT_INDEX)).getType();
     }
 
     public DataSetType<ConvergenceType> getConvergenceType() {
-        return ((InputSlot<ConvergenceType>) this.getInput(1)).getType();
+        return ((InputSlot<ConvergenceType>) this.getInput(CONVERGENCE_INPUT_INDEX)).getType();
     }
 
     public void initialize(Operator initOperator, int initOpOutputIndex) {
-        initOperator.connectTo(initOpOutputIndex, this, 0);
+        initOperator.connectTo(initOpOutputIndex, this, INITIAL_INPUT_INDEX);
     }
 
     public void initialize(Operator initOperator) {
-        initOperator.connectTo(0, this, 0);
+        this.initialize(initOperator, 0);
     }
 
     public void beginIteration(Operator beginOperator, int beginInputIndex, Operator convergeOperator,
                                int convergeInputIndex) {
-        this.connectTo(0, beginOperator, beginInputIndex);
-        this.connectTo(1, convergeOperator, convergeInputIndex);
+        this.connectTo(ITERATION_OUTPUT_INDEX, beginOperator, beginInputIndex);
+        this.connectTo(CONVERGENCE_OUTPUT_INDEX, convergeOperator, convergeInputIndex);
     }
 
     public void beginIteration(Operator beginOperator, Operator convergeOperator) {
-        this.connectTo(0, beginOperator, 0);
-        this.connectTo(1, convergeOperator, 0);
+        this.beginIteration(beginOperator, 0, convergeOperator, 0);
     }
 
     public void endIteration(Operator endOperator, int endOpOutputIndex, Operator convergeOperator,
                              int convergeOutputIndex) {
-        endOperator.connectTo(endOpOutputIndex, this, 2);
-        convergeOperator.connectTo(convergeOutputIndex, this, 1);
+        endOperator.connectTo(endOpOutputIndex, this, ITERATION_INPUT_INDEX);
+        convergeOperator.connectTo(convergeOutputIndex, this, CONVERGENCE_INPUT_INDEX);
     }
 
     public void endIteration(Operator endOperator, Operator convergeOperator) {
-        endOperator.connectTo(0, this, 2);
-        convergeOperator.connectTo(0, this, 1);
+        this.endIteration(endOperator, 0, convergeOperator, 0);
     }
 
     public void outputConnectTo(Operator outputOperator, int thatInputIndex) {
-        this.connectTo(2, outputOperator, thatInputIndex);
+        this.connectTo(FINAL_OUTPUT_INDEX, outputOperator, thatInputIndex);
     }
 
     public void outputConnectTo(Operator outputOperator) {
-        this.connectTo(2, outputOperator, 0);
+        this.outputConnectTo(outputOperator, 0);
     }
 
     public PredicateDescriptor<Collection<ConvergenceType>> getCriterionDescriptor() {
@@ -118,5 +123,25 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
         return Optional.of(new DefaultCardinalityEstimator(1d, 1, this.isSupportingBroadcastInputs(), inputCards -> inputCards[0]));
+    }
+
+    @Override
+    public Collection<OutputSlot<?>> getLoopBodyOutputs() {
+        return Arrays.asList(this.getOutput(ITERATION_OUTPUT_INDEX), this.getOutput(CONVERGENCE_OUTPUT_INDEX));
+    }
+
+    @Override
+    public Collection<OutputSlot<?>> getFinalLoopOutputs() {
+        return Collections.singletonList(this.getOutput(FINAL_OUTPUT_INDEX));
+    }
+
+    @Override
+    public Collection<InputSlot<?>> getLoopBodyInputs() {
+        return Arrays.asList(this.getInput(ITERATION_INPUT_INDEX), this.getInput(CONVERGENCE_INPUT_INDEX));
+    }
+
+    @Override
+    public Collection<InputSlot<?>> getLoopInitializationInputs() {
+        return Collections.singletonList(this.getInput(INITIAL_INPUT_INDEX));
     }
 }

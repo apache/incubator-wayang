@@ -4,6 +4,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 
 import java.util.Optional;
 
@@ -14,6 +15,10 @@ public class TestSink<T> extends UnarySink<T> {
 
     public TestSink(DataSetType<T> inputType) {
         super(inputType, null);
+    }
+
+    public TestSink(Class<T> typeClass) {
+        this(DataSetType.createDefault(DataUnitType.createBasic(typeClass)));
     }
 
     @Override

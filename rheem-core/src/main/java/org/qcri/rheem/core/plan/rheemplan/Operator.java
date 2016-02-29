@@ -141,9 +141,27 @@ public interface Operator {
      * @param that            operator to connect to
      * @param thatInputIndex  index of the input slot to connect from
      */
+    @SuppressWarnings("unchecked")
     default <T> void connectTo(int thisOutputIndex, Operator that, int thatInputIndex) {
         final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputIndex);
         final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputIndex);
+        if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
+            throw new IllegalArgumentException("Cannot connect slots: mismatching types");
+        }
+        outputSlot.connectTo(inputSlot);
+    }
+
+    /**
+     * Connect an output of this operator to the input of a second operator.
+     *
+     * @param thisOutputName name of the output slot to connect to
+     * @param that            operator to connect to
+     * @param thatInputName  name of the input slot to connect from
+     */
+    @SuppressWarnings("unchecked")
+    default <T> void connectTo(String thisOutputName, Operator that, String thatInputName) {
+        final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputName);
+        final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputName);
         if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
             throw new IllegalArgumentException("Cannot connect slots: mismatching types");
         }
@@ -163,6 +181,21 @@ public interface Operator {
         final InputSlot<?> broadcastInput = new InputSlot<>(broadcastName, that, true, output.getType());
         final int broadcastIndex = that.addBroadcastInput(broadcastInput);
         this.connectTo(thisOutputIndex, that, broadcastIndex);
+    }
+
+    /**
+     * Connect an output of this operator as a broadcast input of a second operator.
+     *
+     * @param thisOutputName name of the output slot to connect to
+     * @param that            operator to connect to
+     * @param broadcastName   name of the broadcast that will be used by the operator to identify the broadcast; must
+     *                        be unique among all {@link InputSlot}s
+     */
+    default void broadcastTo(String thisOutputName, Operator that, String broadcastName) {
+        final OutputSlot<?> output = this.getOutput(thisOutputName);
+        final InputSlot<?> broadcastInput = new InputSlot<>(broadcastName, that, true, output.getType());
+        final int broadcastIndex = that.addBroadcastInput(broadcastInput);
+        this.connectTo(output.getIndex(), that, broadcastIndex);
     }
 
 
@@ -191,8 +224,9 @@ public interface Operator {
         }
 
         // Try to exit through the parent.
+        final OutputSlot occupant = input.getOccupant();
         final Operator parent = this.getParent();
-        if (parent != null) {
+        if (occupant == null && parent != null) {
             if (parent instanceof Subplan) {
                 final InputSlot<?> exitInputSlot = ((Subplan) parent).exit(input);
                 if (exitInputSlot != null) {
@@ -208,7 +242,6 @@ public interface Operator {
 
         }
 
-        final OutputSlot occupant = input.getOccupant();
         return occupant == null ? null : occupant.getOwner();
     }
 

@@ -6,6 +6,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 
 import java.util.Optional;
 
@@ -16,8 +17,15 @@ public class TestMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     /**
      * Creates a new instance.
      */
-    public TestMapOperator(DataSetType inputType, DataSetType outputType) {
+    public TestMapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType) {
         super(inputType, outputType, true, null);
+    }
+
+    public TestMapOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass) {
+        this(
+                DataSetType.createDefault(DataUnitType.createBasic(inputTypeClass)),
+                DataSetType.createDefault(DataUnitType.createBasic(outputTypeClass))
+        );
     }
 
     @Override
@@ -25,5 +33,10 @@ public class TestMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
                                                                   Configuration configuration) {
         Validate.isTrue(outputIndex == 0);
         return Optional.of(new DefaultCardinalityEstimator(1d, 1, true, cards -> cards[0]));
+    }
+
+    @Override
+    public boolean isSupportingBroadcastInputs() {
+        return true;
     }
 }

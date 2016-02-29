@@ -114,6 +114,8 @@ public class Job {
     private ExecutionPlan createInitialExecutionPlan() {
         long optimizerStartTime = System.currentTimeMillis();
 
+        this.isolateLoops();
+
         // Apply the mappings to the plan to form a hyperplan.
         this.applyMappingsToRheemPlan();
 
@@ -130,6 +132,10 @@ public class Job {
         assert executionPlan.isSane();
 
         return executionPlan;
+    }
+
+    private void isolateLoops() {
+
     }
 
     /**
