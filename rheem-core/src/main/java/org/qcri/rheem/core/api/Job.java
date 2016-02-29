@@ -23,6 +23,8 @@ import org.qcri.rheem.core.platform.CardinalityBreakpoint;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.platform.ExecutionProfile;
 import org.qcri.rheem.core.platform.FixBreakpoint;
+import org.qcri.rheem.core.profiling.CardinalityRepository;
+import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,14 +93,18 @@ public class Job {
             throw new RheemException("Job has already been executed.");
         }
 
-        // Get an execution plan.
-        ExecutionPlan executionPlan = this.createInitialExecutionPlan();
+        try {
+            // Get an execution plan.
+            ExecutionPlan executionPlan = this.createInitialExecutionPlan();
 
-        // Take care of the execution.
-        CrossPlatformExecutor.State state = this.execute(executionPlan);
-        while (!state.isComplete()) {
-            this.reoptimize(executionPlan, state);
-            state = this.execute(executionPlan);
+            // Take care of the execution.
+            CrossPlatformExecutor.State state = null;
+            while (state == null || !state.isComplete()) {
+                state = this.execute(executionPlan);
+                this.postProcess(executionPlan, state);
+            }
+        } finally {
+            this.releaseResources();
         }
     }
 
@@ -120,6 +126,8 @@ public class Job {
         long optimizerFinishTime = System.currentTimeMillis();
         this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
         this.logger.debug("Picked execution plan:\n{}", executionPlan.toExtensiveString());
+
+        assert executionPlan.isSane();
 
         return executionPlan;
     }
@@ -165,7 +173,6 @@ public class Job {
                 .sum();
     }
 
-
     /**
      * Check that the given {@link RheemPlan} is as we expect it to be in the following steps.
      */
@@ -177,6 +184,7 @@ public class Job {
             throw new IllegalStateException("Hyperplan is not in an expected state.");
         }
     }
+
 
     /**
      * Go over the given {@link RheemPlan} and estimate the cardinalities of data being passed between its
@@ -197,7 +205,6 @@ public class Job {
         cardinalityEstimatorManager.pushCardinalityUpdates(this.rheemPlan, executionState);
     }
 
-
     /**
      * Go over the given {@link RheemPlan} and estimate the execution times of its {@link ExecutionOperator}s.
      */
@@ -208,6 +215,7 @@ public class Job {
                 this.logger.debug("Time estimate for {}: {}", entry.getKey(), entry.getValue()));
         return timeEstimates;
     }
+
 
     /**
      * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
@@ -276,9 +284,11 @@ public class Job {
      * Dummy implementation: Have the platforms execute the given execution plan.
      */
     private CrossPlatformExecutor.State execute(ExecutionPlan executionPlan) {
+        // Set up appropriate Breakpoints.
         FixBreakpoint breakpoint = new FixBreakpoint();
         if (this.crossPlatformExecutor == null) {
-            this.crossPlatformExecutor = new CrossPlatformExecutor();
+            final InstrumentationStrategy instrumentation = this.configuration.getInstrumentationStrategyProvider().provide();
+            this.crossPlatformExecutor = new CrossPlatformExecutor(instrumentation);
             executionPlan.getStartingStages().forEach(breakpoint::breakAfter);
 
         } else {
@@ -290,14 +300,30 @@ public class Job {
         }
         this.crossPlatformExecutor.extendBreakpoint(breakpoint);
         this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(this.maxSpread, this.minConfidence));
-        return this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
+
+        // Trigger the execution.
+        final CrossPlatformExecutor.State state = this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
+
+        // Return the state.
+        return state;
     }
 
-    private void reoptimize(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
+    /**
+     * Injects the cardinalities obtained from {@link Channel} instrumentation, potentially updates the {@link ExecutionPlan}
+     * through re-optimization, and collects measured data.
+     */
+    private void postProcess(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
         long optimizerStartTime = System.currentTimeMillis();
 
         this.reestimateCardinalities(state);
-        this.updateExecutionPlan(executionPlan, state);
+        if (!state.isComplete()) {
+            this.updateExecutionPlan(executionPlan, state);
+        }
+
+        // Collect any instrumentation results for the future.
+        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
+        cardinalityRepository.storeAll(state.getProfile(), this.rheemPlan);
+
 
         long optimizerFinishTime = System.currentTimeMillis();
         this.logger.info("Re-optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
@@ -346,6 +372,17 @@ public class Job {
 
         final ExecutionPlan executionPlanExpansion = partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);
+
+        assert executionPlan.isSane();
+    }
+
+    /**
+     * Asks this instance to release its critical resources to avoid resource leaks and to enhance durability and
+     * consistency of accessed resources.
+     */
+    private void releaseResources() {
+        this.rheemContext.getCardinalityRepository().sleep();
+        if (this.crossPlatformExecutor != null) this.crossPlatformExecutor.shutdown();
     }
 
     /**

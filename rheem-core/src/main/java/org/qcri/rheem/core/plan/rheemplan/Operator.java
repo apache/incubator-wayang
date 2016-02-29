@@ -428,14 +428,23 @@ public interface Operator {
      * Set the {@link CardinalityEstimate} of an {@link OutputSlot} and propagate it to
      * <ul>
      * <li>fed {@link InputSlot}s (which in turn are asked to propagate) and</li>
-     * <li>inner, mapped {@link OutputSlot}s.</li>
+     * <li><b>inner</b>, mapped {@link OutputSlot}s.</li>
      * </ul>
      */
     void propagateOutputCardinality(int outputIndex, CardinalityEstimate cardinalityEstimate);
 
     /**
-     * Set the {@link CardinalityEstimate} of an {@link InputSlot} and propagate it to inner, mapped {@link InputSlot}s.
+     * Set the {@link CardinalityEstimate} of an {@link InputSlot} and propagate it to <b>inner</b>, mapped {@link InputSlot}s.
      */
     void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate);
 
+    /**
+     * Collect all inner {@link OutputSlot}s that are mapped to the given {@link OutputSlot}.
+     */
+    <T> Set<OutputSlot<T>> collectMappedOutputSlots(OutputSlot<T> output);
+
+    /**
+     * Collect all inner {@link InputSlot}s that are mapped to the given {@link InputSlot}.
+     */
+    <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input);
 }

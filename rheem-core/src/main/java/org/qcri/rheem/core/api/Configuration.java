@@ -12,6 +12,8 @@ import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.profiling.InstrumentationStrategy;
+import org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy;
 
 import java.util.Comparator;
 
@@ -43,6 +45,8 @@ public class Configuration {
     private ConstantProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
 
     private CollectionProvider<PlanEnumerationPruningStrategy> pruningStrategiesProvider;
+
+    private ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider;
 
     /**
      * Creates a new top-level instance.
@@ -89,6 +93,8 @@ public class Configuration {
             // Providers for plan enumeration.
             this.pruningStrategiesProvider = new CollectionProvider<>(this.parent.pruningStrategiesProvider);
             this.timeEstimateComparatorProvider = new ConstantProvider<>(this.parent.timeEstimateComparatorProvider);
+            this.instrumentationStrategyProvider = new ConstantProvider<InstrumentationStrategy>(
+                    this.parent.instrumentationStrategyProvider);
 
         }
     }
@@ -232,6 +238,11 @@ public class Configuration {
                     new ConstantProvider<>(defaultProvider);
             configuration.setTimeEstimateComparatorProvider(overrideProvider);
         }
+        {
+            ConstantProvider<InstrumentationStrategy> defaultProvider =
+                    new ConstantProvider<>(new OutboundInstrumentationStrategy());
+            configuration.setInstrumentationStrategyProvider(defaultProvider);
+        }
     }
 
 
@@ -320,5 +331,13 @@ public class Configuration {
 
     public void setPruningStrategiesProvider(CollectionProvider<PlanEnumerationPruningStrategy> pruningStrategiesProvider) {
         this.pruningStrategiesProvider = pruningStrategiesProvider;
+    }
+
+    public ConstantProvider<InstrumentationStrategy> getInstrumentationStrategyProvider() {
+        return this.instrumentationStrategyProvider;
+    }
+
+    public void setInstrumentationStrategyProvider(ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider) {
+        this.instrumentationStrategyProvider = instrumentationStrategyProvider;
     }
 }

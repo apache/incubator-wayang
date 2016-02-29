@@ -49,6 +49,16 @@ public class ProbabilisticIntervalEstimate {
         return this.correctnessProb;
     }
 
+    /**
+     * Checks whether this instance is an exact estimate of the given value.
+     *
+     * @param exactEstimate the hypothesized exact estimation value
+     * @return whether this instance is exactly {@code exactEstimate}
+     */
+    public boolean isExactly(long exactEstimate) {
+        return this.correctnessProb == 1d && this.lowerEstimate == this.upperEstimate && this.upperEstimate == exactEstimate;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

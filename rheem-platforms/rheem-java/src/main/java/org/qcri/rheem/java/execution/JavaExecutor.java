@@ -66,10 +66,6 @@ public class JavaExecutor implements Executor {
     private void execute(ExecutionTask executionTask) {
         // Instrument all stage-outbound channels.
         for (Channel channel : executionTask.getOutputChannels()) {
-            if (channel.getConsumers().stream().anyMatch(consumer -> consumer.getStage() != executionTask.getStage())) {
-                this.logger.debug("Marking {} for instrumentation.", channel);
-                channel.markForInstrumentation(); // TODO: Instrumentation should be done in the CrossPlatformExecutor.
-            }
             if (channel.isMarkedForInstrumentation()) {
                 this.instrumentedChannels.add(channel);
             }
