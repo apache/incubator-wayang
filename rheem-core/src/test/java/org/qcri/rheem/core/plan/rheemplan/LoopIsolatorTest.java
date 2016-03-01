@@ -35,11 +35,11 @@ public class LoopIsolatorTest {
 
         // Check the top-level plan.
         final Operator allegedLoopSubplan = sink.getInputOperator(0);
-        Assert.assertSame(Subplan.class, allegedLoopSubplan.getClass());
+        Assert.assertSame(LoopSubplan.class, allegedLoopSubplan.getClass());
         Assert.assertSame(source, allegedLoopSubplan.getInputOperator(0));
 
         // Check the Subplan.
-        Subplan loopSubplan = (Subplan) allegedLoopSubplan;
+        LoopSubplan loopSubplan = (LoopSubplan) allegedLoopSubplan;
         Assert.assertTrue(loopSubplan.isWrapLoop());
         Assert.assertEquals(1, loopSubplan.getNumOutputs());
         Assert.assertEquals(1, loopSubplan.getNumInputs());
@@ -73,11 +73,11 @@ public class LoopIsolatorTest {
 
         // Check the top-level plan.
         final Operator allegedLoopSubplan = sink.getInputOperator(0);
-        Assert.assertSame(Subplan.class, allegedLoopSubplan.getClass());
+        Assert.assertSame(LoopSubplan.class, allegedLoopSubplan.getClass());
         Assert.assertSame(mainSource, allegedLoopSubplan.getInputOperator(0));
 
         // Check the Subplan.
-        Subplan loopSubplan = (Subplan) allegedLoopSubplan;
+        LoopSubplan loopSubplan = (LoopSubplan) allegedLoopSubplan;
         Assert.assertTrue(loopSubplan.isWrapLoop());
         Assert.assertEquals(1, loopSubplan.getNumOutputs());
         Assert.assertEquals(2, loopSubplan.getNumInputs());
@@ -116,11 +116,11 @@ public class LoopIsolatorTest {
 
         // Check the top-level plan.
         final Operator allegedOuterLoopSubplan = sink.getInputOperator(0);
-        Assert.assertSame(Subplan.class, allegedOuterLoopSubplan.getClass());
+        Assert.assertSame(LoopSubplan.class, allegedOuterLoopSubplan.getClass());
         Assert.assertSame(mainSource, allegedOuterLoopSubplan.getInputOperator(0));
 
         // Check the outer Subplan.
-        Subplan outerSubplan = (Subplan) allegedOuterLoopSubplan;
+        LoopSubplan outerSubplan = (LoopSubplan) allegedOuterLoopSubplan;
         Assert.assertTrue(outerSubplan.isWrapLoop());
         Assert.assertEquals(1, outerSubplan.getNumOutputs());
         Assert.assertEquals(1, outerSubplan.getNumInputs());
@@ -131,10 +131,10 @@ public class LoopIsolatorTest {
         Assert.assertSame(outerSubplan, outerLoopHead.getParent());
         Assert.assertSame(outerSubplan, inOuterLoopMap.getParent());
         final Operator allegedInnerLoopSubplan = outerLoopHead.getInputOperator(outerLoopHead.getInput("loopInput"));
-        Assert.assertSame(Subplan.class, allegedInnerLoopSubplan.getClass());
+        Assert.assertSame(LoopSubplan.class, allegedInnerLoopSubplan.getClass());
 
         // Check the inner Subplan.
-        Subplan innerSubplan = (Subplan) allegedInnerLoopSubplan;
+        LoopSubplan innerSubplan = (LoopSubplan) allegedInnerLoopSubplan;
         Assert.assertTrue(innerSubplan.isWrapLoop());
         Assert.assertEquals(1, innerSubplan.getNumOutputs());
         Assert.assertEquals(1, innerSubplan.getNumInputs());

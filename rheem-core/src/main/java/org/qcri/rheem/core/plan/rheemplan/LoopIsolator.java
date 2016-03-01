@@ -12,10 +12,6 @@ public class LoopIsolator extends OneTimeExecutable {
 
     private final RheemPlan rheemPlan;
 
-    private final Map<Operator, Set<Operator>> loopOperators = new HashMap<>();
-
-    private final Collection<LoopHeadOperator> loopHeads = new LinkedList<>();
-
     private LoopIsolator(RheemPlan rheemPlan) {
         this.rheemPlan = rheemPlan;
     }
@@ -54,8 +50,7 @@ public class LoopIsolator extends OneTimeExecutable {
         // ...from the loop head's final OutputSlots? That would be fatal.
 
         // Insert a new Subplan to delimit the loop body.
-        final Subplan loopSubplan = Subplan.wrap(loopInputSlots, loopOutputSlots, loopHead.getContainer());
-        loopSubplan.setWrapLoop(true);
+        LoopSubplan.wrap(loopInputSlots, loopOutputSlots, loopHead.getContainer());
     }
 
     /**

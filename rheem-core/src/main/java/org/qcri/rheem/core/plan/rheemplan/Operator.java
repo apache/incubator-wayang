@@ -349,12 +349,33 @@ public interface Operator {
         return this instanceof Subplan;
     }
 
+    default boolean isLoopSubplan() {
+        return this instanceof LoopSubplan;
+    }
+
     default boolean isAlternative() {
         return this instanceof OperatorAlternative;
     }
 
     default boolean isExecutionOperator() {
         return this instanceof ExecutionOperator;
+    }
+
+    /**
+     * Identify this instance as the head of a loop. It is the only kind of {@link Operator} that can cause
+     * data flow cycles.
+     *
+     * @return whether this instance is the head of a loop
+     */
+    default boolean isLoopHead() {
+        return this instanceof LoopHeadOperator;
+    }
+
+    /**
+     * @return whether this is an elementary operator
+     */
+    default boolean isElementary() {
+        return true;
     }
 
     /**
@@ -385,6 +406,7 @@ public interface Operator {
      */
     void setContainer(OperatorContainer newContainer);
 
+
     /**
      * Each operator is associated with an epoch, which is a logical timestamp for the operator's creation.
      * This value is the lowest timestamp and default epoch.
@@ -407,14 +429,6 @@ public interface Operator {
      * @see #FIRST_EPOCH
      */
     int getEpoch();
-
-    /**
-     * @return whether this is an elementary operator
-     */
-    default boolean isElementary() {
-        return true;
-    }
-
 
     /**
      * Provide a {@link CardinalityEstimator} for the {@link OutputSlot} at {@code outputIndex}.
@@ -480,15 +494,5 @@ public interface Operator {
      * Collect all inner {@link InputSlot}s that are mapped to the given {@link InputSlot}.
      */
     <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input);
-
-    /**
-     * Identify this instance as the head of a loop. It is the only kind of {@link Operator} that can cause
-     * data flow cycles.
-     *
-     * @return whether this instance is the head of a loop
-     */
-    default boolean isLoopHead() {
-        return this instanceof LoopHeadOperator;
-    }
 
 }
