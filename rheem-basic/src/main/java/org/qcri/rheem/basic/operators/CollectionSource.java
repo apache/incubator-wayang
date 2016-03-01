@@ -5,6 +5,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ActualOperator;
+import org.qcri.rheem.core.plan.rheemplan.ElementaryOperator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
 
@@ -14,7 +15,7 @@ import java.util.Optional;
 /**
  * This source takes as input a Java {@link java.util.Collection}.
  */
-public class CollectionSource<T> extends UnarySource<T> implements ActualOperator {
+public class CollectionSource<T> extends UnarySource<T> implements ElementaryOperator {
 
     protected final Collection<T> collection;
 

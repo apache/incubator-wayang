@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * This operator has three inputs and three outputs.
  */
-public class LoopOperator<InputType, ConvergenceType> extends OperatorBase implements ActualOperator, LoopHeadOperator {
+public class LoopOperator<InputType, ConvergenceType> extends OperatorBase implements ElementaryOperator, LoopHeadOperator {
 
     public enum State {
         NOT_STARTED, RUNNING, FINISHED
@@ -143,5 +143,10 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     @Override
     public Collection<InputSlot<?>> getLoopInitializationInputs() {
         return Collections.singletonList(this.getInput(INITIAL_INPUT_INDEX));
+    }
+
+    @Override
+    public int getNumExpectedIterations() {
+        return 100;
     }
 }
