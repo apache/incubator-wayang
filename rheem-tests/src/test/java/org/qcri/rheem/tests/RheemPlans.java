@@ -280,13 +280,16 @@ public class RheemPlans {
     private static Integer increment(Integer k) {
         return k++;
     }
+
+    private static String concat(String k) {
+        return k.concat("9");
+    }
     /**
      * Same loop counter.
      */
     public static RheemPlan diverseScenario4(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
         // Build a Rheem plan.
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
-        TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
         MapOperator<Integer, Integer> counter = new MapOperator<>(
                 DataSetType.createDefault(Integer.class),
                 DataSetType.createDefault(Integer.class),
@@ -294,7 +297,15 @@ public class RheemPlans {
                         RheemPlans::increment,
                         DataUnitType.createBasic(Integer.class),
                         DataUnitType.createBasic(Integer.class)));
-        UnionAllOperator<String> unionOperator = new UnionAllOperator<>(DataSetType.createDefault(String.class));
+        MapOperator<String, String> concat = new MapOperator<>(
+                DataSetType.createDefault(String.class),
+                DataSetType.createDefault(String.class),
+                new TransformationDescriptor<>(
+                        RheemPlans::concat,
+                        DataUnitType.createBasic(String.class),
+                        DataUnitType.createBasic(String.class)));
+        SortOperator<String> sortOperator = new SortOperator<>(DataSetType.createDefault(String.class));
+
         StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
 
         LoopOperator<String, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(String.class),
@@ -312,11 +323,11 @@ public class RheemPlans {
                 });
 
         // Union 10 times then output
-        loopOperator.initialize(textFileSource1, 0);
-        loopOperator.beginIteration(unionOperator, counter);
-        textFileSource2.connectTo(0, unionOperator, 1);
-        loopOperator.endIteration(unionOperator, counter);
-        loopOperator.outputConnectTo(stdoutSink, 0);
+        //textFileSource1.connectTo(0, sortOperator, 0);
+        loopOperator.initialize(textFileSource1);
+        loopOperator.beginIteration(concat, counter);
+        loopOperator.endIteration(concat, counter);
+        loopOperator.outputConnectTo(stdoutSink);
 
         // Create the RheemPlan.
         RheemPlan rheemPlan = new RheemPlan();

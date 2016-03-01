@@ -27,6 +27,10 @@ public class JavaFilterOperator<Type>
         super(type, predicateDescriptor);
     }
 
+    public JavaFilterOperator(DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
+        super(type, predicateDescriptor);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
