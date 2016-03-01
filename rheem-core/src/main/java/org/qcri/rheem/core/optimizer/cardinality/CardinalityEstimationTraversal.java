@@ -165,7 +165,7 @@ public class CardinalityEstimationTraversal {
             for (Activation dependentActivatorDescriptor : activations) {
                 final int inputIndex = dependentActivatorDescriptor.inputIndex;
                 final Activator activator = dependentActivatorDescriptor.activator;
-                //Validate.isTrue(activator.inputEstimates[inputIndex] == null);
+                Validate.isTrue(activator.inputEstimates[inputIndex] == null);
                 activator.inputEstimates[inputIndex] = estimate;
                 if (activator.canBeActivated()) {
                     activatorQueue.add(activator);
