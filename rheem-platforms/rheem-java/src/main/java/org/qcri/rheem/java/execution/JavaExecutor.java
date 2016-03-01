@@ -1,11 +1,13 @@
 package org.qcri.rheem.java.execution;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ExecutionProfile;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.java.JavaPlatform;
@@ -13,6 +15,7 @@ import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.channels.JavaChannelManager;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
+import org.qcri.rheem.java.operators.JavaLoopOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,11 +78,39 @@ public class JavaExecutor implements Executor {
             }
         }
 
-        ChannelExecutor[] inputChannels = this.obtainInputChannels(executionTask);
-        final JavaExecutionOperator javaExecutionOperator = (JavaExecutionOperator) executionTask.getOperator();
-        ChannelExecutor[] outputChannels = this.createOutputChannelExecutors(executionTask);
-        javaExecutionOperator.evaluate(inputChannels, outputChannels, this.compiler);
-        this.registerChannelExecutor(outputChannels, executionTask);
+        ExecutionOperator op = executionTask.getOperator();
+        if (op instanceof LoopOperator){
+            ChannelExecutor[] inputChannels = new ChannelExecutor[executionTask.getOperator().getNumInputs()];
+            ChannelExecutor[] outputChannels = this.createOutputChannelExecutors(executionTask);
+
+            // Get initial input
+            Channel initialInputChannel = executionTask.getInputChannel(0);
+            inputChannels[0] = this.getOrEstablishChannelExecutor(initialInputChannel);
+            ((JavaLoopOperator) op).evaluate(inputChannels, outputChannels, this.compiler);
+            this.registerChannelExecutor(outputChannels, executionTask);
+
+            while(((LoopOperator)op).getState()!=LoopOperator.State.FINISHED){
+                Channel convergenceChannel = executionTask.getInputChannel(1);
+                inputChannels[1] = this.getOrEstablishChannelExecutor(convergenceChannel);
+
+                Channel iterationChanel = executionTask.getInputChannel(2);
+                inputChannels[2] = this.getOrEstablishChannelExecutor(iterationChanel);
+                ((JavaLoopOperator) op).evaluate(inputChannels, outputChannels, this.compiler);
+                this.registerChannelExecutor(outputChannels, executionTask);
+            }
+
+            // Evaluate one more time for final output.
+            ((JavaLoopOperator) op).evaluate(inputChannels, outputChannels, this.compiler);
+            this.registerChannelExecutor(outputChannels, executionTask);
+
+        }
+        else {
+            ChannelExecutor[] inputChannels = this.obtainInputChannels(executionTask);
+            final JavaExecutionOperator javaExecutionOperator = (JavaExecutionOperator) executionTask.getOperator();
+            ChannelExecutor[] outputChannels = this.createOutputChannelExecutors(executionTask);
+            javaExecutionOperator.evaluate(inputChannels, outputChannels, this.compiler);
+            this.registerChannelExecutor(outputChannels, executionTask);
+        }
     }
 
     private ChannelExecutor[] createOutputChannelExecutors(ExecutionTask executionTask) {

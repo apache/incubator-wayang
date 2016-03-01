@@ -277,15 +277,16 @@ public class RheemPlans {
         return rheemPlan;
     }
 
-    private static Integer increment(Integer k) {
+    public static Integer increment(Integer k) {
         return k++;
     }
 
-    private static String concat(String k) {
+    public static String concat9(String k) {
         return k.concat("9");
     }
+
     /**
-     * Same loop counter.
+     * Simple counter loop .
      */
     public static RheemPlan diverseScenario4(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
         // Build a Rheem plan.
@@ -301,10 +302,9 @@ public class RheemPlans {
                 DataSetType.createDefault(String.class),
                 DataSetType.createDefault(String.class),
                 new TransformationDescriptor<>(
-                        RheemPlans::concat,
+                        RheemPlans::concat9,
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(String.class)));
-        SortOperator<String> sortOperator = new SortOperator<>(DataSetType.createDefault(String.class));
 
         StdoutSink<String> stdoutSink = new StdoutSink<>(DataSetType.createDefault(String.class));
 
@@ -322,8 +322,7 @@ public class RheemPlans {
                     }
                 });
 
-        // Union 10 times then output
-        //textFileSource1.connectTo(0, sortOperator, 0);
+        // concat 10 times then output
         loopOperator.initialize(textFileSource1);
         loopOperator.beginIteration(concat, counter);
         loopOperator.endIteration(concat, counter);
