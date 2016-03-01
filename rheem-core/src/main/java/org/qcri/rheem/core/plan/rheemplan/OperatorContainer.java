@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 
 import java.util.Collection;
@@ -41,6 +42,13 @@ public interface OperatorContainer {
     Operator getSink();
 
     /**
+     * @return whether this container corresponds to a sink
+     */
+    default boolean isSink() {
+        return this.toOperator().isSink();
+    }
+
+    /**
      * Enter the encased plan by following an {@code outputSlot} of the encasing {@link CompositeOperator}.
      *
      * @param outputSlot an {@link OutputSlot} of the encasing {@link CompositeOperator}
@@ -75,23 +83,72 @@ public interface OperatorContainer {
 
     /**
      * Propagates the {@link CardinalityEstimate} of the given {@link InputSlot} to inner, mapped {@link InputSlot}s
+     *
+     * @see Operator#propagateInputCardinality(int, OptimizationContext.OperatorContext)
      */
-    default void propagateCardinality(InputSlot<?> inputSlot) {
-        assert inputSlot.getOwner() == this.toOperator();
-        final Collection<? extends InputSlot<?>> innerInputs = this.followInput(inputSlot);
+    default void propagateInputCardinality(int inputIndex, OptimizationContext.OperatorContext operatorContext) {
+        final CompositeOperator compositeOperator = this.toOperator();
+        assert operatorContext.getOperator() == compositeOperator;
+        assert 0 <= inputIndex && inputIndex <= compositeOperator.getNumInputs();
+        final Collection<? extends InputSlot<?>> innerInputs = this.followInput(this.toOperator().getInput(inputIndex));
+
+        OptimizationContext innerOptimizationCtx = this.getInnerInputOptimizationContext(operatorContext.getOptimizationContext());
         for (InputSlot<?> innerInput : innerInputs) {
-            innerInput.getOwner().propagateInputCardinality(innerInput.getIndex(), inputSlot.getCardinalityEstimate());
+            // Identify the appropriate OperatorContext.
+            OptimizationContext.OperatorContext innerOperatorCtx = innerOptimizationCtx.getOperatorContext(innerInput.getOwner());
+
+            // Update the CardinalityEstimate.
+            final CardinalityEstimate cardinality = operatorContext.getInputCardinality(inputIndex);
+            innerOperatorCtx.setInputCardinality(innerInput.getIndex(), cardinality);
+
+            // Continue the propagation.
+            innerInput.getOwner().propagateInputCardinality(innerInput.getIndex(), innerOperatorCtx);
         }
     }
 
     /**
      * Propagates the {@link CardinalityEstimate} of the given {@link OutputSlot} to inner, mapped {@link OutputSlot}s
+     *
+     * @see Operator#propagateOutputCardinality(int, OptimizationContext.OperatorContext)
      */
-    default void propagateCardinality(OutputSlot<?> outputSlot) {
-        assert outputSlot.getOwner() == this.toOperator();
-        final OutputSlot<?> innerOutput = this.traceOutput(outputSlot);
+    default void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorCtx) {
+        final CompositeOperator compositeOperator = this.toOperator();
+        assert operatorCtx.getOperator() == compositeOperator;
+        final OutputSlot<?> innerOutput = this.traceOutput(compositeOperator.getOutput(outputIndex));
+
         if (innerOutput != null) {
-            innerOutput.getOwner().propagateOutputCardinality(innerOutput.getIndex(), outputSlot.getCardinalityEstimate());
+            // Identify the appropriate OperatorContext.
+            OptimizationContext innerOptimizationCtx = this.getInnerOutputOptimizationContext(operatorCtx.getOptimizationContext());
+            OptimizationContext.OperatorContext innerOperatorCtx = innerOptimizationCtx.getOperatorContext(innerOutput.getOwner());
+
+            // Update the CardinalityEstimate.
+            final CardinalityEstimate cardinality = operatorCtx.getOutputCardinality(outputIndex);
+            innerOperatorCtx.setOutputCardinality(innerOutput.getIndex(), cardinality);
+
+            // Continue the propagation.
+            innerOutput.getOwner().propagateOutputCardinality(innerOutput.getIndex(), innerOperatorCtx);
         }
+    }
+
+    /**
+     * Retrieve that {@link OptimizationContext} that represents the state when this instance is entered.
+     *
+     * @param outerOptimizationContext the {@link OptimizationContext} in that this instance resides
+     * @return the inner {@link OptimizationContext}
+     */
+    default OptimizationContext getInnerInputOptimizationContext(OptimizationContext outerOptimizationContext) {
+        // Usually the same.
+        return outerOptimizationContext;
+    }
+
+    /**
+     * Retrieve that {@link OptimizationContext} that represents the state when this instance is exited.
+     *
+     * @param outerOptimizationContext the {@link OptimizationContext} in that this instance resides
+     * @return the inner {@link OptimizationContext}
+     */
+    default OptimizationContext getInnerOutputOptimizationContext(OptimizationContext outerOptimizationContext) {
+        // Usually the same.
+        return outerOptimizationContext;
     }
 }

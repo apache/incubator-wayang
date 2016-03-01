@@ -2,8 +2,6 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.Objects;
-
 /**
  * An input slot declares an input of an {@link Operator}.
  *
@@ -132,9 +130,13 @@ public class InputSlot<T> extends Slot<T> {
 
     @Override
     public int getIndex() throws IllegalStateException {
-        if (Objects.isNull(this.getOwner())) throw new IllegalStateException("This slot has no owner.");
+        if (this.index != -1) return this.index;
+
+        assert this.getOwner() != null : "This slot has no owner.";
         for (int i = 0; i < this.getOwner().getNumInputs(); i++) {
-            if (this.getOwner().getInput(i) == this) return i;
+            if (this.getOwner().getInput(i) == this) {
+                return this.index = i;
+            }
         }
         throw new IllegalStateException("Could not find this slot within its owner.");
     }

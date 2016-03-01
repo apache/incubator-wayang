@@ -13,7 +13,7 @@ import java.util.Optional;
 /**
  * Join-like operator.
  */
-public class TestJoin<In1, In2, Out> extends OperatorBase implements ActualOperator {
+public class TestJoin<In1, In2, Out> extends OperatorBase implements ElementaryOperator {
 
     public TestJoin(DataSetType<In1> inputType1, DataSetType<In2> inputType2, DataSetType<Out> outputType) {
         super(2, 1, false, null);

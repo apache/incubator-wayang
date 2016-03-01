@@ -2,6 +2,7 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
@@ -23,6 +24,8 @@ public class PreliminaryExecutionPlan {
     private final Set<Channel> inputChannels;
 
     private TimeEstimate timeEstimate;
+
+    private OptimizationContext optimizationContext;
 
     public PreliminaryExecutionPlan(Collection<ExecutionTask> sinkTasks) {
         this(sinkTasks, Collections.emptySet());
@@ -72,7 +75,12 @@ public class PreliminaryExecutionPlan {
         if (operator.getTimeEstimate() == null) {
             final LoadProfileEstimator loadProfileEstimator =
                     configuration.getOperatorLoadProfileEstimatorProvider().provideFor(operator);
-            final LoadProfile loadProfile = loadProfileEstimator.estimate(operator);
+            final OptimizationContext.OperatorContext operatorContext = this.optimizationContext.getOperatorContext(operator);
+
+            // TODO: Find the correct OptimizationContext for in-loop ExecutionOperators.
+            assert operatorContext != null : String.format("No OperatorContext found for %s. Is it in a loop?", operator);
+
+            final LoadProfile loadProfile = loadProfileEstimator.estimate(operatorContext);
             final LoadProfileToTimeConverter converter = configuration.getLoadProfileToTimeConverterProvider().provide();
             final TimeEstimate timeEstimate = converter.convert(loadProfile);
             operator.setTimeEstimate(timeEstimate);

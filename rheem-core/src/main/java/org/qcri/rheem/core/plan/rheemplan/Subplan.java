@@ -2,10 +2,9 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
-import org.qcri.rheem.core.optimizer.cardinality.CompositeCardinalityEstimator;
-import org.qcri.rheem.core.optimizer.cardinality.CompositeCardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.SubplanCardinalityPusher;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -144,6 +143,11 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     }
 
     @Override
+    public boolean isSink() {
+        return this.getNumOutputs() == 0;
+    }
+
+    @Override
     public Operator getSink() {
         if (!this.isSink()) {
             throw new IllegalArgumentException("Cannot enter subplan: no output slot given and subplan is not a sink.");
@@ -271,15 +275,18 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(final int outputIndex,
-                                                                  final Configuration configuration) {
-        Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return CompositeCardinalityEstimator.createFor(this, outputIndex, configuration);
+    public CardinalityPusher getCardinalityPusher(
+            final Configuration configuration) {
+        return SubplanCardinalityPusher.createFor(this, configuration);
     }
 
     @Override
-    public CardinalityPusher getCardinalityPusher(
-            final Configuration configuration) {
-        return CompositeCardinalityPusher.createFor(this, configuration);
+    public void propagateInputCardinality(int inputIndex, OptimizationContext.OperatorContext operatorContext) {
+        OperatorContainer.super.propagateInputCardinality(inputIndex, operatorContext);
+    }
+
+    @Override
+    public void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorContext) {
+        OperatorContainer.super.propagateOutputCardinality(outputIndex, operatorContext);
     }
 }

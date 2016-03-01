@@ -2,11 +2,16 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.*;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
 import org.qcri.rheem.core.platform.Platform;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -155,7 +160,7 @@ public interface Operator {
      * Connect an output of this operator to the input of a second operator.
      *
      * @param thisOutputName name of the output slot to connect to
-     * @param that            operator to connect to
+     * @param that           operator to connect to
      * @param thatInputName  name of the input slot to connect from
      */
     @SuppressWarnings("unchecked")
@@ -187,9 +192,9 @@ public interface Operator {
      * Connect an output of this operator as a broadcast input of a second operator.
      *
      * @param thisOutputName name of the output slot to connect to
-     * @param that            operator to connect to
-     * @param broadcastName   name of the broadcast that will be used by the operator to identify the broadcast; must
-     *                        be unique among all {@link InputSlot}s
+     * @param that           operator to connect to
+     * @param broadcastName  name of the broadcast that will be used by the operator to identify the broadcast; must
+     *                       be unique among all {@link InputSlot}s
      */
     default void broadcastTo(String thisOutputName, Operator that, String broadcastName) {
         final OutputSlot<?> output = this.getOutput(thisOutputName);
@@ -431,21 +436,6 @@ public interface Operator {
     int getEpoch();
 
     /**
-     * Provide a {@link CardinalityEstimator} for the {@link OutputSlot} at {@code outputIndex}.
-     *
-     * @param outputIndex   index of the {@link OutputSlot} for that the {@link CardinalityEstimator} is requested
-     * @param configuration if the {@link CardinalityEstimator} depends on further ones, use this to obtain the latter
-     * @return an {@link Optional} that might provide the requested instance
-     */
-    default Optional<CardinalityEstimator> getCardinalityEstimator(
-            final int outputIndex,
-            final Configuration configuration) {
-        Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        LoggerFactory.getLogger(this.getClass()).warn("Use fallback cardinality estimator for {}.", this);
-        return Optional.of(new FallbackCardinalityEstimator());
-    }
-
-    /**
      * Provide a {@link CardinalityPusher} for the {@link Operator}.
      *
      * @param configuration if the {@link CardinalityPusher} depends on further ones, use this to obtain the latter
@@ -472,18 +462,25 @@ public interface Operator {
     void addTargetPlatform(Platform platform);
 
     /**
-     * Set the {@link CardinalityEstimate} of an {@link OutputSlot} and propagate it to
+     * Propagates the {@link CardinalityEstimate} of an {@link OutputSlot} within the {@code operatorContext} to
      * <ul>
      * <li>fed {@link InputSlot}s (which in turn are asked to propagate) and</li>
      * <li><b>inner</b>, mapped {@link OutputSlot}s.</li>
      * </ul>
+     *
+     * @param outputIndex     of the {@link OutputSlot}
+     * @param operatorContext holds the {@link CardinalityEstimate} to be propagated
      */
-    void propagateOutputCardinality(int outputIndex, CardinalityEstimate cardinalityEstimate);
+    void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorContext);
 
     /**
-     * Set the {@link CardinalityEstimate} of an {@link InputSlot} and propagate it to <b>inner</b>, mapped {@link InputSlot}s.
+     * Propagates the {@link CardinalityEstimate} of an {@link InputSlot} within the {@code operatorContext}
+     * to <b>inner</b>, mapped {@link InputSlot}s.
+     *
+     * @param inputIndex     of the {@link InputSlot}
+     * @param operatorContext holds the {@link CardinalityEstimate} to be propagated
      */
-    void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate);
+    void propagateInputCardinality(int inputIndex, OptimizationContext.OperatorContext operatorContext);
 
     /**
      * Collect all inner {@link OutputSlot}s that are mapped to the given {@link OutputSlot}.

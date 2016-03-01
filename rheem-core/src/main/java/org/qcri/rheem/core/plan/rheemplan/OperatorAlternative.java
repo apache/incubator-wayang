@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.*;
 
 import java.util.*;
@@ -107,15 +108,15 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     }
 
     @Override
-    public void propagateOutputCardinality(int outputIndex, CardinalityEstimate cardinalityEstimate) {
-        super.propagateOutputCardinality(outputIndex, cardinalityEstimate);
-        this.getAlternatives().forEach(alternative -> alternative.propagateCardinality(this.getOutput(outputIndex)));
+    public void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorContext) {
+        super.propagateOutputCardinality(outputIndex, operatorContext);
+        this.getAlternatives().forEach(alternative -> alternative.propagateOutputCardinality(outputIndex, operatorContext));
     }
 
     @Override
-    public void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate) {
-        super.propagateInputCardinality(inputIndex, cardinalityEstimate);
-        this.getAlternatives().forEach(alternative -> alternative.propagateCardinality(this.getInput(inputIndex)));
+    public void propagateInputCardinality(int inputIndex, OptimizationContext.OperatorContext operatorContext) {
+        super.propagateInputCardinality(inputIndex, operatorContext);
+        this.getAlternatives().forEach(alternative -> alternative.propagateInputCardinality(inputIndex, operatorContext));
     }
 
     @Override
@@ -273,21 +274,6 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             return innerOperator == this.operator ? OperatorAlternative.this : null;
         }
 
-    }
-
-    @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
-            final int outputIndex,
-            final Configuration configuration) {
-
-        final OutputSlot<?> requestedSlot = this.getOutput(outputIndex);
-
-        final List<CardinalityEstimator> alternativeEstimators = this.alternatives.stream()
-                .map(alternative -> alternative.traceOutput(requestedSlot))
-                .map(configuration.getCardinalityEstimatorProvider()::provideFor)
-                .collect(Collectors.toList());
-
-        return Optional.of(new AggregatingCardinalityEstimator(alternativeEstimators));
     }
 
     @Override

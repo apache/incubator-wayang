@@ -14,7 +14,7 @@ import java.util.Optional;
 /**
  * An execution operator is handled by a certain platform.
  */
-public interface ExecutionOperator extends ActualOperator {
+public interface ExecutionOperator extends ElementaryOperator {
 
     /**
      * @return the platform that can run this operator

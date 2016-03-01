@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.platform.Platform;
@@ -155,18 +156,32 @@ public abstract class OperatorBase implements Operator {
     }
 
     @Override
-    public void propagateOutputCardinality(int outputIndex, CardinalityEstimate cardinalityEstimate) {
+    public void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorContext) {
+        assert operatorContext.getOperator() == this;
+
+        // Identify the cardinality.
         final OutputSlot<?> output = this.getOutput(outputIndex);
-        output.setCardinalityEstimate(cardinalityEstimate);
+        final CardinalityEstimate cardinality = operatorContext.getOutputCardinality(outputIndex);
+
+        // Propagate to the InputSlots.
         for (InputSlot<?> inputSlot : output.getOccupiedSlots()) {
+            // Find the adjacent OperatorContext corresponding to the inputSlot.
             final int inputIndex = inputSlot.getIndex();
-            inputSlot.getOwner().propagateInputCardinality(inputIndex, cardinalityEstimate);
+            final OptimizationContext optimizationCtx = operatorContext.getOptimizationContext();
+            final Operator adjacentOperator = inputSlot.getOwner();
+            final OptimizationContext.OperatorContext adjacentOperatorCtx = optimizationCtx.getOperatorContext(adjacentOperator);
+            assert adjacentOperatorCtx != null
+                    : String.format("Missing OperatorContext for %s.", adjacentOperator);
+
+            // Update the adjacent OperatorContext.
+            adjacentOperatorCtx.setInputCardinality(inputIndex, cardinality);
+            adjacentOperator.propagateInputCardinality(inputIndex, adjacentOperatorCtx);
         }
     }
 
     @Override
-    public void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate) {
-        this.getInput(inputIndex).setCardinalityEstimate(cardinalityEstimate);
+    public void propagateInputCardinality(int inputIndex, OptimizationContext.OperatorContext operatorContext) {
+        // Nothing to do for elementary operators.
     }
 
     @Override

@@ -10,6 +10,8 @@ import java.util.*;
  */
 public class LoopIsolator extends OneTimeExecutable {
 
+    // Refactor: We don't need the OneTimeExecutable here (as of now).
+
     private final RheemPlan rheemPlan;
 
     private LoopIsolator(RheemPlan rheemPlan) {
@@ -50,7 +52,7 @@ public class LoopIsolator extends OneTimeExecutable {
         // ...from the loop head's final OutputSlots? That would be fatal.
 
         // Insert a new Subplan to delimit the loop body.
-        LoopSubplan.wrap(loopInputSlots, loopOutputSlots, loopHead.getContainer());
+        LoopSubplan.wrap(loopHead, loopInputSlots, loopOutputSlots, loopHead.getContainer());
     }
 
     /**

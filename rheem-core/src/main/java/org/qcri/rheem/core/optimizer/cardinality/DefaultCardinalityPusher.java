@@ -2,16 +2,19 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.configuration.KeyValueProvider;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
+/**
+ * Default {@link CardinalityPusher} implementation. Bundles all {@link CardinalityEstimator}s of an {@link Operator}.
+ */
 public class DefaultCardinalityPusher extends CardinalityPusher {
 
     private final CardinalityEstimator[] cardinalityEstimators;
 
     public DefaultCardinalityPusher(Operator operator,
                                     KeyValueProvider<OutputSlot<?>, CardinalityEstimator> estimationProvider) {
-        super(operator);
         this.cardinalityEstimators = new CardinalityEstimator[operator.getNumOutputs()];
         for (int outputIndex = 0; outputIndex < operator.getNumOutputs(); outputIndex++) {
             this.initializeEstimator(operator, outputIndex, estimationProvider);
@@ -24,14 +27,12 @@ public class DefaultCardinalityPusher extends CardinalityPusher {
     }
 
     @Override
-    protected CardinalityEstimate[] doPush(Configuration configuration, CardinalityEstimate... inputEstimates) {
-        CardinalityEstimate[] estimates = new CardinalityEstimate[this.cardinalityEstimators.length];
+    protected void doPush(OptimizationContext.OperatorContext opCtx, Configuration configuration) {
         for (int outputIndex = 0; outputIndex < this.cardinalityEstimators.length; outputIndex++) {
             final CardinalityEstimator estimator = this.cardinalityEstimators[outputIndex];
             if (estimator != null) {
-                estimates[outputIndex] = estimator.estimate(configuration, inputEstimates);
+                opCtx.setOutputCardinality(outputIndex, estimator.estimate(configuration, opCtx.getInputCardinalities()));
             }
         }
-        return estimates;
     }
 }

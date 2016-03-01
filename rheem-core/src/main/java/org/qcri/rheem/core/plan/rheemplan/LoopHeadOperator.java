@@ -38,5 +38,9 @@ public interface LoopHeadOperator extends Operator {
      * @return the initialization {@link InputSlot}s
      */
     Collection<InputSlot<?>> getLoopInitializationInputs();
-    
+
+    /**
+     * @return a number of expected iterations; not necessarily the actual value
+     */
+    int getNumExpectedIterations();
 }

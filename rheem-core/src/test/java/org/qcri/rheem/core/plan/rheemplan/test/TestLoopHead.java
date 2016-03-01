@@ -41,4 +41,9 @@ public class TestLoopHead<T> extends OperatorBase implements LoopHeadOperator {
     public Collection<InputSlot<?>> getLoopInitializationInputs() {
         return Collections.singleton(this.getInput("initialInput"));
     }
+
+    @Override
+    public int getNumExpectedIterations() {
+        return 3;
+    }
 }

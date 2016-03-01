@@ -2,6 +2,7 @@ package org.qcri.rheem.core.api;
 
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.SanityChecker;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
@@ -61,9 +62,19 @@ public class Job {
     private final RheemPlan rheemPlan;
 
     /**
+     * {@link OptimizationContext} for the {@link #rheemPlan}.
+     */
+    private OptimizationContext optimizationContext;
+
+    /**
      * Executes the optimized {@link ExecutionPlan}.
      */
     private CrossPlatformExecutor crossPlatformExecutor;
+
+    /**
+     * Manages the {@link CardinalityEstimate}s for the {@link #rheemPlan}.
+     */
+    private CardinalityEstimatorManager cardinalityEstimatorManager;
 
     private final double minConfidence = 5., maxSpread = .7;
 
@@ -118,6 +129,8 @@ public class Job {
 
         // Apply the mappings to the plan to form a hyperplan.
         this.applyMappingsToRheemPlan();
+
+        this.optimizationContext = new OptimizationContext(this.rheemPlan);
 
         // Make the cardinality estimation pass.
         this.estimateCardinalities();
@@ -197,8 +210,11 @@ public class Job {
      * {@link Operator}s.
      */
     private void estimateCardinalities() {
-        CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this.configuration);
-        cardinalityEstimatorManager.pushCardinalityEstimation(this.rheemPlan);
+        if (this.cardinalityEstimatorManager == null) {
+            this.cardinalityEstimatorManager = new CardinalityEstimatorManager(
+                    this.rheemPlan, this.optimizationContext, this.configuration);
+        }
+        this.cardinalityEstimatorManager.pushCardinalities();
     }
 
     /**
@@ -206,9 +222,7 @@ public class Job {
      * {@link Operator}s using the given {@link ExecutionProfile}.
      */
     private void reestimateCardinalities(CrossPlatformExecutor.State executionState) {
-        // TODO
-        CardinalityEstimatorManager cardinalityEstimatorManager = new CardinalityEstimatorManager(this.configuration);
-        cardinalityEstimatorManager.pushCardinalityUpdates(this.rheemPlan, executionState);
+        this.cardinalityEstimatorManager.pushCardinalityUpdates(executionState);
     }
 
     /**
@@ -328,7 +342,7 @@ public class Job {
 
         // Collect any instrumentation results for the future.
         final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
-        cardinalityRepository.storeAll(state.getProfile(), this.rheemPlan);
+        cardinalityRepository.storeAll(state.getProfile(), this.optimizationContext);
 
 
         long optimizerFinishTime = System.currentTimeMillis();

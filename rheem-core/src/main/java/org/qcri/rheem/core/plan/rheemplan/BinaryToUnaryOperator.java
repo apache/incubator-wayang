@@ -5,7 +5,7 @@ import org.qcri.rheem.core.types.DataSetType;
 /**
  * This operator has two inputs and a single output.
  */
-public abstract class BinaryToUnaryOperator<InputType0, InputType1, OutputType> extends OperatorBase implements ActualOperator {
+public abstract class BinaryToUnaryOperator<InputType0, InputType1, OutputType> extends OperatorBase implements ElementaryOperator {
 
     /**
      * Creates a new instance.
