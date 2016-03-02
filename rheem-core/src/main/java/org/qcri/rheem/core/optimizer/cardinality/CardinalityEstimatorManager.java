@@ -45,6 +45,7 @@ public class CardinalityEstimatorManager {
 
     public void pushCardinalities() {
         this.getPlanTraversal().traverse(this.optimizationContext, this.configuration);
+        this.optimizationContext.clearMarks();
     }
 
     public CardinalityEstimationTraversal getPlanTraversal() {
@@ -94,6 +95,8 @@ public class CardinalityEstimatorManager {
             }
 
             // Update the operatorCtx, then propagate.
+            // FIXME: Within loops, we might need to propagate across iterations!
+            // TODO: Do we need to propagate? Revisit once channel.getCorrespondingSlots() is incorporating OptimizationContexts.
             final int slotIndex = correspondingSlot.getIndex();
             if (correspondingSlot instanceof InputSlot<?>) {
                 operatorCtx.setInputCardinality(slotIndex, newEstimate);

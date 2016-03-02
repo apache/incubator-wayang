@@ -23,6 +23,7 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
 
     public AggregatingCardinalityPusher(final OperatorAlternative operatorAlternative,
                                         final Configuration configuration) {
+        super(operatorAlternative);
         this.pushPaths = operatorAlternative.getAlternatives().stream()
                 .map(alternative -> {
                     final CardinalityPusher pusher = alternative.getOperator().getCardinalityPusher(configuration);
@@ -60,7 +61,6 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
         // Perform the push.
         pushPath.field1.push(operatorCtx, configuration);
         operatorCtx.pushCardinalitiesForward();
-        operatorCtx.clearMarks();
     }
 
     /**

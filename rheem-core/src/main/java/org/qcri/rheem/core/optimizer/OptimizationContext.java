@@ -17,11 +17,11 @@ public class OptimizationContext {
     /**
      * The instance in that this instance is nested - or {@code null} if it is top-level.
      */
-    private final OptimizationContext parent;
+    private final LoopContext hostLoopContext;
 
     /**
-     * The iteration number of this instance within its {@link #parent} (starting from {@code 0}) - or {@code -1}
-     * if there is no {@link #parent}.
+     * The iteration number of this instance within its {@link #hostLoopContext} (starting from {@code 0}) - or {@code -1}
+     * if there is no {@link #hostLoopContext}.
      */
     private final int iterationNumber;
 
@@ -31,10 +31,10 @@ public class OptimizationContext {
     private final Map<Operator, OperatorContext> operatorContexts = new HashMap<>();
 
     /**
-     * {@link OptimizationContext}s (one per assumed iteration) of one-time {@link LoopSubplan}s (i.e., that are not
+     * {@link LoopContext}s of one-time {@link LoopSubplan}s (i.e., that are not
      * nested in a loop themselves).
      */
-    private final Map<LoopSubplan, List<OptimizationContext>> nestedLoopContexts = new HashMap<>();
+    private final Map<LoopSubplan, LoopContext> loopContexts = new HashMap<>();
 
     /**
      * Create a new instance.
@@ -61,29 +61,30 @@ public class OptimizationContext {
     /**
      * Creates a new (nested) instance for the given {@code loop}.
      */
-    private OptimizationContext(LoopSubplan loop, OptimizationContext parent, int iterationNumber) {
-        this(parent, iterationNumber);
+    private OptimizationContext(LoopSubplan loop, LoopContext hostLoopContext, int iterationNumber) {
+        this(hostLoopContext, iterationNumber);
         this.addOneTimeOperators(loop);
     }
 
     /**
      * Base constructor.
      */
-    private OptimizationContext(OptimizationContext parent, int iterationNumber) {
-        this.parent = parent;
+    private OptimizationContext(LoopContext hostLoopContext, int iterationNumber) {
+        this.hostLoopContext = hostLoopContext;
         this.iterationNumber = iterationNumber;
     }
 
     /**
      * Add {@link OperatorContext}s for the {@code operator} that is executed once within this instance. Also
      * add its encased {@link Operator}s.
-     * Potentially invoke {@link #addOneTimeLoop(LoopSubplan)} as well.
+     * Potentially invoke {@link #addOneTimeLoop(OperatorContext)} as well.
      */
     private void addOneTimeOperator(Operator operator) {
-        this.operatorContexts.put(operator, new OperatorContext(operator));
+        final OperatorContext operatorContext = new OperatorContext(operator);
+        this.operatorContexts.put(operator, operatorContext);
         if (!operator.isElementary()) {
             if (operator.isLoopSubplan()) {
-                this.addOneTimeLoop((LoopSubplan) operator);
+                this.addOneTimeLoop(operatorContext);
             } else if (operator.isAlternative()) {
                 final OperatorAlternative operatorAlternative = (OperatorAlternative) operator;
                 operatorAlternative.getAlternatives().forEach(this::addOneTimeOperators);
@@ -113,13 +114,8 @@ public class OptimizationContext {
     /**
      * Add {@link OptimizationContext}s for the {@code loop} that is executed once within this instance.
      */
-    private void addOneTimeLoop(LoopSubplan loop) {
-        loop.getNumExpectedIterations();
-        List<OptimizationContext> iterationContexts = new ArrayList<>(loop.getNumExpectedIterations());
-        for (int iterationNumber = 0; iterationNumber < loop.getNumExpectedIterations(); iterationNumber++) {
-            iterationContexts.add(new OptimizationContext(loop, this, iterationNumber));
-        }
-        this.nestedLoopContexts.put(loop, iterationContexts);
+    private void addOneTimeLoop(OperatorContext operatorContext) {
+        this.loopContexts.put((LoopSubplan) operatorContext.getOperator(), new LoopContext(operatorContext));
     }
 
     /**
@@ -133,12 +129,10 @@ public class OptimizationContext {
     }
 
     /**
-     * Retrieve the instances for the iterations of a {@code loopSubplan}.
-     *
-     * @return a {@link List} of instances; ordered by their iteration number (see {@link #getIterationNumber()})
+     * Retrieve the {@link LoopContext} for the {@code loopSubplan}.
      */
-    public List<OptimizationContext> getNestedLoopContexts(LoopSubplan loopSubplan) {
-        return this.nestedLoopContexts.get(loopSubplan);
+    public LoopContext getNestedLoopContext(LoopSubplan loopSubplan) {
+        return this.loopContexts.get(loopSubplan);
     }
 
     /**
@@ -150,11 +144,46 @@ public class OptimizationContext {
     }
 
     /**
+     * @return whether this instance is the first iteration within a {@link LoopContext}; this instance must be embedded
+     * in a {@link LoopContext}
+     */
+    public boolean isInitialIteration() {
+        assert this.hostLoopContext != null : "Not within a LoopContext.";
+        return this.iterationNumber == 0;
+    }
+
+
+    /**
+     * @return whether this instance is the final iteration within a {@link LoopContext}; this instance must be embedded
+     * in a {@link LoopContext}
+     */
+    public boolean isFinalIteration() {
+        assert this.hostLoopContext != null;
+        return this.iterationNumber == this.hostLoopContext.getIterationContexts().size() - 1;
+    }
+
+    /**
      * @return if this instance describes an iteration within a {@link LoopSubplan}, return the instance in which
      * this instance is nested
      */
     public OptimizationContext getParent() {
-        return this.parent;
+        return this.hostLoopContext == null ? null : this.hostLoopContext.getOptimizationContext();
+    }
+
+    public OptimizationContext getNextIterationContext() {
+        assert this.hostLoopContext != null;
+        assert !this.isFinalIteration();
+        return this.hostLoopContext.getIterationContexts().get(this.iterationNumber + 1);
+    }
+
+    /**
+     * Calls {@link OperatorContext#clearMarks()} for all nested {@link OperatorContext}s.
+     */
+    public void clearMarks() {
+        this.operatorContexts.values().forEach(OperatorContext::clearMarks);
+        this.loopContexts.values().stream()
+                .flatMap(loopCtx -> loopCtx.getIterationContexts().stream())
+                .forEach(OptimizationContext::clearMarks);
     }
 
     /**
@@ -174,6 +203,9 @@ public class OptimizationContext {
          */
         private final CardinalityEstimate[] inputCardinalities, outputCardinalities;
 
+        /**
+         * Used to mark changed {@link #inputCardinalities} and {@link #outputCardinalities}.
+         */
         private final boolean[] inputCardinalityMarkers, outputCardinalityMarkers;
 
         /**
@@ -184,7 +216,7 @@ public class OptimizationContext {
         /**
          * Creates a new instance.
          */
-        public OperatorContext(Operator operator) {
+        private OperatorContext(Operator operator) {
             this.operator = operator;
             this.inputCardinalities = new CardinalityEstimate[this.operator.getNumInputs()];
             this.inputCardinalityMarkers = new boolean[this.inputCardinalities.length];
@@ -247,15 +279,24 @@ public class OptimizationContext {
         }
 
         /**
-         * Push forward all marked {@link CardinalityEstimate}s.
+         * Push forward all marked {@link CardinalityEstimate}s within the same {@link OptimizationContext}.
          *
          * @see Operator#propagateOutputCardinality(int, OperatorContext)
          */
         public void pushCardinalitiesForward() {
+            OptimizationContext targetContext = this.getOptimizationContext();
             for (int outputIndex = 0; outputIndex < this.outputCardinalities.length; outputIndex++) {
-                if (!this.outputCardinalityMarkers[outputIndex]) continue;
-                this.operator.propagateOutputCardinality(outputIndex, this);
+                this.pushCardinalityForward(outputIndex, targetContext);
             }
+        }
+
+        /**
+         * Pushes the {@link CardinalityEstimate} corresponding to the {@code outputIndex} forward to the
+         * {@code targetContext} if it is marked.
+         */
+        public void pushCardinalityForward(int outputIndex, OptimizationContext targetContext) {
+            if (!this.outputCardinalityMarkers[outputIndex]) return;
+            this.operator.propagateOutputCardinality(outputIndex, this, targetContext);
         }
 
         /**
@@ -263,6 +304,70 @@ public class OptimizationContext {
          */
         public OptimizationContext getOptimizationContext() {
             return OptimizationContext.this;
+        }
+
+        public ExecutionProfile getExecutionProfile() {
+            return this.executionProfile;
+        }
+
+        public void setExecutionProfile(ExecutionProfile executionProfile) {
+            this.executionProfile = executionProfile;
+        }
+    }
+
+    /**
+     * Maintains {@link OptimizationContext}s for the iterations of a {@link LoopSubplan}.
+     */
+    public class LoopContext {
+
+        private final OperatorContext loopSubplanContext;
+
+        private final List<OptimizationContext> iterationContexts;
+
+        private LoopContext(OperatorContext loopSubplanContext) {
+            assert loopSubplanContext.getOptimizationContext() == OptimizationContext.this;
+
+            this.loopSubplanContext = loopSubplanContext;
+
+            LoopSubplan loop = (LoopSubplan) loopSubplanContext.getOperator();
+            final int numIterationContexts = loop.getNumExpectedIterations() + 1;
+            this.iterationContexts = new ArrayList<>(numIterationContexts);
+            for (int iterationNumber = 0; iterationNumber < numIterationContexts; iterationNumber++) {
+                this.iterationContexts.add(new OptimizationContext(loop, this, iterationNumber));
+            }
+        }
+
+        public OperatorContext getLoopSubplanContext() {
+            return this.loopSubplanContext;
+        }
+
+        /**
+         * Retrieves the iteration {@link OptimizationContext}s.
+         * <p>
+         * <p>Note that for {@code n} iterations, there are
+         * {@code n+1} {@link OptimizationContext}s because the {@link LoopHeadOperator} is triggered {@code n+1} times.
+         * The first {@code n} represent the iterations, the final represents the final state of the loop, in which
+         * only the {@link LoopHeadOperator} is run the last time.</p>
+         *
+         * @return the {@link OptimizationContext} for each iteration; order by execution order
+         */
+        public List<OptimizationContext> getIterationContexts() {
+            return this.iterationContexts;
+        }
+
+        /**
+         * @return the {@link OptimizationContext} in that the {@link LoopSubplan} resides
+         */
+        public OptimizationContext getOptimizationContext() {
+            return this.getLoopSubplanContext().getOptimizationContext();
+        }
+
+        public OptimizationContext getInitialIterationContext() {
+            return this.iterationContexts.get(0);
+        }
+
+        public OptimizationContext getFinalIterationContext() {
+            return this.iterationContexts.get(this.iterationContexts.size() - 1);
         }
     }
 

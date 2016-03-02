@@ -2,7 +2,8 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.cardinality.*;
+import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,11 +39,11 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
         OutputSlot.mock(operator, operatorAlternative);
         OutputSlot.stealConnections(operator, operatorAlternative);
-
-        final CompositeOperator parent = operator.getParent();
-        if (Objects.nonNull(parent)) {
-            parent.replace(operator, operatorAlternative);
-        }
+        // TODO. Remove?
+//        final CompositeOperator parent = operator.getParent();
+//        if (Objects.nonNull(parent)) {
+//            parent.replace(operator, operatorAlternative);
+//        }
 
         operatorAlternative.addAlternative(operator);
 
@@ -108,8 +109,10 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     }
 
     @Override
-    public void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorContext) {
-        super.propagateOutputCardinality(outputIndex, operatorContext);
+    public void propagateOutputCardinality(int outputIndex,
+                                           OptimizationContext.OperatorContext operatorContext,
+                                           OptimizationContext targetContext) {
+        super.propagateOutputCardinality(outputIndex, operatorContext, targetContext);
         this.getAlternatives().forEach(alternative -> alternative.propagateOutputCardinality(outputIndex, operatorContext));
     }
 

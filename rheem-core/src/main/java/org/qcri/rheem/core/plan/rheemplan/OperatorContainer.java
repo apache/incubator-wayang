@@ -4,6 +4,7 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * This is not an {@link Operator} in its own right. However, it contains a set of operators and can redirect
@@ -86,23 +87,27 @@ public interface OperatorContainer {
      *
      * @see Operator#propagateInputCardinality(int, OptimizationContext.OperatorContext)
      */
-    default void propagateInputCardinality(int inputIndex, OptimizationContext.OperatorContext operatorContext) {
+    default void propagateInputCardinality(int inputIndex,
+                                           OptimizationContext.OperatorContext operatorContext) {
         final CompositeOperator compositeOperator = this.toOperator();
         assert operatorContext.getOperator() == compositeOperator;
         assert 0 <= inputIndex && inputIndex <= compositeOperator.getNumInputs();
         final Collection<? extends InputSlot<?>> innerInputs = this.followInput(this.toOperator().getInput(inputIndex));
 
-        OptimizationContext innerOptimizationCtx = this.getInnerInputOptimizationContext(operatorContext.getOptimizationContext());
         for (InputSlot<?> innerInput : innerInputs) {
-            // Identify the appropriate OperatorContext.
-            OptimizationContext.OperatorContext innerOperatorCtx = innerOptimizationCtx.getOperatorContext(innerInput.getOwner());
+            Collection<OptimizationContext> innerOptimizationCtxs =
+                    this.getInnerInputOptimizationContext(innerInput, operatorContext.getOptimizationContext());
+            for (OptimizationContext innerOptimizationCtx : innerOptimizationCtxs) {
+                // Identify the appropriate OperatorContext.
+                OptimizationContext.OperatorContext innerOperatorCtx = innerOptimizationCtx.getOperatorContext(innerInput.getOwner());
 
-            // Update the CardinalityEstimate.
-            final CardinalityEstimate cardinality = operatorContext.getInputCardinality(inputIndex);
-            innerOperatorCtx.setInputCardinality(innerInput.getIndex(), cardinality);
+                // Update the CardinalityEstimate.
+                final CardinalityEstimate cardinality = operatorContext.getInputCardinality(inputIndex);
+                innerOperatorCtx.setInputCardinality(innerInput.getIndex(), cardinality);
 
-            // Continue the propagation.
-            innerInput.getOwner().propagateInputCardinality(innerInput.getIndex(), innerOperatorCtx);
+                // Continue the propagation.
+                innerInput.getOwner().propagateInputCardinality(innerInput.getIndex(), innerOperatorCtx);
+            }
         }
     }
 
@@ -118,7 +123,7 @@ public interface OperatorContainer {
 
         if (innerOutput != null) {
             // Identify the appropriate OperatorContext.
-            OptimizationContext innerOptimizationCtx = this.getInnerOutputOptimizationContext(operatorCtx.getOptimizationContext());
+            OptimizationContext innerOptimizationCtx = operatorCtx.getOptimizationContext();
             OptimizationContext.OperatorContext innerOperatorCtx = innerOptimizationCtx.getOperatorContext(innerOutput.getOwner());
 
             // Update the CardinalityEstimate.
@@ -131,14 +136,17 @@ public interface OperatorContainer {
     }
 
     /**
-     * Retrieve that {@link OptimizationContext} that represents the state when this instance is entered.
+     * Retrieve those {@link OptimizationContext}s that represent the state when this instance is entered.
      *
+     * @param innerInput               the inner {@link InputSlot} whose {@link OptimizationContext}s are requested
      * @param outerOptimizationContext the {@link OptimizationContext} in that this instance resides
-     * @return the inner {@link OptimizationContext}
+     * @return the inner {@link OptimizationContext}s
      */
-    default OptimizationContext getInnerInputOptimizationContext(OptimizationContext outerOptimizationContext) {
+    default Collection<OptimizationContext> getInnerInputOptimizationContext(
+            InputSlot<?> innerInput,
+            OptimizationContext outerOptimizationContext) {
         // Usually the same.
-        return outerOptimizationContext;
+        return Collections.singleton(outerOptimizationContext);
     }
 
     /**

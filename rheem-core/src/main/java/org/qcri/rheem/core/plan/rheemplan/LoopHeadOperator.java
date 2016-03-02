@@ -1,11 +1,14 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
+
 import java.util.Collection;
 
 /**
  * Operator free of ambiguities.
  */
-public interface LoopHeadOperator extends Operator {
+public interface LoopHeadOperator extends Operator, ElementaryOperator {
 
 
     /**
@@ -43,4 +46,9 @@ public interface LoopHeadOperator extends Operator {
      * @return a number of expected iterations; not necessarily the actual value
      */
     int getNumExpectedIterations();
+
+    CardinalityPusher getInitializationPusher(Configuration configuration);
+
+    CardinalityPusher getFinalizationPusher(Configuration configuration);
+
 }

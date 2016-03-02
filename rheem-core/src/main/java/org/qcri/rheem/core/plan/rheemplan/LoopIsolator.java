@@ -3,7 +3,10 @@ package org.qcri.rheem.core.plan.rheemplan;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Goes over a {@link RheemPlan} and isolates its loops.
@@ -34,15 +37,20 @@ public class LoopIsolator extends OneTimeExecutable {
                         .traverse(this.rheemPlan.getSinks())
                         .getTraversedNodesWith(Operator::isLoopHead);
 
-        loopHeads.forEach(this::isolate);
+        loopHeads.forEach(LoopIsolator::isolate);
     }
 
-    private void isolate(Operator allegedLoopHead) {
-        if (!allegedLoopHead.isLoopHead()) return;
+    /**
+     * Isolates the loop starting at the {@code allegedLoopHead}.
+     *
+     * @return the isolated {@link LoopSubplan} or {@code null} if none could be isolated
+     */
+    public static LoopSubplan isolate(Operator allegedLoopHead) {
+        if (!allegedLoopHead.isLoopHead()) return null;
         LoopHeadOperator loopHead = (LoopHeadOperator) allegedLoopHead;
 
         // Collect the InputSlots of the loop.
-        final Collection<InputSlot<?>> bodyInputSlots = this.collectInboundInputs(loopHead);
+        final Collection<InputSlot<?>> bodyInputSlots = collectInboundInputs(loopHead);
         List<InputSlot<?>> loopInputSlots = new ArrayList<>(loopHead.getLoopInitializationInputs().size() + bodyInputSlots.size());
         loopInputSlots.addAll(loopHead.getLoopInitializationInputs());
         loopInputSlots.addAll(bodyInputSlots);
@@ -52,14 +60,14 @@ public class LoopIsolator extends OneTimeExecutable {
         // ...from the loop head's final OutputSlots? That would be fatal.
 
         // Insert a new Subplan to delimit the loop body.
-        LoopSubplan.wrap(loopHead, loopInputSlots, loopOutputSlots, loopHead.getContainer());
+        return LoopSubplan.wrap(loopHead, loopInputSlots, loopOutputSlots, loopHead.getContainer());
     }
 
     /**
      * Collect all {@link InputSlot}s in the loop body corresponding to the {@code loopHead} that are not fed by the
      * loop itself. Also, checks various sanity aspects of the loop body.
      */
-    private Collection<InputSlot<?>> collectInboundInputs(LoopHeadOperator loopHead) {
+    private static Collection<InputSlot<?>> collectInboundInputs(LoopHeadOperator loopHead) {
         // Gather all Operators that are part of the loop.
         final Collection<Operator> loopBodyOperators = PlanTraversal.downstream()
                 .traverseFocused(loopHead, loopHead.getLoopBodyOutputs())
@@ -85,14 +93,14 @@ public class LoopIsolator extends OneTimeExecutable {
 
         // Sanity-check inputs of the loopHead.
         for (InputSlot<?> inputSlot : loopHead.getLoopBodyInputs()) {
-            Validate.notNull(inputSlot.getOccupant(), "%s is unconnected.", inputSlot);
+            Validate.notNull(inputSlot.getOccupant(), "Loop body input %s is unconnected.", inputSlot);
             Validate.isTrue(loopBodyOperators.contains(inputSlot.getOccupant().getOwner()),
                     "Illegal input for loop head input %s.", inputSlot);
         }
-        for (InputSlot<?> inputSlot : loopHead.getLoopInitializationInputs()) {
-            Validate.notNull(inputSlot.getOccupant(), "%s is unconnected.", inputSlot);
-            Validate.isTrue(!loopBodyOperators.contains(inputSlot.getOccupant().getOwner()),
-                    "Illegal input for loop head input %s.", inputSlot);
+        for (InputSlot<?> initializationInput : loopHead.getLoopInitializationInputs()) {
+            if (initializationInput.getOccupant() == null) continue;
+            Validate.isTrue(!loopBodyOperators.contains(initializationInput.getOccupant().getOwner()),
+                    "Illegal input for loop head input %s.", initializationInput);
         }
 
         // Sanity-check the outputs of the loopHead.

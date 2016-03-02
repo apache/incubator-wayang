@@ -1,7 +1,12 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.LoopSubplanCardinalityPusher;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,16 +53,27 @@ public class LoopSubplan extends Subplan {
     }
 
     @Override
-    public OptimizationContext getInnerInputOptimizationContext(OptimizationContext outerOptimizationContext) {
-        // Retrieve the OptimizationContext of the first iteration -> this where we need to propagate to
-        final List<OptimizationContext> nestedLoopCtxs = outerOptimizationContext.getNestedLoopContexts(this);
-        return nestedLoopCtxs.get(0);
+    public Collection<OptimizationContext> getInnerInputOptimizationContext(
+            InputSlot<?> innerInput,
+            OptimizationContext outerOptimizationContext) {
+        if (innerInput.getOwner() == this.loopHead) {
+            // Retrieve the OptimizationContext of the first iteration -> this where we need to propagate to
+            assert this.loopHead.getLoopInitializationInputs().contains(innerInput);
+            return Collections.singleton(outerOptimizationContext.getNestedLoopContext(this).getInitialIterationContext());
+        } else {
+            return outerOptimizationContext.getNestedLoopContext(this).getIterationContexts();
+        }
     }
 
     @Override
     public OptimizationContext getInnerOutputOptimizationContext(OptimizationContext outerOptimizationContext) {
         // Retrieve the OptimizationContext of the last iteration -> this where we need to propagate to
-        final List<OptimizationContext> nestedLoopCtxs = outerOptimizationContext.getNestedLoopContexts(this);
-        return nestedLoopCtxs.get(nestedLoopCtxs.size() - 1);
+        return outerOptimizationContext.getNestedLoopContext(this).getFinalIterationContext();
+    }
+
+
+    @Override
+    public CardinalityPusher getCardinalityPusher(Configuration configuration) {
+        return new LoopSubplanCardinalityPusher(this, configuration);
     }
 }

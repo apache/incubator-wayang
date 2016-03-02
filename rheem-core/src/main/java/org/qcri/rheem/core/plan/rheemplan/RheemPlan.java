@@ -10,12 +10,26 @@ public class RheemPlan {
 
     private final Collection<Operator> sinks = new LinkedList<>();
 
+    public static RheemPlan from(Operator... sinks) {
+        RheemPlan rheemPlan = new RheemPlan(sinks);
+        LoopIsolator.isolateLoops(rheemPlan);
+        return rheemPlan;
+    }
+
+    /**
+     * @deprecated Use {@link #from(Operator...)}.
+     */
+    @Deprecated
     public RheemPlan(Operator... sinks) {
         for (Operator sink : sinks) {
             this.addSink(sink);
         }
     }
 
+    /**
+     * @deprecated Use {@link #from(Operator...)}.
+     */
+    @Deprecated
     public void addSink(Operator sink) {
         if (!sink.isSink()) {
             throw new IllegalArgumentException(String.format("%s is not a sink.", sink));

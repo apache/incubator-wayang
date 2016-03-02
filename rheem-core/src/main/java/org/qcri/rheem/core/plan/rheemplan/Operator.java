@@ -397,9 +397,7 @@ public interface Operator {
      */
     default CompositeOperator getParent() {
         final OperatorContainer container = this.getContainer();
-        return container == null ?
-                null :
-                container.toOperator();
+        return container == null ? null : container.toOperator();
     }
 
     OperatorContainer getContainer();
@@ -462,6 +460,14 @@ public interface Operator {
     void addTargetPlatform(Platform platform);
 
     /**
+     * Convenience version of {@link Operator#propagateOutputCardinality(int, OptimizationContext.OperatorContext)},
+     * where the adjacent {@link InputSlot}s reside in the same {@link OptimizationContext} as the {@code operatorContext}.
+     */
+    default void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorContext) {
+        this.propagateOutputCardinality(outputIndex, operatorContext, operatorContext.getOptimizationContext());
+    }
+
+    /**
      * Propagates the {@link CardinalityEstimate} of an {@link OutputSlot} within the {@code operatorContext} to
      * <ul>
      * <li>fed {@link InputSlot}s (which in turn are asked to propagate) and</li>
@@ -470,17 +476,21 @@ public interface Operator {
      *
      * @param outputIndex     of the {@link OutputSlot}
      * @param operatorContext holds the {@link CardinalityEstimate} to be propagated
+     * @param targetContext   to which the {@link CardinalityEstimate}s should be propagated
      */
-    void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorContext);
+    void propagateOutputCardinality(int outputIndex,
+                                    OptimizationContext.OperatorContext operatorContext,
+                                    OptimizationContext targetContext);
 
     /**
      * Propagates the {@link CardinalityEstimate} of an {@link InputSlot} within the {@code operatorContext}
      * to <b>inner</b>, mapped {@link InputSlot}s.
      *
-     * @param inputIndex     of the {@link InputSlot}
+     * @param inputIndex      of the {@link InputSlot}
      * @param operatorContext holds the {@link CardinalityEstimate} to be propagated
      */
-    void propagateInputCardinality(int inputIndex, OptimizationContext.OperatorContext operatorContext);
+    void propagateInputCardinality(int inputIndex,
+                                   OptimizationContext.OperatorContext operatorContext);
 
     /**
      * Collect all inner {@link OutputSlot}s that are mapped to the given {@link OutputSlot}.

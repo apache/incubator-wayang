@@ -13,10 +13,12 @@ import java.util.Optional;
 /**
  * Join-like operator.
  */
-public class TestJoin<In1, In2, Out> extends OperatorBase implements ElementaryOperator {
+public class TestJoin<In1, In2, Out> extends BinaryToUnaryOperator<In1, In2, Out> implements ElementaryOperator {
+
+    public static final double ESTIMATION_CERTAINTY = 0.7d;
 
     public TestJoin(DataSetType<In1> inputType1, DataSetType<In2> inputType2, DataSetType<Out> outputType) {
-        super(2, 1, false, null);
+        super(inputType1, inputType2, outputType, false);
         this.inputSlots[0] = new InputSlot<>("input0", this, inputType1);
         this.inputSlots[1] = new InputSlot<>("input1", this, inputType2);
         this.outputSlots[0] = new OutputSlot<>("output", this, outputType);
@@ -38,6 +40,6 @@ public class TestJoin<In1, In2, Out> extends OperatorBase implements ElementaryO
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
                                                                   Configuration configuration) {
-        return Optional.of(new DefaultCardinalityEstimator(0.7d, 2, false, (cards) -> cards[0] * cards[1]));
+        return Optional.of(new DefaultCardinalityEstimator(ESTIMATION_CERTAINTY, 2, false, (cards) -> cards[0] * cards[1]));
     }
 }

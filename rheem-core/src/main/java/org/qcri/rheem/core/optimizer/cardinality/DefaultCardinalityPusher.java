@@ -15,20 +15,36 @@ public class DefaultCardinalityPusher extends CardinalityPusher {
 
     public DefaultCardinalityPusher(Operator operator,
                                     KeyValueProvider<OutputSlot<?>, CardinalityEstimator> estimationProvider) {
-        this.cardinalityEstimators = new CardinalityEstimator[operator.getNumOutputs()];
-        for (int outputIndex = 0; outputIndex < operator.getNumOutputs(); outputIndex++) {
-            this.initializeEstimator(operator, outputIndex, estimationProvider);
-        }
+        super(operator);
+        this.cardinalityEstimators = this.initializeCardinalityEstimators(operator, estimationProvider);
     }
 
-    private void initializeEstimator(final Operator operator, final int outputIndex, KeyValueProvider<OutputSlot<?>, CardinalityEstimator> estimationProvider) {
-        final CardinalityEstimator estimator = estimationProvider.provideFor(operator.getOutput(outputIndex));
-        this.cardinalityEstimators[outputIndex] = estimator;
+    public DefaultCardinalityPusher(Operator operator,
+                                    int[] relevantInputIndices,
+                                    int[] relevantOutputIndices,
+                                    KeyValueProvider<OutputSlot<?>, CardinalityEstimator> estimationProvider) {
+        super(relevantInputIndices, relevantOutputIndices);
+        this.cardinalityEstimators = this.initializeCardinalityEstimators(operator, estimationProvider);
+    }
+
+    /**
+     * Initializes the {@link CardinalityEstimator}s required by this instance.
+     */
+    private CardinalityEstimator[] initializeCardinalityEstimators(
+            Operator operator,
+            KeyValueProvider<OutputSlot<?>, CardinalityEstimator> estimationProvider) {
+
+        final CardinalityEstimator[] cardinalityEstimators = new CardinalityEstimator[operator.getNumOutputs()];
+        for (int outputIndex : this.relevantOutputIndices) {
+            final CardinalityEstimator estimator = estimationProvider.provideFor(operator.getOutput(outputIndex));
+            cardinalityEstimators[outputIndex] = estimator;
+        }
+        return cardinalityEstimators;
     }
 
     @Override
     protected void doPush(OptimizationContext.OperatorContext opCtx, Configuration configuration) {
-        for (int outputIndex = 0; outputIndex < this.cardinalityEstimators.length; outputIndex++) {
+        for (int outputIndex : this.relevantOutputIndices) {
             final CardinalityEstimator estimator = this.cardinalityEstimators[outputIndex];
             if (estimator != null) {
                 opCtx.setOutputCardinality(outputIndex, estimator.estimate(configuration, opCtx.getInputCardinalities()));

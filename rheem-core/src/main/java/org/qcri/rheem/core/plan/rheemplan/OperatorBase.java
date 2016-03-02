@@ -95,6 +95,10 @@ public abstract class OperatorBase implements Operator {
 
     @Override
     public void setContainer(OperatorContainer newContainer) {
+        final CompositeOperator currentParent = this.getParent();
+        if (currentParent != null) {
+            currentParent.replace(this, newContainer.toOperator());
+        }
         this.container = newContainer;
     }
 
@@ -156,7 +160,9 @@ public abstract class OperatorBase implements Operator {
     }
 
     @Override
-    public void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorContext) {
+    public void propagateOutputCardinality(int outputIndex,
+                                           OptimizationContext.OperatorContext operatorContext,
+                                           OptimizationContext targetContext) {
         assert operatorContext.getOperator() == this;
 
         // Identify the cardinality.
@@ -167,11 +173,9 @@ public abstract class OperatorBase implements Operator {
         for (InputSlot<?> inputSlot : output.getOccupiedSlots()) {
             // Find the adjacent OperatorContext corresponding to the inputSlot.
             final int inputIndex = inputSlot.getIndex();
-            final OptimizationContext optimizationCtx = operatorContext.getOptimizationContext();
             final Operator adjacentOperator = inputSlot.getOwner();
-            final OptimizationContext.OperatorContext adjacentOperatorCtx = optimizationCtx.getOperatorContext(adjacentOperator);
-            assert adjacentOperatorCtx != null
-                    : String.format("Missing OperatorContext for %s.", adjacentOperator);
+            final OptimizationContext.OperatorContext adjacentOperatorCtx = targetContext.getOperatorContext(adjacentOperator);
+            assert adjacentOperatorCtx != null : String.format("Missing OperatorContext for %s.", adjacentOperator);
 
             // Update the adjacent OperatorContext.
             adjacentOperatorCtx.setInputCardinality(inputIndex, cardinality);

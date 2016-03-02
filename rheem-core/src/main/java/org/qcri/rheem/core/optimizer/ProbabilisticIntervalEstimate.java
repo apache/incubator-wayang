@@ -69,6 +69,18 @@ public class ProbabilisticIntervalEstimate {
                 this.upperEstimate == estimate.upperEstimate;
     }
 
+    /**
+     * Compares with this instance equals with {@code that} instance within given delta bounds.
+     */
+    public boolean equalsWithinDelta(ProbabilisticIntervalEstimate that,
+                                     double probDelta,
+                                     long lowerEstimateDelta,
+                                     long upperEstimateDelta) {
+        return Math.abs(that.correctnessProb - this.correctnessProb) <= probDelta &&
+                Math.abs(this.lowerEstimate - that.lowerEstimate) <= lowerEstimateDelta &&
+                Math.abs(this.upperEstimate - that.upperEstimate) <= upperEstimateDelta;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(this.correctnessProb, this.lowerEstimate, this.upperEstimate);

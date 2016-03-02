@@ -4,7 +4,9 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
@@ -148,5 +150,32 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     @Override
     public int getNumExpectedIterations() {
         return 100;
+    }
+
+    @Override
+    public CardinalityPusher getCardinalityPusher(Configuration configuration) {
+        // TODO
+        return new DefaultCardinalityPusher(this,
+                Slot.toIndices(this.getLoopBodyInputs()),
+                Slot.toIndices(this.getLoopBodyOutputs()),
+                configuration.getCardinalityEstimatorProvider());
+    }
+
+    @Override
+    public CardinalityPusher getInitializationPusher(Configuration configuration) {
+        // TODO
+        return new DefaultCardinalityPusher(this,
+                Slot.toIndices(this.getLoopInitializationInputs()),
+                Slot.toIndices(this.getLoopBodyOutputs()),
+                configuration.getCardinalityEstimatorProvider());
+    }
+
+    @Override
+    public CardinalityPusher getFinalizationPusher(Configuration configuration) {
+        // TODO
+        return new DefaultCardinalityPusher(this,
+                Slot.toIndices(this.getLoopBodyInputs()),
+                Slot.toIndices(this.getFinalLoopOutputs()),
+                configuration.getCardinalityEstimatorProvider());
     }
 }

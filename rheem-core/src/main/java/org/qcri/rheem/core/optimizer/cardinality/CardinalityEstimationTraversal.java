@@ -8,6 +8,7 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.PlanTraversal;
 import org.qcri.rheem.core.util.OneTimeExecutable;
+import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -33,12 +34,31 @@ public class CardinalityEstimationTraversal {
     public static CardinalityEstimationTraversal createPushTraversal(Collection<InputSlot<?>> inputSlots,
                                                                      Collection<Operator> sourceOperators,
                                                                      Configuration configuration) {
+        return createPushTraversal(inputSlots, Collections.emptySet(), sourceOperators, configuration);
+    }
+
+
+    /**
+     * Create an instance that pushes {@link CardinalityEstimate}s through a data flow plan starting at the given
+     * {@code inputSlots} and {@code sourceOperators}, thereby putting {@link CardinalityEstimate}s into the
+     * {@code cache}.
+     *
+     * @param inputSlots      open {@link InputSlot}s that will be initially activated
+     * @param outputSlots     that will not be followed; they are terminal in addition to {@link OutputSlot}s that
+     *                        have no occupied {@link InputSlot}s
+     * @param sourceOperators {@link Operator} that will be initially activated
+     * @param configuration   provides utilties for the estimation
+     */
+    public static CardinalityEstimationTraversal createPushTraversal(Collection<InputSlot<?>> inputSlots,
+                                                                     Collection<OutputSlot<?>> outputSlots,
+                                                                     Collection<Operator> sourceOperators,
+                                                                     Configuration configuration) {
         Validate.notNull(inputSlots);
         Validate.notNull(sourceOperators);
         Validate.notNull(configuration);
 
         // Starting from the an output, find all required inputs.
-        return new Builder(inputSlots, sourceOperators, configuration).build();
+        return new Builder(inputSlots, outputSlots, sourceOperators, configuration).build();
     }
 
 
@@ -56,7 +76,6 @@ public class CardinalityEstimationTraversal {
         this.inputActivations = inputActivations;
         this.sourceActivators = sourceActivators;
     }
-
 
     /**
      * Traverse and update {@link CardinalityEstimate}s.
@@ -150,7 +169,6 @@ public class CardinalityEstimationTraversal {
             // Do the local estimation.
             this.pusher.push(opCtx, configuration);
             opCtx.pushCardinalitiesForward();
-            opCtx.clearMarks();
 
             for (int outputIndex = 0; outputIndex < this.operator.getNumOutputs(); outputIndex++) {
                 // Trigger follow-up operators.
@@ -256,6 +274,13 @@ public class CardinalityEstimationTraversal {
         final Collection<InputSlot<?>> inputSlots;
 
         /**
+         * {@link OutputSlot}s that will not be followed; they are terminal. Note that these are not necessarily
+         * the only {@link OutputSlot}s in the created {@link CardinalityEstimationTraversal} that will not be
+         * followed -- some {@link OutputSlot}s might not have occupied {@link InputSlot}s.
+         */
+        final Set<OutputSlot<?>> terminalOutputSlots;
+
+        /**
          * Source {@link Operator}s that should be part of the pushing.
          */
         private final Collection<Operator> sourceOperators;
@@ -274,11 +299,13 @@ public class CardinalityEstimationTraversal {
          * Creates a new instance.
          *
          * @param inputSlots      see {@link #inputSlots}
+         * @param outputSlots     see {@link #terminalOutputSlots}
          * @param sourceOperators see {@link #sourceOperators}
          * @param configuration   see {@link #configuration}
          */
-        private Builder(Collection<InputSlot<?>> inputSlots, Collection<Operator> sourceOperators, Configuration configuration) {
+        private Builder(Collection<InputSlot<?>> inputSlots, Collection<OutputSlot<?>> outputSlots, Collection<Operator> sourceOperators, Configuration configuration) {
             this.inputSlots = inputSlots;
+            this.terminalOutputSlots = RheemCollections.asSet(outputSlots);
             this.configuration = configuration;
             this.sourceOperators = sourceOperators;
         }
@@ -307,6 +334,7 @@ public class CardinalityEstimationTraversal {
                             this.addAndRegisterActivator(outputSlot);
                         }
                     })
+                    .followingOutputsIf(output -> !this.terminalOutputSlots.contains(output))
                     .traverse(this.sourceOperators)
                     .traverse(distinctInputs.stream().map(InputSlot::getOwner));
 
@@ -332,6 +360,10 @@ public class CardinalityEstimationTraversal {
             this.result = new CardinalityEstimationTraversal(requiredActivations, sourceActivators);
         }
 
+        /**
+         * If there is no registered {@link Activator} for the owner of the {@code outputSlot} and/or no
+         * {@link Activation}, then these will be created, registered, and connected.
+         */
         private void addAndRegisterActivator(OutputSlot<?> outputSlot) {
             // See if the output slot has already been processed.
             Activator activator = this.getCachedActivator(outputSlot);
@@ -346,14 +378,22 @@ public class CardinalityEstimationTraversal {
             this.registerDependentActivations(outputSlot, activator);
 
             // Register with required activators.
-            this.registerAsDependentActivation(outputSlot, activator);
+            this.registerAsDependentActivation(activator);
 
         }
 
+        /**
+         * @return the {@link Activator} that is associated to the owner of the {@code outputSlot}
+         */
         protected Activator getCachedActivator(OutputSlot<?> outputSlot) {
             return this.createdActivators.get(outputSlot.getOwner());
         }
 
+        /**
+         * Create and register an {@link Activator} for the owner of the {@code outputSlot}.
+         *
+         * @return the newly created {@link Activator}
+         */
         protected Activator createActivator(OutputSlot<?> outputSlot) {
             final Operator operator = outputSlot.getOwner();
             final Activator pusherActivator = new Activator(operator, this.configuration);
@@ -361,6 +401,10 @@ public class CardinalityEstimationTraversal {
             return pusherActivator;
         }
 
+        /**
+         * Connect the {@code activator} with already existing {@link Activator}s that are fed by the {@code outputSlot}
+         * via a new {@link Activation}.
+         */
         protected void registerDependentActivations(OutputSlot<?> outputSlot, Activator activator) {
             for (InputSlot<?> inputSlot : outputSlot.getOccupiedSlots()) {
                 Arrays.stream(inputSlot.getOwner().getAllOutputs())
@@ -371,8 +415,12 @@ public class CardinalityEstimationTraversal {
             }
         }
 
-        protected void registerAsDependentActivation(OutputSlot<?> outputSlot, Activator activator) {
-            for (InputSlot<?> inputSlot : outputSlot.getOwner().getAllInputs()) {
+        /**
+         * Connect the {@code activator} with already existing {@link Activator}s that are fed by the {@code outputSlot}
+         * via a new {@link Activation}.
+         */
+        protected void registerAsDependentActivation(Activator activator) {
+            for (InputSlot<?> inputSlot : activator.operator.getAllInputs()) {
                 final OutputSlot<?> occupant = inputSlot.getOccupant();
                 if (Objects.isNull(occupant)) {
                     continue;
@@ -381,7 +429,7 @@ public class CardinalityEstimationTraversal {
                 if (requiredActivator == null) {
                     continue;
                 }
-                requiredActivator.getDependentActivations(outputSlot).add(activator.createActivation(inputSlot.getIndex()));
+                requiredActivator.getDependentActivations(occupant).add(activator.createActivation(inputSlot.getIndex()));
             }
         }
     }

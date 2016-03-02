@@ -3,6 +3,8 @@ package org.qcri.rheem.core.plan.rheemplan;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.types.DataSetType;
 
+import java.util.Collection;
+
 /**
  * Abstract class for inputs and outputs to operators.
  */
@@ -68,10 +70,11 @@ abstract public class Slot<T> {
 
     @Override
     public String toString() {
-        return String.format("%s[%s of %s]",
+        return String.format("%s[%s@%d of %s]",
                 this.getClass().getSimpleName(),
 //                this.type,
                 this.name,
+                this.getIndex(),
                 this.owner == null ? "no owner" : this.owner.toString());
     }
 
@@ -128,4 +131,14 @@ abstract public class Slot<T> {
 //    public boolean isMarked() {
 //        return this.isMarked;
 //    }
+
+    /**
+     * Creates an {@code int[]} of the indices of the {@code slots}.
+     */
+    public static int[] toIndices(Collection<? extends Slot<?>> slots) {
+        int[] indices = new int[slots.size()];
+        int i = 0;
+        for (Slot<?> slot : slots) indices[i++] = slot.getIndex();
+        return indices;
+    }
 }

@@ -14,8 +14,6 @@ public class SubplanCardinalityPusher extends CardinalityPusher {
 
     private final CardinalityEstimationTraversal traversal;
 
-    private final Subplan subplan;
-
     /**
      * Create an instance for the given {@link Subplan}.
      *
@@ -38,8 +36,9 @@ public class SubplanCardinalityPusher extends CardinalityPusher {
      * Creates a new instance.
      */
     private SubplanCardinalityPusher(CardinalityEstimationTraversal traversal, final Subplan subplan) {
-        assert !subplan.isLoopSubplan();
-        this.subplan = subplan;
+        super(subplan);
+        assert !subplan.isLoopSubplan() : String.format("%s is not suited for %s instances.",
+                this.getClass().getSimpleName(), Subplan.class.getSimpleName());
         this.traversal = traversal;
     }
 
@@ -55,8 +54,9 @@ public class SubplanCardinalityPusher extends CardinalityPusher {
         this.traversal.traverse(opCtx.getOptimizationContext(), configuration);
 
         // Pull the cardinalities for the OutputSlots.
-        for (int outputIndex = 0; outputIndex < this.subplan.getNumOutputs(); outputIndex++) {
-            final OutputSlot<?> innerOutput = this.subplan.traceOutput(this.subplan.getOutput(outputIndex));
+        Subplan subplan = (Subplan) opCtx.getOperator();
+        for (int outputIndex = 0; outputIndex < subplan.getNumOutputs(); outputIndex++) {
+            final OutputSlot<?> innerOutput = subplan.traceOutput(subplan.getOutput(outputIndex));
             if (innerOutput != null) {
                 final OptimizationContext.OperatorContext innerOperatorCtx =
                         opCtx.getOptimizationContext().getOperatorContext(innerOutput.getOwner());
