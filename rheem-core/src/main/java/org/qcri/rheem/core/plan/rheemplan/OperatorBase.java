@@ -95,11 +95,11 @@ public abstract class OperatorBase implements Operator {
 
     @Override
     public void setContainer(OperatorContainer newContainer) {
-        final CompositeOperator currentParent = this.getParent();
-        if (currentParent != null) {
-            currentParent.replace(this, newContainer.toOperator());
-        }
+        final CompositeOperator oldParent = this.getParent();
         this.container = newContainer;
+        if (oldParent != null) {
+            oldParent.replace(this, newContainer.toOperator());
+        }
     }
 
     @Override

@@ -140,9 +140,11 @@ public class SlotMapping {
      */
     public void replaceInputSlotMappings(Operator oldOperator, Operator newOperator) {
         if (oldOperator.getParent() == newOperator) {
+            // Default strategy: The oldOperator is now wrapped by the newOperator.
             final SlotMapping oldToNewSlotMapping = oldOperator.getContainer().getSlotMapping();
             for (int i = 0; i < oldOperator.getNumInputs(); i++) {
                 final InputSlot<?> oldInput = oldOperator.getInput(i);
+                if (oldInput.getOccupant() != null) continue;
 
                 final InputSlot<?> outerInput = this.resolveUpstream(oldInput);
                 if (outerInput != null) {
@@ -151,8 +153,10 @@ public class SlotMapping {
                     if (newInput != null) this.mapUpstream(newInput, outerInput);
                 }
             }
+
         } else {
-            this.logger.warn("Using bare indices to replace {} with {}.");
+            // Fallback strategy.
+            this.logger.warn("Using bare indices to replace {} (parent {}) with {}.", oldOperator, oldOperator.getParent(), newOperator);
             assert oldOperator.getNumInputs() == newOperator.getNumInputs()
                     : String.format("Operators %s and %s are not matching.", oldOperator, newOperator);
 
@@ -198,21 +202,29 @@ public class SlotMapping {
     @SuppressWarnings("unchecked")
     public void replaceOutputSlotMappings(Operator oldOperator, Operator newOperator) {
         if (oldOperator.getParent() == newOperator) {
+            // Default strategy: The oldOperator is now wrapped by the newOperator.
+            final Map<Slot, Collection> downstreamMapping = this.getOrCreateDownstreamMapping();
             final SlotMapping oldToNewSlotMapping = oldOperator.getContainer().getSlotMapping();
             for (int i = 0; i < oldOperator.getNumOutputs(); i++) {
                 final OutputSlot<?> oldOutput = oldOperator.getOutput(i);
+                final Collection<OutputSlot<?>> outerOutputs = downstreamMapping.get(oldOutput);
+                if (outerOutputs == null) continue;
+
+                // We cannot have multiple OutputSlots, we could not map them downstream to a single OutputSlot.
                 final OutputSlot<?> newOutput = RheemCollections.getSingleOrNull(
-                        (Collection<OutputSlot<?>>) oldToNewSlotMapping.getOrCreateDownstreamMapping().get(oldOutput)
+                        (Collection<OutputSlot<?>>) oldToNewSlotMapping
+                                .getOrCreateDownstreamMapping()
+                                .getOrDefault(oldOutput, Collections.emptySet())
                 );
 
-                final Collection<OutputSlot<?>> outerOutputs = this.getOrCreateDownstreamMapping().get(oldOutput);
                 for (OutputSlot<?> outerOutput : outerOutputs) {
                     this.mapUpstream(outerOutput, newOutput);
                 }
             }
 
         } else {
-            this.logger.warn("Using bare indices to replace {} with {}.");
+            // Fallback strategy.
+            this.logger.warn("Using bare indices to replace {} (parent {}) with {}.", oldOperator, oldOperator.getParent(), newOperator);
             assert oldOperator.getNumOutputs() == newOperator.getNumOutputs()
                     : String.format("Operators %s and %s are not matching.", oldOperator, newOperator);
 

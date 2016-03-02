@@ -39,11 +39,6 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
         OutputSlot.mock(operator, operatorAlternative);
         OutputSlot.stealConnections(operator, operatorAlternative);
-        // TODO. Remove?
-//        final CompositeOperator parent = operator.getParent();
-//        if (Objects.nonNull(parent)) {
-//            parent.replace(operator, operatorAlternative);
-//        }
 
         operatorAlternative.addAlternative(operator);
 
