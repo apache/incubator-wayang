@@ -23,6 +23,8 @@ public abstract class CardinalityPusher {
 
     protected final int[] relevantOutputIndices;
 
+
+
     protected CardinalityPusher(Operator operator) {
         this(RheemArrays.range(operator.getNumInputs()), RheemArrays.range(operator.getNumOutputs()));
     }

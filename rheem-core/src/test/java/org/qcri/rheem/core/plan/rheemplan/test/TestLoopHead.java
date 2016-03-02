@@ -13,7 +13,7 @@ import java.util.Optional;
 /**
  * {@link LoopHeadOperator} implementation for test purposes.
  */
-public class TestLoopHead<T> extends OperatorBase implements LoopHeadOperator {
+public class TestLoopHead<T> extends OperatorBase implements LoopHeadOperator, ElementaryOperator {
 
     private int numExpectedIterations;
 
@@ -54,30 +54,6 @@ public class TestLoopHead<T> extends OperatorBase implements LoopHeadOperator {
 
     public void setNumExpectedIterations(int numExpectedIterations) {
         this.numExpectedIterations = numExpectedIterations;
-    }
-
-    @Override
-    public CardinalityPusher getCardinalityPusher(Configuration configuration) {
-        return new DefaultCardinalityPusher(this,
-                Slot.toIndices(this.getLoopBodyInputs()),
-                Slot.toIndices(this.getLoopBodyOutputs()),
-                configuration.getCardinalityEstimatorProvider());
-    }
-
-    @Override
-    public CardinalityPusher getInitializationPusher(Configuration configuration) {
-        return new DefaultCardinalityPusher(this,
-                Slot.toIndices(this.getLoopInitializationInputs()),
-                Slot.toIndices(this.getLoopBodyOutputs()),
-                configuration.getCardinalityEstimatorProvider());
-    }
-
-    @Override
-    public CardinalityPusher getFinalizationPusher(Configuration configuration) {
-        return new DefaultCardinalityPusher(this,
-                Slot.toIndices(this.getLoopBodyInputs()),
-                Slot.toIndices(this.getFinalLoopOutputs()),
-                configuration.getCardinalityEstimatorProvider());
     }
 
     @Override

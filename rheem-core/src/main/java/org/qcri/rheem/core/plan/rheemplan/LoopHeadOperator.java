@@ -2,13 +2,14 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
 
 import java.util.Collection;
 
 /**
- * Operator free of ambiguities.
+ * Head of a {@link LoopSubplan}.
  */
-public interface LoopHeadOperator extends Operator, ElementaryOperator {
+public interface LoopHeadOperator extends Operator {
 
 
     /**
@@ -47,8 +48,37 @@ public interface LoopHeadOperator extends Operator, ElementaryOperator {
      */
     int getNumExpectedIterations();
 
-    CardinalityPusher getInitializationPusher(Configuration configuration);
+    /**
+     * Get the {@link CardinalityPusher} implementation for the intermediate iterations.
+     */
+    @Override
+    default CardinalityPusher getCardinalityPusher(final Configuration configuration) {
+        return new DefaultCardinalityPusher(this,
+                Slot.toIndices(this.getLoopBodyInputs()),
+                Slot.toIndices(this.getLoopBodyOutputs()),
+                configuration.getCardinalityEstimatorProvider());
+    }
 
-    CardinalityPusher getFinalizationPusher(Configuration configuration);
+    /**
+     * Get the {@link CardinalityPusher} implementation for the initial iteration.
+     */
+    default CardinalityPusher getInitializationPusher(Configuration configuration) {
+        return new DefaultCardinalityPusher(this,
+                Slot.toIndices(this.getLoopInitializationInputs()),
+                Slot.toIndices(this.getLoopBodyOutputs()),
+                configuration.getCardinalityEstimatorProvider());
+    }
+
+    /**
+     * Get the {@link CardinalityPusher} implementation for the final iteration.
+     */
+    default CardinalityPusher getFinalizationPusher(Configuration configuration) {
+        return new DefaultCardinalityPusher(this,
+                Slot.toIndices(this.getLoopBodyInputs()),
+                Slot.toIndices(this.getFinalLoopOutputs()),
+                configuration.getCardinalityEstimatorProvider());
+    }
+
+
 
 }

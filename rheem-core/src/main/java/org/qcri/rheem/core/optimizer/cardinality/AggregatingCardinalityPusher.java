@@ -2,13 +2,13 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OperatorAlternative;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.Tuple;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -24,9 +24,25 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
     public AggregatingCardinalityPusher(final OperatorAlternative operatorAlternative,
                                         final Configuration configuration) {
         super(operatorAlternative);
-        this.pushPaths = operatorAlternative.getAlternatives().stream()
+        this.pushPaths = this.initializePushPaths(operatorAlternative, Operator::getCardinalityPusher, configuration);
+    }
+
+    public AggregatingCardinalityPusher(final OperatorAlternative operatorAlternative,
+                                        Collection<InputSlot<?>> relevantInputSlots,
+                                        Collection<OutputSlot<?>> relevantOutputSlots,
+                                        BiFunction<Operator, Configuration, CardinalityPusher> getPusherFunction,
+                                        final Configuration configuration) {
+        super(Slot.toIndices(relevantInputSlots), Slot.toIndices(relevantOutputSlots));
+        this.pushPaths = this.initializePushPaths(operatorAlternative, getPusherFunction, configuration);
+    }
+
+    private List<Tuple<OperatorAlternative.Alternative, CardinalityPusher>> initializePushPaths(
+            OperatorAlternative operatorAlternative,
+            BiFunction<Operator, Configuration, CardinalityPusher> getPusherFunction,
+            Configuration configuration) {
+        return operatorAlternative.getAlternatives().stream()
                 .map(alternative -> {
-                    final CardinalityPusher pusher = alternative.getOperator().getCardinalityPusher(configuration);
+                    final CardinalityPusher pusher = getPusherFunction.apply(alternative.getOperator(), configuration);
                     return new Tuple<>(alternative, pusher);
                 })
                 .collect(Collectors.toList());
@@ -105,6 +121,10 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
         for (int i = 0; i < estimates1.length; i++) {
             CardinalityEstimate estimate1 = estimates1[i];
             CardinalityEstimate estimate2 = estimates2[i];
+            if (estimate1 == null) {
+                assert estimate2 == null;
+                continue;
+            }
             if (estimate2.getCorrectnessProbability() > estimate1.getCorrectnessProbability()) {
                 mergedEstimates[i] = estimate2;
             }

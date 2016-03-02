@@ -34,7 +34,6 @@ public class RheemPlan {
      * @param sinks the sinks of the new instance
      * @return the prepared instance
      */
-    @Deprecated
     public RheemPlan(Operator... sinks) {
         for (Operator sink : sinks) {
             this.addSink(sink);

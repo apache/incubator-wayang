@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class LoopSubplan extends Subplan {
 
-    private final LoopHeadOperator loopHead;
+    private LoopHeadOperator loopHead;
 
     /**
      * Creates a new instance with the given operators. Initializes the {@link InputSlot}s and {@link OutputSlot}s,
@@ -75,5 +75,13 @@ public class LoopSubplan extends Subplan {
     @Override
     public CardinalityPusher getCardinalityPusher(Configuration configuration) {
         return new LoopSubplanCardinalityPusher(this, configuration);
+    }
+
+    @Override
+    public void replace(Operator oldOperator, Operator newOperator) {
+        super.replace(oldOperator, newOperator);
+        if (oldOperator == this.loopHead) {
+            this.loopHead = (LoopHeadOperator) newOperator;
+        }
     }
 }

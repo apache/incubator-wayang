@@ -67,6 +67,7 @@ public class SparkPlatform extends Platform {
         this.mappings.add(new SortToSparkSortMapping());
         this.mappings.add(new TextFileSourceMapping());
         this.mappings.add(new UnionAllToSparkUnionAllMapping());
+        this.mappings.add(new LoopToSparkLoopMapping());
     }
 
     @Override

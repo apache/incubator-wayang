@@ -11,6 +11,8 @@ import java.util.stream.Stream;
 
 /**
  * This operator encapsulates operators that are alternative to each other.
+ * <p>TODO: Alternatives and their interfaces (i.e., {@link OutputSlot}s and {@link InputSlot}s) are matched via their
+ * input/output indices.</p>
  */
 public class OperatorAlternative extends OperatorBase implements CompositeOperator {
 
@@ -32,7 +34,10 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
      * @param operator operator to wrap
      */
     public static OperatorAlternative wrap(Operator operator) {
-        OperatorAlternative operatorAlternative = new OperatorAlternative(operator);
+        OperatorAlternative operatorAlternative =
+                operator.isLoopHead() ?
+                        new LoopHeadAlternative((LoopHeadOperator) operator) :
+                        new OperatorAlternative(operator);
 
         InputSlot.mock(operator, operatorAlternative, false);
         InputSlot.stealConnections(operator, operatorAlternative);
@@ -48,7 +53,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     /**
      * Creates a new instance with the same number of inputs and outputs and the same parent as the given operator.
      */
-    private OperatorAlternative(Operator operator) {
+    protected OperatorAlternative(Operator operator) {
         super(operator.getNumInputs(), operator.getNumOutputs(), false, operator.getContainer());
     }
 

@@ -1,17 +1,19 @@
 package org.qcri.rheem.basic.operators;
 
-import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
-import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.SwitchForwardCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
 
 /**
  * This operator has three inputs and three outputs.
@@ -27,8 +29,8 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     public static final int ITERATION_INPUT_INDEX = 2;
 
     public static final int ITERATION_OUTPUT_INDEX = 0;
-    public static final int CONVERGENCE_OUTPUT_INDEX= 1;
-    public static final int FINAL_OUTPUT_INDEX= 2;
+    public static final int CONVERGENCE_OUTPUT_INDEX = 1;
+    public static final int FINAL_OUTPUT_INDEX = 2;
 
     /**
      * Function that this operator applies to the input elements.
@@ -50,7 +52,7 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     public LoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
                         PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate) {
         this(inputType, convergenceType,
-                new PredicateDescriptor<>(criterionPredicate, (BasicDataUnitType)convergenceType.getDataUnitType()));
+                new PredicateDescriptor<>(criterionPredicate, (BasicDataUnitType) convergenceType.getDataUnitType()));
     }
 
     /**
@@ -120,11 +122,16 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
-            final int outputIndex,
-            final Configuration configuration) {
-        Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return Optional.of(new DefaultCardinalityEstimator(1d, 1, this.isSupportingBroadcastInputs(), inputCards -> inputCards[0]));
+    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex, Configuration configuration) {
+        switch (outputIndex) {
+            case CONVERGENCE_OUTPUT_INDEX:
+                return Optional.of(new SwitchForwardCardinalityEstimator(CONVERGENCE_INPUT_INDEX, INITIAL_INPUT_INDEX));
+            case ITERATION_OUTPUT_INDEX:
+            case FINAL_OUTPUT_INDEX:
+                return Optional.of(new SwitchForwardCardinalityEstimator(INITIAL_INPUT_INDEX, ITERATION_INPUT_INDEX));
+            default:
+                throw new IllegalArgumentException("Illegal output index " + outputIndex + ".");
+        }
     }
 
     @Override
@@ -152,30 +159,4 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
         return 100;
     }
 
-    @Override
-    public CardinalityPusher getCardinalityPusher(Configuration configuration) {
-        // TODO
-        return new DefaultCardinalityPusher(this,
-                Slot.toIndices(this.getLoopBodyInputs()),
-                Slot.toIndices(this.getLoopBodyOutputs()),
-                configuration.getCardinalityEstimatorProvider());
-    }
-
-    @Override
-    public CardinalityPusher getInitializationPusher(Configuration configuration) {
-        // TODO
-        return new DefaultCardinalityPusher(this,
-                Slot.toIndices(this.getLoopInitializationInputs()),
-                Slot.toIndices(this.getLoopBodyOutputs()),
-                configuration.getCardinalityEstimatorProvider());
-    }
-
-    @Override
-    public CardinalityPusher getFinalizationPusher(Configuration configuration) {
-        // TODO
-        return new DefaultCardinalityPusher(this,
-                Slot.toIndices(this.getLoopBodyInputs()),
-                Slot.toIndices(this.getFinalLoopOutputs()),
-                configuration.getCardinalityEstimatorProvider());
-    }
 }

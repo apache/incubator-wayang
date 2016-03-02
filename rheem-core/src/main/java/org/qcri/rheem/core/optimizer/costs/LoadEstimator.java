@@ -9,6 +9,15 @@ import java.util.Arrays;
  */
 public abstract class LoadEstimator {
 
+    /**
+     * Should be used to replace {@code null} {@link CardinalityEstimate}s.
+     */
+    protected final CardinalityEstimate nullCardinalityReplacement;
+
+    protected LoadEstimator(CardinalityEstimate nullCardinalityReplacement) {
+        this.nullCardinalityReplacement = nullCardinalityReplacement;
+    }
+
     public abstract LoadEstimate calculate(
             CardinalityEstimate[] inputEstimates,
             CardinalityEstimate[] outputEstimates);
@@ -19,8 +28,17 @@ public abstract class LoadEstimator {
 
     private double calculateJointProbability(CardinalityEstimate[] inputEstimates) {
         return Arrays.stream(inputEstimates)
+                .map(this::replaceNullCardinality)
                 .mapToDouble(CardinalityEstimate::getCorrectnessProbability)
                 .reduce(1d, (a, b) -> a * b);
+    }
+
+    /**
+     * If the given {@code cardinalityEstimate} is {@code null} then return {@link #nullCardinalityReplacement},
+     * otherwise {@code cardinalityEstimate}.
+     */
+    protected final CardinalityEstimate replaceNullCardinality(CardinalityEstimate cardinalityEstimate) {
+        return cardinalityEstimate == null ? this.nullCardinalityReplacement : cardinalityEstimate;
     }
 
     public static LoadEstimator createFallback(int numInputs, int numOutputs) {

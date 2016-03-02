@@ -351,6 +351,11 @@ public class OptimizationContext {
         public TimeEstimate getTimeEstimate() {
             return this.timeEstimate;
         }
+
+        @Override
+        public String toString() {
+            return String.format("%s[%s]", this.getClass().getSimpleName(), this.getOperator());
+        }
     }
 
     /**
