@@ -206,7 +206,7 @@ public class CardinalityEstimationTraversal {
                 isStateChanged |= this.isActivated[inputIndex];
                 this.isActivated[inputIndex] = false;
             }
-            return isStateChanged;
+            return isStateChanged || this.isActivated.length == 0;
         }
 
 
@@ -250,7 +250,8 @@ public class CardinalityEstimationTraversal {
         }
 
         public void fire(Queue<Activator> activatorQueue) {
-            assert !this.activator.isActivated[this.inputIndex];
+            assert !this.activator.isActivated[this.inputIndex]
+                    : String.format("%s is already activated at input %d.", this.activator.operator, this.inputIndex);
             this.activator.isActivated[this.inputIndex] = true;
             if (this.activator.canBeActivated()) {
                 activatorQueue.add(this.activator);

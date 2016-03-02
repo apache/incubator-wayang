@@ -179,9 +179,16 @@ public class Configuration {
                             )
                     ).withSlf4jWarning("Creating fallback selectivity for {}.");
 
+            // Built-in option: let the ExecutionOperators provide the LoadProfileEstimator.
+            KeyValueProvider<ExecutionOperator, LoadProfileEstimator> builtInProvider =
+                    new FunctionalKeyValueProvider<>(
+                            fallbackProvider,
+                            operator -> operator.getLoadProfileEstimator(configuration).orElse(null)
+                    );
+
             // Customizable layer: Users can override manually.
             KeyValueProvider<ExecutionOperator, LoadProfileEstimator> overrideProvider =
-                    new MapBasedKeyValueProvider<>(fallbackProvider);
+                    new MapBasedKeyValueProvider<>(builtInProvider);
 
             configuration.setOperatorLoadProfileEstimatorProvider(overrideProvider);
         }

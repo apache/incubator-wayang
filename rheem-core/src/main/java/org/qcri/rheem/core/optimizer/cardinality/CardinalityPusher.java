@@ -2,6 +2,7 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.slf4j.Logger;
@@ -34,6 +35,7 @@ public abstract class CardinalityPusher {
 
     /**
      * Push the input {@link CardinalityEstimate}s of the {@code operatorContext} to the output {@link CardinalityEstimate}s.
+     * If that leaded to an update, also update the {@link TimeEstimate}.
      *
      * @param opCtx         will be subject to the push
      * @param configuration potentially provides some estimation helpers
@@ -50,6 +52,7 @@ public abstract class CardinalityPusher {
                 this.logger.trace("Pushing {} into {}.", Arrays.toString(opCtx.getInputCardinalities()), opCtx.getOperator());
             }
             this.doPush(opCtx, configuration);
+            opCtx.updateTimeEstimate(configuration);
         }
     }
 

@@ -58,17 +58,4 @@ public interface ExecutionOperator extends ElementaryOperator {
      */
     List<ChannelDescriptor> getSupportedOutputChannels(int index);
 
-    /**
-     * Get the {@link TimeEstimate} associated to this instance.
-     *
-     * @return the associated {@link TimeEstimate} or {@code null} if none
-     */
-    TimeEstimate getTimeEstimate();
-
-    /**
-     * Associate a {@link TimeEstimate} to this instance.
-     *
-     * @return
-     */
-    void setTimeEstimate(TimeEstimate timeEstimate);
 }

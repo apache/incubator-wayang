@@ -1,8 +1,15 @@
 package org.qcri.rheem.core.optimizer;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.LoadProfile;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -13,6 +20,8 @@ import java.util.stream.Stream;
  * We manage these contexts in a hierarchical fashion.</p>
  */
 public class OptimizationContext {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * The instance in that this instance is nested - or {@code null} if it is top-level.
@@ -209,9 +218,14 @@ public class OptimizationContext {
         private final boolean[] inputCardinalityMarkers, outputCardinalityMarkers;
 
         /**
-         * {@link ExecutionProfile} of the {@link Operator}.
+         * {@link LoadProfile} of the {@link Operator}.
          */
-        private ExecutionProfile executionProfile;
+        private LoadProfile loadProfile;
+
+        /**
+         * {@link TimeEstimate} for the {@link ExecutionProfile}.
+         */
+        private TimeEstimate timeEstimate;
 
         /**
          * Creates a new instance.
@@ -306,12 +320,36 @@ public class OptimizationContext {
             return OptimizationContext.this;
         }
 
-        public ExecutionProfile getExecutionProfile() {
-            return this.executionProfile;
+        /**
+         * Update the {@link LoadProfile} and {@link TimeEstimate} of this instance.
+         *
+         * @param configuration provides the necessary functions
+         */
+        public void updateTimeEstimate(Configuration configuration) {
+            if (!this.operator.isExecutionOperator()) return;
+
+            final Optional<LoadProfileEstimator> optionalLoadProfileEstimator = configuration
+                    .getOperatorLoadProfileEstimatorProvider()
+                    .optionallyProvideFor((ExecutionOperator) this.operator);
+            if (!optionalLoadProfileEstimator.isPresent()) {
+                OptimizationContext.this.logger.warn("No LoadProfileEstimator for {} configured.", this.operator);
+                return;
+            }
+            final LoadProfileEstimator loadProfileEstimator = optionalLoadProfileEstimator.get();
+            this.loadProfile = loadProfileEstimator.estimate(this);
+
+            final Optional<LoadProfileToTimeConverter> optionalLoadProfileToTimeConverter =
+                    configuration.getLoadProfileToTimeConverterProvider().optionallyProvide();
+            if (!optionalLoadProfileEstimator.isPresent()) {
+                OptimizationContext.this.logger.warn("No LoadProfileToTimeConverter for {} configured.");
+                return;
+            }
+            final LoadProfileToTimeConverter timeConverter = optionalLoadProfileToTimeConverter.get();
+            this.timeEstimate = timeConverter.convert(this.loadProfile);
         }
 
-        public void setExecutionProfile(ExecutionProfile executionProfile) {
-            this.executionProfile = executionProfile;
+        public TimeEstimate getTimeEstimate() {
+            return this.timeEstimate;
         }
     }
 

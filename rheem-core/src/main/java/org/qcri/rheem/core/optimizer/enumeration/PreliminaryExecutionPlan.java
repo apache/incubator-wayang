@@ -3,12 +3,10 @@ package org.qcri.rheem.core.optimizer.enumeration;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfile;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.*;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -68,26 +66,20 @@ public class PreliminaryExecutionPlan {
         }
     }
 
+    // TODO: !!!
     private TimeEstimate getOrCalculateTimeEstimateFor(ExecutionTask task, Configuration configuration) {
         final ExecutionOperator operator = task.getOperator();
 
         // Calculate and chache the TimeEstimate if it does not exist yet.
-        if (operator.getTimeEstimate() == null) {
-            final LoadProfileEstimator loadProfileEstimator =
-                    configuration.getOperatorLoadProfileEstimatorProvider().provideFor(operator);
-            final OptimizationContext.OperatorContext operatorContext = this.optimizationContext.getOperatorContext(operator);
-
-            // TODO: Find the correct OptimizationContext for in-loop ExecutionOperators.
-            assert operatorContext != null : String.format("No OperatorContext found for %s. Is it in a loop?", operator);
-
-            final LoadProfile loadProfile = loadProfileEstimator.estimate(operatorContext);
-            final LoadProfileToTimeConverter converter = configuration.getLoadProfileToTimeConverterProvider().provide();
-            final TimeEstimate timeEstimate = converter.convert(loadProfile);
-            operator.setTimeEstimate(timeEstimate);
+        if (this.optimizationContext != null) {
+            final OptimizationContext.OperatorContext opCtx = this.optimizationContext.getOperatorContext(operator);
+            if (opCtx != null) {
+                return opCtx.getTimeEstimate();
+            }
         }
 
-        // Answer the cached TimeEstimate.
-        return operator.getTimeEstimate();
+        LoggerFactory.getLogger(this.getClass()).error("No time estimate for {}.", operator);
+        return new TimeEstimate(100, 100000, 0.1d);
     }
 
     public TimeEstimate getTimeEstimate() {
