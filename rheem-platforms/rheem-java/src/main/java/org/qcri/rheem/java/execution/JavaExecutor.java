@@ -80,7 +80,10 @@ public class JavaExecutor implements Executor {
 
         ExecutionOperator op = executionTask.getOperator();
         if (op instanceof LoopOperator){
-            ChannelExecutor[] inputChannels = new ChannelExecutor[executionTask.getOperator().getNumInputs()];
+            if (((LoopOperator)op).getState()!=LoopOperator.State.NOT_STARTED){
+                throw new RheemException("Execution failed: invalid state for loop operator " + op);
+            }
+            ChannelExecutor[] inputChannels = new ChannelExecutor[op.getNumInputs()];
             ChannelExecutor[] outputChannels = this.createOutputChannelExecutors(executionTask);
 
             // Get initial input
@@ -95,6 +98,7 @@ public class JavaExecutor implements Executor {
 
                 Channel iterationChanel = executionTask.getInputChannel(2);
                 inputChannels[2] = this.getOrEstablishChannelExecutor(iterationChanel);
+
                 ((JavaLoopOperator) op).evaluate(inputChannels, outputChannels, this.compiler);
                 this.registerChannelExecutor(outputChannels, executionTask);
             }
@@ -106,9 +110,8 @@ public class JavaExecutor implements Executor {
         }
         else {
             ChannelExecutor[] inputChannels = this.obtainInputChannels(executionTask);
-            final JavaExecutionOperator javaExecutionOperator = (JavaExecutionOperator) executionTask.getOperator();
             ChannelExecutor[] outputChannels = this.createOutputChannelExecutors(executionTask);
-            javaExecutionOperator.evaluate(inputChannels, outputChannels, this.compiler);
+            ((JavaExecutionOperator)op).evaluate(inputChannels, outputChannels, this.compiler);
             this.registerChannelExecutor(outputChannels, executionTask);
         }
     }

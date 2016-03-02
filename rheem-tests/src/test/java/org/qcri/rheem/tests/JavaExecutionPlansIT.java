@@ -12,6 +12,7 @@ import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.operators.*;
 
@@ -21,7 +22,7 @@ import java.util.Collection;
 public class JavaExecutionPlansIT {
 
     private JavaPlatform jp;
-    private ChannelInitializer ci;
+    private ChannelInitializer ci, cci;
     private ExecutionStage executionStage;
 
 
@@ -30,6 +31,7 @@ public class JavaExecutionPlansIT {
         jp = JavaPlatform.getInstance();
         PlatformExecution platformExecution = new PlatformExecution(jp);
         ci = jp.getChannelManager().getChannelInitializer(StreamChannel.class);
+        cci = jp.getChannelManager().getChannelInitializer(CollectionChannel.class);
         executionStage = platformExecution.createStage();
     }
 
@@ -157,6 +159,10 @@ public class JavaExecutionPlansIT {
                 new PredicateDescriptor.SerializablePredicate<Collection<Integer>>() {
                     @Override
                     public boolean test(Collection<Integer> collection) {
+                        if (collection.isEmpty()) {
+                            // initial state
+                            return false;
+                        }
                         if (collection.iterator().next()>=10){
                             return true;
                         }
@@ -194,7 +200,7 @@ public class JavaExecutionPlansIT {
         Channel c2_5 = ci.setUpOutput(t2, 0);
         ci.setUpInput(c2_5, t5, 1);
         Channel c3_5 = ci.setUpOutput(t3, 0);
-        ci.setUpInput(c2_5, t5, 2);
+        ci.setUpInput(c3_5, t5, 2);
         Channel c5_3 = ci.setUpOutput(t5, 0);
         ci.setUpInput(c5_3, t3, 0);
         Channel c5_2 = ci.setUpOutput(t5, 1);

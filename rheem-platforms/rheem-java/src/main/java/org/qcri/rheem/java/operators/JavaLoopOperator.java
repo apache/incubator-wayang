@@ -7,6 +7,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Predicate;
@@ -43,12 +44,12 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         final Predicate<Collection<ConvergenceType>> stoppingCondition = compiler.compile(this.criterionDescriptor);
         Boolean endloop = false;
 
-        Collection<ConvergenceType> convergenceCollection = null;
+        Collection<ConvergenceType> convergenceCollection = new ArrayList<>();
         Stream<InputType> input = null;
         switch (this.getState()){
             case NOT_STARTED:
                 input = inputs[0].provideStream();
-                convergenceCollection = Collections.emptyList();
+                convergenceCollection.add(null);
                 break;
             case RUNNING:
                 if (inputs[1].canProvideCollection()) {

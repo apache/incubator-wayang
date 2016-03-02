@@ -278,7 +278,11 @@ public class RheemPlans {
     }
 
     public static Integer increment(Integer k) {
-        return k++;
+        if (k==null) {
+            return 1;
+        }
+        else {
+        return k++;}
     }
 
     public static String concat9(String k) {
@@ -313,7 +317,9 @@ public class RheemPlans {
                 new PredicateDescriptor.SerializablePredicate<Collection<Integer>>() {
                     @Override
                     public boolean test(Collection<Integer> collection) {
-                        if (collection.iterator().next()>=10){
+                        Integer counter = collection.iterator().next();
+                        counter = (counter == null) ? 0 : counter;
+                        if (counter>=10){
                             return true;
                         }
                         else {
