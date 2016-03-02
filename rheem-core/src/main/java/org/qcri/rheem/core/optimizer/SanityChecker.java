@@ -49,7 +49,7 @@ public class SanityChecker {
      */
     public boolean checkProperSubplans() {
         final AtomicBoolean testOutcome = new AtomicBoolean(true);
-        new PlanTraversal(true, false)
+        PlanTraversal.upstream()
             .withCallback(this.getProperSubplanCallback(testOutcome))
             .traverse(this.rheemPlan.getSinks());
         return testOutcome.get();
@@ -62,7 +62,7 @@ public class SanityChecker {
      */
     private PlanTraversal.Callback getProperSubplanCallback(AtomicBoolean testOutcome) {
         return (operator, fromInputSlot, fromOutputSlot) -> {
-            if (operator.isSubplan()) {
+            if (operator.isSubplan() && !operator.isLoopSubplan()) {
                 this.logger.warn("Improper subplan usage detected at {}: not embedded in an alternative.", operator);
                 testOutcome.set(false);
                 this.checkSubplanNotASingleton((Subplan) operator, testOutcome);

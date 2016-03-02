@@ -105,6 +105,9 @@ public class Job {
         }
 
         try {
+            // Prepare the RheemPlan for the optimization.
+            this.rheemPlan.prepare();
+
             // Get an execution plan.
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
 

@@ -94,6 +94,7 @@ public class OutputSlot<T> extends Slot<T> {
 
         this.occupiedSlots.remove(inputSlot);
         inputSlot.setOccupant(null);
+        inputSlot.notifyDetached();
     }
 
     public List<InputSlot<T>> getOccupiedSlots() {

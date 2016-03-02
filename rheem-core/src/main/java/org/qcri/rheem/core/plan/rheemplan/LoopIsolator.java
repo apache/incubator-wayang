@@ -31,6 +31,7 @@ public class LoopIsolator extends OneTimeExecutable {
 
     @Override
     protected void doExecute() {
+        if (this.rheemPlan.isLoopsIsolated()) return;
         @SuppressWarnings("unchecked")
         final Collection<LoopHeadOperator> loopHeads =
                 (Collection<LoopHeadOperator>) (Collection) PlanTraversal.upstream()
@@ -38,6 +39,7 @@ public class LoopIsolator extends OneTimeExecutable {
                         .getTraversedNodesWith(Operator::isLoopHead);
 
         loopHeads.forEach(LoopIsolator::isolate);
+        this.rheemPlan.setLoopsIsolated();
     }
 
     /**

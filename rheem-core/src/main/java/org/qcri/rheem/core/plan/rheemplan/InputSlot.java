@@ -170,4 +170,13 @@ public class InputSlot<T> extends Slot<T> {
     public boolean isBroadcast() {
         return this.isBroadcast;
     }
+
+    /**
+     * Notifies this instance that it has been detached from its {@link #occupant}.
+     */
+    public void notifyDetached() {
+        if (this.isBroadcast) {
+            // TODO: Consider removing broadacast.
+        }
+    }
 }
