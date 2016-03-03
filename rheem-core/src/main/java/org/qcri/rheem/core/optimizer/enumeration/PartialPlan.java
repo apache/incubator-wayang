@@ -27,6 +27,8 @@ public class PartialPlan {
      */
     private final Canonicalizer<ExecutionOperator> operators;
 
+    private final Map<InputSlot<?>, ChannelChoice> channelChoices;
+
     /**
      * An enumerated plan is mainly characterized by the {@link OperatorAlternative.Alternative}s that have
      * been picked so far. This member keeps track of them.
@@ -49,19 +51,34 @@ public class PartialPlan {
      */
     PartialPlan(
             PlanEnumeration planEnumeration,
+            Map<InputSlot<?>, ChannelChoice> channelChoices,
             Collection<ExecutionOperator> operators) {
-        this.planEnumeration = planEnumeration;
-        this.operators = new Canonicalizer<>(operators);
+        this(planEnumeration, channelChoices, new Canonicalizer<>(operators));
     }
 
-
-    PartialPlan(PlanEnumeration planEnumeration, Collection<ExecutionOperator>... operatorCollections) {
-        this.planEnumeration = planEnumeration;
-        this.operators = new Canonicalizer<>();
+    /**
+     * Creates new instance.
+     */
+    PartialPlan(PlanEnumeration planEnumeration,
+                Map<InputSlot<?>, ChannelChoice> channelChoices,
+                Collection<ExecutionOperator>... operatorCollections) {
+        this(planEnumeration, channelChoices, new Canonicalizer<>());
         for (Collection<ExecutionOperator> operatorCollection : operatorCollections) {
             this.operators.addAll(operatorCollection);
         }
     }
+
+    /**
+     * Base constructor.
+     */
+    private PartialPlan(PlanEnumeration planEnumeration,
+                        Map<InputSlot<?>, ChannelChoice> channelChoices,
+                        Canonicalizer<ExecutionOperator> operators) {
+        this.planEnumeration = planEnumeration;
+        this.channelChoices = channelChoices;
+        this.operators = operators;
+    }
+
 
     /**
      * @return the {@link PlanEnumeration} this instance belongs to
@@ -94,9 +111,15 @@ public class PartialPlan {
             }
         }
 
-        final PartialPlan partialPlan = new PartialPlan(target);
+        final PartialPlan partialPlan = new PartialPlan(
+                target,
+                new HashMap<>(this.channelChoices.size() + that.channelChoices.size()),
+                new HashSet<>(this.settledAlternatives.size(), that.settledAlternatives.size())
+        );
         partialPlan.operators.addAll(this.operators);
         partialPlan.operators.addAll(that.operators);
+        partialPlan.channelChoices.putAll(this.channelChoices);
+        partialPlan.channelChoices.putAll(that.channelChoices);
         partialPlan.settledAlternatives.putAll(this.settledAlternatives);
         partialPlan.settledAlternatives.putAll(that.settledAlternatives);
 
@@ -111,7 +134,7 @@ public class PartialPlan {
      * @return
      */
     public PartialPlan escape(OperatorAlternative.Alternative alternative, PlanEnumeration newPlanEnumeration) {
-        final PartialPlan escapedPartialPlan = new PartialPlan(newPlanEnumeration, this.operators);
+        final PartialPlan escapedPartialPlan = new PartialPlan(newPlanEnumeration, this.channelChoices, this.operators);
         escapedPartialPlan.settledAlternatives.putAll(this.settledAlternatives);
         escapedPartialPlan.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
         return escapedPartialPlan;
@@ -278,5 +301,32 @@ public class PartialPlan {
      */
     public OperatorAlternative.Alternative getChosenAlternative(OperatorAlternative operatorAlternative) {
         return this.settledAlternatives.get(operatorAlternative);
+    }
+
+    /**
+     * Describes the implementation of a connection of an {@link OutputSlot} and an {@link InputSlot}.
+     */
+    public static class ChannelChoice {
+
+        /**
+         * An {InputSlot} of an {@link ExecutionOperator} whose {@link Channel} implementation is described here.
+         */
+        private final InputSlot<?> inputSlot;
+
+        /**
+         * The {@link Channel} that immediately consumes the occupying {@link OutputSlot} of the {@link #inputSlot}.
+         */
+        private final Channel startChannel;
+
+        /**
+         * The {@link Channel} that immediately feed the {@link #inputSlot}.
+         */
+        private final Channel endChannel;
+
+        public ChannelChoice(InputSlot<?> inputSlot, Channel startChannel, Channel endChannel) {
+            this.inputSlot = inputSlot;
+            this.startChannel = startChannel;
+            this.endChannel = endChannel;
+        }
     }
 }

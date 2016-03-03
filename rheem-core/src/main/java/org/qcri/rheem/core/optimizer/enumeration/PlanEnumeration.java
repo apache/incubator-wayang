@@ -277,7 +277,7 @@ public class PlanEnumeration {
      * @return the new instance
      */
     private PartialPlan createSingletonPartialPlan(ExecutionOperator executionOperator) {
-        return new PartialPlan(this, Collections.singletonList(executionOperator));
+        return new PartialPlan(this, new HashMap<>(0), Collections.singletonList(executionOperator));
     }
 
     public boolean isComprehensive() {

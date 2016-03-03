@@ -20,6 +20,13 @@ public class Canonicalizer<T> implements Set<T> {
         this.addAll(objs);
     }
 
+    public Canonicalizer(T... objs) {
+        this();
+        for (T obj : objs) {
+            this.add(obj);
+        }
+    }
+
 
     /**
      * Add the given element if it is not contained in this instance, yet.

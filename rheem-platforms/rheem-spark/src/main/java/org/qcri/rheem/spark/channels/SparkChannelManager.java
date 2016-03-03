@@ -82,8 +82,10 @@ public class SparkChannelManager extends DefaultChannelManager {
     }
 
     @Override
-    public ChannelInitializer getChannelInitializer(ChannelDescriptor channelClass) {
-        return this.channelTypeDescriptors.get(channelClass).getInitializer();
+    public ChannelInitializer getChannelInitializer(ChannelDescriptor channelDescriptor) {
+        final ChannelTypeDescriptor channelTypeDescriptor = this.channelTypeDescriptors.get(channelDescriptor);
+        assert channelTypeDescriptor != null : String.format("No channel type descriptor for %s.", channelDescriptor);
+        return channelTypeDescriptor.getInitializer();
     }
 
     public List<ChannelDescriptor> getAllSupportedChannels() {

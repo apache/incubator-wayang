@@ -68,7 +68,9 @@ public class ExecutionTask {
      * instead.
      */
     void setInputChannel(int index, Channel channel) {
-        assert channel == null || this.getInputChannel(index) == null;
+        assert channel == null || this.getInputChannel(index) == null
+                : String.format("Cannot set up %s for %s@%d: There is already %s.",
+                channel, this.getOperator(), index, this.getInputChannel(index));
         this.getInputChannels()[index] = channel;
     }
 

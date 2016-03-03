@@ -255,23 +255,26 @@ public class PlanEnumerator {
         List<Operator> branch = new LinkedList<>();
         Operator currentOperator = startOperator;
         while (true) {
-            if (!currentOperator.isAlternative() && !currentOperator.isExecutionOperator()) {
-                this.logger.debug("Detected invalid branch with {}.", currentOperator);
+            boolean isEnumeratable = currentOperator.isExecutionOperator() ||
+                    currentOperator.isAlternative() ||
+                    currentOperator.isLoopSubplan();
+            if (!isEnumeratable) {
+                this.logger.debug("Cannot enumerate branch with {}.", currentOperator);
                 return null;
             }
             branch.add(currentOperator);
             // Try to advance. This requires certain conditions, though.
             if (currentOperator.getNumOutputs() != 1) {
-                this.logger.debug("Stopping branch, because operator does not have exactly one output.");
+                this.logger.trace("Stopping branch, because operator does not have exactly one output.");
                 break;
             }
             if (currentOperator.getOutput(0).getOccupiedSlots().size() != 1) {
-                this.logger.debug("Stopping branch, because operator does not feed exactly one operator.");
+                this.logger.trace("Stopping branch, because operator does not feed exactly one operator.");
                 break;
             }
             Operator nextOperator = currentOperator.getOutput(0).getOccupiedSlots().get(0).getOwner();
             if (nextOperator.getNumInputs() != 1) {
-                this.logger.debug("Stopping branch, because next operator does not have exactly one input.");
+                this.logger.trace("Stopping branch, because next operator does not have exactly one input.");
                 break;
             }
 
@@ -295,14 +298,10 @@ public class PlanEnumerator {
             PlanEnumeration operatorEnumeration;
             if (operator.isAlternative()) {
                 operatorEnumeration = this.enumerateAlternative((OperatorAlternative) operator);
+            } else if (operator.isLoopSubplan()) {
+                operatorEnumeration = this.enumerateLoop((LoopSubplan) operator);
             } else {
-                if (!operator.isElementary()) {
-                    throw new IllegalStateException("Expect elementary operator.");
-                }
-                if (!operator.isExecutionOperator()) {
-                    this.logger.debug("Detected non-execution branch {}... skipping.", branch);
-                    return null;
-                }
+                assert operator.isExecutionOperator();
                 operatorEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) operator);
             }
 
@@ -352,6 +351,13 @@ public class PlanEnumerator {
                 this.pruningStrategies,
                 this.presettledAlternatives,
                 this.executedTasks);
+    }
+
+    /**
+     * Create a {@link PlanEnumeration} for the given {@code loop}.
+     */
+    private PlanEnumeration enumerateLoop(LoopSubplan loop) {
+        throw new RuntimeException("Enumerating loops not implemented yet.");
     }
 
     private boolean activateDownstreamOperators(List<Operator> branch, PlanEnumeration branchEnumeration) {

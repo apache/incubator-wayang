@@ -1,6 +1,7 @@
 package org.qcri.rheem.tests;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.FilterOperator;
@@ -192,6 +193,7 @@ public class JavaIntegrationIT {
         rheemContext.execute(rheemPlan);
     }
 
+    @Ignore("Loop support not complete, yet.")
     @Test
     public void testDiverseScenario4() throws URISyntaxException {
         // Build the RheemPlan.
