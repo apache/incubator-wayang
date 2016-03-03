@@ -271,9 +271,8 @@ public class Job {
      */
     private PlanEnumerator createPlanEnumerator(ExecutionPlan existingPlan) {
         final PlanEnumerator planEnumerator = existingPlan == null ?
-                new PlanEnumerator(this.rheemPlan, this.configuration) :
-                new PlanEnumerator(this.rheemPlan, this.configuration, existingPlan);
-        this.configuration.getPruningStrategiesProvider().forEach(planEnumerator::addPruningStrategy);
+                new PlanEnumerator(this.rheemPlan, this.optimizationContext, this.configuration) :
+                new PlanEnumerator(this.rheemPlan, this.optimizationContext, this.configuration, existingPlan);
         return planEnumerator;
     }
 

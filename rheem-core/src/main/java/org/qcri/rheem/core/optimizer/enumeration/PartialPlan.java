@@ -27,6 +27,10 @@ public class PartialPlan {
      */
     private final Canonicalizer<ExecutionOperator> operators;
 
+    /**
+     * Describes the {@link Channel}s that have been picked between {@link ExecutionOperator}s and how they are
+     * implemented.
+     */
     private final Map<InputSlot<?>, ChannelChoice> channelChoices;
 
     /**

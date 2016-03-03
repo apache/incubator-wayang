@@ -3,6 +3,7 @@ package org.qcri.rheem.core.optimizer.enumeration;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
@@ -36,6 +37,7 @@ public class PlanEnumerator {
     private final List<OperatorActivation> activatedOperators = new LinkedList<>();
 
     /**
+     * TODO
      * When this instance enumerates an {@link OperatorAlternative.Alternative}, then this field helps to
      * create correct {@link PlanEnumeration}s by mapping the enumerates {@link Operator}s to the {@link OperatorAlternative}'s
      * slots.
@@ -74,12 +76,20 @@ public class PlanEnumerator {
     private final Map<ExecutionOperator, ExecutionTask> executedTasks;
 
     /**
+     * {@link OptimizationContext} that holds all relevant task data.
+     */
+    private final OptimizationContext optimizationContext;
+
+    /**
      * Creates a new instance.
      *
      * @param rheemPlan a hyperplan that should be used for enumeration.
      */
-    public PlanEnumerator(RheemPlan rheemPlan, Configuration configuration) {
+    public PlanEnumerator(RheemPlan rheemPlan,
+                          OptimizationContext optimizationContext,
+                          Configuration configuration) {
         this(rheemPlan.collectReachableTopLevelSources(),
+                optimizationContext,
                 configuration,
                 new LinkedList<>(),
                 null,
@@ -93,8 +103,13 @@ public class PlanEnumerator {
      * @param rheemPlan a hyperplan that should be used for enumeration.
      * @param baseplan  an {@link ExecutionPlan} that has been already executed (for re-optimization)
      */
-    public PlanEnumerator(RheemPlan rheemPlan, Configuration configuration, ExecutionPlan baseplan) {
+    public PlanEnumerator(RheemPlan rheemPlan,
+                          OptimizationContext optimizationContext,
+                          Configuration configuration,
+                          ExecutionPlan baseplan) {
+
         this(rheemPlan.collectReachableTopLevelSources(),
+                optimizationContext,
                 configuration,
                 new LinkedList<>(),
                 null,
@@ -110,15 +125,18 @@ public class PlanEnumerator {
     }
 
     /**
+     * TODO
      * Fork constructor.
      * <p>Forking happens to enumerate a certain {@link OperatorAlternative.Alternative} in a recursive manner.</p>
      */
     private PlanEnumerator(OperatorAlternative.Alternative enumeratedAlternative,
+                           OptimizationContext optimizationContext,
                            Configuration configuration,
                            Collection<PlanEnumerationPruningStrategy> pruningStrategies,
                            Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
                            Map<ExecutionOperator, ExecutionTask> executedTasks) {
-        this(findStartOperators(enumeratedAlternative),
+        this(Operators.collectStartOperators(enumeratedAlternative),
+                optimizationContext,
                 configuration,
                 pruningStrategies,
                 enumeratedAlternative,
@@ -131,6 +149,7 @@ public class PlanEnumerator {
      * Basic constructor that will always be called and initializes all fields.
      */
     private PlanEnumerator(Collection<Operator> startOperators,
+                           OptimizationContext optimizationContext,
                            Configuration configuration,
                            Collection<PlanEnumerationPruningStrategy> pruningStrategies,
                            OperatorAlternative.Alternative enumeratedAlternative,
@@ -139,28 +158,17 @@ public class PlanEnumerator {
         startOperators.stream()
                 .map(PlanEnumerator.OperatorActivation::new)
                 .forEach(this.activatedOperators::add);
+        this.optimizationContext = optimizationContext;
         this.configuration = configuration;
         this.pruningStrategies = pruningStrategies;
         this.enumeratedAlternative = enumeratedAlternative;
         this.presettledAlternatives = presettledAlternatives;
         this.executedTasks = executedTasks;
+
+        // Initialize pruning strategies.
+        this.configuration.getPruningStrategiesProvider().forEach(this::addPruningStrategy);
     }
 
-    /**
-     * Collect all the start operators of an {@link OperatorAlternative.Alternative}.
-     *
-     * @param alternative the {@link OperatorAlternative.Alternative} to investigate
-     * @return the start {@link Operator}s
-     */
-    private static Collection<Operator> findStartOperators(OperatorAlternative.Alternative alternative) {
-        Operator alternativeOperator = alternative.getOperator();
-        if (alternativeOperator.isSubplan()) {
-            Subplan subplan = (Subplan) alternativeOperator;
-            return subplan.collectInputOperators();
-        } else {
-            return Collections.singleton(alternativeOperator);
-        }
-    }
 
     /**
      * Produce the {@link PlanEnumeration} for the plan specified during the construction of this instance.
@@ -207,7 +215,13 @@ public class PlanEnumerator {
     }
 
     /**
-     * Enumerate plans from the branch that starts at the given node.
+     * Enumerate plans from the branch that starts at the given node. The mode of operation is as follows:
+     * <ol>
+     *     <li>Enumerate all {@link Operator}s forming the branch.</li>
+     *     <li>Create a new {@link PlanEnumeration} for the branch.</li>
+     *     <li>Join the branch {@link PlanEnumeration} with all existing input {@link PlanEnumeration}s.</li>
+     *     <li>Activate downstream {@link Operator}s for upcoming branch enumerations.</li>
+     * </ol>
      *
      * @param operatorActivation the activated {@link PlanEnumerator.OperatorActivation}
      */
@@ -347,6 +361,7 @@ public class PlanEnumerator {
      */
     private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative) {
         return new PlanEnumerator(alternative,
+                this.optimizationContext,
                 this.configuration,
                 this.pruningStrategies,
                 this.presettledAlternatives,
@@ -357,7 +372,7 @@ public class PlanEnumerator {
      * Create a {@link PlanEnumeration} for the given {@code loop}.
      */
     private PlanEnumeration enumerateLoop(LoopSubplan loop) {
-        throw new RuntimeException("Enumerating loops not implemented yet.");
+        throw new RuntimeException("Cannot enumerate loops.");
     }
 
     private boolean activateDownstreamOperators(List<Operator> branch, PlanEnumeration branchEnumeration) {
@@ -411,7 +426,6 @@ public class PlanEnumerator {
     }
 
     private void prune(final PlanEnumeration planEnumeration) {
-//        planEnumeration.getPartialPlans().forEach(partialPlan -> partialPlan.createExecutionPlan(this.executedTasks));
         this.pruningStrategies.forEach(strategy -> strategy.prune(planEnumeration, this.configuration));
     }
 

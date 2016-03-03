@@ -39,14 +39,6 @@ public class PlanEnumeration {
     final Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots;
 
     /**
-     * {@link Operator}s (potentially {@link OperatorAlternative}s) that do not have an {@link OutputSlot}s that is
-     * connected to any other {@link Operator} within this instance.
-     * <p>
-     * TODO: If it turns out that we don't need them, remove.
-     */
-    final Set<Operator> terminalOperators = new HashSet<>();
-
-    /**
      * {@link PartialPlan}s contained in this instance.
      */
     final Collection<PartialPlan> partialPlans;
@@ -101,17 +93,13 @@ public class PlanEnumeration {
 
     static PlanEnumeration createFor(Operator inputOperator, Operator outputOperator) {
         final PlanEnumeration instance = new PlanEnumeration();
-        if (inputOperator.isSource()) {
-            instance.terminalOperators.add(inputOperator);
-        } else {
+        if (!inputOperator.isSource()) {
             for (InputSlot<?> inputSlot : inputOperator.getAllInputs()) {
                 instance.requestedInputSlots.add(inputSlot);
             }
         }
 
-        if (outputOperator.isSink()) {
-            instance.terminalOperators.add(outputOperator);
-        } else {
+        if (!outputOperator.isSink()) {
             for (OutputSlot outputSlot : outputOperator.getAllOutputs()) {
                 List<InputSlot> inputSlots = outputSlot.getOccupiedSlots();
                 if (inputSlots.isEmpty()) {
@@ -135,9 +123,6 @@ public class PlanEnumeration {
             throw new IllegalArgumentException("Output slots are not matching.");
         }
 
-        if (!instance1.terminalOperators.equals(instance2.terminalOperators)) {
-            throw new IllegalArgumentException("Terminal operators are not matching.");
-        }
     }
 
     /**
@@ -343,20 +328,6 @@ public class PlanEnumeration {
             }
         }
 
-        // Escape the terminal operators.
-        if (this.terminalOperators.size() == 1) {
-            // If there is a terminal operator (a sink or a source), then the enclosing OperatorAlternative should be
-            // one as well.
-            final Operator terminalOperator = this.terminalOperators.stream().findAny().get();
-            if ((terminalOperator.isSink() ^ operatorAlternative.isSink()) ||
-                    (terminalOperator.isSource() ^ terminalOperator.isSource()) ||
-                    !(terminalOperator.isSource() ^ terminalOperator.isSink())) {
-                throw new IllegalStateException("Operator alternative and inner operators should be consistently either a source or a sink.");
-            }
-            escapedInstance.terminalOperators.add(operatorAlternative);
-        } else if (this.terminalOperators.size() > 1) {
-            throw new IllegalStateException("More than one terminal operator cannot be escaped!");
-        }
 
         // Escape the PartialPlan instances.
         for (PartialPlan partialPlan : this.partialPlans) {
@@ -369,15 +340,5 @@ public class PlanEnumeration {
     public Collection<PartialPlan> getPartialPlans() {
         return this.partialPlans;
     }
-
-//    public PlanEnumeration join(PlanEnumeration that) {
-//        this.scope.addAll(that.scope);
-//        this.requestedInputSlots.addAll(that.requestedInputSlots);
-//        this.servingOutputSlots.addAll(that.servingOutputSlots);
-//        this.terminalOperators.addAll(that.terminalOperators);
-//
-//        final List<OperatorAlternative> commonScope = this.intersectScopeWith(that);
-//
-//    }
 
 }
