@@ -24,6 +24,7 @@ import org.qcri.rheem.core.platform.FixBreakpoint;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.Formats;
+import org.qcri.rheem.core.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,6 +77,11 @@ public class Job {
      */
     private CardinalityEstimatorManager cardinalityEstimatorManager;
 
+    /**
+     * {@link StopWatch} to measure some key figures.
+     */
+    private final StopWatch stopWatch = new StopWatch();
+
     private final double minConfidence = 5., maxSpread = .7;
 
     private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
@@ -121,7 +127,9 @@ public class Job {
                 this.postProcess(executionPlan, state);
             }
         } finally {
+            this.stopWatch.stopAll();
             this.releaseResources();
+            this.logger.info("StopWatch results:\n{}", this.stopWatch.toPrettyString());
         }
     }
 
@@ -130,14 +138,23 @@ public class Job {
      * {@link PlanTransformation}s.
      */
     private void prepareRheemPlan() {
+
         // Prepare the RheemPlan for the optimization.
+        this.stopWatch.start("Prepare", "Prune&Isolate");
         this.rheemPlan.prepare();
+        this.stopWatch.stop("Prepare", "Prune&Isolate");
 
         // Apply the mappings to the plan to form a hyperplan.
+        this.stopWatch.start("Prepare", "Transformations");
         final Collection<PlanTransformation> transformations = this.gatherTransformations();
         this.rheemPlan.applyTransformations(transformations);
+        this.stopWatch.stop("Prepare", "Transformations");
 
+        this.stopWatch.start("Prepare", "Sanity");
         assert this.rheemPlan.isSane();
+        this.stopWatch.stop("Prepare", "Sanity");
+
+        this.stopWatch.stopAll("Prepare");
     }
 
     /**
