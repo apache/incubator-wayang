@@ -1,10 +1,14 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.optimizer.SanityChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A Rheem plan consists of a set of {@link Operator}s.
@@ -118,6 +122,42 @@ public class RheemPlan {
                     });
         }
 
+    }
+
+    /**
+     * Apply all available transformations in the {@code configuration} to this instance.
+     */
+    public void applyTransformations(Collection<PlanTransformation> transformations) {
+        boolean isAnyChange;
+        int epoch = Operator.FIRST_EPOCH;
+        do {
+            epoch++;
+            final int numTransformations = this.applyAndCountTransformations(transformations, epoch);
+            this.logger.debug("Applied {} transformations in epoch {}.", numTransformations, epoch);
+            isAnyChange = numTransformations > 0;
+        } while (isAnyChange);
+    }
+
+    /**
+     * Apply all {@code transformations} to the {@code plan}.
+     *
+     * @param transformations transformations to apply
+     * @param epoch           the new epoch
+     * @return the number of applied transformations
+     */
+    private int applyAndCountTransformations(Collection<PlanTransformation> transformations, int epoch) {
+        return transformations.stream()
+                .mapToInt(transformation -> transformation.transform(this, epoch))
+                .sum();
+    }
+
+    /**
+     * Check that the given {@link RheemPlan} is as we expect it to be in the following steps.
+     */
+    public boolean isSane() {
+        // We make some assumptions on the hyperplan. Make sure that they hold. After all, the transformations might
+        // have bugs.
+        return new SanityChecker(this).checkAllCriteria();
     }
 
     /**

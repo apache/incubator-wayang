@@ -3,11 +3,9 @@ package org.qcri.rheem.core.api;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.SanityChecker;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimationTraversal;
 import org.qcri.rheem.core.optimizer.enumeration.PartialPlan;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumeration;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerator;
@@ -18,7 +16,6 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.CardinalityBreakpoint;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
@@ -30,7 +27,10 @@ import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -105,8 +105,11 @@ public class Job {
         }
 
         try {
-            // Prepare the RheemPlan for the optimization.
-            this.rheemPlan.prepare();
+            // Prepare the #rheemPlan for the optimization.
+            this.prepareRheemPlan();
+
+            // Estimate cardinalities and execution times for the #rheemPlan.
+            this.estimateKeyFigures();
 
             // Get an execution plan.
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
@@ -123,53 +126,18 @@ public class Job {
     }
 
     /**
-     * Determine a good/the best execution plan from a given {@link RheemPlan}.
+     * Prepares the {@link #rheemPlan}: prunes unused {@link Operator}s, isolates loops, and applies all available
+     * {@link PlanTransformation}s.
      */
-    private ExecutionPlan createInitialExecutionPlan() {
-        long optimizerStartTime = System.currentTimeMillis();
-
-        this.isolateLoops();
+    private void prepareRheemPlan() {
+        // Prepare the RheemPlan for the optimization.
+        this.rheemPlan.prepare();
 
         // Apply the mappings to the plan to form a hyperplan.
-        this.applyMappingsToRheemPlan();
-
-        this.optimizationContext = new OptimizationContext(this.rheemPlan);
-
-        // Make the cardinality estimation pass.
-        this.estimateCardinalities();
-
-        // Enumerate plans and pick the best one.
-        final ExecutionPlan executionPlan = this.extractExecutionPlan();
-
-        long optimizerFinishTime = System.currentTimeMillis();
-        this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
-        this.logger.debug("Picked execution plan:\n{}", executionPlan.toExtensiveString());
-
-        assert executionPlan.isSane();
-
-        return executionPlan;
-    }
-
-    private void isolateLoops() {
-
-    }
-
-    /**
-     * Apply all available transformations in the {@link #configuration} to the {@link RheemPlan}.
-     */
-    private void applyMappingsToRheemPlan() {
-        boolean isAnyChange;
-        int epoch = Operator.FIRST_EPOCH;
         final Collection<PlanTransformation> transformations = this.gatherTransformations();
-        do {
-            epoch++;
-            final int numTransformations = this.applyAndCountTransformations(transformations, epoch);
-            this.logger.debug("Applied {} transformations in epoch {}.", numTransformations, epoch);
-            isAnyChange = numTransformations > 0;
-        } while (isAnyChange);
+        this.rheemPlan.applyTransformations(transformations);
 
-        // Check that the mappings have been applied properly.
-        this.checkHyperplanSanity();
+        assert this.rheemPlan.isSane();
     }
 
     /**
@@ -182,63 +150,38 @@ public class Job {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Apply all {@code transformations} to the {@code plan}.
-     *
-     * @param transformations transformations to apply
-     * @param epoch           the new epoch
-     * @return the number of applied transformations
-     */
-    private int applyAndCountTransformations(Collection<PlanTransformation> transformations, int epoch) {
-        return transformations.stream()
-                .mapToInt(transformation -> transformation.transform(this.rheemPlan, epoch))
-                .sum();
-    }
-
-    /**
-     * Check that the given {@link RheemPlan} is as we expect it to be in the following steps.
-     */
-    private void checkHyperplanSanity() {
-        // We make some assumptions on the hyperplan. Make sure that they hold. After all, the transformations might
-        // have bugs.
-        final SanityChecker sanityChecker = new SanityChecker(this.rheemPlan);
-        if (!sanityChecker.checkAllCriteria()) {
-            throw new IllegalStateException("Hyperplan is not in an expected state.");
-        }
-    }
-
 
     /**
      * Go over the given {@link RheemPlan} and estimate the cardinalities of data being passed between its
-     * {@link Operator}s.
+     * {@link Operator}s and the execution profile and time of {@link ExecutionOperator}s.
      */
-    private void estimateCardinalities() {
+    private void estimateKeyFigures() {
         if (this.cardinalityEstimatorManager == null) {
+            this.optimizationContext = new OptimizationContext(this.rheemPlan);
             this.cardinalityEstimatorManager = new CardinalityEstimatorManager(
                     this.rheemPlan, this.optimizationContext, this.configuration);
         }
         this.cardinalityEstimatorManager.pushCardinalities();
     }
 
-    /**
-     * Go over the given {@link RheemPlan} and update the cardinalities of data being passed between its
-     * {@link Operator}s using the given {@link ExecutionProfile}.
-     */
-    private void reestimateCardinalities(CrossPlatformExecutor.State executionState) {
-        this.cardinalityEstimatorManager.pushCardinalityUpdates(executionState);
-    }
 
     /**
-     * Go over the given {@link RheemPlan} and estimate the execution times of its {@link ExecutionOperator}s.
+     * Determine a good/the best execution plan from a given {@link RheemPlan}.
      */
-    private Map<ExecutionOperator, TimeEstimate> estimateExecutionTimes(Map<OutputSlot<?>, CardinalityEstimate> cardinalityEstimates) {
-        final Map<ExecutionOperator, TimeEstimate> timeEstimates = TimeEstimationTraversal.traverse(
-                this.rheemPlan, this.configuration, cardinalityEstimates);
-        timeEstimates.entrySet().forEach(entry ->
-                this.logger.debug("Time estimate for {}: {}", entry.getKey(), entry.getValue()));
-        return timeEstimates;
-    }
+    private ExecutionPlan createInitialExecutionPlan() {
+        long optimizerStartTime = System.currentTimeMillis();
 
+        // Enumerate plans and pick the best one.
+        final ExecutionPlan executionPlan = this.extractExecutionPlan();
+
+        long optimizerFinishTime = System.currentTimeMillis();
+        this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
+        this.logger.debug("Picked execution plan:\n{}", executionPlan.toExtensiveString());
+
+        assert executionPlan.isSane();
+
+        return executionPlan;
+    }
 
     /**
      * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
@@ -258,7 +201,7 @@ public class Job {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        final PartialPlan partialPlan = pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
+        final PartialPlan partialPlan = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
 
         return partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
     }
@@ -268,13 +211,6 @@ public class Job {
                                               ExecutionPlan existingPlan,
                                               Set<Channel> openChannels,
                                               Set<ExecutionStage> executedStages) {
-        // pick first one
-//        PartialPlan plan = executionPlans.iterator().next();
-//        if (existingPlan == null) {
-//            plan.createExecutionPlan();
-//        }
-//        else plan.createExecutionPlan(existingPlan, openChannels, executedStages);
-//        return plan;
 
         return executionPlans.stream()
                 .filter(plan -> (existingPlan == null ?
@@ -290,6 +226,14 @@ public class Job {
                     return plan;
                 })
                 .orElseThrow(() -> new IllegalStateException("Could not find an execution plan."));
+    }
+
+    /**
+     * Go over the given {@link RheemPlan} and update the cardinalities of data being passed between its
+     * {@link Operator}s using the given {@link ExecutionProfile}.
+     */
+    private void reestimateCardinalities(CrossPlatformExecutor.State executionState) {
+        this.cardinalityEstimatorManager.pushCardinalityUpdates(executionState);
     }
 
     /**
@@ -355,9 +299,6 @@ public class Job {
 
     /**
      * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
-     *
-     * @param executionPlan
-     * @param state
      */
     private void updateExecutionPlan(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
         // Defines the plan that we want to use in the end.
