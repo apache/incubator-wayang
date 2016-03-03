@@ -29,14 +29,14 @@ public class PlanEnumeration {
     /**
      * Outermost {@link InputSlot}s that are not satisfied in this instance.
      */
-    final Set<InputSlot> requestedInputSlots;
+    final Set<InputSlot<?>> requestedInputSlots;
 
     /**
      * Combinations of {@link OutputSlot}s and {@link InputSlot}, where the former is served by this instance and the
      * latter is not yet assigned in this instance. If there is no such {@link InputSlot} (because we are enumerating
      * an {@link OperatorAlternative.Alternative}, then we put {@code null} instead of it.
      */
-    final Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots;
+    final Set<Tuple<OutputSlot<?>, InputSlot<?>>> servingOutputSlots;
 
     /**
      * {@link PartialPlan}s contained in this instance.
@@ -59,8 +59,8 @@ public class PlanEnumeration {
      * Creates a new instance.
      */
     private PlanEnumeration(Set<OperatorAlternative> scope,
-                            Set<InputSlot> requestedInputSlots,
-                            Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots) {
+                            Set<InputSlot<?>> requestedInputSlots,
+                            Set<Tuple<OutputSlot<?>, InputSlot<?>>> servingOutputSlots) {
         this(scope, requestedInputSlots, servingOutputSlots, new LinkedList<>(), new HashMap<>());
     }
 
@@ -68,8 +68,8 @@ public class PlanEnumeration {
      * Creates a new instance.
      */
     private PlanEnumeration(Set<OperatorAlternative> scope,
-                            Set<InputSlot> requestedInputSlots,
-                            Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots,
+                            Set<InputSlot<?>> requestedInputSlots,
+                            Set<Tuple<OutputSlot<?>, InputSlot<?>>> servingOutputSlots,
                             Collection<PartialPlan> partialPlans,
                             Map<ExecutionOperator, ExecutionTask> executedTasks) {
         this.scope = scope;
@@ -150,7 +150,7 @@ public class PlanEnumeration {
         // Figure out if the two instance can be concatenated.
         // To this end, there muse be some remaining OutputSlot of this instance that connects to an InputSlot
         // of the other instance. At first, we collect these touchpoints.
-        final Set<InputSlot> concatenatableInputs = this.collectConcatenatableInputs(that);
+        final Set<InputSlot<?>> concatenatableInputs = this.collectConcatenatableInputs(that);
         if (concatenatableInputs.isEmpty()) {
             LOGGER.warn("Could not find a (directed) point of touch when joining to instances.");
         }
@@ -160,7 +160,7 @@ public class PlanEnumeration {
         //-----------------------------\\
 
         // Find out, which InputSlots are requested by both instances.
-        final Set<InputSlot> requestedInputSlots =
+        final Set<InputSlot<?>> requestedInputSlots =
                 new HashSet<>(this.requestedInputSlots.size() + that.requestedInputSlots.size());
         Stream.concat(this.requestedInputSlots.stream(), that.requestedInputSlots.stream())
                 .filter(requestedInput -> !concatenatableInputs.contains(requestedInput))
@@ -171,7 +171,7 @@ public class PlanEnumeration {
         //----------------------------\\
 
         // Find out, which InputSlots are served by both instances.
-        final Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots =
+        final Set<Tuple<OutputSlot<?>, InputSlot<?>>> servingOutputSlots =
                 new HashSet<>(this.servingOutputSlots.size() + that.servingOutputSlots.size());
         Stream.concat(this.servingOutputSlots.stream(), that.servingOutputSlots.stream())
                 .filter(serving -> !concatenatableInputs.contains(serving.getField1()))
@@ -210,18 +210,35 @@ public class PlanEnumeration {
     }
 
 
-    private Set<InputSlot> collectConcatenatableInputs(PlanEnumeration that) {
-        final Set<InputSlot> connectedInputSlots = new HashSet<>(2);
+    /**
+     * Collect all {@link InputSlot}s that are served by one instance and requested by the other.
+     */
+    private Set<InputSlot<?>> collectConcatenatableInputs(PlanEnumeration that) {
+        final Set<InputSlot<?>> connectedInputSlots = new HashSet<>(2);
         this.collectConcatenableInputsDownstream(that, connectedInputSlots);
         that.collectConcatenableInputsDownstream(this, connectedInputSlots);
         return connectedInputSlots;
     }
 
-    private void collectConcatenableInputsDownstream(PlanEnumeration that, Set<InputSlot> collector) {
+    /**
+     * Collect all {@link InputSlot}s that are served by this instance and requested by {@code that} instance.
+     */
+    private void collectConcatenableInputsDownstream(PlanEnumeration that, Set<InputSlot<?>> collector) {
+        assert that != null;
         this.servingOutputSlots.stream()
                 .map(Tuple::getField1)
+                .filter(Objects::nonNull)
                 .filter(that.requestedInputSlots::contains)
                 .forEach(collector::add);
+    }
+
+    /**
+     * Collect all {@link InputSlot}s that are served by this instance and requested by {@code that} instance.
+     */
+    private Set<InputSlot<?>> collectConcatenableInputsDownstream(PlanEnumeration that) {
+        Set<InputSlot<?>> inputSlots = new HashSet<>(2);
+        this.collectConcatenableInputsDownstream(that, inputSlots);
+        return inputSlots;
     }
 
     private List<OperatorAlternative> intersectScopeWith(PlanEnumeration that) {
@@ -244,10 +261,17 @@ public class PlanEnumeration {
      */
     private void joinPartialPlansUsingNestedLoops(PlanEnumeration that, PlanEnumeration target) {
         final List<OperatorAlternative> commonScope = this.intersectScopeWith(that);
+        Set<InputSlot<?>> thisToThatConcatenatableInputs = this.collectConcatenableInputsDownstream(that);
+        Set<InputSlot<?>> thatToThisConcatenatableInputs = that.collectConcatenableInputsDownstream(this);
 
         for (PartialPlan plan1 : this.partialPlans) {
             for (PartialPlan plan2 : that.partialPlans) {
-                final PartialPlan newPartialPlan = plan1.join(plan2, commonScope, target);
+                final PartialPlan newPartialPlan = plan1.join(
+                        plan2,
+                        commonScope,
+                        thisToThatConcatenatableInputs,
+                        thatToThisConcatenatableInputs,
+                        target);
                 if (newPartialPlan != null) {
                     target.add(newPartialPlan);
                 }
@@ -267,6 +291,15 @@ public class PlanEnumeration {
 
     public boolean isComprehensive() {
         return this.servingOutputSlots.isEmpty() && this.requestedInputSlots.isEmpty();
+    }
+
+    /**
+     * Tells whether this instance has no requested {@link InputSlot}s.
+     */
+    public boolean isEarthed() {
+        return this.requestedInputSlots.stream().allMatch(
+                inputSlot -> inputSlot.getOccupant() == null
+        );
     }
 
     /**
@@ -310,14 +343,14 @@ public class PlanEnumeration {
         }
 
         // Escape the output slots.
-        for (Tuple<OutputSlot, InputSlot> link : this.servingOutputSlots) {
+        for (Tuple<OutputSlot<?>, InputSlot<?>> link : this.servingOutputSlots) {
             if (link.field1 != null) {
                 throw new IllegalStateException("Cannot escape a connected output slot.");
             }
-            final Collection<OutputSlot> resolvedOutputSlots =
-                    alternative.getSlotMapping().resolveDownstream(link.field0);
+            final Collection<OutputSlot<Object>> resolvedOutputSlots =
+                    alternative.getSlotMapping().resolveDownstream(link.field0.unchecked());
             for (OutputSlot escapedOutput : resolvedOutputSlots) {
-                final List<InputSlot> occupiedInputs = escapedOutput.getOccupiedSlots();
+                final List<InputSlot<?>> occupiedInputs = escapedOutput.getOccupiedSlots();
                 if (occupiedInputs.isEmpty()) {
                     escapedInstance.servingOutputSlots.add(new Tuple<>(escapedOutput, null));
                 } else {
@@ -341,4 +374,11 @@ public class PlanEnumeration {
         return this.partialPlans;
     }
 
+    public Set<InputSlot<?>> getRequestedInputSlots() {
+        return this.requestedInputSlots;
+    }
+
+    public Set<Tuple<OutputSlot<?>, InputSlot<?>>> getServingOutputSlots() {
+        return this.servingOutputSlots;
+    }
 }

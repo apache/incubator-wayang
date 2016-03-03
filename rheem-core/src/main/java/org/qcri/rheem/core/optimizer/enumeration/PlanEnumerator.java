@@ -7,6 +7,8 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.util.MultiMap;
+import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +34,13 @@ public class PlanEnumerator {
     private final Configuration configuration;
 
     /**
-     * {@link PlanEnumerator.OperatorActivation}s that can be activated and should be followed to create branches.
+     * {@link EnumerationActivator}s that can be activated and should be followed to create branches.
      */
-    private final List<OperatorActivation> activatedOperators = new LinkedList<>();
+    private final List<EnumerationActivator> activatedOperators = new LinkedList<>();
+
+    private Set<PlanEnumeration> earthedEnumerations;
+
+    private Set<PlanEnumeration> floatingEnumerations;
 
     /**
      * TODO
@@ -45,9 +51,14 @@ public class PlanEnumerator {
     private final OperatorAlternative.Alternative enumeratedAlternative;
 
     /**
-     * Maintain {@link PlanEnumerator.OperatorActivation} for {@link Operator}s.
+     * Maintain {@link EnumerationActivator} for {@link Operator}s.
      */
-    private final Map<Operator, OperatorActivation> activationCollector = new HashMap<>();
+    private final Map<Operator, EnumerationActivator> enumerationActivations = new HashMap<>();
+
+    /**
+     * Maintain {@link ConcatenationActivator}s for each {@link OutputSlot}.
+     */
+    private final Map<OutputSlot<?>, ConcatenationActivator> concatenationActivations = new HashMap<>();
 
     /**
      * This instance will put all completed {@link PlanEnumeration}s (which did not cause an activation) here.
@@ -156,7 +167,7 @@ public class PlanEnumerator {
                            Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
                            Map<ExecutionOperator, ExecutionTask> executedTasks) {
         startOperators.stream()
-                .map(PlanEnumerator.OperatorActivation::new)
+                .map(EnumerationActivator::new)
                 .forEach(this.activatedOperators::add);
         this.optimizationContext = optimizationContext;
         this.configuration = configuration;
@@ -199,7 +210,7 @@ public class PlanEnumerator {
     private synchronized void run() {
         if (this.resultReference == null) {
             this.logger.debug("Enumerating with the activated operators {}.", this.activatedOperators.stream()
-                    .map(OperatorActivation::getOperator)
+                    .map(EnumerationActivator::getOperator)
                     .collect(Collectors.toList()));
 
             while (!this.activatedOperators.isEmpty()) {
@@ -217,17 +228,17 @@ public class PlanEnumerator {
     /**
      * Enumerate plans from the branch that starts at the given node. The mode of operation is as follows:
      * <ol>
-     *     <li>Enumerate all {@link Operator}s forming the branch.</li>
-     *     <li>Create a new {@link PlanEnumeration} for the branch.</li>
-     *     <li>Join the branch {@link PlanEnumeration} with all existing input {@link PlanEnumeration}s.</li>
-     *     <li>Activate downstream {@link Operator}s for upcoming branch enumerations.</li>
+     * <li>Enumerate all {@link Operator}s forming the branch.</li>
+     * <li>Create a new {@link PlanEnumeration} for the branch.</li>
+     * <li>Join the branch {@link PlanEnumeration} with all existing input {@link PlanEnumeration}s.</li>
+     * <li>Activate downstream {@link Operator}s for upcoming branch enumerations.</li>
      * </ol>
      *
-     * @param operatorActivation the activated {@link PlanEnumerator.OperatorActivation}
+     * @param enumerationActivator the activated {@link EnumerationActivator}
      */
-    private void enumerateBranchStartingFrom(OperatorActivation operatorActivation) {
+    private void enumerateBranchStartingFrom(EnumerationActivator enumerationActivator) {
         // Start with the activated operator.
-        Operator currentOperator = operatorActivation.activatableOperator;
+        Operator currentOperator = enumerationActivator.activatableOperator;
         this.logger.trace("Creating new branch starting at {}.", currentOperator);
         List<Operator> branch = this.collectBranchOperatorsStartingFrom(currentOperator);
         if (branch == null) {
@@ -241,9 +252,31 @@ public class PlanEnumerator {
         }
         this.prune(branchEnumeration);
 
+        if (branchEnumeration.isEarthed()) {
+            // Activate all successive operators.
+            if (!this.activateDownstreamOperators(branch, branchEnumeration)) {
+                this.completedEnumerations.add(branchEnumeration);
+            }
+            // Register for concatenation.
+            for (Tuple<OutputSlot<?>, InputSlot<?>> outputService : branchEnumeration.getServingOutputSlots()) {
+                final InputSlot<?> input = outputService.getField1();
+                if (input == null) continue;
+                final OutputSlot<?> output = outputService.getField0();
+                this.concatenationActivations.put(output, new ConcatenationActivator(branchEnumeration, output));
+            }
+        } else {
+            // Activate all input operators.
+            for (InputSlot requestedInput : branchEnumeration.getRequestedInputSlots()) {
+                final OutputSlot requestedOutput = requestedInput.getOccupant();
+                if (requestedOutput == null) continue;
+                final ConcatenationActivator activator = this.concatenationActivations.get(requestedOutput);
+                activator.register(branchEnumeration, requestedInput);
+            }
+        }
+
         // Build the complete enumeration from head to toe.
         PlanEnumeration completeEnumeration = branchEnumeration;
-        for (PlanEnumeration inputEnumeration : operatorActivation.activationCollector) {
+        for (PlanEnumeration inputEnumeration : enumerationActivator.activationCollector) {
             // Inputs might not always be available, e.g., when enumerating an alternative.
             if (inputEnumeration != null) {
                 completeEnumeration = inputEnumeration.join(completeEnumeration);
@@ -252,10 +285,7 @@ public class PlanEnumerator {
             this.prune(completeEnumeration);
         }
 
-        // Once we stopped, activate all successive operators.
-        if (!this.activateDownstreamOperators(branch, completeEnumeration)) {
-            this.completedEnumerations.add(completeEnumeration);
-        }
+
     }
 
     /**
@@ -376,32 +406,32 @@ public class PlanEnumerator {
     }
 
     private boolean activateDownstreamOperators(List<Operator> branch, PlanEnumeration branchEnumeration) {
-        final Operator lastBranchOperator = branch.get(branch.size() - 1);
-        return Arrays.stream(lastBranchOperator.getAllOutputs())
-                .flatMap(outputSlot -> outputSlot.getOccupiedSlots().stream())
+        return branchEnumeration.getServingOutputSlots().stream()
+                .map(Tuple::getField1)
+                .filter(Objects::nonNull)
                 .mapToInt(adjacentInputSlot -> {
                     final Operator adjacentOperator = adjacentInputSlot.getOwner();
-                    OperatorActivation adjacentOperatorActivation = this.activationCollector.get(adjacentOperator);
-                    if (adjacentOperatorActivation == null) {
-                        adjacentOperatorActivation = new OperatorActivation(adjacentOperator);
-                        this.activationCollector.put(adjacentOperator, adjacentOperatorActivation);
+                    EnumerationActivator adjacentEnumerationActivator = this.enumerationActivations.get(adjacentOperator);
+                    if (adjacentEnumerationActivator == null) {
+                        adjacentEnumerationActivator = new EnumerationActivator(adjacentOperator);
+                        this.enumerationActivations.put(adjacentOperator, adjacentEnumerationActivator);
                     }
-                    adjacentOperatorActivation.register(branchEnumeration, adjacentInputSlot);
+                    adjacentEnumerationActivator.register(branchEnumeration, adjacentInputSlot);
                     return 1;
                 }).sum() > 0;
     }
 
     private void updateActivatedOperator() {
         this.activatedOperators.clear();
-        this.activationCollector.values().stream()
-                .filter(OperatorActivation::canBeActivated)
+        this.enumerationActivations.values().stream()
+                .filter(EnumerationActivator::canBeActivated)
                 .forEach(this.activatedOperators::add);
-        for (OperatorActivation activatedOperator : this.activatedOperators) {
-            this.activationCollector.remove(activatedOperator.getOperator());
+        for (EnumerationActivator activatedOperator : this.activatedOperators) {
+            this.enumerationActivations.remove(activatedOperator.getOperator());
         }
         this.activatedOperators.stream()
-                .map(OperatorActivation::getOperator)
-                .forEach(this.activationCollector::remove);
+                .map(EnumerationActivator::getOperator)
+                .forEach(this.enumerationActivations::remove);
     }
 
 
@@ -433,7 +463,7 @@ public class PlanEnumerator {
      * An {@link Operator} can be activated as soon as all of its inputs are available. The inputs are served by
      * {@link PlanEnumeration}s.
      */
-    public class OperatorActivation {
+    public class EnumerationActivator {
 
         /**
          * Should be eventually activated.
@@ -450,7 +480,7 @@ public class PlanEnumerator {
          *
          * @param activatableOperator should be eventually activated
          */
-        private OperatorActivation(Operator activatableOperator) {
+        private EnumerationActivator(Operator activatableOperator) {
             this.activatableOperator = activatableOperator;
             this.activationCollector = new PlanEnumeration[this.activatableOperator.getNumInputs()];
         }
@@ -476,6 +506,64 @@ public class PlanEnumerator {
 
         public Operator getOperator() {
             return this.activatableOperator;
+        }
+    }
+
+    /**
+     * TODO. Waiting for all {@link InputSlot}s for an {@link OutputSlot} in order to join.
+     */
+    public class ConcatenationActivator {
+
+        /**
+         * Should be eventually activated.
+         */
+        private final PlanEnumeration planEnumeration;
+
+        /**
+         * Collects the {@link PlanEnumeration}s for various adjacent {@link InputSlot}s.
+         */
+        private final Map<InputSlot<?>, PlanEnumeration> activationCollector;
+
+        /**
+         * The number of required activations.
+         */
+        private final int numRequiredActivations;
+
+        /**
+         * The {@link OutputSlot} that should be concatenated.
+         */
+        private final OutputSlot<?> outputSlot;
+
+        private ConcatenationActivator(PlanEnumeration planEnumeration, OutputSlot<?> outputSlot) {
+            assert !outputSlot.getOccupiedSlots().isEmpty();
+            this.planEnumeration = planEnumeration;
+            this.outputSlot = outputSlot;
+            this.numRequiredActivations = outputSlot.getOccupiedSlots().size();
+            this.activationCollector = new HashMap<>(this.numRequiredActivations);
+        }
+
+        private boolean canBeActivated() {
+            assert this.numRequiredActivations >= this.activationCollector.size();
+            return this.numRequiredActivations == this.activationCollector.size();
+        }
+
+        private void register(PlanEnumeration planEnumeration, InputSlot openInputSlot) {
+            assert openInputSlot.getOccupant() == this.outputSlot;
+            assert this.numRequiredActivations > this.activationCollector.size();
+            final PlanEnumeration existingPlanEnumeration = this.activationCollector.put(openInputSlot, planEnumeration);
+            assert existingPlanEnumeration == null;
+        }
+
+        public PlanEnumeration getPlanEnumeration() {
+            return this.planEnumeration;
+        }
+
+        public Map<InputSlot<?>, PlanEnumeration> getAdjacentEnumerations() {
+            return this.activationCollector;
+        }
+
+        public OutputSlot<?> getOutputSlot() {
+            return this.outputSlot;
         }
     }
 

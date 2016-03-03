@@ -98,12 +98,15 @@ public class PartialPlan {
     /**
      * Create a new instance that forms the concatenation of the two.
      *
-     * @param that        instance to join with
-     * @param commonScope {@link OperatorAlternative}s that are selected in both instances
-     * @param target
-     * @return the joined instance or {@code null} if the two input instances disagree in some {@link OperatorAlternative}s
+     * @param that                 instance to join with
+     * @param commonScope          {@link OperatorAlternative}s that are selected in both instances
+     * @param target               @return the joined instance or {@code null} if the two input instances disagree in some {@link OperatorAlternative}s
      */
-    public PartialPlan join(PartialPlan that, List<OperatorAlternative> commonScope, PlanEnumeration target) {
+    public PartialPlan join(PartialPlan that,
+                            List<OperatorAlternative> commonScope,
+                            Set<InputSlot<?>> thisToThatConcatenatableInputs,
+                            Set<InputSlot<?>> thatToThisConcatenatableInputs,
+                            PlanEnumeration target) {
 
         // Find out if the two plans do not disagree at some point.
         for (OperatorAlternative operatorAlternative : commonScope) {
@@ -117,7 +120,8 @@ public class PartialPlan {
 
         final PartialPlan partialPlan = new PartialPlan(
                 target,
-                new HashMap<>(this.channelChoices.size() + that.channelChoices.size()),
+                new HashMap<>(this.channelChoices.size() + that.channelChoices.size() +
+                        thatToThisConcatenatableInputs.size() + thisToThatConcatenatableInputs.size()),
                 new HashSet<>(this.settledAlternatives.size(), that.settledAlternatives.size())
         );
         partialPlan.operators.addAll(this.operators);
@@ -127,7 +131,76 @@ public class PartialPlan {
         partialPlan.settledAlternatives.putAll(this.settledAlternatives);
         partialPlan.settledAlternatives.putAll(that.settledAlternatives);
 
+        // Find out how to concatenate the inputs.
+        for (InputSlot concatenatableInput : thisToThatConcatenatableInputs) {
+            // Find the actually used Slots.
+            final OutputSlot<?> execOpOutput = this.findExecutionOperatorOutput(concatenatableInput.getOccupant());
+            assert execOpOutput != null;
+
+            Collection<InputSlot<?>> execOpInputs = that.findExecutionOperatorInputs(concatenatableInput);
+            assert execOpInputs != null;
+
+
+        }
+
         return partialPlan;
+    }
+
+    /**
+     * Find the {@link InputSlot}s of already picked {@link ExecutionOperator}s that represent the given {@link InputSlot}.
+     * <p>Note that we require that this instance either provides all or no {@link ExecutionOperator}s necessary to
+     * implement the {@link InputSlot}.</p>
+     *
+     * @param someInput any {@link InputSlot} of the original {@link RheemPlan}
+     * @return the representing {@link InputSlot}s or {@code null} if this instance has no {@link ExecutionOperator}
+     * backing the given {@link InputSlot}
+     */
+    private Collection<InputSlot<?>> findExecutionOperatorInputs(final InputSlot<?> someInput) {
+        if (!someInput.getOwner().isExecutionOperator()) {
+            final OperatorAlternative owner = (OperatorAlternative) someInput.getOwner();
+            final OperatorAlternative.Alternative alternative = this.settledAlternatives.get(owner);
+            if (alternative == null) return null;
+            @SuppressWarnings("unchecked")
+            final Collection<InputSlot<?>> innerInputs = (Collection<InputSlot<?>>) (Collection) alternative.followInput(someInput);
+            boolean isWithNull = false;
+            Collection<InputSlot<?>> result = null;
+            for (InputSlot<?> innerInput : innerInputs) {
+                final Collection<InputSlot<?>> resolvedInputs = this.findExecutionOperatorInputs(innerInput);
+                if (isWithNull && resolvedInputs != null) {
+                    throw new IllegalStateException(String.format("Disallowed that %s is required by two different alternatives.", someInput));
+                }
+                isWithNull |= resolvedInputs == null;
+                if (result == null) {
+                    result = resolvedInputs;
+                } else {
+                    assert resolvedInputs != null;
+                    result.addAll(resolvedInputs);
+                }
+            }
+            return result;
+        } else {
+            Collection<InputSlot<?>> result = new LinkedList<>();
+            result.add(someInput);
+            return result;
+        }
+
+    }
+
+    /**
+     * Find the {@link OutputSlot} of an already picked {@link ExecutionOperator} that represents the given {@link OutputSlot}.
+     *
+     * @param someOutput any {@link InputSlot} of the original {@link RheemPlan}
+     * @return the representing {@link OutputSlot} or {@code null} if this instance has no {@link ExecutionOperator}
+     * backing the given {@link OutputSlot}
+     */
+    private OutputSlot<?> findExecutionOperatorOutput(OutputSlot<?> someOutput) {
+        while (someOutput != null && !someOutput.getOwner().isExecutionOperator()) {
+            final OperatorAlternative owner = (OperatorAlternative) someOutput.getOwner();
+            final OperatorAlternative.Alternative alternative = this.settledAlternatives.get(owner);
+            if (alternative == null) return null;
+            someOutput = alternative.traceOutput(someOutput);
+        }
+        return someOutput;
     }
 
     /**
@@ -158,7 +231,7 @@ public class PartialPlan {
                 .map(Tuple::getField0)
                 .distinct()
                 .collect(Collectors.toSet());
-        final Set<InputSlot> inputSlots = this.getPlanEnumeration().requestedInputSlots;
+        final Set<InputSlot<?>> inputSlots = this.getPlanEnumeration().requestedInputSlots;
 
         return this.operators.stream()
                 .filter(operator ->
@@ -239,62 +312,6 @@ public class PartialPlan {
         }
         return true;
     }
-
-//    public RheemPlan toRheemPlan() {
-//        Map<OutputSlot<?>, ExecutionOperator> copiedOutputProviders = new HashMap<>();
-//        Map<OutputSlot<?>, Collection<InputSlot<?>>> copiedOutputRequesters = new HashMap<>();
-//
-//        Collection<ExecutionOperator> sinks = new LinkedList<>();
-//        for (ExecutionOperator pickedOperator : this.operators) {
-//            final ExecutionOperator copy = pickedOperator.copy();
-//
-//            // Connect the InputSlots or issue an connecting request.
-//            for (InputSlot<?> originalInput : pickedOperator.getAllInputs()) {
-//                final InputSlot<?> originalOuterInput = pickedOperator.getOutermostInputSlot(originalInput);
-//                final OutputSlot<?> originalRequestedOutput = originalOuterInput.getOccupant();
-//                Validate.notNull(originalRequestedOutput, "Outermost %s does not have an occupant.", originalOuterInput);
-//                final ExecutionOperator copiedOutputProvider = copiedOutputProviders.get(originalRequestedOutput);
-//                if (copiedOutputProvider != null) {
-//                    copiedOutputProvider.connectTo(originalRequestedOutput.getIndex(),
-//                            copy,
-//                            originalInput.getIndex());
-//                } else {
-//                    RheemCollections.put(copiedOutputRequesters,
-//                            originalRequestedOutput,
-//                            copy.getInput(originalInput.getIndex()));
-//                }
-//            }
-//
-//            // Connect the OutputSlots and offer further connections.
-//            for (OutputSlot<?> originalOutput : pickedOperator.getAllOutputs()) {
-//                Collection<OutputSlot<Object>> originalOuterOutputs =
-//                        pickedOperator.getOutermostOutputSlots(originalOutput.unchecked());
-//                for (OutputSlot<Object> originalOuterOutput : originalOuterOutputs) {
-//                    copiedOutputProviders.put(originalOuterOutput, copy);
-//                    final Collection<InputSlot<?>> connectableOutputRequesters =
-//                            copiedOutputRequesters.remove(originalOuterOutput);
-//                    if (connectableOutputRequesters != null) {
-//                        for (InputSlot<?> outputRequester : connectableOutputRequesters) {
-//                            copy.connectTo(originalOutput.getIndex(),
-//                                    outputRequester.getOwner(),
-//                                    outputRequester.getIndex());
-//                        }
-//                    }
-//                }
-//            }
-//
-//            // Remember sinks.
-//            if (copy.isSink()) {
-//                sinks.add(copy);
-//            }
-//        }
-//        Validate.isTrue(copiedOutputRequesters.isEmpty());
-//        Validate.isTrue(!sinks.isEmpty());
-//
-//        final RheemPlan rheemPlan = new RheemPlan();
-//        sinks.forEach(rheemPlan::addSink);
-//        return rheemPlan;
-//    }
 
     /**
      * Find for a given {@link OperatorAlternative}, which {@link OperatorAlternative.Alternative} has been picked
