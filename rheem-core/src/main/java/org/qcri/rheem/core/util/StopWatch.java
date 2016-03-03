@@ -78,13 +78,13 @@ public class StopWatch {
      */
     public Round stopAll(String... fullyQualifiedName) {
         if (fullyQualifiedName.length == 0) {
-            this.rounds.values().forEach(round -> round.stop(true));
+            this.rounds.values().forEach(round -> round.stop(true, true));
             return null;
         }
 
         final Round round = this.get(fullyQualifiedName);
         if (round != null) {
-            round.stop(true);
+            round.stop(true, true);
         }
 
         return round;
@@ -168,13 +168,21 @@ public class StopWatch {
             return StopWatch.this.getOrStartSubround(this.subrounds, name, this);
         }
 
+        public long stopSubround(String name) {
+            final Round subround = this.getSubround(name);
+            if (subround != null) {
+                return subround.stop();
+            }
+            return -1;
+        }
+
+
         /**
          * @return the fully qualified name of this round
          */
         public String getFullName() {
             return this.getFullName("->");
         }
-
 
         /**
          * @param separator separates round names in the fully qualified name
@@ -206,9 +214,19 @@ public class StopWatch {
          *
          * @return the measured millis
          */
+        public long stop() {
+            return this.stop(false, false);
+        }
+        /**
+         * If not yet stopped, stop this round.
+         *
+         * @return the measured millis
+         */
         public long stop(boolean stopSubrounds) {
             return this.stop(stopSubrounds, false);
         }
+
+
         /**
          * If not yet stopped, stop this round.
          *
@@ -239,7 +257,6 @@ public class StopWatch {
             sb.append(" - ").append(Formats.formatDuration(this.getDuration())).append('\n');
             this.subrounds.values().forEach(round -> round.append(indent, numIndents + 1, bullet, firstColumnWidth, sb));
         }
-
 
         public long getDuration() {
             return this.stopTime == -1 ? -1 : this.stopTime - this.startTime;

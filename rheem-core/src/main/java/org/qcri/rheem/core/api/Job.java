@@ -23,7 +23,6 @@ import org.qcri.rheem.core.platform.ExecutionProfile;
 import org.qcri.rheem.core.platform.FixBreakpoint;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
-import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,14 +120,18 @@ public class Job {
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
 
             // Take care of the execution.
+            int executionId = 0;
             CrossPlatformExecutor.State state = null;
             while (state == null || !state.isComplete()) {
-                state = this.execute(executionPlan);
-                this.postProcess(executionPlan, state);
+                state = this.execute(executionPlan, executionId);
+                this.postProcess(executionPlan, state, executionId);
+                executionId++;
             }
         } finally {
             this.stopWatch.stopAll();
+            this.stopWatch.start("Release Resources");
             this.releaseResources();
+            this.stopWatch.stop("Release Resources");
             this.logger.info("StopWatch results:\n{}", this.stopWatch.toPrettyString());
         }
     }
@@ -173,12 +176,23 @@ public class Job {
      * {@link Operator}s and the execution profile and time of {@link ExecutionOperator}s.
      */
     private void estimateKeyFigures() {
+        this.stopWatch.start("Cardinality&Load Estimation");
         if (this.cardinalityEstimatorManager == null) {
+            this.stopWatch.start("Cardinality&Load Estimation", "Create OptimizationContext");
             this.optimizationContext = new OptimizationContext(this.rheemPlan);
+            this.stopWatch.stop("Cardinality&Load Estimation", "Create OptimizationContext");
+
+            this.stopWatch.start("Cardinality&Load Estimation", "Create CardinalityEstimationManager");
             this.cardinalityEstimatorManager = new CardinalityEstimatorManager(
                     this.rheemPlan, this.optimizationContext, this.configuration);
+            this.stopWatch.stop("Cardinality&Load Estimation", "Create CardinalityEstimationManager");
         }
+
+        this.stopWatch.start("Cardinality&Load Estimation", "Push Estimation");
         this.cardinalityEstimatorManager.pushCardinalities();
+        this.stopWatch.stop("Cardinality&Load Estimation", "Push Estimation");
+
+        this.stopWatch.stopAll("Cardinality&Load Estimation");
     }
 
 
@@ -186,30 +200,18 @@ public class Job {
      * Determine a good/the best execution plan from a given {@link RheemPlan}.
      */
     private ExecutionPlan createInitialExecutionPlan() {
-        long optimizerStartTime = System.currentTimeMillis();
+        this.stopWatch.start("Create Initial Execution Plan");
 
-        // Enumerate plans and pick the best one.
-        final ExecutionPlan executionPlan = this.extractExecutionPlan();
-
-        long optimizerFinishTime = System.currentTimeMillis();
-        this.logger.info("Optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
-        this.logger.debug("Picked execution plan:\n{}", executionPlan.toExtensiveString());
-
-        assert executionPlan.isSane();
-
-        return executionPlan;
-    }
-
-    /**
-     * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
-     */
-    private ExecutionPlan extractExecutionPlan() {
         // Defines the plan that we want to use in the end.
         final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
 
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator(null);
+
+        this.stopWatch.start("Create Initial Execution Plan", "Enumerate");
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
+        this.stopWatch.stop("Create Initial Execution Plan", "Enumerate");
+
         final Collection<PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
         this.logger.info("Enumerated {} plans.", executionPlans.size());
         for (PartialPlan partialPlan : executionPlans) {
@@ -218,10 +220,21 @@ public class Job {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
+        this.stopWatch.start("Create Initial Execution Plan", "Pick Best Plan");
         final PartialPlan partialPlan = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
+        this.stopWatch.stop("Create Initial Execution Plan", "Pick Best Plan");
 
-        return partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
+        this.stopWatch.start("Create Initial Execution Plan", "Split Stages");
+        final ExecutionPlan executionPlan = partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
+        this.stopWatch.stop("Create Initial Execution Plan", "Split Stages");
+
+        assert executionPlan.isSane();
+
+
+        this.stopWatch.stopAll("Create Initial Execution Plan");
+        return executionPlan;
     }
+
 
     private PartialPlan pickBestExecutionPlan(Comparator<TimeEstimate> timeEstimateComparator,
                                               Collection<PartialPlan> executionPlans,
@@ -267,8 +280,11 @@ public class Job {
     /**
      * Dummy implementation: Have the platforms execute the given execution plan.
      */
-    private CrossPlatformExecutor.State execute(ExecutionPlan executionPlan) {
+    private CrossPlatformExecutor.State execute(ExecutionPlan executionPlan, int executionId) {
+        final StopWatch.Round round = this.stopWatch.start(String.format("Execution %d", executionId));
+
         // Set up appropriate Breakpoints.
+        final StopWatch.Round breakpointRound = round.startSubround("Configure Breakpoint");
         FixBreakpoint breakpoint = new FixBreakpoint();
         if (this.crossPlatformExecutor == null) {
             final InstrumentationStrategy instrumentation = this.configuration.getInstrumentationStrategyProvider().provide();
@@ -284,9 +300,13 @@ public class Job {
         }
         this.crossPlatformExecutor.extendBreakpoint(breakpoint);
         this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(this.maxSpread, this.minConfidence));
+        breakpointRound.stop();
 
         // Trigger the execution.
+        final StopWatch.Round executeRound = round.startSubround("Execute");
         final CrossPlatformExecutor.State state = this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
+        executeRound.stop();
+        round.stop(true, true);
 
         // Return the state.
         return state;
@@ -296,22 +316,27 @@ public class Job {
      * Injects the cardinalities obtained from {@link Channel} instrumentation, potentially updates the {@link ExecutionPlan}
      * through re-optimization, and collects measured data.
      */
-    private void postProcess(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
-        long optimizerStartTime = System.currentTimeMillis();
+    private void postProcess(ExecutionPlan executionPlan, CrossPlatformExecutor.State state, int executionId) {
+        final StopWatch.Round round = this.stopWatch.start(String.format("Post-processing %d", executionId));
 
+        round.startSubround("Reestimate Cardinalities&Time");
         this.reestimateCardinalities(state);
+        round.stopSubround("Reestimate Cardinalities&Time");
+
         if (!state.isComplete()) {
+            round.startSubround("Update Execution Plan");
             this.updateExecutionPlan(executionPlan, state);
+            round.stopSubround("Update Execution Plan");
+
         }
 
         // Collect any instrumentation results for the future.
+        round.startSubround("Store Cardinalities");
         final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
         cardinalityRepository.storeAll(state.getProfile(), this.optimizationContext);
+        round.stopSubround("Update Execution Plan");
 
-
-        long optimizerFinishTime = System.currentTimeMillis();
-        this.logger.info("Re-optimization done in {}.", Formats.formatDuration(optimizerFinishTime - optimizerStartTime));
-        this.logger.debug("Picked execution plan:\n{}", executionPlan.toExtensiveString());
+        round.stop(true, true);
     }
 
     /**
