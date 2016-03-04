@@ -380,14 +380,16 @@ public class PlanEnumerator {
     }
 
     private void concatenate(ConcatenationActivator concatenationActivator) {
-        // TODO: n-way concatenation.
-        assert concatenationActivator.numRequiredActivations == 1;
-        final PlanEnumeration inputEnumeration = RheemCollections.getSingle(
-                concatenationActivator.getAdjacentEnumerations().values()
-        );
-        final PlanEnumeration outputEnumeration = concatenationActivator.getPlanEnumeration();
-
-        final PlanEnumeration concatenatedEnumeration = inputEnumeration.join(outputEnumeration);
+        final PlanEnumeration concatenatedEnumeration = PlanEnumeration.concatenate(
+                concatenationActivator.planEnumeration,
+                concatenationActivator.outputSlot,
+                concatenationActivator.getAdjacentEnumerations());
+//        assert concatenationActivator.numRequiredActivations == 1;
+//        final PlanEnumeration inputEnumeration = RheemCollections.getSingle(
+//                concatenationActivator.getAdjacentEnumerations().values()
+//        );
+//        final PlanEnumeration outputEnumeration = concatenationActivator.getPlanEnumeration();
+//        final PlanEnumeration concatenatedEnumeration = inputEnumeration.join(outputEnumeration);
         this.sendActivations(concatenatedEnumeration);
     }
 
@@ -419,14 +421,15 @@ public class PlanEnumerator {
             if (numDownstreamActivations == 0) {
                 // Either store the complete PlanEnumeration.
                 this.completedEnumerations.add(processedEnumeration);
-            } else for (Tuple<OutputSlot<?>, InputSlot<?>> outputService : processedEnumeration.getServingOutputSlots()) {
-                final InputSlot<?> input = outputService.getField1();
-                if (input == null) continue;
-                final OutputSlot<?> output = outputService.getField0();
-                final ConcatenationActivator concatenationActivator = this.concatenationActivators.computeIfAbsent(
-                        output, ConcatenationActivator::new);
-                concatenationActivator.planEnumeration = processedEnumeration;
-            }
+            } else
+                for (Tuple<OutputSlot<?>, InputSlot<?>> outputService : processedEnumeration.getServingOutputSlots()) {
+                    final InputSlot<?> input = outputService.getField1();
+                    if (input == null) continue;
+                    final OutputSlot<?> output = outputService.getField0();
+                    final ConcatenationActivator concatenationActivator = this.concatenationActivators.computeIfAbsent(
+                            output, ConcatenationActivator::new);
+                    concatenationActivator.planEnumeration = processedEnumeration;
+                }
 
         } else {
             // If there are open input dependencies...

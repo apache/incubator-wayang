@@ -3,6 +3,7 @@ package org.qcri.rheem.core.util;
 import org.apache.commons.lang3.Validate;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Utilities to operate {@link java.util.Collection}s.
@@ -53,5 +54,25 @@ public class RheemCollections {
      */
     public static <T> T getAny(Collection<T> collection) {
         return collection.iterator().next();
+    }
+
+    /**
+     * Return a new {@link List} with mapped values.
+     */
+    public static <S, T> List<T> map(List<S> list, Function<S, T> mapFunction) {
+        List<T> result = new ArrayList<>(list.size());
+        for (S element : list) {
+            result.add(mapFunction.apply(element));
+        }
+        return result;
+    }
+
+    /**
+     * Returns an {@link Iterable} that iterates the cross product of the given {@code iterables}.
+     *
+     * @param iterables should be iterable multiple times
+     */
+    public static <T> Iterable<List<T>> streamedCrossProduct(List<? extends Iterable<T>> iterables) {
+        return new CrossProductIterable<>(iterables);
     }
 }

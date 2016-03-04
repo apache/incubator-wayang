@@ -6,8 +6,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
-import org.qcri.rheem.core.util.Canonicalizer;
-import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.core.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,6 +200,52 @@ public class PartialPlan {
             someOutput = alternative.traceOutput(someOutput);
         }
         return someOutput;
+    }
+
+    /**
+     * Concatenates all {@link PartialPlan}s of the {@code baseEnumeration} via its {@code openOutputSlot}
+     * to the {@code targetEnumerations}' {@link PartialPlan}s.
+     * All {@link PlanEnumeration}s should be distinct.
+     */
+    public static Collection<PartialPlan> concatenate(PlanEnumeration baseEnumeration,
+                                                      OutputSlot<?> openOutputSlot,
+                                                      Map<InputSlot<?>, PlanEnumeration> targetEnumerations) {
+
+        // Sort the PlanEnumerations by their respective open InputSlot or OutputSlot.
+        final MultiMap<OutputSlot<?>, PartialPlan> basePlanGroups = new MultiMap<>();
+        for (PartialPlan basePlan : baseEnumeration.getPartialPlans()) {
+            final OutputSlot<?> openOutput = basePlan.findExecutionOperatorOutput(openOutputSlot);
+            assert openOutput != null;
+            basePlanGroups.putSingle(openOutput, basePlan);
+        }
+
+        List<MultiMap<InputSlot<?>, PartialPlan>> targetPlanGroupList = new ArrayList<>(targetEnumerations.size());
+        for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : targetEnumerations.entrySet()) {
+            final InputSlot<?> openInputSlot = entry.getKey();
+            final PlanEnumeration targetEnumeration = entry.getValue();
+            MultiMap<InputSlot<?>, PartialPlan> targetPlanGroups = new MultiMap<>();
+            for (PartialPlan targetPlan : targetEnumeration.getPartialPlans()) {
+                // TODO: In general, we might face multiple mapped InputSlots, although this is presumably a rare case.
+                final InputSlot<?> openInput = RheemCollections.getSingle(
+                        targetPlan.findExecutionOperatorInputs(openInputSlot));
+                targetPlanGroups.putSingle(openInput, targetPlan);
+            }
+            targetPlanGroupList.add(targetPlanGroups);
+        }
+
+        List<Set<Map.Entry<InputSlot<?>, Set<PartialPlan>>>> targetPlanGroupEntrySet =
+                RheemCollections.map(targetPlanGroupList, MultiMap::entrySet);
+        final Iterable<List<Map.Entry<InputSlot<?>, Set<PartialPlan>>>> targetPlanGroupCrossProduct =
+                RheemCollections.streamedCrossProduct(targetPlanGroupEntrySet);
+        for (List<Map.Entry<InputSlot<?>, Set<PartialPlan>>> targetPlanGroupEntries : targetPlanGroupCrossProduct) {
+            for (Map.Entry<OutputSlot<?>, Set<PartialPlan>> basePlanGroupEntry : basePlanGroups.entrySet()) {
+                // TODO: Find appropriate configurations...
+                System.out.printf("oha");
+                assert false;
+            }
+        }
+
+        return null;
     }
 
     /**

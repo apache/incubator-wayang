@@ -209,6 +209,47 @@ public class PlanEnumeration {
         return planEnumeration;
     }
 
+    /**
+     * Concatenates the {@code baseEnumeration} via its {@code openOutputSlot} to the {@code targetEnumerations}.
+     * All {@link PlanEnumeration}s should be distinct.
+     */
+    public static PlanEnumeration concatenate(PlanEnumeration baseEnumeration,
+                                              OutputSlot<?> openOutputSlot,
+                                              Map<InputSlot<?>, PlanEnumeration> targetEnumerations) {
+
+        assert baseEnumeration.getServingOutputSlots().stream()
+                .map(Tuple::getField0)
+                .anyMatch(openOutputSlot::equals);
+        assert !targetEnumerations.isEmpty();
+
+
+        PlanEnumeration result = new PlanEnumeration();
+        result.scope.addAll(baseEnumeration.getScope());
+        result.requestedInputSlots.addAll(baseEnumeration.getRequestedInputSlots());
+        result.servingOutputSlots.addAll(baseEnumeration.getServingOutputSlots());
+        result.servingOutputSlots.removeIf(slotService -> slotService.getField0().equals(openOutputSlot));
+        result.executedTasks.putAll(baseEnumeration.getExecutedTasks());
+
+        for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : targetEnumerations.entrySet()) {
+            final InputSlot<?> openInputSlot = entry.getKey();
+            final PlanEnumeration targetEnumeration = entry.getValue();
+            result.scope.addAll(targetEnumeration.getScope());
+            result.requestedInputSlots.addAll(targetEnumeration.getRequestedInputSlots());
+            result.requestedInputSlots.remove(openInputSlot);
+            result.servingOutputSlots.addAll(targetEnumeration.getServingOutputSlots());
+            result.executedTasks.putAll(targetEnumeration.getExecutedTasks());
+        }
+
+
+        result.partialPlans.addAll(PartialPlan.concatenate(baseEnumeration,
+                openOutputSlot,
+                targetEnumerations));
+
+        // Build the instance.
+        return result;
+    }
+
+
 
     /**
      * Collect all {@link InputSlot}s that are served by one instance and requested by the other.
@@ -380,5 +421,13 @@ public class PlanEnumeration {
 
     public Set<Tuple<OutputSlot<?>, InputSlot<?>>> getServingOutputSlots() {
         return this.servingOutputSlots;
+    }
+
+    public Set<OperatorAlternative> getScope() {
+        return scope;
+    }
+
+    public Map<ExecutionOperator,ExecutionTask> getExecutedTasks() {
+        return executedTasks;
     }
 }
