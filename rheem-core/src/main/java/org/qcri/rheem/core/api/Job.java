@@ -127,6 +127,10 @@ public class Job {
                 this.postProcess(executionPlan, state, executionId);
                 executionId++;
             }
+        } catch (RheemException e) {
+            throw e;
+        } catch (Throwable t) {
+            throw new RheemException("Plan execution failed.", t);
         } finally {
             this.stopWatch.stopAll();
             this.stopWatch.start("Release Resources");
