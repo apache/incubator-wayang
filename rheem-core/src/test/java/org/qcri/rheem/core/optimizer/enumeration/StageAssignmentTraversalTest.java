@@ -48,20 +48,25 @@ public class StageAssignmentTraversalTest {
         final ExecutionTask sinkTaskA = new ExecutionTask(sinkOpA);
 
         // Connect them using Channels.
-        Channel sourceTaskAChannel1 = new TestChannel(sourceTaskA, 0, true);
+        Channel sourceTaskAChannel1 = new TestChannel(true);
+        sourceTaskA.setOutputChannel(0, sourceTaskAChannel1);
         sourceTaskAChannel1.addConsumer(joinTaskA, 0);
         sourceTaskAChannel1.addConsumer(mapTaskB, 0);
 
-        Channel mapTaskBChannel1 = new TestChannel(mapTaskB, 0, false);
+        Channel mapTaskBChannel1 = new TestChannel(false);
+        mapTaskB.setOutputChannel(0, mapTaskBChannel1);
         mapTaskBChannel1.addConsumer(mapTaskC, 0);
 
-        Channel mapTaskCChannel1 = new TestChannel(mapTaskC, 0, false);
+        Channel mapTaskCChannel1 = new TestChannel(false);
+        mapTaskC.setOutputChannel(0, mapTaskCChannel1);
         mapTaskCChannel1.addConsumer(mapTaskA, 0);
 
-        Channel mapTaskAChannel1 = new TestChannel(mapTaskA, 0, false);
+        Channel mapTaskAChannel1 = new TestChannel(false);
+        mapTaskA.setOutputChannel(0, mapTaskAChannel1);
         mapTaskAChannel1.addConsumer(joinTaskA, 1);
 
-        Channel joinTaskAChannel1 = new TestChannel(joinTaskA, 0, false);
+        Channel joinTaskAChannel1 = new TestChannel(false);
+        joinTaskA.setOutputChannel(0, joinTaskAChannel1);
         joinTaskAChannel1.addConsumer(sinkTaskA, 0);
 
         // Assign platforms.
@@ -106,19 +111,23 @@ public class StageAssignmentTraversalTest {
 
 
         // Connect them using Channels.
-        Channel sourceTaskAChannel1 = new TestChannel(sourceTaskA, 0, true);
+        Channel sourceTaskAChannel1 = new TestChannel(true);
+        sourceTaskA.setOutputChannel(0, sourceTaskAChannel1);
         sourceTaskAChannel1.addConsumer(mapTaskB, 0);
         sourceTaskAChannel1.addConsumer(joinTaskA, 0);
 
-        Channel mapTaskBChannel = new TestChannel(mapTaskB, 0, true);
+        Channel mapTaskBChannel = new TestChannel(true);
+        mapTaskB.setOutputChannel(0, mapTaskBChannel);
         mapTaskBChannel.addConsumer(joinTaskA, 1);
         mapTaskBChannel.addConsumer(joinTaskB, 0);
 
-        Channel joinTaskAChannel = new TestChannel(joinTaskA, 0, true);
+        Channel joinTaskAChannel = new TestChannel(true);
+        joinTaskA.setOutputChannel(0, joinTaskAChannel);
         joinTaskAChannel.addConsumer(sinkTaskA, 0);
         joinTaskAChannel.addConsumer(joinTaskB, 1);
 
-        Channel joinTaskBChannel = new TestChannel(joinTaskB, 0, true);
+        Channel joinTaskBChannel = new TestChannel(true);
+        joinTaskB.setOutputChannel(0, joinTaskBChannel);
         joinTaskBChannel.addConsumer(sinkTaskA, 1);
 
         // Assign platforms.

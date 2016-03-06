@@ -1,7 +1,6 @@
 package org.qcri.rheem.core.plan.executionplan.test;
 
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 
 /**
@@ -9,38 +8,19 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
  */
 public class TestChannel extends Channel {
 
-    private final boolean isReusable;
-
-    private final boolean isInternal;
-
     /**
      * Creates a new instance.
      *
      * @param isReusable whether this instance {@link #isReusable()}
-     * @see Channel#Channel(ChannelDescriptor, ExecutionTask, int)
      */
-    public TestChannel(ExecutionTask producer, int outputIndex, boolean isReusable) {
-        super(null, producer, outputIndex);
-        this.isReusable = isReusable;
-        this.isInternal = true;
+    public TestChannel(boolean isReusable) {
+        super(new ChannelDescriptor(TestChannel.class, isReusable, false, false));
     }
 
-    @Override
-    public boolean isReusable() {
-        return this.isReusable;
-    }
-
-    @Override
-    public boolean isInterStageCapable() {
-        return this.isReusable;
-    }
-
-    @Override
-    public boolean isInterPlatformCapable() {
-        return this.isReusable & !this.isInternal;
-    }
     @Override
     public Channel copy() {
         throw new RuntimeException("Not implemented.");
     }
+
+
 }

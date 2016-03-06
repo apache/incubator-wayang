@@ -6,6 +6,8 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
+import org.qcri.rheem.core.platform.ChannelManager;
+import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +32,7 @@ public class PartialPlan {
      * Describes the {@link Channel}s that have been picked between {@link ExecutionOperator}s and how they are
      * implemented.
      */
-    private final Map<InputSlot<?>, ChannelChoice> channelChoices;
+    private final Map<OutputSlot<?>, Junction> junctions;
 
     /**
      * An enumerated plan is mainly characterized by the {@link OperatorAlternative.Alternative}s that have
@@ -54,18 +56,18 @@ public class PartialPlan {
      */
     PartialPlan(
             PlanEnumeration planEnumeration,
-            Map<InputSlot<?>, ChannelChoice> channelChoices,
+            Map<OutputSlot<?>, Junction> junctions,
             Collection<ExecutionOperator> operators) {
-        this(planEnumeration, channelChoices, new Canonicalizer<>(operators));
+        this(planEnumeration, junctions, new Canonicalizer<>(operators));
     }
 
     /**
      * Creates new instance.
      */
     PartialPlan(PlanEnumeration planEnumeration,
-                Map<InputSlot<?>, ChannelChoice> channelChoices,
+                Map<OutputSlot<?>, Junction> junctions,
                 Collection<ExecutionOperator>... operatorCollections) {
-        this(planEnumeration, channelChoices, new Canonicalizer<>());
+        this(planEnumeration, junctions, new Canonicalizer<>());
         for (Collection<ExecutionOperator> operatorCollection : operatorCollections) {
             this.operators.addAll(operatorCollection);
         }
@@ -75,10 +77,10 @@ public class PartialPlan {
      * Base constructor.
      */
     private PartialPlan(PlanEnumeration planEnumeration,
-                        Map<InputSlot<?>, ChannelChoice> channelChoices,
+                        Map<OutputSlot<?>, Junction> junctions,
                         Canonicalizer<ExecutionOperator> operators) {
         this.planEnumeration = planEnumeration;
-        this.channelChoices = channelChoices;
+        this.junctions = junctions;
         this.operators = operators;
     }
 
@@ -119,14 +121,14 @@ public class PartialPlan {
 
         final PartialPlan partialPlan = new PartialPlan(
                 target,
-                new HashMap<>(this.channelChoices.size() + that.channelChoices.size() +
+                new HashMap<>(this.junctions.size() + that.junctions.size() +
                         thatToThisConcatenatableInputs.size() + thisToThatConcatenatableInputs.size()),
                 new HashSet<>(this.settledAlternatives.size(), that.settledAlternatives.size())
         );
         partialPlan.operators.addAll(this.operators);
         partialPlan.operators.addAll(that.operators);
-        partialPlan.channelChoices.putAll(this.channelChoices);
-        partialPlan.channelChoices.putAll(that.channelChoices);
+        partialPlan.junctions.putAll(this.junctions);
+        partialPlan.junctions.putAll(that.junctions);
         partialPlan.settledAlternatives.putAll(this.settledAlternatives);
         partialPlan.settledAlternatives.putAll(that.settledAlternatives);
 
@@ -211,6 +213,8 @@ public class PartialPlan {
                                                       OutputSlot<?> openOutputSlot,
                                                       Map<InputSlot<?>, PlanEnumeration> targetEnumerations) {
 
+        Collection<PartialPlan> concatenations = new LinkedList<>();
+
         // Sort the PlanEnumerations by their respective open InputSlot or OutputSlot.
         final MultiMap<OutputSlot<?>, PartialPlan> basePlanGroups = new MultiMap<>();
         for (PartialPlan basePlan : baseEnumeration.getPartialPlans()) {
@@ -218,7 +222,6 @@ public class PartialPlan {
             assert openOutput != null;
             basePlanGroups.putSingle(openOutput, basePlan);
         }
-
         List<MultiMap<InputSlot<?>, PartialPlan>> targetPlanGroupList = new ArrayList<>(targetEnumerations.size());
         for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : targetEnumerations.entrySet()) {
             final InputSlot<?> openInputSlot = entry.getKey();
@@ -233,19 +236,58 @@ public class PartialPlan {
             targetPlanGroupList.add(targetPlanGroups);
         }
 
+        // Prepare the cross product of all InputSlots.
         List<Set<Map.Entry<InputSlot<?>, Set<PartialPlan>>>> targetPlanGroupEntrySet =
                 RheemCollections.map(targetPlanGroupList, MultiMap::entrySet);
         final Iterable<List<Map.Entry<InputSlot<?>, Set<PartialPlan>>>> targetPlanGroupCrossProduct =
                 RheemCollections.streamedCrossProduct(targetPlanGroupEntrySet);
+
+        // Iterate all InputSlot/OutputSlot combinations.
         for (List<Map.Entry<InputSlot<?>, Set<PartialPlan>>> targetPlanGroupEntries : targetPlanGroupCrossProduct) {
+            List<InputSlot<?>> inputs = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getKey);
             for (Map.Entry<OutputSlot<?>, Set<PartialPlan>> basePlanGroupEntry : basePlanGroups.entrySet()) {
-                // TODO: Find appropriate configurations...
-                System.out.printf("oha");
-                assert false;
+                final OutputSlot<?> output = basePlanGroupEntry.getKey();
+                final Operator outputOperator = output.getOwner();
+                assert outputOperator.isExecutionOperator();
+                final ChannelManager outputChannelManager = ((ExecutionOperator) outputOperator).getPlatform().getChannelManager();
+                final Junction junction = Junction.create(output, inputs);
+                if (junction == null) continue;
+
+                // If we found a junction, then we can enumerator all PartialPlan combinations
+                final List<Set<PartialPlan>> targetPlans = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getValue);
+                for (List<PartialPlan> targetPlanList : RheemCollections.streamedCrossProduct(targetPlans)) {
+                    for (PartialPlan basePlan : basePlanGroupEntry.getValue()) {
+                        PartialPlan concatenatedPlan = basePlan.concatenate(targetPlanList, junction);
+                        concatenations.add(concatenatedPlan);
+                    }
+                }
+
             }
         }
 
-        return null;
+        return concatenations;
+    }
+
+    /**
+     * Creates a new instance that forms the concatenation of this instance with the {@code targetPlans} via the
+     * {@code junction}.
+     */
+    private PartialPlan concatenate(List<PartialPlan> targetPlans, Junction junction) {
+        final PartialPlan concatenation = new PartialPlan(
+                null,
+                new HashMap<>(this.junctions.size() + 1),
+                new HashSet<>(this.settledAlternatives.size(), targetPlans.size() * 4) // ballpark figure
+        );
+        concatenation.operators.addAll(this.operators);
+        concatenation.junctions.putAll(this.junctions);
+        concatenation.settledAlternatives.putAll(this.settledAlternatives);
+
+        concatenation.junctions.put(junction.getOutput(), junction);
+        for (PartialPlan targetPlan : targetPlans) {
+            concatenation.settledAlternatives.putAll(targetPlan.settledAlternatives);
+        }
+
+        return concatenation;
     }
 
     /**
@@ -256,7 +298,7 @@ public class PartialPlan {
      * @return
      */
     public PartialPlan escape(OperatorAlternative.Alternative alternative, PlanEnumeration newPlanEnumeration) {
-        final PartialPlan escapedPartialPlan = new PartialPlan(newPlanEnumeration, this.channelChoices, this.operators);
+        final PartialPlan escapedPartialPlan = new PartialPlan(newPlanEnumeration, this.junctions, this.operators);
         escapedPartialPlan.settledAlternatives.putAll(this.settledAlternatives);
         escapedPartialPlan.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
         return escapedPartialPlan;
@@ -369,30 +411,4 @@ public class PartialPlan {
         return this.settledAlternatives.get(operatorAlternative);
     }
 
-    /**
-     * Describes the implementation of a connection of an {@link OutputSlot} and an {@link InputSlot}.
-     */
-    public static class ChannelChoice {
-
-        /**
-         * An {InputSlot} of an {@link ExecutionOperator} whose {@link Channel} implementation is described here.
-         */
-        private final InputSlot<?> inputSlot;
-
-        /**
-         * The {@link Channel} that immediately consumes the occupying {@link OutputSlot} of the {@link #inputSlot}.
-         */
-        private final Channel startChannel;
-
-        /**
-         * The {@link Channel} that immediately feed the {@link #inputSlot}.
-         */
-        private final Channel endChannel;
-
-        public ChannelChoice(InputSlot<?> inputSlot, Channel startChannel, Channel endChannel) {
-            this.inputSlot = inputSlot;
-            this.startChannel = startChannel;
-            this.endChannel = endChannel;
-        }
-    }
 }

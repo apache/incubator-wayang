@@ -139,10 +139,11 @@ public class ExecutionTask {
      * Sets an output {@link Channel} for this instance. Consider using
      * {@link Channel#Channel(ChannelDescriptor, ExecutionTask, int)} and derivatives instead.
      */
-    void setOutputChannel(int index, Channel channel) {
+    public void setOutputChannel(int index, Channel channel) {
         assert this.getOutputChannel(index) == null : String.format("Output channel %d of %s is already set to %s.",
                 index, this, this.getOutputChannel(index));
         this.getOutputChannels()[index] = channel;
+        channel.setProducer(this);
     }
 
     public ExecutionStage getStage() {

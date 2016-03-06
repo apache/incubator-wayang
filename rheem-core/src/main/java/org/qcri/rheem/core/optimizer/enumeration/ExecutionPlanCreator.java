@@ -106,7 +106,8 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
                     if (channelInitializer == null) {
                         throw new AbortException(String.format("Cannot connect %s to %s.", channel, consumerTask));
                     }
-                    channelInitializer.setUpInput(channelCopy, consumerTask, consumerInput.getIndex());
+                    // todo: rewrite the whole thing
+//                    channelInitializer.setUpInput(channelCopy, consumerTask, consumerInput.getIndex());
                     this.startActivations.add(new Activation(consumerActivator, consumerInput.getIndex()));
                 }
             }

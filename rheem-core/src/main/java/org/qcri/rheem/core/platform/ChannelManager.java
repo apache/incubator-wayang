@@ -3,6 +3,10 @@ package org.qcri.rheem.core.platform;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.util.Tuple;
 
 import java.util.List;
@@ -13,7 +17,7 @@ import java.util.List;
 public interface ChannelManager {
 
     /**
-     * TODO
+     * @deprecated Use {@link #connect(ExecutionTask, int, List)}.
      */
     boolean connect(ExecutionTask sourceTask, int outputIndex, List<Tuple<ExecutionTask, Integer>> targetDescriptors);
 
@@ -32,5 +36,7 @@ public interface ChannelManager {
      * @return whether the exchanged succeeded
      */
     boolean exchangeWithInterstageCapable(Channel channel);
+
+    ChannelDescriptor getInternalChannelDescriptor(boolean isRequestReusable);
 
 }

@@ -1,6 +1,8 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
+import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
 
 import java.util.Objects;
 
@@ -9,10 +11,23 @@ import java.util.Objects;
  */
 public class ChannelDescriptor {
 
-    private final Class<? extends Channel> channelClass;
+    private final Class<? extends Channel>
+            channelClass;
 
-    public ChannelDescriptor(Class<? extends Channel> channelClass) {
+    private final boolean isReusable;
+
+    private final boolean isInterStageCable;
+
+    private final boolean isInterPlatformCapable;
+
+    public ChannelDescriptor(Class<? extends Channel> channelClass,
+                             boolean isReusable,
+                             boolean isInterStageCable,
+                             boolean isInterPlatformCapable) {
         this.channelClass = channelClass;
+        this.isReusable = isReusable;
+        this.isInterStageCable = isInterStageCable;
+        this.isInterPlatformCapable = isInterPlatformCapable;
     }
 
     public Class<? extends Channel> getChannelClass() {
@@ -37,4 +52,35 @@ public class ChannelDescriptor {
         return String.format("%s[%s]", this.getClass().getSimpleName(), this.getChannelClass().getSimpleName());
     }
 
+
+    /**
+     * Declares whether this is not a read-once instance.
+     *
+     * @return whether this instance can have multiple consumers
+     */
+    public boolean isReusable() {
+        return this.isReusable;
+    }
+
+    /**
+     * Declares whether this instance can be shared among two different {@link ExecutionStage}s (of the same
+     * {@link PlatformExecution}, though).
+     */
+    public boolean isInterStageCapable() {
+        return this.isInterStageCable;
+    }
+
+    /**
+     * Declares whether this instance can be shared among two different {@link PlatformExecution}s.
+     */
+    public boolean isInterPlatformCapable() {
+        return this.isInterPlatformCapable;
+    }
+
+    /**
+     * Declares whether the {@link Channel} is a {@link Platform}-internal.
+     */
+    public boolean isInternal() {
+        return !this.isInterPlatformCapable();
+    }
 }

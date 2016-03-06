@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.types.DataSetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +39,6 @@ public abstract class Channel {
     protected final List<ExecutionTask> consumers = new LinkedList<>();
 
     /**
-     * Estimated incurring cardinality of this instance on execution.
-     */
-    private final CardinalityEstimate cardinalityEstimate;
-
-    /**
      * Mimed instance. Nullable.
      */
     private final Channel original;
@@ -54,36 +50,18 @@ public abstract class Channel {
 
     /**
      * Other {@link Channel}s that represent the same {@link OutputSlot}-to-{@link InputSlot} connection from a
-     * {@link RheemPlan} and share properties such as {@link #cardinalityEstimate}.
+     * {@link RheemPlan} and share properties such as {@link #getCardinalityEstimate()} and {@link #getDataSetType()}.
      */
     private Set<Channel> siblings = new HashSet<>(2);
 
 
     /**
-     * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}. The
-     * {@link CardinalityEstimate} for the instance is retrieved from the {@code producer}.
-     *
-     * @param descriptor  used to create this instance
-     * @param producer    produces the data for the instance
-     * @param outputIndex index of this instance within the {@code producer}
-     */
-    protected Channel(ChannelDescriptor descriptor, ExecutionTask producer, int outputIndex) {
-        this(descriptor, producer, outputIndex, extractCardinalityEstimate(producer, outputIndex));
-    }
-
-    /**
      * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}.
      *
      * @param descriptor          used to create this instance
-     * @param producer            produces the data for the instance
-     * @param outputIndex         index of this instance within the {@code producer}
-     * @param cardinalityEstimate a {@link CardinalityEstimate} for this instance
      */
-    protected Channel(ChannelDescriptor descriptor, ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
+    protected Channel(ChannelDescriptor descriptor) {
         this.descriptor = descriptor;
-        this.producer = producer;
-        this.producer.setOutputChannel(outputIndex, this);
-        this.cardinalityEstimate = cardinalityEstimate;
         this.original = null;
     }
 
@@ -97,7 +75,6 @@ public abstract class Channel {
         this.original = original.getOriginal();
         assert this.original == null || !this.original.isCopy();
         this.producer = original.getProducer();
-        this.cardinalityEstimate = original.getCardinalityEstimate();
     }
 
     public static CardinalityEstimate extractCardinalityEstimate(ExecutionTask task, int outputIndex) {
@@ -125,18 +102,24 @@ public abstract class Channel {
      *
      * @return whether this instance can have multiple consumers
      */
-    public abstract boolean isReusable();
+    public boolean isReusable() {
+        return this.getDescriptor().isReusable();
+    }
 
     /**
      * Declares whether this instance can be shared among two different {@link ExecutionStage}s (of the same
      * {@link PlatformExecution}, though).
      */
-    public abstract boolean isInterStageCapable();
+    public boolean isInterStageCapable() {
+        return this.getDescriptor().isInterStageCapable();
+    }
 
     /**
      * Declares whether this instance can be shared among two different {@link PlatformExecution}s.
      */
-    public abstract boolean isInterPlatformCapable();
+    public boolean isInterPlatformCapable() {
+        return this.getDescriptor().isInterPlatformCapable();
+    }
 
     /**
      * Tells whether this instance connects different {@link PlatformExecution}s. The answer is not necessarily
@@ -171,7 +154,7 @@ public abstract class Channel {
     }
 
     public CardinalityEstimate getCardinalityEstimate() {
-        return this.cardinalityEstimate;
+        throw new UnsupportedOperationException("not valid anymore.");
     }
 
     public boolean isMarkedForInstrumentation() {
@@ -334,6 +317,16 @@ public abstract class Channel {
     }
 
     /**
+     * @return the {@link DataSetType} of this instance (requires a producer)
+     * @see #setProducer(ExecutionTask)
+     */
+    public DataSetType<?> getDataSetType() {
+        assert this.producer != null : String.format("Cannot determine dataset type of %s: no producer.", this);
+        final OutputSlot<?> output = this.producer.getOutputSlotFor(this);
+        return output.getType();
+    }
+
+    /**
      * Copies the consumers of the given {@code channel} into this instance.
      */
     private void adoptSiblings(Channel channel) {
@@ -341,7 +334,7 @@ public abstract class Channel {
         this.removeSiblingsWhere(sibling -> sibling == channel);
     }
 
-    public void setProducer(ExecutionTask producer) {
+    void setProducer(ExecutionTask producer) {
         this.producer = producer;
     }
 
