@@ -185,6 +185,7 @@ public abstract class Channel {
      * Acquaints the given instance with this instance and all existing {@link #siblings}.
      */
     public void addSibling(Channel sibling) {
+        if (sibling == this) return;
         final ArrayList<Channel> siblingSiblings = new ArrayList<>(sibling.siblings);
         this.withSiblings(true).forEach(olderSibling ->
                 siblingSiblings.forEach(siblingSibling ->

@@ -2,9 +2,9 @@ package org.qcri.rheem.spark.channels;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.util.Tuple;
 
 /**
  * Describes the situation where one {@link JavaRDD} is operated on, producing a further {@link JavaRDD}.
@@ -16,12 +16,10 @@ public class RddChannel extends Channel {
 
     private static final boolean IS_INTERNAL = true;
 
-    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(RddChannel.class);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(RddChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL);
 
-    protected RddChannel(ChannelDescriptor descriptor,
-                         ExecutionTask producer,
-                         int outputIndex) {
-        super(descriptor, producer, outputIndex);
+    protected RddChannel(ChannelDescriptor descriptor) {
+        super(descriptor);
         assert descriptor == DESCRIPTOR;
     }
 
@@ -30,53 +28,30 @@ public class RddChannel extends Channel {
     }
 
     @Override
-    public boolean isReusable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterStageCapable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterPlatformCapable() {
-        return IS_REUSABLE & !IS_INTERNAL;
-    }
-
-    @Override
     public RddChannel copy() {
         return new RddChannel(this);
     }
 
-    static class Initializer implements ChannelInitializer {
+    /**
+     * {@link SparkChannelInitializer} for the {@link RddChannel}.
+     */
+    static class Initializer implements SparkChannelInitializer {
 
-        @Override
-        public Channel setUpOutput(ChannelDescriptor descriptor, ExecutionTask executionTask, int index) {
-            final Channel existingOutputChannel = executionTask.getOutputChannel(index);
-            if (existingOutputChannel == null) {
-                return new RddChannel(descriptor, executionTask, index);
-            } else if (existingOutputChannel instanceof RddChannel) {
-                return existingOutputChannel;
-            } else {
-                throw new IllegalStateException();
-            }
+              @Override
+        public RddChannel provideRddChannel(Channel channel) {
+            return (RddChannel) channel;
         }
 
         @Override
-        public void setUpInput(Channel channel, ExecutionTask executionTask, int index) {
-            assert channel instanceof RddChannel;
-            channel.addConsumer(executionTask, index);
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+            final RddChannel rddChannel = new RddChannel(descriptor);
+            return new Tuple<>(rddChannel, rddChannel);
         }
 
         @Override
-        public boolean isReusable() {
-            return true;
-        }
-
-        @Override
-        public boolean isInternal() {
-            return true;
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source) {
+            assert descriptor == RddChannel.DESCRIPTOR;
+            return this.createRddChannel(source);
         }
     }
 

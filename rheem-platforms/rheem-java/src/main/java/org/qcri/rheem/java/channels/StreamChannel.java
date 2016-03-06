@@ -5,7 +5,6 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.util.Tuple;
-import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
@@ -85,7 +84,7 @@ public class StreamChannel extends Channel {
         @Override
         public Channel setUpOutput(ChannelDescriptor descriptor, Channel source) {
             assert descriptor == StreamChannel.DESCRIPTOR;
-            final JavaChannelInitializer channelInitializer = this.getChannelManager().getChannelInitializer(descriptor);
+            final JavaChannelInitializer channelInitializer = this.getChannelManager().getChannelInitializer(source.getDescriptor());
             return channelInitializer.provideStreamChannel(source);
         }
 

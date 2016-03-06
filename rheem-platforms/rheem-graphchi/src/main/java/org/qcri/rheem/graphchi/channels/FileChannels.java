@@ -40,15 +40,6 @@ public class FileChannels {
             channel.addConsumer(executionTask, index);
         }
 
-        @Override
-        public boolean isReusable() {
-            return true;
-        }
-
-        @Override
-        public boolean isInternal() {
-            return false;
-        }
     }
 
 }

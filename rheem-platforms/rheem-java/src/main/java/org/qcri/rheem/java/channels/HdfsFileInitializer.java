@@ -110,7 +110,7 @@ public class HdfsFileInitializer implements JavaChannelInitializer {
         assert internalChannelInitializer != null;
         final Tuple<Channel, Channel> streamChannelSetup = internalChannelInitializer
                 .setUpOutput(StreamChannel.DESCRIPTOR, sourceTask.getOperator().getOutput(0));
-        fileChannel.addSibling(streamChannelSetup.field0);
+        fileChannel.addSibling(streamChannelSetup.getField0());
         sourceTask.setOutputChannel(0, streamChannelSetup.getField0());
 
         return (StreamChannel) streamChannelSetup.getField1();
