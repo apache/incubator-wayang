@@ -1,16 +1,12 @@
 package org.qcri.rheem.core.platform;
 
-import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.core.util.Tuple;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -36,7 +32,7 @@ public class Junction {
 
     /**
      * Algorithm to negotiate about best {@link Channel}s between the {@link #sourceOutput} and the
-     * {@link #targetInputs}.
+     * {@link #targetInputs}. The below describes the interplay with a {@link DefaultChannelManager}.
      * <p>
      * <p>We assume a 1/3 layer-model is the solution to this problem:
      * <ul>
@@ -62,112 +58,25 @@ public class Junction {
      * @return whether the setup was successful
      */
     public boolean setUp() {
-        // Gather all supported output ChannelDescriptors.
-        final ExecutionOperator sourceOperator = (ExecutionOperator) this.sourceOutput.getOwner();
-        final List<ChannelDescriptor> supportedOutputChannels = sourceOperator
-                .getSupportedOutputChannels(this.sourceOutput.getIndex());
-
         // Find the best-matching ChannelDescriptor for each InputSlot.
-        List<ChannelDescriptor> preferredChannelDescriptors = new ArrayList<>(this.targetInputs.size());
-        for (InputSlot<?> inputSlot : this.targetInputs) {
-            final ExecutionOperator targetOperator = (ExecutionOperator) inputSlot.getOwner();
-            final List<ChannelDescriptor> supportedInputChannels = targetOperator.getSupportedInputChannels(inputSlot.getIndex());
+        List<ChannelDescriptor> preferredChannelDescriptors = this.getPreferredChannelDescriptors();
+        if (preferredChannelDescriptors == null) return false;
 
-            ChannelDescriptor preferredChannelDescriptor = this.pickChannelDescriptor(supportedOutputChannels, supportedInputChannels);
-            if (preferredChannelDescriptor == null) {
-                return false;
-            } else {
-                preferredChannelDescriptors.add(preferredChannelDescriptor);
-            }
-        }
-
-        // Find out if we need a reusable internal Channel at first. This is the case if we have multiple consumers.
+        // Set up the "source side" of the junction.
         final ChannelManager sourceChannelManager = this.getSourceChannelManager();
-        int numDistinctExternalChannels = (int) preferredChannelDescriptors.stream()
-                .filter(descriptor -> !descriptor.isInternal())
-                .distinct()
-                .count();
-        int numInternalChannels = (int) preferredChannelDescriptors.stream()
-                .filter(ChannelDescriptor::isInternal)
-                .count();
-        boolean hasInternalReusableChannel = preferredChannelDescriptors.stream()
-                .allMatch(descriptor -> descriptor.isInternal() && descriptor.isInternal());
-        boolean isRequestReusableInternalChannel = hasInternalReusableChannel ||
-                (numDistinctExternalChannels + numInternalChannels) > 1;
+        final Map<ChannelDescriptor, Channel> externalChannels =
+                sourceChannelManager.setUpSourceSide(this, preferredChannelDescriptors);
+        if (externalChannels == null) return false;
 
-        // Set up the internal source Channel.
-        final List<ChannelDescriptor> internalChannelDescriptors = new ArrayList<>(this.targetInputs.size());
-        ChannelDescriptor internalChannelDescriptor = null;
-        for (InputSlot<?> inputSlot : this.targetInputs) {
-            final ExecutionOperator targetOperator = (ExecutionOperator) inputSlot.getOwner();
-            final List<ChannelDescriptor> supportedInputChannels = targetOperator.getSupportedInputChannels(inputSlot.getIndex());
-
-            ChannelDescriptor preferredInternalChannelDescriptor = this.pickChannelDescriptor(
-                    supportedOutputChannels,
-                    supportedInputChannels,
-                    (channelDescriptor) -> channelDescriptor.isInternal()
-                            && (!isRequestReusableInternalChannel || channelDescriptor.isReusable())
-            );
-            if (preferredInternalChannelDescriptor != null) {
-                assert internalChannelDescriptor == null || preferredInternalChannelDescriptor.equals(internalChannelDescriptor)
-                        : String.format("Assumed agreement on internal Channel, got %s and %s.",
-                        internalChannelDescriptor, preferredInternalChannelDescriptor);
-                internalChannelDescriptor = preferredInternalChannelDescriptor;
-            }
-            internalChannelDescriptors.add(preferredInternalChannelDescriptor);
-        }
-
-        // Fallback: there was no pick of an internal Channel.
-        if (internalChannelDescriptor == null) {
-            internalChannelDescriptor = sourceChannelManager.getInternalChannelDescriptor(isRequestReusableInternalChannel);
-        }
-
-        // Set up the internal Channel.
-        final ChannelInitializer internalChannelInitializer = sourceChannelManager.getChannelInitializer(internalChannelDescriptor);
-        final Tuple<Channel, Channel> internalSourceChannelSetup = internalChannelInitializer.setUpOutput(internalChannelDescriptor, this.sourceOutput);
-        this.sourceChannel = internalSourceChannelSetup.field0;
-        final Channel outboundInternalSourceChannel = internalSourceChannelSetup.field1;
-
-        // Set up the internal consumers.
-        boolean isAllChannelsInternal = true;
-        for (int targetIndex = 0; targetIndex < internalChannelDescriptors.size(); targetIndex++) {
-            if (internalChannelDescriptors.get(targetIndex) != null) {
-                assert internalChannelDescriptors.get(targetIndex).equals(outboundInternalSourceChannel.getDescriptor());
-                this.targetChannels.set(targetIndex, outboundInternalSourceChannel);
-            } else {
-                isAllChannelsInternal = false;
-            }
-        }
-        if (isAllChannelsInternal) return true;
-
-        // Set up all external Channels.
-        Map<ChannelDescriptor, Channel> externalChannels = new HashMap<>(2);
-        for (int targetIndex = 0; targetIndex < internalChannelDescriptors.size(); targetIndex++) {
+        // Set up remaining connections that go via external Channels.
+        for (int targetIndex = 0; targetIndex < this.targetChannels.size(); targetIndex++) {
             final ChannelDescriptor extChannelDescriptor = preferredChannelDescriptors.get(targetIndex);
             if (extChannelDescriptor.isInternal()) continue;
 
-            // Get or set up the Channel.
-            final Channel externalChannel = externalChannels.computeIfAbsent(extChannelDescriptor, cd -> {
-                final ChannelInitializer channelInitializer = sourceChannelManager.getChannelInitializer(cd);
-                return channelInitializer.setUpOutput(cd, outboundInternalSourceChannel);
-            });
-
-            // Set up an internal Channel for the target InputSlot.
-            final InputSlot<?> targetInput = this.targetInputs.get(targetIndex);
-            final ExecutionOperator targetOperator = (ExecutionOperator) targetInput.getOwner();
-            final ChannelDescriptor internalTargetChannelDescriptor = targetOperator
-                    .getSupportedInputChannels(targetInput.getIndex()).stream()
-                    .filter(ChannelDescriptor::isInternal)
-                    .findFirst()
-                    .orElseThrow(() ->
-                            new RheemException(String.format("No available internal channel for %s.", targetOperator))
-                    );
-
-            final ChannelManager targetChannelManager = targetOperator.getPlatform().getChannelManager();
-            final ChannelInitializer targetChannelInitializer =
-                    targetChannelManager.getChannelInitializer(internalTargetChannelDescriptor);
-            final Channel internalTargetChannel = targetChannelInitializer.setUpOutput(internalTargetChannelDescriptor, externalChannel);
-            this.targetChannels.set(targetIndex, internalTargetChannel);
+            final Channel externalChannel = externalChannels.get(extChannelDescriptor);
+            assert externalChannel != null;
+            final ChannelManager targetChannelManager = this.getTargetChannelManager(targetIndex);
+            targetChannelManager.setUpTargetSide(this, targetIndex, externalChannel);
         }
 
         // TODO: We could do a post-processing of the plan, once we have settled the PlatformExecution.
@@ -175,8 +84,42 @@ public class Junction {
         return true;
     }
 
-    private ChannelManager getSourceChannelManager() {
+    /**
+     * Finds the preferred {@link ChannelDescriptor} between the {@link #sourceOutput} and each {@link #targetInputs}
+     * or {@code null} if not all {@link #targetInputs} can be connected.
+     */
+    private List<ChannelDescriptor> getPreferredChannelDescriptors() {
+        final List<ChannelDescriptor> supportedOutputChannels = this.getSourceOperator()
+                .getSupportedOutputChannels(this.sourceOutput.getIndex());
+        List<ChannelDescriptor> preferredChannelDescriptors = new ArrayList<>(this.targetInputs.size());
+        for (InputSlot<?> inputSlot : this.targetInputs) {
+            final ExecutionOperator targetOperator = (ExecutionOperator) inputSlot.getOwner();
+            final List<ChannelDescriptor> supportedInputChannels = targetOperator.getSupportedInputChannels(inputSlot.getIndex());
+
+            ChannelDescriptor preferredChannelDescriptor = this.pickChannelDescriptor(supportedOutputChannels, supportedInputChannels);
+            if (preferredChannelDescriptor == null) {
+                return null;
+            } else {
+                preferredChannelDescriptors.add(preferredChannelDescriptor);
+            }
+        }
+        return preferredChannelDescriptors;
+    }
+
+    public ChannelManager getSourceChannelManager() {
         return ((ExecutionOperator) this.sourceOutput.getOwner()).getPlatform().getChannelManager();
+    }
+
+    public ExecutionOperator getSourceOperator() {
+        return (ExecutionOperator) this.sourceOutput.getOwner();
+    }
+
+    public ChannelManager getTargetChannelManager(int targetIndex) {
+        return this.getTargetOperator(targetIndex).getPlatform().getChannelManager();
+    }
+
+    public ExecutionOperator getTargetOperator(int targetIndex) {
+        return (ExecutionOperator) this.getTargetInputs().get(targetIndex).getOwner();
     }
 
     /**
@@ -216,19 +159,32 @@ public class Junction {
         return junction.setUp() ? junction : null;
     }
 
+    public OutputSlot<?> getSourceOutput() {
+        return this.sourceOutput;
+    }
+
+    public List<InputSlot<?>> getTargetInputs() {
+        return this.targetInputs;
+    }
+
+    public InputSlot<?> getTargetInput(int targetIndex) {
+        return this.getTargetInputs().get(targetIndex);
+    }
+
     public Channel getSourceChannel() {
         return this.sourceChannel;
+    }
+
+    public void setSourceChannel(Channel sourceChannel) {
+        this.sourceChannel = sourceChannel;
     }
 
     public List<Channel> getTargetChannels() {
         return this.targetChannels;
     }
 
-    public OutputSlot<?> getOutput() {
-        return this.sourceOutput;
-    }
-
-    public List<InputSlot<?>> getInputs() {
-        return this.targetInputs;
+    public void setTargetChannel(int targetIndex, Channel targetChannel) {
+        assert this.targetChannels.get(targetIndex) == null;
+        this.targetChannels.set(targetIndex, targetChannel);
     }
 }

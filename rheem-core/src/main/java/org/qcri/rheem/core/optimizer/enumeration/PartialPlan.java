@@ -282,7 +282,7 @@ public class PartialPlan {
         concatenation.junctions.putAll(this.junctions);
         concatenation.settledAlternatives.putAll(this.settledAlternatives);
 
-        concatenation.junctions.put(junction.getOutput(), junction);
+        concatenation.junctions.put(junction.getSourceOutput(), junction);
         for (PartialPlan targetPlan : targetPlans) {
             concatenation.settledAlternatives.putAll(targetPlan.settledAlternatives);
         }

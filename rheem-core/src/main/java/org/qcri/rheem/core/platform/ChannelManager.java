@@ -9,17 +9,15 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.util.Tuple;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * TODO
  */
 public interface ChannelManager {
-
-    /**
-     * @deprecated Use {@link #connect(ExecutionTask, int, List)}.
-     */
-    boolean connect(ExecutionTask sourceTask, int outputIndex, List<Tuple<ExecutionTask, Integer>> targetDescriptors);
 
     /**
      * Provides a {@link ChannelInitializer} for the given {@link Channel} class.
@@ -38,5 +36,10 @@ public interface ChannelManager {
     boolean exchangeWithInterstageCapable(Channel channel);
 
     ChannelDescriptor getInternalChannelDescriptor(boolean isRequestReusable);
+
+    Map<ChannelDescriptor, Channel> setUpSourceSide(Junction junction,
+                                                    List<ChannelDescriptor> preferredChannelDescriptors);
+
+    void setUpTargetSide(Junction junction, int targetIndex, Channel externalChannel);
 
 }

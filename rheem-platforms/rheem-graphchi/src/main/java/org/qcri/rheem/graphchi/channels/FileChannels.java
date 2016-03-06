@@ -3,8 +3,9 @@ package org.qcri.rheem.graphchi.channels;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
 
 /**
@@ -18,28 +19,16 @@ public class FileChannels {
     public static class Initializer implements ChannelInitializer {
 
         @Override
-        public Channel setUpOutput(ChannelDescriptor channelDescriptor, ExecutionTask executionTask, int index) {
-            final Channel existingOutputChannel = executionTask.getOutputChannel(index);
-            if (existingOutputChannel == null) {
-                final FileChannel fileChannel = new FileChannel((FileChannel.Descriptor) channelDescriptor,
-                        executionTask,
-                        index,
-                        executionTask.getOperator().getOutput(index).getCardinalityEstimate());
-                fileChannel.addPath(FileChannel.pickTempPath());
-                return fileChannel;
-            } else if (existingOutputChannel instanceof FileChannel) {
-                // TODO: To be on the safe side, we might check if this FileChannel fits the channelDescriptor.
-                return existingOutputChannel;
-            } else {
-                throw new IllegalStateException();
-            }
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+            final FileChannel fileChannel = new FileChannel((FileChannel.Descriptor) descriptor);
+            fileChannel.addPath(FileChannel.pickTempPath());
+            return new Tuple<>(fileChannel, fileChannel);
         }
 
         @Override
-        public void setUpInput(Channel channel, ExecutionTask executionTask, int index) {
-            channel.addConsumer(executionTask, index);
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source) {
+            throw new UnsupportedOperationException("Not (yet) implemented.");
         }
-
     }
 
 }
