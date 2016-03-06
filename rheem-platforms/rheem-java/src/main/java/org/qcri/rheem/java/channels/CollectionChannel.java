@@ -2,9 +2,9 @@ package org.qcri.rheem.java.channels;
 
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
@@ -20,12 +20,10 @@ public class CollectionChannel extends Channel {
 
     private static final boolean IS_INTERNAL = true;
 
-    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(CollectionChannel.class);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(CollectionChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL);
 
-    protected CollectionChannel(ChannelDescriptor channelDescriptor,
-                                ExecutionTask producer,
-                                int outputIndex) {
-        super(channelDescriptor, producer, outputIndex);
+    protected CollectionChannel(ChannelDescriptor channelDescriptor) {
+        super(channelDescriptor);
         assert channelDescriptor == DESCRIPTOR;
     }
 
@@ -34,62 +32,37 @@ public class CollectionChannel extends Channel {
     }
 
     @Override
-    public boolean isReusable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterStageCapable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterPlatformCapable() {
-        return IS_REUSABLE & !IS_INTERNAL;
-    }
-
-    @Override
     public CollectionChannel copy() {
         return new CollectionChannel(this);
     }
 
-    public static class Initializer implements ChannelInitializer {
+    /**
+     * {@link JavaChannelInitializer} implementation for the {@link CollectionChannel}.
+     */
+    public static class Initializer implements JavaChannelInitializer {
 
         @Override
-        public CollectionChannel setUpOutput(ChannelDescriptor descriptor, ExecutionTask executionTask, int index) {
-            assert descriptor == DESCRIPTOR;
-
-            // TODO: We might need to add a "collector" operator or the like because this channel might introduce overhead.
-            // Then we might also get rid of the ChannelExecutors.
-            final Channel existingOutputChannel = executionTask.getOutputChannel(index);
-            if (existingOutputChannel == null) {
-                return new CollectionChannel(descriptor, executionTask, index);
-            } else if (existingOutputChannel instanceof CollectionChannel) {
-                return (CollectionChannel) existingOutputChannel;
-            } else {
-                throw new IllegalStateException(String.format(
-                        "Expected %s, encountered %s.", CollectionChannel.class.getSimpleName(), existingOutputChannel
-                ));
-            }
+        public StreamChannel provideStreamChannel(Channel channel) {
+            throw new UnsupportedOperationException("Not yet implemented.");
         }
 
         @Override
-        public void setUpInput(Channel channel, ExecutionTask executionTask, int index) {
-            assert channel instanceof CollectionChannel;
-            channel.addConsumer(executionTask, index);
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+            assert descriptor == CollectionChannel.DESCRIPTOR;
+            // TODO: We could add a "Collector" operator in between.
+            final CollectionChannel collectionChannel = new CollectionChannel(descriptor);
+            return new Tuple<>(collectionChannel, collectionChannel);
         }
 
         @Override
-        public boolean isReusable() {
-            return true;
-        }
-
-        @Override
-        public boolean isInternal() {
-            return false;
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source) {
+            throw new UnsupportedOperationException("Not yet implemented.");
         }
     }
 
+    /**
+     * {@link ChannelExecutor} implementation for the {@link CollectionChannel}.
+     */
     public static class Executor implements ChannelExecutor {
 
         private Collection<?> collection;

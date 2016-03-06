@@ -2,9 +2,9 @@ package org.qcri.rheem.java.channels;
 
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
@@ -20,10 +20,10 @@ public class StreamChannel extends Channel {
 
     private static final boolean IS_INTERNAL = true;
 
-    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(StreamChannel.class);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(StreamChannel.class, IS_REUSABLE, IS_REUSABLE, IS_REUSABLE & !IS_INTERNAL);
 
-    protected StreamChannel(ChannelDescriptor descriptor, ExecutionTask producer, int outputIndex) {
-        super(descriptor, producer, outputIndex);
+    protected StreamChannel(ChannelDescriptor descriptor) {
+        super(descriptor);
         assert descriptor == DESCRIPTOR;
     }
 
@@ -52,60 +52,47 @@ public class StreamChannel extends Channel {
     }
 
     public Channel exchangeWith(ChannelDescriptor descriptor) {
-        ChannelInitializer channelInitializer = JavaPlatform.getInstance()
-                .getChannelManager()
-                .getChannelInitializer(descriptor);
-        final ExecutionTask producer = this.producer;
-        final int outputIndex = this.producer.removeOutputChannel(this);
-        final Channel replacementChannel = channelInitializer.setUpOutput(descriptor, producer, outputIndex);
-
-        for (ExecutionTask consumer : this.consumers) {
-            int inputIndex = consumer.removeInputChannel(this);
-            channelInitializer.setUpInput(replacementChannel, consumer, inputIndex);
-        }
-
-        if (this.isMarkedForInstrumentation()) {
-            replacementChannel.markForInstrumentation();
-        }
-        this.addSibling(replacementChannel);
-        this.removeSiblings();
-
-        return replacementChannel;
+        throw new UnsupportedOperationException();
+//        ChannelInitializer channelInitializer = JavaPlatform.getInstance()
+//                .getChannelManager()
+//                .getChannelInitializer(descriptor);
+//        final ExecutionTask producer = this.producer;
+//        final int outputIndex = this.producer.removeOutputChannel(this);
+//        final Channel replacementChannel = channelInitializer.setUpOutput(descriptor, producer, outputIndex);
+//
+//        for (ExecutionTask consumer : this.consumers) {
+//            int inputIndex = consumer.removeInputChannel(this);
+//            channelInitializer.setUpInput(replacementChannel, consumer, inputIndex);
+//        }
+//
+//        if (this.isMarkedForInstrumentation()) {
+//            replacementChannel.markForInstrumentation();
+//        }
+//        this.addSibling(replacementChannel);
+//        this.removeSiblings();
+//
+//        return replacementChannel;
     }
 
-    public static class Initializer implements ChannelInitializer {
+    public static class Initializer implements JavaChannelInitializer {
 
         @Override
-        public Channel setUpOutput(ChannelDescriptor descriptor, ExecutionTask executionTask, int index) {
-            final Channel existingOutputChannel = executionTask.getOutputChannel(index);
-            if (existingOutputChannel == null) {
-                return new StreamChannel(descriptor, executionTask, index);
-            } else if (existingOutputChannel instanceof StreamChannel) {
-                return existingOutputChannel;
-            } else if (existingOutputChannel instanceof CollectionChannel) {
-                // That's fine as well. The decision to use a StreamChannel has been overridden.
-                return existingOutputChannel;
-            } else {
-                throw new IllegalStateException();
-            }
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+            StreamChannel channel = new StreamChannel(descriptor);
+            return new Tuple<>(channel, channel);
         }
 
         @Override
-        public void setUpInput(Channel channel, ExecutionTask executionTask, int index) {
-            assert channel instanceof StreamChannel;
-            channel.addConsumer(executionTask, index);
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source) {
+            assert descriptor == StreamChannel.DESCRIPTOR;
+            final JavaChannelInitializer channelInitializer = this.getChannelManager().getChannelInitializer(descriptor);
+            return channelInitializer.provideStreamChannel(source);
         }
 
         @Override
-        public boolean isReusable() {
-            return false;
+        public StreamChannel provideStreamChannel(Channel channel) {
+            return (StreamChannel) channel;
         }
-
-        @Override
-        public boolean isInternal() {
-            return true;
-        }
-
     }
 
     public static class Executor implements ChannelExecutor {

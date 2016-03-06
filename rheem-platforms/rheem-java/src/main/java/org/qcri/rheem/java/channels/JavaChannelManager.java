@@ -2,11 +2,12 @@ package org.qcri.rheem.java.channels;
 
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.DefaultChannelManager;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.JavaPlatform;
 
 import java.util.LinkedHashMap;
@@ -51,7 +52,7 @@ public class JavaChannelManager extends DefaultChannelManager {
     }
 
     private void addChannel(ChannelDescriptor channelClass,
-                            ChannelInitializer channelInitializer,
+                            JavaChannelInitializer channelInitializer,
                             Function<Channel, ChannelExecutor> executorFactory,
                             boolean isRegularChannel,
                             boolean isBroadcastChannel) {
@@ -74,8 +75,13 @@ public class JavaChannelManager extends DefaultChannelManager {
     }
 
     @Override
-    public ChannelInitializer getChannelInitializer(ChannelDescriptor channelClass) {
-        return this.channelTypeDescriptors.get(channelClass).getInitializer();
+    public boolean connect(ExecutionTask sourceTask, int outputIndex, List<Tuple<ExecutionTask, Integer>> targetDescriptors) {
+        throw new UnsupportedOperationException("Not supported anymore.");
+    }
+
+    @Override
+    public JavaChannelInitializer getChannelInitializer(ChannelDescriptor channelClass) {
+        return (JavaChannelInitializer) this.channelTypeDescriptors.get(channelClass).getInitializer();
     }
 
     public ChannelExecutor createChannelExecutor(Channel channel) {
