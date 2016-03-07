@@ -51,11 +51,6 @@ public class PartialPlan {
     private PlanEnumeration planEnumeration;
 
     /**
-     * <i>Lazy-initialized.</i> {@link PreliminaryExecutionPlan} representation of this instance.
-     */
-    private PreliminaryExecutionPlan executionPlan;
-
-    /**
      * The {@link TimeEstimate} to execute this instance.
      */
     private TimeEstimate timeEstimate;
@@ -108,9 +103,9 @@ public class PartialPlan {
     /**
      * Create a new instance that forms the concatenation of the two.
      *
-     * @param that                 instance to join with
-     * @param commonScope          {@link OperatorAlternative}s that are selected in both instances
-     * @param target               @return the joined instance or {@code null} if the two input instances disagree in some {@link OperatorAlternative}s
+     * @param that        instance to join with
+     * @param commonScope {@link OperatorAlternative}s that are selected in both instances
+     * @param target      @return the joined instance or {@code null} if the two input instances disagree in some {@link OperatorAlternative}s
      */
     public PartialPlan join(PartialPlan that,
                             List<OperatorAlternative> commonScope,
@@ -352,49 +347,41 @@ public class PartialPlan {
                 .map(operator::getOutermostInputSlot);
     }
 
-    public PreliminaryExecutionPlan getExecutionPlan() {
-        assert this.executionPlan != null;
-        return this.executionPlan;
-    }
-
     public PreliminaryExecutionPlan createExecutionPlan() {
-        if (this.executionPlan == null) {
-            final List<ExecutionOperator> startOperators = this.operators.stream()
-                    .filter(this::isStartOperator)
-                    .collect(Collectors.toList());
-            assert !startOperators.isEmpty() :
-                    String.format("Could not find start operators among %s: none provides any of %s.",
-                            this.operators, this.planEnumeration.requestedInputSlots);
-            final ExecutionPlanCreator executionPlanCreator = new ExecutionPlanCreator(startOperators, this);
-            if (executionPlanCreator.traverse()) {
-                this.executionPlan = new PreliminaryExecutionPlan(executionPlanCreator.getTerminalTasks());
-            }
+        final List<ExecutionOperator> startOperators = this.operators.stream()
+                .filter(this::isStartOperator)
+                .collect(Collectors.toList());
+        assert !startOperators.isEmpty() :
+                String.format("Could not find start operators among %s: none provides any of %s.",
+                        this.operators, this.planEnumeration.requestedInputSlots);
+        final ExecutionPlanCreator executionPlanCreator = new ExecutionPlanCreator(startOperators, this);
+        if (executionPlanCreator.traverse()) {
+            return new PreliminaryExecutionPlan(executionPlanCreator.getTerminalTasks());
+        } else {
+            return null;
         }
-        return this.executionPlan;
     }
 
     public PreliminaryExecutionPlan createExecutionPlan(
             ExecutionPlan existingPlan,
             Set<Channel> openChannels,
             Set<ExecutionStage> executedStages) {
-        if (this.executionPlan == null) {
-            final List<ExecutionOperator> startOperators = this.operators.stream()
-                    .filter(this::isStartOperator)
-                    .collect(Collectors.toList());
-            assert !startOperators.isEmpty() :
-                    String.format("Could not find start operators among %s: none provides any of %s.",
-                            this.operators, this.planEnumeration.requestedInputSlots);
-            try {
-                final ExecutionPlanCreator executionPlanCreator = new ExecutionPlanCreator(
-                        startOperators, this, existingPlan, openChannels, executedStages);
-                if (executionPlanCreator.traverse((Void[]) null)) {
-                    this.executionPlan = new PreliminaryExecutionPlan(executionPlanCreator.getTerminalTasks(),
-                            executionPlanCreator.getInputChannels());
-                }
-            } catch (AbstractTopologicalTraversal.AbortException e) {
+        final List<ExecutionOperator> startOperators = this.operators.stream()
+                .filter(this::isStartOperator)
+                .collect(Collectors.toList());
+        assert !startOperators.isEmpty() :
+                String.format("Could not find start operators among %s: none provides any of %s.",
+                        this.operators, this.planEnumeration.requestedInputSlots);
+        try {
+            final ExecutionPlanCreator executionPlanCreator = new ExecutionPlanCreator(
+                    startOperators, this, existingPlan, openChannels, executedStages);
+            if (executionPlanCreator.traverse((Void[]) null)) {
+                return new PreliminaryExecutionPlan(executionPlanCreator.getTerminalTasks(),
+                        executionPlanCreator.getInputChannels());
             }
+        } catch (AbstractTopologicalTraversal.AbortException e) {
         }
-        return this.executionPlan;
+        return null;
     }
 
     /**

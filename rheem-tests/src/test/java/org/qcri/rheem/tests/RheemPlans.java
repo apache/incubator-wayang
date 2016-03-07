@@ -96,31 +96,38 @@ public class RheemPlans {
                                                      List<String> collector1, List<String> collector2) {
 
         CollectionSource<String> source1 = new CollectionSource<>(inputList1, String.class);
+        source1.setName("source1");
         CollectionSource<String> source2 = new CollectionSource<>(inputList2, String.class);
+        source2.setName("source2");
 
         UnionAllOperator<String> coalesceOperator1 = new UnionAllOperator<>(String.class);
+        coalesceOperator1.setName("union1");
         source1.connectTo(0, coalesceOperator1, 0);
         source2.connectTo(0, coalesceOperator1, 1);
 
         MapOperator<String, String> lowerCaseOperator = new MapOperator<>(
                 String::toLowerCase, String.class, String.class
         );
+        lowerCaseOperator.setName("toLowerCase");
         coalesceOperator1.connectTo(0, lowerCaseOperator, 0);
 
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
                 String::toUpperCase, String.class, String.class
         );
+        upperCaseOperator.setName("toUpperCase");
         coalesceOperator1.connectTo(0, upperCaseOperator, 0);
 
         UnionAllOperator<String> coalesceOperator2 = new UnionAllOperator<>(String.class);
+        coalesceOperator2.setName("union2");
         lowerCaseOperator.connectTo(0, coalesceOperator2, 0);
         upperCaseOperator.connectTo(0, coalesceOperator2, 1);
 
-
         LocalCallbackSink<String> sink1 = LocalCallbackSink.createCollectingSink(collector1, String.class);
+        sink1.setName("sink1");
         coalesceOperator2.connectTo(0, sink1, 0);
 
         LocalCallbackSink<String> sink2 = LocalCallbackSink.createCollectingSink(collector2, String.class);
+        sink2.setName("sink2");
         coalesceOperator2.connectTo(0, sink2, 0);
 
         return new RheemPlan(sink1, sink2);

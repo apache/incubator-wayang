@@ -229,7 +229,7 @@ public class Job {
         this.stopWatch.stop("Create Initial Execution Plan", "Pick Best Plan");
 
         this.stopWatch.start("Create Initial Execution Plan", "Split Stages");
-        final ExecutionPlan executionPlan = partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
+        final ExecutionPlan executionPlan = partialPlan.createExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
         this.stopWatch.stop("Create Initial Execution Plan", "Split Stages");
 
         assert executionPlan.isSane();
@@ -253,7 +253,7 @@ public class Job {
                     return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
                 })
                 .map(plan -> {
-                    this.logger.info("Picked plan's cost estimate is {}.", plan.getExecutionPlan().estimateExecutionTime(this.configuration));
+                    this.logger.info("Picked plan's cost estimate is {}.", plan.getTimeEstimate());
                     return plan;
                 })
                 .orElseThrow(() -> new IllegalStateException("Could not find an execution plan."));
@@ -376,7 +376,9 @@ public class Job {
         final PartialPlan partialPlan = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, executionPlan,
                 openChannels, completedStages);
 
-        final ExecutionPlan executionPlanExpansion = partialPlan.getExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
+        final ExecutionPlan executionPlanExpansion = partialPlan
+                .createExecutionPlan(executionPlan, openChannels, state.getCompletedStages())
+                .toExecutionPlan(this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);
 
         assert executionPlan.isSane();

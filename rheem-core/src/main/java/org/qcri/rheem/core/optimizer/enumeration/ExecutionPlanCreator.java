@@ -13,9 +13,8 @@ import java.util.stream.Stream;
 /**
  * Creates an {@link PreliminaryExecutionPlan} from a {@link PartialPlan}.
  */
-public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
-        ExecutionPlanCreator.Activator,
-        ExecutionPlanCreator.Activation> {
+public class ExecutionPlanCreator
+        extends AbstractTopologicalTraversal<Void, ExecutionPlanCreator.Activator, ExecutionPlanCreator.Activation> {
 
     private final Map<ExecutionOperator, Activator> activators = new HashMap<>();
 

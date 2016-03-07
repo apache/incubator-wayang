@@ -219,11 +219,13 @@ public class PlanEnumerator {
                 // Try to enumerate branches.
                 EnumerationActivator enumerationActivator;
                 while ((enumerationActivator = this.activatedEnumerations.poll()) != null) {
+                    this.logger.debug("Executing enumeration for {}.", enumerationActivator.getKey().getField0());
                     this.enumerateBranchStartingFrom(enumerationActivator);
                 }
 
                 ConcatenationActivator concatenationActivator;
                 while ((concatenationActivator = this.activatedConcatenations.poll()) != null) {
+                    this.logger.debug("Executing concatenation for {}.", concatenationActivator.getKey().getField0());
                     this.concatenationActivators.remove(concatenationActivator.getKey());
                     this.concatenate(concatenationActivator);
                 }
@@ -261,7 +263,7 @@ public class PlanEnumerator {
         }
         this.prune(branchEnumeration);
 
-        this.sendActivations(branchEnumeration, currentOptimizationCtx);
+        this.postProcess(branchEnumeration, currentOptimizationCtx);
     }
 
     /**
@@ -279,7 +281,7 @@ public class PlanEnumerator {
                     currentOperator.isAlternative() ||
                     currentOperator.isLoopSubplan();
             if (!isEnumeratable) {
-                this.logger.debug("Cannot enumerate branch with {}.", currentOperator);
+                this.logger.trace("Cannot enumerate branch with {}.", currentOperator);
                 return null;
             }
             branch.add(currentOperator);
@@ -300,7 +302,7 @@ public class PlanEnumerator {
 
             currentOperator = nextOperator;
         }
-        this.logger.debug("Determined branch : {}.", currentOperator);
+        this.logger.trace("Determined branch : {}.", currentOperator);
 
         return branch;
     }
@@ -327,12 +329,14 @@ public class PlanEnumerator {
                 operatorEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) operator, optimizationContext);
             }
 
-            branchEnumeration = branchEnumeration == null
-                    ? operatorEnumeration
-                    : PlanEnumeration.concatenate(branchEnumeration,
-                    lastOperator.getOutput(0),
-                    Collections.singletonMap(operator.getInput(0), operatorEnumeration),
-                    optimizationContext);
+            if (branchEnumeration == null) {
+                branchEnumeration = operatorEnumeration;
+            } else {
+                branchEnumeration = PlanEnumeration.concatenate(branchEnumeration,
+                        lastOperator.getOutput(0),
+                        Collections.singletonMap(operator.getInput(0), operatorEnumeration),
+                        optimizationContext);
+            }
 
             lastOperator = operator;
         }
@@ -392,12 +396,12 @@ public class PlanEnumerator {
 
     private void concatenate(ConcatenationActivator concatenationActivator) {
         final PlanEnumeration concatenatedEnumeration = PlanEnumeration.concatenate(
-                concatenationActivator.planEnumeration,
+                concatenationActivator.baseEnumeration,
                 concatenationActivator.outputSlot,
                 concatenationActivator.getAdjacentEnumerations(),
                 concatenationActivator.getOptimizationContext());
 
-        this.sendActivations(concatenatedEnumeration, concatenationActivator.optimizationContext);
+        this.postProcess(concatenatedEnumeration, concatenationActivator.optimizationContext);
     }
 
     /**
@@ -406,53 +410,77 @@ public class PlanEnumerator {
      * @param processedEnumeration from that the activations should be sent
      * @param optimizationCtx      of the {@code processedEnumeration}
      */
-    private void sendActivations(PlanEnumeration processedEnumeration, OptimizationContext optimizationCtx) {
+    private void postProcess(PlanEnumeration processedEnumeration, OptimizationContext optimizationCtx) {
         if (processedEnumeration.isEarthed()) {
-            // If all input dependencies are satisfied...
+            this.postProcessEarthedEnumeration(processedEnumeration, optimizationCtx);
+        } else {
+            this.postProcessLooseEnumeration(processedEnumeration, optimizationCtx);
+        }
+    }
 
-            // Activate all successive operators.
-            int numDownstreamActivations = 0;
-            for (Tuple<OutputSlot<?>, InputSlot<?>> inputService : processedEnumeration.getServingOutputSlots()) {
-                final InputSlot<?> servedInput = inputService.getField1();
-                if (servedInput == null) continue;
-                final Operator servedOperator = servedInput.getOwner();
-                Tuple<Operator, OptimizationContext> activatorKey = EnumerationActivator.createKey(servedOperator, optimizationCtx);
-                EnumerationActivator enumerationActivator = this.enumerationActivators.computeIfAbsent(
-                        activatorKey, key -> new EnumerationActivator(key.getField0(), key.getField1()));
-                enumerationActivator.register(processedEnumeration, servedInput);
-                if (enumerationActivator.canBeActivated()) {
-                    this.enumerationActivators.remove(enumerationActivator.getKey());
-                    this.activatedEnumerations.add(enumerationActivator);
-                }
-                numDownstreamActivations++;
+    /**
+     * Activate successive enumerations and wait for concatenations or mark as complete.
+     */
+    private void postProcessEarthedEnumeration(PlanEnumeration earthedEnumeration, OptimizationContext optimizationCtx) {
+        // If all input dependencies are satisfied...
+
+        // Activate all successive operators for enumeration.
+        int numDownstreamActivations = 0;
+        for (Tuple<OutputSlot<?>, InputSlot<?>> inputService : earthedEnumeration.getServingOutputSlots()) {
+            final InputSlot<?> servedInput = inputService.getField1();
+            if (servedInput == null) continue;
+            final Operator servedOperator = servedInput.getOwner();
+            Tuple<Operator, OptimizationContext> activatorKey = EnumerationActivator.createKey(servedOperator, optimizationCtx);
+            EnumerationActivator enumerationActivator = this.enumerationActivators.computeIfAbsent(
+                    activatorKey, key -> new EnumerationActivator(key.getField0(), key.getField1()));
+            enumerationActivator.register(earthedEnumeration, servedInput);
+            this.logger.debug("Registering {} for enumeration of {}.", earthedEnumeration, activatorKey.getField0());
+            if (enumerationActivator.canBeActivated()) {
+                this.logger.debug("Activating enumeration for {}.", activatorKey.getField0());
+                this.enumerationActivators.remove(enumerationActivator.getKey());
+                this.activatedEnumerations.add(enumerationActivator);
             }
+            numDownstreamActivations++;
+        }
 
-            if (numDownstreamActivations == 0) {
-                // Either store the complete PlanEnumeration.
-                this.completedEnumerations.add(processedEnumeration);
-            } else
-                for (Tuple<OutputSlot<?>, InputSlot<?>> outputService : processedEnumeration.getServingOutputSlots()) {
-                    final InputSlot<?> input = outputService.getField1();
-                    if (input == null) continue;
-                    final OutputSlot<?> output = outputService.getField0();
-                    Tuple<OutputSlot<?>, OptimizationContext> activatorKey = ConcatenationActivator.createKey(output, optimizationCtx);
-                    final ConcatenationActivator concatenationActivator = this.concatenationActivators.computeIfAbsent(
-                            activatorKey, key -> new ConcatenationActivator(key.getField0(), key.getField1()));
-                    concatenationActivator.planEnumeration = processedEnumeration;
-                }
+        if (numDownstreamActivations == 0) {
+            // If the PlanEnumeration cannot be extended, it is complete.
+            this.completedEnumerations.add(earthedEnumeration);
 
         } else {
-            // If there are open input dependencies...
-            // Activate all input PlanEnumerations.
-            for (InputSlot requestedInput : processedEnumeration.getRequestedInputSlots()) {
-                final OutputSlot requestedOutput = requestedInput.getOccupant();
-                if (requestedOutput == null) continue;
-                Tuple<OutputSlot<?>, OptimizationContext> activatorKey = ConcatenationActivator.createKey(requestedOutput, optimizationCtx);
-                final ConcatenationActivator activator = this.concatenationActivators.get(activatorKey);
-                boolean wasActivated = activator.canBeActivated();
-                activator.register(processedEnumeration, requestedInput);
-                if (!wasActivated && activator.canBeActivated()) {
+            // Otherwise, wait for concatenation of the successive enumerations.
+            for (Tuple<OutputSlot<?>, InputSlot<?>> outputService : earthedEnumeration.getServingOutputSlots()) {
+                final InputSlot<?> input = outputService.getField1();
+                if (input == null) continue;
+                final OutputSlot<?> output = outputService.getField0();
+                Tuple<OutputSlot<?>, OptimizationContext> activatorKey = ConcatenationActivator.createKey(output, optimizationCtx);
+                final ConcatenationActivator concatenationActivator = this.concatenationActivators.computeIfAbsent(
+                        activatorKey, key -> new ConcatenationActivator(key.getField0(), key.getField1()));
+                concatenationActivator.updateBaseEnumeration(earthedEnumeration);
+            }
+        }
+    }
+
+    /**
+     * Activate earthed enumerations for concatenation of the processed enumeration.
+     */
+    private void postProcessLooseEnumeration(PlanEnumeration looseEnumeration, OptimizationContext optimizationCtx) {
+        // If there are open InputSlots, activate concatenations.
+        for (InputSlot requestedInput : looseEnumeration.getRequestedInputSlots()) {
+            final OutputSlot requestedOutput = requestedInput.getOccupant();
+            if (requestedOutput == null) continue;
+            Tuple<OutputSlot<?>, OptimizationContext> activatorKey = ConcatenationActivator.createKey(requestedOutput, optimizationCtx);
+            final ConcatenationActivator activator = this.concatenationActivators.get(activatorKey);
+            assert activator != null : String.format("No concatenation activator for %s (requested by %s).",
+                    activatorKey, looseEnumeration);
+            boolean wasActivated = activator.canBeActivated();
+            activator.register(looseEnumeration, requestedInput);
+            if (activator.canBeActivated()) {
+                if (!wasActivated) {
+                    this.logger.debug("Activating concatenation for {}.", activatorKey.getField0());
                     this.activatedConcatenations.add(activator);
+                } else {
+                    activator.updateBaseEnumeration(looseEnumeration);
                 }
             }
         }
@@ -523,15 +551,11 @@ public class PlanEnumerator {
         }
 
         private void register(PlanEnumeration planEnumeration, InputSlot activatedInputSlot) {
-            if (activatedInputSlot.getOwner() != this.activatableOperator) {
-                throw new IllegalArgumentException("Slot does not belong to the activatable operator.");
-            }
+            assert activatedInputSlot.getOwner() == this.activatableOperator
+                    : "Slot does not belong to the activatable operator.";
             int index = activatedInputSlot.getIndex();
-            if (this.activationCollector[index] != null) {
-                throw new IllegalStateException("Slot is already activated.");
-            } else {
-                this.activationCollector[index] = planEnumeration;
-            }
+            assert this.activationCollector[index] == null : "Slot is already activated.";
+            this.activationCollector[index] = planEnumeration;
         }
 
         public Operator getOperator() {
@@ -557,12 +581,12 @@ public class PlanEnumerator {
     public static class ConcatenationActivator {
 
         /**
-         * Should be eventually activated.
+         * Base plan that provides the {@link #outputSlot}. May change.
          */
-        private PlanEnumeration planEnumeration;
+        private PlanEnumeration baseEnumeration;
 
         /**
-         * The {@link OptimizationContext} for the {@link #planEnumeration}.
+         * The {@link OptimizationContext} for the {@link #baseEnumeration}.
          */
         private final OptimizationContext optimizationContext;
 
@@ -585,7 +609,7 @@ public class PlanEnumerator {
             assert !outputSlot.getOccupiedSlots().isEmpty();
             this.outputSlot = outputSlot;
             this.optimizationContext = optimizationContext;
-            this.numRequiredActivations = outputSlot.getOccupiedSlots().size();
+            this.numRequiredActivations = (int) outputSlot.getOccupiedSlots().stream().filter(Objects::nonNull).count();
             this.activationCollector = new HashMap<>(this.numRequiredActivations);
         }
 
@@ -600,8 +624,15 @@ public class PlanEnumerator {
             assert this.numRequiredActivations >= this.activationCollector.size();
         }
 
-        public PlanEnumeration getPlanEnumeration() {
-            return this.planEnumeration;
+        public PlanEnumeration getBaseEnumeration() {
+            return this.baseEnumeration;
+        }
+
+        public void updateBaseEnumeration(PlanEnumeration baseEnumeration) {
+            if (this.baseEnumeration == null || this.baseEnumeration.getScope().stream().anyMatch(baseEnumeration.getScope()::contains)) {
+                assert this.baseEnumeration == null || baseEnumeration.getScope().containsAll(this.baseEnumeration.getScope());
+                this.baseEnumeration = baseEnumeration;
+            }
         }
 
         public Map<InputSlot<?>, PlanEnumeration> getAdjacentEnumerations() {

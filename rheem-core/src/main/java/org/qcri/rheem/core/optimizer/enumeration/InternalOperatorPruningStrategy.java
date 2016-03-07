@@ -25,25 +25,23 @@ public class InternalOperatorPruningStrategy implements PlanEnumerationPruningSt
                         .values();
         final Comparator<TimeEstimate> timeEstimateComparator = configuration.getTimeEstimateComparatorProvider().provide();
         final List<PartialPlan> bestPlans = competingPlans.stream()
-                .map(plans -> this.selectBestPlanNary(plans, configuration, timeEstimateComparator))
+                .map(plans -> this.selectBestPlanNary(plans, timeEstimateComparator))
                 .collect(Collectors.toList());
         planEnumeration.getPartialPlans().retainAll(bestPlans);
     }
 
     private PartialPlan selectBestPlanNary(List<PartialPlan> partialPlan,
-                                           Configuration configuration,
                                            Comparator<TimeEstimate> timeEstimateComparator) {
         return partialPlan.stream()
-                .reduce((plan1, plan2) -> this.selectBestPlanBinary(plan1, plan2, configuration, timeEstimateComparator))
+                .reduce((plan1, plan2) -> this.selectBestPlanBinary(plan1, plan2, timeEstimateComparator))
                 .get();
     }
 
     private PartialPlan selectBestPlanBinary(PartialPlan p1,
                                              PartialPlan p2,
-                                             Configuration configuration,
                                              Comparator<TimeEstimate> timeEstimateComparator) {
-        final TimeEstimate t1 = p1.getExecutionPlan().estimateExecutionTime(configuration);
-        final TimeEstimate t2 = p2.getExecutionPlan().estimateExecutionTime(configuration);
+        final TimeEstimate t1 = p1.getTimeEstimate();
+        final TimeEstimate t2 = p2.getTimeEstimate();
         return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
     }
 

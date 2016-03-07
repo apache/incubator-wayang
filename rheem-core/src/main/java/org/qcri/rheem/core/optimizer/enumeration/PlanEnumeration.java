@@ -1,6 +1,5 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
@@ -9,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -85,7 +85,6 @@ public class PlanEnumeration {
      * Create an instance for a single {@link ExecutionOperator}.
      *
      * @param operator the mentioned {@link ExecutionOperator}
-     * @param operatorContext
      * @return the new instance
      */
     static PlanEnumeration createSingleton(ExecutionOperator operator, OptimizationContext optimizationContext) {
@@ -232,7 +231,6 @@ public class PlanEnumeration {
         result.scope.addAll(baseEnumeration.getScope());
         result.requestedInputSlots.addAll(baseEnumeration.getRequestedInputSlots());
         result.servingOutputSlots.addAll(baseEnumeration.getServingOutputSlots());
-        result.servingOutputSlots.removeIf(slotService -> slotService.getField0().equals(openOutputSlot));
         result.executedTasks.putAll(baseEnumeration.getExecutedTasks());
 
         for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : targetEnumerations.entrySet()) {
@@ -245,6 +243,7 @@ public class PlanEnumeration {
             result.executedTasks.putAll(targetEnumeration.getExecutedTasks());
         }
 
+        result.servingOutputSlots.removeIf(slotService -> slotService.getField0().equals(openOutputSlot));
 
         result.partialPlans.addAll(PartialPlan.concatenate(baseEnumeration,
                 openOutputSlot,
@@ -254,7 +253,6 @@ public class PlanEnumeration {
         // Build the instance.
         return result;
     }
-
 
 
     /**
@@ -330,7 +328,7 @@ public class PlanEnumeration {
     /**
      * Creates a new instance for exactly one {@link ExecutionOperator}.
      *
-     * @param executionOperator will be wrapped in the new instance
+     * @param executionOperator   will be wrapped in the new instance
      * @param optimizationContext
      * @return the new instance
      */
@@ -435,10 +433,20 @@ public class PlanEnumeration {
     }
 
     public Set<OperatorAlternative> getScope() {
-        return scope;
+        return this.scope;
     }
 
-    public Map<ExecutionOperator,ExecutionTask> getExecutedTasks() {
-        return executedTasks;
+    public Map<ExecutionOperator, ExecutionTask> getExecutedTasks() {
+        return this.executedTasks;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[inputs=%s, outputs=%s]", this.getClass().getSimpleName(),
+                this.requestedInputSlots, this.servingOutputSlots.stream()
+                        .map(Tuple::getField0)
+                        .distinct()
+                        .collect(Collectors.toList())
+        );
     }
 }
