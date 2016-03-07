@@ -46,12 +46,36 @@ public class OptimizationContext {
     private final Map<LoopSubplan, LoopContext> loopContexts = new HashMap<>();
 
     /**
+     * Forked {@link OptimizationContext}s can have a base.
+     */
+    private final OptimizationContext base;
+
+    /**
+     * {@link Configuration} that is used to create estimates here.
+     */
+    private final Configuration configuration;
+
+    /**
+     * Create a new, plain instance.
+     */
+    public OptimizationContext() {
+        this(null, null, null, -1);
+    }
+
+    /**
+     * Forks an {@link OptimizationContext} by providing a write-layer on top of the {@code base}.
+     */
+    public OptimizationContext(OptimizationContext base) {
+        this(base.configuration, base, base.hostLoopContext, base.iterationNumber);
+    }
+
+    /**
      * Create a new instance.
      *
      * @param rheemPlan that the new instance should describe; loops should already be isolated
      */
-    public OptimizationContext(RheemPlan rheemPlan) {
-        this(null, -1);
+    public OptimizationContext(RheemPlan rheemPlan, Configuration configuration) {
+        this(configuration, null, null, -1);
         PlanTraversal.upstream()
                 .withCallback(this::addOneTimeOperator)
                 .traverse(rheemPlan.getSinks());
@@ -62,23 +86,25 @@ public class OptimizationContext {
      *
      * @param operator the single {@link Operator} of this instance
      */
-    public OptimizationContext(Operator operator) {
-        this(null, -1);
+    public OptimizationContext(Operator operator, Configuration configuration) {
+        this(configuration, null, null, -1);
         this.addOneTimeOperator(operator);
     }
 
     /**
      * Creates a new (nested) instance for the given {@code loop}.
      */
-    private OptimizationContext(LoopSubplan loop, LoopContext hostLoopContext, int iterationNumber) {
-        this(hostLoopContext, iterationNumber);
+    private OptimizationContext(LoopSubplan loop, LoopContext hostLoopContext, int iterationNumber, Configuration configuration) {
+        this(configuration, null, hostLoopContext, iterationNumber);
         this.addOneTimeOperators(loop);
     }
 
     /**
      * Base constructor.
      */
-    private OptimizationContext(LoopContext hostLoopContext, int iterationNumber) {
+    private OptimizationContext(Configuration configuration, OptimizationContext base, LoopContext hostLoopContext, int iterationNumber) {
+        this.configuration = configuration;
+        this.base = base;
         this.hostLoopContext = hostLoopContext;
         this.iterationNumber = iterationNumber;
     }
@@ -88,7 +114,7 @@ public class OptimizationContext {
      * add its encased {@link Operator}s.
      * Potentially invoke {@link #addOneTimeLoop(OperatorContext)} as well.
      */
-    private void addOneTimeOperator(Operator operator) {
+    public OperatorContext addOneTimeOperator(Operator operator) {
         final OperatorContext operatorContext = new OperatorContext(operator);
         this.operatorContexts.put(operator, operatorContext);
         if (!operator.isElementary()) {
@@ -102,12 +128,13 @@ public class OptimizationContext {
                 this.addOneTimeOperators((Subplan) operator);
             }
         }
+        return operatorContext;
     }
 
     /**
      * Add {@link OperatorContext}s for all the contained {@link Operator}s of the {@code container}.
      */
-    private void addOneTimeOperators(OperatorContainer container) {
+    public void addOneTimeOperators(OperatorContainer container) {
         final CompositeOperator compositeOperator = container.toOperator();
         final Stream<Operator> innerOutputOperatorStream = compositeOperator.isSink() ?
                 Stream.of(container.getSink()) :
@@ -123,7 +150,7 @@ public class OptimizationContext {
     /**
      * Add {@link OptimizationContext}s for the {@code loop} that is executed once within this instance.
      */
-    private void addOneTimeLoop(OperatorContext operatorContext) {
+    public void addOneTimeLoop(OperatorContext operatorContext) {
         this.loopContexts.put((LoopSubplan) operatorContext.getOperator(), new LoopContext(operatorContext));
     }
 
@@ -134,14 +161,22 @@ public class OptimizationContext {
      * @return the {@link OperatorContext} for the {@link Operator} or {@code null} if none
      */
     public OperatorContext getOperatorContext(Operator operator) {
-        return this.operatorContexts.get(operator);
+        OperatorContext operatorContext = this.operatorContexts.get(operator);
+        if (operatorContext == null && this.base != null) {
+            operatorContext = this.base.getOperatorContext(operator);
+        }
+        return operatorContext;
     }
 
     /**
      * Retrieve the {@link LoopContext} for the {@code loopSubplan}.
      */
     public LoopContext getNestedLoopContext(LoopSubplan loopSubplan) {
-        return this.loopContexts.get(loopSubplan);
+        LoopContext loopContext = this.loopContexts.get(loopSubplan);
+        if (loopContext == null && this.base != null) {
+            loopContext = this.base.getNestedLoopContext(loopSubplan);
+        }
+        return loopContext;
     }
 
     /**
@@ -193,6 +228,17 @@ public class OptimizationContext {
         this.loopContexts.values().stream()
                 .flatMap(loopCtx -> loopCtx.getIterationContexts().stream())
                 .forEach(OptimizationContext::clearMarks);
+    }
+
+    public Configuration getConfiguration() {
+        return this.configuration;
+    }
+
+    /**
+     * @return the {@link OperatorContext}s of this instance (exclusive of any base instance)
+     */
+    public Map<Operator, OperatorContext> getLocalOperatorContexts() {
+        return this.operatorContexts;
     }
 
     /**
@@ -322,8 +368,16 @@ public class OptimizationContext {
 
         /**
          * Update the {@link LoadProfile} and {@link TimeEstimate} of this instance.
+         */
+        public void updateTimeEstimate() {
+            this.updateTimeEstimate(this.getOptimizationContext().getConfiguration());
+        }
+
+        /**
+         * Update the {@link LoadProfile} and {@link TimeEstimate} of this instance.
          *
          * @param configuration provides the necessary functions
+         * @deprecated Use {@link #updateTimeEstimate()}.
          */
         public void updateTimeEstimate(Configuration configuration) {
             if (!this.operator.isExecutionOperator()) return;
@@ -376,7 +430,7 @@ public class OptimizationContext {
             final int numIterationContexts = loop.getNumExpectedIterations() + 1;
             this.iterationContexts = new ArrayList<>(numIterationContexts);
             for (int iterationNumber = 0; iterationNumber < numIterationContexts; iterationNumber++) {
-                this.iterationContexts.add(new OptimizationContext(loop, this, iterationNumber));
+                this.iterationContexts.add(new OptimizationContext(loop, this, iterationNumber, OptimizationContext.this.configuration));
             }
         }
 

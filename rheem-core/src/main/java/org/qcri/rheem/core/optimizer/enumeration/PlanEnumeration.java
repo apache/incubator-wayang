@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.Tuple;
@@ -83,11 +85,13 @@ public class PlanEnumeration {
      * Create an instance for a single {@link ExecutionOperator}.
      *
      * @param operator the mentioned {@link ExecutionOperator}
+     * @param operatorContext
      * @return the new instance
      */
-    static PlanEnumeration createSingleton(ExecutionOperator operator) {
+    static PlanEnumeration createSingleton(ExecutionOperator operator, OptimizationContext optimizationContext) {
         final PlanEnumeration enumeration = createFor(operator, operator);
-        enumeration.add(enumeration.createSingletonPartialPlan(operator));
+        final PartialPlan singletonPartialPlan = enumeration.createSingletonPartialPlan(operator, optimizationContext);
+        enumeration.add(singletonPartialPlan);
         return enumeration;
     }
 
@@ -215,7 +219,8 @@ public class PlanEnumeration {
      */
     public static PlanEnumeration concatenate(PlanEnumeration baseEnumeration,
                                               OutputSlot<?> openOutputSlot,
-                                              Map<InputSlot<?>, PlanEnumeration> targetEnumerations) {
+                                              Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
+                                              OptimizationContext optimizationContext) {
 
         assert baseEnumeration.getServingOutputSlots().stream()
                 .map(Tuple::getField0)
@@ -243,7 +248,8 @@ public class PlanEnumeration {
 
         result.partialPlans.addAll(PartialPlan.concatenate(baseEnumeration,
                 openOutputSlot,
-                targetEnumerations));
+                targetEnumerations,
+                optimizationContext));
 
         // Build the instance.
         return result;
@@ -294,6 +300,7 @@ public class PlanEnumeration {
     public void add(PartialPlan partialPlan) {
         // TODO: Check if the plan conforms to this instance.
         this.partialPlans.add(partialPlan);
+        assert partialPlan.getTimeEstimate() != null;
         partialPlan.setPlanEnumeration(this);
     }
 
@@ -324,10 +331,14 @@ public class PlanEnumeration {
      * Creates a new instance for exactly one {@link ExecutionOperator}.
      *
      * @param executionOperator will be wrapped in the new instance
+     * @param optimizationContext
      * @return the new instance
      */
-    private PartialPlan createSingletonPartialPlan(ExecutionOperator executionOperator) {
-        return new PartialPlan(this, new HashMap<>(0), Collections.singletonList(executionOperator));
+    private PartialPlan createSingletonPartialPlan(ExecutionOperator executionOperator, OptimizationContext optimizationContext) {
+        final PartialPlan partialPlan = new PartialPlan(this, new HashMap<>(0), Collections.singletonList(executionOperator));
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(executionOperator);
+        partialPlan.addToTimeEstimate(operatorContext.getTimeEstimate());
+        return partialPlan;
     }
 
     public boolean isComprehensive() {

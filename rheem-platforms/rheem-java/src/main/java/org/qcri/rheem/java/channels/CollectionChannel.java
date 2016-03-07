@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.channels;
 
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -42,12 +43,12 @@ public class CollectionChannel extends Channel {
     public static class Initializer implements JavaChannelInitializer {
 
         @Override
-        public StreamChannel provideStreamChannel(Channel channel) {
+        public StreamChannel provideStreamChannel(Channel channel, OptimizationContext optimizationContext) {
             throw new UnsupportedOperationException("Not yet implemented.");
         }
 
         @Override
-        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
             assert descriptor == CollectionChannel.DESCRIPTOR;
             // TODO: We could add a "Collector" operator in between.
             final CollectionChannel collectionChannel = new CollectionChannel(descriptor);
@@ -55,7 +56,7 @@ public class CollectionChannel extends Channel {
         }
 
         @Override
-        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source) {
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
             throw new UnsupportedOperationException("Not yet implemented.");
         }
     }

@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.plan.executionplan;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
@@ -25,17 +27,21 @@ public interface ChannelInitializer {
 
     /**
      * Todo.
+     *
+     * @param optimizationContext provides estimates and accepts new {@link Operator}s
      * @return {@link Channel} that is directly output by the {@code outputSlot} and the {@link Channel} that was
      * actually requested; both are interlinked.
      */
-    Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot);
+    Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext);
 
     /**
      * Todo.
+     *
+     * @param optimizationContext provides estimates and accepts new {@link Operator}s
      * @return {@link Channel} that is directly output by the {@code outputSlot} and the {@link Channel} that was
      * actually requested; both are interlinked.
      */
-    Channel setUpOutput(ChannelDescriptor descriptor, Channel source);
+    Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext);
 
 //    /**
 //     * <i>Optional operation.</i> Implements the {@link Channel} on the {@code index}-th output of the given

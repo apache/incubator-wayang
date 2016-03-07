@@ -84,11 +84,6 @@ public class SparkChannelManager extends DefaultChannelManager {
     }
 
     @Override
-    public boolean connect(ExecutionTask sourceTask, int outputIndex, List<Tuple<ExecutionTask, Integer>> targetDescriptors) {
-        throw new UnsupportedOperationException("Not supported anymore.");
-    }
-
-    @Override
     public SparkChannelInitializer getChannelInitializer(ChannelDescriptor channelDescriptor) {
         final ChannelTypeDescriptor channelTypeDescriptor = this.channelTypeDescriptors.get(channelDescriptor);
         assert channelTypeDescriptor != null : String.format("No channel type descriptor for %s.", channelDescriptor);

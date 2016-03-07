@@ -45,7 +45,7 @@ public class RheemCollections {
      * Validate that there is at most one element in the {@code collection} and return it (or {@code null} otherwise).
      */
     public static <T> T getSingleOrNull(Collection<T> collection) {
-        Validate.isTrue(collection.size() <= 1);
+        Validate.isTrue(collection.size() <= 1, "Expected 0 or 1 elements, found %d.", collection.size());
         return collection.isEmpty() ? null : getAny(collection);
     }
 

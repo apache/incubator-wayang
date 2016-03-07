@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.channels;
 
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -76,20 +77,20 @@ public class StreamChannel extends Channel {
     public static class Initializer implements JavaChannelInitializer {
 
         @Override
-        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
             StreamChannel channel = new StreamChannel(descriptor);
             return new Tuple<>(channel, channel);
         }
 
         @Override
-        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source) {
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
             assert descriptor == StreamChannel.DESCRIPTOR;
             final JavaChannelInitializer channelInitializer = this.getChannelManager().getChannelInitializer(source.getDescriptor());
-            return channelInitializer.provideStreamChannel(source);
+            return channelInitializer.provideStreamChannel(source, optimizationContext);
         }
 
         @Override
-        public StreamChannel provideStreamChannel(Channel channel) {
+        public StreamChannel provideStreamChannel(Channel channel, OptimizationContext optimizationContext) {
             return (StreamChannel) channel;
         }
     }

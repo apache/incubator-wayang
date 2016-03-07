@@ -1,6 +1,7 @@
 package org.qcri.rheem.spark.channels;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -38,20 +39,20 @@ public class RddChannel extends Channel {
     static class Initializer implements SparkChannelInitializer {
 
               @Override
-        public RddChannel provideRddChannel(Channel channel) {
+        public RddChannel provideRddChannel(Channel channel, OptimizationContext optimizationContext) {
             return (RddChannel) channel;
         }
 
         @Override
-        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
             final RddChannel rddChannel = new RddChannel(descriptor);
             return new Tuple<>(rddChannel, rddChannel);
         }
 
         @Override
-        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source) {
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
             assert descriptor == RddChannel.DESCRIPTOR;
-            return this.createRddChannel(source);
+            return this.createRddChannel(source, optimizationContext);
         }
     }
 

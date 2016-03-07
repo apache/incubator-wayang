@@ -1,14 +1,18 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
-import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Junction;
-import org.qcri.rheem.core.util.*;
+import org.qcri.rheem.core.util.Canonicalizer;
+import org.qcri.rheem.core.util.MultiMap;
+import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +54,11 @@ public class PartialPlan {
      * <i>Lazy-initialized.</i> {@link PreliminaryExecutionPlan} representation of this instance.
      */
     private PreliminaryExecutionPlan executionPlan;
+
+    /**
+     * The {@link TimeEstimate} to execute this instance.
+     */
+    private TimeEstimate timeEstimate;
 
     /**
      * Create a new instance.
@@ -211,7 +220,8 @@ public class PartialPlan {
      */
     public static Collection<PartialPlan> concatenate(PlanEnumeration baseEnumeration,
                                                       OutputSlot<?> openOutputSlot,
-                                                      Map<InputSlot<?>, PlanEnumeration> targetEnumerations) {
+                                                      Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
+                                                      OptimizationContext optimizationContext) {
 
         Collection<PartialPlan> concatenations = new LinkedList<>();
 
@@ -249,8 +259,7 @@ public class PartialPlan {
                 final OutputSlot<?> output = basePlanGroupEntry.getKey();
                 final Operator outputOperator = output.getOwner();
                 assert outputOperator.isExecutionOperator();
-                final ChannelManager outputChannelManager = ((ExecutionOperator) outputOperator).getPlatform().getChannelManager();
-                final Junction junction = Junction.create(output, inputs);
+                final Junction junction = Junction.create(output, inputs, optimizationContext);
                 if (junction == null) continue;
 
                 // If we found a junction, then we can enumerator all PartialPlan combinations
@@ -278,13 +287,18 @@ public class PartialPlan {
                 new HashMap<>(this.junctions.size() + 1),
                 new HashSet<>(this.settledAlternatives.size(), targetPlans.size() * 4) // ballpark figure
         );
+
         concatenation.operators.addAll(this.operators);
         concatenation.junctions.putAll(this.junctions);
         concatenation.settledAlternatives.putAll(this.settledAlternatives);
+        concatenation.addToTimeEstimate(this.getTimeEstimate());
 
         concatenation.junctions.put(junction.getSourceOutput(), junction);
+        concatenation.addToTimeEstimate(junction.getTimeEstimate());
+
         for (PartialPlan targetPlan : targetPlans) {
             concatenation.settledAlternatives.putAll(targetPlan.settledAlternatives);
+            concatenation.addToTimeEstimate(targetPlan.getTimeEstimate());
         }
 
         return concatenation;
@@ -301,6 +315,7 @@ public class PartialPlan {
         final PartialPlan escapedPartialPlan = new PartialPlan(newPlanEnumeration, this.junctions, this.operators);
         escapedPartialPlan.settledAlternatives.putAll(this.settledAlternatives);
         escapedPartialPlan.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
+        escapedPartialPlan.addToTimeEstimate(this.getTimeEstimate());
         return escapedPartialPlan;
     }
 
@@ -411,4 +426,12 @@ public class PartialPlan {
         return this.settledAlternatives.get(operatorAlternative);
     }
 
+    public void addToTimeEstimate(TimeEstimate delta) {
+        assert delta != null;
+        this.timeEstimate = this.timeEstimate == null ? delta : this.timeEstimate.plus(delta);
+    }
+
+    public TimeEstimate getTimeEstimate() {
+        return this.timeEstimate;
+    }
 }

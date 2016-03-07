@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
@@ -24,10 +26,15 @@ public class Junction {
 
     private final List<Channel> targetChannels;
 
-    public Junction(OutputSlot<?> sourceOutput, List<InputSlot<?>> targetInputs) {
+    private final OptimizationContext localOptimizationContext;
+
+    private TimeEstimate timeEstimateCache;
+
+    public Junction(OutputSlot<?> sourceOutput, List<InputSlot<?>> targetInputs, OptimizationContext baseOptimizationCtx) {
         this.sourceOutput = sourceOutput;
         this.targetInputs = targetInputs;
         this.targetChannels = RheemCollections.map(this.targetInputs, input -> null);
+        this.localOptimizationContext = new OptimizationContext(baseOptimizationCtx);
     }
 
     /**
@@ -65,7 +72,7 @@ public class Junction {
         // Set up the "source side" of the junction.
         final ChannelManager sourceChannelManager = this.getSourceChannelManager();
         final Map<ChannelDescriptor, Channel> externalChannels =
-                sourceChannelManager.setUpSourceSide(this, preferredChannelDescriptors);
+                sourceChannelManager.setUpSourceSide(this, preferredChannelDescriptors, this.localOptimizationContext);
         if (externalChannels == null) return false;
 
         // Set up remaining connections that go via external Channels.
@@ -76,7 +83,7 @@ public class Junction {
             final Channel externalChannel = externalChannels.get(extChannelDescriptor);
             assert externalChannel != null;
             final ChannelManager targetChannelManager = this.getTargetChannelManager(targetIndex);
-            targetChannelManager.setUpTargetSide(this, targetIndex, externalChannel);
+            targetChannelManager.setUpTargetSide(this, targetIndex, externalChannel, this.localOptimizationContext);
         }
 
         // TODO: We could do a post-processing of the plan, once we have settled the PlatformExecution.
@@ -154,8 +161,10 @@ public class Junction {
         return null;
     }
 
-    public static Junction create(OutputSlot<?> outputSlot, List<InputSlot<?>> inputSlots) {
-        final Junction junction = new Junction(outputSlot, inputSlots);
+    public static Junction create(OutputSlot<?> outputSlot,
+                                  List<InputSlot<?>> inputSlots,
+                                  OptimizationContext baseOptimizationCtx) {
+        final Junction junction = new Junction(outputSlot, inputSlots, baseOptimizationCtx);
         return junction.setUp() ? junction : null;
     }
 
@@ -186,5 +195,18 @@ public class Junction {
     public void setTargetChannel(int targetIndex, Channel targetChannel) {
         assert this.targetChannels.get(targetIndex) == null;
         this.targetChannels.set(targetIndex, targetChannel);
+    }
+
+    public TimeEstimate getTimeEstimate() {
+        if (this.timeEstimateCache == null) {
+            this.timeEstimateCache = this.createTimeEstimate();
+        }
+        return this.timeEstimateCache;
+    }
+
+    private TimeEstimate createTimeEstimate() {
+        return this.localOptimizationContext.getLocalOperatorContexts().values().stream()
+                .map(OptimizationContext.OperatorContext::getTimeEstimate)
+                .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
     }
 }

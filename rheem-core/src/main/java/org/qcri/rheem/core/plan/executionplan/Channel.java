@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.plan.executionplan;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -50,7 +51,7 @@ public abstract class Channel {
 
     /**
      * Other {@link Channel}s that represent the same {@link OutputSlot}-to-{@link InputSlot} connection from a
-     * {@link RheemPlan} and share properties such as {@link #getCardinalityEstimate()} and {@link #getDataSetType()}.
+     * {@link RheemPlan} and share properties such as {@link #getCardinalityEstimate(OptimizationContext)} and {@link #getDataSetType()}.
      */
     private Set<Channel> siblings = new HashSet<>(2);
 
@@ -153,8 +154,11 @@ public abstract class Channel {
         return this.consumers;
     }
 
-    public CardinalityEstimate getCardinalityEstimate() {
-        throw new UnsupportedOperationException("not valid anymore.");
+    public CardinalityEstimate getCardinalityEstimate(OptimizationContext optimizationContext) {
+        if (this.getProducer() == null) return null;
+        final OutputSlot<?> output = this.getProducer().getOutputSlotFor(this);
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(output.getOwner());
+        return operatorContext.getInputCardinality(output.getIndex());
     }
 
     public boolean isMarkedForInstrumentation() {

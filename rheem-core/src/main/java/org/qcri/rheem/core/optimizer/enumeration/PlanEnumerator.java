@@ -54,12 +54,12 @@ public class PlanEnumerator {
     /**
      * Maintain {@link EnumerationActivator} for {@link Operator}s.
      */
-    private final Map<Operator, EnumerationActivator> enumerationActivators = new HashMap<>();
+    private final Map<Tuple<Operator, OptimizationContext>, EnumerationActivator> enumerationActivators = new HashMap<>();
 
     /**
      * Maintain {@link ConcatenationActivator}s for each {@link OutputSlot}.
      */
-    private final Map<OutputSlot<?>, ConcatenationActivator> concatenationActivators = new HashMap<>();
+    private final Map<Tuple<OutputSlot<?>, OptimizationContext>, ConcatenationActivator> concatenationActivators = new HashMap<>();
 
     /**
      * This instance will put all completed {@link PlanEnumeration}s (which did not cause an activation) here.
@@ -90,7 +90,7 @@ public class PlanEnumerator {
     /**
      * {@link OptimizationContext} that holds all relevant task data.
      */
-    private final OptimizationContext optimizationContext;
+    private final OptimizationContext rootOptimizationContext;
 
     /**
      * Creates a new instance.
@@ -167,10 +167,11 @@ public class PlanEnumerator {
                            OperatorAlternative.Alternative enumeratedAlternative,
                            Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
                            Map<ExecutionOperator, ExecutionTask> executedTasks) {
+
         startOperators.stream()
-                .map(EnumerationActivator::new)
+                .map(operator -> new EnumerationActivator(operator, optimizationContext))
                 .forEach(this.activatedEnumerations::add);
-        this.optimizationContext = optimizationContext;
+        this.rootOptimizationContext = optimizationContext;
         this.configuration = configuration;
         this.pruningStrategies = pruningStrategies;
         this.enumeratedAlternative = enumeratedAlternative;
@@ -223,7 +224,7 @@ public class PlanEnumerator {
 
                 ConcatenationActivator concatenationActivator;
                 while ((concatenationActivator = this.activatedConcatenations.poll()) != null) {
-                    this.concatenationActivators.remove(concatenationActivator.getOutputSlot());
+                    this.concatenationActivators.remove(concatenationActivator.getKey());
                     this.concatenate(concatenationActivator);
                 }
             }
@@ -253,13 +254,14 @@ public class PlanEnumerator {
         }
 
         // Go over the branch and create a PlanEnumeration for it.
-        PlanEnumeration branchEnumeration = this.enumerateBranch(branch);
+        final OptimizationContext currentOptimizationCtx = enumerationActivator.getOptimizationContext();
+        PlanEnumeration branchEnumeration = this.enumerateBranch(branch, currentOptimizationCtx);
         if (branchEnumeration == null) {
             return;
         }
         this.prune(branchEnumeration);
 
-        this.sendActivations(branchEnumeration);
+        this.sendActivations(branchEnumeration, currentOptimizationCtx);
     }
 
     /**
@@ -306,26 +308,31 @@ public class PlanEnumerator {
     /**
      * Create a {@link PlanEnumeration} for the given {@code branch}.
      *
-     * @param branch {@link List} of {@link Operator}s of the branch; ordered downstream
+     * @param branch              {@link List} of {@link Operator}s of the branch; ordered downstream
+     * @param optimizationContext in which the {@code branch} resides
      * @return a {@link PlanEnumeration} for the given {@code branch}
      */
-    private PlanEnumeration enumerateBranch(List<Operator> branch) {
+    private PlanEnumeration enumerateBranch(List<Operator> branch, OptimizationContext optimizationContext) {
         PlanEnumeration branchEnumeration = null;
 
+        Operator lastOperator = null;
         for (Operator operator : branch) {
             PlanEnumeration operatorEnumeration;
             if (operator.isAlternative()) {
-                operatorEnumeration = this.enumerateAlternative((OperatorAlternative) operator);
+                operatorEnumeration = this.enumerateAlternative((OperatorAlternative) operator, optimizationContext);
             } else if (operator.isLoopSubplan()) {
-                operatorEnumeration = this.enumerateLoop((LoopSubplan) operator);
+                operatorEnumeration = this.enumerateLoop((LoopSubplan) operator, optimizationContext);
             } else {
                 assert operator.isExecutionOperator();
-                operatorEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) operator);
+                operatorEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) operator, optimizationContext);
             }
 
             branchEnumeration = branchEnumeration == null
                     ? operatorEnumeration
-                    : branchEnumeration.join(operatorEnumeration);
+                    : PlanEnumeration.concatenate(branchEnumeration,
+                    lastOperator.getOutput(0),
+                    Collections.singletonMap(operator.getInput(0), operatorEnumeration),
+                    optimizationContext);
         }
 
         return branchEnumeration;
@@ -335,9 +342,10 @@ public class PlanEnumerator {
      * Create a {@link PlanEnumeration} for the given {@code operatorAlternative}.
      *
      * @param operatorAlternative {@link OperatorAlternative}s that should be enumerated
+     * @param optimizationContext in which the {@code operatorAlternative} resides
      * @return a {@link PlanEnumeration} for the given {@code operatorAlternative}
      */
-    private PlanEnumeration enumerateAlternative(OperatorAlternative operatorAlternative) {
+    private PlanEnumeration enumerateAlternative(OperatorAlternative operatorAlternative, OptimizationContext optimizationContext) {
         PlanEnumeration result = null;
         final List<OperatorAlternative.Alternative> alternatives =
                 this.presettledAlternatives == null || !this.presettledAlternatives.containsKey(operatorAlternative) ?
@@ -346,11 +354,11 @@ public class PlanEnumerator {
         for (OperatorAlternative.Alternative alternative : alternatives) {
 
             // Recursively enumerate all alternatives.
-            final PlanEnumerator alternativeEnumerator = this.forkFor(alternative);
+            final PlanEnumerator alternativeEnumerator = this.forkFor(alternative, optimizationContext);
             final PlanEnumeration alternativeEnumeration = alternativeEnumerator.enumerate(false);
 
             if (alternativeEnumeration != null) {
-                if (result == null) result = alternativeEnumeration;
+                if (result == null) result = alternativeEnumeration.escape(alternative);
                 else result.unionInPlace(alternativeEnumeration);
             }
         }
@@ -360,12 +368,13 @@ public class PlanEnumerator {
     /**
      * Fork a new instance to enumerate the given {@code alternative}.
      *
-     * @param alternative an {@link OperatorAlternative.Alternative} to be enumerated recursively
+     * @param alternative         an {@link OperatorAlternative.Alternative} to be enumerated recursively
+     * @param optimizationContext
      * @return the new instance
      */
-    private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative) {
+    private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative, OptimizationContext optimizationContext) {
         return new PlanEnumerator(alternative,
-                this.optimizationContext,
+                optimizationContext,
                 this.configuration,
                 this.pruningStrategies,
                 this.presettledAlternatives,
@@ -375,30 +384,27 @@ public class PlanEnumerator {
     /**
      * Create a {@link PlanEnumeration} for the given {@code loop}.
      */
-    private PlanEnumeration enumerateLoop(LoopSubplan loop) {
-        throw new RuntimeException("Cannot enumerate loops.");
+    private PlanEnumeration enumerateLoop(LoopSubplan loop, OptimizationContext operatorContext) {
+        throw new RuntimeException("Cannot enumerate loops, yet.");
     }
 
     private void concatenate(ConcatenationActivator concatenationActivator) {
         final PlanEnumeration concatenatedEnumeration = PlanEnumeration.concatenate(
                 concatenationActivator.planEnumeration,
                 concatenationActivator.outputSlot,
-                concatenationActivator.getAdjacentEnumerations());
-//        assert concatenationActivator.numRequiredActivations == 1;
-//        final PlanEnumeration inputEnumeration = RheemCollections.getSingle(
-//                concatenationActivator.getAdjacentEnumerations().values()
-//        );
-//        final PlanEnumeration outputEnumeration = concatenationActivator.getPlanEnumeration();
-//        final PlanEnumeration concatenatedEnumeration = inputEnumeration.join(outputEnumeration);
-        this.sendActivations(concatenatedEnumeration);
+                concatenationActivator.getAdjacentEnumerations(),
+                concatenationActivator.getOptimizationContext());
+
+        this.sendActivations(concatenatedEnumeration, concatenationActivator.optimizationContext);
     }
 
     /**
      * Sends activations to relevant {@link #enumerationActivators} or {@link #concatenationActivators}.
      *
      * @param processedEnumeration from that the activations should be sent
+     * @param optimizationCtx      of the {@code processedEnumeration}
      */
-    private void sendActivations(PlanEnumeration processedEnumeration) {
+    private void sendActivations(PlanEnumeration processedEnumeration, OptimizationContext optimizationCtx) {
         if (processedEnumeration.isEarthed()) {
             // If all input dependencies are satisfied...
 
@@ -408,11 +414,12 @@ public class PlanEnumerator {
                 final InputSlot<?> servedInput = inputService.getField1();
                 if (servedInput == null) continue;
                 final Operator servedOperator = servedInput.getOwner();
+                Tuple<Operator, OptimizationContext> activatorKey = EnumerationActivator.createKey(servedOperator, optimizationCtx);
                 EnumerationActivator enumerationActivator = this.enumerationActivators.computeIfAbsent(
-                        servedOperator, EnumerationActivator::new);
+                        activatorKey, key -> new EnumerationActivator(key.getField0(), key.getField1()));
                 enumerationActivator.register(processedEnumeration, servedInput);
                 if (enumerationActivator.canBeActivated()) {
-                    this.enumerationActivators.remove(enumerationActivator.activatableOperator);
+                    this.enumerationActivators.remove(enumerationActivator.getKey());
                     this.activatedEnumerations.add(enumerationActivator);
                 }
                 numDownstreamActivations++;
@@ -426,8 +433,9 @@ public class PlanEnumerator {
                     final InputSlot<?> input = outputService.getField1();
                     if (input == null) continue;
                     final OutputSlot<?> output = outputService.getField0();
+                    Tuple<OutputSlot<?>, OptimizationContext> activatorKey = ConcatenationActivator.createKey(output, optimizationCtx);
                     final ConcatenationActivator concatenationActivator = this.concatenationActivators.computeIfAbsent(
-                            output, ConcatenationActivator::new);
+                            activatorKey, key -> new ConcatenationActivator(key.getField0(), key.getField1()));
                     concatenationActivator.planEnumeration = processedEnumeration;
                 }
 
@@ -437,7 +445,8 @@ public class PlanEnumerator {
             for (InputSlot requestedInput : processedEnumeration.getRequestedInputSlots()) {
                 final OutputSlot requestedOutput = requestedInput.getOccupant();
                 if (requestedOutput == null) continue;
-                final ConcatenationActivator activator = this.concatenationActivators.get(requestedOutput);
+                Tuple<OutputSlot<?>, OptimizationContext> activatorKey = ConcatenationActivator.createKey(requestedOutput, optimizationCtx);
+                final ConcatenationActivator activator = this.concatenationActivators.get(activatorKey);
                 boolean wasActivated = activator.canBeActivated();
                 activator.register(processedEnumeration, requestedInput);
                 if (!wasActivated && activator.canBeActivated()) {
@@ -456,10 +465,11 @@ public class PlanEnumerator {
      * did not allow to construct a valid {@link PlanEnumeration}.
      */
     private void constructResultEnumeration() {
-        final PlanEnumeration resultEnumeration = this.completedEnumerations.stream()
-                .map(instance -> instance.escape(this.enumeratedAlternative))
-                .reduce(PlanEnumeration::join)
-                .orElse(null);
+//        final PlanEnumeration resultEnumeration = this.completedEnumerations.stream()
+//                .map(instance -> instance.escape(this.enumeratedAlternative))
+//                .reduce(PlanEnumeration::join)
+//                .orElse(null);
+        final PlanEnumeration resultEnumeration = RheemCollections.getSingleOrNull(this.completedEnumerations);
         this.resultReference = new AtomicReference<>(resultEnumeration);
     }
 
@@ -483,6 +493,11 @@ public class PlanEnumerator {
         private final Operator activatableOperator;
 
         /**
+         * The {@link OptimizationContext} in that the {@link #activatableOperator} resides.
+         */
+        private final OptimizationContext optimizationContext;
+
+        /**
          * Collects the {@link PlanEnumeration}s for the various inputs.
          */
         private final PlanEnumeration[] activationCollector;
@@ -492,8 +507,9 @@ public class PlanEnumerator {
          *
          * @param activatableOperator should be eventually activated
          */
-        private EnumerationActivator(Operator activatableOperator) {
+        private EnumerationActivator(Operator activatableOperator, OptimizationContext optimizationContext) {
             this.activatableOperator = activatableOperator;
+            this.optimizationContext = optimizationContext;
             this.activationCollector = new PlanEnumeration[this.activatableOperator.getNumInputs()];
         }
 
@@ -519,6 +535,18 @@ public class PlanEnumerator {
         public Operator getOperator() {
             return this.activatableOperator;
         }
+
+        public OptimizationContext getOptimizationContext() {
+            return this.optimizationContext;
+        }
+
+        public Tuple<Operator, OptimizationContext> getKey() {
+            return createKey(this.activatableOperator, this.optimizationContext);
+        }
+
+        public static Tuple<Operator, OptimizationContext> createKey(Operator operator, OptimizationContext optimizationContext) {
+            return new Tuple<>(operator, optimizationContext);
+        }
     }
 
     /**
@@ -530,6 +558,11 @@ public class PlanEnumerator {
          * Should be eventually activated.
          */
         private PlanEnumeration planEnumeration;
+
+        /**
+         * The {@link OptimizationContext} for the {@link #planEnumeration}.
+         */
+        private final OptimizationContext optimizationContext;
 
         /**
          * Collects the {@link PlanEnumeration}s for various adjacent {@link InputSlot}s.
@@ -546,9 +579,10 @@ public class PlanEnumerator {
          */
         private final OutputSlot<?> outputSlot;
 
-        private ConcatenationActivator(OutputSlot<?> outputSlot) {
+        private ConcatenationActivator(OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
             assert !outputSlot.getOccupiedSlots().isEmpty();
             this.outputSlot = outputSlot;
+            this.optimizationContext = optimizationContext;
             this.numRequiredActivations = outputSlot.getOccupiedSlots().size();
             this.activationCollector = new HashMap<>(this.numRequiredActivations);
         }
@@ -574,6 +608,18 @@ public class PlanEnumerator {
 
         public OutputSlot<?> getOutputSlot() {
             return this.outputSlot;
+        }
+
+        public Tuple<OutputSlot<?>, OptimizationContext> getKey() {
+            return createKey(this.outputSlot, this.optimizationContext);
+        }
+
+        public static Tuple<OutputSlot<?>, OptimizationContext> createKey(OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
+            return new Tuple<>(outputSlot, optimizationContext);
+        }
+
+        public OptimizationContext getOptimizationContext() {
+            return optimizationContext;
         }
     }
 

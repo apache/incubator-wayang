@@ -1,5 +1,6 @@
 package org.qcri.rheem.spark.channels;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -39,21 +40,21 @@ public class BroadcastChannel extends Channel {
     public static class Initializer implements SparkChannelInitializer {
 
         @Override
-        public RddChannel provideRddChannel(Channel channel) {
+        public RddChannel provideRddChannel(Channel channel, OptimizationContext optimizationContext) {
             throw new UnsupportedOperationException("Not yet implemented.");
         }
 
         @Override
-        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
             throw new UnsupportedOperationException("Not yet implemented.");
         }
 
         @Override
-        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source) {
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
             assert descriptor == BroadcastChannel.DESCRIPTOR;
 
             // Set up an intermediate Channel at first.
-            final RddChannel rddChannel = this.createRddChannel(source);
+            final RddChannel rddChannel = this.createRddChannel(source, optimizationContext);
 
             // Next, broadcast the data.
             final ExecutionTask broadcastTask = rddChannel.getConsumers().stream()

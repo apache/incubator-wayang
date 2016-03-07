@@ -75,11 +75,6 @@ public class JavaChannelManager extends DefaultChannelManager {
     }
 
     @Override
-    public boolean connect(ExecutionTask sourceTask, int outputIndex, List<Tuple<ExecutionTask, Integer>> targetDescriptors) {
-        throw new UnsupportedOperationException("Not supported anymore.");
-    }
-
-    @Override
     public JavaChannelInitializer getChannelInitializer(ChannelDescriptor channelClass) {
         return (JavaChannelInitializer) this.channelTypeDescriptors.get(channelClass).getInitializer();
     }

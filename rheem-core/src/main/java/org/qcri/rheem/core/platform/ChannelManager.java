@@ -1,16 +1,9 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
-import org.qcri.rheem.core.plan.rheemplan.Slot;
-import org.qcri.rheem.core.util.Tuple;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,9 +30,11 @@ public interface ChannelManager {
 
     ChannelDescriptor getInternalChannelDescriptor(boolean isRequestReusable);
 
-    Map<ChannelDescriptor, Channel> setUpSourceSide(Junction junction,
-                                                    List<ChannelDescriptor> preferredChannelDescriptors);
+    Map<ChannelDescriptor, Channel> setUpSourceSide(
+            Junction junction,
+            List<ChannelDescriptor> preferredChannelDescriptors,
+            OptimizationContext optimizationContext);
 
-    void setUpTargetSide(Junction junction, int targetIndex, Channel externalChannel);
+    void setUpTargetSide(Junction junction, int targetIndex, Channel externalChannel, OptimizationContext optimizationContext);
 
 }

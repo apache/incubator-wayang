@@ -226,7 +226,7 @@ public class Configuration {
         }
         {
             ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantProvider<>(TimeEstimate.expectionValueComparator());
+                    new ConstantProvider<>(TimeEstimate.expectationValueComparator());
             ConstantProvider<Comparator<TimeEstimate>> overrideProvider =
                     new ConstantProvider<>(defaultProvider);
             configuration.setTimeEstimateComparatorProvider(overrideProvider);
@@ -243,7 +243,7 @@ public class Configuration {
         }
         {
             ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantProvider<>(TimeEstimate.expectionValueComparator());
+                    new ConstantProvider<>(TimeEstimate.expectationValueComparator());
             ConstantProvider<Comparator<TimeEstimate>> overrideProvider =
                     new ConstantProvider<>(defaultProvider);
             configuration.setTimeEstimateComparatorProvider(overrideProvider);

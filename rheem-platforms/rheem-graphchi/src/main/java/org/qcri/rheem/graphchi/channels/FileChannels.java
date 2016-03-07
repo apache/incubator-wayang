@@ -1,6 +1,7 @@
 package org.qcri.rheem.graphchi.channels;
 
 import org.qcri.rheem.basic.channels.FileChannel;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -19,14 +20,14 @@ public class FileChannels {
     public static class Initializer implements ChannelInitializer {
 
         @Override
-        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
             final FileChannel fileChannel = new FileChannel((FileChannel.Descriptor) descriptor);
             fileChannel.addPath(FileChannel.pickTempPath());
             return new Tuple<>(fileChannel, fileChannel);
         }
 
         @Override
-        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source) {
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
             throw new UnsupportedOperationException("Not (yet) implemented.");
         }
     }

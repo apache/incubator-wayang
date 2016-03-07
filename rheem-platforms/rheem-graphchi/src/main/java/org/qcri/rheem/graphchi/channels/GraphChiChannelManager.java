@@ -1,6 +1,7 @@
 package org.qcri.rheem.graphchi.channels;
 
 import org.qcri.rheem.basic.channels.FileChannel;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -38,7 +39,7 @@ public class GraphChiChannelManager extends DefaultChannelManager {
     }
 
     @Override
-    public Map<ChannelDescriptor, Channel> setUpSourceSide(Junction junction, List<ChannelDescriptor> preferredChannelDescriptors) {
+    public Map<ChannelDescriptor, Channel> setUpSourceSide(Junction junction, List<ChannelDescriptor> preferredChannelDescriptors, OptimizationContext optimizationContext) {
         // The GraphChi uses a simpler model for Channels: it waives internal Channels and operates directly on
         // external Channels.
 
@@ -52,7 +53,7 @@ public class GraphChiChannelManager extends DefaultChannelManager {
 
         // Create the Channel.
         final ChannelInitializer channelInitializer = this.getChannelInitializer(channelDescriptor);
-        final Tuple<Channel, Channel> channelSetup = channelInitializer.setUpOutput(channelDescriptor, junction.getSourceOutput());
+        final Tuple<Channel, Channel> channelSetup = channelInitializer.setUpOutput(channelDescriptor, junction.getSourceOutput(), optimizationContext);
         junction.setSourceChannel(channelSetup.getField0());
 
         // Construct and return the result.
@@ -64,7 +65,7 @@ public class GraphChiChannelManager extends DefaultChannelManager {
     }
 
     @Override
-    public void setUpTargetSide(Junction junction, int targetIndex, Channel externalChannel) {
+    public void setUpTargetSide(Junction junction, int targetIndex, Channel externalChannel, OptimizationContext optimizationContext) {
         // The GraphChi uses a simpler model for Channels: it waives internal Channels and operates directly on
         // external Channels.
 

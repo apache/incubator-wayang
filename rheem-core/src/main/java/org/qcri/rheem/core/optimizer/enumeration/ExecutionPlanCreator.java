@@ -288,7 +288,8 @@ public class ExecutionPlanCreator extends AbstractTopologicalTraversal<Void,
 
 
             // Create the connections.
-            return platform.getChannelManager().connect(this.executionTask, outputIndex, targetExecutionTasks);
+            throw new RuntimeException("todo");
+//            return platform.getChannelManager().connect(this.executionTask, outputIndex, targetExecutionTasks);
         }
 
         private void createActivation(InputSlot<Object> targetInput, Collection<Activation> collector) {

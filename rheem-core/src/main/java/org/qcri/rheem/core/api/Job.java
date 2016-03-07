@@ -85,7 +85,7 @@ public class Job {
 
     private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
             (producerTask, channel, consumerTask) -> {
-                final CardinalityEstimate ce = channel.getCardinalityEstimate();
+                final CardinalityEstimate ce = channel.getCardinalityEstimate(optimizationContext);
                 return ce.getCorrectnessProbability() >= this.minConfidence
                         && CardinalityBreakpoint.calculateSpread(ce) <= this.maxSpread;
             };
@@ -183,7 +183,7 @@ public class Job {
         this.stopWatch.start("Cardinality&Load Estimation");
         if (this.cardinalityEstimatorManager == null) {
             this.stopWatch.start("Cardinality&Load Estimation", "Create OptimizationContext");
-            this.optimizationContext = new OptimizationContext(this.rheemPlan);
+            this.optimizationContext = new OptimizationContext(this.rheemPlan, this.configuration);
             this.stopWatch.stop("Cardinality&Load Estimation", "Create OptimizationContext");
 
             this.stopWatch.start("Cardinality&Load Estimation", "Create CardinalityEstimationManager");

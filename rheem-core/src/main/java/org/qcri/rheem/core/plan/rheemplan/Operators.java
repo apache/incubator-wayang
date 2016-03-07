@@ -133,6 +133,6 @@ public class Operators {
         return Arrays.stream(compositeOperator.getAllInputs())
                 .flatMap(inputSlot -> operatorContainer.getSlotMapping().resolveDownstream(inputSlot).stream())
                 .map(InputSlot::getOwner)
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 }

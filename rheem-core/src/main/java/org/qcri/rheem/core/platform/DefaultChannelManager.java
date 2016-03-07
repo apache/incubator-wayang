@@ -2,6 +2,7 @@ package org.qcri.rheem.core.platform;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -35,8 +36,11 @@ public abstract class DefaultChannelManager implements ChannelManager {
     }
 
     @Override
-    public Map<ChannelDescriptor, Channel> setUpSourceSide(Junction junction,
-                                                           List<ChannelDescriptor> preferredChannelDescriptors) {
+    public Map<ChannelDescriptor, Channel> setUpSourceSide(
+            Junction junction,
+            List<ChannelDescriptor> preferredChannelDescriptors,
+            OptimizationContext optimizationContext) {
+
         // Find out if we need a reusable internal Channel at first. This is the case if we have multiple consumers.
         final ChannelManager sourceChannelManager = junction.getSourceChannelManager();
         int numDistinctExternalChannels = (int) preferredChannelDescriptors.stream()
@@ -51,7 +55,7 @@ public abstract class DefaultChannelManager implements ChannelManager {
         boolean isRequestReusableInternalChannel = hasInternalReusableChannel ||
                 (numDistinctExternalChannels + numInternalChannels) > 1;
 
-        // Set up the internal source Channel.
+        // Pick the internal ChannelDescriptors.
         final List<ChannelDescriptor> supportedOutputChannels = junction.getSourceOperator()
                 .getSupportedOutputChannels(junction.getSourceOutput().getIndex());
         final List<ChannelDescriptor> internalChannelDescriptors = new ArrayList<>(junction.getTargetInputs().size());
@@ -81,9 +85,10 @@ public abstract class DefaultChannelManager implements ChannelManager {
         }
 
         // Set up the internal Channel.
+        OptimizationContext forkOptimizationCtx = new OptimizationContext(optimizationContext);
         final ChannelInitializer internalChannelInitializer = sourceChannelManager.getChannelInitializer(internalChannelDescriptor);
         final Tuple<Channel, Channel> internalSourceChannelSetup = internalChannelInitializer.setUpOutput(
-                internalChannelDescriptor, junction.getSourceOutput());
+                internalChannelDescriptor, junction.getSourceOutput(), forkOptimizationCtx);
         junction.setSourceChannel(internalSourceChannelSetup.field0);
         final Channel outboundInternalSourceChannel = internalSourceChannelSetup.field1;
 
@@ -104,7 +109,7 @@ public abstract class DefaultChannelManager implements ChannelManager {
             // Get or set up the Channel.
             externalChannels.computeIfAbsent(extChannelDescriptor, cd -> {
                 final ChannelInitializer channelInitializer = sourceChannelManager.getChannelInitializer(cd);
-                return channelInitializer.setUpOutput(cd, outboundInternalSourceChannel);
+                return channelInitializer.setUpOutput(cd, outboundInternalSourceChannel, forkOptimizationCtx);
             });
         }
 
@@ -151,7 +156,7 @@ public abstract class DefaultChannelManager implements ChannelManager {
     }
 
     @Override
-    public void setUpTargetSide(Junction junction, int targetIndex, Channel externalChannel) {
+    public void setUpTargetSide(Junction junction, int targetIndex, Channel externalChannel, OptimizationContext optimizationContext) {
 
         // Set up an internal Channel for the target InputSlot.
         final InputSlot<?> targetInput = junction.getTargetInput(targetIndex);
@@ -167,7 +172,8 @@ public abstract class DefaultChannelManager implements ChannelManager {
         final ChannelManager targetChannelManager = targetOperator.getPlatform().getChannelManager();
         final ChannelInitializer targetChannelInitializer =
                 targetChannelManager.getChannelInitializer(internalTargetChannelDescriptor);
-        final Channel internalTargetChannel = targetChannelInitializer.setUpOutput(internalTargetChannelDescriptor, externalChannel);
+        final Channel internalTargetChannel = targetChannelInitializer.setUpOutput(
+                internalTargetChannelDescriptor, externalChannel, optimizationContext);
         junction.setTargetChannel(targetIndex, internalTargetChannel);
     }
 

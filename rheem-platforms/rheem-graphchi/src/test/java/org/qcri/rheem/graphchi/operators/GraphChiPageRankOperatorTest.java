@@ -3,7 +3,6 @@ package org.qcri.rheem.graphchi.operators;
 import org.junit.Test;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
 import org.qcri.rheem.graphchi.channels.GraphChiChannelManager;
@@ -26,12 +25,12 @@ public class GraphChiPageRankOperatorTest {
 
         final ExecutionOperator outputOperator = mock(ExecutionOperator.class);
         when(outputOperator.getNumOutputs()).thenReturn(1);
-        FileChannel inputFile = new FileChannel(GraphChiChannelManager.HDFS_TSV_DESCRIPTOR, new ExecutionTask(outputOperator), 0, null);
+        FileChannel inputFile = new FileChannel(GraphChiChannelManager.HDFS_TSV_DESCRIPTOR);
         inputFile.addPath(this.getClass().getResource("/test.edgelist").toString());
 
         final ExecutionOperator inputOperator = mock(ExecutionOperator.class);
         when(inputOperator.getNumOutputs()).thenReturn(1);
-        FileChannel outputFile = new FileChannel(GraphChiChannelManager.HDFS_TSV_DESCRIPTOR, new ExecutionTask(inputOperator), 0, null);
+        FileChannel outputFile = new FileChannel(GraphChiChannelManager.HDFS_TSV_DESCRIPTOR);
         final File tempFile = File.createTempFile("rheem-graphchi", "bin");
         tempFile.deleteOnExit();
         outputFile.addPath(tempFile.toURI().toString());
