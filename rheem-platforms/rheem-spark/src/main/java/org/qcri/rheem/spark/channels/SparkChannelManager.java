@@ -32,7 +32,7 @@ public class SparkChannelManager extends DefaultChannelManager {
     private final List<ChannelDescriptor> allSupportedChannels = new LinkedList<>();
 
     public SparkChannelManager(Platform platform) {
-        super(platform, RddChannel.DESCRIPTOR, BroadcastChannel.DESCRIPTOR);
+        super(platform, RddChannel.DESCRIPTOR, RddChannel.DESCRIPTOR);
         this.initializeChannelTypeDescriptors();
     }
 

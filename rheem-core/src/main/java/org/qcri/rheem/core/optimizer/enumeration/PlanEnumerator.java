@@ -364,8 +364,9 @@ public class PlanEnumerator {
             final PlanEnumeration alternativeEnumeration = alternativeEnumerator.enumerate(false);
 
             if (alternativeEnumeration != null) {
-                if (result == null) result = alternativeEnumeration.escape(alternative);
-                else result.unionInPlace(alternativeEnumeration);
+                final PlanEnumeration escapedEnumeration = alternativeEnumeration.escape(alternative);
+                if (result == null) result = escapedEnumeration;
+                else result.unionInPlace(escapedEnumeration);
             }
         }
         return result;
