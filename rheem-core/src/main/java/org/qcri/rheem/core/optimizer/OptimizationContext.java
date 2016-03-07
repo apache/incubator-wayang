@@ -242,6 +242,31 @@ public class OptimizationContext {
     }
 
     /**
+     * @return whether there is {@link TimeEstimate} for each {@link ExecutionOperator}
+     */
+    public boolean isTimeEstimatesComplete() {
+        boolean isComplete = true;
+        for (OperatorContext operatorContext : operatorContexts.values()) {
+            if (operatorContext.getOperator().isExecutionOperator() && operatorContext.getTimeEstimate() == null) {
+                this.logger.warn("No TimeEstimate for {}.", operatorContext);
+                isComplete = false;
+            }
+        }
+
+        if (this.base != null) {
+            isComplete &= this.base.isTimeEstimatesComplete();
+        }
+        
+        for (LoopContext loopContext : this.loopContexts.values()) {
+            for (OptimizationContext iterationContext : loopContext.getIterationContexts()) {
+                isComplete &= iterationContext.isTimeEstimatesComplete();
+            }
+        }
+
+        return isComplete;
+    }
+
+    /**
      * Represents a single optimization context of an {@link Operator}. This can be thought of as a single, virtual
      * execution of the {@link Operator}.
      */

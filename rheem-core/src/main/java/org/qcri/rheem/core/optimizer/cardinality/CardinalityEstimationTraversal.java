@@ -330,11 +330,7 @@ public class CardinalityEstimationTraversal {
 
             // Go through all relevant operators of and create EstimatorActivators.
             PlanTraversal.downstream()
-                    .withCallback((operator) -> {
-                        for (OutputSlot<?> outputSlot : operator.getAllOutputs()) {
-                            this.addAndRegisterActivator(outputSlot);
-                        }
-                    })
+                    .withCallback(this::addAndRegisterActivator)
                     .followingOutputsIf(output -> !this.terminalOutputSlots.contains(output))
                     .traverse(this.sourceOperators)
                     .traverse(distinctInputs.stream().map(InputSlot::getOwner));
@@ -362,21 +358,21 @@ public class CardinalityEstimationTraversal {
         }
 
         /**
-         * If there is no registered {@link Activator} for the owner of the {@code outputSlot} and/or no
+         * If there is no registered {@link Activator} for the {@code operator} and/or no
          * {@link Activation}, then these will be created, registered, and connected.
+         * @param operator
          */
-        private void addAndRegisterActivator(OutputSlot<?> outputSlot) {
-            // See if the output slot has already been processed.
-            Activator activator = this.getCachedActivator(outputSlot);
-            if (activator != null) {
-                return;
-            }
+        private void addAndRegisterActivator(Operator operator) {
+            // The operator should not have been processed yet.
+            assert !this.createdActivators.containsKey(operator);
 
             // Otherwise, try to create the activator.
-            activator = this.createActivator(outputSlot);
+            Activator activator = this.createActivator(operator);
 
             // Register existing dependent activators.
-            this.registerDependentActivations(outputSlot, activator);
+            for (OutputSlot<?> outputSlot : operator.getAllOutputs()) {
+                this.registerDependentActivations(outputSlot, activator);
+            }
 
             // Register with required activators.
             this.registerAsDependentActivation(activator);
@@ -391,12 +387,11 @@ public class CardinalityEstimationTraversal {
         }
 
         /**
-         * Create and register an {@link Activator} for the owner of the {@code outputSlot}.
+         * Create and register an {@link Activator} for the {@code operator}.
          *
          * @return the newly created {@link Activator}
          */
-        protected Activator createActivator(OutputSlot<?> outputSlot) {
-            final Operator operator = outputSlot.getOwner();
+        protected Activator createActivator(Operator operator) {
             final Activator pusherActivator = new Activator(operator, this.configuration);
             this.createdActivators.put(operator, pusherActivator);
             return pusherActivator;

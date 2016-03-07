@@ -54,6 +54,9 @@ public abstract class CardinalityPusher {
                 this.logger.trace("Pushing {} into {}.", Arrays.toString(opCtx.getInputCardinalities()), opCtx.getOperator());
             }
             this.doPush(opCtx, configuration);
+        }
+
+        if (opCtx.getTimeEstimate() == null) {
             opCtx.updateTimeEstimate(configuration);
         }
     }

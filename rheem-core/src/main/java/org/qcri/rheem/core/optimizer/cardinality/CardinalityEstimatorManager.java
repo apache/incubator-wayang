@@ -46,6 +46,7 @@ public class CardinalityEstimatorManager {
     public void pushCardinalities() {
         this.getPlanTraversal().traverse(this.optimizationContext, this.configuration);
         this.optimizationContext.clearMarks();
+        assert this.optimizationContext.isTimeEstimatesComplete();
     }
 
     public CardinalityEstimationTraversal getPlanTraversal() {

@@ -333,6 +333,8 @@ public class PlanEnumerator {
                     lastOperator.getOutput(0),
                     Collections.singletonMap(operator.getInput(0), operatorEnumeration),
                     optimizationContext);
+
+            lastOperator = operator;
         }
 
         return branchEnumeration;

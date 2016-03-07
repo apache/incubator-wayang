@@ -247,12 +247,9 @@ public class Job {
                                               Set<ExecutionStage> executedStages) {
 
         return executionPlans.stream()
-                .filter(plan -> (existingPlan == null ?
-                        plan.createExecutionPlan() :
-                        plan.createExecutionPlan(existingPlan, openChannels, executedStages)) != null)
                 .reduce((p1, p2) -> {
-                    final TimeEstimate t1 = p1.getExecutionPlan().estimateExecutionTime(this.configuration);
-                    final TimeEstimate t2 = p2.getExecutionPlan().estimateExecutionTime(this.configuration);
+                    final TimeEstimate t1 = p1.getTimeEstimate();
+                    final TimeEstimate t2 = p2.getTimeEstimate();
                     return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
                 })
                 .map(plan -> {
