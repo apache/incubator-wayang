@@ -3,8 +3,8 @@ package org.qcri.rheem.core.optimizer.enumeration;
 import org.qcri.rheem.core.plan.executionplan.*;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
+import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.util.Tuple;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -105,6 +105,8 @@ public class ExecutionPlanCreator
                     if (channelInitializer == null) {
                         throw new AbortException(String.format("Cannot connect %s to %s.", channel, consumerTask));
                     }
+                    // Is this correct?
+                    channelCopy.addConsumer(consumerTask, consumerInput.getIndex());
                     // todo: rewrite the whole thing
 //                    channelInitializer.setUpInput(channelCopy, consumerTask, consumerInput.getIndex());
                     this.startActivations.add(new Activation(consumerActivator, consumerInput.getIndex()));
@@ -251,7 +253,7 @@ public class ExecutionPlanCreator
             // Create a Channel for each OutputSlot of the wrapped Operator.
             Collection<Activation> collector = new LinkedList<>();
             for (int outputIndex = 0; outputIndex < this.operator.getNumOutputs(); outputIndex++) {
-                if (!this.establishChannels(outputIndex, platform, collector)) return null;
+                this.connectToSuccessorTasks(outputIndex, platform, collector);
             }
 
             // If we could not create any Activation, then we safe the current operator.
@@ -262,35 +264,29 @@ public class ExecutionPlanCreator
             return collector;
         }
 
-        private boolean establishChannels(int outputIndex, Platform platform, Collection<Activation> collector) {
-            // Collect all InputSlots that are connected to the current OutputSlot.
-            final List<InputSlot<Object>> targetInputs = this.operator
-                    .getOutermostOutputSlots(this.operator.getOutput(outputIndex).unchecked())
-                    .stream()
-                    .flatMap(output -> output.getOccupiedSlots().stream())
-                    .flatMap(ExecutionPlanCreator.this::findExecutionOperatorInputs)
-                    .map(InputSlot::unchecked)
-                    .collect(Collectors.toList());
+        private void connectToSuccessorTasks(int outputIndex, Platform platform, Collection<Activation> collector) {
+            final OutputSlot<?> output = this.operator.getOutput(outputIndex);
+            for (OutputSlot<?> outerOutput : this.operator.getOutermostOutputSlots(output)) {
+                final Junction junction = ExecutionPlanCreator.this.partialPlan.getJunction(outerOutput);
+                assert junction != null : String.format("No junction found for %s.", outerOutput);
+                this.executionTask.setOutputChannel(outputIndex, junction.getSourceChannel());
 
-            // Create the activations already.
-            for (InputSlot<Object> targetInput : targetInputs) {
-                this.createActivation(targetInput, collector);
+                for (int targetIndex = 0; targetIndex < junction.getNumTargets(); targetIndex++) {
+                    final Channel targetChannel = junction.getTargetChannel(targetIndex);
+                    final InputSlot<?> targetInput = junction.getTargetInput(targetIndex);
+                    final ExecutionTask successorTask =
+                            ExecutionPlanCreator.this.getOrCreateExecutionTask((ExecutionOperator) targetInput.getOwner());
+                    targetChannel.addConsumer(successorTask, targetInput.getIndex());
+
+                    this.createActivation(targetInput.unchecked(), collector);
+                }
             }
-
-            final List<Tuple<ExecutionTask, Integer>> targetExecutionTasks =
-                    targetInputs.stream()
-                            .map(input -> new Tuple<>(
-                                    ExecutionPlanCreator.this.getOrCreateExecutionTask((ExecutionOperator) input.getOwner()),
-                                    input.getIndex()
-                            ))
-                            .collect(Collectors.toList());
-
-
-            // Create the connections.
-            throw new RuntimeException("todo");
-//            return platform.getChannelManager().connect(this.executionTask, outputIndex, targetExecutionTasks);
         }
 
+        /**
+         * Creates an {@link Activator} for the {@link ExecutionOperator} idenfied by the {@code targetInput} and
+         * adds an {@link Activation} to it.
+         */
         private void createActivation(InputSlot<Object> targetInput, Collection<Activation> collector) {
             final Operator targetOperator = targetInput.getOwner();
             if (targetOperator.isAlternative()) {

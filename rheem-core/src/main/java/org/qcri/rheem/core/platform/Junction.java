@@ -9,6 +9,7 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -172,6 +173,11 @@ public class Junction {
         return this.sourceOutput;
     }
 
+    @SuppressWarnings("unchecked")
+    public Collection<OutputSlot<?>> getOuterSourceOutputs() {
+        return (Collection) this.getSourceOperator().getOutermostOutputSlots(this.getSourceOutput());
+    }
+
     public List<InputSlot<?>> getTargetInputs() {
         return this.targetInputs;
     }
@@ -192,9 +198,17 @@ public class Junction {
         return this.targetChannels;
     }
 
+    public Channel getTargetChannel(int targetIndex) {
+        return this.targetChannels.get(targetIndex);
+    }
+
     public void setTargetChannel(int targetIndex, Channel targetChannel) {
         assert this.targetChannels.get(targetIndex) == null;
         this.targetChannels.set(targetIndex, targetChannel);
+    }
+
+    public int getNumTargets() {
+        return this.targetInputs.size();
     }
 
     public TimeEstimate getTimeEstimate() {

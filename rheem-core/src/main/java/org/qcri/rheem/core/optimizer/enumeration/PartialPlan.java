@@ -86,6 +86,8 @@ public class PartialPlan {
         this.planEnumeration = planEnumeration;
         this.junctions = junctions;
         this.operators = operators;
+
+        assert this.planEnumeration != null;
     }
 
 
@@ -216,7 +218,8 @@ public class PartialPlan {
     public static Collection<PartialPlan> concatenate(PlanEnumeration baseEnumeration,
                                                       OutputSlot<?> openOutputSlot,
                                                       Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
-                                                      OptimizationContext optimizationContext) {
+                                                      OptimizationContext optimizationContext,
+                                                      PlanEnumeration concatenationEnumeration) {
 
         Collection<PartialPlan> concatenations = new LinkedList<>();
 
@@ -261,7 +264,7 @@ public class PartialPlan {
                 final List<Set<PartialPlan>> targetPlans = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getValue);
                 for (List<PartialPlan> targetPlanList : RheemCollections.streamedCrossProduct(targetPlans)) {
                     for (PartialPlan basePlan : basePlanGroupEntry.getValue()) {
-                        PartialPlan concatenatedPlan = basePlan.concatenate(targetPlanList, junction);
+                        PartialPlan concatenatedPlan = basePlan.concatenate(targetPlanList, junction, concatenationEnumeration);
                         concatenations.add(concatenatedPlan);
                     }
                 }
@@ -276,9 +279,9 @@ public class PartialPlan {
      * Creates a new instance that forms the concatenation of this instance with the {@code targetPlans} via the
      * {@code junction}.
      */
-    private PartialPlan concatenate(List<PartialPlan> targetPlans, Junction junction) {
+    private PartialPlan concatenate(List<PartialPlan> targetPlans, Junction junction, PlanEnumeration concatenationEnumeration) {
         final PartialPlan concatenation = new PartialPlan(
-                null,
+                concatenationEnumeration,
                 new HashMap<>(this.junctions.size() + 1),
                 new HashSet<>(this.settledAlternatives.size(), targetPlans.size() * 4) // ballpark figure
         );
@@ -288,10 +291,12 @@ public class PartialPlan {
         concatenation.settledAlternatives.putAll(this.settledAlternatives);
         concatenation.addToTimeEstimate(this.getTimeEstimate());
 
-        concatenation.junctions.put(junction.getSourceOutput(), junction);
+        junction.getOuterSourceOutputs().forEach(oso -> concatenation.junctions.put(oso, junction));
         concatenation.addToTimeEstimate(junction.getTimeEstimate());
 
         for (PartialPlan targetPlan : targetPlans) {
+            concatenation.operators.addAll(targetPlan.operators);
+            concatenation.junctions.putAll(targetPlan.junctions);
             concatenation.settledAlternatives.putAll(targetPlan.settledAlternatives);
             concatenation.addToTimeEstimate(targetPlan.getTimeEstimate());
         }
@@ -420,5 +425,9 @@ public class PartialPlan {
 
     public TimeEstimate getTimeEstimate() {
         return this.timeEstimate;
+    }
+
+    public Junction getJunction(OutputSlot<?> output) {
+        return this.junctions.get(output);
     }
 }

@@ -248,7 +248,8 @@ public class PlanEnumeration {
         result.partialPlans.addAll(PartialPlan.concatenate(baseEnumeration,
                 openOutputSlot,
                 targetEnumerations,
-                optimizationContext));
+                optimizationContext,
+                result));
 
         // Build the instance.
         return result;

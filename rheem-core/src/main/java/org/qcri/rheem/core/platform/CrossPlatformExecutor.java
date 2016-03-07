@@ -195,12 +195,12 @@ public class CrossPlatformExecutor {
         final ExecutionProfile executionProfile = executor.execute(stage);
         long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime));
-        throw new RuntimeException("todo");
+//        throw new RuntimeException("todo");
 //        executionProfile.getCardinalities().forEach((channel, cardinality) ->
 //                CrossPlatformExecutor.this.logger.debug("Cardinality of {}: actual {}, estimated {}",
 //                        channel, cardinality, channel.getCardinalityEstimate(optimizationContext))
 //        );
-//        return executionProfile;
+        return executionProfile;
     }
 
     /**

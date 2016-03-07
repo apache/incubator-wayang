@@ -158,7 +158,7 @@ public abstract class Channel {
         if (this.getProducer() == null) return null;
         final OutputSlot<?> output = this.getProducer().getOutputSlotFor(this);
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(output.getOwner());
-        return operatorContext.getInputCardinality(output.getIndex());
+        return operatorContext.getOutputCardinality(output.getIndex());
     }
 
     public boolean isMarkedForInstrumentation() {
