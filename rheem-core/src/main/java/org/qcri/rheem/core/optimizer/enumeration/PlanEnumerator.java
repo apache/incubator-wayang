@@ -126,25 +126,6 @@ public class PlanEnumerator {
     }
 
     /**
-     * TODO
-     * Fork constructor.
-     * <p>Forking happens to enumerate a certain {@link OperatorAlternative.Alternative} in a recursive manner.</p>
-     */
-    private PlanEnumerator(OperatorAlternative.Alternative enumeratedAlternative,
-                           OptimizationContext optimizationContext,
-                           Collection<PlanEnumerationPruningStrategy> pruningStrategies,
-                           Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
-                           Map<ExecutionOperator, ExecutionTask> executedTasks) {
-        this(Operators.collectStartOperators(enumeratedAlternative),
-                optimizationContext,
-                pruningStrategies,
-                enumeratedAlternative,
-                presettledAlternatives,
-                executedTasks
-        );
-    }
-
-    /**
      * Basic constructor that will always be called and initializes all fields.
      */
     private PlanEnumerator(Collection<Operator> startOperators,
@@ -277,17 +258,32 @@ public class PlanEnumerator {
             }
             branch.add(currentOperator);
             // Try to advance. This requires certain conditions, though.
-            if (currentOperator.getNumOutputs() != 1) {
-                this.logger.trace("Stopping branch, because operator does not have exactly one output.");
-                break;
+            OutputSlot<?> followableOutput;
+            if (currentOperator.isLoopHead()) {
+                LoopHeadOperator loopHeadOperator = (LoopHeadOperator) currentOperator;
+                if (loopHeadOperator.getLoopBodyOutputs().size() != 1) {
+                    break;
+                }
+                followableOutput = RheemCollections.getSingle(loopHeadOperator.getLoopBodyOutputs());
+
+            } else {
+                if (currentOperator.getNumOutputs() != 1) {
+                    break;
+                }
+                followableOutput = currentOperator.getOutput(0);
             }
-            if (currentOperator.getOutput(0).getOccupiedSlots().size() != 1) {
+
+            if (followableOutput.getOccupiedSlots().size() != 1) {
                 this.logger.trace("Stopping branch, because operator does not feed exactly one operator.");
                 break;
             }
             Operator nextOperator = currentOperator.getOutput(0).getOccupiedSlots().get(0).getOwner();
             if (nextOperator.getNumInputs() != 1) {
                 this.logger.trace("Stopping branch, because next operator does not have exactly one input.");
+                break;
+            }
+
+            if (nextOperator == startOperator) {
                 break;
             }
 
@@ -315,6 +311,8 @@ public class PlanEnumerator {
                 operatorEnumeration = this.enumerateAlternative((OperatorAlternative) operator, optimizationContext);
             } else if (operator.isLoopSubplan()) {
                 operatorEnumeration = this.enumerateLoop((LoopSubplan) operator, optimizationContext);
+            } else if (operator.isLoopHead()) {
+                operatorEnumeration = PlanEnumeration.createSingleton((LoopHeadOperator) operator, optimizationContext);
             } else {
                 assert operator.isExecutionOperator();
                 operatorEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) operator, optimizationContext);
@@ -371,9 +369,22 @@ public class PlanEnumerator {
      * @return the new instance
      */
     private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative, OptimizationContext optimizationContext) {
-        return new PlanEnumerator(alternative,
+        return new PlanEnumerator(Operators.collectStartOperators(alternative),
                 optimizationContext,
                 this.pruningStrategies,
+                alternative,
+                this.presettledAlternatives,
+                this.executedTasks);
+    }
+
+    /**
+     * Fork a new instance for the {@code optimizationContext}.
+     */
+    PlanEnumerator forkFor(LoopHeadOperator loopHeadOperator, OptimizationContext optimizationContext) {
+        return new PlanEnumerator(Operators.collectStartOperators(loopHeadOperator.getContainer()),
+                optimizationContext,
+                this.pruningStrategies,
+                null,
                 this.presettledAlternatives,
                 this.executedTasks);
     }
@@ -382,8 +393,8 @@ public class PlanEnumerator {
      * Create a {@link PlanEnumeration} for the given {@code loop}.
      */
     private PlanEnumeration enumerateLoop(LoopSubplan loop, OptimizationContext operatorContext) {
-        final LoopEnumerator loopEnumerator = new LoopEnumerator(operatorContext.getNestedLoopContext(loop));
-        loopEnumerator.doExecute();
+        final LoopEnumerator loopEnumerator = new LoopEnumerator(this, operatorContext.getNestedLoopContext(loop));
+        final LoopEnumeration loopEnumeration = loopEnumerator.enumerate();
         throw new RuntimeException("Cannot enumerate loops, yet.");
     }
 

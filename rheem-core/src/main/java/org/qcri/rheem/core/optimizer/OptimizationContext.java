@@ -8,6 +8,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.util.RheemArrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -247,7 +248,9 @@ public class OptimizationContext {
     public boolean isTimeEstimatesComplete() {
         boolean isComplete = true;
         for (OperatorContext operatorContext : operatorContexts.values()) {
-            if (operatorContext.getOperator().isExecutionOperator() && operatorContext.getTimeEstimate() == null) {
+            if (operatorContext.getOperator().isExecutionOperator()
+                    && operatorContext.getTimeEstimate() == null
+                    && RheemArrays.anyMatch(operatorContext.getOutputCardinalities(), Objects::nonNull)) {
                 this.logger.warn("No TimeEstimate for {}.", operatorContext);
                 isComplete = false;
             }

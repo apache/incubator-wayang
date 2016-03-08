@@ -11,9 +11,12 @@ public class LoopEnumerator extends OneTimeExecutable {
 
     private final OptimizationContext.LoopContext loopContext;
 
+    private final PlanEnumerator planEnumerator;
+
     private LoopEnumeration loopEnumeration;
 
-    public LoopEnumerator(OptimizationContext.LoopContext loopContext) {
+    public LoopEnumerator(PlanEnumerator planEnumerator, OptimizationContext.LoopContext loopContext) {
+        this.planEnumerator = planEnumerator;
         this.loopContext = loopContext;
     }
 
@@ -26,5 +29,9 @@ public class LoopEnumerator extends OneTimeExecutable {
     protected void doExecute() {
         // Create aggregate iteration contexts.
         OptimizationContext aggregateContext = this.loopContext.createAggregateContext(0, this.loopContext.getIterationContexts().size());
+        final PlanEnumerator loopBodyEnumerator = this.planEnumerator.forkFor(this.loopContext.getLoop().getLoopHead(), aggregateContext);
+        final PlanEnumeration planEnumeration = loopBodyEnumerator.enumerate(true);
+
+        this.loopEnumeration = new LoopEnumeration(this.loopContext.getLoop());
     }
 }

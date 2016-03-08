@@ -93,6 +93,28 @@ public class PlanEnumeration {
         return enumeration;
     }
 
+    /**
+     * Create an instance for a single {@code loopHead}.
+     *
+     * @return the new instance
+     */
+    static PlanEnumeration createSingleton(LoopHeadOperator loopHead, OptimizationContext optimizationContext) {
+        final PlanEnumeration instance = new PlanEnumeration();
+        loopHead.getLoopBodyInputs().forEach(instance.requestedInputSlots::add);
+
+        for (OutputSlot outputSlot : loopHead.getLoopBodyOutputs()) {
+            List<InputSlot> inputSlots = outputSlot.getOccupiedSlots();
+            if (inputSlots.isEmpty()) {
+                inputSlots = Collections.singletonList(null); // InputSlot is probably in a surrounding plan.
+            }
+            for (InputSlot inputSlot : inputSlots) {
+                instance.servingOutputSlots.add(new Tuple<>(outputSlot, inputSlot));
+            }
+        }
+
+        return instance;
+    }
+
     static PlanEnumeration createFor(Operator inputOperator, Operator outputOperator) {
         final PlanEnumeration instance = new PlanEnumeration();
         if (!inputOperator.isSource()) {

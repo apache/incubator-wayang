@@ -1,5 +1,9 @@
 package org.qcri.rheem.core.util;
 
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+
+import java.util.function.Predicate;
+
 /**
  * Utility for handling arrays.
  */
@@ -24,5 +28,14 @@ public class RheemArrays {
      */
     public static int[] range(int to) {
         return range(0, to);
+    }
+
+    public static <T> boolean anyMatch(T[] array, Predicate<T> predicate) {
+        for (T t : array) {
+            if (predicate.test(t)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
