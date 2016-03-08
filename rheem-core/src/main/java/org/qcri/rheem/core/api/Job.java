@@ -272,8 +272,8 @@ public class Job {
      */
     private PlanEnumerator createPlanEnumerator(ExecutionPlan existingPlan) {
         final PlanEnumerator planEnumerator = existingPlan == null ?
-                new PlanEnumerator(this.rheemPlan, this.optimizationContext, this.configuration) :
-                new PlanEnumerator(this.rheemPlan, this.optimizationContext, this.configuration, existingPlan);
+                new PlanEnumerator(this.rheemPlan, this.optimizationContext) :
+                new PlanEnumerator(this.rheemPlan, this.optimizationContext, existingPlan);
         return planEnumerator;
     }
 

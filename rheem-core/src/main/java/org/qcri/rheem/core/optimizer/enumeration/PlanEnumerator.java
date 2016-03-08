@@ -1,7 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
@@ -28,11 +27,6 @@ public class PlanEnumerator {
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
-     * {@link Configuration} of the {@link Job} on whose behalf that this instance operates.
-     */
-    private final Configuration configuration;
-
-    /**
      * {@link EnumerationActivator}s that are activated and should be followed to create branches.
      */
     private final Queue<EnumerationActivator> activatedEnumerations = new LinkedList<>();
@@ -49,12 +43,6 @@ public class PlanEnumerator {
      * slots.
      */
     private final OperatorAlternative.Alternative enumeratedAlternative;
-
-    /**
-     * TODO
-     * When this instance enumerates an {@link LoopSubplan}.
-     */
-    private final LoopSubplan enumeratedLoop;
 
     /**
      * Maintain {@link EnumerationActivator} for {@link Operator}s.
@@ -95,7 +83,7 @@ public class PlanEnumerator {
     /**
      * {@link OptimizationContext} that holds all relevant task data.
      */
-    private final OptimizationContext rootOptimizationContext;
+    private final OptimizationContext optimizationContext;
 
     /**
      * Creates a new instance.
@@ -103,13 +91,10 @@ public class PlanEnumerator {
      * @param rheemPlan a hyperplan that should be used for enumeration.
      */
     public PlanEnumerator(RheemPlan rheemPlan,
-                          OptimizationContext optimizationContext,
-                          Configuration configuration) {
+                          OptimizationContext optimizationContext) {
         this(rheemPlan.collectReachableTopLevelSources(),
                 optimizationContext,
-                configuration,
                 new LinkedList<>(),
-                null,
                 null,
                 Collections.emptyMap(),
                 Collections.emptyMap());
@@ -123,14 +108,11 @@ public class PlanEnumerator {
      */
     public PlanEnumerator(RheemPlan rheemPlan,
                           OptimizationContext optimizationContext,
-                          Configuration configuration,
                           ExecutionPlan baseplan) {
 
         this(rheemPlan.collectReachableTopLevelSources(),
                 optimizationContext,
-                configuration,
                 new LinkedList<>(),
-                null,
                 null,
                 new HashMap<>(),
                 new HashMap<>());
@@ -150,38 +132,13 @@ public class PlanEnumerator {
      */
     private PlanEnumerator(OperatorAlternative.Alternative enumeratedAlternative,
                            OptimizationContext optimizationContext,
-                           Configuration configuration,
                            Collection<PlanEnumerationPruningStrategy> pruningStrategies,
                            Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
                            Map<ExecutionOperator, ExecutionTask> executedTasks) {
         this(Operators.collectStartOperators(enumeratedAlternative),
                 optimizationContext,
-                configuration,
                 pruningStrategies,
                 enumeratedAlternative,
-                null,
-                presettledAlternatives,
-                executedTasks
-        );
-    }
-
-    /**
-     * TODO
-     * Fork constructor.
-     * <p>Forking happens to enumerate a certain {@link OperatorAlternative.Alternative} in a recursive manner.</p>
-     */
-    private PlanEnumerator(LoopSubplan enumeratedLoop,
-                           OptimizationContext optimizationContext,
-                           Configuration configuration,
-                           Collection<PlanEnumerationPruningStrategy> pruningStrategies,
-                           Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
-                           Map<ExecutionOperator, ExecutionTask> executedTasks) {
-        this(Collections.singleton(enumeratedLoop.getLoopHead()),
-                optimizationContext,
-                configuration,
-                pruningStrategies,
-                null,
-                enumeratedLoop,
                 presettledAlternatives,
                 executedTasks
         );
@@ -192,26 +149,22 @@ public class PlanEnumerator {
      */
     private PlanEnumerator(Collection<Operator> startOperators,
                            OptimizationContext optimizationContext,
-                           Configuration configuration,
                            Collection<PlanEnumerationPruningStrategy> pruningStrategies,
                            OperatorAlternative.Alternative enumeratedAlternative,
-                           LoopSubplan enumeratedLoop,
                            Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
                            Map<ExecutionOperator, ExecutionTask> executedTasks) {
 
         startOperators.stream()
                 .map(operator -> new EnumerationActivator(operator, optimizationContext))
                 .forEach(this.activatedEnumerations::add);
-        this.rootOptimizationContext = optimizationContext;
-        this.configuration = configuration;
+        this.optimizationContext = optimizationContext;
         this.pruningStrategies = pruningStrategies;
         this.enumeratedAlternative = enumeratedAlternative;
-        this.enumeratedLoop = enumeratedLoop;
         this.presettledAlternatives = presettledAlternatives;
         this.executedTasks = executedTasks;
 
         // Initialize pruning strategies.
-        this.configuration.getPruningStrategiesProvider().forEach(this::addPruningStrategy);
+        this.getConfiguration().getPruningStrategiesProvider().forEach(this::addPruningStrategy);
     }
 
 
@@ -420,7 +373,6 @@ public class PlanEnumerator {
     private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative, OptimizationContext optimizationContext) {
         return new PlanEnumerator(alternative,
                 optimizationContext,
-                this.configuration,
                 this.pruningStrategies,
                 this.presettledAlternatives,
                 this.executedTasks);
@@ -433,23 +385,6 @@ public class PlanEnumerator {
         final LoopEnumerator loopEnumerator = new LoopEnumerator(operatorContext.getNestedLoopContext(loop));
         loopEnumerator.doExecute();
         throw new RuntimeException("Cannot enumerate loops, yet.");
-    }
-
-    /**
-     * Fork a new instance to enumerate the given {@code alternative}.
-     *
-     * @param loopSubplan         an {@link LoopSubplan} to be enumerated recursively
-     * @param optimizationContext
-     * @return the new instance
-     */
-    private PlanEnumerator forkFor(LoopSubplan loopSubplan, OptimizationContext optimizationContext) {
-        final OptimizationContext.LoopContext nestedLoopContext = optimizationContext.getNestedLoopContext(loopSubplan);
-        return new PlanEnumerator(loopSubplan,
-                nestedLoopContext.getInitialIterationContext(),
-                this.configuration,
-                this.pruningStrategies,
-                this.presettledAlternatives,
-                this.executedTasks);
     }
 
     private void concatenate(ConcatenationActivator concatenationActivator) {
@@ -575,11 +510,15 @@ public class PlanEnumerator {
     }
 
     private void prune(final PlanEnumeration planEnumeration) {
-        this.pruningStrategies.forEach(strategy -> strategy.prune(planEnumeration, this.configuration));
+        this.pruningStrategies.forEach(strategy -> strategy.prune(planEnumeration, this.getConfiguration()));
     }
 
     public boolean isTopLevel() {
         return this.enumeratedAlternative == null;
+    }
+
+    public Configuration getConfiguration() {
+        return this.optimizationContext.getConfiguration();
     }
 
     /**
