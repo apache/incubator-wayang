@@ -123,16 +123,21 @@ public abstract class OperatorBase implements Operator {
     @Override
     public String toString() {
         if (this.name != null) {
-            return String.format("%s[%s]", this.getClass().getSimpleName(), this.name);
+            return String.format("%s[%s]", this.getSimpleClassName(), this.name);
         }
         long numBroadcasts = Arrays.stream(this.getAllInputs()).filter(InputSlot::isBroadcast).count();
         return String.format("%s[%d%s->%d, id=%x]",
-                this.getClass().getSimpleName(),
+                this.getSimpleClassName(),
                 this.getNumInputs() - numBroadcasts,
                 numBroadcasts == 0 ? "" : "+" + numBroadcasts,
                 this.getNumOutputs(),
 //                this.getParent() == null ? "top-level" : "nested",
                 this.hashCode());
+    }
+
+    protected String getSimpleClassName() {
+        String className = this.getClass().getSimpleName();
+        return className.replaceAll("Operator", "");
     }
 
     @Override

@@ -21,7 +21,7 @@ public class FileChannels {
 
         @Override
         public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
-            final FileChannel fileChannel = new FileChannel((FileChannel.Descriptor) descriptor);
+            final FileChannel fileChannel = new FileChannel((FileChannel.Descriptor) descriptor, outputSlot);
             fileChannel.addPath(FileChannel.pickTempPath());
             return new Tuple<>(fileChannel, fileChannel);
         }

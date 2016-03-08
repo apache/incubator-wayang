@@ -141,8 +141,8 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
     @Override
     public String toString() {
-        return String.format("%s[%dx like %s, %x]",
-                this.getClass().getSimpleName(),
+        return String.format("%s[%dx ~%s, %x]",
+                this.getSimpleClassName(),
                 this.alternatives.size(),
                 this.alternatives.get(0).getOperator(),
                 this.hashCode());

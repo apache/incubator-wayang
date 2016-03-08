@@ -163,8 +163,7 @@ public class HdfsFileInitializer implements SparkChannelInitializer {
 //        }
 
         // Create the SparkObjectFileSink.
-        // FIXME: This is neither elegant nor sound, as we make assumptions on the FileChannel producer.
-        final DataSetType<?> dataSetType = fileChannel.getProducer().getOperator().getInput(0).getType();
+        final DataSetType<?> dataSetType = fileChannel.getDataSetType();
         SparkObjectFileSource<?> sparkObjectFileSource = new SparkObjectFileSource<>(fileChannel.getSinglePath(), dataSetType);
         ExecutionTask sourceTask = new ExecutionTask(sparkObjectFileSource, 1, sparkObjectFileSource.getNumOutputs());
         fileChannel.addConsumer(sourceTask, 0);
@@ -181,8 +180,7 @@ public class HdfsFileInitializer implements SparkChannelInitializer {
 //        }
 
         // Create the SparkObjectFileSink.
-        // FIXME: This is neither elegant nor sound, as we make assumptions on the FileChannel producer.
-        final DataSetType<?> dataSetType = fileChannel.getProducer().getOperator().getInput(0).getType();
+        final DataSetType<?> dataSetType = fileChannel.getDataSetType();
         SparkTsvFileSource<?> fileSource = new SparkTsvFileSource<>(fileChannel.getSinglePath(), dataSetType);
         ExecutionTask sourceTask = new ExecutionTask(fileSource, 1, fileSource.getNumOutputs());
         fileChannel.addConsumer(sourceTask, 0);

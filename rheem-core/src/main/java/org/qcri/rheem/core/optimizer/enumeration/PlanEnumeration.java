@@ -232,16 +232,20 @@ public class PlanEnumeration {
         result.servingOutputSlots.addAll(baseEnumeration.getServingOutputSlots());
         result.executedTasks.putAll(baseEnumeration.getExecutedTasks());
 
+
         for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : targetEnumerations.entrySet()) {
             final InputSlot<?> openInputSlot = entry.getKey();
             final PlanEnumeration targetEnumeration = entry.getValue();
             result.scope.addAll(targetEnumeration.getScope());
             result.requestedInputSlots.addAll(targetEnumeration.getRequestedInputSlots());
-            result.requestedInputSlots.remove(openInputSlot);
             result.servingOutputSlots.addAll(targetEnumeration.getServingOutputSlots());
             result.executedTasks.putAll(targetEnumeration.getExecutedTasks());
         }
 
+        // NB: We need to store remove the InputSlots only here, because a single targetEnumeration
+        // might service multiple InputSlots. If this targetEnumeration is then also the baseEnumeration, it might
+        // re-request already serviced InputSlots, although already deleted.
+        result.requestedInputSlots.removeAll(targetEnumerations.keySet());
         result.servingOutputSlots.removeIf(slotService -> slotService.getField0().equals(openOutputSlot));
 
         result.partialPlans.addAll(PartialPlan.concatenate(baseEnumeration,

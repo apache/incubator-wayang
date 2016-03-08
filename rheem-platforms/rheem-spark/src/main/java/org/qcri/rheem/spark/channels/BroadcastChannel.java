@@ -18,7 +18,7 @@ public class BroadcastChannel extends Channel {
     private static final boolean IS_INTERNAL = true;
 
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(
-            BroadcastChannel.class, IS_REUSABLE, IS_REUSABLE, IS_INTERNAL);
+            BroadcastChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL && IS_REUSABLE);
 
     protected BroadcastChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
         super(descriptor, outputSlot);
@@ -46,7 +46,10 @@ public class BroadcastChannel extends Channel {
 
         @Override
         public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
-            throw new UnsupportedOperationException("Not yet implemented.");
+            final SparkChannelInitializer rddInitializer = this.getChannelManager().getChannelInitializer(RddChannel.DESCRIPTOR);
+            final Tuple<Channel, Channel> rddChannelSetup = rddInitializer.setUpOutput(RddChannel.DESCRIPTOR, outputSlot, optimizationContext);
+            Channel broadcastChannel = this.setUpOutput(descriptor, rddChannelSetup.getField1(), optimizationContext);
+            return new Tuple<>(rddChannelSetup.getField0(), broadcastChannel);
         }
 
         @Override
@@ -74,6 +77,7 @@ public class BroadcastChannel extends Channel {
             } else {
                 final BroadcastChannel broadcastChannel = new BroadcastChannel(descriptor, broadcastTask.getOperator().getOutput(0));
                 broadcastTask.setOutputChannel(0, broadcastChannel);
+                source.addSibling(broadcastChannel);
                 return broadcastChannel;
             }
         }
