@@ -19,8 +19,8 @@ public class RddChannel extends Channel {
 
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(RddChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL);
 
-    protected RddChannel(ChannelDescriptor descriptor) {
-        super(descriptor);
+    protected RddChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+        super(descriptor, outputSlot);
         assert descriptor == DESCRIPTOR;
     }
 
@@ -45,7 +45,7 @@ public class RddChannel extends Channel {
 
         @Override
         public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
-            final RddChannel rddChannel = new RddChannel(descriptor);
+            final RddChannel rddChannel = new RddChannel(descriptor, outputSlot);
             return new Tuple<>(rddChannel, rddChannel);
         }
 

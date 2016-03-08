@@ -254,6 +254,7 @@ public class PlanEnumerator {
         if (branch == null) {
             return;
         }
+        this.logger.debug("Enumerating {}.", branch);
 
         // Go over the branch and create a PlanEnumeration for it.
         final OptimizationContext currentOptimizationCtx = enumerationActivator.getOptimizationContext();
@@ -401,6 +402,10 @@ public class PlanEnumerator {
                 concatenationActivator.outputSlot,
                 concatenationActivator.getAdjacentEnumerations(),
                 concatenationActivator.getOptimizationContext());
+
+        if (concatenatedEnumeration.getPartialPlans().isEmpty()) {
+            this.logger.warn("No implementations found for {}.", concatenatedEnumeration);
+        }
 
         this.postProcess(concatenatedEnumeration, concatenationActivator.optimizationContext);
     }

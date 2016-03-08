@@ -115,6 +115,8 @@ public class PartialPlan {
                             Set<InputSlot<?>> thatToThisConcatenatableInputs,
                             PlanEnumeration target) {
 
+        assert false;
+
         // Find out if the two plans do not disagree at some point.
         for (OperatorAlternative operatorAlternative : commonScope) {
             final OperatorAlternative.Alternative thisChosenAlternative = this.settledAlternatives.get(operatorAlternative);
@@ -265,10 +267,11 @@ public class PartialPlan {
                 for (List<PartialPlan> targetPlanList : RheemCollections.streamedCrossProduct(targetPlans)) {
                     for (PartialPlan basePlan : basePlanGroupEntry.getValue()) {
                         PartialPlan concatenatedPlan = basePlan.concatenate(targetPlanList, junction, concatenationEnumeration);
-                        concatenations.add(concatenatedPlan);
+                        if (concatenatedPlan != null) {
+                            concatenations.add(concatenatedPlan);
+                        }
                     }
                 }
-
             }
         }
 
@@ -295,6 +298,10 @@ public class PartialPlan {
         concatenation.addToTimeEstimate(junction.getTimeEstimate());
 
         for (PartialPlan targetPlan : targetPlans) {
+            // TODO: We still need the join!
+            if (concatenation.isSettledAlternativesContradicting(targetPlan)) {
+                return null;
+            }
             concatenation.operators.addAll(targetPlan.operators);
             concatenation.junctions.putAll(targetPlan.junctions);
             concatenation.settledAlternatives.putAll(targetPlan.settledAlternatives);
@@ -302,6 +309,18 @@ public class PartialPlan {
         }
 
         return concatenation;
+    }
+
+    private boolean isSettledAlternativesContradicting(PartialPlan that) {
+        for (Map.Entry<OperatorAlternative, OperatorAlternative.Alternative> entry : this.settledAlternatives.entrySet()) {
+            final OperatorAlternative opAlt = entry.getKey();
+            final OperatorAlternative.Alternative alternative = entry.getValue();
+            final OperatorAlternative.Alternative thatAlternative = that.settledAlternatives.get(opAlt);
+            if (thatAlternative != null && alternative != thatAlternative) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -314,6 +333,7 @@ public class PartialPlan {
     public PartialPlan escape(OperatorAlternative.Alternative alternative, PlanEnumeration newPlanEnumeration) {
         final PartialPlan escapedPartialPlan = new PartialPlan(newPlanEnumeration, this.junctions, this.operators);
         escapedPartialPlan.settledAlternatives.putAll(this.settledAlternatives);
+        assert !escapedPartialPlan.settledAlternatives.containsKey(alternative.getOperatorAlternative());
         escapedPartialPlan.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
         escapedPartialPlan.addToTimeEstimate(this.getTimeEstimate());
         return escapedPartialPlan;

@@ -2,6 +2,7 @@ package org.qcri.rheem.basic.channels;
 
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 
 import java.io.IOException;
@@ -23,7 +24,11 @@ public class FileChannel extends Channel {
     private Collection<String> paths = new LinkedList<>();
 
     public FileChannel(FileChannel.Descriptor descriptor) {
-        super(descriptor);
+        this(descriptor, null);
+    }
+
+    public FileChannel(FileChannel.Descriptor descriptor, OutputSlot<?> outputSlot) {
+        super(descriptor, outputSlot);
     }
 
     private FileChannel(FileChannel parent) {

@@ -126,12 +126,12 @@ public class HdfsFileInitializer implements JavaChannelInitializer {
     }
 
     private ExecutionTask setUpJavaObjectFileSource(FileChannel fileChannel, OptimizationContext optimizationContext) {
-        // Check if there is already is a JavaObjectFileSource in place.
-        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
-            if (consumerTask.getOperator() instanceof JavaObjectFileSource<?>) {
-                return consumerTask;
-            }
-        }
+//        // Check if there is already is a JavaObjectFileSource in place.
+//        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
+//            if (consumerTask.getOperator() instanceof JavaObjectFileSource<?>) {
+//                return consumerTask;
+//            }
+//        }
 
         // Create the JavaObjectFileSink.
         final DataSetType<?> dataSetType = fileChannel.getDataSetType();
@@ -147,12 +147,12 @@ public class HdfsFileInitializer implements JavaChannelInitializer {
     }
 
     private ExecutionTask setUpTsvFileSource(FileChannel fileChannel, OptimizationContext optimizationContext) {
-        // Check if there is already is a JavaTsvFileSource in place.
-        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
-            if (consumerTask.getOperator() instanceof JavaTsvFileSource<?>) {
-                return consumerTask;
-            }
-        }
+//        // Check if there is already is a JavaTsvFileSource in place.
+//        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
+//            if (consumerTask.getOperator() instanceof JavaTsvFileSource<?>) {
+//                return consumerTask;
+//            }
+//        }
 
         // Create the JavaObjectFileSink.
         final DataSetType<?> dataSetType = fileChannel.getDataSetType();

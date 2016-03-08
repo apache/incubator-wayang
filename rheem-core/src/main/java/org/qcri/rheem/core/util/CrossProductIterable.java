@@ -27,7 +27,8 @@ public class CrossProductIterable<T> implements Iterable<List<T>> {
 
         private List<T> vals;
 
-        private boolean hasNext;
+        private boolean hasEmptyIterator;
+
 
         private Iterator(CrossProductIterable<T> crossProductIterable) {
             // Initialize.
@@ -35,48 +36,50 @@ public class CrossProductIterable<T> implements Iterable<List<T>> {
             this.partialIterators = new ArrayList<>(this.crossProductIterable.iterables.size());
             this.vals = new ArrayList<>(this.crossProductIterable.iterables.size());
 
-            this.hasNext = true;
             for (Iterable<T> iterable : this.crossProductIterable.iterables) {
                 final java.util.Iterator<T> iterator = iterable.iterator();
                 this.partialIterators.add(iterator);
+                this.hasEmptyIterator |= !iterator.hasNext();
                 this.vals.add(null);
-                if (!(this.hasNext &= iterator.hasNext())) {
-                    return;
-                }
             }
+
         }
 
         @Override
         public boolean hasNext() {
-            return this.hasNext;
+            if (this.hasEmptyIterator) return false;
+            for (java.util.Iterator<T> partialIterator : this.partialIterators) {
+                if (partialIterator.hasNext()) return true;
+            }
+            return false;
         }
 
         @Override
         public List<T> next() {
+            assert this.hasNext();
+
             List<T> next = new ArrayList<>(this.partialIterators.size());
-            this.hasNext = false;
             boolean isFetchNext = true;
             for (int i = 0; i < this.partialIterators.size(); i++) {
                 java.util.Iterator<T> partialIterator = this.partialIterators.get(i);
                 if (isFetchNext) {
                     // If the Iterator has made a full pass, replace it with a new one.
-                    if (!partialIterator.hasNext()) {
+                    boolean isFullPass;
+                    if (isFullPass = !partialIterator.hasNext()) {
+                        assert i < this.partialIterators.size() - 1;
                         partialIterator = this.crossProductIterable.iterables.get(i).iterator();
                         this.partialIterators.set(i, partialIterator);
-                        this.vals.set(i, null);
                         assert partialIterator.hasNext();
                     }
 
                     // If the Iterator had made a full pass or this is the very first iteration.
-                    if (this.vals.get(i) == null) {
+                    if (isFetchNext) {
+                        isFetchNext = isFullPass || this.vals.get(i) == null;
                         this.vals.set(i, partialIterator.next());
-                    } else {
-                        isFetchNext = false;
                     }
                 }
 
                 next.add(this.vals.get(i));
-                this.hasNext |= partialIterator.hasNext();
             }
 
             return next;

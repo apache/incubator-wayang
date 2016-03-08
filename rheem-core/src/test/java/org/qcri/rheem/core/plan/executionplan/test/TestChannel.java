@@ -14,7 +14,7 @@ public class TestChannel extends Channel {
      * @param isReusable whether this instance {@link #isReusable()}
      */
     public TestChannel(boolean isReusable) {
-        super(new ChannelDescriptor(TestChannel.class, isReusable, false, false));
+        super(new ChannelDescriptor(TestChannel.class, isReusable, true, true), null);
     }
 
     @Override

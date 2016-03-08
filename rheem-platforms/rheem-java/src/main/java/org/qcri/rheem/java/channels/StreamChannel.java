@@ -3,11 +3,15 @@ package org.qcri.rheem.java.channels;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Stream;
 
@@ -22,8 +26,8 @@ public class StreamChannel extends Channel {
 
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(StreamChannel.class, IS_REUSABLE, IS_REUSABLE, IS_REUSABLE & !IS_INTERNAL);
 
-    protected StreamChannel(ChannelDescriptor descriptor) {
-        super(descriptor);
+    public StreamChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+        super(descriptor, outputSlot);
         assert descriptor == DESCRIPTOR;
     }
 
@@ -52,33 +56,35 @@ public class StreamChannel extends Channel {
     }
 
     public Channel exchangeWith(ChannelDescriptor descriptor) {
-        throw new UnsupportedOperationException();
-//        ChannelInitializer channelInitializer = JavaPlatform.getInstance()
-//                .getChannelManager()
-//                .getChannelInitializer(descriptor);
-//        final ExecutionTask producer = this.producer;
-//        final int outputIndex = this.producer.removeOutputChannel(this);
-//        final Channel replacementChannel = channelInitializer.setUpOutput(descriptor, producer, outputIndex);
-//
-//        for (ExecutionTask consumer : this.consumers) {
-//            int inputIndex = consumer.removeInputChannel(this);
-//            channelInitializer.setUpInput(replacementChannel, consumer, inputIndex);
-//        }
-//
-//        if (this.isMarkedForInstrumentation()) {
-//            replacementChannel.markForInstrumentation();
-//        }
-//        this.addSibling(replacementChannel);
-//        this.removeSiblings();
-//
-//        return replacementChannel;
+        // Todo: Hacky.
+        final ExecutionTask producer = this.getProducer();
+        final OutputSlot<?> outputSlot = producer.getOutputSlotFor(this);
+
+        final ChannelManager channelManager = producer.getPlatform().getChannelManager();
+        final ChannelInitializer channelInitializer = channelManager.getChannelInitializer(descriptor);
+        final Tuple<Channel, Channel> newChannelSetup = channelInitializer.setUpOutput(descriptor, outputSlot, null);
+
+        int outputIndex = producer.removeOutputChannel(this);
+        producer.setOutputChannel(outputIndex, newChannelSetup.field0);
+
+        for (ExecutionTask consumer : new ArrayList<>(this.getConsumers())) {
+            consumer.exchangeInputChannel(this, newChannelSetup.field1);
+        }
+        this.addSibling(newChannelSetup.field0);
+        this.removeSiblings();
+
+        if (this.isMarkedForInstrumentation()) {
+            newChannelSetup.field0.markForInstrumentation();
+        }
+
+        return newChannelSetup.field1;
     }
 
     public static class Initializer implements JavaChannelInitializer {
 
         @Override
         public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
-            StreamChannel channel = new StreamChannel(descriptor);
+            StreamChannel channel = new StreamChannel(descriptor, outputSlot);
             return new Tuple<>(channel, channel);
         }
 

@@ -30,6 +30,11 @@ public abstract class Channel {
     private final ChannelDescriptor descriptor;
 
     /**
+     * {@link OutputSlot} that creates this instance.
+     */
+    private final OutputSlot<?> producerSlot;
+
+    /**
      * Produces the data flowing through this instance.
      */
     protected ExecutionTask producer;
@@ -59,11 +64,12 @@ public abstract class Channel {
     /**
      * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}.
      *
-     * @param descriptor          used to create this instance
+     * @param descriptor used to create this instance
      */
-    protected Channel(ChannelDescriptor descriptor) {
+    protected Channel(ChannelDescriptor descriptor, OutputSlot<?> producerSlot) {
         this.descriptor = descriptor;
         this.original = null;
+        this.producerSlot = producerSlot;
     }
 
     /**
@@ -76,6 +82,7 @@ public abstract class Channel {
         this.original = original.getOriginal();
         assert this.original == null || !this.original.isCopy();
         this.producer = original.getProducer();
+        this.producerSlot = original.getProducerSlot();
     }
 
     public static CardinalityEstimate extractCardinalityEstimate(ExecutionTask task, int outputIndex) {
@@ -155,10 +162,17 @@ public abstract class Channel {
     }
 
     public CardinalityEstimate getCardinalityEstimate(OptimizationContext optimizationContext) {
-        if (this.getProducer() == null) return null;
-        final OutputSlot<?> output = this.getProducer().getOutputSlotFor(this);
-        final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(output.getOwner());
-        return operatorContext.getOutputCardinality(output.getIndex());
+        return this.withSiblings(false)
+                .map(sibling -> {
+                    final OutputSlot<?> output = sibling.getProducerSlot();
+                    if (output == null) return null;
+                    final OptimizationContext.OperatorContext operatorCtx =
+                            optimizationContext.getOperatorContext(output.getOwner());
+                    if (operatorCtx == null) return null;
+                    return operatorCtx.getOutputCardinality(output.getIndex());
+                }).filter(Objects::nonNull)
+                .findAny()
+                .orElseThrow(() -> new IllegalStateException(String.format("No CardinalityEstimate for %s.", this)));
     }
 
     public boolean isMarkedForInstrumentation() {
@@ -190,12 +204,7 @@ public abstract class Channel {
      */
     public void addSibling(Channel sibling) {
         if (sibling == this) return;
-        final ArrayList<Channel> siblingSiblings = new ArrayList<>(sibling.siblings);
-        this.withSiblings(true).forEach(olderSibling ->
-                siblingSiblings.forEach(siblingSibling ->
-                        olderSibling.relateTo(siblingSibling)
-                )
-        );
+        this.withSiblings(true).forEach(olderSibling -> olderSibling.relateTo(sibling));
     }
 
     /**
@@ -326,9 +335,11 @@ public abstract class Channel {
      * @see #setProducer(ExecutionTask)
      */
     public DataSetType<?> getDataSetType() {
-        assert this.producer != null : String.format("Cannot determine dataset type of %s: no producer.", this);
-        final OutputSlot<?> output = this.producer.getOutputSlotFor(this);
-        return output.getType();
+        return this.withSiblings(false)
+                .filter(sibling -> sibling.getProducerSlot() != null)
+                .findAny()
+                .orElseThrow(() -> new IllegalStateException(String.format("No DataSetType for %s.", this)))
+                .getProducerSlot().getType();
     }
 
     /**
@@ -345,5 +356,9 @@ public abstract class Channel {
 
     public ChannelDescriptor getDescriptor() {
         return this.descriptor;
+    }
+
+    public OutputSlot<?> getProducerSlot() {
+        return this.producerSlot;
     }
 }

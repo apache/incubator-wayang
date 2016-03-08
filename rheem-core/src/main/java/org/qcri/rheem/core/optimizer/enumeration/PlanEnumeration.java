@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -443,7 +442,8 @@ public class PlanEnumeration {
 
     @Override
     public String toString() {
-        return String.format("%s[inputs=%s, outputs=%s]", this.getClass().getSimpleName(),
+        return String.format("%s[%dx, inputs=%s, outputs=%s]", this.getClass().getSimpleName(),
+                this.getPartialPlans().size(),
                 this.requestedInputSlots, this.servingOutputSlots.stream()
                         .map(Tuple::getField0)
                         .distinct()

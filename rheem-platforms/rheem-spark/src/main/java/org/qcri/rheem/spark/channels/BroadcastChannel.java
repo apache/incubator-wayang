@@ -20,8 +20,8 @@ public class BroadcastChannel extends Channel {
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(
             BroadcastChannel.class, IS_REUSABLE, IS_REUSABLE, IS_INTERNAL);
 
-    protected BroadcastChannel(ChannelDescriptor descriptor) {
-        super(descriptor);
+    protected BroadcastChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+        super(descriptor, outputSlot);
     }
 
     private BroadcastChannel(BroadcastChannel parent) {
@@ -72,7 +72,7 @@ public class BroadcastChannel extends Channel {
                 assert broadcastTask.getOutputChannel(0) instanceof BroadcastChannel;
                 return broadcastTask.getOutputChannel(0);
             } else {
-                final BroadcastChannel broadcastChannel = new BroadcastChannel(descriptor);
+                final BroadcastChannel broadcastChannel = new BroadcastChannel(descriptor, broadcastTask.getOperator().getOutput(0));
                 broadcastTask.setOutputChannel(0, broadcastChannel);
                 return broadcastChannel;
             }

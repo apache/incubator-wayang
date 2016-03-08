@@ -23,8 +23,8 @@ public class CollectionChannel extends Channel {
 
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(CollectionChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL);
 
-    protected CollectionChannel(ChannelDescriptor channelDescriptor) {
-        super(channelDescriptor);
+    protected CollectionChannel(ChannelDescriptor channelDescriptor, OutputSlot<?> outputSlot) {
+        super(channelDescriptor, outputSlot);
         assert channelDescriptor == DESCRIPTOR;
     }
 
@@ -51,7 +51,7 @@ public class CollectionChannel extends Channel {
         public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
             assert descriptor == CollectionChannel.DESCRIPTOR;
             // TODO: We could add a "Collector" operator in between.
-            final CollectionChannel collectionChannel = new CollectionChannel(descriptor);
+            final CollectionChannel collectionChannel = new CollectionChannel(descriptor, outputSlot);
             return new Tuple<>(collectionChannel, collectionChannel);
         }
 

@@ -69,6 +69,7 @@ public class HdfsFileInitializer implements SparkChannelInitializer {
         final FileChannel fileChannel = new FileChannel((FileChannel.Descriptor) descriptor);
         fileChannel.addPath(targetPath);
         fileChannel.addSibling(source);
+        sinkTask.setOutputChannel(0, fileChannel);
         return fileChannel;
     }
 
@@ -154,12 +155,12 @@ public class HdfsFileInitializer implements SparkChannelInitializer {
     }
 
     private ExecutionTask setUpSparkObjectFileSource(FileChannel fileChannel) {
-        // Check if there is already is a SparkObjectFileSource in place.
-        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
-            if (consumerTask.getOperator() instanceof SparkObjectFileSource<?>) {
-                return consumerTask;
-            }
-        }
+//        // Check if there is already is a SparkObjectFileSource in place.
+//        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
+//            if (consumerTask.getOperator() instanceof SparkObjectFileSource<?>) {
+//                return consumerTask;
+//            }
+//        }
 
         // Create the SparkObjectFileSink.
         // FIXME: This is neither elegant nor sound, as we make assumptions on the FileChannel producer.
@@ -172,12 +173,12 @@ public class HdfsFileInitializer implements SparkChannelInitializer {
     }
 
     private ExecutionTask setUpSparkTsvFileSource(FileChannel fileChannel) {
-        // Check if there is already is a SparkObjectFileSource in place.
-        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
-            if (consumerTask.getOperator() instanceof SparkTsvFileSource<?>) {
-                return consumerTask;
-            }
-        }
+//        // Check if there is already is a SparkObjectFileSource in place.
+//        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
+//            if (consumerTask.getOperator() instanceof SparkTsvFileSource<?>) {
+//                return consumerTask;
+//            }
+//        }
 
         // Create the SparkObjectFileSink.
         // FIXME: This is neither elegant nor sound, as we make assumptions on the FileChannel producer.

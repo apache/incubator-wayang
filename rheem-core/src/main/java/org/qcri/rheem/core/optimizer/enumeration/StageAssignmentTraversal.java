@@ -144,6 +144,7 @@ public class StageAssignmentTraversal {
                     }
                 } else {
                     // Otherwise, just stage.
+                    assert inputChannel.getProducer() != null;
                     stagedTasks.add(inputChannel.getProducer());
                 }
             }

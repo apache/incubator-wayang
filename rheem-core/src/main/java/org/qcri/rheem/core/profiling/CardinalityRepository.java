@@ -100,7 +100,7 @@ public class CardinalityRepository {
         final Operator operator = operatorContext.getOperator();
         for (int inputIndex = 0; inputIndex < operator.getNumInputs(); inputIndex++) {
             final InputSlot<?> input = operator.getInput(inputIndex);
-            final CardinalityEstimate inputEstimate = operatorContext.getOutputCardinality(inputIndex);
+            final CardinalityEstimate inputEstimate = operatorContext.getInputCardinality(inputIndex);
 
             JSONObject jsonInputCardinality = new JSONObject();
             jsonInputCardinality.put("name", input.getName());

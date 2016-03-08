@@ -223,4 +223,9 @@ public class Junction {
                 .map(OptimizationContext.OperatorContext::getTimeEstimate)
                 .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s->%s]", this.getClass().getSimpleName(), this.getSourceOutput(), this.getTargetInputs());
+    }
 }
