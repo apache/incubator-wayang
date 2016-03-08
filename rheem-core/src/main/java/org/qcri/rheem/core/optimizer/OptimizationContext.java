@@ -256,7 +256,7 @@ public class OptimizationContext {
         if (this.base != null) {
             isComplete &= this.base.isTimeEstimatesComplete();
         }
-        
+
         for (LoopContext loopContext : this.loopContexts.values()) {
             for (OptimizationContext iterationContext : loopContext.getIterationContexts()) {
                 isComplete &= iterationContext.isTimeEstimatesComplete();
@@ -264,6 +264,10 @@ public class OptimizationContext {
         }
 
         return isComplete;
+    }
+
+    public OptimizationContext getBase() {
+        return this.base;
     }
 
     /**
@@ -427,6 +431,39 @@ public class OptimizationContext {
             this.timeEstimate = timeConverter.convert(this.loadProfile);
         }
 
+        public void increaseBy(OperatorContext that) {
+            assert this.operator.equals(that.operator);
+            this.addTo(this.inputCardinalities, that.inputCardinalities);
+            this.addTo(this.inputCardinalityMarkers, that.inputCardinalityMarkers);
+            this.addTo(this.outputCardinalities, that.outputCardinalities);
+            this.addTo(this.outputCardinalityMarkers, that.outputCardinalityMarkers);
+            this.timeEstimate = this.timeEstimate == null ?
+                    that.timeEstimate :
+                    that.timeEstimate == null ?
+                            this.timeEstimate :
+                            this.timeEstimate.plus(that.timeEstimate);
+        }
+
+        private void addTo(CardinalityEstimate[] aggregate, CardinalityEstimate[] delta) {
+            assert aggregate.length == delta.length;
+            for (int i = 0; i < aggregate.length; i++) {
+                CardinalityEstimate aggregateCardinality = aggregate[i];
+                CardinalityEstimate deltaCardinality = delta[i];
+                if (aggregateCardinality == null) {
+                    aggregate[i] = deltaCardinality;
+                } else if (deltaCardinality != null) {
+                    aggregate[i] = aggregateCardinality.plus(deltaCardinality);
+                }
+            }
+        }
+
+        private void addTo(boolean[] aggregate, boolean[] delta) {
+            assert aggregate.length == delta.length;
+            for (int i = 0; i < aggregate.length; i++) {
+                aggregate[i] |= delta[i];
+            }
+        }
+
         public TimeEstimate getTimeEstimate() {
             return this.timeEstimate;
         }
@@ -448,6 +485,7 @@ public class OptimizationContext {
 
         private LoopContext(OperatorContext loopSubplanContext) {
             assert loopSubplanContext.getOptimizationContext() == OptimizationContext.this;
+            assert loopSubplanContext.getOperator() instanceof LoopSubplan;
 
             this.loopSubplanContext = loopSubplanContext;
 
@@ -477,6 +515,10 @@ public class OptimizationContext {
             return this.iterationContexts;
         }
 
+        public OptimizationContext getIterationContext(int iteration) {
+            return this.iterationContexts.get(iteration);
+        }
+
         /**
          * @return the {@link OptimizationContext} in that the {@link LoopSubplan} resides
          */
@@ -490,6 +532,38 @@ public class OptimizationContext {
 
         public OptimizationContext getFinalIterationContext() {
             return this.iterationContexts.get(this.iterationContexts.size() - 1);
+        }
+
+        public LoopSubplan getLoop() {
+            return (LoopSubplan) this.loopSubplanContext.getOperator();
+        }
+
+        public OptimizationContext createAggregateContext(int fromIteration, int toIteration) {
+            final OptimizationContext aggregateCtx = new OptimizationContext(this.getLoop(), this, -1, this.getOptimizationContext().getConfiguration());
+            for (int i = fromIteration; i < toIteration; i++) {
+                OptimizationContext iterationContext = this.iterationContexts.get(i);
+                this.addUp(aggregateCtx, iterationContext);
+            }
+
+            return aggregateCtx;
+        }
+
+        private void addUp(OptimizationContext aggregateCtx, OptimizationContext iterationContext) {
+            while (iterationContext != null) {
+                for (OperatorContext operatorCtx : iterationContext.getLocalOperatorContexts().values()) {
+                    this.addUp(aggregateCtx, operatorCtx);
+                }
+                iterationContext = iterationContext.getBase();
+            }
+        }
+
+        private void addUp(OptimizationContext aggregateCtx, OperatorContext operatorCtx) {
+            final Operator operator = operatorCtx.getOperator();
+            OperatorContext aggregateOperatorCtx = aggregateCtx.getOperatorContext(operator);
+            if (aggregateOperatorCtx == null) {
+                aggregateOperatorCtx = aggregateCtx.addOneTimeOperator(operator);
+            }
+            aggregateOperatorCtx.increaseBy(operatorCtx);
         }
     }
 

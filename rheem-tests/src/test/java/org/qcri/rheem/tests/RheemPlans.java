@@ -387,18 +387,24 @@ public class RheemPlans {
     public static RheemPlan diverseScenario4(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
         // Build a Rheem plan.
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
+        textFileSource1.setName("file1");
         TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
+        textFileSource2.setName("file2");
         MapOperator<Integer, Integer> counter = new MapOperator<>(
                 new TransformationDescriptor<>(n -> n + 1, Integer.class, Integer.class)
         );
+        counter.setName("counter");
         UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
+        unionOperator.setName("union");
         LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
+        stdoutSink.setName("stdout");
 
         LoopOperator<String, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(String.class),
                 DataSetType.createDefault(Integer.class),
                 (PredicateDescriptor.SerializablePredicate<Collection<Integer>>) collection ->
                         collection.iterator().next() >= 10
                 );
+        loopOperator.setName("loop");
 
         // Union 10 times then output
         loopOperator.initialize(textFileSource1, 0);

@@ -179,4 +179,15 @@ public class InputSlot<T> extends Slot<T> {
             // TODO: Consider removing broadacast.
         }
     }
+
+    /**
+     * @return whether this is the loop body input of a {@link LoopHeadOperator}
+     */
+    public boolean isLoopBodyInput() {
+        if (this.getOwner().isLoopHead()) {
+            LoopHeadOperator loopHead = (LoopHeadOperator) this.getOwner();
+            return loopHead.getLoopBodyInputs().contains(this);
+        }
+        return false;
+    }
 }

@@ -51,6 +51,12 @@ public class PlanEnumerator {
     private final OperatorAlternative.Alternative enumeratedAlternative;
 
     /**
+     * TODO
+     * When this instance enumerates an {@link LoopSubplan}.
+     */
+    private final LoopSubplan enumeratedLoop;
+
+    /**
      * Maintain {@link EnumerationActivator} for {@link Operator}s.
      */
     private final Map<Tuple<Operator, OptimizationContext>, EnumerationActivator> enumerationActivators = new HashMap<>();
@@ -104,6 +110,7 @@ public class PlanEnumerator {
                 configuration,
                 new LinkedList<>(),
                 null,
+                null,
                 Collections.emptyMap(),
                 Collections.emptyMap());
     }
@@ -123,6 +130,7 @@ public class PlanEnumerator {
                 optimizationContext,
                 configuration,
                 new LinkedList<>(),
+                null,
                 null,
                 new HashMap<>(),
                 new HashMap<>());
@@ -151,6 +159,29 @@ public class PlanEnumerator {
                 configuration,
                 pruningStrategies,
                 enumeratedAlternative,
+                null,
+                presettledAlternatives,
+                executedTasks
+        );
+    }
+
+    /**
+     * TODO
+     * Fork constructor.
+     * <p>Forking happens to enumerate a certain {@link OperatorAlternative.Alternative} in a recursive manner.</p>
+     */
+    private PlanEnumerator(LoopSubplan enumeratedLoop,
+                           OptimizationContext optimizationContext,
+                           Configuration configuration,
+                           Collection<PlanEnumerationPruningStrategy> pruningStrategies,
+                           Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
+                           Map<ExecutionOperator, ExecutionTask> executedTasks) {
+        this(Collections.singleton(enumeratedLoop.getLoopHead()),
+                optimizationContext,
+                configuration,
+                pruningStrategies,
+                null,
+                enumeratedLoop,
                 presettledAlternatives,
                 executedTasks
         );
@@ -164,6 +195,7 @@ public class PlanEnumerator {
                            Configuration configuration,
                            Collection<PlanEnumerationPruningStrategy> pruningStrategies,
                            OperatorAlternative.Alternative enumeratedAlternative,
+                           LoopSubplan enumeratedLoop,
                            Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
                            Map<ExecutionOperator, ExecutionTask> executedTasks) {
 
@@ -174,6 +206,7 @@ public class PlanEnumerator {
         this.configuration = configuration;
         this.pruningStrategies = pruningStrategies;
         this.enumeratedAlternative = enumeratedAlternative;
+        this.enumeratedLoop = enumeratedLoop;
         this.presettledAlternatives = presettledAlternatives;
         this.executedTasks = executedTasks;
 
@@ -397,7 +430,26 @@ public class PlanEnumerator {
      * Create a {@link PlanEnumeration} for the given {@code loop}.
      */
     private PlanEnumeration enumerateLoop(LoopSubplan loop, OptimizationContext operatorContext) {
+        final LoopEnumerator loopEnumerator = new LoopEnumerator(operatorContext.getNestedLoopContext(loop));
+        loopEnumerator.doExecute();
         throw new RuntimeException("Cannot enumerate loops, yet.");
+    }
+
+    /**
+     * Fork a new instance to enumerate the given {@code alternative}.
+     *
+     * @param loopSubplan         an {@link LoopSubplan} to be enumerated recursively
+     * @param optimizationContext
+     * @return the new instance
+     */
+    private PlanEnumerator forkFor(LoopSubplan loopSubplan, OptimizationContext optimizationContext) {
+        final OptimizationContext.LoopContext nestedLoopContext = optimizationContext.getNestedLoopContext(loopSubplan);
+        return new PlanEnumerator(loopSubplan,
+                nestedLoopContext.getInitialIterationContext(),
+                this.configuration,
+                this.pruningStrategies,
+                this.presettledAlternatives,
+                this.executedTasks);
     }
 
     private void concatenate(ConcatenationActivator concatenationActivator) {
@@ -514,10 +566,6 @@ public class PlanEnumerator {
      * did not allow to construct a valid {@link PlanEnumeration}.
      */
     private void constructResultEnumeration() {
-//        final PlanEnumeration resultEnumeration = this.completedEnumerations.stream()
-//                .map(instance -> instance.escape(this.enumeratedAlternative))
-//                .reduce(PlanEnumeration::join)
-//                .orElse(null);
         final PlanEnumeration resultEnumeration = RheemCollections.getSingleOrNull(this.completedEnumerations);
         this.resultReference = new AtomicReference<>(resultEnumeration);
     }

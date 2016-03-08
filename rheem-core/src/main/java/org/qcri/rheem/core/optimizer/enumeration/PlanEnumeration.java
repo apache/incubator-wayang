@@ -352,7 +352,7 @@ public class PlanEnumeration {
      */
     public boolean isEarthed() {
         return this.requestedInputSlots.stream().allMatch(
-                inputSlot -> inputSlot.getOccupant() == null
+                inputSlot -> inputSlot.getOccupant() == null || inputSlot.isLoopBodyInput()
         );
     }
 
