@@ -70,10 +70,10 @@ public class PartialPlan {
      */
     PartialPlan(PlanEnumeration planEnumeration,
                 Map<OutputSlot<?>, Junction> junctions,
-                Collection<ExecutionOperator>... operatorCollections) {
+                ExecutionOperator... operatorCollections) {
         this(planEnumeration, junctions, new Canonicalizer<>());
-        for (Collection<ExecutionOperator> operatorCollection : operatorCollections) {
-            this.operators.addAll(operatorCollection);
+        for (ExecutionOperator operator : operators) {
+            this.operators.add(operator);
         }
     }
 

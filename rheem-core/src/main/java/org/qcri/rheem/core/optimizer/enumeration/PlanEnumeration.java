@@ -93,27 +93,27 @@ public class PlanEnumeration {
         return enumeration;
     }
 
-    /**
-     * Create an instance for a single {@code loopHead}.
-     *
-     * @return the new instance
-     */
-    static PlanEnumeration createSingleton(LoopHeadOperator loopHead, OptimizationContext optimizationContext) {
-        final PlanEnumeration instance = new PlanEnumeration();
-        loopHead.getLoopBodyInputs().forEach(instance.requestedInputSlots::add);
-
-        for (OutputSlot outputSlot : loopHead.getLoopBodyOutputs()) {
-            List<InputSlot> inputSlots = outputSlot.getOccupiedSlots();
-            if (inputSlots.isEmpty()) {
-                inputSlots = Collections.singletonList(null); // InputSlot is probably in a surrounding plan.
-            }
-            for (InputSlot inputSlot : inputSlots) {
-                instance.servingOutputSlots.add(new Tuple<>(outputSlot, inputSlot));
-            }
-        }
-
-        return instance;
-    }
+//    /**
+//     * Create an instance for a single {@code loopHead}.
+//     *
+//     * @return the new instance
+//     */
+//    static PlanEnumeration createSingleton(LoopHeadOperator loopHead, OptimizationContext optimizationContext) {
+//        final PlanEnumeration instance = new PlanEnumeration();
+//        loopHead.getLoopBodyInputs().forEach(instance.requestedInputSlots::add);
+//
+//        for (OutputSlot outputSlot : loopHead.getLoopBodyOutputs()) {
+//            List<InputSlot> inputSlots = outputSlot.getOccupiedSlots();
+//            if (inputSlots.isEmpty()) {
+//                inputSlots = Collections.singletonList(null); // InputSlot is probably in a surrounding plan.
+//            }
+//            for (InputSlot inputSlot : inputSlots) {
+//                instance.servingOutputSlots.add(new Tuple<>(outputSlot, inputSlot));
+//            }
+//        }
+//
+//        return instance;
+//    }
 
     static PlanEnumeration createFor(Operator inputOperator, Operator outputOperator) {
         final PlanEnumeration instance = new PlanEnumeration();
@@ -365,8 +365,13 @@ public class PlanEnumeration {
         return partialPlan;
     }
 
+    /**
+     * @return whether this instance cannot be expanded anymore (i.e., all {@link #getServingOutputSlots()} and
+     * {@link #getRequestedInputSlots()} are not connected to an adjacent {@link Slot})
+     */
     public boolean isComprehensive() {
-        return this.servingOutputSlots.isEmpty() && this.requestedInputSlots.isEmpty();
+        return this.servingOutputSlots.stream().allMatch(outputService -> outputService.getField1() == null)
+                && this.requestedInputSlots.stream().allMatch(input -> input.getOccupant() == null);
     }
 
     /**

@@ -168,11 +168,11 @@ public class SubplanPattern extends OperatorBase {
                     PlanTraversal.upstream()
                             .withCallback(this::attemptMatchFrom)
                             .traverse(innerOutputSlot.getOwner(), null, innerOutputSlot);
-
                 }
 
             } else if (operator instanceof OperatorAlternative) {
                 // Delegate to all Alternatives of the OperatorAlternative.
+                // TODO: This code is different from above. Is it still correct?
                 for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
                     SubplanMatch subplanMatchCopy = new SubplanMatch(subplanMatch);
                     if (trackedOutputSlot == null) {
