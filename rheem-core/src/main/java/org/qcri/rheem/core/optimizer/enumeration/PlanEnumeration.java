@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -93,38 +94,40 @@ public class PlanEnumeration {
         return enumeration;
     }
 
-//    /**
-//     * Create an instance for a single {@code loopHead}.
-//     *
-//     * @return the new instance
-//     */
-//    static PlanEnumeration createSingleton(LoopHeadOperator loopHead, OptimizationContext optimizationContext) {
-//        final PlanEnumeration instance = new PlanEnumeration();
-//        loopHead.getLoopBodyInputs().forEach(instance.requestedInputSlots::add);
-//
-//        for (OutputSlot outputSlot : loopHead.getLoopBodyOutputs()) {
-//            List<InputSlot> inputSlots = outputSlot.getOccupiedSlots();
-//            if (inputSlots.isEmpty()) {
-//                inputSlots = Collections.singletonList(null); // InputSlot is probably in a surrounding plan.
-//            }
-//            for (InputSlot inputSlot : inputSlots) {
-//                instance.servingOutputSlots.add(new Tuple<>(outputSlot, inputSlot));
-//            }
-//        }
-//
-//        return instance;
-//    }
-
+    /**
+     * Creates a new instance.
+     *
+     * @param inputOperator  provides the requested {@link InputSlot}s
+     * @param outputOperator provides the requested {@link OutputSlot}s
+     * @return the new instance
+     */
     static PlanEnumeration createFor(Operator inputOperator, Operator outputOperator) {
+        return createFor(inputOperator, input -> true, outputOperator, output -> true);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param inputOperator       provides the requested {@link InputSlot}s
+     * @param inputSlotPredicate  can narrow down the {@link InputSlot}s
+     * @param outputOperator      provides the requested {@link OutputSlot}s
+     * @param outputSlotPredicate can narrow down the {@link OutputSlot}s
+     * @return the new instance
+     */
+    static PlanEnumeration createFor(Operator inputOperator,
+                                     Predicate<InputSlot<?>> inputSlotPredicate,
+                                     Operator outputOperator,
+                                     Predicate<OutputSlot<?>> outputSlotPredicate) {
+
         final PlanEnumeration instance = new PlanEnumeration();
-        if (!inputOperator.isSource()) {
-            for (InputSlot<?> inputSlot : inputOperator.getAllInputs()) {
+        for (InputSlot<?> inputSlot : inputOperator.getAllInputs()) {
+            if (inputSlotPredicate.test(inputSlot)) {
                 instance.requestedInputSlots.add(inputSlot);
             }
         }
 
-        if (!outputOperator.isSink()) {
-            for (OutputSlot outputSlot : outputOperator.getAllOutputs()) {
+        for (OutputSlot outputSlot : outputOperator.getAllOutputs()) {
+            if (outputSlotPredicate.test(outputSlot)) {
                 List<InputSlot> inputSlots = outputSlot.getOccupiedSlots();
                 if (inputSlots.isEmpty()) {
                     inputSlots = Collections.singletonList(null); // InputSlot is probably in a surrounding plan.
@@ -363,24 +366,6 @@ public class PlanEnumeration {
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(executionOperator);
         partialPlan.addToTimeEstimate(operatorContext.getTimeEstimate());
         return partialPlan;
-    }
-
-    /**
-     * @return whether this instance cannot be expanded anymore (i.e., all {@link #getServingOutputSlots()} and
-     * {@link #getRequestedInputSlots()} are not connected to an adjacent {@link Slot})
-     */
-    public boolean isComprehensive() {
-        return this.servingOutputSlots.stream().allMatch(outputService -> outputService.getField1() == null)
-                && this.requestedInputSlots.stream().allMatch(input -> input.getOccupant() == null);
-    }
-
-    /**
-     * Tells whether this instance has no requested {@link InputSlot}s.
-     */
-    public boolean isEarthed() {
-        return this.requestedInputSlots.stream().allMatch(
-                inputSlot -> inputSlot.getOccupant() == null || inputSlot.isLoopBodyInput()
-        );
     }
 
     /**

@@ -29,9 +29,16 @@ public class LoopEnumerator extends OneTimeExecutable {
     protected void doExecute() {
         // Create aggregate iteration contexts.
         OptimizationContext aggregateContext = this.loopContext.createAggregateContext(0, this.loopContext.getIterationContexts().size());
-        final PlanEnumerator loopBodyEnumerator = this.planEnumerator.forkFor(this.loopContext.getLoop().getLoopHead(), aggregateContext);
-        final PlanEnumeration planEnumeration = loopBodyEnumerator.enumerate(true);
 
+        // Create the end result.
         this.loopEnumeration = new LoopEnumeration(this.loopContext.getLoop());
+
+        // Enumerate the loop body (for now, only a single loop body).
+        final PlanEnumerator loopBodyEnumerator = this.planEnumerator.forkFor(this.loopContext.getLoop().getLoopHead(), aggregateContext);
+        final PlanEnumeration loopBodyEnumeration = loopBodyEnumerator.enumerate(true);
+        final LoopEnumeration.IterationEnumeration iterationEnumeration = this.loopEnumeration.addIterationEnumeration(
+                this.loopContext.getLoop().getNumExpectedIterations(),
+                loopBodyEnumeration
+        );
     }
 }

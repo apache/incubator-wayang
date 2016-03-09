@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -170,8 +171,14 @@ public class PlanEnumerator {
         final PlanEnumeration comprehensiveEnumeration = this.resultReference.get();
         if (isRequireResult && comprehensiveEnumeration == null) {
             this.logger.error("No comprehensive PlanEnumeration.");
-            this.logger.error("Pending enumerations: {}", this.enumerationActivators.values());
-            this.logger.error("Pending concatenations: {}", this.concatenationActivators.values());
+            this.logger.error("Pending enumerations: {}", this.enumerationActivators.values().stream()
+                    .filter(activator -> !activator.wasExecuted())
+                    .collect(Collectors.toList())
+            );
+            this.logger.error("Pending concatenations: {}", this.concatenationActivators.values().stream()
+                    .filter(activator -> !activator.wasExecuted())
+                    .collect(Collectors.toList())
+            );
             throw new RheemException("Could not find a single execution plan.");
         }
         return comprehensiveEnumeration;
@@ -324,7 +331,7 @@ public class PlanEnumerator {
             if (operator.isAlternative()) {
                 operatorEnumeration = this.enumerateAlternative((OperatorAlternative) operator, optimizationContext);
 //            } else if (operator.isLoopHead()) {
-//                operatorEnumeration = this.enumerateLoopHead((LoopHeadOperator) operator, optimizationContext);
+//                operatorEnumeration = PlanEnumeration.createSingleton((LoopHeadOperator) operator, this.optimizationContext);
             } else if (operator.isLoopSubplan()) {
                 operatorEnumeration = this.enumerateLoop((LoopSubplan) operator, optimizationContext);
             } else {
@@ -403,31 +410,6 @@ public class PlanEnumerator {
                 this.executedTasks);
     }
 
-//    /**
-//     * Create a {@link PlanEnumeration} for the given {@code loopHead}.
-//     */
-//    private PlanEnumeration enumerateLoopHead(LoopHeadOperator loopHead, OptimizationContext operatorContext) {
-//        final PlanEnumeration planEnumeration = PlanEnumeration.createSingleton(loopHead);
-//        if (loopHead.isAlternative()) {
-//            LoopHeadAlternative loopHeadAlternative = (LoopHeadAlternative) loopHead;
-//            for (OperatorAlternative.Alternative alternative : loopHeadAlternative.getAlternatives()) {
-//                LoopHeadOperator altLoopHead = (LoopHeadOperator) alternative.getOperator();
-//                if (altLoopHead.isExecutionOperator()) {
-//                    final PartialPlan partialPlan = new PartialPlan(
-//                            planEnumeration, new HashMap<>(), (ExecutionOperator) altLoopHead
-//                    );
-//                    planEnumeration.add(partialPlan);
-//                }
-//            }
-//        } else if (loopHead.isExecutionOperator()) {
-//            final PartialPlan partialPlan = new PartialPlan(
-//                    planEnumeration, new HashMap<>(), (ExecutionOperator) loopHead
-//            );
-//            planEnumeration.add(partialPlan);
-//        }
-//        return planEnumeration;
-//    }
-
     /**
      * Create a {@link PlanEnumeration} for the given {@code loop}.
      */
@@ -461,12 +443,35 @@ public class PlanEnumerator {
      * @param optimizationCtx      of the {@code processedEnumeration}
      */
     private void postProcess(PlanEnumeration processedEnumeration, OptimizationContext optimizationCtx) {
-        if (processedEnumeration.isComprehensive()) {
+        if (this.deemsComprehensive(processedEnumeration)) {
             this.completedEnumerations.add(processedEnumeration);
         } else {
             this.activateUpstream(processedEnumeration, optimizationCtx);
             this.activateDownstream(processedEnumeration, optimizationCtx);
         }
+    }
+
+
+    /**
+     * @return whether the {@code enumeration} cannot be expanded anymore (i.e., all {@link PlanEnumeration#getServingOutputSlots()} and
+     * {@link PlanEnumeration#getRequestedInputSlots()} are not connected to an adjacent {@link Slot})
+     */
+    public boolean deemsComprehensive(PlanEnumeration enumeration) {
+        return enumeration.getServingOutputSlots().stream().allMatch(
+                outputService -> !deemsRelevant(outputService.getField1())
+        ) && enumeration.getRequestedInputSlots().stream().allMatch(
+                input -> !deemsRelevant(input)
+        );
+    }
+
+    /**
+     * @return whether the {@code input} is relevant and needed for the comprehensiveness of this instance
+     * (if it is not {@code null} and does not feed a {@link LoopHeadOperator})
+     */
+    private static boolean deemsRelevant(InputSlot<?> input) {
+        return input != null
+                && input.getOccupant() != null
+                && !(input.getOwner() instanceof LoopHeadOperator);
     }
 
 
@@ -482,6 +487,7 @@ public class PlanEnumerator {
         for (Tuple<OutputSlot<?>, InputSlot<?>> inputService : processedEnumeration.getServingOutputSlots()) {
             final OutputSlot<?> output = inputService.getField0();
             final InputSlot<?> servedInput = inputService.getField1();
+            if (!deemsRelevant(servedInput)) continue;
 
             // Activate downstream EnumerationActivators.
             if (this.activateDownstreamEnumeration(servedInput, processedEnumeration, optimizationCtx)) {
@@ -507,9 +513,9 @@ public class PlanEnumerator {
     private boolean activateDownstreamEnumeration(InputSlot<?> input,
                                                   PlanEnumeration processedEnumeration,
                                                   OptimizationContext optimizationCtx) {
-        if (input == null) return false;
 
         // Find or create the appropriate EnumerationActivator.
+        assert input != null;
         final Operator servedOperator = input.getOwner();
         Tuple<Operator, OptimizationContext> enumerationKey = EnumerationActivator.createKey(servedOperator, optimizationCtx);
         EnumerationActivator enumerationActivator = this.enumerationActivators.computeIfAbsent(
@@ -536,23 +542,12 @@ public class PlanEnumerator {
     }
 
     /**
-     * Activate successive enumerations and wait for concatenations or mark as complete.
-     */
-    private void postProcessEarthedEnumeration(PlanEnumeration earthedEnumeration,
-                                               boolean isTerminal,
-                                               OptimizationContext optimizationCtx) {
-        if (isTerminal) {
-            // If the PlanEnumeration cannot be extended, it is complete.
-            this.completedEnumerations.add(earthedEnumeration);
-        }
-    }
-
-    /**
      * Activate earthed enumerations for concatenation of the processed enumeration.
      */
     private void activateUpstream(PlanEnumeration enumeration, OptimizationContext optimizationCtx) {
         // If there are open InputSlots, activate concatenations.
         for (InputSlot requestedInput : enumeration.getRequestedInputSlots()) {
+            if (!deemsRelevant(requestedInput)) continue;
             this.activateUpstreamConcatenation(requestedInput, enumeration, optimizationCtx);
         }
     }
@@ -567,7 +562,7 @@ public class PlanEnumerator {
 
         // Find the OutputSlot to connect with.
         final OutputSlot output = input.getOccupant();
-        if (output == null) return;
+        assert output != null;
 
         // Find or create the ConcatenationActivator.
         final ConcatenationActivator concatenationActivator = this.getOrCreateConcatenationActivator(output, optimizationCtx);
@@ -676,16 +671,7 @@ public class PlanEnumerator {
          */
         private boolean requiresActivation(int inputIndex) {
             final InputSlot<?> input = this.activatableOperator.getInput(inputIndex);
-            if (input.getOccupant() == null) {
-                return false;
-
-            } else if (this.activatableOperator.isLoopHead()) {
-                LoopHeadOperator loopHead = (LoopHeadOperator) this.activatableOperator;
-                return !loopHead.getLoopBodyInputs().contains(input);
-
-            }
-
-            return true;
+            return deemsRelevant(input);
         }
 
         private void register(PlanEnumeration planEnumeration, InputSlot activatedInputSlot) {
@@ -765,7 +751,7 @@ public class PlanEnumerator {
             assert !outputSlot.getOccupiedSlots().isEmpty();
             this.outputSlot = outputSlot;
             this.optimizationContext = optimizationContext;
-            this.numRequiredActivations = (int) outputSlot.getOccupiedSlots().stream().filter(Objects::nonNull).count();
+            this.numRequiredActivations = (int) outputSlot.getOccupiedSlots().stream().filter(PlanEnumerator::deemsRelevant).count();
             this.activationCollector = new HashMap<>(this.numRequiredActivations);
         }
 
@@ -775,6 +761,8 @@ public class PlanEnumerator {
         }
 
         private void register(PlanEnumeration planEnumeration, InputSlot openInputSlot) {
+            assert deemsRelevant(openInputSlot)
+                    : String.format("Trying to register irrelevant %s to %s.", openInputSlot, this);
             assert openInputSlot.getOccupant() == this.outputSlot;
             this.activationCollector.put(openInputSlot, planEnumeration);
             assert this.numRequiredActivations >= this.activationCollector.size();
