@@ -164,7 +164,7 @@ public class PartialPlan {
      * @return the representing {@link InputSlot}s or {@code null} if this instance has no {@link ExecutionOperator}
      * backing the given {@link InputSlot}
      */
-    private Collection<InputSlot<?>> findExecutionOperatorInputs(final InputSlot<?> someInput) {
+    Collection<InputSlot<?>> findExecutionOperatorInputs(final InputSlot<?> someInput) {
         if (!someInput.getOwner().isExecutionOperator()) {
             final OperatorAlternative owner = (OperatorAlternative) someInput.getOwner();
             final OperatorAlternative.Alternative alternative = this.settledAlternatives.get(owner);
@@ -202,7 +202,7 @@ public class PartialPlan {
      * @return the representing {@link OutputSlot} or {@code null} if this instance has no {@link ExecutionOperator}
      * backing the given {@link OutputSlot}
      */
-    private OutputSlot<?> findExecutionOperatorOutput(OutputSlot<?> someOutput) {
+    OutputSlot<?> findExecutionOperatorOutput(OutputSlot<?> someOutput) {
         while (someOutput != null && !someOutput.getOwner().isExecutionOperator()) {
             final OperatorAlternative owner = (OperatorAlternative) someOutput.getOwner();
             final OperatorAlternative.Alternative alternative = this.settledAlternatives.get(owner);
@@ -212,77 +212,12 @@ public class PartialPlan {
         return someOutput;
     }
 
-    /**
-     * Concatenates all {@link PartialPlan}s of the {@code baseEnumeration} via its {@code openOutputSlot}
-     * to the {@code targetEnumerations}' {@link PartialPlan}s.
-     * All {@link PlanEnumeration}s should be distinct.
-     */
-    public static Collection<PartialPlan> concatenate(PlanEnumeration baseEnumeration,
-                                                      OutputSlot<?> openOutputSlot,
-                                                      Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
-                                                      OptimizationContext optimizationContext,
-                                                      PlanEnumeration concatenationEnumeration) {
-
-        Collection<PartialPlan> concatenations = new LinkedList<>();
-
-        // Sort the PlanEnumerations by their respective open InputSlot or OutputSlot.
-        final MultiMap<OutputSlot<?>, PartialPlan> basePlanGroups = new MultiMap<>();
-        for (PartialPlan basePlan : baseEnumeration.getPartialPlans()) {
-            final OutputSlot<?> openOutput = basePlan.findExecutionOperatorOutput(openOutputSlot);
-            assert openOutput != null;
-            basePlanGroups.putSingle(openOutput, basePlan);
-        }
-        List<MultiMap<InputSlot<?>, PartialPlan>> targetPlanGroupList = new ArrayList<>(targetEnumerations.size());
-        for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : targetEnumerations.entrySet()) {
-            final InputSlot<?> openInputSlot = entry.getKey();
-            final PlanEnumeration targetEnumeration = entry.getValue();
-            MultiMap<InputSlot<?>, PartialPlan> targetPlanGroups = new MultiMap<>();
-            for (PartialPlan targetPlan : targetEnumeration.getPartialPlans()) {
-                // TODO: In general, we might face multiple mapped InputSlots, although this is presumably a rare case.
-                final InputSlot<?> openInput = RheemCollections.getSingle(
-                        targetPlan.findExecutionOperatorInputs(openInputSlot));
-                targetPlanGroups.putSingle(openInput, targetPlan);
-            }
-            targetPlanGroupList.add(targetPlanGroups);
-        }
-
-        // Prepare the cross product of all InputSlots.
-        List<Set<Map.Entry<InputSlot<?>, Set<PartialPlan>>>> targetPlanGroupEntrySet =
-                RheemCollections.map(targetPlanGroupList, MultiMap::entrySet);
-        final Iterable<List<Map.Entry<InputSlot<?>, Set<PartialPlan>>>> targetPlanGroupCrossProduct =
-                RheemCollections.streamedCrossProduct(targetPlanGroupEntrySet);
-
-        // Iterate all InputSlot/OutputSlot combinations.
-        for (List<Map.Entry<InputSlot<?>, Set<PartialPlan>>> targetPlanGroupEntries : targetPlanGroupCrossProduct) {
-            List<InputSlot<?>> inputs = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getKey);
-            for (Map.Entry<OutputSlot<?>, Set<PartialPlan>> basePlanGroupEntry : basePlanGroups.entrySet()) {
-                final OutputSlot<?> output = basePlanGroupEntry.getKey();
-                final Operator outputOperator = output.getOwner();
-                assert outputOperator.isExecutionOperator();
-                final Junction junction = Junction.create(output, inputs, optimizationContext);
-                if (junction == null) continue;
-
-                // If we found a junction, then we can enumerator all PartialPlan combinations
-                final List<Set<PartialPlan>> targetPlans = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getValue);
-                for (List<PartialPlan> targetPlanList : RheemCollections.streamedCrossProduct(targetPlans)) {
-                    for (PartialPlan basePlan : basePlanGroupEntry.getValue()) {
-                        PartialPlan concatenatedPlan = basePlan.concatenate(targetPlanList, junction, concatenationEnumeration);
-                        if (concatenatedPlan != null) {
-                            concatenations.add(concatenatedPlan);
-                        }
-                    }
-                }
-            }
-        }
-
-        return concatenations;
-    }
 
     /**
      * Creates a new instance that forms the concatenation of this instance with the {@code targetPlans} via the
      * {@code junction}.
      */
-    private PartialPlan concatenate(List<PartialPlan> targetPlans, Junction junction, PlanEnumeration concatenationEnumeration) {
+    PartialPlan concatenate(List<PartialPlan> targetPlans, Junction junction, PlanEnumeration concatenationEnumeration) {
         final PartialPlan concatenation = new PartialPlan(
                 concatenationEnumeration,
                 new HashMap<>(this.junctions.size() + 1),

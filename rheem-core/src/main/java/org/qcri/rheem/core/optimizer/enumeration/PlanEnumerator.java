@@ -342,8 +342,7 @@ public class PlanEnumerator {
             if (branchEnumeration == null) {
                 branchEnumeration = operatorEnumeration;
             } else {
-                branchEnumeration = PlanEnumeration.concatenate(branchEnumeration,
-                        lastOperator.getOutput(0),
+                branchEnumeration = branchEnumeration.concatenate(lastOperator.getOutput(0),
                         Collections.singletonMap(operator.getInput(0), operatorEnumeration),
                         optimizationContext);
             }
@@ -423,11 +422,11 @@ public class PlanEnumerator {
         assert !concatenationActivator.wasExecuted();
         concatenationActivator.markAsExecuted();
 
-        final PlanEnumeration concatenatedEnumeration = PlanEnumeration.concatenate(
-                concatenationActivator.baseEnumeration,
+        final PlanEnumeration concatenatedEnumeration = concatenationActivator.baseEnumeration.concatenate(
                 concatenationActivator.outputSlot,
                 concatenationActivator.getAdjacentEnumerations(),
-                concatenationActivator.getOptimizationContext());
+                concatenationActivator.getOptimizationContext()
+        );
 
         if (concatenatedEnumeration.getPartialPlans().isEmpty() && this.isTopLevel()) {
             throw new RheemException(String.format("No implementations found for %s.", concatenatedEnumeration));
