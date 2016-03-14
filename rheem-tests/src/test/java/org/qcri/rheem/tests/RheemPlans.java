@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
+import org.qcri.rheem.core.util.RheemArrays;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -186,6 +187,46 @@ public class RheemPlans {
         distinctLinesOperator.connectTo(0, stdoutSink, 0);
 
         return new RheemPlan(stdoutSink);
+    }
+
+    /**
+     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link LoopOperator}. It will
+     * then {@code k} times map each value to {@code 2n} and {@code 2n+1}. Finally, the outcome of the loop is
+     * collected in the {@code collector}.
+     */
+    public static RheemPlan simpleLoop(int numIterations, Collection<Integer> collector, int... values)
+            throws URISyntaxException {
+        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        source.setName("source");
+
+        LoopOperator<Integer, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(Integer.class),
+                DataSetType.createDefault(Integer.class),
+                (PredicateDescriptor.SerializablePredicate<Collection<Integer>>) collection ->
+                        collection.iterator().next() >= numIterations
+        );
+        loopOperator.setName("loop");
+        loopOperator.initialize(source);
+
+        FlatMapOperator<Integer, Integer> stepOperator = new FlatMapOperator<>(
+                val -> Arrays.asList(2 * val, 2 * val + 1),
+                Integer.class,
+                Integer.class
+        );
+        stepOperator.setName("step");
+
+        MapOperator<Integer, Integer> counter = new MapOperator<>(
+                new TransformationDescriptor<>(n -> n + 1, Integer.class, Integer.class)
+        );
+        counter.setName("counter");
+        loopOperator.beginIteration(stepOperator, counter);
+        loopOperator.endIteration(stepOperator, counter);
+
+        LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(collector, Integer.class);
+        sink.setName("sink");
+        loopOperator.outputConnectTo(sink);
+
+        // Create the RheemPlan.
+        return new RheemPlan(sink);
     }
 
     /**
@@ -403,7 +444,7 @@ public class RheemPlans {
                 DataSetType.createDefault(Integer.class),
                 (PredicateDescriptor.SerializablePredicate<Collection<Integer>>) collection ->
                         collection.iterator().next() >= 10
-                );
+        );
         loopOperator.setName("loop");
 
         // Union 10 times then output

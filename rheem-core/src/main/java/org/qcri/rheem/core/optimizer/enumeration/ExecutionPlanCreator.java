@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Creates an {@link PreliminaryExecutionPlan} from a {@link PartialPlan}.
+ * Creates an {@link PreliminaryExecutionPlan} from a {@link PlanImplementation}.
  */
 public class ExecutionPlanCreator
         extends AbstractTopologicalTraversal<Void, ExecutionPlanCreator.Activator, ExecutionPlanCreator.Activation> {
@@ -22,7 +22,7 @@ public class ExecutionPlanCreator
 
     private final Collection<Activation> startActivations;
 
-    private final PartialPlan partialPlan;
+    private final PlanImplementation planImplementation;
 
     private final Collection<ExecutionTask> terminalTasks = new LinkedList<>();
 
@@ -34,10 +34,10 @@ public class ExecutionPlanCreator
      * Creates a new instance that enumerates a <i>complete</i> {@link ExecutionPlan}.
      *
      * @param startOperators {@link ExecutionOperator}s from which the enumeration can start (should be sources).
-     * @param partialPlan    defines the {@link ExecutionOperator}s to use
+     * @param planImplementation    defines the {@link ExecutionOperator}s to use
      */
-    public ExecutionPlanCreator(Collection<ExecutionOperator> startOperators, PartialPlan partialPlan) {
-        this.partialPlan = partialPlan;
+    public ExecutionPlanCreator(Collection<ExecutionOperator> startOperators, PlanImplementation planImplementation) {
+        this.planImplementation = planImplementation;
         this.startActivators = startOperators.stream().map(Activator::new).collect(Collectors.toList());
         this.startActivations = Collections.emptyList();
     }
@@ -47,17 +47,17 @@ public class ExecutionPlanCreator
      * {@link Channel}s that have already been processed, so all their producers must not be enumerated.
      *
      * @param startOperators {@link ExecutionOperator}s from which the enumeration can start (should be sources).
-     * @param partialPlan    defines the {@link ExecutionOperator}s to use
+     * @param planImplementation    defines the {@link ExecutionOperator}s to use
      * @param existingPlan   {@link ExecutionPlan} that has already been executed and should be enhanced now; note that
-     *                       it must agree with the {@code partialPlan}
+     *                       it must agree with the {@code planImplementation}
      * @param openChannels   they, and their producers, must not be enumerated
      */
     public ExecutionPlanCreator(Collection<ExecutionOperator> startOperators,
-                                PartialPlan partialPlan,
+                                PlanImplementation planImplementation,
                                 ExecutionPlan existingPlan,
                                 Set<Channel> openChannels,
                                 Set<ExecutionStage> executedStages) {
-        this.partialPlan = partialPlan;
+        this.planImplementation = planImplementation;
 
         // We use the following reasoning to determine where to start the traversal:
         // Premise: start Operator is involved in producing an existing Channel <=> Operator has been executed
@@ -128,7 +128,7 @@ public class ExecutionPlanCreator
             return Stream.of(input);
         }
         OperatorAlternative.Alternative alternative =
-                ExecutionPlanCreator.this.partialPlan.getChosenAlternative((OperatorAlternative) owner);
+                ExecutionPlanCreator.this.planImplementation.getChosenAlternative((OperatorAlternative) owner);
         if (alternative == null) {
             ExecutionPlanCreator.this.logger.warn(
                     "Deciding upon output channels before having settled all follow-up alternatives.");
@@ -267,7 +267,7 @@ public class ExecutionPlanCreator
         private void connectToSuccessorTasks(int outputIndex, Platform platform, Collection<Activation> collector) {
             final OutputSlot<?> output = this.operator.getOutput(outputIndex);
             for (OutputSlot<?> outerOutput : this.operator.getOutermostOutputSlots(output)) {
-                final Junction junction = ExecutionPlanCreator.this.partialPlan.getJunction(outerOutput);
+                final Junction junction = ExecutionPlanCreator.this.planImplementation.getJunction(outerOutput);
                 assert junction != null : String.format("No junction found for %s.", outerOutput);
                 this.executionTask.setOutputChannel(outputIndex, junction.getSourceChannel());
 
@@ -291,7 +291,7 @@ public class ExecutionPlanCreator
             final Operator targetOperator = targetInput.getOwner();
             if (targetOperator.isAlternative()) {
                 OperatorAlternative.Alternative alternative =
-                        ExecutionPlanCreator.this.partialPlan.getChosenAlternative((OperatorAlternative) targetOperator);
+                        ExecutionPlanCreator.this.planImplementation.getChosenAlternative((OperatorAlternative) targetOperator);
                 if (alternative != null) {
                     final Collection<InputSlot<Object>> innerTargetInputs = alternative.followInput(targetInput);
                     for (InputSlot<Object> innerTargetInput : innerTargetInputs) {

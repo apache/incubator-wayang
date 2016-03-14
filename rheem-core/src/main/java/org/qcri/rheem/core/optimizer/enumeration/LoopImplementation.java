@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
@@ -11,26 +12,38 @@ import java.util.List;
 /**
  * Describes the enumeration of a {@link LoopSubplan}.
  */
-public class LoopEnumeration {
+public class LoopImplementation {
 
     private final LoopSubplan enumeratedLoop;
 
-    private final List<IterationEnumeration> iterationEnumerations = new LinkedList<>();
+    private final List<IterationImplementation> iterationImplementations = new LinkedList<>();
 
-    public LoopEnumeration(LoopSubplan enumeratedLoop) {
+    public LoopImplementation(LoopSubplan enumeratedLoop) {
         this.enumeratedLoop = enumeratedLoop;
     }
 
-    public IterationEnumeration addIterationEnumeration(int numIterations, PlanEnumeration bodyEnumeration) {
-        IterationEnumeration iterationEnumeration = new IterationEnumeration(numIterations, bodyEnumeration);
-        this.iterationEnumerations.add(iterationEnumeration);
-        return iterationEnumeration;
+    public IterationImplementation addIterationEnumeration(int numIterations, PlanImplementation bodyImplementation) {
+        IterationImplementation iterationImplementation = new IterationImplementation(numIterations, bodyImplementation);
+        this.iterationImplementations.add(iterationImplementation);
+        return iterationImplementation;
+    }
+
+    public TimeEstimate getTimeEstimate() {
+        TimeEstimate timeEstimate = TimeEstimate.ZERO;
+        for (int i = 0; i < this.iterationImplementations.size(); i++) {
+            timeEstimate = timeEstimate.plus(this.iterationImplementations.get(i).getTimeEstimate());
+        }
+        return timeEstimate;
+    }
+
+    public List<IterationImplementation> getIterationImplementations() {
+        return this.iterationImplementations;
     }
 
     /**
      * Enumeration for a number of contiguous loop iterations.
      */
-    public static class IterationEnumeration {
+    public static class IterationImplementation {
 
         /**
          * The number of iterations performed with this enumeration.
@@ -38,10 +51,10 @@ public class LoopEnumeration {
         private final int numIterations;
 
         /**
-         * The {@link PlanEnumeration} of the loop body (from the {@link LoopHeadOperator} to the final loop
-         * {@link Operator}.
+         * The {@link PlanImplementation} of the loop body (from the {@link LoopHeadOperator} to the final loop
+         * {@link Operator}s.
          */
-        private final PlanEnumeration bodyEnumeration;
+        private final PlanImplementation bodyImplementation;
 
         /**
          * Connects two iterations with this instance.
@@ -65,17 +78,17 @@ public class LoopEnumeration {
          */
         private Junction exitJunction;
 
-        public IterationEnumeration(int numIterations, PlanEnumeration bodyEnumeration) {
+        public IterationImplementation(int numIterations, PlanImplementation bodyImplementation) {
             this.numIterations = numIterations;
-            this.bodyEnumeration = bodyEnumeration;
+            this.bodyImplementation = bodyImplementation;
         }
 
         public int getNumIterations() {
             return this.numIterations;
         }
 
-        public PlanEnumeration getBodyEnumeration() {
-            return this.bodyEnumeration;
+        public PlanImplementation getBodyImplementation() {
+            return this.bodyImplementation;
         }
 
         public Junction getInterBodyJunction() {
@@ -109,6 +122,12 @@ public class LoopEnumeration {
         public void setExitJunction(Junction exitJunction) {
             this.exitJunction = exitJunction;
         }
+
+        public TimeEstimate getTimeEstimate() {
+            // TODO: Is this enough? Probably not.
+            return this.bodyImplementation.getTimeEstimate();
+        }
+
     }
 
 }

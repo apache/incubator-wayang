@@ -6,7 +6,7 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.optimizer.enumeration.PartialPlan;
+import org.qcri.rheem.core.optimizer.enumeration.PlanImplementation;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumeration;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerator;
 import org.qcri.rheem.core.optimizer.enumeration.StageAssignmentTraversal;
@@ -216,20 +216,20 @@ public class Job {
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
         this.stopWatch.stop("Create Initial Execution Plan", "Enumerate");
 
-        final Collection<PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
+        final Collection<PlanImplementation> executionPlans = comprehensiveEnumeration.getPlanImplementations();
         this.logger.info("Enumerated {} plans.", executionPlans.size());
-        for (PartialPlan partialPlan : executionPlans) {
-            this.logger.debug("Plan with operators: {}", partialPlan.getOperators());
+        for (PlanImplementation planImplementation : executionPlans) {
+            this.logger.debug("Plan with operators: {}", planImplementation.getOperators());
         }
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
         this.stopWatch.start("Create Initial Execution Plan", "Pick Best Plan");
-        final PartialPlan partialPlan = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
+        final PlanImplementation planImplementation = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
         this.stopWatch.stop("Create Initial Execution Plan", "Pick Best Plan");
 
         this.stopWatch.start("Create Initial Execution Plan", "Split Stages");
-        final ExecutionPlan executionPlan = partialPlan.createExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
+        final ExecutionPlan executionPlan = planImplementation.createExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
         this.stopWatch.stop("Create Initial Execution Plan", "Split Stages");
 
         assert executionPlan.isSane();
@@ -240,11 +240,11 @@ public class Job {
     }
 
 
-    private PartialPlan pickBestExecutionPlan(Comparator<TimeEstimate> timeEstimateComparator,
-                                              Collection<PartialPlan> executionPlans,
-                                              ExecutionPlan existingPlan,
-                                              Set<Channel> openChannels,
-                                              Set<ExecutionStage> executedStages) {
+    private PlanImplementation pickBestExecutionPlan(Comparator<TimeEstimate> timeEstimateComparator,
+                                                     Collection<PlanImplementation> executionPlans,
+                                                     ExecutionPlan existingPlan,
+                                                     Set<Channel> openChannels,
+                                                     Set<ExecutionStage> executedStages) {
 
         return executionPlans.stream()
                 .reduce((p1, p2) -> {
@@ -365,18 +365,18 @@ public class Job {
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator(executionPlan);
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
-        final Collection<PartialPlan> executionPlans = comprehensiveEnumeration.getPartialPlans();
+        final Collection<PlanImplementation> executionPlans = comprehensiveEnumeration.getPlanImplementations();
         this.logger.info("Enumerated {} plans.", executionPlans.size());
-        for (PartialPlan partialPlan : executionPlans) {
-            this.logger.debug("Plan with operators: {}", partialPlan.getOperators());
+        for (PlanImplementation planImplementation : executionPlans) {
+            this.logger.debug("Plan with operators: {}", planImplementation.getOperators());
         }
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        final PartialPlan partialPlan = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, executionPlan,
+        final PlanImplementation planImplementation = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, executionPlan,
                 openChannels, completedStages);
 
-        final ExecutionPlan executionPlanExpansion = partialPlan
+        final ExecutionPlan executionPlanExpansion = planImplementation
                 .createExecutionPlan(executionPlan, openChannels, state.getCompletedStages())
                 .toExecutionPlan(this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);

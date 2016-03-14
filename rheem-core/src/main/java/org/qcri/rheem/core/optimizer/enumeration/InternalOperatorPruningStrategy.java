@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 /**
  * This {@link PlanEnumerationPruningStrategy} follows the idea that we can throw away a
- * {@link PartialPlan}, when there is a further one that is (i) better and (ii) has the exact same
+ * {@link PlanImplementation}, when there is a further one that is (i) better and (ii) has the exact same
  * operators with still-to-be-connected {@link Slot}s.
  */
 public class InternalOperatorPruningStrategy implements PlanEnumerationPruningStrategy {
@@ -19,27 +19,27 @@ public class InternalOperatorPruningStrategy implements PlanEnumerationPruningSt
     @Override
     public void prune(PlanEnumeration planEnumeration, Configuration configuration) {
         // Group plans.
-        final Collection<List<PartialPlan>> competingPlans =
-                planEnumeration.getPartialPlans().stream()
-                        .collect(Collectors.groupingBy(PartialPlan::getInterfaceOperators))
+        final Collection<List<PlanImplementation>> competingPlans =
+                planEnumeration.getPlanImplementations().stream()
+                        .collect(Collectors.groupingBy(PlanImplementation::getInterfaceOperators))
                         .values();
         final Comparator<TimeEstimate> timeEstimateComparator = configuration.getTimeEstimateComparatorProvider().provide();
-        final List<PartialPlan> bestPlans = competingPlans.stream()
+        final List<PlanImplementation> bestPlans = competingPlans.stream()
                 .map(plans -> this.selectBestPlanNary(plans, timeEstimateComparator))
                 .collect(Collectors.toList());
-        planEnumeration.getPartialPlans().retainAll(bestPlans);
+        planEnumeration.getPlanImplementations().retainAll(bestPlans);
     }
 
-    private PartialPlan selectBestPlanNary(List<PartialPlan> partialPlan,
-                                           Comparator<TimeEstimate> timeEstimateComparator) {
-        return partialPlan.stream()
+    private PlanImplementation selectBestPlanNary(List<PlanImplementation> planImplementation,
+                                                  Comparator<TimeEstimate> timeEstimateComparator) {
+        return planImplementation.stream()
                 .reduce((plan1, plan2) -> this.selectBestPlanBinary(plan1, plan2, timeEstimateComparator))
                 .get();
     }
 
-    private PartialPlan selectBestPlanBinary(PartialPlan p1,
-                                             PartialPlan p2,
-                                             Comparator<TimeEstimate> timeEstimateComparator) {
+    private PlanImplementation selectBestPlanBinary(PlanImplementation p1,
+                                                    PlanImplementation p2,
+                                                    Comparator<TimeEstimate> timeEstimateComparator) {
         final TimeEstimate t1 = p1.getTimeEstimate();
         final TimeEstimate t2 = p2.getTimeEstimate();
         return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;

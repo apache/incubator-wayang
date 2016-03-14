@@ -1,8 +1,9 @@
 package org.qcri.rheem.core.util;
 
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Utility for handling arrays.
@@ -37,5 +38,12 @@ public class RheemArrays {
             }
         }
         return false;
+    }
+
+    /**
+     * Converts {@code int} varargs into a {@link List}.
+     */
+    public static List<Integer> asList(int... values) {
+        return Arrays.stream(values).mapToObj(Integer::valueOf).collect(Collectors.toList());
     }
 }

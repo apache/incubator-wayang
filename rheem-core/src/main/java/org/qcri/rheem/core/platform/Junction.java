@@ -32,10 +32,15 @@ public class Junction {
     private TimeEstimate timeEstimateCache;
 
     public Junction(OutputSlot<?> sourceOutput, List<InputSlot<?>> targetInputs, OptimizationContext baseOptimizationCtx) {
+        // Copy parameters.
+        assert sourceOutput.getOwner().isExecutionOperator();
         this.sourceOutput = sourceOutput;
+        assert targetInputs.stream().allMatch(input -> input.getOwner().isExecutionOperator());
         this.targetInputs = targetInputs;
-        this.targetChannels = RheemCollections.map(this.targetInputs, input -> null);
         this.localOptimizationContext = new OptimizationContext(baseOptimizationCtx);
+
+        // Fill with nulls.
+        this.targetChannels = RheemCollections.map(this.targetInputs, input -> null);
     }
 
     /**

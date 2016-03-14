@@ -1,7 +1,5 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.apache.commons.lang3.Validate;
-
 import java.util.Objects;
 
 /**
@@ -25,8 +23,8 @@ public class ProbabilisticIntervalEstimate {
     private final long lowerEstimate, upperEstimate;
 
     public ProbabilisticIntervalEstimate(long lowerEstimate, long upperEstimate, double correctnessProb) {
-        Validate.isTrue(lowerEstimate <= upperEstimate);
-        Validate.inclusiveBetween(0, 1, correctnessProb);
+        assert lowerEstimate <= upperEstimate : String.format("%d > %d, which is illegal.", lowerEstimate, upperEstimate);
+        assert correctnessProb >= 0 && correctnessProb <= 1 : String.format("Illegal probability %f.", correctnessProb);
 
         this.correctnessProb = correctnessProb;
         this.lowerEstimate = lowerEstimate;

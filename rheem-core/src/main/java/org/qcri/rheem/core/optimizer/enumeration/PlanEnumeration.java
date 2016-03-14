@@ -13,11 +13,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Represents a collection of {@link PartialPlan}s that all implement the same section of a {@link RheemPlan} (which
+ * Represents a collection of {@link PlanImplementation}s that all implement the same section of a {@link RheemPlan} (which
  * is assumed to contain {@link OperatorAlternative}s in general).
- * <p>
- * <p><i>TODO: Describe algebra.</i>
- * The outputs are mapped to this {@link RheemPlan} if the plans are partial.</p>
+ * <p>Instances can be mutated and combined in algebraic manner. In particular, instances can be unioned if they implement
+ * the same part of the {@link RheemPlan}, concatenated if there are contact points, and pruned.</p>
  */
 public class PlanEnumeration {
 
@@ -27,7 +26,7 @@ public class PlanEnumeration {
     final Set<OperatorAlternative> scope;
 
     /**
-     * Outermost {@link InputSlot}s that are not satisfied in this instance.
+     * {@link InputSlot}s that are not satisfied in this instance.
      */
     final Set<InputSlot<?>> requestedInputSlots;
 
@@ -39,12 +38,12 @@ public class PlanEnumeration {
     final Set<Tuple<OutputSlot<?>, InputSlot<?>>> servingOutputSlots;
 
     /**
-     * {@link PartialPlan}s contained in this instance.
+     * {@link PlanImplementation}s contained in this instance.
      */
-    final Collection<PartialPlan> partialPlans;
+    final Collection<PlanImplementation> planImplementations;
 
     /**
-     *
+     * {@link ExecutionTask}s that have already been executed.
      */
     final Map<ExecutionOperator, ExecutionTask> executedTasks;
 
@@ -70,12 +69,12 @@ public class PlanEnumeration {
     private PlanEnumeration(Set<OperatorAlternative> scope,
                             Set<InputSlot<?>> requestedInputSlots,
                             Set<Tuple<OutputSlot<?>, InputSlot<?>>> servingOutputSlots,
-                            Collection<PartialPlan> partialPlans,
+                            Collection<PlanImplementation> planImplementations,
                             Map<ExecutionOperator, ExecutionTask> executedTasks) {
         this.scope = scope;
         this.requestedInputSlots = requestedInputSlots;
         this.servingOutputSlots = servingOutputSlots;
-        this.partialPlans = partialPlans;
+        this.planImplementations = planImplementations;
         this.executedTasks = executedTasks;
     }
 
@@ -87,8 +86,8 @@ public class PlanEnumeration {
      */
     static PlanEnumeration createSingleton(ExecutionOperator operator, OptimizationContext optimizationContext) {
         final PlanEnumeration enumeration = createFor(operator, operator);
-        final PartialPlan singletonPartialPlan = enumeration.createSingletonPartialPlan(operator, optimizationContext);
-        enumeration.add(singletonPartialPlan);
+        final PlanImplementation singletonPlanImplementation = enumeration.createSingletonPartialPlan(operator, optimizationContext);
+        enumeration.add(singletonPlanImplementation);
         return enumeration;
     }
 
@@ -139,6 +138,9 @@ public class PlanEnumeration {
         return instance;
     }
 
+    /**
+     * Asserts that two given instances enumerate the same part of a {@link RheemPlan}.
+     */
     private static void assertMatchingInterface(PlanEnumeration instance1, PlanEnumeration instance2) {
         if (!instance1.requestedInputSlots.equals(instance2.requestedInputSlots)) {
             throw new IllegalArgumentException("Input slots are not matching.");
@@ -160,7 +162,8 @@ public class PlanEnumeration {
 
         assert this.getServingOutputSlots().stream()
                 .map(Tuple::getField0)
-                .anyMatch(openOutputSlot::equals);
+                .anyMatch(openOutputSlot::equals)
+                : String.format("Cannot concatenate %s: it is not a served output.", openOutputSlot);
         assert !targetEnumerations.isEmpty();
 
 
@@ -186,7 +189,7 @@ public class PlanEnumeration {
         result.requestedInputSlots.removeAll(targetEnumerations.keySet());
         result.servingOutputSlots.removeIf(slotService -> slotService.getField0().equals(openOutputSlot));
 
-        result.partialPlans.addAll(
+        result.planImplementations.addAll(
                 this.concatenatePartialPlans(openOutputSlot, targetEnumerations, optimizationContext, result)
         );
 
@@ -195,81 +198,124 @@ public class PlanEnumeration {
     }
 
     /**
-     * Concatenates all {@link PartialPlan}s of the {@code baseEnumeration} via its {@code openOutputSlot}
-     * to the {@code targetEnumerations}' {@link PartialPlan}s.
+     * Concatenates all {@link PlanImplementation}s of the {@code baseEnumeration} via its {@code openOutputSlot}
+     * to the {@code targetEnumerations}' {@link PlanImplementation}s.
      * All {@link PlanEnumeration}s should be distinct.
      */
-    public Collection<PartialPlan> concatenatePartialPlans(OutputSlot<?> openOutputSlot,
-                                                           Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
-                                                           OptimizationContext optimizationContext,
-                                                           PlanEnumeration concatenationEnumeration) {
+    private Collection<PlanImplementation> concatenatePartialPlans(OutputSlot<?> openOutputSlot,
+                                                                   Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
+                                                                   OptimizationContext optimizationContext,
+                                                                   PlanEnumeration concatenationEnumeration) {
 
-        Collection<PartialPlan> concatenations = new LinkedList<>();
+        // Group the base and target PlanImplementations by their operator.
+        final MultiMap<Collection<OutputSlot<?>>, PlanImplementation> basePlanGroups =
+                this.groupImplementationsByOutput(openOutputSlot);
+        final List<MultiMap<Set<InputSlot<?>>, PlanImplementation>> targetPlanGroupList =
+                groupImplementationsByInput(targetEnumerations);
 
-        // Sort the PlanEnumerations by their respective open InputSlot or OutputSlot.
-        final MultiMap<OutputSlot<?>, PartialPlan> basePlanGroups = new MultiMap<>();
-        for (PartialPlan basePlan : this.getPartialPlans()) {
-            final OutputSlot<?> openOutput = basePlan.findExecutionOperatorOutput(openOutputSlot);
-            assert openOutput != null;
-            basePlanGroups.putSingle(openOutput, basePlan);
-        }
-        List<MultiMap<InputSlot<?>, PartialPlan>> targetPlanGroupList = new ArrayList<>(targetEnumerations.size());
-        for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : targetEnumerations.entrySet()) {
-            final InputSlot<?> openInputSlot = entry.getKey();
-            final PlanEnumeration targetEnumeration = entry.getValue();
-            MultiMap<InputSlot<?>, PartialPlan> targetPlanGroups = new MultiMap<>();
-            for (PartialPlan targetPlan : targetEnumeration.getPartialPlans()) {
-                // TODO: In general, we might face multiple mapped InputSlots, although this is presumably a rare case.
-                final InputSlot<?> openInput = RheemCollections.getSingle(
-                        targetPlan.findExecutionOperatorInputs(openInputSlot));
-                targetPlanGroups.putSingle(openInput, targetPlan);
-            }
-            targetPlanGroupList.add(targetPlanGroups);
-        }
 
-        // Prepare the cross product of all InputSlots.
-        List<Set<Map.Entry<InputSlot<?>, Set<PartialPlan>>>> targetPlanGroupEntrySet =
-                RheemCollections.map(targetPlanGroupList, MultiMap::entrySet);
-        final Iterable<List<Map.Entry<InputSlot<?>, Set<PartialPlan>>>> targetPlanGroupCrossProduct =
-                RheemCollections.streamedCrossProduct(targetPlanGroupEntrySet);
+        // Allocate result collector.
+        Collection<PlanImplementation> result = new LinkedList<>();
 
         // Iterate all InputSlot/OutputSlot combinations.
-        for (List<Map.Entry<InputSlot<?>, Set<PartialPlan>>> targetPlanGroupEntries : targetPlanGroupCrossProduct) {
-            List<InputSlot<?>> inputs = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getKey);
-            for (Map.Entry<OutputSlot<?>, Set<PartialPlan>> basePlanGroupEntry : basePlanGroups.entrySet()) {
-                final OutputSlot<?> output = basePlanGroupEntry.getKey();
-                final Operator outputOperator = output.getOwner();
-                assert outputOperator.isExecutionOperator();
-                final Junction junction = Junction.create(output, inputs, optimizationContext);
-                if (junction == null) continue;
+        List<Set<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>>> targetPlanGroupEntrySet =
+                RheemCollections.map(targetPlanGroupList, MultiMap::entrySet);
+        final Iterable<List<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>>> targetPlanGroupCrossProduct =
+                RheemCollections.streamedCrossProduct(targetPlanGroupEntrySet);
+        for (List<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>> targetPlanGroupEntries : targetPlanGroupCrossProduct) {
+            // Flatten the requested InputSlots.
+            final List<InputSlot<?>> inputs = targetPlanGroupEntries.stream()
+                    .map(Map.Entry::getKey)
+                    .flatMap(Collection::stream)
+                    .distinct()
+                    .collect(Collectors.toCollection(() -> new ArrayList<>(4)));
 
-                // If we found a junction, then we can enumerator all PartialPlan combinations
-                final List<Set<PartialPlan>> targetPlans = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getValue);
-                for (List<PartialPlan> targetPlanList : RheemCollections.streamedCrossProduct(targetPlans)) {
-                    for (PartialPlan basePlan : basePlanGroupEntry.getValue()) {
-                        PartialPlan concatenatedPlan = basePlan.concatenate(targetPlanList, junction, concatenationEnumeration);
-                        if (concatenatedPlan != null) {
-                            concatenations.add(concatenatedPlan);
+            for (Map.Entry<Collection<OutputSlot<?>>, Set<PlanImplementation>> basePlanGroupEntry : basePlanGroups.entrySet()) {
+
+                final Collection<OutputSlot<?>> outputs = basePlanGroupEntry.getKey();
+                for (final OutputSlot<?> output : outputs) {
+
+                    // Construct a Junction between the ExecutionOperators.
+                    final Operator outputOperator = output.getOwner();
+                    assert outputOperator.isExecutionOperator()
+                            : String.format("Expected execution operator, found %s.", outputOperator);
+                    final Junction junction = Junction.create(output, inputs, optimizationContext);
+                    if (junction == null) continue;
+
+                    // If we found a junction, then we can enumerate all PlanImplementation combinations
+                    final List<Set<PlanImplementation>> targetPlans = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getValue);
+                    for (List<PlanImplementation> targetPlanList : RheemCollections.streamedCrossProduct(targetPlans)) {
+                        for (PlanImplementation basePlan : basePlanGroupEntry.getValue()) {
+                            PlanImplementation concatenatedPlan = basePlan.concatenate(targetPlanList, junction, concatenationEnumeration);
+                            if (concatenatedPlan != null) {
+                                result.add(concatenatedPlan);
+                            }
                         }
                     }
                 }
             }
         }
 
-        return concatenations;
+        return result;
+    }
+
+    /**
+     * Groups all {@link #planImplementations} by their {@link ExecutionOperator} for the {@code ouput}.
+     */
+    private MultiMap<Collection<OutputSlot<?>>, PlanImplementation> groupImplementationsByOutput(OutputSlot<?> output) {
+        // Sort the PlanEnumerations by their respective open InputSlot or OutputSlot.
+        final MultiMap<Collection<OutputSlot<?>>, PlanImplementation> basePlanGroups = new MultiMap<>();
+        for (PlanImplementation basePlan : this.getPlanImplementations()) {
+            final Collection<OutputSlot<?>> openOutputs = basePlan.findExecutionOperatorOutput(output);
+            assert openOutputs != null && !openOutputs.isEmpty() : String.format("No outputs found for %s.", output);
+            basePlanGroups.putSingle(openOutputs, basePlan);
+        }
+        return basePlanGroups;
+    }
+
+    /**
+     * For each given instance, group the {@link #planImplementations} by their {@link ExecutionOperator} for the
+     * associated {@link InputSlot}.
+     *
+     * @param enumerations a mapping from {@link InputSlot}s to {@link PlanEnumeration}s that request this input
+     * @return a {@link List} with an element for each {@code enumerations} entry; each entry groups the
+     * {@link PlanImplementation}s of the {@link PlanEnumeration} that share the same {@link ExecutionOperator}s for
+     * the requested {@link InputSlot}
+     */
+    private static List<MultiMap<Set<InputSlot<?>>, PlanImplementation>> groupImplementationsByInput(
+            Map<InputSlot<?>, PlanEnumeration> enumerations) {
+
+        // Prepare a collector for the results.
+        List<MultiMap<Set<InputSlot<?>>, PlanImplementation>> targetPlanGroupList = new ArrayList<>(enumerations.size());
+
+        // Go over all PlanEnumerations.
+        for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : enumerations.entrySet()) {
+            // Extract the requested InputSlot and the associated PlanEnumeration requesting it.
+            final InputSlot<?> requestedInput = entry.getKey();
+            final PlanEnumeration targetEnumeration = entry.getValue();
+
+
+            MultiMap<Set<InputSlot<?>>, PlanImplementation> targetPlanGroups = new MultiMap<>();
+            for (PlanImplementation planImpl : targetEnumeration.getPlanImplementations()) {
+                final Collection<InputSlot<?>> openInput = planImpl.findExecutionOperatorInputs(requestedInput);
+                targetPlanGroups.putSingle(RheemCollections.asSet(openInput), planImpl);
+            }
+            targetPlanGroupList.add(targetPlanGroups);
+        }
+        return targetPlanGroupList;
     }
 
 
     /**
-     * Add a {@link PartialPlan} to this instance.
+     * Add a {@link PlanImplementation} to this instance.
      *
-     * @param partialPlan to be added
+     * @param planImplementation to be added
      */
-    public void add(PartialPlan partialPlan) {
+    public void add(PlanImplementation planImplementation) {
         // TODO: Check if the plan conforms to this instance.
-        this.partialPlans.add(partialPlan);
-        assert partialPlan.getTimeEstimate() != null;
-        partialPlan.setPlanEnumeration(this);
+        this.planImplementations.add(planImplementation);
+        assert planImplementation.getTimeEstimate() != null;
+        planImplementation.setPlanEnumeration(this);
     }
 
     /**
@@ -279,15 +325,15 @@ public class PlanEnumeration {
      * @param optimizationContext
      * @return the new instance
      */
-    private PartialPlan createSingletonPartialPlan(ExecutionOperator executionOperator, OptimizationContext optimizationContext) {
-        final PartialPlan partialPlan = new PartialPlan(this, new HashMap<>(0), Collections.singletonList(executionOperator));
+    private PlanImplementation createSingletonPartialPlan(ExecutionOperator executionOperator, OptimizationContext optimizationContext) {
+        final PlanImplementation planImplementation = new PlanImplementation(this, new HashMap<>(0), Collections.singletonList(executionOperator));
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(executionOperator);
-        partialPlan.addToTimeEstimate(operatorContext.getTimeEstimate());
-        return partialPlan;
+        planImplementation.addToTimeEstimate(operatorContext.getTimeEstimate());
+        return planImplementation;
     }
 
     /**
-     * Unions the {@link PartialPlan}s of this and {@code that} instance. The operation is in-place, i.e., this instance
+     * Unions the {@link PlanImplementation}s of this and {@code that} instance. The operation is in-place, i.e., this instance
      * is modified to form the result.
      *
      * @param that the instance to compute the union with
@@ -295,11 +341,11 @@ public class PlanEnumeration {
     public void unionInPlace(PlanEnumeration that) {
         assertMatchingInterface(this, that);
         this.scope.addAll(that.scope);
-        that.partialPlans.forEach(partialPlan -> {
-            this.partialPlans.add(partialPlan);
+        that.planImplementations.forEach(partialPlan -> {
+            this.planImplementations.add(partialPlan);
             partialPlan.setPlanEnumeration(this);
         });
-        that.partialPlans.clear();
+        that.planImplementations.clear();
     }
 
     /**
@@ -346,16 +392,16 @@ public class PlanEnumeration {
         }
 
 
-        // Escape the PartialPlan instances.
-        for (PartialPlan partialPlan : this.partialPlans) {
-            escapedInstance.partialPlans.add(partialPlan.escape(alternative, escapedInstance));
+        // Escape the PlanImplementation instances.
+        for (PlanImplementation planImplementation : this.planImplementations) {
+            escapedInstance.planImplementations.add(planImplementation.escape(alternative, escapedInstance));
         }
 
         return escapedInstance;
     }
 
-    public Collection<PartialPlan> getPartialPlans() {
-        return this.partialPlans;
+    public Collection<PlanImplementation> getPlanImplementations() {
+        return this.planImplementations;
     }
 
     public Set<InputSlot<?>> getRequestedInputSlots() {
@@ -377,7 +423,7 @@ public class PlanEnumeration {
     @Override
     public String toString() {
         return String.format("%s[%dx, inputs=%s, outputs=%s]", this.getClass().getSimpleName(),
-                this.getPartialPlans().size(),
+                this.getPlanImplementations().size(),
                 this.requestedInputSlots, this.servingOutputSlots.stream()
                         .map(Tuple::getField0)
                         .distinct()

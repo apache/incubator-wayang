@@ -414,8 +414,7 @@ public class PlanEnumerator {
      */
     private PlanEnumeration enumerateLoop(LoopSubplan loop, OptimizationContext operatorContext) {
         final LoopEnumerator loopEnumerator = new LoopEnumerator(this, operatorContext.getNestedLoopContext(loop));
-        final LoopEnumeration loopEnumeration = loopEnumerator.enumerate();
-        throw new RuntimeException("Cannot enumerate loops, yet.");
+        return loopEnumerator.enumerate();
     }
 
     private void concatenate(ConcatenationActivator concatenationActivator) {
@@ -428,7 +427,7 @@ public class PlanEnumerator {
                 concatenationActivator.getOptimizationContext()
         );
 
-        if (concatenatedEnumeration.getPartialPlans().isEmpty() && this.isTopLevel()) {
+        if (concatenatedEnumeration.getPlanImplementations().isEmpty() && this.isTopLevel()) {
             throw new RheemException(String.format("No implementations found for %s.", concatenatedEnumeration));
         }
 

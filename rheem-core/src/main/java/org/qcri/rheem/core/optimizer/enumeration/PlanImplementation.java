@@ -1,7 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
@@ -10,11 +9,7 @@ import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.util.Canonicalizer;
-import org.qcri.rheem.core.util.MultiMap;
-import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -23,9 +18,7 @@ import java.util.stream.Stream;
 /**
  * Represents a partial execution plan.
  */
-public class PartialPlan {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(PartialPlan.class);
+public class PlanImplementation {
 
     /**
      * {@link ExecutionOperator}s contained in this instance.
@@ -37,6 +30,11 @@ public class PartialPlan {
      * implemented.
      */
     private final Map<OutputSlot<?>, Junction> junctions;
+
+    /**
+     * Defines how {@link LoopSubplan}s should be executed.
+     */
+    private final Map<LoopSubplan, LoopImplementation> loopImplementations = new HashMap<>();
 
     /**
      * An enumerated plan is mainly characterized by the {@link OperatorAlternative.Alternative}s that have
@@ -58,7 +56,7 @@ public class PartialPlan {
     /**
      * Create a new instance.
      */
-    PartialPlan(
+    PlanImplementation(
             PlanEnumeration planEnumeration,
             Map<OutputSlot<?>, Junction> junctions,
             Collection<ExecutionOperator> operators) {
@@ -68,9 +66,9 @@ public class PartialPlan {
     /**
      * Creates new instance.
      */
-    PartialPlan(PlanEnumeration planEnumeration,
-                Map<OutputSlot<?>, Junction> junctions,
-                ExecutionOperator... operatorCollections) {
+    PlanImplementation(PlanEnumeration planEnumeration,
+                       Map<OutputSlot<?>, Junction> junctions,
+                       ExecutionOperator... operatorCollections) {
         this(planEnumeration, junctions, new Canonicalizer<>());
         for (ExecutionOperator operator : operators) {
             this.operators.add(operator);
@@ -80,9 +78,9 @@ public class PartialPlan {
     /**
      * Base constructor.
      */
-    private PartialPlan(PlanEnumeration planEnumeration,
-                        Map<OutputSlot<?>, Junction> junctions,
-                        Canonicalizer<ExecutionOperator> operators) {
+    private PlanImplementation(PlanEnumeration planEnumeration,
+                               Map<OutputSlot<?>, Junction> junctions,
+                               Canonicalizer<ExecutionOperator> operators) {
         this.planEnumeration = planEnumeration;
         this.junctions = junctions;
         this.operators = operators;
@@ -102,58 +100,6 @@ public class PartialPlan {
         this.planEnumeration = planEnumeration;
     }
 
-    /**
-     * Create a new instance that forms the concatenation of the two.
-     *
-     * @param that        instance to join with
-     * @param commonScope {@link OperatorAlternative}s that are selected in both instances
-     * @param target      @return the joined instance or {@code null} if the two input instances disagree in some {@link OperatorAlternative}s
-     */
-    public PartialPlan join(PartialPlan that,
-                            List<OperatorAlternative> commonScope,
-                            Set<InputSlot<?>> thisToThatConcatenatableInputs,
-                            Set<InputSlot<?>> thatToThisConcatenatableInputs,
-                            PlanEnumeration target) {
-
-        assert false;
-
-        // Find out if the two plans do not disagree at some point.
-        for (OperatorAlternative operatorAlternative : commonScope) {
-            final OperatorAlternative.Alternative thisChosenAlternative = this.settledAlternatives.get(operatorAlternative);
-            final OperatorAlternative.Alternative thatChosenAlternative = that.settledAlternatives.get(operatorAlternative);
-            if (!thatChosenAlternative.equals(thisChosenAlternative)) {
-                LOGGER.trace("Cannot combine two partial plans: they disagree in some alternatives");
-                return null;
-            }
-        }
-
-        final PartialPlan partialPlan = new PartialPlan(
-                target,
-                new HashMap<>(this.junctions.size() + that.junctions.size() +
-                        thatToThisConcatenatableInputs.size() + thisToThatConcatenatableInputs.size()),
-                new HashSet<>(this.settledAlternatives.size(), that.settledAlternatives.size())
-        );
-        partialPlan.operators.addAll(this.operators);
-        partialPlan.operators.addAll(that.operators);
-        partialPlan.junctions.putAll(this.junctions);
-        partialPlan.junctions.putAll(that.junctions);
-        partialPlan.settledAlternatives.putAll(this.settledAlternatives);
-        partialPlan.settledAlternatives.putAll(that.settledAlternatives);
-
-        // Find out how to concatenate the inputs.
-        for (InputSlot concatenatableInput : thisToThatConcatenatableInputs) {
-            // Find the actually used Slots.
-            final OutputSlot<?> execOpOutput = this.findExecutionOperatorOutput(concatenatableInput.getOccupant());
-            assert execOpOutput != null;
-
-            Collection<InputSlot<?>> execOpInputs = that.findExecutionOperatorInputs(concatenatableInput);
-            assert execOpInputs != null;
-
-
-        }
-
-        return partialPlan;
-    }
 
     /**
      * Find the {@link InputSlot}s of already picked {@link ExecutionOperator}s that represent the given {@link InputSlot}.
@@ -165,9 +111,10 @@ public class PartialPlan {
      * backing the given {@link InputSlot}
      */
     Collection<InputSlot<?>> findExecutionOperatorInputs(final InputSlot<?> someInput) {
-        if (!someInput.getOwner().isExecutionOperator()) {
-            final OperatorAlternative owner = (OperatorAlternative) someInput.getOwner();
-            final OperatorAlternative.Alternative alternative = this.settledAlternatives.get(owner);
+        final Operator owner = someInput.getOwner();
+        if (owner.isAlternative()) {
+            final OperatorAlternative operatorAlternative = (OperatorAlternative) owner;
+            final OperatorAlternative.Alternative alternative = this.settledAlternatives.get(operatorAlternative);
             if (alternative == null) return null;
             @SuppressWarnings("unchecked")
             final Collection<InputSlot<?>> innerInputs = (Collection<InputSlot<?>>) (Collection) alternative.followInput(someInput);
@@ -187,7 +134,37 @@ public class PartialPlan {
                 }
             }
             return result;
+
+        } else if (owner.isLoopSubplan()) {
+            final LoopSubplan loopSubplan = (LoopSubplan) owner;
+            final LoopImplementation loopImplementation = this.getLoopImplementations().get(loopSubplan);
+            if (loopImplementation == null) return null;
+
+            // Enter the LoopSubplan.
+            final Collection<InputSlot<?>> innerInputs = loopSubplan.followInputUnchecked(someInput);
+            if (innerInputs.isEmpty()) return innerInputs;
+
+            // Discern LoopHeadOperator InputSlots and loop body InputSlots.
+            final List<LoopImplementation.IterationImplementation> iterationImpls = loopImplementation.getIterationImplementations();
+            final Collection<InputSlot<?>> collector = new HashSet<>(innerInputs.size());
+            for (InputSlot<?> innerInput : innerInputs) {
+                if (innerInput.getOwner() == loopSubplan.getLoopHead()) {
+                    final LoopImplementation.IterationImplementation initialIterationImpl = iterationImpls.get(0);
+                    collector.addAll(
+                            initialIterationImpl.getBodyImplementation().findExecutionOperatorInputs(innerInput)
+                    );
+                } else {
+                    for (LoopImplementation.IterationImplementation iterationImpl : iterationImpls) {
+                        collector.addAll(
+                                iterationImpl.getBodyImplementation().findExecutionOperatorInputs(innerInput)
+                        );
+                    }
+                }
+            }
+            return collector;
+
         } else {
+            assert owner.isExecutionOperator();
             Collection<InputSlot<?>> result = new LinkedList<>();
             result.add(someInput);
             return result;
@@ -196,20 +173,61 @@ public class PartialPlan {
     }
 
     /**
-     * Find the {@link OutputSlot} of an already picked {@link ExecutionOperator} that represents the given {@link OutputSlot}.
+     * Find the {@link OutputSlot}s of already picked {@link ExecutionOperator}s that represent the given {@link OutputSlot}.
      *
-     * @param someOutput any {@link InputSlot} of the original {@link RheemPlan}
-     * @return the representing {@link OutputSlot} or {@code null} if this instance has no {@link ExecutionOperator}
-     * backing the given {@link OutputSlot}
+     * @param someOutput any {@link OutputSlot} of the original {@link RheemPlan}
+     * @return the representing {@link OutputSlot}s
      */
-    OutputSlot<?> findExecutionOperatorOutput(OutputSlot<?> someOutput) {
-        while (someOutput != null && !someOutput.getOwner().isExecutionOperator()) {
-            final OperatorAlternative owner = (OperatorAlternative) someOutput.getOwner();
-            final OperatorAlternative.Alternative alternative = this.settledAlternatives.get(owner);
-            if (alternative == null) return null;
-            someOutput = alternative.traceOutput(someOutput);
+    Collection<OutputSlot<?>> findExecutionOperatorOutput(OutputSlot<?> someOutput) {
+        while (someOutput != null
+                && someOutput.getOwner().isAlternative()) {
+            final Operator owner = someOutput.getOwner();
+            final OperatorAlternative operatorAlternative = (OperatorAlternative) owner;
+            final OperatorAlternative.Alternative alternative = this.settledAlternatives.get(operatorAlternative);
+            someOutput = alternative == null ? null : alternative.traceOutput(someOutput);
         }
-        return someOutput;
+
+        // If we did not find a terminal OutputSlot.
+        if (someOutput == null) {
+            return Collections.emptySet();
+        }
+
+        // Otherwise, discern LoopSubplans and ExecutionOperators.
+        final Operator owner = someOutput.getOwner();
+        if (owner.isLoopSubplan()) {
+            assert owner.isLoopSubplan();
+            final LoopSubplan loopSubplan = (LoopSubplan) owner;
+            final LoopImplementation loopImplementation = this.getLoopImplementations().get(loopSubplan);
+            if (loopImplementation == null) return Collections.emptyList();
+
+            // Enter the LoopSubplan.
+            final OutputSlot<?> innerOutput = loopSubplan.traceOutput(someOutput);
+            if (innerOutput == null) return Collections.emptyList();
+
+            // Short-cut.
+            assert innerOutput.getOwner().isLoopHead();
+            final LoopHeadOperator loopHead = (LoopHeadOperator) innerOutput.getOwner();
+            if (innerOutput.getOwner().isExecutionOperator()) {
+                return Collections.singleton(innerOutput);
+            }
+
+            // For all the iterations, return the potential OutputSlots.
+            assert loopHead.isAlternative();
+            final List<LoopImplementation.IterationImplementation> iterationImpls =
+                    loopImplementation.getIterationImplementations();
+            final Set<OutputSlot<?>> collector = new HashSet<>(iterationImpls.size());
+            for (LoopImplementation.IterationImplementation iterationImpl : iterationImpls) {
+                final Collection<OutputSlot<?>> iterationOutputs =
+                        iterationImpl.getBodyImplementation().findExecutionOperatorOutput(innerOutput);
+                collector.addAll(iterationOutputs);
+            }
+
+            return collector;
+
+        } else {
+            assert owner.isExecutionOperator();
+            return Collections.singleton(someOutput);
+        }
     }
 
 
@@ -217,27 +235,30 @@ public class PartialPlan {
      * Creates a new instance that forms the concatenation of this instance with the {@code targetPlans} via the
      * {@code junction}.
      */
-    PartialPlan concatenate(List<PartialPlan> targetPlans, Junction junction, PlanEnumeration concatenationEnumeration) {
-        final PartialPlan concatenation = new PartialPlan(
+    PlanImplementation concatenate(List<PlanImplementation> targetPlans, Junction junction, PlanEnumeration concatenationEnumeration) {
+        final PlanImplementation concatenation = new PlanImplementation(
                 concatenationEnumeration,
                 new HashMap<>(this.junctions.size() + 1),
                 new HashSet<>(this.settledAlternatives.size(), targetPlans.size() * 4) // ballpark figure
         );
 
         concatenation.operators.addAll(this.operators);
+        concatenation.loopImplementations.putAll(this.loopImplementations);
         concatenation.junctions.putAll(this.junctions);
         concatenation.settledAlternatives.putAll(this.settledAlternatives);
         concatenation.addToTimeEstimate(this.getTimeEstimate());
 
-        junction.getOuterSourceOutputs().forEach(oso -> concatenation.junctions.put(oso, junction));
+        concatenation.junctions.put(junction.getSourceOutput(), junction);
+//        junction.getOuterSourceOutputs().forEach(oso -> concatenation.junctions.put(oso, junction));
         concatenation.addToTimeEstimate(junction.getTimeEstimate());
 
-        for (PartialPlan targetPlan : targetPlans) {
+        for (PlanImplementation targetPlan : targetPlans) {
             // TODO: We still need the join!
             if (concatenation.isSettledAlternativesContradicting(targetPlan)) {
                 return null;
             }
             concatenation.operators.addAll(targetPlan.operators);
+            concatenation.loopImplementations.putAll(targetPlan.loopImplementations);
             concatenation.junctions.putAll(targetPlan.junctions);
             concatenation.settledAlternatives.putAll(targetPlan.settledAlternatives);
             concatenation.addToTimeEstimate(targetPlan.getTimeEstimate());
@@ -246,7 +267,7 @@ public class PartialPlan {
         return concatenation;
     }
 
-    private boolean isSettledAlternativesContradicting(PartialPlan that) {
+    private boolean isSettledAlternativesContradicting(PlanImplementation that) {
         for (Map.Entry<OperatorAlternative, OperatorAlternative.Alternative> entry : this.settledAlternatives.entrySet()) {
             final OperatorAlternative opAlt = entry.getKey();
             final OperatorAlternative.Alternative alternative = entry.getValue();
@@ -265,17 +286,21 @@ public class PartialPlan {
      * @param newPlanEnumeration will host the new instance
      * @return
      */
-    public PartialPlan escape(OperatorAlternative.Alternative alternative, PlanEnumeration newPlanEnumeration) {
-        final PartialPlan escapedPartialPlan = new PartialPlan(newPlanEnumeration, this.junctions, this.operators);
-        escapedPartialPlan.settledAlternatives.putAll(this.settledAlternatives);
-        assert !escapedPartialPlan.settledAlternatives.containsKey(alternative.getOperatorAlternative());
-        escapedPartialPlan.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
-        escapedPartialPlan.addToTimeEstimate(this.getTimeEstimate());
-        return escapedPartialPlan;
+    public PlanImplementation escape(OperatorAlternative.Alternative alternative, PlanEnumeration newPlanEnumeration) {
+        final PlanImplementation escapedPlanImplementation = new PlanImplementation(newPlanEnumeration, this.junctions, this.operators);
+        escapedPlanImplementation.settledAlternatives.putAll(this.settledAlternatives);
+        assert !escapedPlanImplementation.settledAlternatives.containsKey(alternative.getOperatorAlternative());
+        escapedPlanImplementation.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
+        escapedPlanImplementation.addToTimeEstimate(this.getTimeEstimate());
+        return escapedPlanImplementation;
     }
 
     public Canonicalizer<ExecutionOperator> getOperators() {
         return this.operators;
+    }
+
+    public Map<LoopSubplan, LoopImplementation> getLoopImplementations() {
+        return this.loopImplementations;
     }
 
     /**

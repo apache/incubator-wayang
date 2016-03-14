@@ -206,6 +206,20 @@ public class JavaIntegrationIT {
         rheemContext.execute(rheemPlan);
     }
 
+    @Ignore("Loop support not complete, yet.")
+    @Test
+    public void testSimpleLoop() throws URISyntaxException {
+        // Build the RheemPlan.
+        final List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.simpleLoop(3, collector, 0, 1, 2);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+    }
+
     @Test
     public void testBroadcasts() {
         Collection<Integer> broadcastedValues = Arrays.asList(1, 2, 3, 4);

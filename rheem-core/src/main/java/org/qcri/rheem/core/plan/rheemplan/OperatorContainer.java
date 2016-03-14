@@ -36,6 +36,14 @@ public interface OperatorContainer {
     <T> Collection<InputSlot<T>> followInput(InputSlot<T> inputSlot);
 
     /**
+     * @see #followInput(InputSlot)
+     */
+    @SuppressWarnings("unchecked")
+    default Collection<InputSlot<?>> followInputUnchecked(InputSlot<?> inputSlot) {
+        return (Collection<InputSlot<?>>) (Collection) this.followInput(inputSlot);
+    }
+
+    /**
      * Enter this container. This container's {@link CompositeOperator} needs to be a sink.
      *
      * @return the sink operator within this subplan
