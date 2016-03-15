@@ -11,8 +11,12 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.spark.channels.SparkChannelManager;
 import org.qcri.rheem.spark.mapping.*;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Properties;
 
 /**
  * {@link Platform} for a single JVM executor based on the {@link java.util.stream} library.
@@ -43,10 +47,21 @@ public class SparkPlatform extends Platform {
     }
 
     public JavaSparkContext getSparkContext() {
+        Properties default_properties = new Properties();
+        default_properties.setProperty("spark.appName", "rheem");
+        default_properties.setProperty("spark.master", "local");
+        Properties properties = new Properties(default_properties);
+        try {
+            properties.load(new FileReader(new File("app.properties")));
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
         // NB: There must be only one JavaSparkContext per JVM. Therefore, it is not local to the executor.
         if (this.sparkContext == null) {
-            // TODO set spark config properly.
-            final SparkConf conf = new SparkConf().setAppName("Rheem").setMaster("local");
+            String appName = properties.getProperty("spark.appName");
+            String master = properties.getProperty("spark.master");
+            final SparkConf conf = new SparkConf().setAppName(appName).setMaster(master);
             this.sparkContext = new JavaSparkContext(conf);
         }
         return this.sparkContext;
