@@ -62,6 +62,10 @@ public class SparkPlatform extends Platform {
             String appName = properties.getProperty("spark.appName");
             String master = properties.getProperty("spark.master");
             final SparkConf conf = new SparkConf().setAppName(appName).setMaster(master);
+            if (properties.getProperty("spark.jars")!=null){
+                String[] jarFiles = properties.getProperty("spark.jars").split(",");
+                conf.setJars(jarFiles);
+            }
             this.sparkContext = new JavaSparkContext(conf);
         }
         return this.sparkContext;
