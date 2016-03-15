@@ -153,7 +153,7 @@ public class PlanEnumeration {
      * in this concatenation point.</li>
      * </ol>
      * Without these interaction points, the join degrades basically to a Cartesian product. This is an unexpected
-     * situation.</p>
+     * situation.
      *
      * @param that instance to join
      * @return a new instance representing the join product

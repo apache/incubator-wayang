@@ -68,7 +68,6 @@ public interface ExecutionOperator extends ActualOperator {
     /**
      * Associate a {@link TimeEstimate} to this instance.
      *
-     * @return
      */
     void setTimeEstimate(TimeEstimate timeEstimate);
 }

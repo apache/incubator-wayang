@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 /**
  * This mapping can be used to encapsulate subplans by connecting slots (usually <b>against</b> the data flow direction,
- * i.e., outer output slot -> inner output slot, inner input slot -> outer input slot).
+ * i.e., outer output slot to inner output slot, inner input slot to outer input slot).
  */
 public class SlotMapping {
 
