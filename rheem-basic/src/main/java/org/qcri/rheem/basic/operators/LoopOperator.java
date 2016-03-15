@@ -123,6 +123,35 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     }
 
     @Override
+    public Collection<OutputSlot<?>> getForwards(InputSlot<?> input) {
+        assert this.isOwnerOf(input);
+        switch (input.getIndex()) {
+            case INITIAL_CONVERGENCE_INPUT_INDEX:
+            case ITERATION_CONVERGENCE_INPUT_INDEX:
+                return Collections.singleton(this.getOutput(ITERATION_CONVERGENCE_OUTPUT_INDEX));
+            case INITIAL_INPUT_INDEX:
+            case ITERATION_INPUT_INDEX:
+                return Arrays.asList(this.getOutput(ITERATION_OUTPUT_INDEX), this.getOutput(FINAL_OUTPUT_INDEX));
+            default:
+                return super.getForwards(input);
+        }
+    }
+
+    @Override
+    public boolean isReading(InputSlot<?> input) {
+        assert this.isOwnerOf(input);
+        switch (input.getIndex()) {
+            case INITIAL_CONVERGENCE_INPUT_INDEX:
+            case ITERATION_CONVERGENCE_INPUT_INDEX:
+            case INITIAL_INPUT_INDEX:
+            case ITERATION_INPUT_INDEX:
+                return true;
+            default:
+                return super.isReading(input);
+        }
+    }
+
+    @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex, Configuration configuration) {
         switch (outputIndex) {
             case ITERATION_CONVERGENCE_OUTPUT_INDEX:

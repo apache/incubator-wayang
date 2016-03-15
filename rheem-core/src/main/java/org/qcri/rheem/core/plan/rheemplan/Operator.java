@@ -321,16 +321,34 @@ public interface Operator {
         return Collections.singleton(output);
     }
 
-
-    //    /**
-//     * This method is part of the visitor pattern and calls the appropriate visit method on {@code visitor}.
-//     *
-//     * @return return values associated with the inner-most input slot
-//     */
-
     default boolean isOwnerOf(Slot<?> slot) {
         return slot.getOwner() == this;
     }
+
+    /**
+     * Declare forward rules. Execution engines may take the chance to optimize the executed plans by having
+     * forwarded data by-pass this instance. However, note the specific semantics of a forward rule: If an
+     * {@link Operator} serves an {@link OutputSlot} that is involved in a foward rule, it will do so by forwarding.
+     * If the {@link OutputSlot} is not served, then the forwarding does not apply.
+     *
+     * @return {@link OutputSlot}s to which this instance forwards the given {@code input}.
+     * @see #isReading(InputSlot)
+     */
+    default Collection<OutputSlot<?>> getForwards(InputSlot<?> input) {
+        assert this.isOwnerOf(input);
+        return Collections.emptyList();
+    }
+
+    /**
+     * Tells whether the given {@code input} is read by this operator. If not, the optimizer can make use of this
+     * insight.
+     *
+     * @see #getForwards(InputSlot)
+     */
+    default boolean isReading(InputSlot<?> input) {
+        return true;
+    }
+
 
     /**
      * Tells whether this operator is a sink, i.e., it has no outputs.
