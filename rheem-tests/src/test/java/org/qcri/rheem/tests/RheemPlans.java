@@ -194,7 +194,7 @@ public class RheemPlans {
      * then {@code k} times map each value to {@code 2n} and {@code 2n+1}. Finally, the outcome of the loop is
      * collected in the {@code collector}.
      */
-    public static RheemPlan simpleLoop(int numIterations, Collection<Integer> collector, int... values)
+    public static RheemPlan simpleLoop(final int numIterations, Collection<Integer> collector, final int... values)
             throws URISyntaxException {
         CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
         source.setName("source");
@@ -205,7 +205,7 @@ public class RheemPlans {
                         collection.iterator().next() >= numIterations
         );
         loopOperator.setName("loop");
-        loopOperator.initialize(source);
+        loopOperator.initialize(source, CollectionSource.empty(Integer.class));
 
         FlatMapOperator<Integer, Integer> stepOperator = new FlatMapOperator<>(
                 val -> Arrays.asList(2 * val, 2 * val + 1),
@@ -402,7 +402,7 @@ public class RheemPlans {
         LoopOperator<String, Integer> loopOperator = null;
         Operator converge = null;
         // Read from file 1, remove commas, union with file 2, sort, upper case, then remove duplicates and output.
-        loopOperator.initialize(textFileSource1, 0);
+        loopOperator.initialize(textFileSource1, null); // TODO: Fix this test.
         loopOperator.beginIteration(noCommaOperator, converge);
         textFileSource2.connectTo(0, unionOperator, 0);
         noCommaOperator.connectTo(0, unionOperator, 1);
@@ -448,7 +448,7 @@ public class RheemPlans {
         loopOperator.setName("loop");
 
         // Union 10 times then output
-        loopOperator.initialize(textFileSource1, 0);
+        loopOperator.initialize(textFileSource1, CollectionSource.empty(Integer.class));
         loopOperator.beginIteration(unionOperator, counter);
         textFileSource2.connectTo(0, unionOperator, 1);
         loopOperator.endIteration(unionOperator, counter);

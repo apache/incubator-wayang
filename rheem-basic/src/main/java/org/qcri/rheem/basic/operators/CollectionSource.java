@@ -9,7 +9,9 @@ import org.qcri.rheem.core.plan.rheemplan.ElementaryOperator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 /**
@@ -39,5 +41,12 @@ public class CollectionSource<T> extends UnarySource<T> implements ElementaryOpe
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
         return Optional.of(new DefaultCardinalityEstimator(1d, this.getNumInputs(), this.isSupportingBroadcastInputs(),
                 inputCards -> this.collection.size()));
+    }
+
+    /**
+     * Creates a new instance without any data quanta.
+     */
+    public static <T> CollectionSource<T> empty(Class<T> typeClass) {
+        return new CollectionSource<>(Collections.emptyList(), typeClass);
     }
 }
