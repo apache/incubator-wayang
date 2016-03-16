@@ -54,7 +54,6 @@ public class SparkPlatform extends Platform {
         try {
             properties.load(new FileReader(new File("app.properties")));
         } catch (IOException e) {
-            e.printStackTrace();
             System.out.println("Could not find app.properties file, using default local spark configuration.");
         }
         // NB: There must be only one JavaSparkContext per JVM. Therefore, it is not local to the executor.
