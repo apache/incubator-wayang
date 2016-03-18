@@ -4,10 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
-import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.util.Canonicalizer;
 import org.qcri.rheem.core.util.RheemCollections;
@@ -304,7 +301,7 @@ public class PlanImplementation {
         concatenation.settledAlternatives.putAll(this.settledAlternatives);
         concatenation.addToTimeEstimate(this.getTimeEstimate());
 
-        // TODO: Find the appropriate PlanImplementation for the junction.
+        // Find the appropriate PlanImplementation for the junction.
         PlanImplementation junctionPlanImplementation;
         if (outputPlanImplemtation == this) {
             concatenation.loopImplementations.putAll(this.loopImplementations);
@@ -450,41 +447,15 @@ public class PlanImplementation {
                 .map(operator::getOutermostInputSlot);
     }
 
-    public PreliminaryExecutionPlan createExecutionPlan() {
-        final List<ExecutionOperator> startOperators = this.operators.stream()
+    /**
+     * Find the {@link ExecutionOperator} that do not depend on any other {@link ExecutionOperator} as input.
+     *
+     * @return the start {@link ElementaryOperator}s
+     */
+    public List<ExecutionOperator> getStartOperators() {
+        return this.operators.stream()
                 .filter(this::isStartOperator)
                 .collect(Collectors.toList());
-        assert !startOperators.isEmpty() :
-                String.format("Could not find start operators among %s: none provides any of %s.",
-                        this.operators, this.planEnumeration.requestedInputSlots);
-        final ExecutionPlanCreator executionPlanCreator = new ExecutionPlanCreator(startOperators, this);
-        if (executionPlanCreator.traverse()) {
-            return new PreliminaryExecutionPlan(executionPlanCreator.getTerminalTasks());
-        } else {
-            return null;
-        }
-    }
-
-    public PreliminaryExecutionPlan createExecutionPlan(
-            ExecutionPlan existingPlan,
-            Set<Channel> openChannels,
-            Set<ExecutionStage> executedStages) {
-        final List<ExecutionOperator> startOperators = this.operators.stream()
-                .filter(this::isStartOperator)
-                .collect(Collectors.toList());
-        assert !startOperators.isEmpty() :
-                String.format("Could not find start operators among %s: none provides any of %s.",
-                        this.operators, this.planEnumeration.requestedInputSlots);
-        try {
-            final ExecutionPlanCreator executionPlanCreator = new ExecutionPlanCreator(
-                    startOperators, this, existingPlan, openChannels, executedStages);
-            if (executionPlanCreator.traverse((Void[]) null)) {
-                return new PreliminaryExecutionPlan(executionPlanCreator.getTerminalTasks(),
-                        executionPlanCreator.getInputChannels());
-            }
-        } catch (AbstractTopologicalTraversal.AbortException e) {
-        }
-        return null;
     }
 
     /**

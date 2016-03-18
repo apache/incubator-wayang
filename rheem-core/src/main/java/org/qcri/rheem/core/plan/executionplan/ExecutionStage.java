@@ -153,7 +153,7 @@ public class ExecutionStage {
     public String toExtensiveString() {
         final StringBuilder sb = new StringBuilder();
         this.toExtensiveString(sb);
-        if (sb.charAt(sb.length() - 1) == '\n') sb.setLength(sb.length() - 1);
+        if (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\n') sb.setLength(sb.length() - 1);
         return sb.toString();
     }
 

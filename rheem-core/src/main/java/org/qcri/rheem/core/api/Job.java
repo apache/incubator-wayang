@@ -6,10 +6,7 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.optimizer.enumeration.PlanImplementation;
-import org.qcri.rheem.core.optimizer.enumeration.PlanEnumeration;
-import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerator;
-import org.qcri.rheem.core.optimizer.enumeration.StageAssignmentTraversal;
+import org.qcri.rheem.core.optimizer.enumeration.*;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
@@ -84,11 +81,12 @@ public class Job {
     private final double minConfidence = 5., maxSpread = .7;
 
     private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
-            (producerTask, channel, consumerTask) -> {
-                final CardinalityEstimate ce = channel.getCardinalityEstimate(optimizationContext);
-                return ce.getCorrectnessProbability() >= this.minConfidence
-                        && CardinalityBreakpoint.calculateSpread(ce) <= this.maxSpread;
-            };
+            (producerTask, channel, consumerTask) -> false ;
+//    {
+//                final CardinalityEstimate ce = channel.getCardinalityEstimate(optimizationContext);
+//                return ce.getCorrectnessProbability() >= this.minConfidence
+//                        && CardinalityBreakpoint.calculateSpread(ce) <= this.maxSpread;
+//            };
 
 
     /**
@@ -229,7 +227,8 @@ public class Job {
         this.stopWatch.stop("Create Initial Execution Plan", "Pick Best Plan");
 
         this.stopWatch.start("Create Initial Execution Plan", "Split Stages");
-        final ExecutionPlan executionPlan = planImplementation.createExecutionPlan().toExecutionPlan(this.stageSplittingCriterion);
+        final ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.createFrom(planImplementation);
+        final ExecutionPlan executionPlan = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         this.stopWatch.stop("Create Initial Execution Plan", "Split Stages");
 
         assert executionPlan.isSane();
@@ -376,9 +375,10 @@ public class Job {
         final PlanImplementation planImplementation = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, executionPlan,
                 openChannels, completedStages);
 
-        final ExecutionPlan executionPlanExpansion = planImplementation
-                .createExecutionPlan(executionPlan, openChannels, state.getCompletedStages())
-                .toExecutionPlan(this.stageSplittingCriterion);
+        ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.recreateFrom(
+                planImplementation, executionPlan, openChannels, state.getCompletedStages()
+        );
+        final ExecutionPlan executionPlanExpansion = ExecutionPlan.createFrom(executionTaskFlow, stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);
 
         assert executionPlan.isSane();

@@ -14,10 +14,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Creates an {@link PreliminaryExecutionPlan} from a {@link PlanImplementation}.
+ * Creates an {@link ExecutionTaskFlow} from a {@link PlanImplementation}.
  */
-public class ExecutionPlanCreator
-        extends AbstractTopologicalTraversal<Void, ExecutionPlanCreator.Activator, ExecutionPlanCreator.Activation> {
+public class ExecutionTaskFlowCompiler
+        extends AbstractTopologicalTraversal<Void, ExecutionTaskFlowCompiler.Activator, ExecutionTaskFlowCompiler.Activation> {
 
     private final Map<ActivatorKey, Activator> activators = new HashMap<>();
 
@@ -39,7 +39,7 @@ public class ExecutionPlanCreator
      * @param startOperators     {@link ExecutionOperator}s from which the enumeration can start (should be sources).
      * @param planImplementation defines the {@link ExecutionOperator}s to use
      */
-    public ExecutionPlanCreator(Collection<ExecutionOperator> startOperators, PlanImplementation planImplementation) {
+    public ExecutionTaskFlowCompiler(Collection<ExecutionOperator> startOperators, PlanImplementation planImplementation) {
         this.planImplementation = planImplementation;
         this.startActivators = startOperators.stream().map(Activator::new).collect(Collectors.toList());
         this.startActivations = Collections.emptyList();
@@ -55,11 +55,11 @@ public class ExecutionPlanCreator
      *                           it must agree with the {@code planImplementation}
      * @param openChannels       they, and their producers, must not be enumerated
      */
-    public ExecutionPlanCreator(Collection<ExecutionOperator> startOperators,
-                                PlanImplementation planImplementation,
-                                ExecutionPlan existingPlan,
-                                Set<Channel> openChannels,
-                                Set<ExecutionStage> executedStages) {
+    public ExecutionTaskFlowCompiler(Collection<ExecutionOperator> startOperators,
+                                     PlanImplementation planImplementation,
+                                     ExecutionPlan existingPlan,
+                                     Set<Channel> openChannels,
+                                     Set<ExecutionStage> executedStages) {
         this.planImplementation = planImplementation;
 
         // We use the following reasoning to determine where to start the traversal:
@@ -132,9 +132,9 @@ public class ExecutionPlanCreator
             return Stream.of(input);
         }
         OperatorAlternative.Alternative alternative =
-                ExecutionPlanCreator.this.planImplementation.getChosenAlternative((OperatorAlternative) owner);
+                ExecutionTaskFlowCompiler.this.planImplementation.getChosenAlternative((OperatorAlternative) owner);
         if (alternative == null) {
-            ExecutionPlanCreator.this.logger.warn(
+            ExecutionTaskFlowCompiler.this.logger.warn(
                     "Deciding upon output channels before having settled all follow-up alternatives.");
             return Stream.empty();
         }
@@ -318,7 +318,7 @@ public class ExecutionPlanCreator
 
         @Override
         protected Collection<Activation> doWork() {
-            this.executionTask = ExecutionPlanCreator.this.getOrCreateExecutionTask((ExecutionOperator) this.operator);
+            this.executionTask = ExecutionTaskFlowCompiler.this.getOrCreateExecutionTask((ExecutionOperator) this.operator);
             final Platform platform = ((ExecutionOperator) this.operator).getPlatform();
 
             // Create a Channel for each OutputSlot of the wrapped Operator.
@@ -329,7 +329,7 @@ public class ExecutionPlanCreator
 
             // If we could not create any Activation, then we safe the current operator.
             if (collector.isEmpty()) {
-                ExecutionPlanCreator.this.terminalTasks.add(this.executionTask);
+                ExecutionTaskFlowCompiler.this.terminalTasks.add(this.executionTask);
             }
 
             return collector;
@@ -338,7 +338,7 @@ public class ExecutionPlanCreator
         private void connectToSuccessorTasks(int outputIndex, Platform platform, Collection<Activation> collector) {
             final OutputSlot<?> output = this.operator.getOutput(outputIndex);
             final Collection<Tuple<OutputSlot<?>, PlanImplementation>> executionOperatorOutputsWithContext =
-                    ExecutionPlanCreator.this.planImplementation.findExecutionOperatorOutputWithContext(output);
+                    ExecutionTaskFlowCompiler.this.planImplementation.findExecutionOperatorOutputWithContext(output);
             // TODO: Make generic: There might be multiple OutputSlots for final loop outputs (one for each iteration).
             final Tuple<OutputSlot<?>, PlanImplementation> execOpOutputWithContext =
                     RheemCollections.getSingle(executionOperatorOutputsWithContext);
@@ -353,7 +353,7 @@ public class ExecutionPlanCreator
                 final Channel targetChannel = junction.getTargetChannel(targetIndex);
                 final InputSlot<?> targetInput = junction.getTargetInput(targetIndex);
                 final ExecutionTask successorTask =
-                        ExecutionPlanCreator.this.getOrCreateExecutionTask((ExecutionOperator) targetInput.getOwner());
+                        ExecutionTaskFlowCompiler.this.getOrCreateExecutionTask((ExecutionOperator) targetInput.getOwner());
                 targetChannel.addConsumer(successorTask, targetInput.getIndex());
 
                 this.createActivation(targetInput.unchecked(), collector);
@@ -364,7 +364,7 @@ public class ExecutionPlanCreator
             if (this.iterationImplementation != null) {
                 return this.iterationImplementation.getBodyImplementation().getJunction(output);
             } else {
-                return ExecutionPlanCreator.this.planImplementation.getJunction(output);
+                return ExecutionTaskFlowCompiler.this.planImplementation.getJunction(output);
             }
         }
 
@@ -376,7 +376,7 @@ public class ExecutionPlanCreator
             final Operator targetOperator = targetInput.getOwner();
             if (targetOperator.isAlternative()) {
                 OperatorAlternative.Alternative alternative =
-                        ExecutionPlanCreator.this.planImplementation.getChosenAlternative((OperatorAlternative) targetOperator);
+                        ExecutionTaskFlowCompiler.this.planImplementation.getChosenAlternative((OperatorAlternative) targetOperator);
                 if (alternative != null) {
                     final Collection<InputSlot<Object>> innerTargetInputs = alternative.followInput(targetInput);
                     for (InputSlot<Object> innerTargetInput : innerTargetInputs) {
@@ -387,7 +387,7 @@ public class ExecutionPlanCreator
                 final LoopImplementation.IterationImplementation targetIteration = this.determineIteration(targetOperator);
                 final ActivatorKey activatorKey = new ActivatorKey((ExecutionOperator) targetOperator, targetIteration);
                 final Activator activator =
-                        ExecutionPlanCreator.this.activators.computeIfAbsent(activatorKey, Activator::new);
+                        ExecutionTaskFlowCompiler.this.activators.computeIfAbsent(activatorKey, Activator::new);
                 collector.add(new Activation(activator, targetInput.getIndex()));
             } else {
                 throw new IllegalStateException("Unexpected operator: " + targetOperator);
@@ -413,7 +413,7 @@ public class ExecutionPlanCreator
                 assert targetOperator.isLoopHead() :
                         String.format("Expected to enter loop via LoopHeadOperator, got %s.", targetOperator);
                 final LoopImplementation loopImplementation =
-                        ExecutionPlanCreator.this.planImplementation.getLoopImplementations().get(targetLoop);
+                        ExecutionTaskFlowCompiler.this.planImplementation.getLoopImplementations().get(targetLoop);
                 return loopImplementation.getIterationImplementations().get(0);
             }
 

@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.plan.executionplan;
 
+import org.qcri.rheem.core.optimizer.enumeration.ExecutionTaskFlow;
+import org.qcri.rheem.core.optimizer.enumeration.StageAssignmentTraversal;
 import org.qcri.rheem.core.util.Counter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,4 +150,17 @@ public class ExecutionPlan {
         return isAllTasksAssigned && isAllChannelsOriginal && isAllSiblingsConsistent;
     }
 
+    /**
+     * Creates a new instance from the given {@link ExecutionTaskFlow}.
+     *
+     * @param executionTaskFlow should be converted into an {@link ExecutionPlan}
+     * @param stageSplittingCriterion  defines where to install {@link ExecutionStage} boundaries
+     * @return the new instance
+     */
+    public static ExecutionPlan createFrom(ExecutionTaskFlow executionTaskFlow,
+                                           StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion) {
+        final StageAssignmentTraversal stageAssignmentTraversal =
+                new StageAssignmentTraversal(executionTaskFlow, stageSplittingCriterion);
+        return stageAssignmentTraversal.run();
+    }
 }

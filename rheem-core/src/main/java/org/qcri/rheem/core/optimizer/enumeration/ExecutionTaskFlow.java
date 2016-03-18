@@ -1,11 +1,8 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
-import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.*;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.slf4j.LoggerFactory;
+import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -14,34 +11,20 @@ import java.util.stream.Stream;
  * Graph of {@link ExecutionTask}s and {@link Channel}s. Does not define {@link ExecutionStage}s and
  * {@link PlatformExecution}s - in contrast to a final {@link ExecutionPlan}.
  */
-public class PreliminaryExecutionPlan {
+public class ExecutionTaskFlow {
 
     private final Collection<ExecutionTask> sinkTasks;
 
     private final Set<Channel> inputChannels;
 
-    private TimeEstimate timeEstimate;
-
-    private OptimizationContext optimizationContext;
-
-    public PreliminaryExecutionPlan(Collection<ExecutionTask> sinkTasks) {
+    public ExecutionTaskFlow(Collection<ExecutionTask> sinkTasks) {
         this(sinkTasks, Collections.emptySet());
     }
 
-    public PreliminaryExecutionPlan(Collection<ExecutionTask> sinkTasks, Set<Channel> inputChannels) {
+    public ExecutionTaskFlow(Collection<ExecutionTask> sinkTasks, Set<Channel> inputChannels) {
         assert !sinkTasks.isEmpty() : "Cannot build plan without sinks.";
         this.sinkTasks = sinkTasks;
         this.inputChannels = inputChannels;
-    }
-
-    public TimeEstimate estimateExecutionTime(Configuration configuration) {
-        if (this.timeEstimate == null) {
-            this.timeEstimate = this.collectAllTasks().stream()
-                    .map(task -> this.getOrCalculateTimeEstimateFor(task, configuration))
-                    .reduce(TimeEstimate::plus)
-                    .orElseThrow(() -> new IllegalStateException("No time estimate found."));
-        }
-        return this.timeEstimate;
     }
 
     public Set<ExecutionTask> collectAllTasks() {
@@ -63,30 +46,6 @@ public class PreliminaryExecutionPlan {
                     .filter(Objects::nonNull);
             this.collectAllTasksAux(producerStream, collector);
         }
-    }
-
-    // TODO: !!!
-    private TimeEstimate getOrCalculateTimeEstimateFor(ExecutionTask task, Configuration configuration) {
-        final ExecutionOperator operator = task.getOperator();
-
-        // Calculate and chache the TimeEstimate if it does not exist yet.
-        if (this.optimizationContext != null) {
-            final OptimizationContext.OperatorContext opCtx = this.optimizationContext.getOperatorContext(operator);
-            if (opCtx != null) {
-                return opCtx.getTimeEstimate();
-            }
-        }
-
-        LoggerFactory.getLogger(this.getClass()).error("No time estimate for {}.", operator);
-        return new TimeEstimate(100, 100000, 0.1d);
-    }
-
-    public TimeEstimate getTimeEstimate() {
-        return this.timeEstimate;
-    }
-
-    public ExecutionPlan toExecutionPlan(StageAssignmentTraversal.StageSplittingCriterion... splittingCriteria) {
-        return new StageAssignmentTraversal(this, splittingCriteria).run();
     }
 
     public boolean isComplete() {
@@ -111,5 +70,36 @@ public class PreliminaryExecutionPlan {
 
     public Set<Channel> getInputChannels() {
         return this.inputChannels;
+    }
+
+    public static ExecutionTaskFlow createFrom(PlanImplementation planImplementation) {
+        final List<ExecutionOperator> startOperators = planImplementation.getStartOperators();
+        assert !startOperators.isEmpty() :
+                String.format("Could not find start operators among %s.", planImplementation.getStartOperators());
+        final ExecutionTaskFlowCompiler executionTaskFlowCompiler = new ExecutionTaskFlowCompiler(startOperators, planImplementation);
+        if (executionTaskFlowCompiler.traverse()) {
+            return new ExecutionTaskFlow(executionTaskFlowCompiler.getTerminalTasks());
+        } else {
+            return null;
+        }
+    }
+
+    public static ExecutionTaskFlow recreateFrom(PlanImplementation planImplementation,
+                                                 ExecutionPlan oldExecutionPlan,
+                                                 Set<Channel> openChannels,
+                                                 Set<ExecutionStage> completedStages) {
+        final List<ExecutionOperator> startOperators = planImplementation.getStartOperators();
+        assert !startOperators.isEmpty() :
+                String.format("Could not find start operators among %s.", planImplementation.getStartOperators());
+        try {
+            final ExecutionTaskFlowCompiler compiler = new ExecutionTaskFlowCompiler(
+                    startOperators, planImplementation, oldExecutionPlan, openChannels, completedStages);
+            if (compiler.traverse((Void[]) null)) {
+                return new ExecutionTaskFlow(compiler.getTerminalTasks(), compiler.getInputChannels());
+            }
+        } catch (AbstractTopologicalTraversal.AbortException e) {
+        }
+        return null;
+
     }
 }
