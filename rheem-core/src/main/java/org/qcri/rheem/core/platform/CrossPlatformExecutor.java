@@ -233,7 +233,7 @@ public class CrossPlatformExecutor {
                 this.predecessorCounter.remove(succeedingStage);
             } else {
                 assert newCompletedPredecessors < succeedingStage.getPredecessors().size() :
-                String.format("Activated %s to often.", succeedingStage);
+                String.format("Activated %s too often.", succeedingStage);
             }
         }
     }

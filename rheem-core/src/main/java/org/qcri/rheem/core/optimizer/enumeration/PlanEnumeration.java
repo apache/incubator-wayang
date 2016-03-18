@@ -3,7 +3,6 @@ package org.qcri.rheem.core.optimizer.enumeration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.util.MultiMap;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
@@ -207,68 +206,98 @@ public class PlanEnumeration {
                                                                    OptimizationContext optimizationContext,
                                                                    PlanEnumeration concatenationEnumeration) {
 
-        // Group the base and target PlanImplementations by their operator.
-        final MultiMap<Collection<OutputSlot<?>>, PlanImplementation> basePlanGroups =
-                this.groupImplementationsByOutput(openOutputSlot);
-        final List<MultiMap<Set<InputSlot<?>>, PlanImplementation>> targetPlanGroupList =
-                groupImplementationsByInput(targetEnumerations);
+//        // Group the base and target PlanImplementations by their operator.
+//        final MultiMap<Collection<OutputSlot<?>>, PlanImplementation> basePlanGroups =
+//                this.groupImplementationsByOutput(openOutputSlot);
+//        final List<MultiMap<Set<InputSlot<?>>, PlanImplementation>> targetPlanGroupList =
+//                groupImplementationsByInput(targetEnumerations);
+//
+//
+//        // Allocate result collector.
+//        Collection<PlanImplementation> result = new LinkedList<>();
+//
+//        // Iterate all InputSlot/OutputSlot combinations.
+//        List<Set<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>>> targetPlanGroupEntrySet =
+//                RheemCollections.map(targetPlanGroupList, MultiMap::entrySet);
+//        final Iterable<List<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>>> targetPlanGroupCrossProduct =
+//                RheemCollections.streamedCrossProduct(targetPlanGroupEntrySet);
+//        for (List<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>> targetPlanGroupEntries : targetPlanGroupCrossProduct) {
+//            // Flatten the requested InputSlots.
+//            final List<InputSlot<?>> inputs = targetPlanGroupEntries.stream()
+//                    .map(Map.Entry::getKey)
+//                    .flatMap(Collection::stream)
+//                    .distinct()
+//                    .collect(Collectors.toCollection(() -> new ArrayList<>(4)));
+//
+//            for (Map.Entry<Collection<OutputSlot<?>>, Set<PlanImplementation>> basePlanGroupEntry : basePlanGroups.entrySet()) {
+//
+//                final Collection<OutputSlot<?>> outputs = basePlanGroupEntry.getKey();
+//                for (final OutputSlot<?> output : outputs) {
+//
+//                    // Construct a Junction between the ExecutionOperators.
+//                    final Operator outputOperator = output.getOwner();
+//                    assert outputOperator.isExecutionOperator()
+//                            : String.format("Expected execution operator, found %s.", outputOperator);
+//                    final Junction junction = Junction.create(output, inputs, optimizationContext);
+//                    if (junction == null) continue;
+//
+//                    // If we found a junction, then we can enumerate all PlanImplementation combinations
+//                    final List<Set<PlanImplementation>> targetPlans = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getValue);
+//                    for (List<PlanImplementation> targetPlanList : RheemCollections.streamedCrossProduct(targetPlans)) {
+//                        for (PlanImplementation basePlan : basePlanGroupEntry.getValue()) {
+//                            PlanImplementation concatenatedPlan = basePlan.concatenate(targetPlanList, junction, concatenationEnumeration);
+//                            if (concatenatedPlan != null) {
+//                                result.add(concatenatedPlan);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        return result;
 
+        // Simple implementation waives optimization potential.
 
-        // Allocate result collector.
-        Collection<PlanImplementation> result = new LinkedList<>();
+        // Allocated result collector.
+        Collection<PlanImplementation> resultCollector = new LinkedList<>();
 
-        // Iterate all InputSlot/OutputSlot combinations.
-        List<Set<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>>> targetPlanGroupEntrySet =
-                RheemCollections.map(targetPlanGroupList, MultiMap::entrySet);
-        final Iterable<List<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>>> targetPlanGroupCrossProduct =
-                RheemCollections.streamedCrossProduct(targetPlanGroupEntrySet);
-        for (List<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>> targetPlanGroupEntries : targetPlanGroupCrossProduct) {
-            // Flatten the requested InputSlots.
-            final List<InputSlot<?>> inputs = targetPlanGroupEntries.stream()
-                    .map(Map.Entry::getKey)
-                    .flatMap(Collection::stream)
-                    .distinct()
-                    .collect(Collectors.toCollection(() -> new ArrayList<>(4)));
+        // Iterate over the cross product of PlanImplementations.
+        List<Map.Entry<InputSlot<?>, PlanEnumeration>> targetEnumerationEntries = new ArrayList<>(targetEnumerations.entrySet());
+        List<InputSlot<?>> inputSlots = RheemCollections.map(targetEnumerationEntries, Map.Entry::getKey);
+        List<Collection<PlanImplementation>> targetEnumerationImplList = RheemCollections.map(
+                targetEnumerationEntries,
+                entry -> entry.getValue().getPlanImplementations()
+        );
+        for (List<PlanImplementation> targetImpls : RheemCollections.streamedCrossProduct(targetEnumerationImplList)) {
+            for (PlanImplementation thisImpl : this.getPlanImplementations()) {
 
-            for (Map.Entry<Collection<OutputSlot<?>>, Set<PlanImplementation>> basePlanGroupEntry : basePlanGroups.entrySet()) {
-
-                final Collection<OutputSlot<?>> outputs = basePlanGroupEntry.getKey();
-                for (final OutputSlot<?> output : outputs) {
-
-                    // Construct a Junction between the ExecutionOperators.
-                    final Operator outputOperator = output.getOwner();
-                    assert outputOperator.isExecutionOperator()
-                            : String.format("Expected execution operator, found %s.", outputOperator);
-                    final Junction junction = Junction.create(output, inputs, optimizationContext);
-                    if (junction == null) continue;
-
-                    // If we found a junction, then we can enumerate all PlanImplementation combinations
-                    final List<Set<PlanImplementation>> targetPlans = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getValue);
-                    for (List<PlanImplementation> targetPlanList : RheemCollections.streamedCrossProduct(targetPlans)) {
-                        for (PlanImplementation basePlan : basePlanGroupEntry.getValue()) {
-                            PlanImplementation concatenatedPlan = basePlan.concatenate(targetPlanList, junction, concatenationEnumeration);
-                            if (concatenatedPlan != null) {
-                                result.add(concatenatedPlan);
-                            }
-                        }
-                    }
-                }
+                // Concatenate the PlanImplementations.
+                resultCollector.add(
+                        thisImpl.concatenate(openOutputSlot, targetImpls, inputSlots, concatenationEnumeration, optimizationContext)
+                );
             }
         }
 
-        return result;
+        return resultCollector;
     }
 
     /**
-     * Groups all {@link #planImplementations} by their {@link ExecutionOperator} for the {@code ouput}.
+     * Groups all {@link #planImplementations} by their {@link ExecutionOperator} for the {@code output}. Additionally
+     * preserves the very (nested) {@link PlanImplementation} in that {@code output} resides.
      */
-    private MultiMap<Collection<OutputSlot<?>>, PlanImplementation> groupImplementationsByOutput(OutputSlot<?> output) {
+    private MultiMap<Collection<OutputSlot<?>>, Tuple<PlanImplementation, PlanImplementation>>
+    groupImplementationsByOutput(OutputSlot<?> output) {
         // Sort the PlanEnumerations by their respective open InputSlot or OutputSlot.
-        final MultiMap<Collection<OutputSlot<?>>, PlanImplementation> basePlanGroups = new MultiMap<>();
+        final MultiMap<Collection<OutputSlot<?>>, Tuple<PlanImplementation, PlanImplementation>> basePlanGroups =
+                new MultiMap<>();
         for (PlanImplementation basePlan : this.getPlanImplementations()) {
-            final Collection<OutputSlot<?>> openOutputs = basePlan.findExecutionOperatorOutput(output);
-            assert openOutputs != null && !openOutputs.isEmpty() : String.format("No outputs found for %s.", output);
-            basePlanGroups.putSingle(openOutputs, basePlan);
+            final Collection<Tuple<OutputSlot<?>, PlanImplementation>> execOpOutputsWithContext =
+                    basePlan.findExecutionOperatorOutputWithContext(output);
+            assert execOpOutputsWithContext != null && !execOpOutputsWithContext.isEmpty()
+                    : String.format("No outputs found for %s.", output);
+
+//       todo     basePlanGroups.putSingle(execOpOutputsWithContext, basePlan);
         }
         return basePlanGroups;
     }

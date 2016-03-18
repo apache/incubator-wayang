@@ -469,7 +469,7 @@ public class PlanEnumerator {
     private static boolean deemsRelevant(InputSlot<?> input) {
         return input != null
                 && input.getOccupant() != null
-                && !(input.getOwner() instanceof LoopHeadOperator);
+                && !input.isFeedback();
     }
 
 

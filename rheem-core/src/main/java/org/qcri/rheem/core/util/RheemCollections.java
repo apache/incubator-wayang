@@ -3,6 +3,7 @@ package org.qcri.rheem.core.util;
 import org.apache.commons.lang3.Validate;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -63,6 +64,18 @@ public class RheemCollections {
         List<T> result = new ArrayList<>(list.size());
         for (S element : list) {
             result.add(mapFunction.apply(element));
+        }
+        return result;
+    }
+
+    /**
+     * Return a new {@link List} with mapped values.
+     */
+    public static <S, T> List<T> map(List<S> list, BiFunction<Integer, S, T> mapFunction) {
+        List<T> result = new ArrayList<>(list.size());
+        int i = 0;
+        for (S element : list) {
+            result.add(mapFunction.apply(i++, element));
         }
         return result;
     }

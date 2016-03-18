@@ -172,22 +172,18 @@ public class InputSlot<T> extends Slot<T> {
     }
 
     /**
+     * @return whether this instance is designated to close feedback loops (i.e., data flow cycles)
+     */
+    public boolean isFeedback() {
+        return this.getOwner().isFeedbackInput(this);
+    }
+
+    /**
      * Notifies this instance that it has been detached from its {@link #occupant}.
      */
     public void notifyDetached() {
         if (this.isBroadcast) {
             // TODO: Consider removing broadacast.
         }
-    }
-
-    /**
-     * @return whether this is the loop body input of a {@link LoopHeadOperator}
-     */
-    public boolean isLoopBodyInput() {
-        if (this.getOwner().isLoopHead()) {
-            LoopHeadOperator loopHead = (LoopHeadOperator) this.getOwner();
-            return loopHead.getLoopBodyInputs().contains(this);
-        }
-        return false;
     }
 }

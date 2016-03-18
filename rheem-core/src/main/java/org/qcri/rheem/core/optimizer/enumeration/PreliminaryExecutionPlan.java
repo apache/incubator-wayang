@@ -1,6 +1,5 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
-import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
@@ -30,7 +29,7 @@ public class PreliminaryExecutionPlan {
     }
 
     public PreliminaryExecutionPlan(Collection<ExecutionTask> sinkTasks, Set<Channel> inputChannels) {
-        Validate.notEmpty(sinkTasks, "Cannot build plan without sinks.");
+        assert !sinkTasks.isEmpty() : "Cannot build plan without sinks.";
         this.sinkTasks = sinkTasks;
         this.inputChannels = inputChannels;
     }

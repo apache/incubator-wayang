@@ -8,10 +8,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
 import org.qcri.rheem.core.platform.Platform;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -349,6 +346,14 @@ public interface Operator {
         return true;
     }
 
+    /**
+     * @return whether this {@code input} is used to close a feedback loop (i.e., a flow graph cycle)
+     */
+    default boolean isFeedbackInput(InputSlot<?> input) {
+        assert this.isOwnerOf(input);
+        return this.isLoopHead() && ((LoopHeadOperator) this).getLoopBodyInputs().contains(input);
+    }
+
 
     /**
      * Tells whether this operator is a sink, i.e., it has no outputs.
@@ -427,6 +432,32 @@ public interface Operator {
      */
     void setContainer(OperatorContainer newContainer);
 
+    /**
+     * @return the innermost {@link LoopSubplan} containing this instance
+     */
+    default LoopSubplan getInnermostLoop() {
+        final CompositeOperator parent = this.getParent();
+        if (parent == null) {
+            return null;
+        } else if (parent.isLoopSubplan()) {
+            return (LoopSubplan) parent;
+        } else {
+            return parent.getInnermostLoop();
+        }
+    }
+
+    /**
+     * @return the stack of nested {@link LoopSubplan}s of this instance, from inside to outside
+     */
+    default LinkedList<LoopSubplan> getLoopStack() {
+        LinkedList<LoopSubplan> loopStack = new LinkedList<>();
+        LoopSubplan nextLoop = this.getInnermostLoop();
+        while (nextLoop != null) {
+            loopStack.addLast(nextLoop);
+            nextLoop = nextLoop.getInnermostLoop();
+        }
+        return loopStack;
+    }
 
     /**
      * Each operator is associated with an epoch, which is a logical timestamp for the operator's creation.

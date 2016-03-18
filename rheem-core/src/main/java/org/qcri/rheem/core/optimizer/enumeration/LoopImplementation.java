@@ -4,6 +4,7 @@ import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Junction;
 
 import java.util.LinkedList;
@@ -20,6 +21,13 @@ public class LoopImplementation {
 
     public LoopImplementation(LoopSubplan enumeratedLoop) {
         this.enumeratedLoop = enumeratedLoop;
+    }
+
+    public LoopImplementation(LoopImplementation original) {
+        this.enumeratedLoop = original.enumeratedLoop;
+        for (IterationImplementation originalIteration : original.getIterationImplementations()) {
+            this.iterationImplementations.add(new IterationImplementation(originalIteration));
+        }
     }
 
     public IterationImplementation addIterationEnumeration(int numIterations, PlanImplementation bodyImplementation) {
@@ -43,7 +51,7 @@ public class LoopImplementation {
     /**
      * Enumeration for a number of contiguous loop iterations.
      */
-    public static class IterationImplementation {
+    public class IterationImplementation {
 
         /**
          * The number of iterations performed with this enumeration.
@@ -81,6 +89,17 @@ public class LoopImplementation {
         public IterationImplementation(int numIterations, PlanImplementation bodyImplementation) {
             this.numIterations = numIterations;
             this.bodyImplementation = bodyImplementation;
+        }
+
+        public IterationImplementation(IterationImplementation originalIteration) {
+            this.numIterations = originalIteration.getNumIterations();
+            this.bodyImplementation = new PlanImplementation(originalIteration.getBodyImplementation());
+
+            this.interBodyJunction = originalIteration.getInterBodyJunction();
+            this.forwardJunction = originalIteration.getForwardJunction();
+            this.enterJunction = originalIteration.getEnterJunction();
+            this.exitJunction = originalIteration.getExitJunction();
+
         }
 
         public int getNumIterations() {
@@ -128,6 +147,31 @@ public class LoopImplementation {
             return this.bodyImplementation.getTimeEstimate();
         }
 
+        /**
+         * @return the encasing {@link LoopImplementation}
+         */
+        public LoopImplementation getLoopImplementation() {
+            return LoopImplementation.this;
+        }
+
+        public IterationImplementation getSuccessorIterationImplementation() {
+            final List<IterationImplementation> allImpls = this.getLoopImplementation().getIterationImplementations();
+            final int thisIndex = allImpls.indexOf(this);
+            assert thisIndex != -1;
+            final int successorIndex = thisIndex + 1;
+            if (successorIndex < allImpls.size()) {
+                return allImpls.get(successorIndex);
+            } else {
+                return null;
+            }
+        }
+
+        /**
+         * Retrieves the {@link Junction} that implements the given {@code output}.
+         */
+        public Junction getJunction(OutputSlot<?> output) {
+            return this.getBodyImplementation().getJunction(output);
+        }
     }
 
 }

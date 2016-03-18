@@ -5,6 +5,9 @@ import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.core.util.Tuple;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,7 +19,7 @@ import java.util.stream.Stream;
 public class ExecutionPlanCreator
         extends AbstractTopologicalTraversal<Void, ExecutionPlanCreator.Activator, ExecutionPlanCreator.Activation> {
 
-    private final Map<ExecutionOperator, Activator> activators = new HashMap<>();
+    private final Map<ActivatorKey, Activator> activators = new HashMap<>();
 
     private final Collection<Activator> startActivators;
 
@@ -33,8 +36,8 @@ public class ExecutionPlanCreator
     /**
      * Creates a new instance that enumerates a <i>complete</i> {@link ExecutionPlan}.
      *
-     * @param startOperators {@link ExecutionOperator}s from which the enumeration can start (should be sources).
-     * @param planImplementation    defines the {@link ExecutionOperator}s to use
+     * @param startOperators     {@link ExecutionOperator}s from which the enumeration can start (should be sources).
+     * @param planImplementation defines the {@link ExecutionOperator}s to use
      */
     public ExecutionPlanCreator(Collection<ExecutionOperator> startOperators, PlanImplementation planImplementation) {
         this.planImplementation = planImplementation;
@@ -46,11 +49,11 @@ public class ExecutionPlanCreator
      * Creates a new instance that enumerates a <i>partial</i> {@link ExecutionPlan}. In fact, provides additional
      * {@link Channel}s that have already been processed, so all their producers must not be enumerated.
      *
-     * @param startOperators {@link ExecutionOperator}s from which the enumeration can start (should be sources).
-     * @param planImplementation    defines the {@link ExecutionOperator}s to use
-     * @param existingPlan   {@link ExecutionPlan} that has already been executed and should be enhanced now; note that
-     *                       it must agree with the {@code planImplementation}
-     * @param openChannels   they, and their producers, must not be enumerated
+     * @param startOperators     {@link ExecutionOperator}s from which the enumeration can start (should be sources).
+     * @param planImplementation defines the {@link ExecutionOperator}s to use
+     * @param existingPlan       {@link ExecutionPlan} that has already been executed and should be enhanced now; note that
+     *                           it must agree with the {@code planImplementation}
+     * @param openChannels       they, and their producers, must not be enumerated
      */
     public ExecutionPlanCreator(Collection<ExecutionOperator> startOperators,
                                 PlanImplementation planImplementation,
@@ -82,7 +85,7 @@ public class ExecutionPlanCreator
             Collection<InputSlot<?>> consumerInputs = this.findRheemPlanInputSlotFor(producerOutput);
 
             // Finally, produce Activations.
-            if (!consumerInputs.isEmpty()) {
+            if (consumerInputs.isEmpty()) {
                 Channel channelCopy = channel.copy();
                 this.inputChannels.add(channelCopy);
                 // If the channel was only "partially open", then we need to consider not to re-create existing ExecutionTasks.
@@ -96,7 +99,8 @@ public class ExecutionPlanCreator
                     }
                     this.logger.debug("Intercepting {}->{}.", producerOutput, consumerInput);
                     final ExecutionOperator consumerOperator = (ExecutionOperator) consumerInput.getOwner();
-                    final Activator consumerActivator = this.activators.computeIfAbsent(consumerOperator, Activator::new);
+                    final ActivatorKey activatorKey = new ActivatorKey(consumerOperator, null);
+                    final Activator consumerActivator = this.activators.computeIfAbsent(activatorKey, Activator::new);
                     final ExecutionTask consumerTask = this.getOrCreateExecutionTask(consumerOperator);
                     consumerActivator.executionTask = consumerTask;
                     final Platform consumerPlatform = consumerTask.getOperator().getPlatform();
@@ -227,22 +231,89 @@ public class ExecutionPlanCreator
     }
 
     /**
+     * Identifies an {@link Activator}.
+     */
+    private static final class ActivatorKey {
+
+        private final ExecutionOperator executionOperator;
+
+        private final LoopImplementation.IterationImplementation iterationImplementation;
+
+        private ActivatorKey(ExecutionOperator executionOperator,
+                             LoopImplementation.IterationImplementation iterationImplementation) {
+            this.executionOperator = executionOperator;
+            this.iterationImplementation = iterationImplementation;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || this.getClass() != o.getClass()) return false;
+            ActivatorKey that = (ActivatorKey) o;
+            return Objects.equals(this.executionOperator, that.executionOperator) &&
+                    Objects.equals(this.iterationImplementation, that.iterationImplementation);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.executionOperator, this.iterationImplementation);
+        }
+    }
+
+    /**
      * Takes care of creating {@link ExecutionTask}s and {@link Channel}s.
      */
     public class Activator extends AbstractTopologicalTraversal.Activator<Activation> {
 
-        private Activation[] activations;
+        private final Activation[] activations;
 
         private ExecutionTask executionTask;
 
+        /**
+         * The {@link LoopImplementation.IterationImplementation} in which the {@link #operator} resides or
+         * {@code null} if none.
+         */
+        private final LoopImplementation.IterationImplementation iterationImplementation;
+
+        /**
+         * Convenience constructor for when we are not inside of a {@link LoopImplementation.IterationImplementation}.
+         *
+         * @param operator
+         */
         public Activator(ExecutionOperator operator) {
+            this(operator, null);
+        }
+
+        /**
+         * Convenience constructor.
+         *
+         * @param key identifies the new instance
+         */
+        public Activator(ActivatorKey key) {
+            this(key.executionOperator, key.iterationImplementation);
+        }
+
+        /**
+         * Creates a new instance.
+         *
+         * @param operator                that should be processed
+         * @param iterationImplementation in which the {@code operator} resides (or {@code null} if none)
+         */
+        public Activator(ExecutionOperator operator, LoopImplementation.IterationImplementation iterationImplementation) {
             super(operator);
             this.activations = new Activation[operator.getNumInputs()];
+            this.iterationImplementation = iterationImplementation;
         }
 
         @Override
         protected boolean isActivationComplete() {
-            return Arrays.stream(this.activations).noneMatch(Objects::isNull);
+            assert this.activations.length == this.operator.getNumInputs();
+            for (int inputIndex = 0; inputIndex < this.operator.getNumInputs(); inputIndex++) {
+                if (this.activations[inputIndex] == null && !this.operator.getInput(inputIndex).isFeedback()) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         @Override
@@ -266,20 +337,34 @@ public class ExecutionPlanCreator
 
         private void connectToSuccessorTasks(int outputIndex, Platform platform, Collection<Activation> collector) {
             final OutputSlot<?> output = this.operator.getOutput(outputIndex);
-            for (OutputSlot<?> outerOutput : this.operator.getOutermostOutputSlots(output)) {
-                final Junction junction = ExecutionPlanCreator.this.planImplementation.getJunction(outerOutput);
-                assert junction != null : String.format("No junction found for %s.", outerOutput);
-                this.executionTask.setOutputChannel(outputIndex, junction.getSourceChannel());
+            final Collection<Tuple<OutputSlot<?>, PlanImplementation>> executionOperatorOutputsWithContext =
+                    ExecutionPlanCreator.this.planImplementation.findExecutionOperatorOutputWithContext(output);
+            // TODO: Make generic: There might be multiple OutputSlots for final loop outputs (one for each iteration).
+            final Tuple<OutputSlot<?>, PlanImplementation> execOpOutputWithContext =
+                    RheemCollections.getSingle(executionOperatorOutputsWithContext);
+            final OutputSlot<?> execOpOutput = execOpOutputWithContext.getField0();
+            final PlanImplementation planImpl = execOpOutputWithContext.getField1();
+            final Junction junction = this.getJunction(output); //planImpl.getJunction(execOpOutput);
+            LoggerFactory.getLogger(this.getClass()).info("Connecting {} -> {}.", output, junction);
+            assert junction != null : String.format("No junction found for %s.", output);
+            this.executionTask.setOutputChannel(outputIndex, junction.getSourceChannel());
 
-                for (int targetIndex = 0; targetIndex < junction.getNumTargets(); targetIndex++) {
-                    final Channel targetChannel = junction.getTargetChannel(targetIndex);
-                    final InputSlot<?> targetInput = junction.getTargetInput(targetIndex);
-                    final ExecutionTask successorTask =
-                            ExecutionPlanCreator.this.getOrCreateExecutionTask((ExecutionOperator) targetInput.getOwner());
-                    targetChannel.addConsumer(successorTask, targetInput.getIndex());
+            for (int targetIndex = 0; targetIndex < junction.getNumTargets(); targetIndex++) {
+                final Channel targetChannel = junction.getTargetChannel(targetIndex);
+                final InputSlot<?> targetInput = junction.getTargetInput(targetIndex);
+                final ExecutionTask successorTask =
+                        ExecutionPlanCreator.this.getOrCreateExecutionTask((ExecutionOperator) targetInput.getOwner());
+                targetChannel.addConsumer(successorTask, targetInput.getIndex());
 
-                    this.createActivation(targetInput.unchecked(), collector);
-                }
+                this.createActivation(targetInput.unchecked(), collector);
+            }
+        }
+
+        private Junction getJunction(OutputSlot<?> output) {
+            if (this.iterationImplementation != null) {
+                return this.iterationImplementation.getBodyImplementation().getJunction(output);
+            } else {
+                return ExecutionPlanCreator.this.planImplementation.getJunction(output);
             }
         }
 
@@ -299,12 +384,52 @@ public class ExecutionPlanCreator
                     }
                 }
             } else if (targetOperator.isExecutionOperator()) {
+                final LoopImplementation.IterationImplementation targetIteration = this.determineIteration(targetOperator);
+                final ActivatorKey activatorKey = new ActivatorKey((ExecutionOperator) targetOperator, targetIteration);
                 final Activator activator =
-                        ExecutionPlanCreator.this.activators.computeIfAbsent((ExecutionOperator) targetOperator, Activator::new);
+                        ExecutionPlanCreator.this.activators.computeIfAbsent(activatorKey, Activator::new);
                 collector.add(new Activation(activator, targetInput.getIndex()));
             } else {
                 throw new IllegalStateException("Unexpected operator: " + targetOperator);
             }
+        }
+
+        /**
+         * As we enumerate {@link LoopSubplan}s, we might face multiple implementations. Here, we determine the
+         * next {@link LoopImplementation.IterationImplementation} for the given {@code targetOperator} based on the
+         * current {@link #iterationImplementation}.
+         *
+         * @param targetOperator for which the {@link LoopImplementation.IterationImplementation} is sought
+         * @return the appropriate {@link LoopImplementation.IterationImplementation} (or {@code null} if n/a)
+         */
+        private LoopImplementation.IterationImplementation determineIteration(Operator targetOperator) {
+            // See if the targetOperator is inside a LoopSubplan in the first place.
+            final LoopSubplan targetLoop = targetOperator.getInnermostLoop();
+            if (targetLoop == null) return null;
+
+            // Check if the targetOperator's loop has just been entered.
+            final LoopSubplan currentLoop = this.operator.getInnermostLoop();
+            if (currentLoop == null) { // TODO: Current code supports only non-nested loops.
+                assert targetOperator.isLoopHead() :
+                        String.format("Expected to enter loop via LoopHeadOperator, got %s.", targetOperator);
+                final LoopImplementation loopImplementation =
+                        ExecutionPlanCreator.this.planImplementation.getLoopImplementations().get(targetLoop);
+                return loopImplementation.getIterationImplementations().get(0);
+            }
+
+            // Check if we are exiting a loop.
+            // TODO: Current code (implicitly) supports only non-nested loops.
+
+            // Otherwise, we are staying within a loop.
+            assert currentLoop == targetLoop;
+            // Check if we need to switch iterations.
+            if (targetOperator.isLoopHead()) {
+                return this.iterationImplementation.getSuccessorIterationImplementation();
+            } else {
+                return this.iterationImplementation;
+            }
+
+
         }
 
         @Override
@@ -325,6 +450,13 @@ public class ExecutionPlanCreator
         protected Activation(Activator targetActivator, int inputIndex) {
             super(targetActivator);
             this.inputIndex = inputIndex;
+        }
+
+        /**
+         * @return the {@link InputSlot} that is used to activate the following {@link Activator}
+         */
+        protected InputSlot<?> getActivatedInput() {
+            return this.getTargetActivator().executionTask.getOperator().getInput(this.inputIndex);
         }
 
     }

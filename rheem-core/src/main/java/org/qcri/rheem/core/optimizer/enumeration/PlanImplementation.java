@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
@@ -9,6 +10,7 @@ import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.util.Canonicalizer;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
 
 import java.util.*;
@@ -46,6 +48,7 @@ public class PlanImplementation {
     /**
      * The {@link PlanEnumeration} that hosts this instance. Can change over time.
      */
+    // TODO: I think, we don't maintain this field properly. Also, its semantics blur inside of LoopImplementations. Can we remove it?
     private PlanEnumeration planEnumeration;
 
     /**
@@ -73,6 +76,18 @@ public class PlanImplementation {
         for (ExecutionOperator operator : operators) {
             this.operators.add(operator);
         }
+    }
+
+    /**
+     * Copy constructor.
+     */
+    public PlanImplementation(PlanImplementation original) {
+        this.planEnumeration = original.planEnumeration;
+        this.junctions = new HashMap<>(original.junctions);
+        this.operators = new Canonicalizer<>(original.getOperators());
+        this.timeEstimate = original.timeEstimate;
+        this.settledAlternatives.putAll(original.settledAlternatives);
+        this.loopImplementations.putAll(original.loopImplementations);
     }
 
     /**
@@ -179,6 +194,19 @@ public class PlanImplementation {
      * @return the representing {@link OutputSlot}s
      */
     Collection<OutputSlot<?>> findExecutionOperatorOutput(OutputSlot<?> someOutput) {
+        return this.findExecutionOperatorOutputWithContext(someOutput).stream()
+                .map(Tuple::getField0)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Find the {@link OutputSlot}s of already picked {@link ExecutionOperator}s that represent the given {@link OutputSlot}.
+     *
+     * @param someOutput any {@link OutputSlot} of the original {@link RheemPlan}
+     * @return the representing {@link OutputSlot}s together with their enclosing {@link PlanImplementation}
+     */
+    Collection<Tuple<OutputSlot<?>, PlanImplementation>> findExecutionOperatorOutputWithContext(
+            OutputSlot<?> someOutput) {
         while (someOutput != null
                 && someOutput.getOwner().isAlternative()) {
             final Operator owner = someOutput.getOwner();
@@ -195,7 +223,6 @@ public class PlanImplementation {
         // Otherwise, discern LoopSubplans and ExecutionOperators.
         final Operator owner = someOutput.getOwner();
         if (owner.isLoopSubplan()) {
-            assert owner.isLoopSubplan();
             final LoopSubplan loopSubplan = (LoopSubplan) owner;
             final LoopImplementation loopImplementation = this.getLoopImplementations().get(loopSubplan);
             if (loopImplementation == null) return Collections.emptyList();
@@ -203,39 +230,69 @@ public class PlanImplementation {
             // Enter the LoopSubplan.
             final OutputSlot<?> innerOutput = loopSubplan.traceOutput(someOutput);
             if (innerOutput == null) return Collections.emptyList();
-
-            // Short-cut.
             assert innerOutput.getOwner().isLoopHead();
-            final LoopHeadOperator loopHead = (LoopHeadOperator) innerOutput.getOwner();
-            if (innerOutput.getOwner().isExecutionOperator()) {
-                return Collections.singleton(innerOutput);
-            }
 
             // For all the iterations, return the potential OutputSlots.
-            assert loopHead.isAlternative();
             final List<LoopImplementation.IterationImplementation> iterationImpls =
                     loopImplementation.getIterationImplementations();
-            final Set<OutputSlot<?>> collector = new HashSet<>(iterationImpls.size());
+            final Set<Tuple<OutputSlot<?>, PlanImplementation>> collector = new HashSet<>(iterationImpls.size());
             for (LoopImplementation.IterationImplementation iterationImpl : iterationImpls) {
-                final Collection<OutputSlot<?>> iterationOutputs =
-                        iterationImpl.getBodyImplementation().findExecutionOperatorOutput(innerOutput);
-                collector.addAll(iterationOutputs);
+                final Collection<Tuple<OutputSlot<?>, PlanImplementation>> outputsWithContext =
+                        iterationImpl.getBodyImplementation().findExecutionOperatorOutputWithContext(innerOutput);
+                collector.addAll(outputsWithContext);
             }
 
             return collector;
 
         } else {
             assert owner.isExecutionOperator();
-            return Collections.singleton(someOutput);
+            return Collections.singleton(new Tuple<>(someOutput, this));
         }
     }
 
 
     /**
+     * Creates a {@link Junction} between the {@link OutputSlot} and {@link InputSlot}s and with this concatenates
+     * the {@link PlanImplementation}s.
+     *
+     * @param output
+     * @param targets
+     * @param inputs
+     * @param concatenationEnumeration
+     * @param optimizationContext
+     * @return
+     */
+    public PlanImplementation concatenate(OutputSlot<?> output,
+                                          List<PlanImplementation> targets,
+                                          List<InputSlot<?>> inputs,
+                                          PlanEnumeration concatenationEnumeration,
+                                          OptimizationContext optimizationContext) {
+
+        // Construct the Junction between the PlanImplementations.
+        final Tuple<OutputSlot<?>, PlanImplementation> execOutputWithContext =
+                RheemCollections.getSingle(this.findExecutionOperatorOutputWithContext(output));
+        final List<InputSlot<?>> execInputs = RheemCollections.map(
+                inputs,
+                (index, input) -> {
+                    PlanImplementation targetImpl = targets.get(index);
+                    return RheemCollections.getSingle(targetImpl.findExecutionOperatorInputs(input));
+                }
+        );
+        final Junction junction = Junction.create(execOutputWithContext.getField0(), execInputs, optimizationContext);
+
+        // Delegate.
+        return this.concatenate(targets, junction, execOutputWithContext.getField1(), concatenationEnumeration);
+
+    }
+
+    /**
      * Creates a new instance that forms the concatenation of this instance with the {@code targetPlans} via the
      * {@code junction}.
      */
-    PlanImplementation concatenate(List<PlanImplementation> targetPlans, Junction junction, PlanEnumeration concatenationEnumeration) {
+    PlanImplementation concatenate(List<PlanImplementation> targetPlans,
+                                   Junction junction,
+                                   PlanImplementation outputPlanImplemtation,
+                                   PlanEnumeration concatenationEnumeration) {
         final PlanImplementation concatenation = new PlanImplementation(
                 concatenationEnumeration,
                 new HashMap<>(this.junctions.size() + 1),
@@ -243,17 +300,26 @@ public class PlanImplementation {
         );
 
         concatenation.operators.addAll(this.operators);
-        concatenation.loopImplementations.putAll(this.loopImplementations);
         concatenation.junctions.putAll(this.junctions);
         concatenation.settledAlternatives.putAll(this.settledAlternatives);
         concatenation.addToTimeEstimate(this.getTimeEstimate());
 
-        concatenation.junctions.put(junction.getSourceOutput(), junction);
-//        junction.getOuterSourceOutputs().forEach(oso -> concatenation.junctions.put(oso, junction));
+        // TODO: Find the appropriate PlanImplementation for the junction.
+        PlanImplementation junctionPlanImplementation;
+        if (outputPlanImplemtation == this) {
+            concatenation.loopImplementations.putAll(this.loopImplementations);
+            junctionPlanImplementation = concatenation;
+        } else {
+            // Exhaustively, yet focussed, search for the PlanImplementation.
+            junctionPlanImplementation = concatenation.copyLoopImplementations(this,
+                    outputPlanImplemtation,
+                    junction.getSourceOutput().getOwner().getLoopStack());
+        }
+        junctionPlanImplementation.junctions.put(junction.getSourceOutput(), junction);
         concatenation.addToTimeEstimate(junction.getTimeEstimate());
 
         for (PlanImplementation targetPlan : targetPlans) {
-            // TODO: We still need the join!
+            // NB: Join semantics at this point weaved in.
             if (concatenation.isSettledAlternativesContradicting(targetPlan)) {
                 return null;
             }
@@ -265,6 +331,58 @@ public class PlanImplementation {
         }
 
         return concatenation;
+    }
+
+    /**
+     * todo
+     *
+     * @param originalPlanImplementation
+     * @return
+     */
+    private PlanImplementation copyLoopImplementations(PlanImplementation originalPlanImplementation,
+                                                       PlanImplementation targetPlanImplementation,
+                                                       LinkedList<LoopSubplan> loopStack) {
+        // Descend into the loopStack.
+        assert !loopStack.isEmpty();
+        final LoopSubplan visitedLoop = loopStack.pop();
+        this.loopImplementations.putAll(originalPlanImplementation.getLoopImplementations());
+        final LoopImplementation loopImplCopy =
+                this.loopImplementations.compute(visitedLoop, (key, value) -> new LoopImplementation(value));
+        final LoopImplementation originalLoopImpl = originalPlanImplementation.loopImplementations.get(visitedLoop);
+
+
+        // If we cannot descend further, seek to replace the PlanImplementation.
+        // Traverse the original and copied LoopImplementations in parallel.
+        PlanImplementation targetPlanImplementationCopy = null;
+        Iterator<LoopImplementation.IterationImplementation>
+                originalIterator = originalLoopImpl.getIterationImplementations().iterator(),
+                copyIterator = loopImplCopy.getIterationImplementations().iterator();
+        while (originalIterator.hasNext()) {
+            final LoopImplementation.IterationImplementation nextCopy = copyIterator.next();
+            final LoopImplementation.IterationImplementation nextOriginal = originalIterator.next();
+            // If the original PlanImplementation equals the targetPlanImplementation, then return the corresponding
+            // copy.
+            if (!loopStack.isEmpty()) {
+                targetPlanImplementationCopy = nextCopy.getBodyImplementation().copyLoopImplementations(
+                        nextOriginal.getBodyImplementation(),
+                        targetPlanImplementation,
+                        loopStack);
+                if (targetPlanImplementationCopy != null) break;
+            } else {
+                if (nextOriginal.getBodyImplementation() == targetPlanImplementation) {
+                    targetPlanImplementationCopy = nextCopy.getBodyImplementation();
+                    break;
+                }
+            }
+        }
+
+        // Restore the loopStack.
+        loopStack.push(visitedLoop);
+
+        // Return the match.
+        return targetPlanImplementationCopy;
+
+
     }
 
     private boolean isSettledAlternativesContradicting(PlanImplementation that) {
@@ -409,5 +527,10 @@ public class PlanImplementation {
 
     public Junction getJunction(OutputSlot<?> output) {
         return this.junctions.get(output);
+    }
+
+    public void putJunction(OutputSlot<?> output, Junction junction) {
+        final Junction oldValue = this.junctions.put(output, junction);
+        assert oldValue == null : String.format("Replaced %s with %s.", oldValue, junction);
     }
 }
