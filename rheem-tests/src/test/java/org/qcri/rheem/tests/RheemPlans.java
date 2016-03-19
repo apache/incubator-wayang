@@ -452,7 +452,7 @@ public class RheemPlans {
         loopOperator.setName("loop");
 
         // Union 10 times then output
-        loopOperator.initialize(textFileSource1, CollectionSource.empty(Integer.class));
+        loopOperator.initialize(textFileSource1, CollectionSource.singleton(0, Integer.class));
         loopOperator.beginIteration(unionOperator, counter);
         textFileSource2.connectTo(0, unionOperator, 1);
         loopOperator.endIteration(unionOperator, counter);

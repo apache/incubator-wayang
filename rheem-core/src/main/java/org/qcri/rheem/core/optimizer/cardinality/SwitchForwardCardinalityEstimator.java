@@ -2,6 +2,7 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.slf4j.LoggerFactory;
 
 /**
  * Forwards the {@link CardinalityEstimate} of any given {@link InputSlot} that is not {@code null}. Asserts that
@@ -22,7 +23,9 @@ public class SwitchForwardCardinalityEstimator implements CardinalityEstimator {
         for (int switchInputIndex : this.switchInputIndices) {
             final CardinalityEstimate inputEstimate = inputEstimates[switchInputIndex];
             if (inputEstimate != null) {
-                assert forwardEstimate == null;
+                if (forwardEstimate != null) {
+                    LoggerFactory.getLogger(this.getClass()).error("Conflicting estimates {} and {}.", forwardEstimate, inputEstimate);
+                }
                 forwardEstimate = inputEstimate;
             }
         }

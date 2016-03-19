@@ -384,11 +384,12 @@ public class ExecutionTaskFlowCompiler
                     }
                 }
             } else if (targetOperator.isExecutionOperator()) {
-                final LoopImplementation.IterationImplementation targetIteration = this.determineIteration(targetOperator);
-                final ActivatorKey activatorKey = new ActivatorKey((ExecutionOperator) targetOperator, targetIteration);
-                final Activator activator =
-                        ExecutionTaskFlowCompiler.this.activators.computeIfAbsent(activatorKey, Activator::new);
-                collector.add(new Activation(activator, targetInput.getIndex()));
+                for (final LoopImplementation.IterationImplementation targetIteration : this.determineIteration(targetOperator)) {
+                    final ActivatorKey activatorKey = new ActivatorKey((ExecutionOperator) targetOperator, targetIteration);
+                    final Activator activator =
+                            ExecutionTaskFlowCompiler.this.activators.computeIfAbsent(activatorKey, Activator::new);
+                    collector.add(new Activation(activator, targetInput.getIndex()));
+                }
             } else {
                 throw new IllegalStateException("Unexpected operator: " + targetOperator);
             }
@@ -402,19 +403,25 @@ public class ExecutionTaskFlowCompiler
          * @param targetOperator for which the {@link LoopImplementation.IterationImplementation} is sought
          * @return the appropriate {@link LoopImplementation.IterationImplementation} (or {@code null} if n/a)
          */
-        private LoopImplementation.IterationImplementation determineIteration(Operator targetOperator) {
+        private Collection<LoopImplementation.IterationImplementation> determineIteration(Operator targetOperator) {
             // See if the targetOperator is inside a LoopSubplan in the first place.
             final LoopSubplan targetLoop = targetOperator.getInnermostLoop();
-            if (targetLoop == null) return null;
+            if (targetLoop == null) return Collections.singleton(null);
 
             // Check if the targetOperator's loop has just been entered.
             final LoopSubplan currentLoop = this.operator.getInnermostLoop();
             if (currentLoop == null) { // TODO: Current code supports only non-nested loops.
-                assert targetOperator.isLoopHead() :
-                        String.format("Expected to enter loop via LoopHeadOperator, got %s.", targetOperator);
-                final LoopImplementation loopImplementation =
-                        ExecutionTaskFlowCompiler.this.planImplementation.getLoopImplementations().get(targetLoop);
-                return loopImplementation.getIterationImplementations().get(0);
+                    final LoopImplementation loopImplementation =
+                            ExecutionTaskFlowCompiler.this.planImplementation.getLoopImplementations().get(targetLoop);
+                if (targetOperator.isLoopHead()) {
+                    return Collections.singleton(loopImplementation.getIterationImplementations().get(0));
+                } else {
+                    return loopImplementation.getIterationImplementations().stream()
+                            .filter(iterImpl -> {
+                                return true;
+                            })
+                            .collect(Collectors.toList());
+                }
             }
 
             // Check if we are exiting a loop.
@@ -424,9 +431,9 @@ public class ExecutionTaskFlowCompiler
             assert currentLoop == targetLoop;
             // Check if we need to switch iterations.
             if (targetOperator.isLoopHead()) {
-                return this.iterationImplementation.getSuccessorIterationImplementation();
+                return Collections.singleton(this.iterationImplementation.getSuccessorIterationImplementation());
             } else {
-                return this.iterationImplementation;
+                return Collections.singleton(this.iterationImplementation);
             }
 
 

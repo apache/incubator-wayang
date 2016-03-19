@@ -4,12 +4,10 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import org.qcri.rheem.core.plan.rheemplan.ActualOperator;
 import org.qcri.rheem.core.plan.rheemplan.ElementaryOperator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
@@ -47,6 +45,17 @@ public class CollectionSource<T> extends UnarySource<T> implements ElementaryOpe
      * Creates a new instance without any data quanta.
      */
     public static <T> CollectionSource<T> empty(Class<T> typeClass) {
-        return new CollectionSource<>(Collections.emptyList(), typeClass);
+        final CollectionSource<T> instance = new CollectionSource<>(Collections.emptyList(), typeClass);
+        instance.setName("{}");
+        return instance;
+    }
+
+    /**
+     * Creates a new instance without any data quanta.
+     */
+    public static <T> CollectionSource<T> singleton(T value, Class<T> typeClass) {
+        final CollectionSource<T> instance = new CollectionSource<>(Collections.singleton(value), typeClass);
+        instance.setName("{" + value + "}");
+        return instance;
     }
 }
