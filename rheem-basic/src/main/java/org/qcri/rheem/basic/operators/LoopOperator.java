@@ -18,10 +18,6 @@ import java.util.Optional;
  */
 public class LoopOperator<InputType, ConvergenceType> extends OperatorBase implements ElementaryOperator, LoopHeadOperator {
 
-    public enum State {
-        NOT_STARTED, RUNNING, FINISHED
-    }
-
     public static final int INITIAL_INPUT_INDEX = 0;
     public static final int INITIAL_CONVERGENCE_INPUT_INDEX= 1;
     public static final int ITERATION_INPUT_INDEX = 2;
@@ -38,10 +34,12 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
 
     private State state;
 
+    @Override
     public State getState() {
         return state;
     }
 
+    @Override
     public void setState(State state) {
         this.state = state;
     }

@@ -88,4 +88,15 @@ public class RheemCollections {
     public static <T> Iterable<List<T>> streamedCrossProduct(List<? extends Iterable<T>> iterables) {
         return new CrossProductIterable<>(iterables);
     }
+
+    /**
+     * Creates an {@link ArrayList} that is filled with {@code k} {@code null}s.
+     */
+    public static <T> ArrayList<T> createNullFilledArrayList(int k) {
+        ArrayList<T> list = new ArrayList<>(k);
+        for (int i = 0; i < k; i++) {
+            list.add(null);
+        }
+        return list;
+    }
 }

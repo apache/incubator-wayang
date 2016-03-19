@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.OptionalLong;
 import java.util.stream.Stream;
 
 /**
@@ -219,12 +220,6 @@ public class HdfsFileInitializer implements JavaChannelInitializer {
         }
 
         @Override
-        public long getCardinality() throws RheemException {
-            assert this.isMarkedForInstrumentation;
-            return this.cardinality;
-        }
-
-        @Override
         public void markForInstrumentation() {
             this.isMarkedForInstrumentation = true;
             ((JavaExecutionOperator) this.fileChannel.getProducer().getOperator()).instrumentSink(this);
@@ -237,6 +232,21 @@ public class HdfsFileInitializer implements JavaChannelInitializer {
         @Override
         public boolean ensureExecution() {
             return this.wasTriggered;
+        }
+
+        @Override
+        public Channel getChannel() {
+            return this.fileChannel;
+        }
+
+        @Override
+        public OptionalLong getMeasuredCardinality() {
+            return this.cardinality == -1 ? OptionalLong.empty() : OptionalLong.of(this.cardinality);
+        }
+
+        @Override
+        public void release() throws RheemException {
+            // TODO: Delete file.
         }
     }
 }

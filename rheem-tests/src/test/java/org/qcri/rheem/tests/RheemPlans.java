@@ -199,13 +199,17 @@ public class RheemPlans {
         CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
         source.setName("source");
 
+        CollectionSource<Integer> convergenceSource = new CollectionSource<>(RheemArrays.asList(0), Integer.class);
+        source.setName("convergenceSource");
+
+
         LoopOperator<Integer, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(Integer.class),
                 DataSetType.createDefault(Integer.class),
                 (PredicateDescriptor.SerializablePredicate<Collection<Integer>>) collection ->
                         collection.iterator().next() >= numIterations
         );
         loopOperator.setName("loop");
-        loopOperator.initialize(source, CollectionSource.empty(Integer.class));
+        loopOperator.initialize(source, convergenceSource);
 
         FlatMapOperator<Integer, Integer> stepOperator = new FlatMapOperator<>(
                 val -> Arrays.asList(2 * val, 2 * val + 1),

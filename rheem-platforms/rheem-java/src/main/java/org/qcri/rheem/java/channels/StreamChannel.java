@@ -13,6 +13,7 @@ import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.OptionalLong;
 import java.util.stream.Stream;
 
 /**
@@ -80,6 +81,10 @@ public class StreamChannel extends Channel {
         return newChannelSetup.field1;
     }
 
+    public StreamChannel.Executor createExecutor() {
+        return new Executor(this.isMarkedForInstrumentation());
+    }
+
     public static class Initializer implements JavaChannelInitializer {
 
         @Override
@@ -101,7 +106,7 @@ public class StreamChannel extends Channel {
         }
     }
 
-    public static class Executor implements ChannelExecutor {
+    public class Executor implements ChannelExecutor {
 
         private Stream<?> stream;
 
@@ -153,12 +158,6 @@ public class StreamChannel extends Channel {
         }
 
         @Override
-        public long getCardinality() throws RheemException {
-            assert this.isMarkedForInstrumentation;
-            return this.cardinality;
-        }
-
-        @Override
         public void markForInstrumentation() {
             this.isMarkedForInstrumentation = true;
         }
@@ -168,6 +167,21 @@ public class StreamChannel extends Channel {
             assert this.stream != null;
             // We cannot ensure execution. For this purpose, we would need a CollectionChannel.
             return false;
+        }
+
+        @Override
+        public Channel getChannel() {
+            return StreamChannel.this;
+        }
+
+        @Override
+        public OptionalLong getMeasuredCardinality() {
+            return this.cardinality == -1 ? OptionalLong.empty() : OptionalLong.of(this.cardinality);
+        }
+
+        @Override
+        public void release() throws RheemException {
+            this.stream = null;
         }
     }
 

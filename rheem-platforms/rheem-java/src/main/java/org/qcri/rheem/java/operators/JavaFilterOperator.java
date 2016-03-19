@@ -28,14 +28,18 @@ public class JavaFilterOperator<Type>
     }
 
     @Override
+    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
+        final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
+        JavaExecutor.openFunction(this, filterFunction, inputs);
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
         final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
-        JavaExecutor.openFunction(this, filterFunction, inputs);
-
         outputs[0].acceptStream(inputs[0].<Type>provideStream().filter(filterFunction));
     }
 

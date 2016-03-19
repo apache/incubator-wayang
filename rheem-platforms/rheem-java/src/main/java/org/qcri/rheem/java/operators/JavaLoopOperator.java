@@ -8,10 +8,8 @@ import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Java implementation of the {@link LoopOperator}.
@@ -41,42 +39,63 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         assert outputs.length == this.getNumOutputs();
 
         final Predicate<Collection<ConvergenceType>> stoppingCondition = compiler.compile(this.criterionDescriptor);
-        Boolean endloop = false;
+        boolean endloop = false;
 
-        Collection<ConvergenceType> convergenceCollection = null;
-        Stream<InputType> input = null;
-        switch (this.getState()){
+        final Collection<ConvergenceType> convergenceCollection;
+        final ChannelExecutor input;
+        switch (this.getState()) {
             case NOT_STARTED:
-                input = inputs[0].provideStream();
-                convergenceCollection = Collections.emptyList();
+                assert inputs[INITIAL_INPUT_INDEX] != null;
+                assert inputs[INITIAL_CONVERGENCE_INPUT_INDEX] != null;
+
+                input = inputs[INITIAL_INPUT_INDEX];
+                convergenceCollection = getAsCollection(inputs[INITIAL_CONVERGENCE_INPUT_INDEX]);
                 break;
             case RUNNING:
-                if (inputs[1].canProvideCollection()) {
-                    convergenceCollection = inputs[1].provideCollection();
-                }
-                else {
-                    convergenceCollection = (Collection<ConvergenceType>) inputs[1].provideStream().collect(Collectors.toList());
-                }
+                assert inputs[ITERATION_INPUT_INDEX] != null;
+                assert inputs[ITERATION_CONVERGENCE_INPUT_INDEX] != null;
+
+                convergenceCollection = getAsCollection(inputs[ITERATION_CONVERGENCE_INPUT_INDEX]);
                 endloop = stoppingCondition.test(convergenceCollection);
-                input = inputs[2].provideStream();
+                input = inputs[ITERATION_INPUT_INDEX];
                 break;
-            case FINISHED:
-                return;
+            default:
+                throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
 
         }
 
         if (endloop) {
             // final loop output
-            outputs[2].acceptStream(input);
+            forward(input, outputs[FINAL_OUTPUT_INDEX]);
+            outputs[ITERATION_OUTPUT_INDEX] = null;
+            outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
-        }
-        else {
-            outputs[0].acceptStream(input);
-            outputs[1].acceptCollection(convergenceCollection);
+        } else {
+            outputs[FINAL_OUTPUT_INDEX] = null;
+            forward(input, outputs[ITERATION_OUTPUT_INDEX]);
+            // We do not use forward(...) because we might not be able to consume the input ChannelExecutor twice.
+            outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX].acceptCollection(convergenceCollection);
             this.setState(State.RUNNING);
-
         }
+    }
 
+    /**
+     * Provides the content of the {@code channelExecutor} as a {@link Collection}.
+     */
+    private static <T> Collection<T> getAsCollection(ChannelExecutor channelExecutor) {
+        if (channelExecutor.canProvideCollection()) {
+            return channelExecutor.provideCollection();
+        } else {
+            return channelExecutor.<T>provideStream().collect(Collectors.toList());
+        }
+    }
+
+    private static void forward(ChannelExecutor source, ChannelExecutor target) {
+        if (source.canProvideCollection()) {
+            target.acceptCollection(source.provideCollection());
+        } else {
+            target.acceptStream(source.provideStream());
+        }
     }
 
     @Override

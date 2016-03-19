@@ -354,6 +354,14 @@ public interface Operator {
         return this.isLoopHead() && ((LoopHeadOperator) this).getLoopBodyInputs().contains(input);
     }
 
+    /**
+     * @return whether this {@code output} is used to start a feedback loop (i.e., a flow graph cycle)
+     */
+    default boolean isFeedforwardOutput(OutputSlot<?> ouput) {
+        assert this.isOwnerOf(ouput);
+        return this.isLoopHead() && ((LoopHeadOperator) this).getLoopBodyOutputs().contains(ouput);
+    }
+
 
     /**
      * Tells whether this operator is a sink, i.e., it has no outputs.

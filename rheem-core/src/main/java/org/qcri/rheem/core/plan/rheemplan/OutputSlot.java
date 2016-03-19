@@ -149,4 +149,12 @@ public class OutputSlot<T> extends Slot<T> {
                 }
         ).collect(Collectors.toSet());
     }
+
+    /**
+     * @return whether this instance is designated to open feedback loops (i.e., data flow cycles)
+     */
+    public boolean isFeedforward() {
+        return this.getOwner().isFeedforwardOutput(this);
+    }
+
 }

@@ -7,7 +7,6 @@ import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.util.MultiMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -207,14 +206,12 @@ public class StageAssignmentTraversal {
             return;
         }
         Platform platform = task.getOperator().getPlatform();
-        if (task.getStage() != null) {
-            return;
-        } else {
+        if (task.getStage() == null) {
             if (platformExecution == null) {
                 platformExecution = new PlatformExecution(platform);
             }
             InterimStage initialStage = new InterimStageImpl(platformExecution);
-            addStage(initialStage);
+            this.addStage(initialStage);
             this.traverseTask(task, initialStage);
         }
     }
@@ -651,7 +648,7 @@ public class StageAssignmentTraversal {
             for (ExecutionTask task : this.allTasks) {
                 executionStage.addTask(task);
                 if (this.checkIfStartTask(task)) {
-                    executionStage.markAsStartTast(task);
+                    executionStage.markAsStartTask(task);
                 }
                 if (this.checkIfTerminalTask(task)) {
                     executionStage.markAsTerminalTask(task);
@@ -668,6 +665,7 @@ public class StageAssignmentTraversal {
          */
         private boolean checkIfStartTask(ExecutionTask task) {
             for (Channel channel : task.getInputChannels()) {
+                if (this.checkIfFeedbackChannel(task, channel)) continue;
                 final ExecutionTask producer = channel.getProducer();
                 if (this.equals(StageAssignmentTraversal.this.assignedInterimStages.get(producer))) {
                     return false;
@@ -677,11 +675,21 @@ public class StageAssignmentTraversal {
         }
 
         /**
+         * Checks if the given {@code channel} is a feedback to {@code task} (i.e., it closes a data flow cycle).
+         */
+        private boolean checkIfFeedbackChannel(ExecutionTask task, Channel channel) {
+            if (!task.getOperator().isLoopHead()) return false;
+            final InputSlot<?> input = task.getInputSlotFor(channel);
+            return input != null && input.isFeedback();
+        }
+
+        /**
          * Checks if <i>all</i> output {@link Channel}s of the given {@code task} are outbound w.r.t. to the
          * {@link InterimStage}.
          */
         private boolean checkIfTerminalTask(ExecutionTask task) {
             for (Channel channel : task.getOutputChannels()) {
+                if (this.checkIfFeedforwardChannel(task, channel)) continue;
                 for (ExecutionTask consumer : channel.getConsumers()) {
                     if (this.equals(StageAssignmentTraversal.this.assignedInterimStages.get(consumer))) {
                         return false;
@@ -689,6 +697,15 @@ public class StageAssignmentTraversal {
                 }
             }
             return true;
+        }
+
+        /**
+         * Checks if the given {@code channel} is a feedforward to {@code task} (i.e., it constitutes the beginning of a data flow cycle).
+         */
+        private boolean checkIfFeedforwardChannel(ExecutionTask task, Channel channel) {
+            if (!task.getOperator().isLoopHead()) return false;
+            final OutputSlot<?> output = task.getOutputSlotFor(channel);
+            return output != null && output.isFeedforward();
         }
     }
 

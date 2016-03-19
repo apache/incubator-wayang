@@ -9,6 +9,7 @@ import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
+import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,6 +36,10 @@ public class CollectionChannel extends Channel {
     @Override
     public CollectionChannel copy() {
         return new CollectionChannel(this);
+    }
+
+    public CollectionChannel.Executor createExecutor() {
+        return new Executor(this.isMarkedForInstrumentation());
     }
 
     /**
@@ -64,11 +69,11 @@ public class CollectionChannel extends Channel {
     /**
      * {@link ChannelExecutor} implementation for the {@link CollectionChannel}.
      */
-    public static class Executor implements ChannelExecutor {
+    public class Executor implements ChannelExecutor {
 
         private Collection<?> collection;
 
-        private long count = -1;
+        private long cardinality = -1;
 
         private boolean isMarkedForInstrumentation;
 
@@ -79,13 +84,13 @@ public class CollectionChannel extends Channel {
         @Override
         public void acceptStream(Stream<?> stream) {
             this.collection = stream.collect(Collectors.toList());
-            this.count = this.collection.size();
+            this.cardinality = this.collection.size();
         }
 
         @Override
         public void acceptCollection(Collection<?> collection) {
             this.collection = collection;
-            this.count = this.collection.size();
+            this.cardinality = this.collection.size();
         }
 
         @Override
@@ -106,20 +111,29 @@ public class CollectionChannel extends Channel {
         }
 
         @Override
-        public long getCardinality() throws RheemException {
-            assert this.isMarkedForInstrumentation;
-            return this.count;
-        }
-
-        @Override
         public void markForInstrumentation() {
             this.isMarkedForInstrumentation = true;
         }
 
         @Override
         public boolean ensureExecution() {
-            assert this.collection != null;
+            assert this.collection != null : String.format("Could not ensure execution of %s.", this.getChannel());
             return true;
+        }
+
+        @Override
+        public Channel getChannel() {
+            return CollectionChannel.this;
+        }
+
+        @Override
+        public OptionalLong getMeasuredCardinality() {
+            return this.cardinality == -1 ? OptionalLong.empty() : OptionalLong.of(this.cardinality);
+        }
+
+        @Override
+        public void release() throws RheemException {
+            this.collection = null;
         }
     }
 }

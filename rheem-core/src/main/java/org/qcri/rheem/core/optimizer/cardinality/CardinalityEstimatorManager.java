@@ -91,7 +91,7 @@ public class CardinalityEstimatorManager {
             final Operator owner = correspondingSlot.getOwner();
             final OptimizationContext.OperatorContext operatorCtx = this.optimizationContext.getOperatorContext(owner);
             if (operatorCtx == null) {
-                this.logger.error("Could not inject measured cardinality for {}: Is it inside a loop?");
+                this.logger.error("Could not inject measured cardinality for {}: Is it inside a loop?", owner);
                 continue;
             }
 

@@ -48,6 +48,8 @@ public interface LoopHeadOperator extends Operator {
      */
     int getNumExpectedIterations();
 
+
+
     /**
      * Get the {@link CardinalityPusher} implementation for the intermediate iterations.
      */
@@ -79,6 +81,41 @@ public interface LoopHeadOperator extends Operator {
                 configuration.getCardinalityEstimatorProvider());
     }
 
+    /**
+     * <i>Optional operation. Only {@link ExecutionOperator}s need to implement this method.</i>
+     * @return the current {@link State} of this instance
+     */
+    default State getState() {
+        assert !this.isExecutionOperator();
+        throw new UnsupportedOperationException();
+    }
 
+    /**
+     * <i>Optional operation. Only {@link ExecutionOperator}s need to implement this method.</i> Sets the {@link State} of this instance.
+     */
+    default void setState(State state) {
+        assert !this.isExecutionOperator();
+        throw new UnsupportedOperationException();
+    }
 
+    /**
+     * {@link LoopHeadOperator}s can be stateful because they might be executed mulitple times. This {@code enum}
+     * expresses this state.
+     */
+    enum State {
+        /**
+         * The {@link LoopHeadOperator} has not been executed yet.
+         */
+        NOT_STARTED,
+
+        /**
+         * The {@link LoopHeadOperator} has been executed. However, the last execution was not the ultimate one.
+         */
+        RUNNING,
+
+        /**
+         * The {@link LoopHeadOperator} has been executed ultimately.
+         */
+        FINISHED
+    }
 }
