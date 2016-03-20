@@ -13,4 +13,7 @@ Rheem is an agile distributed data processing framework developed by the data an
 To be able to run and compile Rheem, the following software is needed.
 - [Java 1.8](http://www.java.com/en/download/faq/develop.xml)
 - [Apache Maven](http://maven.apache.org)
-- Platforms to be employed (as of now Java and [Apache Spark](https://spark.apache.org/))
+- Platforms to be employed, as of now:
+    - Java
+    - [Apache Spark](https://spark.apache.org/)
+    - [Graphchi](https://github.com/GraphChi/graphchi-java)

@@ -2,12 +2,12 @@ package org.qcri.rheem.core.optimizer;
 
 import java.util.Objects;
 
-/**
+/***
  * An estimate that is capable of expressing uncertainty.
- * <p>The estimate addresses uncertainty in the estimation process by
- * <ol><li>expressing estimates as intervals</li>
- * <li>and assigning a probability of correctness (in [0, 1]).</li></ol></p>
- */
+ * The estimate addresses uncertainty in the estimation process by
+ * expressing estimates as intervals
+ * and assigning a probability of correctness (in [0, 1]).
+ ***/
 public class ProbabilisticIntervalEstimate {
 
     /**

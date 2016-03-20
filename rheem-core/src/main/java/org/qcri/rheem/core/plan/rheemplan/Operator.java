@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
  * <li>its {@link InputSlot}s, and</li>
  * <li>its {@link OutputSlot}s.</li>
  * </ul>
- * The former two aspects are handled by subclassed, the latter two are basic features of every operator.</p>
+ * The former two aspects are handled by subclassed, the latter two are basic features of every operator.
  * <p>{@link Slot}s are typed input and output declarations of each operator and can be connected to each other
  * to form a full {@link RheemPlan}. Moreover, we distinguish between two kinds of {@link InputSlot}s:
  * <ol>
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
  * <li><b>Broadcast.</b>Some operators permit for broadcast {@link InputSlot}s. These are dynamically added and
  * will be indexed after the regular ones. Also, their execution semantics differ: Broadcast input data will be
  * provided <i>before</i> the regular data.</li>
- * </ol></p>
+ * </ol>
  */
 public interface Operator {
 
@@ -511,8 +511,6 @@ public interface Operator {
     /**
      * <i>Optional operation.</i> Restrict this instance to be executed/implemented on a certain {@link Platform}s or
      * allow a further one if there is already a restriction in place.
-     *
-     * @return the targeted {@link Platform}s or an empty {@link Set} if there is no such restriction
      */
     void addTargetPlatform(Platform platform);
 
