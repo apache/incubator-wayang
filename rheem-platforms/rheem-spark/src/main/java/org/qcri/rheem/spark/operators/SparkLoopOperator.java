@@ -1,7 +1,9 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.LoopOperator;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
@@ -10,8 +12,6 @@ import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.function.Predicate;
 
 /**
  * Spark implementation of the {@link LoopOperator}.
@@ -41,36 +41,54 @@ public class SparkLoopOperator<InputType, ConvergenceType>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final Predicate<Collection<ConvergenceType>> stoppingCondition = this.criterionDescriptor.getJavaImplementation();
-        Boolean endloop = false;
+        final Function<Collection<ConvergenceType>, Boolean> stoppingCondition =
+                compiler.compile(this.criterionDescriptor, this, inputs);
+        boolean endloop = false;
 
-        Collection<ConvergenceType> convergenceCollection = null;
-        JavaRDD<InputType> input = null;
-        switch (this.getState()){
+        final Collection<ConvergenceType> convergenceCollection;
+        final JavaRDD<ConvergenceType> convergenceRDD;
+        final ChannelExecutor input;
+        switch (this.getState()) {
             case NOT_STARTED:
-                input = inputs[0].provideRdd();
-                convergenceCollection = Collections.emptyList();
+                assert inputs[INITIAL_INPUT_INDEX] != null;
+                assert inputs[INITIAL_CONVERGENCE_INPUT_INDEX] != null;
+
+                input = inputs[INITIAL_INPUT_INDEX];
+                convergenceRDD = inputs[INITIAL_CONVERGENCE_INPUT_INDEX].provideRdd();
                 break;
             case RUNNING:
-                convergenceCollection = (Collection<ConvergenceType>) inputs[1].provideRdd().cache().collect();
-                endloop = stoppingCondition.test(convergenceCollection);
-                input = inputs[2].provideRdd();
+                assert inputs[ITERATION_INPUT_INDEX] != null;
+                assert inputs[ITERATION_CONVERGENCE_INPUT_INDEX] != null;
+
+                convergenceRDD = (JavaRDD<ConvergenceType>) inputs[ITERATION_CONVERGENCE_INPUT_INDEX].provideRdd().cache();
+                convergenceCollection = convergenceRDD.collect();
+                try {
+                    endloop = stoppingCondition.call(convergenceCollection);
+                } catch (Exception e) {
+                    throw new RheemException(
+                            String.format("Could not evaluate stopping condition for %s.", this),
+                            e
+                    );
+                }
+                input = inputs[ITERATION_INPUT_INDEX];
                 break;
-            case FINISHED:
-                return;
+            default:
+                throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
 
         }
 
         if (endloop) {
             // final loop output
-            outputs[2].acceptRdd(input);
+            outputs[FINAL_OUTPUT_INDEX].acceptRdd(input.provideRdd());
+            outputs[ITERATION_OUTPUT_INDEX] = null;
+            outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
-        }
-        else {
-            outputs[0].acceptRdd(input);
-            outputs[1].acceptRdd(inputs[1].provideRdd());
+        } else {
+            outputs[FINAL_OUTPUT_INDEX] = null;
+            outputs[ITERATION_OUTPUT_INDEX].acceptRdd(input.provideRdd());
+            // We do not use forward(...) because we might not be able to consume the input ChannelExecutor twice.
+            outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX].acceptRdd(convergenceRDD);
             this.setState(State.RUNNING);
-
         }
 
     }

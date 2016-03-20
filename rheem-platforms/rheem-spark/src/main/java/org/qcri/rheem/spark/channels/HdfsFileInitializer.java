@@ -26,6 +26,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.OptionalLong;
 
 /**
  * Sets up {@link FileChannel} usage in the {@link SparkPlatform}.
@@ -223,7 +224,7 @@ public class HdfsFileInitializer implements SparkChannelInitializer {
         }
 
         @Override
-        public void dispose() {
+        public void release() {
             for (String path : this.fileChannel.getPaths()) {
                 try {
                     // TODO: delete HDFS files
@@ -236,13 +237,18 @@ public class HdfsFileInitializer implements SparkChannelInitializer {
         }
 
         @Override
-        public long getCardinality() throws RheemException {
-            return -1;
+        public OptionalLong getMeasuredCardinality() throws RheemException {
+            return OptionalLong.empty();
         }
 
         @Override
         public boolean ensureExecution() {
             return this.wasTriggered;
+        }
+
+        @Override
+        public FileChannel getChannel() {
+            return this.fileChannel;
         }
     }
 }

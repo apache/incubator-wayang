@@ -2,14 +2,19 @@ package org.qcri.rheem.spark.platform;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ExecutionProfile;
 import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.PushExecutorTemplate;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.channels.SparkChannelManager;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,15 +24,11 @@ import java.util.*;
 /**
  * {@link Executor} implementation for the {@link SparkPlatform}.
  */
-public class SparkExecutor implements Executor {
-
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+public class SparkExecutor extends PushExecutorTemplate<ChannelExecutor> {
 
     public final JavaSparkContext sc;
 
     public FunctionCompiler compiler = new FunctionCompiler();
-
-    private Map<Channel, ChannelExecutor> establishedChannelExecutors = new HashMap<>();
 
     private final SparkPlatform platform;
 
@@ -35,99 +36,58 @@ public class SparkExecutor implements Executor {
         this.platform = platform;
         this.sc = this.platform.getSparkContext();
     }
+    @Override
+    protected void open(ExecutionTask task, List<ChannelExecutor> inputChannelInstances) {
+        // Nothing to do. Opening is handled in #execute(...).
+    }
 
     @Override
-    public ExecutionProfile execute(ExecutionStage stage) {
-        final Collection<ExecutionTask> terminalTasks = stage.getTerminalTasks();
-        terminalTasks.forEach(this::forceExecution);
+    protected List<ChannelExecutor> execute(ExecutionTask task, List<ChannelExecutor> inputChannelInstances, boolean isForceExecution) {
+        // Provide the ChannelExecutors for the output of the task.
+        final ChannelExecutor[] outputChannelExecutors = this.createOutputChannelExecutors(task);
 
-        return this.assembleExecutionProfile();
-    }
+        // Execute.
+        cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelExecutors, this.compiler, this);
 
-    private void forceExecution(ExecutionTask terminalTask) {
-        this.execute(terminalTask);
-        for (Channel outputChannel : terminalTask.getOutputChannels()) {
-            final ChannelExecutor channelExecutor = this.establishedChannelExecutors.get(outputChannel);
-            assert channelExecutor != null : String.format("Could not find an executor for %s.", outputChannel);
-            if (!channelExecutor.ensureExecution()) {
-                this.logger.warn("Could not force execution of {}. This might break the execution or " +
-                        "cause side-effects with the re-optimization.", outputChannel);
+        // Force execution if necessary.
+        if (isForceExecution) {
+            for (ChannelExecutor outputChannelExecutor : outputChannelExecutors) {
+                if (outputChannelExecutor == null || !outputChannelExecutor.ensureExecution()) {
+                    this.logger.warn("Execution of {} might not have been enforced properly. " +
+                                    "This might break the execution or cause side-effects with the re-optimization.",
+                            task);
+                }
             }
         }
+
+        return Arrays.asList(outputChannelExecutors);
     }
 
-    private void execute(ExecutionTask executionTask) {
-        // We want to enforce a top-down creation order of the ChannelExecutors.
-        ChannelExecutor[] outputs = this.createOutputExecutors(executionTask);
-        ChannelExecutor[] inputs = this.obtainInputs(executionTask);
-        final SparkExecutionOperator sparkExecutionOperator = (SparkExecutionOperator) executionTask.getOperator();
-        this.logger.debug("Evaluating {}...", sparkExecutionOperator);
-        sparkExecutionOperator.evaluate(inputs, outputs, this.compiler, this);
-        this.registerChannelExecutor(outputs, executionTask);
-    }
 
-    private ChannelExecutor[] createOutputExecutors(ExecutionTask executionTask) {
+    private ChannelExecutor[] createOutputChannelExecutors(ExecutionTask task) {
         final SparkChannelManager channelManager = this.getPlatform().getChannelManager();
-        ChannelExecutor[] channelExecutors = new ChannelExecutor[executionTask.getOutputChannels().length];
+        ChannelExecutor[] channelExecutors = new ChannelExecutor[task.getNumOuputChannels()];
         for (int outputIndex = 0; outputIndex < channelExecutors.length; outputIndex++) {
-            final Channel outputChannel = executionTask.getOutputChannel(outputIndex);
-            final ChannelExecutor channelExecutor = channelManager.createChannelExecutor(outputChannel, this);
-            channelExecutors[outputIndex] = channelExecutor;
+            final Channel outputChannel = task.getOutputChannel(outputIndex);
+            channelExecutors[outputIndex] = channelManager.createChannelExecutor(outputChannel, this);
         }
         return channelExecutors;
     }
 
-    private ChannelExecutor[] obtainInputs(ExecutionTask executionTask) {
-        ChannelExecutor[] inputs = new ChannelExecutor[executionTask.getOperator().getNumInputs()];
-        for (int inputIndex = 0; inputIndex < inputs.length; inputIndex++) {
-            Channel input = executionTask.getInputChannel(inputIndex);
-            inputs[inputIndex] = this.getOrEstablishChannelExecutor(input);
-        }
-        return inputs;
+    private static SparkExecutionOperator cast(ExecutionOperator executionOperator) {
+        return (SparkExecutionOperator) executionOperator;
     }
 
-    private ChannelExecutor getOrEstablishChannelExecutor(Channel channel) {
-        for (int numTry = 0; numTry < 2; numTry++) {
-            final ChannelExecutor channelExecutor = this.establishedChannelExecutors.get(channel);
-            if (channelExecutor != null) {
-                return channelExecutor;
-            }
-
-            this.execute(channel.getProducer());
-        }
-
-        throw new RheemException("Execution failed: could not obtain data for " + channel);
+    private static ChannelExecutor[] toArray(List<ChannelExecutor> channelExecutors) {
+        final ChannelExecutor[] array = new ChannelExecutor[channelExecutors.size()];
+        return channelExecutors.toArray(array);
     }
 
-    private void registerChannelExecutor(ChannelExecutor[] outputs, ExecutionTask executionTask) {
-        for (int outputIndex = 0; outputIndex < executionTask.getNumOuputChannels(); outputIndex++) {
-            Channel channel = executionTask.getOutputChannel(outputIndex);
-            final ChannelExecutor channelExecutor = outputs[outputIndex];
-            assert channelExecutor != null;
-            this.establishedChannelExecutors.put(channel, channelExecutor);
+    public static void openFunction(SparkExecutionOperator operator, Object function, ChannelExecutor[] inputs) {
+        if (function instanceof ExtendedFunction) {
+            ExtendedFunction extendedFunction = (ExtendedFunction) function;
+            extendedFunction.open(new SparkExecutionContext(operator, inputs));
         }
-    }
-
-    private ExecutionProfile assembleExecutionProfile() {
-        ExecutionProfile executionProfile = new ExecutionProfile();
-        final Map<Channel, Long> cardinalities = executionProfile.getCardinalities();
-        for (Map.Entry<Channel, ChannelExecutor> entry : this.establishedChannelExecutors.entrySet()) {
-            final Channel channel = entry.getKey();
-            if (!channel.isMarkedForInstrumentation()) continue;
-            final ChannelExecutor channelExecutor = entry.getValue();
-            final long cardinality = channelExecutor.getCardinality();
-            if (cardinality == -1) {
-                this.logger.warn("No cardinality available for {}, although it was requested.", channel);
-            } else {
-                cardinalities.put(channel, cardinality);
-            }
-        }
-        return executionProfile;
-    }
-
-    @Override
-    public void dispose() {
-        this.establishedChannelExecutors.values().forEach(ChannelExecutor::dispose);
     }
 
     @Override
