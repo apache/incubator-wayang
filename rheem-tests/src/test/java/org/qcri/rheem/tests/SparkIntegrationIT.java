@@ -1,9 +1,10 @@
 package org.qcri.rheem.tests;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.qcri.rheem.basic.operators.*;
+import org.qcri.rheem.basic.operators.CollectionSource;
+import org.qcri.rheem.basic.operators.FilterOperator;
+import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
@@ -185,6 +186,32 @@ public class SparkIntegrationIT {
         rheemContext.register(SparkPlatform.getInstance());
 
         rheemContext.execute(rheemPlan);
+    }
+
+    @Test
+    public void testDiverseScenario4() throws URISyntaxException {
+        // Build the RheemPlan.
+        RheemPlan rheemPlan = RheemPlans.diverseScenario4(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(SparkPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+    }
+
+    @Test
+    public void testSimpleLoop() throws URISyntaxException {
+        // Build the RheemPlan.
+        final List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.simpleLoop(3, collector, 0, 1, 2);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(SparkPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+        System.out.println(collector);
     }
 
     @Test

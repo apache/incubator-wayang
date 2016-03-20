@@ -193,7 +193,6 @@ public class JavaIntegrationIT {
         rheemContext.execute(rheemPlan);
     }
 
-    @Ignore("Loop support not complete, yet.")
     @Test
     public void testDiverseScenario4() throws URISyntaxException {
         // Build the RheemPlan.

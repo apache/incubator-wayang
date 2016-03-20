@@ -6,6 +6,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Collection;
 import java.util.function.Predicate;
@@ -30,6 +31,12 @@ public class JavaLoopOperator<InputType, ConvergenceType>
     public JavaLoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
                             PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
         super(inputType, convergenceType, criterionDescriptor);
+    }
+
+    @Override
+    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
+        final Predicate<Collection<ConvergenceType>> udf = compiler.compile(this.criterionDescriptor);
+        JavaExecutor.openFunction(this, udf, inputs);
     }
 
     @Override
