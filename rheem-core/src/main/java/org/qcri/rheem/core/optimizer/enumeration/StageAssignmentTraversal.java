@@ -132,8 +132,10 @@ public class StageAssignmentTraversal {
 
         // Refine stages as much as necessary
         this.refineStages();
-        for (InterimStage stage : this.allStages) {
-            this.logger.debug("Final stage {}: {}", stage, stage.getTasks());
+        if (this.logger.isDebugEnabled()) {
+            for (InterimStage stage : this.allStages) {
+                this.logger.debug("Final stage {}: {}", stage, stage.getTasks());
+            }
         }
 
         // Assemble the ExecutionPlan.
@@ -241,11 +243,12 @@ public class StageAssignmentTraversal {
         assert task.getOperator().getPlatform().equals(newStage.getPlatform());
         newStage.addTask(task);
         final InterimStage oldStage = this.assignedInterimStages.put(task, newStage);
-        assert oldStage == null : String.format("Reassigned %s from %s to %s.", task, oldStage, newStage);
-        final HashSet<InterimStage> thisRequiredStages = new HashSet<>(4);
+        this.logger.debug("Reassigned %s from %s to %s.", task, oldStage, newStage);
+        final Set<InterimStage> thisRequiredStages = this.requiredStages.computeIfAbsent(
+                task, key -> new HashSet<>(4)
+        );
         thisRequiredStages.add(newStage);
-        this.requiredStages.put(task, thisRequiredStages);
-        this.logger.debug("Initially assigning {} to {}.", task, newStage);
+        this.logger.debug("Assigning {} to {}.", task, newStage);
     }
 
     /**
@@ -307,7 +310,13 @@ public class StageAssignmentTraversal {
             // Update the precedence graph.
             for (InterimStage currentStage : this.newStages) {
                 for (ExecutionTask outboundTask : currentStage.getOutboundTasks()) {
-                    this.updateRequiredStages(outboundTask, new HashSet<>());
+                    final HashSet<InterimStage> requiredStages = new HashSet<>();
+                    requiredStages.addAll(this.requiredStages.get(outboundTask));
+                    for (Channel channel : outboundTask.getOutputChannels()) {
+                        for (ExecutionTask consumer : channel.getConsumers()) {
+                            this.updateRequiredStages(consumer, requiredStages);
+                        }
+                    }
                 }
             }
 
@@ -429,7 +438,7 @@ public class StageAssignmentTraversal {
         InterimStage newStage = stage.separate(separableTasks);
         this.addStage(newStage);
         for (ExecutionTask separatedTask : newStage.getTasks()) {
-            this.assignedInterimStages.put(separatedTask, newStage);
+            this.assign(separatedTask, newStage);
         }
         return newStage;
     }
@@ -457,22 +466,20 @@ public class StageAssignmentTraversal {
                                        ExecutionTask currentExecutionTask,
                                        HashSet<Object> visitedTasks) {
 
-        if (!visitedTasks.add(currentExecutionTask)) {
-            return;
-        }
-
         // Get or create the final ExecutionStage.
         final InterimStage interimStage = this.assignedInterimStages.get(currentExecutionTask);
-        ExecutionStage executionStage = finalStages.get(interimStage);
-        if (executionStage == null) {
-            executionStage = interimStage.toExecutionStage();
-            finalStages.put(interimStage, executionStage);
-        }
+        final ExecutionStage executionStage = finalStages.computeIfAbsent(interimStage, InterimStage::toExecutionStage);
 
         if (successorExecutionStage != null
                 && !executionStage.equals(successorExecutionStage)
                 && !executionStage.getSuccessors().contains(successorExecutionStage)) {
             executionStage.addSuccessor(successorExecutionStage);
+        }
+
+        // Avoid running into loops. However, we must not do this check earlier because we might visit ExecutionTasks
+        // from several different predecessor InterimStages.
+        if (!visitedTasks.add(currentExecutionTask)) {
+            return;
         }
 
         for (Channel channel : currentExecutionTask.getInputChannels()) {
