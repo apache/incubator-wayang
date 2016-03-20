@@ -44,6 +44,8 @@ public class HdfsFileInitializer implements SparkChannelInitializer {
     public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
         // Get an RddChannel to operate on.
         final RddChannel rddChannel = this.createRddChannel(source, optimizationContext);
+        assert rddChannel.getProducerSlot() != null
+                : String.format("RddChannel %s created for %s has no producer.", rddChannel, source);
 
         // Create a sink to write the HDFS file.
         ExecutionTask sinkTask;

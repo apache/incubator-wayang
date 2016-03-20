@@ -172,7 +172,10 @@ public abstract class Channel {
                     return operatorCtx.getOutputCardinality(output.getIndex());
                 }).filter(Objects::nonNull)
                 .findAny()
-                .orElseThrow(() -> new IllegalStateException(String.format("No CardinalityEstimate for %s.", this)));
+                .orElseThrow(() -> new IllegalStateException(String.format(
+                        "No CardinalityEstimate for %s (available: %s).",
+                        this, optimizationContext.getLocalOperatorContexts()
+                )));
     }
 
     public boolean isMarkedForInstrumentation() {
@@ -196,7 +199,10 @@ public abstract class Channel {
 
     @Override
     public String toString() {
-        return String.format("%s[%s->%s]", this.getClass().getSimpleName(), this.getProducer(), this.getConsumers());
+        return String.format("%s[%s->%s]",
+                this.getClass().getSimpleName(),
+                this.getProducer() == null ? this.getProducerSlot() : this.getProducer(),
+                this.getConsumers());
     }
 
     /**

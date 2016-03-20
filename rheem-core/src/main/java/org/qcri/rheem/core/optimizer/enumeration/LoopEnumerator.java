@@ -71,7 +71,7 @@ public class LoopEnumerator extends OneTimeExecutable {
             loopImplementation.addIterationEnumeration(
                     this.loopContext.getLoop().getNumExpectedIterations(), loopBodyImplementation
             );
-            final PlanImplementation planImplementation = new PlanImplementation(this.loopEnumeration, new HashMap<>(1));
+            final PlanImplementation planImplementation = new PlanImplementation(this.loopEnumeration, new HashMap<>(1), aggregateContext);
             planImplementation.getLoopImplementations().put(loop, loopImplementation);
             planImplementation.addToTimeEstimate(loopImplementation.getTimeEstimate());
             this.loopEnumeration.add(planImplementation);

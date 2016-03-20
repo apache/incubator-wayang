@@ -357,7 +357,9 @@ public class PlanEnumeration {
      * @return the new instance
      */
     private PlanImplementation createSingletonPartialPlan(ExecutionOperator executionOperator, OptimizationContext optimizationContext) {
-        final PlanImplementation planImplementation = new PlanImplementation(this, new HashMap<>(0), Collections.singletonList(executionOperator));
+        final PlanImplementation planImplementation = new PlanImplementation(
+                this, new HashMap<>(0), Collections.singletonList(executionOperator), optimizationContext
+        );
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(executionOperator);
         planImplementation.addToTimeEstimate(operatorContext.getTimeEstimate());
         return planImplementation;

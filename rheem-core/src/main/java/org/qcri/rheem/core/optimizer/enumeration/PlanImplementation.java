@@ -19,6 +19,7 @@ import java.util.stream.Stream;
  */
 public class PlanImplementation {
 
+
     /**
      * {@link ExecutionOperator}s contained in this instance.
      */
@@ -49,6 +50,11 @@ public class PlanImplementation {
     private PlanEnumeration planEnumeration;
 
     /**
+     * {@link OptimizationContext} that provides estimates for the {@link #operators}.
+     */
+    private final OptimizationContext optimizationContext;
+
+    /**
      * The {@link TimeEstimate} to execute this instance.
      */
     private TimeEstimate timeEstimate;
@@ -59,8 +65,9 @@ public class PlanImplementation {
     PlanImplementation(
             PlanEnumeration planEnumeration,
             Map<OutputSlot<?>, Junction> junctions,
-            Collection<ExecutionOperator> operators) {
-        this(planEnumeration, junctions, new Canonicalizer<>(operators));
+            Collection<ExecutionOperator> operators,
+            OptimizationContext optimizationContext) {
+        this(planEnumeration, junctions, new Canonicalizer<>(operators), optimizationContext);
     }
 
     /**
@@ -68,11 +75,8 @@ public class PlanImplementation {
      */
     PlanImplementation(PlanEnumeration planEnumeration,
                        Map<OutputSlot<?>, Junction> junctions,
-                       ExecutionOperator... operatorCollections) {
-        this(planEnumeration, junctions, new Canonicalizer<>());
-        for (ExecutionOperator operator : operators) {
-            this.operators.add(operator);
-        }
+                       OptimizationContext optimizationContext) {
+        this(planEnumeration, junctions, new Canonicalizer<>(), optimizationContext);
     }
 
     /**
@@ -85,6 +89,7 @@ public class PlanImplementation {
         this.timeEstimate = original.timeEstimate;
         this.settledAlternatives.putAll(original.settledAlternatives);
         this.loopImplementations.putAll(original.loopImplementations);
+        this.optimizationContext = original.optimizationContext;
     }
 
     /**
@@ -92,10 +97,12 @@ public class PlanImplementation {
      */
     private PlanImplementation(PlanEnumeration planEnumeration,
                                Map<OutputSlot<?>, Junction> junctions,
-                               Canonicalizer<ExecutionOperator> operators) {
+                               Canonicalizer<ExecutionOperator> operators,
+                               OptimizationContext optimizationContext) {
         this.planEnumeration = planEnumeration;
         this.junctions = junctions;
         this.operators = operators;
+        this.optimizationContext = optimizationContext;
 
         assert this.planEnumeration != null;
     }
@@ -275,7 +282,7 @@ public class PlanImplementation {
                     return RheemCollections.getSingle(targetImpl.findExecutionOperatorInputs(input));
                 }
         );
-        final Junction junction = Junction.create(execOutputWithContext.getField0(), execInputs, optimizationContext);
+        final Junction junction = Junction.create(execOutputWithContext.getField0(), execInputs, this.optimizationContext);
 
         // Delegate.
         return this.concatenate(targets, junction, execOutputWithContext.getField1(), concatenationEnumeration);
@@ -293,7 +300,8 @@ public class PlanImplementation {
         final PlanImplementation concatenation = new PlanImplementation(
                 concatenationEnumeration,
                 new HashMap<>(this.junctions.size() + 1),
-                new HashSet<>(this.settledAlternatives.size(), targetPlans.size() * 4) // ballpark figure
+                new HashSet<>(this.settledAlternatives.size(), targetPlans.size() * 4), // ballpark figure
+                this.optimizationContext
         );
 
         concatenation.operators.addAll(this.operators);
@@ -402,7 +410,9 @@ public class PlanImplementation {
      * @return
      */
     public PlanImplementation escape(OperatorAlternative.Alternative alternative, PlanEnumeration newPlanEnumeration) {
-        final PlanImplementation escapedPlanImplementation = new PlanImplementation(newPlanEnumeration, this.junctions, this.operators);
+        final PlanImplementation escapedPlanImplementation = new PlanImplementation(
+                newPlanEnumeration, this.junctions, this.operators, this.optimizationContext
+        );
         escapedPlanImplementation.settledAlternatives.putAll(this.settledAlternatives);
         assert !escapedPlanImplementation.settledAlternatives.containsKey(alternative.getOperatorAlternative());
         escapedPlanImplementation.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
