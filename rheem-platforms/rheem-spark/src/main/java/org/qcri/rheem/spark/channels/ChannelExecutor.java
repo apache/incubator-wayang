@@ -192,7 +192,7 @@ public interface ChannelExecutor extends ChannelInstance {
 
         @Override
         public OptionalLong getMeasuredCardinality() throws RheemException {
-            return OptionalLong.of(((SparkBroadcastOperator<?>) this.channel.getProducer().getOperator()).getMeasuredCardinality());
+            return ((SparkBroadcastOperator<?>) this.channel.getProducer().getOperator()).getMeasuredCardinality();
         }
 
         @Override

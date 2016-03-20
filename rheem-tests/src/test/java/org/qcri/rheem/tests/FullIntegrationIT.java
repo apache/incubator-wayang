@@ -182,4 +182,32 @@ public class FullIntegrationIT {
 
         rheemContext.execute(rheemPlan);
     }
+
+    @Test
+    public void testDiverseScenario4() throws URISyntaxException {
+        // Build the RheemPlan.
+        RheemPlan rheemPlan = RheemPlans.diverseScenario4(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(SparkPlatform.getInstance());
+        rheemContext.register(JavaPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+    }
+
+    @Test
+    public void testSimpleLoop() throws URISyntaxException {
+        // Build the RheemPlan.
+        final List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.simpleLoop(3, collector, 0, 1, 2);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(SparkPlatform.getInstance());
+        rheemContext.register(JavaPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+        System.out.println(collector);
+    }
 }
