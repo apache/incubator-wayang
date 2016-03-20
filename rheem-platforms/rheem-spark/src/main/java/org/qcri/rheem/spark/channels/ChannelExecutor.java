@@ -5,14 +5,17 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.broadcast.Broadcast;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.spark.operators.SparkBroadcastOperator;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.slf4j.LoggerFactory;
 
+import java.util.OptionalLong;
+
 /**
  * Defines execution logic to handle a {@link Channel}.
  */
-public interface ChannelExecutor {
+public interface ChannelExecutor extends ChannelInstance {
 
     /**
      * Accept the result of the producer of a {@link Channel}.
@@ -43,17 +46,6 @@ public interface ChannelExecutor {
      * @return the producer's result
      */
     <T> Broadcast<T> provideBroadcast();
-
-    /**
-     * Releases resources held by this instance.
-     */
-    void dispose();
-
-    /**
-     * @return the cardinality measured by this instance or {@code -1} if for some reason no cardinality was measured
-     * @throws RheemException if the corresponding {@link Channel} is not marked for instrumentation
-     */
-    long getCardinality() throws RheemException;
 
     /**
      * Request this instance to pull the data for its {@link Channel} if this has not happened yet.
@@ -118,7 +110,7 @@ public interface ChannelExecutor {
         }
 
         @Override
-        public void dispose() {
+        public void release() {
             if (this.isCaching && this.rdd != null) {
                 try {
                     this.rdd.unpersist();
@@ -129,19 +121,25 @@ public interface ChannelExecutor {
         }
 
         @Override
-        public long getCardinality() throws RheemException {
+        public OptionalLong getMeasuredCardinality() throws RheemException {
             if (!this.channel.isMarkedForInstrumentation()) {
-                return -1;
+                return OptionalLong.empty();
             }
-            return this.accumulator.value();
+            return OptionalLong.of(this.accumulator.value());
         }
 
         @Override
         public boolean ensureExecution() {
             // TODO: This right-here is blunt.
             LoggerFactory.getLogger(this.getClass()).warn("Bluntly forcing execution on {}.", this.rdd);
+            assert this.rdd != null : String.format("RDD missing for %s.", this.channel);
             this.rdd.cache().foreachPartition((i) -> {});
             return true;
+        }
+
+        @Override
+        public RddChannel getChannel() {
+            return this.channel;
         }
     }
 
@@ -182,7 +180,7 @@ public interface ChannelExecutor {
         }
 
         @Override
-        public void dispose() {
+        public void release() {
             if (this.broadcast != null) {
                 try {
                     this.broadcast.destroy(false);
@@ -193,13 +191,18 @@ public interface ChannelExecutor {
         }
 
         @Override
-        public long getCardinality() throws RheemException {
+        public OptionalLong getMeasuredCardinality() throws RheemException {
             return ((SparkBroadcastOperator<?>) this.channel.getProducer().getOperator()).getMeasuredCardinality();
         }
 
         @Override
         public boolean ensureExecution() {
             return this.broadcast != null;
+        }
+
+        @Override
+        public BroadcastChannel getChannel() {
+            return this.channel;
         }
     }
 }

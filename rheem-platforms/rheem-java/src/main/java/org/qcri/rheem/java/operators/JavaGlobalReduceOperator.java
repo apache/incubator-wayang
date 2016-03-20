@@ -10,7 +10,9 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Collections;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
+import java.util.function.Function;
 
 /**
  * Java implementation of the {@link GlobalReduceOperator}.
@@ -29,6 +31,12 @@ public class JavaGlobalReduceOperator<Type>
     public JavaGlobalReduceOperator(DataSetType<Type> type,
                                     ReduceDescriptor<Type> reduceDescriptor) {
         super(reduceDescriptor, type);
+    }
+
+    @Override
+    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
+        final BiFunction<Type, Type, Type> udf = compiler.compile(this.reduceDescriptor);
+        JavaExecutor.openFunction(this, udf, inputs);
     }
 
     @Override

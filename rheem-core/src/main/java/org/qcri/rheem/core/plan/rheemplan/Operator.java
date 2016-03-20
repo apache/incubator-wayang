@@ -2,9 +2,11 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.*;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
 import org.qcri.rheem.core.platform.Platform;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -141,9 +143,27 @@ public interface Operator {
      * @param that            operator to connect to
      * @param thatInputIndex  index of the input slot to connect from
      */
+    @SuppressWarnings("unchecked")
     default <T> void connectTo(int thisOutputIndex, Operator that, int thatInputIndex) {
         final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputIndex);
         final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputIndex);
+        if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
+            throw new IllegalArgumentException("Cannot connect slots: mismatching types");
+        }
+        outputSlot.connectTo(inputSlot);
+    }
+
+    /**
+     * Connect an output of this operator to the input of a second operator.
+     *
+     * @param thisOutputName name of the output slot to connect to
+     * @param that           operator to connect to
+     * @param thatInputName  name of the input slot to connect from
+     */
+    @SuppressWarnings("unchecked")
+    default <T> void connectTo(String thisOutputName, Operator that, String thatInputName) {
+        final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputName);
+        final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputName);
         if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
             throw new IllegalArgumentException("Cannot connect slots: mismatching types");
         }
@@ -163,6 +183,21 @@ public interface Operator {
         final InputSlot<?> broadcastInput = new InputSlot<>(broadcastName, that, true, output.getType());
         final int broadcastIndex = that.addBroadcastInput(broadcastInput);
         this.connectTo(thisOutputIndex, that, broadcastIndex);
+    }
+
+    /**
+     * Connect an output of this operator as a broadcast input of a second operator.
+     *
+     * @param thisOutputName name of the output slot to connect to
+     * @param that           operator to connect to
+     * @param broadcastName  name of the broadcast that will be used by the operator to identify the broadcast; must
+     *                       be unique among all {@link InputSlot}s
+     */
+    default void broadcastTo(String thisOutputName, Operator that, String broadcastName) {
+        final OutputSlot<?> output = this.getOutput(thisOutputName);
+        final InputSlot<?> broadcastInput = new InputSlot<>(broadcastName, that, true, output.getType());
+        final int broadcastIndex = that.addBroadcastInput(broadcastInput);
+        this.connectTo(output.getIndex(), that, broadcastIndex);
     }
 
 
@@ -191,8 +226,9 @@ public interface Operator {
         }
 
         // Try to exit through the parent.
+        final OutputSlot occupant = input.getOccupant();
         final Operator parent = this.getParent();
-        if (parent != null) {
+        if (occupant == null && parent != null) {
             if (parent instanceof Subplan) {
                 final InputSlot<?> exitInputSlot = ((Subplan) parent).exit(input);
                 if (exitInputSlot != null) {
@@ -208,7 +244,6 @@ public interface Operator {
 
         }
 
-        final OutputSlot occupant = input.getOccupant();
         return occupant == null ? null : occupant.getOwner();
     }
 
@@ -283,16 +318,50 @@ public interface Operator {
         return Collections.singleton(output);
     }
 
-
-    //    /**
-//     * This method is part of the visitor pattern and calls the appropriate visit method on {@code visitor}.
-//     *
-//     * @return return values associated with the inner-most input slot
-//     */
-
     default boolean isOwnerOf(Slot<?> slot) {
         return slot.getOwner() == this;
     }
+
+    /**
+     * Declare forward rules. Execution engines may take the chance to optimize the executed plans by having
+     * forwarded data by-pass this instance. However, note the specific semantics of a forward rule: If an
+     * {@link Operator} serves an {@link OutputSlot} that is involved in a foward rule, it will do so by forwarding.
+     * If the {@link OutputSlot} is not served, then the forwarding does not apply.
+     *
+     * @return {@link OutputSlot}s to which this instance forwards the given {@code input}.
+     * @see #isReading(InputSlot)
+     */
+    default Collection<OutputSlot<?>> getForwards(InputSlot<?> input) {
+        assert this.isOwnerOf(input);
+        return Collections.emptyList();
+    }
+
+    /**
+     * Tells whether the given {@code input} is read by this operator. If not, the optimizer can make use of this
+     * insight.
+     *
+     * @see #getForwards(InputSlot)
+     */
+    default boolean isReading(InputSlot<?> input) {
+        return true;
+    }
+
+    /**
+     * @return whether this {@code input} is used to close a feedback loop (i.e., a flow graph cycle)
+     */
+    default boolean isFeedbackInput(InputSlot<?> input) {
+        assert this.isOwnerOf(input);
+        return this.isLoopHead() && ((LoopHeadOperator) this).getLoopBodyInputs().contains(input);
+    }
+
+    /**
+     * @return whether this {@code output} is used to start a feedback loop (i.e., a flow graph cycle)
+     */
+    default boolean isFeedforwardOutput(OutputSlot<?> ouput) {
+        assert this.isOwnerOf(ouput);
+        return this.isLoopHead() && ((LoopHeadOperator) this).getLoopBodyOutputs().contains(ouput);
+    }
+
 
     /**
      * Tells whether this operator is a sink, i.e., it has no outputs.
@@ -316,12 +385,33 @@ public interface Operator {
         return this instanceof Subplan;
     }
 
+    default boolean isLoopSubplan() {
+        return this instanceof LoopSubplan;
+    }
+
     default boolean isAlternative() {
         return this instanceof OperatorAlternative;
     }
 
     default boolean isExecutionOperator() {
         return this instanceof ExecutionOperator;
+    }
+
+    /**
+     * Identify this instance as the head of a loop. It is the only kind of {@link Operator} that can cause
+     * data flow cycles.
+     *
+     * @return whether this instance is the head of a loop
+     */
+    default boolean isLoopHead() {
+        return this instanceof LoopHeadOperator;
+    }
+
+    /**
+     * @return whether this is an elementary operator
+     */
+    default boolean isElementary() {
+        return true;
     }
 
     /**
@@ -338,9 +428,7 @@ public interface Operator {
      */
     default CompositeOperator getParent() {
         final OperatorContainer container = this.getContainer();
-        return container == null ?
-                null :
-                container.toOperator();
+        return container == null ? null : container.toOperator();
     }
 
     OperatorContainer getContainer();
@@ -351,6 +439,33 @@ public interface Operator {
      * @param newContainer the new container of this operator or {@code null} to declare it top-level
      */
     void setContainer(OperatorContainer newContainer);
+
+    /**
+     * @return the innermost {@link LoopSubplan} containing this instance
+     */
+    default LoopSubplan getInnermostLoop() {
+        final CompositeOperator parent = this.getParent();
+        if (parent == null) {
+            return null;
+        } else if (parent.isLoopSubplan()) {
+            return (LoopSubplan) parent;
+        } else {
+            return parent.getInnermostLoop();
+        }
+    }
+
+    /**
+     * @return the stack of nested {@link LoopSubplan}s of this instance, from inside to outside
+     */
+    default LinkedList<LoopSubplan> getLoopStack() {
+        LinkedList<LoopSubplan> loopStack = new LinkedList<>();
+        LoopSubplan nextLoop = this.getInnermostLoop();
+        while (nextLoop != null) {
+            loopStack.addLast(nextLoop);
+            nextLoop = nextLoop.getInnermostLoop();
+        }
+        return loopStack;
+    }
 
     /**
      * Each operator is associated with an epoch, which is a logical timestamp for the operator's creation.
@@ -374,29 +489,6 @@ public interface Operator {
      * @see #FIRST_EPOCH
      */
     int getEpoch();
-
-    /**
-     * @return whether this is an elementary operator
-     */
-    default boolean isElementary() {
-        return true;
-    }
-
-
-    /**
-     * Provide a {@link CardinalityEstimator} for the {@link OutputSlot} at {@code outputIndex}.
-     *
-     * @param outputIndex   index of the {@link OutputSlot} for that the {@link CardinalityEstimator} is requested
-     * @param configuration if the {@link CardinalityEstimator} depends on further ones, use this to obtain the latter
-     * @return an {@link Optional} that might provide the requested instance
-     */
-    default Optional<CardinalityEstimator> getCardinalityEstimator(
-            final int outputIndex,
-            final Configuration configuration) {
-        Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        LoggerFactory.getLogger(this.getClass()).warn("Use fallback cardinality estimator for {}.", this);
-        return Optional.of(new FallbackCardinalityEstimator());
-    }
 
     /**
      * Provide a {@link CardinalityPusher} for the {@link Operator}.
@@ -423,18 +515,37 @@ public interface Operator {
     void addTargetPlatform(Platform platform);
 
     /**
-     * Set the {@link CardinalityEstimate} of an {@link OutputSlot} and propagate it to
+     * Convenience version of {@link Operator#propagateOutputCardinality(int, OptimizationContext.OperatorContext)},
+     * where the adjacent {@link InputSlot}s reside in the same {@link OptimizationContext} as the {@code operatorContext}.
+     */
+    default void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorContext) {
+        this.propagateOutputCardinality(outputIndex, operatorContext, operatorContext.getOptimizationContext());
+    }
+
+    /**
+     * Propagates the {@link CardinalityEstimate} of an {@link OutputSlot} within the {@code operatorContext} to
      * <ul>
      * <li>fed {@link InputSlot}s (which in turn are asked to propagate) and</li>
      * <li><b>inner</b>, mapped {@link OutputSlot}s.</li>
      * </ul>
+     *
+     * @param outputIndex     of the {@link OutputSlot}
+     * @param operatorContext holds the {@link CardinalityEstimate} to be propagated
+     * @param targetContext   to which the {@link CardinalityEstimate}s should be propagated
      */
-    void propagateOutputCardinality(int outputIndex, CardinalityEstimate cardinalityEstimate);
+    void propagateOutputCardinality(int outputIndex,
+                                    OptimizationContext.OperatorContext operatorContext,
+                                    OptimizationContext targetContext);
 
     /**
-     * Set the {@link CardinalityEstimate} of an {@link InputSlot} and propagate it to <b>inner</b>, mapped {@link InputSlot}s.
+     * Propagates the {@link CardinalityEstimate} of an {@link InputSlot} within the {@code operatorContext}
+     * to <b>inner</b>, mapped {@link InputSlot}s.
+     *
+     * @param inputIndex      of the {@link InputSlot}
+     * @param operatorContext holds the {@link CardinalityEstimate} to be propagated
      */
-    void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate);
+    void propagateInputCardinality(int inputIndex,
+                                   OptimizationContext.OperatorContext operatorContext);
 
     /**
      * Collect all inner {@link OutputSlot}s that are mapped to the given {@link OutputSlot}.
@@ -445,4 +556,5 @@ public interface Operator {
      * Collect all inner {@link InputSlot}s that are mapped to the given {@link InputSlot}.
      */
     <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input);
+
 }

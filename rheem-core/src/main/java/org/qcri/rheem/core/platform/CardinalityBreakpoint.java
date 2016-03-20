@@ -33,7 +33,9 @@ public class CardinalityBreakpoint implements Breakpoint {
 
     @Override
     public boolean permitsExecutionOf(ExecutionStage stage) {
-        return stage.getInboundChannels().stream().map(Channel::getCardinalityEstimate).allMatch(this::approves);
+//        throw new RuntimeException("todo");
+//        return stage.getInboundChannels().stream().map(Channel::getCardinalityEstimate).allMatch(this::approves);
+        return true;
     }
 
     private boolean approves(CardinalityEstimate cardinalityEstimate) {

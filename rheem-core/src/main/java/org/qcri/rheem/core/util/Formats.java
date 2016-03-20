@@ -6,6 +6,7 @@ package org.qcri.rheem.core.util;
 public class Formats {
 
     public static String formatDuration(long millis) {
+        if (millis < 0) return "-:--:--.---";
         long ms = millis % 1000;
         millis /= 1000;
         long s = millis % 60;

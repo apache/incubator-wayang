@@ -3,10 +3,12 @@ package org.qcri.rheem.spark.channels;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.DefaultChannelManager;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -30,7 +32,7 @@ public class SparkChannelManager extends DefaultChannelManager {
     private final List<ChannelDescriptor> allSupportedChannels = new LinkedList<>();
 
     public SparkChannelManager(Platform platform) {
-        super(platform, RddChannel.DESCRIPTOR, BroadcastChannel.DESCRIPTOR);
+        super(platform, RddChannel.DESCRIPTOR, RddChannel.DESCRIPTOR);
         this.initializeChannelTypeDescriptors();
     }
 
@@ -82,8 +84,10 @@ public class SparkChannelManager extends DefaultChannelManager {
     }
 
     @Override
-    public ChannelInitializer getChannelInitializer(ChannelDescriptor channelClass) {
-        return this.channelTypeDescriptors.get(channelClass).getInitializer();
+    public SparkChannelInitializer getChannelInitializer(ChannelDescriptor channelDescriptor) {
+        final ChannelTypeDescriptor channelTypeDescriptor = this.channelTypeDescriptors.get(channelDescriptor);
+        assert channelTypeDescriptor != null : String.format("No channel type descriptor for %s.", channelDescriptor);
+        return (SparkChannelInitializer) channelTypeDescriptor.getInitializer();
     }
 
     public List<ChannelDescriptor> getAllSupportedChannels() {

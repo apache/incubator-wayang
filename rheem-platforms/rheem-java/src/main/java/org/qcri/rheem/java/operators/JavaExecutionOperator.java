@@ -1,7 +1,6 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.java.JavaPlatform;
@@ -19,6 +18,16 @@ public interface JavaExecutionOperator extends ExecutionOperator {
     @Override
     default JavaPlatform getPlatform() {
         return JavaPlatform.getInstance();
+    }
+
+    /**
+     * When this instance is not yet initialized, this method is called.
+     *
+     * @param inputs   {@link ChannelExecutor}s that satisfy the inputs of this operator
+     * @param compiler compiles functions used by this instance
+     */
+    default void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
+        // Do nothing by default.
     }
 
     /**

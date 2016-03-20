@@ -1,37 +1,28 @@
 package org.qcri.rheem.java.execution;
 
-import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.PushExecutorTemplate;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.channels.JavaChannelManager;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * {@link Executor} implementation for the {@link JavaPlatform}.
  */
-public class JavaExecutor implements Executor {
-
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+public class JavaExecutor extends PushExecutorTemplate<ChannelExecutor> {
 
     private final JavaPlatform platform;
 
     public FunctionCompiler compiler = new FunctionCompiler();
-
-    private Map<Channel, ChannelExecutor> establishedChannelExecutors = new HashMap<>();
-
-    private Set<Channel> instrumentedChannels = new HashSet<>();
 
     public JavaExecutor(JavaPlatform javaPlatform) {
         this.platform = javaPlatform;
@@ -43,95 +34,50 @@ public class JavaExecutor implements Executor {
     }
 
     @Override
-    public ExecutionProfile execute(ExecutionStage stage) {
-        final Collection<ExecutionTask> terminalTasks = stage.getTerminalTasks();
-        for (ExecutionTask terminalTask : terminalTasks) {
-            this.forceExecution(terminalTask);
-        }
-        return this.assembleExecutionProfile();
+    protected void open(ExecutionTask task, List<ChannelExecutor> inputChannelInstances) {
+        cast(task.getOperator()).open(toArray(inputChannelInstances), this.compiler);
     }
 
-    private void forceExecution(ExecutionTask terminalTask) {
-        this.execute(terminalTask);
-        for (Channel outputChannel : terminalTask.getOutputChannels()) {
-            final ChannelExecutor channelExecutor = this.establishedChannelExecutors.get(outputChannel);
-            assert channelExecutor != null : String.format("Could not find an executor for %s.", outputChannel);
-            if (!channelExecutor.ensureExecution()) {
-                this.logger.warn("Could not force execution of {}. This might break the execution or " +
-                        "cause side-effects with the re-optimization.", outputChannel);
-            }
-        }
-    }
+    @Override
+    protected List<ChannelExecutor> execute(ExecutionTask task, List<ChannelExecutor> inputChannelInstances, boolean isForceExecution) {
+        // Provide the ChannelExecutors for the output of the task.
+        final ChannelExecutor[] outputChannelExecutors = this.createOutputChannelExecutors(task);
 
-    private void execute(ExecutionTask executionTask) {
-        // Instrument all stage-outbound channels.
-        for (Channel channel : executionTask.getOutputChannels()) {
-            if (channel.isMarkedForInstrumentation()) {
-                this.instrumentedChannels.add(channel);
+        // Execute.
+        cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelExecutors, this.compiler);
+
+        // Force execution if necessary.
+        if (isForceExecution) {
+            for (ChannelExecutor outputChannelExecutor : outputChannelExecutors) {
+                if (outputChannelExecutor == null || !outputChannelExecutor.ensureExecution()) {
+                    this.logger.warn("Execution of {} might not have been enforced properly. " +
+                            "This might break the execution or cause side-effects with the re-optimization.",
+                            task);
+                }
             }
         }
 
-        ChannelExecutor[] inputChannels = this.obtainInputChannels(executionTask);
-        final JavaExecutionOperator javaExecutionOperator = (JavaExecutionOperator) executionTask.getOperator();
-        ChannelExecutor[] outputChannels = this.createOutputChannelExecutors(executionTask);
-        javaExecutionOperator.evaluate(inputChannels, outputChannels, this.compiler);
-        this.registerChannelExecutor(outputChannels, executionTask);
+        return Arrays.asList(outputChannelExecutors);
     }
 
-    private ChannelExecutor[] createOutputChannelExecutors(ExecutionTask executionTask) {
+
+    private ChannelExecutor[] createOutputChannelExecutors(ExecutionTask task) {
         final JavaChannelManager channelManager = this.getPlatform().getChannelManager();
-        ChannelExecutor[] channelExecutors = new ChannelExecutor[executionTask.getOutputChannels().length];
+        ChannelExecutor[] channelExecutors = new ChannelExecutor[task.getNumOuputChannels()];
         for (int outputIndex = 0; outputIndex < channelExecutors.length; outputIndex++) {
-            final Channel outputChannel = executionTask.getOutputChannel(outputIndex);
+            final Channel outputChannel = task.getOutputChannel(outputIndex);
             channelExecutors[outputIndex] = channelManager.createChannelExecutor(outputChannel);
         }
         return channelExecutors;
     }
 
-    private ChannelExecutor[] obtainInputChannels(ExecutionTask executionTask) {
-        ChannelExecutor[] inputChannels = new ChannelExecutor[executionTask.getOperator().getNumInputs()];
-        for (int inputIndex = 0; inputIndex < inputChannels.length; inputIndex++) {
-            Channel inputChannel = executionTask.getInputChannel(inputIndex);
-            inputChannels[inputIndex] = this.getOrEstablishChannelExecutor(inputChannel);
-        }
-        return inputChannels;
+    private static JavaExecutionOperator cast(ExecutionOperator executionOperator) {
+        return (JavaExecutionOperator) executionOperator;
     }
 
-    private ChannelExecutor getOrEstablishChannelExecutor(Channel channel) {
-        for (int numTry = 0; numTry < 2; numTry++) {
-            final ChannelExecutor channelExecutor = this.establishedChannelExecutors.get(channel);
-            if (channelExecutor != null) {
-                return channelExecutor;
-            }
-
-            this.execute(channel.getProducer());
-        }
-
-        throw new RheemException("Execution failed: could not obtain data for " + channel);
-    }
-
-    private void registerChannelExecutor(ChannelExecutor[] outputChannels, ExecutionTask executionTask) {
-        for (int outputIndex = 0; outputIndex < executionTask.getNumOuputChannels(); outputIndex++) {
-            Channel channel = executionTask.getOutputChannels()[outputIndex];
-            final ChannelExecutor channelExecutor = outputChannels[outputIndex];
-            Validate.notNull(channelExecutor);
-            this.establishedChannelExecutors.put(channel, channelExecutor);
-        }
-    }
-
-    private ExecutionProfile assembleExecutionProfile() {
-        ExecutionProfile executionProfile = new ExecutionProfile();
-        final Map<Channel, Long> cardinalities = executionProfile.getCardinalities();
-        for (Channel channel : this.instrumentedChannels) {
-            final ChannelExecutor channelExecutor = this.establishedChannelExecutors.get(channel);
-            assert channelExecutor != null : String.format("Could not find a Channel executor for %s.", channel);
-            final long cardinality = channelExecutor.getCardinality();
-            if (cardinality == -1) {
-                this.logger.warn("No cardinality available for {}, although it was requested.", channel);
-            } else {
-                cardinalities.put(channel, cardinality);
-            }        }
-        return executionProfile;
+    private static ChannelExecutor[] toArray(List<ChannelExecutor> channelExecutors) {
+        final ChannelExecutor[] array = new ChannelExecutor[channelExecutors.size()];
+        return channelExecutors.toArray(array);
     }
 
     public static void openFunction(JavaExecutionOperator operator, Object function, ChannelExecutor[] inputs) {
@@ -139,10 +85,5 @@ public class JavaExecutor implements Executor {
             ExtendedFunction extendedFunction = (ExtendedFunction) function;
             extendedFunction.open(new JavaExecutionContext(operator, inputs));
         }
-    }
-
-    @Override
-    public void dispose() {
-        this.establishedChannelExecutors.clear();
     }
 }

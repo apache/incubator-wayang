@@ -1,9 +1,8 @@
 package org.qcri.rheem.basic.channels;
 
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 
 import java.io.IOException;
@@ -24,11 +23,12 @@ public class FileChannel extends Channel {
 
     private Collection<String> paths = new LinkedList<>();
 
-    public FileChannel(FileChannel.Descriptor descriptor,
-                       ExecutionTask producer,
-                       int outputIndex,
-                       CardinalityEstimate cardinalityEstimate) {
-        super(descriptor, producer, outputIndex, cardinalityEstimate);
+    public FileChannel(FileChannel.Descriptor descriptor) {
+        this(descriptor, null);
+    }
+
+    public FileChannel(FileChannel.Descriptor descriptor, OutputSlot<?> outputSlot) {
+        super(descriptor, outputSlot);
     }
 
     private FileChannel(FileChannel parent) {
@@ -66,21 +66,6 @@ public class FileChannel extends Channel {
     }
 
     @Override
-    public boolean isReusable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterStageCapable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterPlatformCapable() {
-        return IS_REUSABLE & !IS_INTERNAL;
-    }
-
-    @Override
     public FileChannel copy() {
         return new FileChannel(this);
     }
@@ -112,7 +97,7 @@ public class FileChannel extends Channel {
          * @param serialization type of serialization, e.g., {@code object-file}, {@code tsv}
          */
         public Descriptor(String location, String serialization) {
-            super(FileChannel.class);
+            super(FileChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL && IS_REUSABLE);
             this.location = location;
             this.serialization = serialization;
         }

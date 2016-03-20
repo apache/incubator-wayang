@@ -11,6 +11,7 @@ import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
 import java.util.List;
+import java.util.OptionalLong;
 
 /**
  * Takes care of creating a {@link Broadcast} that can be used later on.
@@ -19,7 +20,7 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
 
     private boolean isMarkedForInstrumentation;
 
-    private long measuredCardinality = -1;
+    private OptionalLong measuredCardinality;
 
     public SparkBroadcastOperator(DataSetType<Type> type) {
         super(1, 1, false, null);
@@ -33,7 +34,7 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
         assert outputs.length == this.getNumOutputs();
 
         final List<?> collect = inputs[0].provideRdd().collect();
-        this.measuredCardinality = this.isMarkedForInstrumentation ? collect.size() : -1;
+        this.measuredCardinality = this.isMarkedForInstrumentation ? OptionalLong.of(collect.size()) : OptionalLong.empty();
         final Broadcast<?> broadcast = sparkExecutor.sc.broadcast(collect);
         outputs[0].acceptBroadcast(broadcast);
     }
@@ -52,7 +53,7 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
         this.isMarkedForInstrumentation = true;
     }
 
-    public long getMeasuredCardinality() {
+    public OptionalLong getMeasuredCardinality() {
         return this.measuredCardinality;
     }
 }

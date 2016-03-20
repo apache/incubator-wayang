@@ -1,14 +1,19 @@
 package org.qcri.rheem.java.channels;
 
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.core.platform.ChannelManager;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.OptionalLong;
 import java.util.stream.Stream;
 
 /**
@@ -20,10 +25,10 @@ public class StreamChannel extends Channel {
 
     private static final boolean IS_INTERNAL = true;
 
-    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(StreamChannel.class);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(StreamChannel.class, IS_REUSABLE, IS_REUSABLE, IS_REUSABLE & !IS_INTERNAL);
 
-    protected StreamChannel(ChannelDescriptor descriptor, ExecutionTask producer, int outputIndex) {
-        super(descriptor, producer, outputIndex);
+    public StreamChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+        super(descriptor, outputSlot);
         assert descriptor == DESCRIPTOR;
     }
 
@@ -52,63 +57,56 @@ public class StreamChannel extends Channel {
     }
 
     public Channel exchangeWith(ChannelDescriptor descriptor) {
-        ChannelInitializer channelInitializer = JavaPlatform.getInstance()
-                .getChannelManager()
-                .getChannelInitializer(descriptor);
-        final ExecutionTask producer = this.producer;
-        final int outputIndex = this.producer.removeOutputChannel(this);
-        final Channel replacementChannel = channelInitializer.setUpOutput(descriptor, producer, outputIndex);
+        // Todo: Hacky.
+        final ExecutionTask producer = this.getProducer();
+        final OutputSlot<?> outputSlot = producer.getOutputSlotFor(this);
 
-        for (ExecutionTask consumer : this.consumers) {
-            int inputIndex = consumer.removeInputChannel(this);
-            channelInitializer.setUpInput(replacementChannel, consumer, inputIndex);
-        }
+        final ChannelManager channelManager = producer.getPlatform().getChannelManager();
+        final ChannelInitializer channelInitializer = channelManager.getChannelInitializer(descriptor);
+        final Tuple<Channel, Channel> newChannelSetup = channelInitializer.setUpOutput(descriptor, outputSlot, null);
 
-        if (this.isMarkedForInstrumentation()) {
-            replacementChannel.markForInstrumentation();
+        int outputIndex = producer.removeOutputChannel(this);
+        producer.setOutputChannel(outputIndex, newChannelSetup.field0);
+
+        for (ExecutionTask consumer : new ArrayList<>(this.getConsumers())) {
+            consumer.exchangeInputChannel(this, newChannelSetup.field1);
         }
-        this.addSibling(replacementChannel);
+        this.addSibling(newChannelSetup.field0);
         this.removeSiblings();
 
-        return replacementChannel;
+        if (this.isMarkedForInstrumentation()) {
+            newChannelSetup.field0.markForInstrumentation();
+        }
+
+        return newChannelSetup.field1;
     }
 
-    public static class Initializer implements ChannelInitializer {
-
-        @Override
-        public Channel setUpOutput(ChannelDescriptor descriptor, ExecutionTask executionTask, int index) {
-            final Channel existingOutputChannel = executionTask.getOutputChannel(index);
-            if (existingOutputChannel == null) {
-                return new StreamChannel(descriptor, executionTask, index);
-            } else if (existingOutputChannel instanceof StreamChannel) {
-                return existingOutputChannel;
-            } else if (existingOutputChannel instanceof CollectionChannel) {
-                // That's fine as well. The decision to use a StreamChannel has been overridden.
-                return existingOutputChannel;
-            } else {
-                throw new IllegalStateException();
-            }
-        }
-
-        @Override
-        public void setUpInput(Channel channel, ExecutionTask executionTask, int index) {
-            assert channel instanceof StreamChannel;
-            channel.addConsumer(executionTask, index);
-        }
-
-        @Override
-        public boolean isReusable() {
-            return false;
-        }
-
-        @Override
-        public boolean isInternal() {
-            return true;
-        }
-
+    public StreamChannel.Executor createExecutor() {
+        return new Executor(this.isMarkedForInstrumentation());
     }
 
-    public static class Executor implements ChannelExecutor {
+    public static class Initializer implements JavaChannelInitializer {
+
+        @Override
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
+            StreamChannel channel = new StreamChannel(descriptor, outputSlot);
+            return new Tuple<>(channel, channel);
+        }
+
+        @Override
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
+            assert descriptor == StreamChannel.DESCRIPTOR;
+            final JavaChannelInitializer channelInitializer = this.getChannelManager().getChannelInitializer(source.getDescriptor());
+            return channelInitializer.provideStreamChannel(source, optimizationContext);
+        }
+
+        @Override
+        public StreamChannel provideStreamChannel(Channel channel, OptimizationContext optimizationContext) {
+            return (StreamChannel) channel;
+        }
+    }
+
+    public class Executor implements ChannelExecutor {
 
         private Stream<?> stream;
 
@@ -160,12 +158,6 @@ public class StreamChannel extends Channel {
         }
 
         @Override
-        public long getCardinality() throws RheemException {
-            assert this.isMarkedForInstrumentation;
-            return this.cardinality;
-        }
-
-        @Override
         public void markForInstrumentation() {
             this.isMarkedForInstrumentation = true;
         }
@@ -175,6 +167,21 @@ public class StreamChannel extends Channel {
             assert this.stream != null;
             // We cannot ensure execution. For this purpose, we would need a CollectionChannel.
             return false;
+        }
+
+        @Override
+        public Channel getChannel() {
+            return StreamChannel.this;
+        }
+
+        @Override
+        public OptionalLong getMeasuredCardinality() {
+            return this.cardinality == -1 ? OptionalLong.empty() : OptionalLong.of(this.cardinality);
+        }
+
+        @Override
+        public void release() throws RheemException {
+            this.stream = null;
         }
     }
 

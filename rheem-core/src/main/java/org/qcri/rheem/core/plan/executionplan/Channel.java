@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.plan.executionplan;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -7,6 +8,7 @@ import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.types.DataSetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +30,11 @@ public abstract class Channel {
     private final ChannelDescriptor descriptor;
 
     /**
+     * {@link OutputSlot} that creates this instance.
+     */
+    private final OutputSlot<?> producerSlot;
+
+    /**
      * Produces the data flowing through this instance.
      */
     protected ExecutionTask producer;
@@ -36,11 +43,6 @@ public abstract class Channel {
      * Consuming {@link ExecutionTask}s of this instance.
      */
     protected final List<ExecutionTask> consumers = new LinkedList<>();
-
-    /**
-     * Estimated incurring cardinality of this instance on execution.
-     */
-    private final CardinalityEstimate cardinalityEstimate;
 
     /**
      * Mimed instance. Nullable.
@@ -54,37 +56,20 @@ public abstract class Channel {
 
     /**
      * Other {@link Channel}s that represent the same {@link OutputSlot}-to-{@link InputSlot} connection from a
-     * {@link RheemPlan} and share properties such as {@link #cardinalityEstimate}.
+     * {@link RheemPlan} and share properties such as {@link #getCardinalityEstimate(OptimizationContext)} and {@link #getDataSetType()}.
      */
     private Set<Channel> siblings = new HashSet<>(2);
 
 
     /**
-     * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}. The
-     * {@link CardinalityEstimate} for the instance is retrieved from the {@code producer}.
-     *
-     * @param descriptor  used to create this instance
-     * @param producer    produces the data for the instance
-     * @param outputIndex index of this instance within the {@code producer}
-     */
-    protected Channel(ChannelDescriptor descriptor, ExecutionTask producer, int outputIndex) {
-        this(descriptor, producer, outputIndex, extractCardinalityEstimate(producer, outputIndex));
-    }
-
-    /**
      * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}.
      *
-     * @param descriptor          used to create this instance
-     * @param producer            produces the data for the instance
-     * @param outputIndex         index of this instance within the {@code producer}
-     * @param cardinalityEstimate a {@link CardinalityEstimate} for this instance
+     * @param descriptor used to create this instance
      */
-    protected Channel(ChannelDescriptor descriptor, ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
+    protected Channel(ChannelDescriptor descriptor, OutputSlot<?> producerSlot) {
         this.descriptor = descriptor;
-        this.producer = producer;
-        this.producer.setOutputChannel(outputIndex, this);
-        this.cardinalityEstimate = cardinalityEstimate;
         this.original = null;
+        this.producerSlot = producerSlot;
     }
 
     /**
@@ -97,7 +82,7 @@ public abstract class Channel {
         this.original = original.getOriginal();
         assert this.original == null || !this.original.isCopy();
         this.producer = original.getProducer();
-        this.cardinalityEstimate = original.getCardinalityEstimate();
+        this.producerSlot = original.getProducerSlot();
     }
 
     public static CardinalityEstimate extractCardinalityEstimate(ExecutionTask task, int outputIndex) {
@@ -125,18 +110,24 @@ public abstract class Channel {
      *
      * @return whether this instance can have multiple consumers
      */
-    public abstract boolean isReusable();
+    public boolean isReusable() {
+        return this.getDescriptor().isReusable();
+    }
 
     /**
      * Declares whether this instance can be shared among two different {@link ExecutionStage}s (of the same
      * {@link PlatformExecution}, though).
      */
-    public abstract boolean isInterStageCapable();
+    public boolean isInterStageCapable() {
+        return this.getDescriptor().isInterStageCapable();
+    }
 
     /**
      * Declares whether this instance can be shared among two different {@link PlatformExecution}s.
      */
-    public abstract boolean isInterPlatformCapable();
+    public boolean isInterPlatformCapable() {
+        return this.getDescriptor().isInterPlatformCapable();
+    }
 
     /**
      * Tells whether this instance connects different {@link PlatformExecution}s. The answer is not necessarily
@@ -170,8 +161,21 @@ public abstract class Channel {
         return this.consumers;
     }
 
-    public CardinalityEstimate getCardinalityEstimate() {
-        return this.cardinalityEstimate;
+    public CardinalityEstimate getCardinalityEstimate(OptimizationContext optimizationContext) {
+        return this.withSiblings(false)
+                .map(sibling -> {
+                    final OutputSlot<?> output = sibling.getProducerSlot();
+                    if (output == null) return null;
+                    final OptimizationContext.OperatorContext operatorCtx =
+                            optimizationContext.getOperatorContext(output.getOwner());
+                    if (operatorCtx == null) return null;
+                    return operatorCtx.getOutputCardinality(output.getIndex());
+                }).filter(Objects::nonNull)
+                .findAny()
+                .orElseThrow(() -> new IllegalStateException(String.format(
+                        "No CardinalityEstimate for %s (available: %s).",
+                        this, optimizationContext.getLocalOperatorContexts()
+                )));
     }
 
     public boolean isMarkedForInstrumentation() {
@@ -195,19 +199,18 @@ public abstract class Channel {
 
     @Override
     public String toString() {
-        return String.format("%s[%s->%s]", this.getClass().getSimpleName(), this.getProducer(), this.getConsumers());
+        return String.format("%s[%s->%s]",
+                this.getClass().getSimpleName(),
+                this.getProducer() == null ? this.getProducerSlot() : this.getProducer(),
+                this.getConsumers());
     }
 
     /**
      * Acquaints the given instance with this instance and all existing {@link #siblings}.
      */
     public void addSibling(Channel sibling) {
-        final ArrayList<Channel> siblingSiblings = new ArrayList<>(sibling.siblings);
-        this.withSiblings(true).forEach(olderSibling ->
-                siblingSiblings.forEach(siblingSibling ->
-                        olderSibling.relateTo(siblingSibling)
-                )
-        );
+        if (sibling == this) return;
+        this.withSiblings(true).forEach(olderSibling -> olderSibling.relateTo(sibling));
     }
 
     /**
@@ -334,6 +337,18 @@ public abstract class Channel {
     }
 
     /**
+     * @return the {@link DataSetType} of this instance (requires a producer)
+     * @see #setProducer(ExecutionTask)
+     */
+    public DataSetType<?> getDataSetType() {
+        return this.withSiblings(false)
+                .filter(sibling -> sibling.getProducerSlot() != null)
+                .findAny()
+                .orElseThrow(() -> new IllegalStateException(String.format("No DataSetType for %s.", this)))
+                .getProducerSlot().getType();
+    }
+
+    /**
      * Copies the consumers of the given {@code channel} into this instance.
      */
     private void adoptSiblings(Channel channel) {
@@ -341,11 +356,15 @@ public abstract class Channel {
         this.removeSiblingsWhere(sibling -> sibling == channel);
     }
 
-    public void setProducer(ExecutionTask producer) {
+    void setProducer(ExecutionTask producer) {
         this.producer = producer;
     }
 
     public ChannelDescriptor getDescriptor() {
         return this.descriptor;
+    }
+
+    public OutputSlot<?> getProducerSlot() {
+        return this.producerSlot;
     }
 }

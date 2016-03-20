@@ -5,7 +5,7 @@ import org.qcri.rheem.core.types.DataSetType;
 /**
  * Abstract base-class for sinks with a single input.
  */
-public abstract class UnarySink<T> extends OperatorBase implements ActualOperator {
+public abstract class UnarySink<T> extends OperatorBase implements ElementaryOperator {
 
     /**
      * Creates a new instance.

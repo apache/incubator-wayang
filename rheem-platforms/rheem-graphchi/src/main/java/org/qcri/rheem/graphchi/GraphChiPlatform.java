@@ -4,7 +4,7 @@ import edu.cmu.graphchi.io.CompressedIO;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.graphchi.channels.ChannelManager;
+import org.qcri.rheem.graphchi.channels.GraphChiChannelManager;
 import org.qcri.rheem.graphchi.execution.GraphChiExecutor;
 import org.qcri.rheem.graphchi.mappings.PageRankMapping;
 
@@ -60,7 +60,7 @@ public class GraphChiPlatform extends Platform {
     }
 
     @Override
-    protected ChannelManager createChannelManager() {
-        return new ChannelManager(this);
+    protected GraphChiChannelManager createChannelManager() {
+        return new GraphChiChannelManager(this);
     }
 }

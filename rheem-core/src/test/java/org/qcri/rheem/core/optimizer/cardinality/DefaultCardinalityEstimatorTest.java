@@ -1,4 +1,4 @@
-package org.qcri.rheem.core.optimizer.costs;
+package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.junit.Assert;
 import org.junit.Test;

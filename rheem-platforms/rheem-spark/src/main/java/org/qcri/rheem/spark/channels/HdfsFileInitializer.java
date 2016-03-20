@@ -4,11 +4,14 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.broadcast.Broadcast;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.operators.SparkObjectFileSink;
 import org.qcri.rheem.spark.operators.SparkObjectFileSource;
 import org.qcri.rheem.spark.operators.SparkTsvFileSink;
@@ -23,35 +26,37 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.OptionalLong;
 
 /**
  * Sets up {@link FileChannel} usage in the {@link SparkPlatform}.
  */
-public class HdfsFileInitializer implements ChannelInitializer {
+public class HdfsFileInitializer implements SparkChannelInitializer {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Override
-    public Channel setUpOutput(ChannelDescriptor fileDescriptor, ExecutionTask sourceTask, int index) {
-        // Set up an internal Channel at first.
-        final ChannelInitializer internalChannelInitializer = sourceTask
-                .getOperator()
-                .getPlatform()
-                .getChannelManager()
-                .getChannelInitializer(RddChannel.DESCRIPTOR);
-        assert internalChannelInitializer != null;
-        final Channel internalChannel = internalChannelInitializer.setUpOutput(RddChannel.DESCRIPTOR, sourceTask, index);
+    public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
+        throw new UnsupportedOperationException("Not yet implemented.");
+    }
+
+    @Override
+    public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
+        // Get an RddChannel to operate on.
+        final RddChannel rddChannel = this.createRddChannel(source, optimizationContext);
+        assert rddChannel.getProducerSlot() != null
+                : String.format("RddChannel %s created for %s has no producer.", rddChannel, source);
 
         // Create a sink to write the HDFS file.
         ExecutionTask sinkTask;
         final String targetPath = FileChannel.pickTempPath();
-        final String serialization = ((FileChannel.Descriptor) fileDescriptor).getSerialization();
+        final String serialization = ((FileChannel.Descriptor) descriptor).getSerialization();
         switch (serialization) {
             case "object-file":
-                sinkTask = this.setUpObjectFileSink(sourceTask, index, internalChannel, targetPath);
+                sinkTask = this.setUpObjectFileSink(rddChannel, targetPath, optimizationContext);
                 break;
             case "tsv":
-                sinkTask = this.setUpTsvFileSink(sourceTask, index, internalChannel, targetPath);
+                sinkTask = this.setUpTsvFileSink(rddChannel, targetPath, optimizationContext);
                 break;
             default:
                 throw new IllegalStateException(String.format("Unsupported serialization: \"%s\"", serialization));
@@ -64,63 +69,62 @@ public class HdfsFileInitializer implements ChannelInitializer {
         }
 
         // Create the actual FileChannel.
-        final FileChannel fileChannel = new FileChannel((FileChannel.Descriptor) fileDescriptor,
-                sinkTask, index, Channel.extractCardinalityEstimate(sourceTask, index));
+        final FileChannel fileChannel = new FileChannel((FileChannel.Descriptor) descriptor);
         fileChannel.addPath(targetPath);
-        fileChannel.addSibling(internalChannel);
+        fileChannel.addSibling(source);
+        sinkTask.setOutputChannel(0, fileChannel);
         return fileChannel;
     }
 
-    private ExecutionTask setUpObjectFileSink(ExecutionTask sourceTask, int outputIndex, Channel internalChannel, String targetPath) {
+    private ExecutionTask setUpObjectFileSink(Channel sourceChannel, String targetPath, OptimizationContext optimizationContext) {
         // Check if the Channel already is consumed by a SparkObjectFileSink.
-        for (ExecutionTask consumerTask : internalChannel.getConsumers()) {
+        for (ExecutionTask consumerTask : sourceChannel.getConsumers()) {
             if (consumerTask.getOperator() instanceof SparkObjectFileSink<?>) {
+                this.logger.warn("Unexpected existing HDFS writer.");
                 return consumerTask;
             }
         }
 
         // Create the SparkObjectFileSink.
-        final DataSetType<?> dataSetType = sourceTask.getOperator().getOutput(outputIndex).getType();
+        final DataSetType<?> dataSetType = sourceChannel.getDataSetType();
         SparkObjectFileSink<?> sparkObjectFileSink = new SparkObjectFileSink<>(targetPath, dataSetType);
-        sparkObjectFileSink.getInput(0).setCardinalityEstimate(Channel.extractCardinalityEstimate(sourceTask, outputIndex));
-        ExecutionTask sinkTask = new ExecutionTask(sparkObjectFileSink, sparkObjectFileSink.getNumInputs(), 1);
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(sparkObjectFileSink);
+        operatorContext.setInputCardinality(0, sourceChannel.getCardinalityEstimate(optimizationContext));
+        operatorContext.updateTimeEstimate();
 
-        // Connect it to the internalChannel.
-        final ChannelInitializer channelInitializer = sparkObjectFileSink
-                .getPlatform()
-                .getChannelManager()
-                .getChannelInitializer(internalChannel.getDescriptor());
-        channelInitializer.setUpInput(internalChannel, sinkTask, 0);
+        ExecutionTask sinkTask = new ExecutionTask(sparkObjectFileSink, sparkObjectFileSink.getNumInputs(), 1);
+        sourceChannel.addConsumer(sinkTask, 0);
 
         return sinkTask;
     }
 
-    private ExecutionTask setUpTsvFileSink(ExecutionTask sourceTask, int outputIndex, Channel internalChannel, String targetPath) {
+    private ExecutionTask setUpTsvFileSink(Channel sourceChannel, String targetPath, OptimizationContext optimizationContext) {
         // Check if the Channel already is consumed by a SparkTsvFileSink.
-        for (ExecutionTask consumerTask : internalChannel.getConsumers()) {
+        for (ExecutionTask consumerTask : sourceChannel.getConsumers()) {
             if (consumerTask.getOperator() instanceof SparkObjectFileSink<?>) {
+                this.logger.warn("Unexpected existing HDFS writer.");
                 return consumerTask;
             }
         }
 
         // Create the SparkTsvFileSink.
-        final DataSetType<?> dataSetType = sourceTask.getOperator().getOutput(outputIndex).getType();
+        final DataSetType<?> dataSetType = sourceChannel.getDataSetType();
         SparkTsvFileSink<?> sparkTsvFileSink = new SparkTsvFileSink<>(targetPath, dataSetType);
-        sparkTsvFileSink.getInput(0).setCardinalityEstimate(Channel.extractCardinalityEstimate(sourceTask, outputIndex));
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(sparkTsvFileSink);
+        operatorContext.setInputCardinality(0, sourceChannel.getCardinalityEstimate(optimizationContext));
+        operatorContext.updateTimeEstimate();
+
         ExecutionTask sinkTask = new ExecutionTask(sparkTsvFileSink, sparkTsvFileSink.getNumInputs(), 1);
 
         // Connect it to the internalChannel.
-        final ChannelInitializer channelInitializer = sparkTsvFileSink
-                .getPlatform()
-                .getChannelManager()
-                .getChannelInitializer(internalChannel.getDescriptor());
-        channelInitializer.setUpInput(internalChannel, sinkTask, 0);
+        sourceChannel.addConsumer(sinkTask, 0);
 
         return sinkTask;
     }
 
+
     @Override
-    public void setUpInput(Channel channel, ExecutionTask targetTask, int inputIndex) {
+    public RddChannel provideRddChannel(Channel channel, OptimizationContext optimizationContext) {
         FileChannel fileChannel = (FileChannel) channel;
         assert fileChannel.getPaths().size() == 1 : "We support only single HDFS files so far.";
 
@@ -139,30 +143,31 @@ public class HdfsFileInitializer implements ChannelInitializer {
                 break;
             default:
                 throw new IllegalStateException(
-                        String.format("%s cannot handle \"%s\" serialization.", targetTask.getPlatform(), serialization));
+                        String.format("%s cannot handle \"%s\" serialization.", this, serialization));
         }
         // Set up the actual input..
-        final ChannelInitializer internalChannelInitializer = SparkPlatform.getInstance().getChannelManager()
+        final ChannelInitializer internalChannelInitializer = this.getChannelManager()
                 .getChannelInitializer(RddChannel.DESCRIPTOR);
-        assert internalChannelInitializer !=  null;
-        final Channel internalChannel = internalChannelInitializer.setUpOutput(RddChannel.DESCRIPTOR, sourceTask, 0);
-        internalChannel.addSibling(fileChannel);
-        internalChannelInitializer.setUpInput(internalChannel, targetTask, inputIndex);
+        assert internalChannelInitializer != null;
+        final Tuple<Channel, Channel> rddChannelSetup = internalChannelInitializer
+                .setUpOutput(RddChannel.DESCRIPTOR, sourceTask.getOperator().getOutput(0), optimizationContext);
+        fileChannel.addSibling(rddChannelSetup.getField0());
+        sourceTask.setOutputChannel(0, rddChannelSetup.getField0());
+
+        return (RddChannel) rddChannelSetup.getField1();
     }
 
     private ExecutionTask setUpSparkObjectFileSource(FileChannel fileChannel) {
-        // Check if there is already is a SparkObjectFileSource in place.
-        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
-            if (consumerTask.getOperator() instanceof SparkObjectFileSource<?>) {
-                return consumerTask;
-            }
-        }
+//        // Check if there is already is a SparkObjectFileSource in place.
+//        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
+//            if (consumerTask.getOperator() instanceof SparkObjectFileSource<?>) {
+//                return consumerTask;
+//            }
+//        }
 
         // Create the SparkObjectFileSink.
-        // FIXME: This is neither elegant nor sound, as we make assumptions on the FileChannel producer.
-        final DataSetType<?> dataSetType = fileChannel.getProducer().getOperator().getInput(0).getType();
+        final DataSetType<?> dataSetType = fileChannel.getDataSetType();
         SparkObjectFileSource<?> sparkObjectFileSource = new SparkObjectFileSource<>(fileChannel.getSinglePath(), dataSetType);
-        sparkObjectFileSource.getOutput(0).setCardinalityEstimate(fileChannel.getCardinalityEstimate());
         ExecutionTask sourceTask = new ExecutionTask(sparkObjectFileSource, 1, sparkObjectFileSource.getNumOutputs());
         fileChannel.addConsumer(sourceTask, 0);
 
@@ -170,34 +175,25 @@ public class HdfsFileInitializer implements ChannelInitializer {
     }
 
     private ExecutionTask setUpSparkTsvFileSource(FileChannel fileChannel) {
-        // Check if there is already is a SparkObjectFileSource in place.
-        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
-            if (consumerTask.getOperator() instanceof SparkTsvFileSource<?>) {
-                return consumerTask;
-            }
-        }
+//        // Check if there is already is a SparkObjectFileSource in place.
+//        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
+//            if (consumerTask.getOperator() instanceof SparkTsvFileSource<?>) {
+//                return consumerTask;
+//            }
+//        }
 
         // Create the SparkObjectFileSink.
-        // FIXME: This is neither elegant nor sound, as we make assumptions on the FileChannel producer.
-        final DataSetType<?> dataSetType = fileChannel.getProducer().getOperator().getInput(0).getType();
+        final DataSetType<?> dataSetType = fileChannel.getDataSetType();
         SparkTsvFileSource<?> fileSource = new SparkTsvFileSource<>(fileChannel.getSinglePath(), dataSetType);
-        fileSource.getOutput(0).setCardinalityEstimate(fileChannel.getCardinalityEstimate());
         ExecutionTask sourceTask = new ExecutionTask(fileSource, 1, fileSource.getNumOutputs());
         fileChannel.addConsumer(sourceTask, 0);
 
         return sourceTask;
     }
 
-    @Override
-    public boolean isReusable() {
-        return true;
-    }
-
-    @Override
-    public boolean isInternal() {
-        return false;
-    }
-
+    /**
+     * {@link ChannelExecutor} for the {@link FileChannel}.
+     */
     public static class Executor implements ChannelExecutor {
 
         private final FileChannel fileChannel;
@@ -230,7 +226,7 @@ public class HdfsFileInitializer implements ChannelInitializer {
         }
 
         @Override
-        public void dispose() {
+        public void release() {
             for (String path : this.fileChannel.getPaths()) {
                 try {
                     // TODO: delete HDFS files
@@ -243,13 +239,18 @@ public class HdfsFileInitializer implements ChannelInitializer {
         }
 
         @Override
-        public long getCardinality() throws RheemException {
-            return -1;
+        public OptionalLong getMeasuredCardinality() throws RheemException {
+            return OptionalLong.empty();
         }
 
         @Override
         public boolean ensureExecution() {
             return this.wasTriggered;
+        }
+
+        @Override
+        public FileChannel getChannel() {
+            return this.fileChannel;
         }
     }
 }

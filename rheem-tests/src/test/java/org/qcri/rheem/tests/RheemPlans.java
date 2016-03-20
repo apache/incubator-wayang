@@ -2,13 +2,12 @@ package org.qcri.rheem.tests;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
-import org.qcri.rheem.core.function.ExecutionContext;
-import org.qcri.rheem.core.function.FlatMapDescriptor;
-import org.qcri.rheem.core.function.FunctionDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.function.*;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
+import org.qcri.rheem.core.util.RheemArrays;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -98,31 +97,38 @@ public class RheemPlans {
                                                      List<String> collector1, List<String> collector2) {
 
         CollectionSource<String> source1 = new CollectionSource<>(inputList1, String.class);
+        source1.setName("source1");
         CollectionSource<String> source2 = new CollectionSource<>(inputList2, String.class);
+        source2.setName("source2");
 
         UnionAllOperator<String> coalesceOperator1 = new UnionAllOperator<>(String.class);
+        coalesceOperator1.setName("union1");
         source1.connectTo(0, coalesceOperator1, 0);
         source2.connectTo(0, coalesceOperator1, 1);
 
         MapOperator<String, String> lowerCaseOperator = new MapOperator<>(
                 String::toLowerCase, String.class, String.class
         );
+        lowerCaseOperator.setName("toLowerCase");
         coalesceOperator1.connectTo(0, lowerCaseOperator, 0);
 
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
                 String::toUpperCase, String.class, String.class
         );
+        upperCaseOperator.setName("toUpperCase");
         coalesceOperator1.connectTo(0, upperCaseOperator, 0);
 
         UnionAllOperator<String> coalesceOperator2 = new UnionAllOperator<>(String.class);
+        coalesceOperator2.setName("union2");
         lowerCaseOperator.connectTo(0, coalesceOperator2, 0);
         upperCaseOperator.connectTo(0, coalesceOperator2, 1);
 
-
         LocalCallbackSink<String> sink1 = LocalCallbackSink.createCollectingSink(collector1, String.class);
+        sink1.setName("sink1");
         coalesceOperator2.connectTo(0, sink1, 0);
 
         LocalCallbackSink<String> sink2 = LocalCallbackSink.createCollectingSink(collector2, String.class);
+        sink2.setName("sink2");
         coalesceOperator2.connectTo(0, sink2, 0);
 
         return new RheemPlan(sink1, sink2);
@@ -164,7 +170,7 @@ public class RheemPlans {
         TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
         FilterOperator<String> noCommaOperator = new FilterOperator<>(s -> !s.contains(","), String.class);
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
-                        String::toUpperCase, String.class, String.class
+                String::toUpperCase, String.class, String.class
         );
         UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
         SortOperator<String> sortOperator = new SortOperator<>(String.class);
@@ -181,6 +187,50 @@ public class RheemPlans {
         distinctLinesOperator.connectTo(0, stdoutSink, 0);
 
         return new RheemPlan(stdoutSink);
+    }
+
+    /**
+     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link LoopOperator}. It will
+     * then {@code k} times map each value to {@code 2n} and {@code 2n+1}. Finally, the outcome of the loop is
+     * collected in the {@code collector}.
+     */
+    public static RheemPlan simpleLoop(final int numIterations, Collection<Integer> collector, final int... values)
+            throws URISyntaxException {
+        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        source.setName("source");
+
+        CollectionSource<Integer> convergenceSource = new CollectionSource<>(RheemArrays.asList(0), Integer.class);
+        source.setName("convergenceSource");
+
+
+        LoopOperator<Integer, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(Integer.class),
+                DataSetType.createDefault(Integer.class),
+                (PredicateDescriptor.SerializablePredicate<Collection<Integer>>) collection ->
+                        collection.iterator().next() >= numIterations
+        );
+        loopOperator.setName("loop");
+        loopOperator.initialize(source, convergenceSource);
+
+        FlatMapOperator<Integer, Integer> stepOperator = new FlatMapOperator<>(
+                val -> Arrays.asList(2 * val, 2 * val + 1),
+                Integer.class,
+                Integer.class
+        );
+        stepOperator.setName("step");
+
+        MapOperator<Integer, Integer> counter = new MapOperator<>(
+                new TransformationDescriptor<>(n -> n + 1, Integer.class, Integer.class)
+        );
+        counter.setName("counter");
+        loopOperator.beginIteration(stepOperator, counter);
+        loopOperator.endIteration(stepOperator, counter);
+
+        LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(collector, Integer.class);
+        sink.setName("sink");
+        loopOperator.outputConnectTo(sink);
+
+        // Create the RheemPlan.
+        return new RheemPlan(sink);
     }
 
     /**
@@ -312,8 +362,8 @@ public class RheemPlans {
                                 this.dictionary = ctx.<Tuple2<Character, Integer>>getBroadcast("vertex IDs").stream()
                                         .map(Tuple2::swap)
                                         .collect(
-                                        Collectors.toMap(Tuple2::getField0, Tuple2::getField1)
-                                );
+                                                Collectors.toMap(Tuple2::getField0, Tuple2::getField1)
+                                        );
                             }
 
                             @Override
@@ -336,4 +386,89 @@ public class RheemPlans {
 
         return new RheemPlan(callbackSink);
     }
+
+    /**
+     * Same as scenarion2 but repeat 10 times before output.
+     */
+    public static RheemPlan diverseScenario3(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
+        // Build a Rheem plan.
+        TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
+        TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
+        FilterOperator<String> noCommaOperator = new FilterOperator<>(s -> !s.contains(","), String.class);
+        MapOperator<String, String> upperCaseOperator = new MapOperator<>(
+                new TransformationDescriptor<>(String::toUpperCase, String.class, String.class)
+        );
+        UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
+        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
+        DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(String.class);
+        SortOperator<String> sortOperator = new SortOperator<>(String.class);
+
+        LoopOperator<String, Integer> loopOperator = null;
+        Operator converge = null;
+        // Read from file 1, remove commas, union with file 2, sort, upper case, then remove duplicates and output.
+        loopOperator.initialize(textFileSource1, null); // TODO: Fix this test.
+        loopOperator.beginIteration(noCommaOperator, converge);
+        textFileSource2.connectTo(0, unionOperator, 0);
+        noCommaOperator.connectTo(0, unionOperator, 1);
+        unionOperator.connectTo(0, sortOperator, 0);
+        sortOperator.connectTo(0, upperCaseOperator, 0);
+
+        loopOperator.endIteration(sortOperator, converge);
+        loopOperator.outputConnectTo(upperCaseOperator, 0);
+        upperCaseOperator.connectTo(0, distinctLinesOperator, 0);
+        distinctLinesOperator.connectTo(0, stdoutSink, 0);
+
+        // Create the RheemPlan.
+        return new RheemPlan(stdoutSink);
+    }
+
+    public static Integer increment(Integer k) {
+        if (k==null) {
+            return 1;
+        }
+        else {
+        return k++;}
+    }
+
+    public static String concat9(String k) {
+        return k.concat("9");
+    }
+
+    /**
+     * Simple counter loop .
+     */
+    public static RheemPlan diverseScenario4(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
+        // Build a Rheem plan.
+        TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
+        textFileSource1.setName("file1");
+        TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
+        textFileSource2.setName("file2");
+        MapOperator<Integer, Integer> counter = new MapOperator<>(
+                new TransformationDescriptor<>(n -> n + 1, Integer.class, Integer.class)
+        );
+        counter.setName("counter");
+        UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
+        unionOperator.setName("union");
+        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
+        stdoutSink.setName("stdout");
+
+        LoopOperator<String, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(String.class),
+                DataSetType.createDefault(Integer.class),
+                (PredicateDescriptor.SerializablePredicate<Collection<Integer>>) collection ->
+                        collection.iterator().next() >= 10
+        );
+        loopOperator.setName("loop");
+
+        // Union 10 times then output
+        loopOperator.initialize(textFileSource1, CollectionSource.singleton(0, Integer.class));
+        loopOperator.beginIteration(unionOperator, counter);
+        textFileSource2.connectTo(0, unionOperator, 1);
+        loopOperator.endIteration(unionOperator, counter);
+        loopOperator.outputConnectTo(stdoutSink, 0);
+
+        // Create the RheemPlan.
+        return new RheemPlan(stdoutSink);
+    }
 }
+
+

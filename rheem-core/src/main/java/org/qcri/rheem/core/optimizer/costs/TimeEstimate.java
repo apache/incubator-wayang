@@ -9,6 +9,8 @@ import java.util.Comparator;
  */
 public class TimeEstimate extends ProbabilisticIntervalEstimate {
 
+    public static final TimeEstimate ZERO = new TimeEstimate(0, 0, 1d);
+
     public TimeEstimate(long lowerEstimate, long upperEstimate, double correctnessProb) {
         super(lowerEstimate, upperEstimate, correctnessProb);
     }
@@ -21,7 +23,7 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
         );
     }
 
-    public static final Comparator<TimeEstimate> expectionValueComparator() {
+    public static final Comparator<TimeEstimate> expectationValueComparator() {
         return (t1, t2) -> Long.compare(t1.getAverageEstimate(), t2.getAverageEstimate());
     }
 

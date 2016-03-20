@@ -1,13 +1,15 @@
 package org.qcri.rheem.java.channels;
 
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
+import java.util.OptionalLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,12 +22,10 @@ public class CollectionChannel extends Channel {
 
     private static final boolean IS_INTERNAL = true;
 
-    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(CollectionChannel.class);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(CollectionChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL && IS_REUSABLE);
 
-    protected CollectionChannel(ChannelDescriptor channelDescriptor,
-                                ExecutionTask producer,
-                                int outputIndex) {
-        super(channelDescriptor, producer, outputIndex);
+    protected CollectionChannel(ChannelDescriptor channelDescriptor, OutputSlot<?> outputSlot) {
+        super(channelDescriptor, outputSlot);
         assert channelDescriptor == DESCRIPTOR;
     }
 
@@ -34,67 +34,46 @@ public class CollectionChannel extends Channel {
     }
 
     @Override
-    public boolean isReusable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterStageCapable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterPlatformCapable() {
-        return IS_REUSABLE & !IS_INTERNAL;
-    }
-
-    @Override
     public CollectionChannel copy() {
         return new CollectionChannel(this);
     }
 
-    public static class Initializer implements ChannelInitializer {
+    public CollectionChannel.Executor createExecutor() {
+        return new Executor(this.isMarkedForInstrumentation());
+    }
+
+    /**
+     * {@link JavaChannelInitializer} implementation for the {@link CollectionChannel}.
+     */
+    public static class Initializer implements JavaChannelInitializer {
 
         @Override
-        public CollectionChannel setUpOutput(ChannelDescriptor descriptor, ExecutionTask executionTask, int index) {
-            assert descriptor == DESCRIPTOR;
-
-            // TODO: We might need to add a "collector" operator or the like because this channel might introduce overhead.
-            // Then we might also get rid of the ChannelExecutors.
-            final Channel existingOutputChannel = executionTask.getOutputChannel(index);
-            if (existingOutputChannel == null) {
-                return new CollectionChannel(descriptor, executionTask, index);
-            } else if (existingOutputChannel instanceof CollectionChannel) {
-                return (CollectionChannel) existingOutputChannel;
-            } else {
-                throw new IllegalStateException(String.format(
-                        "Expected %s, encountered %s.", CollectionChannel.class.getSimpleName(), existingOutputChannel
-                ));
-            }
+        public StreamChannel provideStreamChannel(Channel channel, OptimizationContext optimizationContext) {
+            throw new UnsupportedOperationException("Not yet implemented.");
         }
 
         @Override
-        public void setUpInput(Channel channel, ExecutionTask executionTask, int index) {
-            assert channel instanceof CollectionChannel;
-            channel.addConsumer(executionTask, index);
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
+            assert descriptor == CollectionChannel.DESCRIPTOR;
+            // TODO: We could add a "Collector" operator in between.
+            final CollectionChannel collectionChannel = new CollectionChannel(descriptor, outputSlot);
+            return new Tuple<>(collectionChannel, collectionChannel);
         }
 
         @Override
-        public boolean isReusable() {
-            return true;
-        }
-
-        @Override
-        public boolean isInternal() {
-            return false;
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
+            throw new UnsupportedOperationException("Not yet implemented.");
         }
     }
 
-    public static class Executor implements ChannelExecutor {
+    /**
+     * {@link ChannelExecutor} implementation for the {@link CollectionChannel}.
+     */
+    public class Executor implements ChannelExecutor {
 
         private Collection<?> collection;
 
-        private long count = -1;
+        private long cardinality = -1;
 
         private boolean isMarkedForInstrumentation;
 
@@ -105,13 +84,13 @@ public class CollectionChannel extends Channel {
         @Override
         public void acceptStream(Stream<?> stream) {
             this.collection = stream.collect(Collectors.toList());
-            this.count = this.collection.size();
+            this.cardinality = this.collection.size();
         }
 
         @Override
         public void acceptCollection(Collection<?> collection) {
             this.collection = collection;
-            this.count = this.collection.size();
+            this.cardinality = this.collection.size();
         }
 
         @Override
@@ -132,20 +111,29 @@ public class CollectionChannel extends Channel {
         }
 
         @Override
-        public long getCardinality() throws RheemException {
-            assert this.isMarkedForInstrumentation;
-            return this.count;
-        }
-
-        @Override
         public void markForInstrumentation() {
             this.isMarkedForInstrumentation = true;
         }
 
         @Override
         public boolean ensureExecution() {
-            assert this.collection != null;
+            assert this.collection != null : String.format("Could not ensure execution of %s.", this.getChannel());
             return true;
+        }
+
+        @Override
+        public Channel getChannel() {
+            return CollectionChannel.this;
+        }
+
+        @Override
+        public OptionalLong getMeasuredCardinality() {
+            return this.cardinality == -1 ? OptionalLong.empty() : OptionalLong.of(this.cardinality);
+        }
+
+        @Override
+        public void release() throws RheemException {
+            this.collection = null;
         }
     }
 }

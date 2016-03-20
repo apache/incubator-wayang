@@ -49,6 +49,7 @@ public class JavaPlatform extends Platform {
         this.mappings.add(new FilterToJavaFilterMapping());
         this.mappings.add(new UnionAllToJavaUnionAllMapping());
         this.mappings.add(new CartesianToJavaCartesianMapping());
+        this.mappings.add(new LoopToJavaLoopMapping());
     }
 
     @Override

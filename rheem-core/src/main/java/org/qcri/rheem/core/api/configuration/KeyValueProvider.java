@@ -59,6 +59,11 @@ public abstract class KeyValueProvider<Key, Value> {
         }
     }
 
+    /**
+     * Provide the appropriate value for the {@code key}.
+     *
+     * @return the value of {@code null} if none could be provided
+     */
     protected abstract Value tryToProvide(Key key, KeyValueProvider<Key, Value> requestee);
 
 

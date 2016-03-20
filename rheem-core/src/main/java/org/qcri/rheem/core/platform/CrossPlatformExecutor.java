@@ -195,10 +195,11 @@ public class CrossPlatformExecutor {
         final ExecutionProfile executionProfile = executor.execute(stage);
         long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime));
-        executionProfile.getCardinalities().forEach((channel, cardinality) ->
-                CrossPlatformExecutor.this.logger.debug("Cardinality of {}: actual {}, estimated {}",
-                        channel, cardinality, channel.getCardinalityEstimate())
-        );
+//        throw new RuntimeException("todo");
+//        executionProfile.getCardinalities().forEach((channel, cardinality) ->
+//                CrossPlatformExecutor.this.logger.debug("Cardinality of {}: actual {}, estimated {}",
+//                        channel, cardinality, channel.getCardinalityEstimate(optimizationContext))
+//        );
         return executionProfile;
     }
 
@@ -232,7 +233,7 @@ public class CrossPlatformExecutor {
                 this.predecessorCounter.remove(succeedingStage);
             } else {
                 assert newCompletedPredecessors < succeedingStage.getPredecessors().size() :
-                String.format("Activated %s to often.", succeedingStage);
+                String.format("Activated %s too often.", succeedingStage);
             }
         }
     }

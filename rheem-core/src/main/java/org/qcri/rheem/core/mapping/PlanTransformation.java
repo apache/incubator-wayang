@@ -107,7 +107,11 @@ public class PlanTransformation {
 
         // Wrap the match in a subplan.
         final Operator originalOutputOperator = match.getOutputMatch().getOperator();
+        boolean wasTopLevel = originalOutputOperator.getParent() == null;
         Operator originalSubplan = Subplan.wrap(match.getInputMatch().getOperator(), originalOutputOperator);
+        if (wasTopLevel && originalOutputOperator.isSink()) {
+            plan.replaceSink(originalOutputOperator, originalSubplan);
+        }
 
         // Place an alternative: the original subplan and the replacement.
         // Either add an alternative to the existing OperatorAlternative or create a new OperatorAlternative.
@@ -120,11 +124,8 @@ public class PlanTransformation {
             operatorAlternative.addAlternative(replacement);
 
             // If the originalOutputOperator was a sink, we need to update the sink in the plan accordingly.
-            if (originalOutputOperator.isSink()) {
-                plan.getSinks().remove(originalOutputOperator);
-            }
-            if (operatorAlternative.isSink() && operatorAlternative.getParent() == null) {
-                plan.addSink(operatorAlternative);
+            if (originalSubplan.isSink()) {
+                plan.replaceSink(originalSubplan, operatorAlternative);
             }
         }
 

@@ -2,6 +2,10 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.executionplan.*;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,10 +14,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Builds an {@link ExecutionPlan} from a {@link PreliminaryExecutionPlan}.
+ * Builds an {@link ExecutionPlan} from a {@link ExecutionTaskFlow}.
  * <p>Specifically, subdivides the {@link ExecutionTask}s into {@link PlatformExecution} and {@link ExecutionStage}s,
  * thereby discarding already executed {@link ExecutionTask}s. As of now, these are recognized as producers of
- * {@link Channel}s that are copied. This is because of {@link ExecutionPlanCreator} that copies {@link Channel}s
+ * {@link Channel}s that are copied. This is because of {@link ExecutionTaskFlowCompiler} that copies {@link Channel}s
  * to different alternative {@link ExecutionPlan}s on top of existing fixed {@link ExecutionTask}s.</p>
  */
 public class StageAssignmentTraversal {
@@ -23,7 +27,7 @@ public class StageAssignmentTraversal {
     /**
      * Should be turned into a {@link ExecutionPlan}.
      */
-    private final PreliminaryExecutionPlan preliminaryExecutionPlan;
+    private final ExecutionTaskFlow executionTaskFlow;
 
     /**
      * Maintains {@link ExecutionTask}s that might not yet be assigned to an {@link InterimStage} and must be explored.
@@ -58,13 +62,13 @@ public class StageAssignmentTraversal {
     /**
      * Creates a new instance.
      *
-     * @param preliminaryExecutionPlan    should be converted into a {@link ExecutionPlan}
+     * @param executionTaskFlow           should be converted into a {@link ExecutionPlan}
      * @param additionalSplittingCriteria to create splits beside the precedence-based splitting
      */
-    public StageAssignmentTraversal(PreliminaryExecutionPlan preliminaryExecutionPlan,
+    public StageAssignmentTraversal(ExecutionTaskFlow executionTaskFlow,
                                     StageSplittingCriterion... additionalSplittingCriteria) {
         // Some sanity checks.
-        final Set<ExecutionTask> executionTasks = preliminaryExecutionPlan.collectAllTasks();
+        final Set<ExecutionTask> executionTasks = executionTaskFlow.collectAllTasks();
         for (ExecutionTask executionTask : executionTasks) {
             for (int i = 0; i < executionTask.getInputChannels().length; i++) {
                 Channel channel = executionTask.getInputChannels()[i];
@@ -79,16 +83,47 @@ public class StageAssignmentTraversal {
                 }
             }
         }
-        assert preliminaryExecutionPlan.isComplete();
-        this.preliminaryExecutionPlan = preliminaryExecutionPlan;
+        assert executionTaskFlow.isComplete();
+        this.executionTaskFlow = executionTaskFlow;
 
-        this.additionalSplittingCriteria = Arrays.asList(additionalSplittingCriteria);
+        this.additionalSplittingCriteria = new ArrayList<>();
+        this.additionalSplittingCriteria.add(StageAssignmentTraversal::isLoopBoarder);
+        this.additionalSplittingCriteria.addAll(Arrays.asList(additionalSplittingCriteria));
+    }
+
+    /**
+     * Tells whether the given {@link Channel} leaves or enters a loop.
+     *
+     * @see StageSplittingCriterion#shouldSplit(ExecutionTask, Channel, ExecutionTask)
+     */
+    private static boolean isLoopBoarder(ExecutionTask producer, Channel channel, ExecutionTask consumer) {
+        // Check if the channel leaves a loop.
+        final ExecutionOperator producerOperator = producer.getOperator();
+        if (producerOperator.isLoopHead()) {
+            LoopHeadOperator loopHead = (LoopHeadOperator) producerOperator;
+            final OutputSlot<?> output = producer.getOutputSlotFor(channel);
+            if (loopHead.getFinalLoopOutputs().contains(output)) {
+                return true;
+            }
+        }
+
+        // Check if the channel enters a loop.
+        final ExecutionOperator consumerOperator = consumer.getOperator();
+        if (consumerOperator.isLoopHead()) {
+            LoopHeadOperator loopHead = (LoopHeadOperator) consumerOperator;
+            final InputSlot<?> input = consumer.getInputSlotFor(channel);
+            if (loopHead.getLoopInitializationInputs().contains(input)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
      * Perform the assignment.
      *
-     * @return the {@link ExecutionPlan} for the {@link PreliminaryExecutionPlan} specified in the constructor
+     * @return the {@link ExecutionPlan} for the {@link ExecutionTaskFlow} specified in the constructor
      */
     public synchronized ExecutionPlan run() {
         // Create initial stages.
@@ -97,8 +132,10 @@ public class StageAssignmentTraversal {
 
         // Refine stages as much as necessary
         this.refineStages();
-        for (InterimStage stage : this.allStages) {
-            this.logger.debug("Final stage {}: {}", stage, stage.getTasks());
+        if (this.logger.isDebugEnabled()) {
+            for (InterimStage stage : this.allStages) {
+                this.logger.debug("Final stage {}: {}", stage, stage.getTasks());
+            }
         }
 
         // Assemble the ExecutionPlan.
@@ -125,7 +162,7 @@ public class StageAssignmentTraversal {
         final Set<ExecutionTask> relevantTasks = new HashSet<>();
 
         // ExecutionTasks that staged for exploration.
-        final Queue<ExecutionTask> stagedTasks = new LinkedList<>(this.preliminaryExecutionPlan.getSinkTasks());
+        final Queue<ExecutionTask> stagedTasks = new LinkedList<>(this.executionTaskFlow.getSinkTasks());
 
         // Run until all ExecutionTasks have been checked.
         while (!stagedTasks.isEmpty()) {
@@ -144,6 +181,7 @@ public class StageAssignmentTraversal {
                     }
                 } else {
                     // Otherwise, just stage.
+                    assert inputChannel.getProducer() != null;
                     stagedTasks.add(inputChannel.getProducer());
                 }
             }
@@ -170,14 +208,12 @@ public class StageAssignmentTraversal {
             return;
         }
         Platform platform = task.getOperator().getPlatform();
-        if (task.getStage() != null) {
-            return;
-        } else {
+        if (task.getStage() == null) {
             if (platformExecution == null) {
                 platformExecution = new PlatformExecution(platform);
             }
             InterimStage initialStage = new InterimStageImpl(platformExecution);
-            addStage(initialStage);
+            this.addStage(initialStage);
             this.traverseTask(task, initialStage);
         }
     }
@@ -207,11 +243,12 @@ public class StageAssignmentTraversal {
         assert task.getOperator().getPlatform().equals(newStage.getPlatform());
         newStage.addTask(task);
         final InterimStage oldStage = this.assignedInterimStages.put(task, newStage);
-        assert oldStage == null : String.format("Reassigned %s from %s to %s.", task, oldStage, newStage);
-        final HashSet<InterimStage> thisRequiredStages = new HashSet<>(4);
+        this.logger.debug("Reassigned %s from %s to %s.", task, oldStage, newStage);
+        final Set<InterimStage> thisRequiredStages = this.requiredStages.computeIfAbsent(
+                task, key -> new HashSet<>(4)
+        );
         thisRequiredStages.add(newStage);
-        this.requiredStages.put(task, thisRequiredStages);
-        this.logger.debug("Initially assigning {} to {}.", task, newStage);
+        this.logger.debug("Assigning {} to {}.", task, newStage);
     }
 
     /**
@@ -273,7 +310,13 @@ public class StageAssignmentTraversal {
             // Update the precedence graph.
             for (InterimStage currentStage : this.newStages) {
                 for (ExecutionTask outboundTask : currentStage.getOutboundTasks()) {
-                    this.updateRequiredStages(outboundTask, new HashSet<>());
+                    final HashSet<InterimStage> requiredStages = new HashSet<>();
+                    requiredStages.addAll(this.requiredStages.get(outboundTask));
+                    for (Channel channel : outboundTask.getOutputChannels()) {
+                        for (ExecutionTask consumer : channel.getConsumers()) {
+                            this.updateRequiredStages(consumer, requiredStages);
+                        }
+                    }
                 }
             }
 
@@ -327,20 +370,27 @@ public class StageAssignmentTraversal {
      * @param task           which is to be traversed next
      * @param requiredStages the required {@link InterimStage}s
      */
-    private void updateRequiredStages(ExecutionTask task, Set<InterimStage> requiredStages) {
+    private void updateRequiredStages(ExecutionTask task,
+                                      Set<InterimStage> requiredStages) {
+        // Find the InterimStage assigned to the task.
         final InterimStage currentStage = this.assignedInterimStages.get(task);
+
+        // Update the requiredStages by the InterimStage of the task.
         if (!requiredStages.contains(currentStage)) {
             requiredStages = new HashSet<>(requiredStages);
             requiredStages.add(currentStage);
         }
+
+        // Update the requiredStages of the task. On change, propagate the requirements downstream.
         final Set<InterimStage> currentlyRequiredStages = this.requiredStages.get(task);
         if (currentlyRequiredStages.addAll(requiredStages)) {
             this.logger.debug("Updated required stages of {} to {}.", task, currentlyRequiredStages);
             currentStage.mark();
-        }
-        for (Channel channel : task.getOutputChannels()) {
-            for (ExecutionTask consumingTask : channel.getConsumers()) {
-                this.updateRequiredStages(consumingTask, requiredStages);
+
+            for (Channel channel : task.getOutputChannels()) {
+                for (ExecutionTask consumingTask : channel.getConsumers()) {
+                    this.updateRequiredStages(consumingTask, requiredStages);
+                }
             }
         }
     }
@@ -388,31 +438,37 @@ public class StageAssignmentTraversal {
         InterimStage newStage = stage.separate(separableTasks);
         this.addStage(newStage);
         for (ExecutionTask separatedTask : newStage.getTasks()) {
-            this.assignedInterimStages.put(separatedTask, newStage);
+            this.assign(separatedTask, newStage);
         }
         return newStage;
     }
 
     private ExecutionPlan assembleExecutionPlan() {
         final Map<InterimStage, ExecutionStage> finalStages = new HashMap<>(this.allStages.size());
-        for (ExecutionTask sinkTask : this.preliminaryExecutionPlan.getSinkTasks()) {
-            this.assembleExecutionPlan(finalStages, null, sinkTask);
+        for (ExecutionTask sinkTask : this.executionTaskFlow.getSinkTasks()) {
+            this.assembleExecutionPlan(finalStages, null, sinkTask, new HashSet<>());
         }
         final ExecutionPlan executionPlan = new ExecutionPlan();
         finalStages.values().stream().filter(ExecutionStage::isStartingStage).forEach(executionPlan::addStartingStage);
         return executionPlan;
     }
 
+    /**
+     * Creates {@link ExecutionStage}s and connects them.
+     *
+     * @param finalStages             collects the {@link ExecutionStage}s
+     * @param successorExecutionStage the {@link ExecutionStage} following the {@code currentExecutionTask}
+     * @param currentExecutionTask    an {@link ExecutionTask} whose {@link InterimStage} is to be considered
+     * @param visitedTasks            maintains already visited {@link ExecutionTask}s to avoid running into loops
+     */
     private void assembleExecutionPlan(Map<InterimStage, ExecutionStage> finalStages,
                                        ExecutionStage successorExecutionStage,
-                                       ExecutionTask currentExecutionTask) {
+                                       ExecutionTask currentExecutionTask,
+                                       HashSet<Object> visitedTasks) {
 
+        // Get or create the final ExecutionStage.
         final InterimStage interimStage = this.assignedInterimStages.get(currentExecutionTask);
-        ExecutionStage executionStage = finalStages.get(interimStage);
-        if (executionStage == null) {
-            executionStage = interimStage.toExecutionStage();
-            finalStages.put(interimStage, executionStage);
-        }
+        final ExecutionStage executionStage = finalStages.computeIfAbsent(interimStage, InterimStage::toExecutionStage);
 
         if (successorExecutionStage != null
                 && !executionStage.equals(successorExecutionStage)
@@ -420,12 +476,19 @@ public class StageAssignmentTraversal {
             executionStage.addSuccessor(successorExecutionStage);
         }
 
+        // Avoid running into loops. However, we must not do this check earlier because we might visit ExecutionTasks
+        // from several different predecessor InterimStages.
+        if (!visitedTasks.add(currentExecutionTask)) {
+            return;
+        }
+
         for (Channel channel : currentExecutionTask.getInputChannels()) {
             if (this.shouldVisitProducerOf(channel)) {
                 final ExecutionTask predecessor = channel.getProducer();
-                this.assembleExecutionPlan(finalStages, executionStage, predecessor);
+                this.assembleExecutionPlan(finalStages, executionStage, predecessor, visitedTasks);
             }
         }
+
     }
 
     /**
@@ -592,7 +655,7 @@ public class StageAssignmentTraversal {
             for (ExecutionTask task : this.allTasks) {
                 executionStage.addTask(task);
                 if (this.checkIfStartTask(task)) {
-                    executionStage.markAsStartTast(task);
+                    executionStage.markAsStartTask(task);
                 }
                 if (this.checkIfTerminalTask(task)) {
                     executionStage.markAsTerminalTask(task);
@@ -609,6 +672,7 @@ public class StageAssignmentTraversal {
          */
         private boolean checkIfStartTask(ExecutionTask task) {
             for (Channel channel : task.getInputChannels()) {
+                if (this.checkIfFeedbackChannel(task, channel)) continue;
                 final ExecutionTask producer = channel.getProducer();
                 if (this.equals(StageAssignmentTraversal.this.assignedInterimStages.get(producer))) {
                     return false;
@@ -618,11 +682,21 @@ public class StageAssignmentTraversal {
         }
 
         /**
+         * Checks if the given {@code channel} is a feedback to {@code task} (i.e., it closes a data flow cycle).
+         */
+        private boolean checkIfFeedbackChannel(ExecutionTask task, Channel channel) {
+            if (!task.getOperator().isLoopHead()) return false;
+            final InputSlot<?> input = task.getInputSlotFor(channel);
+            return input != null && input.isFeedback();
+        }
+
+        /**
          * Checks if <i>all</i> output {@link Channel}s of the given {@code task} are outbound w.r.t. to the
          * {@link InterimStage}.
          */
         private boolean checkIfTerminalTask(ExecutionTask task) {
             for (Channel channel : task.getOutputChannels()) {
+                if (this.checkIfFeedforwardChannel(task, channel)) continue;
                 for (ExecutionTask consumer : channel.getConsumers()) {
                     if (this.equals(StageAssignmentTraversal.this.assignedInterimStages.get(consumer))) {
                         return false;
@@ -630,6 +704,15 @@ public class StageAssignmentTraversal {
                 }
             }
             return true;
+        }
+
+        /**
+         * Checks if the given {@code channel} is a feedforward to {@code task} (i.e., it constitutes the beginning of a data flow cycle).
+         */
+        private boolean checkIfFeedforwardChannel(ExecutionTask task, Channel channel) {
+            if (!task.getOperator().isLoopHead()) return false;
+            final OutputSlot<?> output = task.getOutputSlotFor(channel);
+            return output != null && output.isFeedforward();
         }
     }
 

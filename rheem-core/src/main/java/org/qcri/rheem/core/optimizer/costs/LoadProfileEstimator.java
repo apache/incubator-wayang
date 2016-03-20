@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.costs;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
@@ -11,6 +12,6 @@ public interface LoadProfileEstimator {
     @Deprecated
     LoadProfile estimate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates);
 
-    LoadProfile estimate(ExecutionOperator executionOperator);
+    LoadProfile estimate(OptimizationContext.OperatorContext operatorContext);
 
 }

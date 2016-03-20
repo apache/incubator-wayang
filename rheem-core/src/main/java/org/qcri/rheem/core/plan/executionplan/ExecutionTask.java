@@ -68,7 +68,9 @@ public class ExecutionTask {
      * instead.
      */
     void setInputChannel(int index, Channel channel) {
-        assert channel == null || this.getInputChannel(index) == null;
+        assert channel == null || this.getInputChannel(index) == null
+                : String.format("Cannot set up %s for %s@%d: There is already %s.",
+                channel, this.getOperator(), index, this.getInputChannel(index));
         this.getInputChannels()[index] = channel;
     }
 
@@ -137,10 +139,11 @@ public class ExecutionTask {
      * Sets an output {@link Channel} for this instance. Consider using
      * {@link Channel#Channel(ChannelDescriptor, ExecutionTask, int)} and derivatives instead.
      */
-    void setOutputChannel(int index, Channel channel) {
+    public void setOutputChannel(int index, Channel channel) {
         assert this.getOutputChannel(index) == null : String.format("Output channel %d of %s is already set to %s.",
                 index, this, this.getOutputChannel(index));
         this.getOutputChannels()[index] = channel;
+        channel.setProducer(this);
     }
 
     public ExecutionStage getStage() {
@@ -196,4 +199,5 @@ public class ExecutionTask {
     public Platform getPlatform() {
         return this.operator.getPlatform();
     }
+
 }

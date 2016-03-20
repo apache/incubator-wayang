@@ -1,21 +1,16 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.util.Tuple;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * TODO
  */
 public interface ChannelManager {
-
-    /**
-     * TODO
-     */
-    boolean connect(ExecutionTask sourceTask, int outputIndex, List<Tuple<ExecutionTask, Integer>> targetDescriptors);
 
     /**
      * Provides a {@link ChannelInitializer} for the given {@link Channel} class.
@@ -32,5 +27,14 @@ public interface ChannelManager {
      * @return whether the exchanged succeeded
      */
     boolean exchangeWithInterstageCapable(Channel channel);
+
+    ChannelDescriptor getInternalChannelDescriptor(boolean isRequestReusable);
+
+    Map<ChannelDescriptor, Channel> setUpSourceSide(
+            Junction junction,
+            List<ChannelDescriptor> preferredChannelDescriptors,
+            OptimizationContext optimizationContext);
+
+    void setUpTargetSide(Junction junction, int targetIndex, Channel externalChannel, OptimizationContext optimizationContext);
 
 }

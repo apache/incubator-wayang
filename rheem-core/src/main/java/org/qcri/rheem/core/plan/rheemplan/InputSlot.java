@@ -2,8 +2,6 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.Objects;
-
 /**
  * An input slot declares an input of an {@link Operator}.
  *
@@ -53,11 +51,19 @@ public class InputSlot<T> extends Slot<T> {
         }
 
         for (int i = 0; i < victim.getNumInputs(); i++) {
-            final OutputSlot<?> occupant = victim.getInput(i).getOccupant();
-            if (occupant != null) {
-                occupant.unchecked().disconnectFrom(victim.getInput(i).unchecked());
-                occupant.unchecked().connectTo(thief.getInput(i).unchecked());
-            }
+            thief.getInput(i).unchecked().stealOccupant(victim.getInput(i).unchecked());
+        }
+    }
+
+    /**
+     * Takes away the occupant {@link OutputSlot} of the {@code victim} and connects it to this instance.
+     */
+    public void stealOccupant(InputSlot<T> victim) {
+        assert this.getOccupant() == null;
+        final OutputSlot<T> occupant = victim.getOccupant();
+        if (occupant != null) {
+            occupant.disconnectFrom(victim);
+            occupant.connectTo(this);
         }
     }
 
@@ -124,9 +130,13 @@ public class InputSlot<T> extends Slot<T> {
 
     @Override
     public int getIndex() throws IllegalStateException {
-        if (Objects.isNull(this.getOwner())) throw new IllegalStateException("This slot has no owner.");
+        if (this.index != -1) return this.index;
+
+        assert this.getOwner() != null : "This slot has no owner.";
         for (int i = 0; i < this.getOwner().getNumInputs(); i++) {
-            if (this.getOwner().getInput(i) == this) return i;
+            if (this.getOwner().getInput(i) == this) {
+                return this.index = i;
+            }
         }
         throw new IllegalStateException("Could not find this slot within its owner.");
     }
@@ -159,5 +169,21 @@ public class InputSlot<T> extends Slot<T> {
      */
     public boolean isBroadcast() {
         return this.isBroadcast;
+    }
+
+    /**
+     * @return whether this instance is designated to close feedback loops (i.e., data flow cycles)
+     */
+    public boolean isFeedback() {
+        return this.getOwner().isFeedbackInput(this);
+    }
+
+    /**
+     * Notifies this instance that it has been detached from its {@link #occupant}.
+     */
+    public void notifyDetached() {
+        if (this.isBroadcast) {
+            // TODO: Consider removing broadacast.
+        }
     }
 }
