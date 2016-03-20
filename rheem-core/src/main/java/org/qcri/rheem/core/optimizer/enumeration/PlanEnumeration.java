@@ -273,9 +273,11 @@ public class PlanEnumeration {
             for (PlanImplementation thisImpl : this.getPlanImplementations()) {
 
                 // Concatenate the PlanImplementations.
-                resultCollector.add(
-                        thisImpl.concatenate(openOutputSlot, targetImpls, inputSlots, concatenationEnumeration, optimizationContext)
-                );
+                final PlanImplementation concatenationImpl = thisImpl.concatenate(
+                        openOutputSlot, targetImpls, inputSlots, concatenationEnumeration, optimizationContext);
+                if (concatenationImpl != null) {
+                    resultCollector.add(concatenationImpl);
+                }
             }
         }
 
