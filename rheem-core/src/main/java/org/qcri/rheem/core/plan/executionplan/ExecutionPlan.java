@@ -1,14 +1,21 @@
 package org.qcri.rheem.core.plan.executionplan;
 
+import org.qcri.rheem.core.optimizer.enumeration.ExecutionTaskFlow;
+import org.qcri.rheem.core.optimizer.enumeration.StageAssignmentTraversal;
 import org.qcri.rheem.core.util.Counter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents an executable, cross-platform data flow. Consists of muliple {@link PlatformExecution}s.
  */
 public class ExecutionPlan {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * All {@link ExecutionStage}s without predecessors that need be executed at first.
@@ -50,7 +57,7 @@ public class ExecutionPlan {
      */
     public void retain(Set<ExecutionStage> retainableStages) {
         for (ExecutionStage stage : retainableStages) {
-            for (ExecutionTask terminalTask : stage.getTerminalTasks()) {
+            for (ExecutionTask terminalTask : stage.getAllTasks()) {
                 for (Channel channel : terminalTask.getOutputChannels()) {
                     channel.retain(retainableStages);
                 }
@@ -93,8 +100,12 @@ public class ExecutionPlan {
             final ExecutionStage producerStage = original.getProducer().getStage();
             for (ExecutionTask consumer : original.getConsumers()) {
                 final ExecutionStage consumerStage = consumer.getStage();
-                assert producerStage != null : String.format("No stage found for %s.", producerStage);
-                producerStage.addSuccessor(consumerStage);
+                assert producerStage != null : String.format("No stage found for %s.", original.getProducer());
+                assert consumerStage != null : String.format("No stage found for %s.", consumer);
+                // Equal stages possible on "partially open" Channels.
+                if (producerStage != consumerStage) {
+                    producerStage.addSuccessor(consumerStage);
+                }
             }
         }
     }
@@ -109,4 +120,47 @@ public class ExecutionPlan {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Implements various sanity checks. Problems are logged.
+     */
+    public boolean isSane() {
+        // 1. Check if every ExecutionTask is assigned an ExecutionStage.
+        final Set<ExecutionTask> allTasks = this.collectAllTasks();
+        boolean isAllTasksAssigned = allTasks.stream().allMatch(task -> task.getStage() != null);
+        if (!isAllTasksAssigned) {
+            this.logger.error("There are tasks without stages.");
+        }
+
+        final Set<Channel> allChannels = allTasks.stream()
+                .flatMap(task -> Stream.concat(Arrays.stream(task.getInputChannels()), Arrays.stream(task.getOutputChannels())))
+                .collect(Collectors.toSet());
+
+        boolean isAllChannelsOriginal = allChannels.stream()
+                .allMatch(channel -> !channel.isCopy());
+        if (!isAllChannelsOriginal) {
+            this.logger.error("There are channels that are copies.");
+        }
+
+        boolean isAllSiblingsConsistent = allChannels.stream()
+                .allMatch(channel -> channel.withSiblings(false).allMatch(allChannels::contains));
+        if (!isAllSiblingsConsistent) {
+            this.logger.error("There are siblings that are not part of the plan.");
+        }
+
+        return isAllTasksAssigned && isAllChannelsOriginal && isAllSiblingsConsistent;
+    }
+
+    /**
+     * Creates a new instance from the given {@link ExecutionTaskFlow}.
+     *
+     * @param executionTaskFlow should be converted into an {@link ExecutionPlan}
+     * @param stageSplittingCriterion  defines where to install {@link ExecutionStage} boundaries
+     * @return the new instance
+     */
+    public static ExecutionPlan createFrom(ExecutionTaskFlow executionTaskFlow,
+                                           StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion) {
+        final StageAssignmentTraversal stageAssignmentTraversal =
+                new StageAssignmentTraversal(executionTaskFlow, stageSplittingCriterion);
+        return stageAssignmentTraversal.run();
+    }
 }

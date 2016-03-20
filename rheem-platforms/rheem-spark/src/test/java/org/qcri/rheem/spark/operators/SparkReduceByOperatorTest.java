@@ -40,12 +40,12 @@ public class SparkReduceByOperatorTest extends SparkOperatorTestBase {
                                 DataUnitType.createBasic(String.class),
                                 "field0"),
                         new ReduceDescriptor<>(
-                                DataUnitType.createGroupedUnchecked(Tuple2.class),
-                                DataUnitType.createBasicUnchecked(Tuple2.class),
                                 (a, b) -> {
                                     a.field1 += b.field1;
                                     return a;
-                                }));
+                                }, DataUnitType.createGroupedUnchecked(Tuple2.class),
+                                DataUnitType.createBasicUnchecked(Tuple2.class)
+                        ));
 
         // Set up the ChannelExecutors.
         final ChannelExecutor[] inputs = new ChannelExecutor[]{

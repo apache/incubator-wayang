@@ -48,45 +48,13 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
 
         SequenceFileIterator sequenceFileIterator;
         try {
-            final String path = this.findCorrectInputPath(this.sourcePath);
-            sequenceFileIterator = new SequenceFileIterator<>(path);
+            final String actualInputPath = FileSystems.findActualSingleInputPath(this.sourcePath);
+            sequenceFileIterator = new SequenceFileIterator<>(actualInputPath);
             Stream<?> sequenceFileStream =
                     StreamSupport.stream(Spliterators.spliteratorUnknownSize(sequenceFileIterator, 0), false);
             outputs[0].acceptStream(sequenceFileStream);
         } catch (IOException e) {
-            throw new RheemException("Reading failed.", e);
-        }
-    }
-
-    /**
-     * Systems such as Spark do not produce a single output file often times. That method tries to detect such
-     * split object files to reassemble them correctly.
-     */
-    private String findCorrectInputPath(String ostensibleInputFile) {
-        final Optional<FileSystem> fileSystem = FileSystems.getFileSystem(ostensibleInputFile);
-
-        if (!fileSystem.isPresent()) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not inspect input file {}.", this.sourcePath);
-            return this.sourcePath;
-
-        } else if (fileSystem.get().isDirectory(this.sourcePath)) {
-            final Collection<String> children = fileSystem.get().listChildren(this.sourcePath);
-
-            // Look for Spark-like directory structure.
-            if (children.stream().anyMatch(child -> child.endsWith("_SUCCESS"))) {
-                final List<String> sparkFiles =
-                        children.stream().filter(child -> child.matches(".*/part-\\d{5}")).collect(Collectors.toList());
-                if (sparkFiles.size() != 1) {
-                    throw new RheemException("Illegal number of Spark result files: " + sparkFiles);
-                }
-                LoggerFactory.getLogger(this.getClass()).info("Using input path {} for {}.", sparkFiles.get(0), this);
-                return sparkFiles.get(0);
-            } else {
-                throw new RheemException("Could not identify directory structure: " + children);
-            }
-
-        } else {
-            return this.sourcePath;
+            throw new RheemException(String.format("%s failed to read from %s.", this, this.sourcePath), e);
         }
     }
 

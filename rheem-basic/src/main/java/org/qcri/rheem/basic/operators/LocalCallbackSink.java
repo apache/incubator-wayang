@@ -21,6 +21,18 @@ public class LocalCallbackSink<T> extends UnarySink<T> {
         return new LocalCallbackSink<>(collector::add, type);
     }
 
+    public static <T> LocalCallbackSink<T> createCollectingSink(Collection<T> collector, Class<T> typeClass) {
+        return new LocalCallbackSink<>(collector::add, typeClass);
+    }
+
+    public static <T> LocalCallbackSink<T> createStdoutSink(DataSetType<T> type) {
+        return new LocalCallbackSink<>(System.out::println, type);
+    }
+
+    public static <T> LocalCallbackSink<T> createStdoutSink(Class<T> typeClass) {
+        return new LocalCallbackSink<>(System.out::println, typeClass);
+    }
+
     /**
      * Creates a new instance.
      *
@@ -30,6 +42,16 @@ public class LocalCallbackSink<T> extends UnarySink<T> {
     public LocalCallbackSink(Consumer<T> callback, DataSetType<T> type) {
         super(type, null);
         this.callback = callback;
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param callback callback that is executed locally for each incoming data unit
+     * @param typeClass     type of the incoming elements
+     */
+    public LocalCallbackSink(Consumer<T> callback, Class<T> typeClass) {
+        this(callback, DataSetType.createDefault(typeClass));
     }
 
     public Consumer<T> getCallback() {

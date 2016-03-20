@@ -115,7 +115,7 @@ public class SubplanPattern extends OperatorBase {
          */
         public List<SubplanMatch> match(RheemPlan plan) {
             // Start an attempt to match from each operator that is upstream-reachable from one of the RheemPlan sinks.
-            new PlanTraversal(true, false)
+            PlanTraversal.upstream()
                     .withCallback(this::attemptMatchFrom)
                     .traverse(plan.getSinks());
             // TODO: Traverse subplans and alternatives correctly!
@@ -160,14 +160,19 @@ public class SubplanPattern extends OperatorBase {
             if (operator instanceof Subplan) {
                 // Delegate to the inner part of the Subplan.
                 if (trackedOutputSlot == null) {
-                    this.match(pattern, ((Subplan) operator).getSink(), trackedOutputSlot, subplanMatch);
+                    PlanTraversal.upstream()
+                            .withCallback(this::attemptMatchFrom)
+                            .traverse(((Subplan) operator).getSink());
                 } else {
                     final OutputSlot<?> innerOutputSlot = ((Subplan) operator).traceOutput(trackedOutputSlot);
-                    this.match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatch);
+                    PlanTraversal.upstream()
+                            .withCallback(this::attemptMatchFrom)
+                            .traverse(innerOutputSlot.getOwner(), null, innerOutputSlot);
                 }
 
             } else if (operator instanceof OperatorAlternative) {
                 // Delegate to all Alternatives of the OperatorAlternative.
+                // TODO: This code is different from above. Is it still correct?
                 for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
                     SubplanMatch subplanMatchCopy = new SubplanMatch(subplanMatch);
                     if (trackedOutputSlot == null) {

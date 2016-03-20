@@ -2,6 +2,7 @@ package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
@@ -24,8 +25,25 @@ public class MapOperator<InputType, OutputType> extends UnaryToUnaryOperator<Inp
     /**
      * Creates a new instance.
      */
-    public MapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType,
-                       TransformationDescriptor<InputType, OutputType> functionDescriptor) {
+    public MapOperator(FunctionDescriptor.SerializableFunction<InputType, OutputType> function,
+                       Class<InputType> inputTypeClass,
+                       Class<OutputType> outputTypeClass) {
+        this(new TransformationDescriptor<>(function, inputTypeClass, outputTypeClass));
+    }
+
+    /**
+     * Creates a new instance.
+     */
+    public MapOperator(TransformationDescriptor<InputType, OutputType> functionDescriptor) {
+        this(functionDescriptor,
+                DataSetType.createDefault(functionDescriptor.getInputType()),
+                DataSetType.createDefault(functionDescriptor.getOutputType()));
+    }
+
+    /**
+     * Creates a new instance.
+     */
+    public MapOperator(TransformationDescriptor<InputType, OutputType> functionDescriptor, DataSetType<InputType> inputType, DataSetType<OutputType> outputType) {
         super(inputType, outputType, true, null);
         this.functionDescriptor = functionDescriptor;
     }

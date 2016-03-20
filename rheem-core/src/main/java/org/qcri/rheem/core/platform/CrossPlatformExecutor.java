@@ -1,9 +1,11 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
+import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.Counter;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
@@ -48,6 +50,11 @@ public class CrossPlatformExecutor {
      */
     private Collection<ExecutionStage> suspendedStages = new LinkedList<>();
 
+    /**
+     * Marks {@link Channel}s for instrumentation.
+     */
+    private final InstrumentationStrategy instrumentationStrategy;
+
 
     /**
      * Keeps track of {@link ExecutionStage}s that have actually been executed by this instance.
@@ -55,6 +62,10 @@ public class CrossPlatformExecutor {
     private Set<ExecutionStage> completedStages = new HashSet<>();
 
     private ExecutionProfile executionProfile;
+
+    public CrossPlatformExecutor(InstrumentationStrategy instrumentationStrategy) {
+        this.instrumentationStrategy = instrumentationStrategy;
+    }
 
     /**
      * Execute the given {@link ExecutionPlan}.
@@ -149,6 +160,7 @@ public class CrossPlatformExecutor {
     private boolean execute(ExecutionStage activatedStage) {
         final boolean shouldExecute = !activatedStage.wasExecuted();
         if (shouldExecute) {
+            this.instrumentationStrategy.applyTo(activatedStage);
             Executor executor = this.getOrCreateExecutorFor(activatedStage);
             final ExecutionProfile executionProfile = this.submit(activatedStage, executor);
             this.executionProfile.merge(executionProfile);
@@ -183,10 +195,11 @@ public class CrossPlatformExecutor {
         final ExecutionProfile executionProfile = executor.execute(stage);
         long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime));
-        executionProfile.getCardinalities().forEach((channel, cardinality) ->
-                CrossPlatformExecutor.this.logger.debug("Cardinality of {}: actual {}, estimated {}",
-                        channel, cardinality, channel.getCardinalityEstimate())
-        );
+//        throw new RuntimeException("todo");
+//        executionProfile.getCardinalities().forEach((channel, cardinality) ->
+//                CrossPlatformExecutor.this.logger.debug("Cardinality of {}: actual {}, estimated {}",
+//                        channel, cardinality, channel.getCardinalityEstimate(optimizationContext))
+//        );
         return executionProfile;
     }
 
@@ -213,9 +226,14 @@ public class CrossPlatformExecutor {
     private void tryToActivateSuccessors(ExecutionStage processedStage, Collection<ExecutionStage> collector) {
         for (ExecutionStage succeedingStage : processedStage.getSuccessors()) {
             final int newCompletedPredecessors = this.predecessorCounter.increment(succeedingStage);
+            this.logger.info("{} activated {} to {}/{}.", processedStage, succeedingStage, newCompletedPredecessors,
+                    succeedingStage.getPredecessors().size());
             if (newCompletedPredecessors == succeedingStage.getPredecessors().size()) {
                 collector.add(succeedingStage);
                 this.predecessorCounter.remove(succeedingStage);
+            } else {
+                assert newCompletedPredecessors < succeedingStage.getPredecessors().size() :
+                String.format("Activated %s too often.", succeedingStage);
             }
         }
     }
@@ -229,6 +247,10 @@ public class CrossPlatformExecutor {
      */
     public State captureState() {
         return new State(this);
+    }
+
+    public void shutdown() {
+        this.executors.values().forEach(Executor::dispose);
     }
 
     /**

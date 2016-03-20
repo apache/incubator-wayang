@@ -2,7 +2,7 @@ package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkGlobalReduceOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -26,7 +26,7 @@ public class GlobalReduceMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "reduce", new GlobalReduceOperator<>(null, null), false);
+                "reduce", new GlobalReduceOperator<>(null, DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

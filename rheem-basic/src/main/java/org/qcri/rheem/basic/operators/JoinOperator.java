@@ -20,6 +20,17 @@ public class JoinOperator<InputType0, InputType1, Key>
 
     protected final TransformationDescriptor<InputType1, Key> keyDescriptor1;
 
+    public JoinOperator(TransformationDescriptor<InputType0, Key> keyDescriptor0,
+                        TransformationDescriptor<InputType1, Key> keyDescriptor1) {
+        super(DataSetType.createDefault(keyDescriptor0.getInputType()),
+                DataSetType.createDefault(keyDescriptor1.getInputType()),
+                JoinOperator.<InputType0, InputType1>createOutputDataSetType(),
+                true);
+        this.keyDescriptor0 = keyDescriptor0;
+        this.keyDescriptor1 = keyDescriptor1;
+
+    }
+
     public JoinOperator(DataSetType<InputType0> inputType0,
                         DataSetType<InputType1> inputType1,
                         TransformationDescriptor<InputType0, Key> keyDescriptor0,

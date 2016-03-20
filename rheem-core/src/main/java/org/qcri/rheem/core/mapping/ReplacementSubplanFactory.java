@@ -1,14 +1,10 @@
 package org.qcri.rheem.core.mapping;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
-import org.qcri.rheem.core.plan.rheemplan.Subplan;
+import org.qcri.rheem.core.plan.rheemplan.*;
 
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
 /**
  * This factory takes an {@link SubplanMatch} and derives a replacement {@link Subplan} from it.
@@ -18,8 +14,32 @@ public abstract class ReplacementSubplanFactory {
     public Operator createReplacementSubplan(SubplanMatch subplanMatch, int epoch) {
         final Operator replacementSubplan = this.translate(subplanMatch, epoch);
         this.checkSanity(subplanMatch, replacementSubplan);
+        this.copyNames(subplanMatch, replacementSubplan);
         return replacementSubplan;
     }
+
+    protected void copyNames(SubplanMatch subplanMatch, Operator replacementSubplan) {
+        if (subplanMatch.getOperatorMatches().size() == 1) {
+            final OperatorMatch operatorMatch = subplanMatch.getOperatorMatches().values().stream().findAny().get();
+            final Operator operator = operatorMatch.getOperator();
+            String operatorName;
+            if (operator instanceof OperatorBase && (operatorName = ((OperatorBase) operator).getName()) != null) {
+                this.setNameTo(operatorName, replacementSubplan);
+            }
+        }
+    }
+
+    private void setNameTo(String operatorName, Operator targetOperator) {
+        if (targetOperator instanceof Subplan || targetOperator instanceof OperatorAlternative) {
+            // Minor: Propagate names to subplans.
+        } else if (targetOperator instanceof ActualOperator && targetOperator instanceof OperatorBase) {
+            final OperatorBase operatorBase = (OperatorBase) targetOperator;
+            if (operatorBase.getName() == null) {
+                operatorBase.setName(operatorName);
+            }
+        }
+    }
+
 
     protected void checkSanity(SubplanMatch subplanMatch, Operator replacementSubplan) {
         if (replacementSubplan.getNumInputs() != subplanMatch.getInputMatch().getOperator().getNumInputs()) {

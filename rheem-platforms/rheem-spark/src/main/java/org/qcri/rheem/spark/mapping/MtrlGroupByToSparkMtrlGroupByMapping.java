@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.mapping;
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkMaterializedGroupByOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -22,7 +23,7 @@ public class MtrlGroupByToSparkMtrlGroupByMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "operator", new MaterializedGroupByOperator<>(null, null), false);
+                "operator", new MaterializedGroupByOperator<>(null, DataSetType.none(), DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -32,8 +33,9 @@ public class MtrlGroupByToSparkMtrlGroupByMapping implements Mapping {
         protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final MaterializedGroupByOperator<?, ?> originalOperator = (MaterializedGroupByOperator<?, ?>) subplanMatch.getMatch("operator").getOperator();
             return new SparkMaterializedGroupByOperator<>(
-                    originalOperator.getType().unchecked(),
-                    originalOperator.getKeyDescriptor().unchecked()
+                    originalOperator.getKeyDescriptor().unchecked(),
+                    originalOperator.getInputType().unchecked(),
+                    originalOperator.getOutputType().uncheckedGroup()
             ).at(epoch);
         }
     }

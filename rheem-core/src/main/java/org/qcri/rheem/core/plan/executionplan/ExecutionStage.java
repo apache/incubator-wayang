@@ -86,7 +86,7 @@ public class ExecutionStage {
         task.setStage(this);
     }
 
-    public void markAsStartTast(ExecutionTask executionTask) {
+    public void markAsStartTask(ExecutionTask executionTask) {
         Validate.isTrue(executionTask.getStage() == this);
         this.startTasks.add(executionTask);
     }
@@ -109,11 +109,12 @@ public class ExecutionStage {
 
     @Override
     public String toString() {
-        return String.format("%s[%s-%d:%d]",
+        return String.format("%s[%s-%d:%d-%6x]",
                 this.getClass().getSimpleName(),
                 this.platformExecution.getPlatform().getName(),
                 this.platformExecution.getSequenceNumber(),
-                this.sequenceNumber);
+                this.sequenceNumber,
+                this.hashCode());
     }
 
     /**
@@ -152,7 +153,7 @@ public class ExecutionStage {
     public String toExtensiveString() {
         final StringBuilder sb = new StringBuilder();
         this.toExtensiveString(sb);
-        if (sb.charAt(sb.length() - 1) == '\n') sb.setLength(sb.length() - 1);
+        if (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\n') sb.setLength(sb.length() - 1);
         return sb.toString();
     }
 

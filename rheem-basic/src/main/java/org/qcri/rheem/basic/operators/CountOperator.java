@@ -25,6 +25,15 @@ public class CountOperator<Type> extends UnaryToUnaryOperator<Type, Long> {
         super(type, DataSetType.createDefault(Long.class), false, null);
     }
 
+    /**
+     * Creates a new instance.
+     *
+     * @param typeClass type of the stream elements
+     */
+    public CountOperator(Class<Type> typeClass) {
+        this(DataSetType.createDefault(typeClass));
+    }
+
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(
             final int outputIndex,

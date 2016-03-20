@@ -1,12 +1,12 @@
 package org.qcri.rheem.spark.channels;
 
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.operators.SparkBroadcastOperator;
-import org.qcri.rheem.spark.platform.SparkPlatform;
 
 /**
  * {@link Channel} that represents a broadcasted value.
@@ -17,53 +17,54 @@ public class BroadcastChannel extends Channel {
 
     private static final boolean IS_INTERNAL = true;
 
-    protected BroadcastChannel(ExecutionTask producer, int outputIndex, CardinalityEstimate cardinalityEstimate) {
-        super(producer, outputIndex, cardinalityEstimate);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(
+            BroadcastChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL && IS_REUSABLE);
+
+    protected BroadcastChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+        super(descriptor, outputSlot);
     }
 
     private BroadcastChannel(BroadcastChannel parent) {
         super(parent);
     }
 
-    @Override
-    public boolean isReusable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterStageCapable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterPlatformCapable() {
-        return IS_REUSABLE & !IS_INTERNAL;
-    }
 
     @Override
     public BroadcastChannel copy() {
         return new BroadcastChannel(this);
     }
 
-    public static class Initializer implements ChannelInitializer {
+    /**
+     * {@link SparkChannelInitializer} for the {@link BroadcastChannel}.
+     */
+    public static class Initializer implements SparkChannelInitializer {
 
         @Override
-        public Channel setUpOutput(ExecutionTask executionTask, int index) {
-            assert executionTask.getOperator().getPlatform() == SparkPlatform.getInstance();
+        public RddChannel provideRddChannel(Channel channel, OptimizationContext optimizationContext) {
+            throw new UnsupportedOperationException("Not yet implemented.");
+        }
+
+        @Override
+        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
+            final SparkChannelInitializer rddInitializer = this.getChannelManager().getChannelInitializer(RddChannel.DESCRIPTOR);
+            final Tuple<Channel, Channel> rddChannelSetup = rddInitializer.setUpOutput(RddChannel.DESCRIPTOR, outputSlot, optimizationContext);
+            Channel broadcastChannel = this.setUpOutput(descriptor, rddChannelSetup.getField1(), optimizationContext);
+            return new Tuple<>(rddChannelSetup.getField0(), broadcastChannel);
+        }
+
+        @Override
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
+            assert descriptor == BroadcastChannel.DESCRIPTOR;
 
             // Set up an intermediate Channel at first.
-            final Platform platform = executionTask.getOperator().getPlatform();
-            final ChannelInitializer rddChannelInitializer = platform.getChannelManager().getChannelInitializer(RddChannel.class);
-            final Channel rddChannel = rddChannelInitializer.setUpOutput(executionTask, index);
+            final RddChannel rddChannel = this.createRddChannel(source, optimizationContext);
 
             // Next, broadcast the data.
             final ExecutionTask broadcastTask = rddChannel.getConsumers().stream()
                     .filter(consumer -> consumer.getOperator() instanceof SparkBroadcastOperator)
                     .findAny()
                     .orElseGet(() -> {
-                        SparkBroadcastOperator sbo = new SparkBroadcastOperator(executionTask.getOperator().getOutput(index).getType());
-                        sbo.getInput(0).setCardinalityEstimate(rddChannel.getCardinalityEstimate());
-                        sbo.getOutput(0).setCardinalityEstimate(rddChannel.getCardinalityEstimate());
+                        SparkBroadcastOperator sbo = new SparkBroadcastOperator(source.getDataSetType());
                         ExecutionTask task = new ExecutionTask(sbo);
                         rddChannel.addConsumer(task, 0);
                         return task;
@@ -74,24 +75,11 @@ public class BroadcastChannel extends Channel {
                 assert broadcastTask.getOutputChannel(0) instanceof BroadcastChannel;
                 return broadcastTask.getOutputChannel(0);
             } else {
-                return new BroadcastChannel(broadcastTask, 0, rddChannel.getCardinalityEstimate());
+                final BroadcastChannel broadcastChannel = new BroadcastChannel(descriptor, broadcastTask.getOperator().getOutput(0));
+                broadcastTask.setOutputChannel(0, broadcastChannel);
+                source.addSibling(broadcastChannel);
+                return broadcastChannel;
             }
-        }
-
-        @Override
-        public void setUpInput(Channel channel, ExecutionTask executionTask, int index) {
-            assert channel instanceof BroadcastChannel;
-            channel.addConsumer(executionTask, index);
-        }
-
-        @Override
-        public boolean isReusable() {
-            return IS_REUSABLE;
-        }
-
-        @Override
-        public boolean isInternal() {
-            return IS_INTERNAL;
         }
     }
 

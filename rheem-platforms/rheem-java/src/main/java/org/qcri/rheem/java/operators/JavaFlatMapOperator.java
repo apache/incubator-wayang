@@ -11,7 +11,7 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Function;
-import java.util.stream.Stream;
+import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
 /**
@@ -28,7 +28,13 @@ public class JavaFlatMapOperator<InputType, OutputType>
      */
     public JavaFlatMapOperator(DataSetType inputType, DataSetType outputType,
                                FlatMapDescriptor<InputType, OutputType> functionDescriptor) {
-        super(inputType, outputType, functionDescriptor);
+        super(functionDescriptor, inputType, outputType);
+    }
+
+    @Override
+    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
+        final Function<InputType, Iterable<OutputType>> udf = compiler.compile(this.functionDescriptor);
+        JavaExecutor.openFunction(this, udf, inputs);
     }
 
     @Override

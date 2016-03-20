@@ -1,8 +1,10 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * This is not an {@link Operator} in its own right. However, it contains a set of operators and can redirect
@@ -34,11 +36,26 @@ public interface OperatorContainer {
     <T> Collection<InputSlot<T>> followInput(InputSlot<T> inputSlot);
 
     /**
+     * @see #followInput(InputSlot)
+     */
+    @SuppressWarnings("unchecked")
+    default Collection<InputSlot<?>> followInputUnchecked(InputSlot<?> inputSlot) {
+        return (Collection<InputSlot<?>>) (Collection) this.followInput(inputSlot);
+    }
+
+    /**
      * Enter this container. This container's {@link CompositeOperator} needs to be a sink.
      *
      * @return the sink operator within this subplan
      */
     Operator getSink();
+
+    /**
+     * @return whether this container corresponds to a sink
+     */
+    default boolean isSink() {
+        return this.toOperator().isSink();
+    }
 
     /**
      * Enter the encased plan by following an {@code outputSlot} of the encasing {@link CompositeOperator}.
@@ -75,23 +92,79 @@ public interface OperatorContainer {
 
     /**
      * Propagates the {@link CardinalityEstimate} of the given {@link InputSlot} to inner, mapped {@link InputSlot}s
+     *
+     * @see Operator#propagateInputCardinality(int, OptimizationContext.OperatorContext)
      */
-    default void propagateCardinality(InputSlot<?> inputSlot) {
-        assert inputSlot.getOwner() == this.toOperator();
-        final Collection<? extends InputSlot<?>> innerInputs = this.followInput(inputSlot);
+    default void propagateInputCardinality(int inputIndex,
+                                           OptimizationContext.OperatorContext operatorContext) {
+        final CompositeOperator compositeOperator = this.toOperator();
+        assert operatorContext.getOperator() == compositeOperator;
+        assert 0 <= inputIndex && inputIndex <= compositeOperator.getNumInputs();
+        final Collection<? extends InputSlot<?>> innerInputs = this.followInput(this.toOperator().getInput(inputIndex));
+
         for (InputSlot<?> innerInput : innerInputs) {
-            innerInput.getOwner().propagateInputCardinality(innerInput.getIndex(), inputSlot.getCardinalityEstimate());
+            Collection<OptimizationContext> innerOptimizationCtxs =
+                    this.getInnerInputOptimizationContext(innerInput, operatorContext.getOptimizationContext());
+            for (OptimizationContext innerOptimizationCtx : innerOptimizationCtxs) {
+                // Identify the appropriate OperatorContext.
+                OptimizationContext.OperatorContext innerOperatorCtx = innerOptimizationCtx.getOperatorContext(innerInput.getOwner());
+
+                // Update the CardinalityEstimate.
+                final CardinalityEstimate cardinality = operatorContext.getInputCardinality(inputIndex);
+                innerOperatorCtx.setInputCardinality(innerInput.getIndex(), cardinality);
+
+                // Continue the propagation.
+                innerInput.getOwner().propagateInputCardinality(innerInput.getIndex(), innerOperatorCtx);
+            }
         }
     }
 
     /**
      * Propagates the {@link CardinalityEstimate} of the given {@link OutputSlot} to inner, mapped {@link OutputSlot}s
+     *
+     * @see Operator#propagateOutputCardinality(int, OptimizationContext.OperatorContext)
      */
-    default void propagateCardinality(OutputSlot<?> outputSlot) {
-        assert outputSlot.getOwner() == this.toOperator();
-        final OutputSlot<?> innerOutput = this.traceOutput(outputSlot);
+    default void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorCtx) {
+        final CompositeOperator compositeOperator = this.toOperator();
+        assert operatorCtx.getOperator() == compositeOperator;
+        final OutputSlot<?> innerOutput = this.traceOutput(compositeOperator.getOutput(outputIndex));
+
         if (innerOutput != null) {
-            innerOutput.getOwner().propagateOutputCardinality(innerOutput.getIndex(), outputSlot.getCardinalityEstimate());
+            // Identify the appropriate OperatorContext.
+            OptimizationContext innerOptimizationCtx = operatorCtx.getOptimizationContext();
+            OptimizationContext.OperatorContext innerOperatorCtx = innerOptimizationCtx.getOperatorContext(innerOutput.getOwner());
+
+            // Update the CardinalityEstimate.
+            final CardinalityEstimate cardinality = operatorCtx.getOutputCardinality(outputIndex);
+            innerOperatorCtx.setOutputCardinality(innerOutput.getIndex(), cardinality);
+
+            // Continue the propagation.
+            innerOutput.getOwner().propagateOutputCardinality(innerOutput.getIndex(), innerOperatorCtx);
         }
+    }
+
+    /**
+     * Retrieve those {@link OptimizationContext}s that represent the state when this instance is entered.
+     *
+     * @param innerInput               the inner {@link InputSlot} whose {@link OptimizationContext}s are requested
+     * @param outerOptimizationContext the {@link OptimizationContext} in that this instance resides
+     * @return the inner {@link OptimizationContext}s
+     */
+    default Collection<OptimizationContext> getInnerInputOptimizationContext(
+            InputSlot<?> innerInput,
+            OptimizationContext outerOptimizationContext) {
+        // Usually the same.
+        return Collections.singleton(outerOptimizationContext);
+    }
+
+    /**
+     * Retrieve that {@link OptimizationContext} that represents the state when this instance is exited.
+     *
+     * @param outerOptimizationContext the {@link OptimizationContext} in that this instance resides
+     * @return the inner {@link OptimizationContext}
+     */
+    default OptimizationContext getInnerOutputOptimizationContext(OptimizationContext outerOptimizationContext) {
+        // Usually the same.
+        return outerOptimizationContext;
     }
 }

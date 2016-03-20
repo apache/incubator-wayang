@@ -207,6 +207,20 @@ public class JavaIntegrationIT {
     }
 
     @Test
+    public void testSimpleLoop() throws URISyntaxException {
+        // Build the RheemPlan.
+        final List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.simpleLoop(3, collector, 0, 1, 2);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+        System.out.println(collector);
+    }
+
+    @Test
     public void testBroadcasts() {
         Collection<Integer> broadcastedValues = Arrays.asList(1, 2, 3, 4);
         Collection<Integer> mainValues = Arrays.asList(2, 4, 6, 2);
@@ -267,8 +281,6 @@ public class JavaIntegrationIT {
         CollectionSource<Integer> mainSource = new CollectionSource<>(mainValues,
                 integerDataSetType);
         MapOperator<Integer, Integer> mulitply = new MapOperator<>(
-                integerDataSetType,
-                integerDataSetType,
                 new TransformationDescriptor<>(
                         new FunctionDescriptor.ExtendedSerializableFunction<Integer, Integer>() {
 
@@ -287,7 +299,8 @@ public class JavaIntegrationIT {
                         },
                         DataUnitType.createBasic(Integer.class),
                         DataUnitType.createBasic(Integer.class)
-                )
+                ), integerDataSetType,
+                integerDataSetType
         );
         final LocalCallbackSink<Integer> collectingSink = LocalCallbackSink.createCollectingSink(collectedValues,
                 integerDataSetType);

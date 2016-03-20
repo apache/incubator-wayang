@@ -1,9 +1,7 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for {@link Operator}s.
@@ -117,5 +115,24 @@ public class Operators {
 
     public static final Operator slotlessOperator() {
         return slotlessOperator(null);
+    }
+
+    /**
+     * Collect {@link Operator}s within this instance that are connected to an outer {@link InputSlot}, or the source
+     * {@link Operator}.
+     *
+     * @param operatorContainer whose input {@link Operator}s are to be collected
+     * @return the collected {@link Operator}s
+     */
+    public static Collection<Operator> collectStartOperators(OperatorContainer operatorContainer) {
+        final CompositeOperator compositeOperator = operatorContainer.toOperator();
+        if (compositeOperator.isSource()) {
+            return Collections.singleton(operatorContainer.getSource());
+        }
+
+        return Arrays.stream(compositeOperator.getAllInputs())
+                .flatMap(inputSlot -> operatorContainer.getSlotMapping().resolveDownstream(inputSlot).stream())
+                .map(InputSlot::getOwner)
+                .collect(Collectors.toSet());
     }
 }

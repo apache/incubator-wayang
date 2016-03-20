@@ -1,7 +1,6 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
@@ -26,7 +25,7 @@ public class SparkMapOperator<InputType, OutputType>
      */
     public SparkMapOperator(DataSetType inputType, DataSetType outputType,
                             TransformationDescriptor<InputType, OutputType> functionDescriptor) {
-        super(inputType, outputType, functionDescriptor);
+        super(functionDescriptor, inputType, outputType);
     }
 
     @Override

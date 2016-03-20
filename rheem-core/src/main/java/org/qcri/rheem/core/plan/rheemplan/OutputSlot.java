@@ -3,6 +3,8 @@ package org.qcri.rheem.core.plan.rheemplan;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * An output slot declares an output of an {@link Operator}.
@@ -34,19 +36,27 @@ public class OutputSlot<T> extends Slot<T> {
         }
 
         for (int i = 0; i < victim.getNumOutputs(); i++) {
-            final List<? extends InputSlot<?>> occupiedSlots = new ArrayList<>(victim.getOutput(i).getOccupiedSlots());
-            for (InputSlot<?> occupiedSlot : occupiedSlots) {
-                victim.getOutput(i).unchecked().disconnectFrom(occupiedSlot.unchecked());
-                thief.getOutput(i).unchecked().connectTo(occupiedSlot.unchecked());
-            }
+            thief.getOutput(i).unchecked().stealOccupiedSlots(victim.getOutput(i).unchecked());
         }
     }
 
-    public OutputSlot(Slot blueprint, Operator owner) {
+
+    /**
+     * Takes away the occupied {@link InputSlot}s of the {@code victim} and connects it to this instance.
+     */
+    public void stealOccupiedSlots(OutputSlot<T> victim) {
+        final List<InputSlot<T>> occupiedSlots = new ArrayList<>(victim.getOccupiedSlots());
+        for (InputSlot<T> occupiedSlot : occupiedSlots) {
+            victim.disconnectFrom(occupiedSlot);
+            this.connectTo(occupiedSlot);
+        }
+    }
+
+    public OutputSlot(Slot<T> blueprint, Operator owner) {
         this(blueprint.getName(), owner, blueprint.getType());
     }
 
-    public OutputSlot(String name, Operator owner, DataSetType type) {
+    public OutputSlot(String name, Operator owner, DataSetType<T> type) {
         super(name, owner, type);
     }
 
@@ -60,7 +70,7 @@ public class OutputSlot<T> extends Slot<T> {
     }
 
     public OutputSlot copyFor(Operator owner) {
-        return new OutputSlot(this, owner);
+        return new OutputSlot<>(this, owner);
     }
 
     /**
@@ -84,6 +94,7 @@ public class OutputSlot<T> extends Slot<T> {
 
         this.occupiedSlots.remove(inputSlot);
         inputSlot.setOccupant(null);
+        inputSlot.notifyDetached();
     }
 
     public List<InputSlot<T>> getOccupiedSlots() {
@@ -121,4 +132,29 @@ public class OutputSlot<T> extends Slot<T> {
 
         return resolvedOutputs;
     }
+
+    /**
+     * Collects all {@link OutputSlot}s that are related to this instance via {@link OperatorContainer}s.
+     *
+     * @return all the matching {@link OutputSlot}s
+     */
+    public Set<OutputSlot<T>> collectRelatedSlots() {
+        return this.getOwner().getOutermostOutputSlots(this).stream().flatMap(
+                outerOutput -> {
+                    final Operator outerOperator = outerOutput.getOwner();
+                    return Stream.concat(
+                            Stream.of(outerOutput),
+                            outerOperator.collectMappedOutputSlots(outerOutput).stream()
+                    );
+                }
+        ).collect(Collectors.toSet());
+    }
+
+    /**
+     * @return whether this instance is designated to open feedback loops (i.e., data flow cycles)
+     */
+    public boolean isFeedforward() {
+        return this.getOwner().isFeedforwardOutput(this);
+    }
+
 }

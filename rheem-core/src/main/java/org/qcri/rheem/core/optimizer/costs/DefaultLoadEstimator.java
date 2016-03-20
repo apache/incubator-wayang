@@ -14,6 +14,7 @@ import java.util.stream.LongStream;
 public class DefaultLoadEstimator extends LoadEstimator {
 
     public static final int UNSPECIFIED_NUM_SLOTS = -1;
+
     private final double correctnessProbablity;
 
     private final int numInputs, numOutputs;
@@ -24,7 +25,16 @@ public class DefaultLoadEstimator extends LoadEstimator {
                                 int numOutputs,
                                 double correctnessProbablity,
                                 ToLongBiFunction<long[], long[]> singlePointFunction) {
+        this(numInputs, numOutputs, correctnessProbablity, null, singlePointFunction);
+    }
 
+    public DefaultLoadEstimator(int numInputs,
+                                int numOutputs,
+                                double correctnessProbablity,
+                                CardinalityEstimate nullCardinalityReplacement,
+                                ToLongBiFunction<long[], long[]> singlePointFunction) {
+
+        super(nullCardinalityReplacement);
         this.numInputs = numInputs;
         this.numOutputs = numOutputs;
         this.correctnessProbablity = correctnessProbablity;
@@ -32,12 +42,14 @@ public class DefaultLoadEstimator extends LoadEstimator {
     }
 
     /**
-     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element.
+     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element. Missing
+     * {@link CardinalityEstimate}s are interpreted as a cardinality of {@code 0}.
      */
     public static LoadEstimator createIOLinearEstimator(ExecutionOperator operator, long loadPerCardinalityUnit) {
         return new DefaultLoadEstimator(operator.getNumInputs(),
                 operator.getNumOutputs(),
                 0.01,
+                CardinalityEstimate.EMPTY_ESTIMATE,
                 (inputCards, outputCards) ->
                         loadPerCardinalityUnit * LongStream.concat(
                                 Arrays.stream(inputCards),
@@ -101,9 +113,10 @@ public class DefaultLoadEstimator extends LoadEstimator {
         for (int combinationIdentifier = 0; combinationIdentifier < numCombinations; combinationIdentifier++) {
             for (int pos = 0; pos < cardinalityEstimates.length; pos++) {
                 int bit = (combinationIdentifier >>> pos) & 0x1;
+                final CardinalityEstimate cardinalityEstimate = this.replaceNullCardinality(cardinalityEstimates[pos]);
                 combinations[combinationIdentifier][pos] = bit == 0 ?
-                        cardinalityEstimates[pos].getLowerEstimate() :
-                        cardinalityEstimates[pos].getUpperEstimate();
+                        cardinalityEstimate.getLowerEstimate() :
+                        cardinalityEstimate.getUpperEstimate();
             }
         }
 

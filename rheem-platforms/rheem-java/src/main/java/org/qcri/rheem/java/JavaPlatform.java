@@ -36,7 +36,6 @@ public class JavaPlatform extends Platform {
 
     private void initializeMappings() {
         this.mappings.add(new TextFileSourceToJavaTextFileSourceMapping());
-        this.mappings.add(new StdoutSinkToJavaStdoutSinkMapping());
         this.mappings.add(new MapOperatorToJavaMapOperatorMapping());
         this.mappings.add(new ReduceByOperatorToJavaReduceByOperatorMapping());
         this.mappings.add(new JavaCollectionSourceMapping());
@@ -50,6 +49,7 @@ public class JavaPlatform extends Platform {
         this.mappings.add(new FilterToJavaFilterMapping());
         this.mappings.add(new UnionAllToJavaUnionAllMapping());
         this.mappings.add(new CartesianToJavaCartesianMapping());
+        this.mappings.add(new LoopToJavaLoopMapping());
     }
 
     @Override

@@ -1,7 +1,6 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -32,9 +31,8 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
                 new SparkGlobalReduceOperator<>(
                         DataSetType.createDefaultUnchecked(Tuple2.class),
                         new ReduceDescriptor<>(
-                                DataUnitType.createGrouped(Integer.class),
-                                DataUnitType.createBasic(Integer.class),
-                                (a, b) -> a + b
+                                (a, b) -> a + b, DataUnitType.createGrouped(Integer.class),
+                                DataUnitType.createBasic(Integer.class)
                         )
                 );
 
@@ -67,9 +65,8 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
                 new SparkGlobalReduceOperator<>(
                         DataSetType.createDefaultUnchecked(Tuple2.class),
                         new ReduceDescriptor<>(
-                                DataUnitType.createGrouped(Integer.class),
-                                DataUnitType.createBasic(Integer.class),
-                                (a, b) -> a + b
+                                (a, b) -> a + b, DataUnitType.createGrouped(Integer.class),
+                                DataUnitType.createBasic(Integer.class)
                         )
                 );
 

@@ -1,25 +1,23 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.util.MultiMap;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
- * Represents a collection of {@link PartialPlan}s that all implement the same section of a {@link RheemPlan} (which
+ * Represents a collection of {@link PlanImplementation}s that all implement the same section of a {@link RheemPlan} (which
  * is assumed to contain {@link OperatorAlternative}s in general).
- * <p>
- * <p><i>TODO: Describe algebra.</i>
- * The outputs are mapped to this {@link RheemPlan} if the plans are partial.</p>
+ * <p>Instances can be mutated and combined in algebraic manner. In particular, instances can be unioned if they implement
+ * the same part of the {@link RheemPlan}, concatenated if there are contact points, and pruned.</p>
  */
 public class PlanEnumeration {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(PlanEnumeration.class);
 
     /**
      * The {@link OperatorAlternative}s for that an {@link OperatorAlternative.Alternative} has been picked.
@@ -27,32 +25,24 @@ public class PlanEnumeration {
     final Set<OperatorAlternative> scope;
 
     /**
-     * Outermost {@link InputSlot}s that are not satisfied in this instance.
+     * {@link InputSlot}s that are not satisfied in this instance.
      */
-    final Set<InputSlot> requestedInputSlots;
+    final Set<InputSlot<?>> requestedInputSlots;
 
     /**
      * Combinations of {@link OutputSlot}s and {@link InputSlot}, where the former is served by this instance and the
      * latter is not yet assigned in this instance. If there is no such {@link InputSlot} (because we are enumerating
      * an {@link OperatorAlternative.Alternative}, then we put {@code null} instead of it.
      */
-    final Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots;
+    final Set<Tuple<OutputSlot<?>, InputSlot<?>>> servingOutputSlots;
 
     /**
-     * {@link Operator}s (potentially {@link OperatorAlternative}s) that do not have an {@link OutputSlot}s that is
-     * connected to any other {@link Operator} within this instance.
-     * <p>
-     * TODO: If it turns out that we don't need them, remove.
+     * {@link PlanImplementation}s contained in this instance.
      */
-    final Set<Operator> terminalOperators = new HashSet<>();
+    final Collection<PlanImplementation> planImplementations;
 
     /**
-     * {@link PartialPlan}s contained in this instance.
-     */
-    final Collection<PartialPlan> partialPlans;
-
-    /**
-     *
+     * {@link ExecutionTask}s that have already been executed.
      */
     final Map<ExecutionOperator, ExecutionTask> executedTasks;
 
@@ -67,8 +57,8 @@ public class PlanEnumeration {
      * Creates a new instance.
      */
     private PlanEnumeration(Set<OperatorAlternative> scope,
-                            Set<InputSlot> requestedInputSlots,
-                            Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots) {
+                            Set<InputSlot<?>> requestedInputSlots,
+                            Set<Tuple<OutputSlot<?>, InputSlot<?>>> servingOutputSlots) {
         this(scope, requestedInputSlots, servingOutputSlots, new LinkedList<>(), new HashMap<>());
     }
 
@@ -76,14 +66,14 @@ public class PlanEnumeration {
      * Creates a new instance.
      */
     private PlanEnumeration(Set<OperatorAlternative> scope,
-                            Set<InputSlot> requestedInputSlots,
-                            Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots,
-                            Collection<PartialPlan> partialPlans,
+                            Set<InputSlot<?>> requestedInputSlots,
+                            Set<Tuple<OutputSlot<?>, InputSlot<?>>> servingOutputSlots,
+                            Collection<PlanImplementation> planImplementations,
                             Map<ExecutionOperator, ExecutionTask> executedTasks) {
         this.scope = scope;
         this.requestedInputSlots = requestedInputSlots;
         this.servingOutputSlots = servingOutputSlots;
-        this.partialPlans = partialPlans;
+        this.planImplementations = planImplementations;
         this.executedTasks = executedTasks;
     }
 
@@ -93,26 +83,47 @@ public class PlanEnumeration {
      * @param operator the mentioned {@link ExecutionOperator}
      * @return the new instance
      */
-    static PlanEnumeration createSingleton(ExecutionOperator operator) {
+    static PlanEnumeration createSingleton(ExecutionOperator operator, OptimizationContext optimizationContext) {
         final PlanEnumeration enumeration = createFor(operator, operator);
-        enumeration.add(enumeration.createSingletonPartialPlan(operator));
+        final PlanImplementation singletonPlanImplementation = enumeration.createSingletonPartialPlan(operator, optimizationContext);
+        enumeration.add(singletonPlanImplementation);
         return enumeration;
     }
 
+    /**
+     * Creates a new instance.
+     *
+     * @param inputOperator  provides the requested {@link InputSlot}s
+     * @param outputOperator provides the requested {@link OutputSlot}s
+     * @return the new instance
+     */
     static PlanEnumeration createFor(Operator inputOperator, Operator outputOperator) {
+        return createFor(inputOperator, input -> true, outputOperator, output -> true);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param inputOperator       provides the requested {@link InputSlot}s
+     * @param inputSlotPredicate  can narrow down the {@link InputSlot}s
+     * @param outputOperator      provides the requested {@link OutputSlot}s
+     * @param outputSlotPredicate can narrow down the {@link OutputSlot}s
+     * @return the new instance
+     */
+    static PlanEnumeration createFor(Operator inputOperator,
+                                     Predicate<InputSlot<?>> inputSlotPredicate,
+                                     Operator outputOperator,
+                                     Predicate<OutputSlot<?>> outputSlotPredicate) {
+
         final PlanEnumeration instance = new PlanEnumeration();
-        if (inputOperator.isSource()) {
-            instance.terminalOperators.add(inputOperator);
-        } else {
-            for (InputSlot<?> inputSlot : inputOperator.getAllInputs()) {
+        for (InputSlot<?> inputSlot : inputOperator.getAllInputs()) {
+            if (inputSlotPredicate.test(inputSlot)) {
                 instance.requestedInputSlots.add(inputSlot);
             }
         }
 
-        if (outputOperator.isSink()) {
-            instance.terminalOperators.add(outputOperator);
-        } else {
-            for (OutputSlot outputSlot : outputOperator.getAllOutputs()) {
+        for (OutputSlot outputSlot : outputOperator.getAllOutputs()) {
+            if (outputSlotPredicate.test(outputSlot)) {
                 List<InputSlot> inputSlots = outputSlot.getOccupiedSlots();
                 if (inputSlots.isEmpty()) {
                     inputSlots = Collections.singletonList(null); // InputSlot is probably in a surrounding plan.
@@ -126,6 +137,9 @@ public class PlanEnumeration {
         return instance;
     }
 
+    /**
+     * Asserts that two given instances enumerate the same part of a {@link RheemPlan}.
+     */
     private static void assertMatchingInterface(PlanEnumeration instance1, PlanEnumeration instance2) {
         if (!instance1.requestedInputSlots.equals(instance2.requestedInputSlots)) {
             throw new IllegalArgumentException("Input slots are not matching.");
@@ -135,157 +149,224 @@ public class PlanEnumeration {
             throw new IllegalArgumentException("Output slots are not matching.");
         }
 
-        if (!instance1.terminalOperators.equals(instance2.terminalOperators)) {
-            throw new IllegalArgumentException("Terminal operators are not matching.");
-        }
     }
 
     /**
-     * Join two instances. This potentially increases number of {@link #partialPlans} to the product
-     * of the numbers of partial plans of the two instances.
-     * <p>The join is guided by two interaction points of the two instances.
-     * <ol>
-     * <li><b>Common scope.</b> If the two instances have a common scope (they both picked assignments for the some
-     * {@link OperatorAlternative}(s)), then only those pairs of {@link PartialPlan}s can be merged, that agree
-     * on this assignment.</li>
-     * <li><b>Concatenation.</b> If one instance provides an {@link OutputSlot} that feeds the {@link InputSlot} of
-     * the other instance (concatenation point), then pairs of {@link PartialPlan}s to be merged must be compatible
-     * in this concatenation point.</li>
-     * </ol>
-     * Without these interaction points, the join degrades basically to a Cartesian product. This is an unexpected
-     * situation.</p>
-     *
-     * @param that instance to join
-     * @return a new instance representing the join product
+     * Concatenates the {@code baseEnumeration} via its {@code openOutputSlot} to the {@code targetEnumerations}.
+     * All {@link PlanEnumeration}s should be distinct.
      */
-    public PlanEnumeration join(PlanEnumeration that) {
-        // TODO: How can we guarantee that the two instances are not incompatible (because their scopes imply
-        // different choices for some OperatorAlternatives)
+    public PlanEnumeration concatenate(OutputSlot<?> openOutputSlot,
+                                       Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
+                                       OptimizationContext optimizationContext) {
 
-        // Figure out if the two instance can be concatenated.
-        // To this end, there muse be some remaining OutputSlot of this instance that connects to an InputSlot
-        // of the other instance. At first, we collect these touchpoints.
-        final Set<InputSlot> concatenatableInputs = this.collectConcatenatableInputs(that);
-        if (concatenatableInputs.isEmpty()) {
-            LOGGER.warn("Could not find a (directed) point of touch when joining to instances.");
+        assert this.getServingOutputSlots().stream()
+                .map(Tuple::getField0)
+                .anyMatch(openOutputSlot::equals)
+                : String.format("Cannot concatenate %s: it is not a served output.", openOutputSlot);
+        assert !targetEnumerations.isEmpty();
+
+
+        PlanEnumeration result = new PlanEnumeration();
+        result.scope.addAll(this.getScope());
+        result.requestedInputSlots.addAll(this.getRequestedInputSlots());
+        result.servingOutputSlots.addAll(this.getServingOutputSlots());
+        result.executedTasks.putAll(this.getExecutedTasks());
+
+
+        for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : targetEnumerations.entrySet()) {
+            final InputSlot<?> openInputSlot = entry.getKey();
+            final PlanEnumeration targetEnumeration = entry.getValue();
+            result.scope.addAll(targetEnumeration.getScope());
+            result.requestedInputSlots.addAll(targetEnumeration.getRequestedInputSlots());
+            result.servingOutputSlots.addAll(targetEnumeration.getServingOutputSlots());
+            result.executedTasks.putAll(targetEnumeration.getExecutedTasks());
         }
 
-        //-----------------------------\\
-        // Set up #requestedInputSlots \\
-        //-----------------------------\\
+        // NB: We need to store remove the InputSlots only here, because a single targetEnumeration
+        // might service multiple InputSlots. If this targetEnumeration is then also the baseEnumeration, it might
+        // re-request already serviced InputSlots, although already deleted.
+        result.requestedInputSlots.removeAll(targetEnumerations.keySet());
+        result.servingOutputSlots.removeIf(slotService -> slotService.getField0().equals(openOutputSlot));
 
-        // Find out, which InputSlots are requested by both instances.
-        final Set<InputSlot> requestedInputSlots =
-                new HashSet<>(this.requestedInputSlots.size() + that.requestedInputSlots.size());
-        Stream.concat(this.requestedInputSlots.stream(), that.requestedInputSlots.stream())
-                .filter(requestedInput -> !concatenatableInputs.contains(requestedInput))
-                .forEach(requestedInputSlots::add);
-
-        //----------------------------\\
-        // Set up #servingOutputSlots \\
-        //----------------------------\\
-
-        // Find out, which InputSlots are served by both instances.
-        final Set<Tuple<OutputSlot, InputSlot>> servingOutputSlots =
-                new HashSet<>(this.servingOutputSlots.size() + that.servingOutputSlots.size());
-        Stream.concat(this.servingOutputSlots.stream(), that.servingOutputSlots.stream())
-                .filter(serving -> !concatenatableInputs.contains(serving.getField1()))
-                .forEach(servingOutputSlots::add);
-
-
-        //---------------\\
-        // Set up #scope \\
-        //---------------\\
-
-        // It's simply the union of both scopes.
-        final Set<OperatorAlternative> newScope = new HashSet<>(this.scope.size() + that.scope.size());
-        newScope.addAll(this.scope);
-        newScope.addAll(that.scope);
-
-        //---------------------------\\
-        // Set up #terminalOperators \\
-        //---------------------------\\
-        // NOP: We ignore them so far.
-
-        //-----------------------//
-        // Set up #executedTasks \\
-        //-----------------------//
-        final Map<ExecutionOperator, ExecutionTask> executedTasks = new HashMap<>(this.executedTasks);
-        executedTasks.putAll(that.executedTasks);
-
-        //----------------------\\
-        // Set up #partialPlans \\
-        //----------------------\\
-        PlanEnumeration planEnumeration =
-                new PlanEnumeration(newScope, requestedInputSlots, servingOutputSlots, new LinkedList<>(), executedTasks);
-        this.joinPartialPlansUsingNestedLoops(that, planEnumeration);
+        result.planImplementations.addAll(
+                this.concatenatePartialPlans(openOutputSlot, targetEnumerations, optimizationContext, result)
+        );
 
         // Build the instance.
-        return planEnumeration;
-    }
-
-
-    private Set<InputSlot> collectConcatenatableInputs(PlanEnumeration that) {
-        final Set<InputSlot> connectedInputSlots = new HashSet<>(2);
-        this.collectConcatenableInputsDownstream(that, connectedInputSlots);
-        that.collectConcatenableInputsDownstream(this, connectedInputSlots);
-        return connectedInputSlots;
-    }
-
-    private void collectConcatenableInputsDownstream(PlanEnumeration that, Set<InputSlot> collector) {
-        this.servingOutputSlots.stream()
-                .map(Tuple::getField1)
-                .filter(that.requestedInputSlots::contains)
-                .forEach(collector::add);
-    }
-
-    private List<OperatorAlternative> intersectScopeWith(PlanEnumeration that) {
-        return this.scope.stream().filter(that.scope::contains).collect(Collectors.toList());
+        return result;
     }
 
     /**
-     * Add a {@link PartialPlan} to this instance.
-     *
-     * @param partialPlan to be added
+     * Concatenates all {@link PlanImplementation}s of the {@code baseEnumeration} via its {@code openOutputSlot}
+     * to the {@code targetEnumerations}' {@link PlanImplementation}s.
+     * All {@link PlanEnumeration}s should be distinct.
      */
-    public void add(PartialPlan partialPlan) {
-        // TODO: Check if the plan conforms to this instance.
-        this.partialPlans.add(partialPlan);
-        partialPlan.setPlanEnumeration(this);
-    }
+    private Collection<PlanImplementation> concatenatePartialPlans(OutputSlot<?> openOutputSlot,
+                                                                   Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
+                                                                   OptimizationContext optimizationContext,
+                                                                   PlanEnumeration concatenationEnumeration) {
 
-    /**
-     * Joins the {@link #partialPlans} of this instance with those of {@code that} using nested loops.
-     */
-    private void joinPartialPlansUsingNestedLoops(PlanEnumeration that, PlanEnumeration target) {
-        final List<OperatorAlternative> commonScope = this.intersectScopeWith(that);
+//        // Group the base and target PlanImplementations by their operator.
+//        final MultiMap<Collection<OutputSlot<?>>, PlanImplementation> basePlanGroups =
+//                this.groupImplementationsByOutput(openOutputSlot);
+//        final List<MultiMap<Set<InputSlot<?>>, PlanImplementation>> targetPlanGroupList =
+//                groupImplementationsByInput(targetEnumerations);
+//
+//
+//        // Allocate result collector.
+//        Collection<PlanImplementation> result = new LinkedList<>();
+//
+//        // Iterate all InputSlot/OutputSlot combinations.
+//        List<Set<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>>> targetPlanGroupEntrySet =
+//                RheemCollections.map(targetPlanGroupList, MultiMap::entrySet);
+//        final Iterable<List<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>>> targetPlanGroupCrossProduct =
+//                RheemCollections.streamedCrossProduct(targetPlanGroupEntrySet);
+//        for (List<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>> targetPlanGroupEntries : targetPlanGroupCrossProduct) {
+//            // Flatten the requested InputSlots.
+//            final List<InputSlot<?>> inputs = targetPlanGroupEntries.stream()
+//                    .map(Map.Entry::getKey)
+//                    .flatMap(Collection::stream)
+//                    .distinct()
+//                    .collect(Collectors.toCollection(() -> new ArrayList<>(4)));
+//
+//            for (Map.Entry<Collection<OutputSlot<?>>, Set<PlanImplementation>> basePlanGroupEntry : basePlanGroups.entrySet()) {
+//
+//                final Collection<OutputSlot<?>> outputs = basePlanGroupEntry.getKey();
+//                for (final OutputSlot<?> output : outputs) {
+//
+//                    // Construct a Junction between the ExecutionOperators.
+//                    final Operator outputOperator = output.getOwner();
+//                    assert outputOperator.isExecutionOperator()
+//                            : String.format("Expected execution operator, found %s.", outputOperator);
+//                    final Junction junction = Junction.create(output, inputs, optimizationContext);
+//                    if (junction == null) continue;
+//
+//                    // If we found a junction, then we can enumerate all PlanImplementation combinations
+//                    final List<Set<PlanImplementation>> targetPlans = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getValue);
+//                    for (List<PlanImplementation> targetPlanList : RheemCollections.streamedCrossProduct(targetPlans)) {
+//                        for (PlanImplementation basePlan : basePlanGroupEntry.getValue()) {
+//                            PlanImplementation concatenatedPlan = basePlan.concatenate(targetPlanList, junction, concatenationEnumeration);
+//                            if (concatenatedPlan != null) {
+//                                result.add(concatenatedPlan);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        return result;
 
-        for (PartialPlan plan1 : this.partialPlans) {
-            for (PartialPlan plan2 : that.partialPlans) {
-                final PartialPlan newPartialPlan = plan1.join(plan2, commonScope, target);
-                if (newPartialPlan != null) {
-                    target.add(newPartialPlan);
+        // Simple implementation waives optimization potential.
+
+        // Allocated result collector.
+        Collection<PlanImplementation> resultCollector = new LinkedList<>();
+
+        // Iterate over the cross product of PlanImplementations.
+        List<Map.Entry<InputSlot<?>, PlanEnumeration>> targetEnumerationEntries = new ArrayList<>(targetEnumerations.entrySet());
+        List<InputSlot<?>> inputSlots = RheemCollections.map(targetEnumerationEntries, Map.Entry::getKey);
+        List<Collection<PlanImplementation>> targetEnumerationImplList = RheemCollections.map(
+                targetEnumerationEntries,
+                entry -> entry.getValue().getPlanImplementations()
+        );
+        for (List<PlanImplementation> targetImpls : RheemCollections.streamedCrossProduct(targetEnumerationImplList)) {
+            for (PlanImplementation thisImpl : this.getPlanImplementations()) {
+
+                // Concatenate the PlanImplementations.
+                final PlanImplementation concatenationImpl = thisImpl.concatenate(
+                        openOutputSlot, targetImpls, inputSlots, concatenationEnumeration, optimizationContext);
+                if (concatenationImpl != null) {
+                    resultCollector.add(concatenationImpl);
                 }
             }
         }
+
+        return resultCollector;
+    }
+
+    /**
+     * Groups all {@link #planImplementations} by their {@link ExecutionOperator} for the {@code output}. Additionally
+     * preserves the very (nested) {@link PlanImplementation} in that {@code output} resides.
+     */
+    private MultiMap<Collection<OutputSlot<?>>, Tuple<PlanImplementation, PlanImplementation>>
+    groupImplementationsByOutput(OutputSlot<?> output) {
+        // Sort the PlanEnumerations by their respective open InputSlot or OutputSlot.
+        final MultiMap<Collection<OutputSlot<?>>, Tuple<PlanImplementation, PlanImplementation>> basePlanGroups =
+                new MultiMap<>();
+        for (PlanImplementation basePlan : this.getPlanImplementations()) {
+            final Collection<Tuple<OutputSlot<?>, PlanImplementation>> execOpOutputsWithContext =
+                    basePlan.findExecutionOperatorOutputWithContext(output);
+            assert execOpOutputsWithContext != null && !execOpOutputsWithContext.isEmpty()
+                    : String.format("No outputs found for %s.", output);
+
+//       todo     basePlanGroups.putSingle(execOpOutputsWithContext, basePlan);
+        }
+        return basePlanGroups;
+    }
+
+    /**
+     * For each given instance, group the {@link #planImplementations} by their {@link ExecutionOperator} for the
+     * associated {@link InputSlot}.
+     *
+     * @param enumerations a mapping from {@link InputSlot}s to {@link PlanEnumeration}s that request this input
+     * @return a {@link List} with an element for each {@code enumerations} entry; each entry groups the
+     * {@link PlanImplementation}s of the {@link PlanEnumeration} that share the same {@link ExecutionOperator}s for
+     * the requested {@link InputSlot}
+     */
+    private static List<MultiMap<Set<InputSlot<?>>, PlanImplementation>> groupImplementationsByInput(
+            Map<InputSlot<?>, PlanEnumeration> enumerations) {
+
+        // Prepare a collector for the results.
+        List<MultiMap<Set<InputSlot<?>>, PlanImplementation>> targetPlanGroupList = new ArrayList<>(enumerations.size());
+
+        // Go over all PlanEnumerations.
+        for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : enumerations.entrySet()) {
+            // Extract the requested InputSlot and the associated PlanEnumeration requesting it.
+            final InputSlot<?> requestedInput = entry.getKey();
+            final PlanEnumeration targetEnumeration = entry.getValue();
+
+
+            MultiMap<Set<InputSlot<?>>, PlanImplementation> targetPlanGroups = new MultiMap<>();
+            for (PlanImplementation planImpl : targetEnumeration.getPlanImplementations()) {
+                final Collection<InputSlot<?>> openInput = planImpl.findExecutionOperatorInputs(requestedInput);
+                targetPlanGroups.putSingle(RheemCollections.asSet(openInput), planImpl);
+            }
+            targetPlanGroupList.add(targetPlanGroups);
+        }
+        return targetPlanGroupList;
+    }
+
+
+    /**
+     * Add a {@link PlanImplementation} to this instance.
+     *
+     * @param planImplementation to be added
+     */
+    public void add(PlanImplementation planImplementation) {
+        // TODO: Check if the plan conforms to this instance.
+        this.planImplementations.add(planImplementation);
+        assert planImplementation.getTimeEstimate() != null;
+        planImplementation.setPlanEnumeration(this);
     }
 
     /**
      * Creates a new instance for exactly one {@link ExecutionOperator}.
      *
-     * @param executionOperator will be wrapped in the new instance
+     * @param executionOperator   will be wrapped in the new instance
+     * @param optimizationContext
      * @return the new instance
      */
-    private PartialPlan createSingletonPartialPlan(ExecutionOperator executionOperator) {
-        return new PartialPlan(this, Collections.singletonList(executionOperator));
-    }
-
-    public boolean isComprehensive() {
-        return this.servingOutputSlots.isEmpty() && this.requestedInputSlots.isEmpty();
+    private PlanImplementation createSingletonPartialPlan(ExecutionOperator executionOperator, OptimizationContext optimizationContext) {
+        final PlanImplementation planImplementation = new PlanImplementation(
+                this, new HashMap<>(0), Collections.singletonList(executionOperator), optimizationContext
+        );
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(executionOperator);
+        planImplementation.addToTimeEstimate(operatorContext.getTimeEstimate());
+        return planImplementation;
     }
 
     /**
-     * Unions the {@link PartialPlan}s of this and {@code that} instance. The operation is in-place, i.e., this instance
+     * Unions the {@link PlanImplementation}s of this and {@code that} instance. The operation is in-place, i.e., this instance
      * is modified to form the result.
      *
      * @param that the instance to compute the union with
@@ -293,11 +374,11 @@ public class PlanEnumeration {
     public void unionInPlace(PlanEnumeration that) {
         assertMatchingInterface(this, that);
         this.scope.addAll(that.scope);
-        that.partialPlans.forEach(partialPlan -> {
-            this.partialPlans.add(partialPlan);
+        that.planImplementations.forEach(partialPlan -> {
+            this.planImplementations.add(partialPlan);
             partialPlan.setPlanEnumeration(this);
         });
-        that.partialPlans.clear();
+        that.planImplementations.clear();
     }
 
     /**
@@ -325,14 +406,14 @@ public class PlanEnumeration {
         }
 
         // Escape the output slots.
-        for (Tuple<OutputSlot, InputSlot> link : this.servingOutputSlots) {
+        for (Tuple<OutputSlot<?>, InputSlot<?>> link : this.servingOutputSlots) {
             if (link.field1 != null) {
                 throw new IllegalStateException("Cannot escape a connected output slot.");
             }
-            final Collection<OutputSlot> resolvedOutputSlots =
-                    alternative.getSlotMapping().resolveDownstream(link.field0);
+            final Collection<OutputSlot<Object>> resolvedOutputSlots =
+                    alternative.getSlotMapping().resolveDownstream(link.field0.unchecked());
             for (OutputSlot escapedOutput : resolvedOutputSlots) {
-                final List<InputSlot> occupiedInputs = escapedOutput.getOccupiedSlots();
+                final List<InputSlot<?>> occupiedInputs = escapedOutput.getOccupiedSlots();
                 if (occupiedInputs.isEmpty()) {
                     escapedInstance.servingOutputSlots.add(new Tuple<>(escapedOutput, null));
                 } else {
@@ -343,41 +424,43 @@ public class PlanEnumeration {
             }
         }
 
-        // Escape the terminal operators.
-        if (this.terminalOperators.size() == 1) {
-            // If there is a terminal operator (a sink or a source), then the enclosing OperatorAlternative should be
-            // one as well.
-            final Operator terminalOperator = this.terminalOperators.stream().findAny().get();
-            if ((terminalOperator.isSink() ^ operatorAlternative.isSink()) ||
-                    (terminalOperator.isSource() ^ terminalOperator.isSource()) ||
-                    !(terminalOperator.isSource() ^ terminalOperator.isSink())) {
-                throw new IllegalStateException("Operator alternative and inner operators should be consistently either a source or a sink.");
-            }
-            escapedInstance.terminalOperators.add(operatorAlternative);
-        } else if (this.terminalOperators.size() > 1) {
-            throw new IllegalStateException("More than one terminal operator cannot be escaped!");
-        }
 
-        // Escape the PartialPlan instances.
-        for (PartialPlan partialPlan : this.partialPlans) {
-            escapedInstance.partialPlans.add(partialPlan.escape(alternative, escapedInstance));
+        // Escape the PlanImplementation instances.
+        for (PlanImplementation planImplementation : this.planImplementations) {
+            escapedInstance.planImplementations.add(planImplementation.escape(alternative, escapedInstance));
         }
 
         return escapedInstance;
     }
 
-    public Collection<PartialPlan> getPartialPlans() {
-        return this.partialPlans;
+    public Collection<PlanImplementation> getPlanImplementations() {
+        return this.planImplementations;
     }
 
-//    public PlanEnumeration join(PlanEnumeration that) {
-//        this.scope.addAll(that.scope);
-//        this.requestedInputSlots.addAll(that.requestedInputSlots);
-//        this.servingOutputSlots.addAll(that.servingOutputSlots);
-//        this.terminalOperators.addAll(that.terminalOperators);
-//
-//        final List<OperatorAlternative> commonScope = this.intersectScopeWith(that);
-//
-//    }
+    public Set<InputSlot<?>> getRequestedInputSlots() {
+        return this.requestedInputSlots;
+    }
 
+    public Set<Tuple<OutputSlot<?>, InputSlot<?>>> getServingOutputSlots() {
+        return this.servingOutputSlots;
+    }
+
+    public Set<OperatorAlternative> getScope() {
+        return this.scope;
+    }
+
+    public Map<ExecutionOperator, ExecutionTask> getExecutedTasks() {
+        return this.executedTasks;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%dx, inputs=%s, outputs=%s]", this.getClass().getSimpleName(),
+                this.getPlanImplementations().size(),
+                this.requestedInputSlots, this.servingOutputSlots.stream()
+                        .map(Tuple::getField0)
+                        .distinct()
+                        .collect(Collectors.toList())
+        );
+    }
 }

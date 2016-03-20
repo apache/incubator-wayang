@@ -1,7 +1,5 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.apache.commons.lang3.Validate;
-
 import java.util.Objects;
 
 /**
@@ -25,8 +23,8 @@ public class ProbabilisticIntervalEstimate {
     private final long lowerEstimate, upperEstimate;
 
     public ProbabilisticIntervalEstimate(long lowerEstimate, long upperEstimate, double correctnessProb) {
-        Validate.isTrue(lowerEstimate <= upperEstimate);
-        Validate.inclusiveBetween(0, 1, correctnessProb);
+        assert lowerEstimate <= upperEstimate : String.format("%d > %d, which is illegal.", lowerEstimate, upperEstimate);
+        assert correctnessProb >= 0 && correctnessProb <= 1 : String.format("Illegal probability %f.", correctnessProb);
 
         this.correctnessProb = correctnessProb;
         this.lowerEstimate = lowerEstimate;
@@ -49,6 +47,16 @@ public class ProbabilisticIntervalEstimate {
         return this.correctnessProb;
     }
 
+    /**
+     * Checks whether this instance is an exact estimate of the given value.
+     *
+     * @param exactEstimate the hypothesized exact estimation value
+     * @return whether this instance is exactly {@code exactEstimate}
+     */
+    public boolean isExactly(long exactEstimate) {
+        return this.correctnessProb == 1d && this.lowerEstimate == this.upperEstimate && this.upperEstimate == exactEstimate;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -57,6 +65,18 @@ public class ProbabilisticIntervalEstimate {
         return Double.compare(estimate.correctnessProb, this.correctnessProb) == 0 &&
                 this.lowerEstimate == estimate.lowerEstimate &&
                 this.upperEstimate == estimate.upperEstimate;
+    }
+
+    /**
+     * Compares with this instance equals with {@code that} instance within given delta bounds.
+     */
+    public boolean equalsWithinDelta(ProbabilisticIntervalEstimate that,
+                                     double probDelta,
+                                     long lowerEstimateDelta,
+                                     long upperEstimateDelta) {
+        return Math.abs(that.correctnessProb - this.correctnessProb) <= probDelta &&
+                Math.abs(this.lowerEstimate - that.lowerEstimate) <= lowerEstimateDelta &&
+                Math.abs(this.upperEstimate - that.upperEstimate) <= upperEstimateDelta;
     }
 
     @Override

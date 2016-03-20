@@ -13,9 +13,21 @@ import java.util.function.Predicate;
  */
 public class PredicateDescriptor<Input> extends FunctionDescriptor {
 
-    protected final BasicDataUnitType inputType;
+    protected final BasicDataUnitType<Input> inputType;
 
     private final SerializablePredicate<Input> javaImplementation;
+
+    public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
+                               Class<Input> inputTypeClass) {
+        this(javaImplementation, BasicDataUnitType.createBasic(inputTypeClass));
+    }
+
+    public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
+                               Class<Input> inputTypeClass,
+                               LoadEstimator cpuLoadEstimator,
+                               LoadEstimator ramLoadEstimator) {
+        this(javaImplementation, BasicDataUnitType.createBasic(inputTypeClass), cpuLoadEstimator, ramLoadEstimator);
+    }
 
     public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
                                BasicDataUnitType inputType) {
@@ -51,6 +63,10 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
     @SuppressWarnings("unchecked")
     public PredicateDescriptor<Object> unchecked() {
         return (PredicateDescriptor<Object>) this;
+    }
+
+    public BasicDataUnitType<Input> getInputType() {
+        return this.inputType;
     }
 
     @FunctionalInterface

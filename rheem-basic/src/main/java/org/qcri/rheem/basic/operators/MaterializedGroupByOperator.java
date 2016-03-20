@@ -2,6 +2,7 @@ package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
@@ -21,17 +22,39 @@ public class MaterializedGroupByOperator<Type, Key> extends UnaryToUnaryOperator
     /**
      * Creates a new instance.
      *
-     * @param type          type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
-     * @param keyDescriptor describes how to extract the key from data units
+     * @param keyFunction describes how to extract the key from data units
+     * @param typeClass   class of the data quanta to be grouped
+     * @param keyClass    class of the extracted keys
      */
-    public MaterializedGroupByOperator(DataSetType<Type> type,
-                                       TransformationDescriptor<Type, Key> keyDescriptor) {
-        super(type, type, false, null);
-        this.keyDescriptor = keyDescriptor;
+    public MaterializedGroupByOperator(FunctionDescriptor.SerializableFunction<Type, Key> keyFunction,
+                                       Class<Type> typeClass,
+                                       Class<Key> keyClass) {
+        this(new TransformationDescriptor<>(keyFunction, typeClass, keyClass));
     }
 
-    public DataSetType<Type> getType() {
-        return this.getInputType();
+    /**
+     * Creates a new instance.
+     *
+     * @param keyDescriptor describes how to extract the key from data units
+     */
+    public MaterializedGroupByOperator(TransformationDescriptor<Type, Key> keyDescriptor) {
+        this(keyDescriptor,
+                DataSetType.createDefault(keyDescriptor.getInputType()),
+                DataSetType.createGrouped(keyDescriptor.getInputType()));
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param keyDescriptor describes how to extract the key from data units
+     * @param inputType     type of the input elements
+     * @param inputType     type of the element groups
+     */
+    public MaterializedGroupByOperator(TransformationDescriptor<Type, Key> keyDescriptor,
+                                       DataSetType<Type> inputType,
+                                       DataSetType<Iterable<Type>> outputType) {
+        super(inputType, outputType, false, null);
+        this.keyDescriptor = keyDescriptor;
     }
 
     public TransformationDescriptor<Type, Key> getKeyDescriptor() {

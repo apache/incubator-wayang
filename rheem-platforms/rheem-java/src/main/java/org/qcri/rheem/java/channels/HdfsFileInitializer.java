@@ -1,146 +1,179 @@
 package org.qcri.rheem.java.channels;
 
-import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.basic.channels.HdfsFile;
+import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.operators.JavaExecutionOperator;
-import org.qcri.rheem.java.operators.JavaObjectFileSink;
-import org.qcri.rheem.java.operators.JavaObjectFileSource;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.operators.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collection;
+import java.util.OptionalLong;
 import java.util.stream.Stream;
 
 /**
- * Sets up {@link HdfsFile} usage in the {@link JavaPlatform}.
+ * Sets up {@link FileChannel} usage in the {@link JavaPlatform}.
  */
-public class HdfsFileInitializer implements ChannelInitializer {
+public class HdfsFileInitializer implements JavaChannelInitializer {
+
+    @SuppressWarnings("unused")
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private static String pickTempPath() {
-        // TODO: Do this properly via the configuration.
-        try {
-            final Path tempDirectory = Files.createTempDirectory("rheem-java");
-            Path tempPath = tempDirectory.resolve("data");
-            return tempPath.toUri().toString();
-        } catch (IOException e) {
-            throw new RheemException(e);
-        }
+
+    @Override
+    public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Channel setUpOutput(ExecutionTask sourceTask, int index) {
-        // Set up an internal Channel at first.
-        final ChannelInitializer streamChannelInitializer = sourceTask.getOperator().getPlatform()
-                .getChannelManager().getChannelInitializer(StreamChannel.class);
-        assert streamChannelInitializer != null;
-        final Channel internalChannel = streamChannelInitializer.setUpOutput(sourceTask, index);
-
+    public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
         // Create a sink to write the HDFS file.
-        ExecutionTask sinkTask = this.setUpJavaObjectFileSink(sourceTask, index, internalChannel);
+        final String targetPath = FileChannel.pickTempPath();
 
-        // Check if the final HdfsFile already exists.
-        assert sinkTask.getOutputChannels().length == 1;
-        if (sinkTask.getOutputChannel(0) != null) {
-            assert sinkTask.getOutputChannel(0) instanceof HdfsFile :
-                    String.format("Expected %s, found %s.", HdfsFile.class.getSimpleName(), sinkTask.getOutputChannel(0));
-            return sinkTask.getOutputChannel(0);
+        ExecutionTask sinkTask;
+        final FileChannel.Descriptor fileDescriptor = (FileChannel.Descriptor) descriptor;
+        final String serialization = fileDescriptor.getSerialization();
+        switch (serialization) {
+            case "object-file":
+                sinkTask = this.setUpJavaObjectFileSink(source, targetPath, optimizationContext);
+                break;
+            case "tsv":
+                sinkTask = this.setUpTsvFileSink(source, targetPath, optimizationContext);
+                break;
+            default:
+                throw new IllegalStateException(String.format("Unsupported serialization: \"%s\"", serialization));
         }
 
-        // Create the actual HdfsFile.
-        final HdfsFile hdfsFile = new HdfsFile(sinkTask, index, Channel.extractCardinalityEstimate(sourceTask, index));
-        hdfsFile.addPath(((JavaObjectFileSink<?>) sinkTask.getOperator()).getTargetPath());
-        hdfsFile.addSibling(internalChannel);
-        return hdfsFile;
+        // Create the actual FileChannel.
+        final FileChannel fileChannel = new FileChannel(fileDescriptor);
+        fileChannel.addPath(targetPath);
+        fileChannel.addSibling(source);
+        sinkTask.setOutputChannel(0, fileChannel);
+        return fileChannel;
     }
 
-    private ExecutionTask setUpJavaObjectFileSink(ExecutionTask sourceTask, int outputIndex, Channel internalChannel) {
-        // Check if the Channel already is consumed by a JavaObjectFileSink.
-        for (ExecutionTask consumerTask : internalChannel.getConsumers()) {
-            if (consumerTask.getOperator() instanceof JavaObjectFileSink<?>) {
-                return consumerTask;
-            }
-        }
 
+    private ExecutionTask setUpJavaObjectFileSink(Channel sourceChannel, String targetPath, OptimizationContext optimizationContext) {
         // Create the JavaObjectFileSink.
-        final DataSetType<?> dataSetType = sourceTask.getOperator().getOutput(outputIndex).getType();
-        final String targetPath = pickTempPath();
+        final DataSetType<?> dataSetType = sourceChannel.getDataSetType();
         JavaObjectFileSink<?> javaObjectFileSink = new JavaObjectFileSink<>(targetPath, dataSetType);
-        javaObjectFileSink.getInput(0).setCardinalityEstimate(Channel.extractCardinalityEstimate(sourceTask, outputIndex));
-        ExecutionTask sinkTask = new ExecutionTask(javaObjectFileSink, javaObjectFileSink.getNumInputs(), 1);
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(javaObjectFileSink);
+        operatorContext.setInputCardinality(0, sourceChannel.getCardinalityEstimate(optimizationContext));
+        operatorContext.updateTimeEstimate();
 
-        // Connect it to the internalChannel.
-        final ChannelInitializer channelInitializer = javaObjectFileSink
-                .getPlatform()
-                .getChannelManager()
-                .getChannelInitializer(internalChannel.getClass());
-        channelInitializer.setUpInput(internalChannel, sinkTask, 0);
+        ExecutionTask sinkTask = new ExecutionTask(javaObjectFileSink, javaObjectFileSink.getNumInputs(), 1);
+        sourceChannel.addConsumer(sinkTask, 0);
+
+        return sinkTask;
+    }
+
+    private ExecutionTask setUpTsvFileSink(Channel sourceChannel, String targetPath, OptimizationContext optimizationContext) {
+        // Create the JavaObjectFileSink.
+        final DataSetType<?> dataSetType = sourceChannel.getDataSetType();
+        JavaTsvFileSink<?> javaTsvFileSink = new JavaTsvFileSink<>(targetPath, dataSetType);
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(javaTsvFileSink);
+        operatorContext.setInputCardinality(0, sourceChannel.getCardinalityEstimate(optimizationContext));
+        operatorContext.updateTimeEstimate();
+
+        ExecutionTask sinkTask = new ExecutionTask(javaTsvFileSink, javaTsvFileSink.getNumInputs(), 1);
+        sourceChannel.addConsumer(sinkTask, 0);
 
         return sinkTask;
     }
 
     @Override
-    public void setUpInput(Channel channel, ExecutionTask targetTask, int inputIndex) {
-        HdfsFile hdfsFile = (HdfsFile) channel;
-        assert hdfsFile.getPaths().size() == 1 : "We support only single HDFS files so far.";
+    public StreamChannel provideStreamChannel(Channel channel, OptimizationContext optimizationContext) {
+        FileChannel fileChannel = (FileChannel) channel;
+        assert fileChannel.getPaths().size() == 1 :
+                String.format("We support only single files so far (found %d).", fileChannel.getPaths().size());
 
         // NB: We always put the HDFS file contents into a Collection. That's not necessary if we don't broadcast
         // and use it only once.
 
-        // Intercept with a JavaObjectFileSource.
-        // TODO: Improve management of data types, file paths, serialization formats etc.
-        ExecutionTask sourceTask = this.setUpJavaObjectFileSource(hdfsFile);
+        // Create a reader for the file.
+        ExecutionTask sourceTask;
+        final String serialization = fileChannel.getDescriptor().getSerialization();
+        switch (serialization) {
+            case "object-file":
+                sourceTask = this.setUpJavaObjectFileSource(fileChannel, optimizationContext);
+                break;
+            case "tsv":
+                sourceTask = this.setUpTsvFileSource(fileChannel, optimizationContext);
+                break;
+            default:
+                throw new IllegalStateException(
+                        String.format("%s cannot handle \"%s\" serialization.", this.getClass().getSimpleName(), serialization));
+        }
+        fileChannel.addConsumer(sourceTask, 0);
 
-        // Set up the actual input..
-        final ChannelInitializer internalChannelInitializer = targetTask.getOperator().getPlatform().getChannelManager()
-                .getChannelInitializer(CollectionChannel.class);
-        Validate.notNull(internalChannelInitializer);
-        final Channel internalChannel = internalChannelInitializer.setUpOutput(sourceTask, 0);
-        internalChannel.addSibling(hdfsFile);
-        internalChannelInitializer.setUpInput(internalChannel, targetTask, inputIndex);
+        // Create and setup the actual StreamChannel.
+        final ChannelInitializer internalChannelInitializer = this.getChannelManager()
+                .getChannelInitializer(StreamChannel.DESCRIPTOR);
+        assert internalChannelInitializer != null;
+        final Tuple<Channel, Channel> streamChannelSetup = internalChannelInitializer
+                .setUpOutput(StreamChannel.DESCRIPTOR, sourceTask.getOperator().getOutput(0), optimizationContext);
+        fileChannel.addSibling(streamChannelSetup.getField0());
+        sourceTask.setOutputChannel(0, streamChannelSetup.getField0());
+
+        return (StreamChannel) streamChannelSetup.getField1();
     }
 
-    private ExecutionTask setUpJavaObjectFileSource(HdfsFile hdfsFile) {
-        // Check if there is already is a JavaObjectFileSource in place.
-        for (ExecutionTask consumerTask : hdfsFile.getConsumers()) {
-            if (consumerTask.getOperator() instanceof JavaObjectFileSource<?>) {
-                return consumerTask;
-            }
-        }
+    private ExecutionTask setUpJavaObjectFileSource(FileChannel fileChannel, OptimizationContext optimizationContext) {
+//        // Check if there is already is a JavaObjectFileSource in place.
+//        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
+//            if (consumerTask.getOperator() instanceof JavaObjectFileSource<?>) {
+//                return consumerTask;
+//            }
+//        }
 
         // Create the JavaObjectFileSink.
-        // FIXME: This is neither elegant nor sound, as we make assumptions on the HdfsFile producer.
-        final DataSetType<?> dataSetType = hdfsFile.getProducer().getOperator().getInput(0).getType();
-        JavaObjectFileSource<?> javaObjectFileSource = new JavaObjectFileSource<>(hdfsFile.getSinglePath(), dataSetType);
-        javaObjectFileSource.getOutput(0).setCardinalityEstimate(hdfsFile.getCardinalityEstimate());
+        final DataSetType<?> dataSetType = fileChannel.getDataSetType();
+        JavaObjectFileSource<?> javaObjectFileSource = new JavaObjectFileSource<>(fileChannel.getSinglePath(), dataSetType);
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(javaObjectFileSource);
+        operatorContext.setOutputCardinality(0, fileChannel.getCardinalityEstimate(optimizationContext));
+        operatorContext.updateTimeEstimate();
+
         ExecutionTask sourceTask = new ExecutionTask(javaObjectFileSource, 1, javaObjectFileSource.getNumOutputs());
-        hdfsFile.addConsumer(sourceTask, 0);
+        fileChannel.addConsumer(sourceTask, 0);
 
         return sourceTask;
     }
 
-    @Override
-    public boolean isReusable() {
-        return true;
+    private ExecutionTask setUpTsvFileSource(FileChannel fileChannel, OptimizationContext optimizationContext) {
+//        // Check if there is already is a JavaTsvFileSource in place.
+//        for (ExecutionTask consumerTask : fileChannel.getConsumers()) {
+//            if (consumerTask.getOperator() instanceof JavaTsvFileSource<?>) {
+//                return consumerTask;
+//            }
+//        }
+
+        // Create the JavaObjectFileSink.
+        final DataSetType<?> dataSetType = fileChannel.getDataSetType();
+        JavaTsvFileSource<?> tsvSource = new JavaTsvFileSource<>(fileChannel.getSinglePath(), dataSetType);
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(tsvSource);
+        operatorContext.setOutputCardinality(0, fileChannel.getCardinalityEstimate(optimizationContext));
+        operatorContext.updateTimeEstimate();
+
+        ExecutionTask sourceTask = new ExecutionTask(tsvSource, 1, tsvSource.getNumOutputs());
+        fileChannel.addConsumer(sourceTask, 0);
+
+        return sourceTask;
     }
 
-    @Override
-    public boolean isInternal() {
-        return false;
-    }
-
+    /**
+     * {@link ChannelExecutor} implementation for the {@link FileChannel}.
+     */
     public static class Executor implements ChannelExecutor {
 
-        private final HdfsFile hdfsFile;
+        private final FileChannel fileChannel;
 
         private boolean isMarkedForInstrumentation;
 
@@ -148,9 +181,9 @@ public class HdfsFileInitializer implements ChannelInitializer {
 
         private boolean wasTriggered = false;
 
-        public Executor(HdfsFile hdfsFile) {
-            this.hdfsFile = hdfsFile;
-            if (this.hdfsFile.isMarkedForInstrumentation()) {
+        public Executor(FileChannel fileChannel) {
+            this.fileChannel = fileChannel;
+            if (this.fileChannel.isMarkedForInstrumentation()) {
                 this.markForInstrumentation();
             }
         }
@@ -187,15 +220,9 @@ public class HdfsFileInitializer implements ChannelInitializer {
         }
 
         @Override
-        public long getCardinality() throws RheemException {
-            assert this.isMarkedForInstrumentation;
-            return this.cardinality;
-        }
-
-        @Override
         public void markForInstrumentation() {
             this.isMarkedForInstrumentation = true;
-            ((JavaExecutionOperator) this.hdfsFile.getProducer().getOperator()).instrumentSink(this);
+            ((JavaExecutionOperator) this.fileChannel.getProducer().getOperator()).instrumentSink(this);
         }
 
         public void setCardinality(long cardinality) {
@@ -205,6 +232,21 @@ public class HdfsFileInitializer implements ChannelInitializer {
         @Override
         public boolean ensureExecution() {
             return this.wasTriggered;
+        }
+
+        @Override
+        public Channel getChannel() {
+            return this.fileChannel;
+        }
+
+        @Override
+        public OptionalLong getMeasuredCardinality() {
+            return this.cardinality == -1 ? OptionalLong.empty() : OptionalLong.of(this.cardinality);
+        }
+
+        @Override
+        public void release() throws RheemException {
+            // TODO: Delete file.
         }
     }
 }

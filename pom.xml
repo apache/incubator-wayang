@@ -12,6 +12,7 @@
         <scala.compat.version>2.10</scala.compat.version>
         <spark.version>1.6.0</spark.version>
         <hadoop.version>2.2.0</hadoop.version>
+        <graphchi.version>0.2.2</graphchi.version>
     </properties>
 
     <groupId>org.qcri.rheem</groupId>
@@ -27,6 +28,20 @@
         </repository>
     </repositories>
 
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <configuration>
+                        <trimStackTrace>false</trimStackTrace>
+                        <enableAssertions>true</enableAssertions>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>net.sf.trove4j</groupId>
@@ -38,6 +53,10 @@
             <artifactId>junit</artifactId>
             <version>4.11</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -54,6 +73,7 @@
         </dependency>
     </dependencies>
     <dependencyManagement>
+        <!-- Apache Spark -->
         <dependencies>
             <dependency>
                 <groupId>org.apache.spark</groupId>
@@ -77,6 +97,8 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
+            <!-- Apache Flink -->
             <dependency>
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-scala</artifactId>
@@ -92,6 +114,8 @@
                 <artifactId>flink-gelly-scala</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
+
+            <!-- Apache Hadoop -->
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-common</artifactId>
@@ -103,6 +127,19 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
+            <!-- GraphChi: Note might be necessary to build it manually. -->
+            <dependency>
+                <groupId>org.graphchi</groupId>
+                <artifactId>graphchi-java</artifactId>
+                <version>${graphchi.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.json</groupId>
+                <artifactId>json</artifactId>
+                <version>20160212</version>
+            </dependency>
             <dependency>
                 <groupId>com.beust</groupId>
                 <artifactId>jcommander</artifactId>
@@ -112,6 +149,11 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>3.3.2</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.4</version>
             </dependency>
             <dependency>
                 <groupId>net.openhft</groupId>

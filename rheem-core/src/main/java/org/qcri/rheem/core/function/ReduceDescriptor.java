@@ -19,15 +19,17 @@ public class ReduceDescriptor<Type> extends FunctionDescriptor {
 
     private final SerializableBinaryOperator<Type> javaImplementation;
 
-    public ReduceDescriptor(DataUnitGroupType<Type> inputType, BasicDataUnitType<Type> outputType,
-                            SerializableBinaryOperator<Type> javaImplementation) {
-        this(inputType, outputType, javaImplementation,
+    public ReduceDescriptor(SerializableBinaryOperator<Type> javaImplementation,
+                            DataUnitGroupType<Type> inputType,
+                            BasicDataUnitType<Type> outputType) {
+        this(javaImplementation, inputType, outputType,
                 LoadEstimator.createFallback(1, 1),
                 LoadEstimator.createFallback(1, 1));
     }
 
-    public ReduceDescriptor(DataUnitGroupType<Type> inputType, BasicDataUnitType<Type> outputType,
-                            SerializableBinaryOperator<Type> javaImplementation, LoadEstimator cpuLoadEstimator,
+    public ReduceDescriptor(SerializableBinaryOperator<Type> javaImplementation,
+                            DataUnitGroupType<Type> inputType, BasicDataUnitType<Type> outputType,
+                            LoadEstimator cpuLoadEstimator,
                             LoadEstimator memoryLoadEstimator) {
         super(cpuLoadEstimator, memoryLoadEstimator);
         this.inputType = inputType;
@@ -35,11 +37,9 @@ public class ReduceDescriptor<Type> extends FunctionDescriptor {
         this.javaImplementation = javaImplementation;
     }
 
-    public ReduceDescriptor(Class<? extends Type> inputType, SerializableBinaryOperator<Type> javaImplementation) {
-        this(
-                DataUnitType.createGroupedUnchecked(inputType),
-                DataUnitType.createBasicUnchecked(inputType),
-                javaImplementation
+    public ReduceDescriptor(SerializableBinaryOperator<Type> javaImplementation, Class<Type> inputType) {
+        this(javaImplementation, DataUnitType.createGroupedUnchecked(inputType),
+                DataUnitType.createBasicUnchecked(inputType)
         );
     }
 
@@ -64,4 +64,11 @@ public class ReduceDescriptor<Type> extends FunctionDescriptor {
         return (ReduceDescriptor<Object>) this;
     }
 
+    public DataUnitGroupType<Type> getInputType() {
+        return this.inputType;
+    }
+
+    public BasicDataUnitType<Type> getOutputType() {
+        return this.outputType;
+    }
 }

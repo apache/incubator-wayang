@@ -5,7 +5,7 @@ import org.qcri.rheem.core.types.DataSetType;
 /**
  * This operator has a single input and a single output.
  */
-public abstract class UnaryToUnaryOperator<InputType, OutputType> extends OperatorBase implements ActualOperator {
+public abstract class UnaryToUnaryOperator<InputType, OutputType> extends OperatorBase implements ElementaryOperator {
 
     /**
      * Creates a new instance.
@@ -29,7 +29,7 @@ public abstract class UnaryToUnaryOperator<InputType, OutputType> extends Operat
         return this.getInput().getType();
     }
 
-    public DataSetType getOutputType() {
+    public DataSetType<OutputType> getOutputType() {
         return this.getOutput().getType();
     }
 }

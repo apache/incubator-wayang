@@ -24,7 +24,13 @@ public class JavaFilterOperator<Type>
      * @param type type of the dataset elements
      */
     public JavaFilterOperator(DataSetType<Type> type, PredicateDescriptor<Type> predicateDescriptor) {
-        super(type, predicateDescriptor);
+        super(predicateDescriptor, type);
+    }
+
+    @Override
+    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
+        final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
+        JavaExecutor.openFunction(this, filterFunction, inputs);
     }
 
     public JavaFilterOperator(DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
@@ -38,8 +44,6 @@ public class JavaFilterOperator<Type>
         assert outputs.length == this.getNumOutputs();
 
         final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
-        JavaExecutor.openFunction(this, filterFunction, inputs);
-
         outputs[0].acceptStream(inputs[0].<Type>provideStream().filter(filterFunction));
     }
 

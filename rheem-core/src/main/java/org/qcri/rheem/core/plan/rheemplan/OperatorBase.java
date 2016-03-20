@@ -1,11 +1,13 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,6 +29,11 @@ public abstract class OperatorBase implements Operator {
     private final Set<Platform> targetPlatforms = new HashSet<>(0);
 
     private ExecutionOperator original;
+
+    /**
+     * Optional name. Helpful for debugging.
+     */
+    private String name;
 
     /**
      * Can assign a {@link TimeEstimate} to {@link ExecutionOperator}s.
@@ -88,7 +95,11 @@ public abstract class OperatorBase implements Operator {
 
     @Override
     public void setContainer(OperatorContainer newContainer) {
+        final CompositeOperator oldParent = this.getParent();
         this.container = newContainer;
+        if (oldParent != null) {
+            oldParent.replace(this, newContainer.toOperator());
+        }
     }
 
     @Override
@@ -111,14 +122,22 @@ public abstract class OperatorBase implements Operator {
 
     @Override
     public String toString() {
+        if (this.name != null) {
+            return String.format("%s[%s]", this.getSimpleClassName(), this.name);
+        }
         long numBroadcasts = Arrays.stream(this.getAllInputs()).filter(InputSlot::isBroadcast).count();
         return String.format("%s[%d%s->%d, id=%x]",
-                this.getClass().getSimpleName(),
+                this.getSimpleClassName(),
                 this.getNumInputs() - numBroadcasts,
                 numBroadcasts == 0 ? "" : "+" + numBroadcasts,
                 this.getNumOutputs(),
 //                this.getParent() == null ? "top-level" : "nested",
                 this.hashCode());
+    }
+
+    protected String getSimpleClassName() {
+        String className = this.getClass().getSimpleName();
+        return className.replaceAll("Operator", "");
     }
 
     @Override
@@ -146,18 +165,45 @@ public abstract class OperatorBase implements Operator {
     }
 
     @Override
-    public void propagateOutputCardinality(int outputIndex, CardinalityEstimate cardinalityEstimate) {
+    public void propagateOutputCardinality(int outputIndex,
+                                           OptimizationContext.OperatorContext operatorContext,
+                                           OptimizationContext targetContext) {
+        assert operatorContext.getOperator() == this;
+
+        // Identify the cardinality.
         final OutputSlot<?> output = this.getOutput(outputIndex);
-        output.setCardinalityEstimate(cardinalityEstimate);
+        final CardinalityEstimate cardinality = operatorContext.getOutputCardinality(outputIndex);
+
+        // Propagate to the InputSlots.
         for (InputSlot<?> inputSlot : output.getOccupiedSlots()) {
+            // Find the adjacent OperatorContext corresponding to the inputSlot.
             final int inputIndex = inputSlot.getIndex();
-            inputSlot.getOwner().propagateInputCardinality(inputIndex, cardinalityEstimate);
+            final Operator adjacentOperator = inputSlot.getOwner();
+            final OptimizationContext.OperatorContext adjacentOperatorCtx = targetContext.getOperatorContext(adjacentOperator);
+            assert adjacentOperatorCtx != null : String.format("Missing OperatorContext for %s.", adjacentOperator);
+
+            // Update the adjacent OperatorContext.
+            adjacentOperatorCtx.setInputCardinality(inputIndex, cardinality);
+            adjacentOperator.propagateInputCardinality(inputIndex, adjacentOperatorCtx);
         }
     }
 
     @Override
-    public void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate) {
-        this.getInput(inputIndex).setCardinalityEstimate(cardinalityEstimate);
+    public void propagateInputCardinality(int inputIndex, OptimizationContext.OperatorContext operatorContext) {
+        // Nothing to do for elementary operators.
+    }
+
+    @Override
+    public <T> Set<OutputSlot<T>> collectMappedOutputSlots(OutputSlot<T> output) {
+        // Default implementation for elementary instances.
+        assert this.isElementary();
+        assert output.getOwner() == this;
+        return Collections.singleton(output);
+    }
+
+    @Override
+    public <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input) {
+        throw new RuntimeException("Implement me.");
     }
 
     /**
@@ -180,5 +226,15 @@ public abstract class OperatorBase implements Operator {
     public ExecutionOperator getOriginal() {
         assert this.isExecutionOperator();
         return this.original == null ? (ExecutionOperator) this : this.original;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <Self extends OperatorBase> Self setName(String name) {
+        this.name = name;
+        return (Self) this;
     }
 }

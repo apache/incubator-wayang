@@ -13,6 +13,7 @@ import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -28,7 +29,13 @@ public class JavaMapOperator<InputType, OutputType>
      * @param functionDescriptor
      */
     public JavaMapOperator(DataSetType inputType, DataSetType outputType, TransformationDescriptor<InputType, OutputType> functionDescriptor) {
-        super(inputType, outputType, functionDescriptor);
+        super(functionDescriptor, inputType, outputType);
+    }
+
+    @Override
+    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
+        final Function<InputType, OutputType> udf = compiler.compile(this.functionDescriptor);
+        JavaExecutor.openFunction(this, udf, inputs);
     }
 
     @Override

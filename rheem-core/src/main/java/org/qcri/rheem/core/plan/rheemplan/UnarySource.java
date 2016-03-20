@@ -5,7 +5,7 @@ import org.qcri.rheem.core.types.DataSetType;
 /**
  * Abstract base class for sources with a single output.
  */
-public abstract class UnarySource<T> extends OperatorBase implements ActualOperator {
+public abstract class UnarySource<T> extends OperatorBase implements ElementaryOperator {
 
     /**
      * Creates a new instance.

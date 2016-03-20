@@ -9,9 +9,12 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
+import org.qcri.rheem.core.plan.rheemplan.ElementaryOperator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.profiling.InstrumentationStrategy;
+import org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy;
 
 import java.util.Comparator;
 
@@ -43,6 +46,8 @@ public class Configuration {
     private ConstantProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
 
     private CollectionProvider<PlanEnumerationPruningStrategy> pruningStrategiesProvider;
+
+    private ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider;
 
     /**
      * Creates a new top-level instance.
@@ -89,6 +94,8 @@ public class Configuration {
             // Providers for plan enumeration.
             this.pruningStrategiesProvider = new CollectionProvider<>(this.parent.pruningStrategiesProvider);
             this.timeEstimateComparatorProvider = new ConstantProvider<>(this.parent.timeEstimateComparatorProvider);
+            this.instrumentationStrategyProvider = new ConstantProvider<>(
+                    this.parent.instrumentationStrategyProvider);
 
         }
     }
@@ -119,11 +126,13 @@ public class Configuration {
 
         // Default option: Implementations define their estimators.
         KeyValueProvider<OutputSlot<?>, CardinalityEstimator> defaultProvider =
-                new FunctionalKeyValueProvider<>(fallbackProvider, (outputSlot, requestee) ->
-                        outputSlot.getOwner()
-                                .getCardinalityEstimator(outputSlot.getIndex(), configuration)
-                                .orElse(null)
-                );
+                new FunctionalKeyValueProvider<>(fallbackProvider, (outputSlot, requestee) -> {
+                    assert outputSlot.getOwner().isElementary()
+                            : String.format("Cannot provide estimator for composite %s.", outputSlot.getOwner());
+                    return ((ElementaryOperator) outputSlot.getOwner())
+                            .getCardinalityEstimator(outputSlot.getIndex(), configuration)
+                            .orElse(null);
+                });
 
         // Customizable layer: Users can override manually.
         KeyValueProvider<OutputSlot<?>, CardinalityEstimator> overrideProvider =
@@ -170,9 +179,16 @@ public class Configuration {
                             )
                     ).withSlf4jWarning("Creating fallback selectivity for {}.");
 
+            // Built-in option: let the ExecutionOperators provide the LoadProfileEstimator.
+            KeyValueProvider<ExecutionOperator, LoadProfileEstimator> builtInProvider =
+                    new FunctionalKeyValueProvider<>(
+                            fallbackProvider,
+                            operator -> operator.getLoadProfileEstimator(configuration).orElse(null)
+                    );
+
             // Customizable layer: Users can override manually.
             KeyValueProvider<ExecutionOperator, LoadProfileEstimator> overrideProvider =
-                    new MapBasedKeyValueProvider<>(fallbackProvider);
+                    new MapBasedKeyValueProvider<>(builtInProvider);
 
             configuration.setOperatorLoadProfileEstimatorProvider(overrideProvider);
         }
@@ -210,7 +226,7 @@ public class Configuration {
         }
         {
             ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantProvider<>(TimeEstimate.expectionValueComparator());
+                    new ConstantProvider<>(TimeEstimate.expectationValueComparator());
             ConstantProvider<Comparator<TimeEstimate>> overrideProvider =
                     new ConstantProvider<>(defaultProvider);
             configuration.setTimeEstimateComparatorProvider(overrideProvider);
@@ -227,10 +243,15 @@ public class Configuration {
         }
         {
             ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantProvider<>(TimeEstimate.expectionValueComparator());
+                    new ConstantProvider<>(TimeEstimate.expectationValueComparator());
             ConstantProvider<Comparator<TimeEstimate>> overrideProvider =
                     new ConstantProvider<>(defaultProvider);
             configuration.setTimeEstimateComparatorProvider(overrideProvider);
+        }
+        {
+            ConstantProvider<InstrumentationStrategy> defaultProvider =
+                    new ConstantProvider<>(new OutboundInstrumentationStrategy());
+            configuration.setInstrumentationStrategyProvider(defaultProvider);
         }
     }
 
@@ -320,5 +341,13 @@ public class Configuration {
 
     public void setPruningStrategiesProvider(CollectionProvider<PlanEnumerationPruningStrategy> pruningStrategiesProvider) {
         this.pruningStrategiesProvider = pruningStrategiesProvider;
+    }
+
+    public ConstantProvider<InstrumentationStrategy> getInstrumentationStrategyProvider() {
+        return this.instrumentationStrategyProvider;
+    }
+
+    public void setInstrumentationStrategyProvider(ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider) {
+        this.instrumentationStrategyProvider = instrumentationStrategyProvider;
     }
 }

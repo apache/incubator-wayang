@@ -1,13 +1,18 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.*;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This operator encapsulates operators that are alternative to each other.
+ * <p>TODO: Alternatives and their interfaces (i.e., {@link OutputSlot}s and {@link InputSlot}s) are matched via their
+ * input/output indices.</p>
  */
 public class OperatorAlternative extends OperatorBase implements CompositeOperator {
 
@@ -29,18 +34,16 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
      * @param operator operator to wrap
      */
     public static OperatorAlternative wrap(Operator operator) {
-        OperatorAlternative operatorAlternative = new OperatorAlternative(operator);
+        OperatorAlternative operatorAlternative =
+                operator.isLoopHead() ?
+                        new LoopHeadAlternative((LoopHeadOperator) operator) :
+                        new OperatorAlternative(operator);
 
         InputSlot.mock(operator, operatorAlternative, false);
         InputSlot.stealConnections(operator, operatorAlternative);
 
         OutputSlot.mock(operator, operatorAlternative);
         OutputSlot.stealConnections(operator, operatorAlternative);
-
-        final CompositeOperator parent = operator.getParent();
-        if (Objects.nonNull(parent)) {
-            parent.replace(operator, operatorAlternative);
-        }
 
         operatorAlternative.addAlternative(operator);
 
@@ -50,7 +53,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     /**
      * Creates a new instance with the same number of inputs and outputs and the same parent as the given operator.
      */
-    private OperatorAlternative(Operator operator) {
+    protected OperatorAlternative(Operator operator) {
         super(operator.getNumInputs(), operator.getNumOutputs(), false, operator.getContainer());
     }
 
@@ -106,21 +109,40 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     }
 
     @Override
-    public void propagateOutputCardinality(int outputIndex, CardinalityEstimate cardinalityEstimate) {
-        super.propagateOutputCardinality(outputIndex, cardinalityEstimate);
-        this.getAlternatives().forEach(alternative -> alternative.propagateCardinality(this.getOutput(outputIndex)));
+    public void propagateOutputCardinality(int outputIndex,
+                                           OptimizationContext.OperatorContext operatorContext,
+                                           OptimizationContext targetContext) {
+        super.propagateOutputCardinality(outputIndex, operatorContext, targetContext);
+        this.getAlternatives().forEach(alternative -> alternative.propagateOutputCardinality(outputIndex, operatorContext));
     }
 
     @Override
-    public void propagateInputCardinality(int inputIndex, CardinalityEstimate cardinalityEstimate) {
-        super.propagateInputCardinality(inputIndex, cardinalityEstimate);
-        this.getAlternatives().forEach(alternative -> alternative.propagateCardinality(this.getInput(inputIndex)));
+    public void propagateInputCardinality(int inputIndex, OptimizationContext.OperatorContext operatorContext) {
+        super.propagateInputCardinality(inputIndex, operatorContext);
+        this.getAlternatives().forEach(alternative -> alternative.propagateInputCardinality(inputIndex, operatorContext));
+    }
+
+    @Override
+    public <T> Set<OutputSlot<T>> collectMappedOutputSlots(OutputSlot<T> output) {
+        return Stream.concat(
+                Stream.of(output),
+                this.alternatives.stream().flatMap(alternative -> this.streamMappedOutputSlots(alternative, output))
+        ).collect(Collectors.toSet());
+    }
+
+    private <T> Stream<OutputSlot<T>> streamMappedOutputSlots(
+            OperatorAlternative.Alternative alternative,
+            OutputSlot<T> output) {
+        final OutputSlot<T> innerOutput = alternative.traceOutput(output);
+        return innerOutput == null ?
+                Stream.empty() :
+                innerOutput.getOwner().collectMappedOutputSlots(innerOutput).stream();
     }
 
     @Override
     public String toString() {
-        return String.format("%s[%dx like %s, %x]",
-                this.getClass().getSimpleName(),
+        return String.format("%s[%dx ~%s, %x]",
+                this.getSimpleClassName(),
                 this.alternatives.size(),
                 this.alternatives.get(0).getOperator(),
                 this.hashCode());
@@ -255,21 +277,6 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             return innerOperator == this.operator ? OperatorAlternative.this : null;
         }
 
-    }
-
-    @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
-            final int outputIndex,
-            final Configuration configuration) {
-
-        final OutputSlot<?> requestedSlot = this.getOutput(outputIndex);
-
-        final List<CardinalityEstimator> alternativeEstimators = this.alternatives.stream()
-                .map(alternative -> alternative.traceOutput(requestedSlot))
-                .map(configuration.getCardinalityEstimatorProvider()::provideFor)
-                .collect(Collectors.toList());
-
-        return Optional.of(new AggregatingCardinalityEstimator(alternativeEstimators));
     }
 
     @Override

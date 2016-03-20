@@ -1,5 +1,9 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import org.qcri.rheem.core.util.RheemCollections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -8,6 +12,8 @@ import java.util.stream.Collectors;
  * i.e., outer output slot -> inner output slot, inner input slot -> outer input slot).
  */
 public class SlotMapping {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final Map<Slot, Slot> upstreamMapping = new HashMap<>();
 
@@ -57,6 +63,12 @@ public class SlotMapping {
     }
 
     public void mapUpstream(InputSlot<?> source, InputSlot<?> target) {
+        if (target == null) {
+            this.upstreamMapping.remove(source);
+            this.downstreamMapping = null;
+            return;
+        }
+
         if (!source.isCompatibleWith(target)) {
             throw new IllegalArgumentException(String.format("Incompatible slots given: %s -> %s", source, target));
         }
@@ -66,6 +78,12 @@ public class SlotMapping {
     }
 
     public void mapUpstream(OutputSlot<?> source, OutputSlot<?> target) {
+        if (target == null) {
+            this.upstreamMapping.remove(source);
+            this.downstreamMapping = null;
+            return;
+        }
+
         if (!source.isCompatibleWith(target)) {
             throw new IllegalArgumentException(String.format("Incompatible slots given: %s -> %s", source, target));
         }
@@ -121,18 +139,36 @@ public class SlotMapping {
      * @param newOperator the new wrapped operator
      */
     public void replaceInputSlotMappings(Operator oldOperator, Operator newOperator) {
-        if (oldOperator.getNumInputs() != newOperator.getNumInputs()) {
-            throw new IllegalArgumentException("Operators are not matching.");
-        }
+        if (oldOperator.getParent() == newOperator) {
+            // Default strategy: The oldOperator is now wrapped by the newOperator.
+            final SlotMapping oldToNewSlotMapping = oldOperator.getContainer().getSlotMapping();
+            for (int i = 0; i < oldOperator.getNumInputs(); i++) {
+                final InputSlot<?> oldInput = oldOperator.getInput(i);
+                if (oldInput.getOccupant() != null) continue;
 
-        for (int i = 0; i < oldOperator.getNumInputs(); i++) {
-            final InputSlot<?> oldInput = oldOperator.getInput(i);
-            final InputSlot<?> newInput = newOperator.getInput(i);
+                final InputSlot<?> outerInput = this.resolveUpstream(oldInput);
+                if (outerInput != null) {
+                    this.delete(oldInput);
+                    final InputSlot<?> newInput = oldToNewSlotMapping.resolveUpstream(oldInput);
+                    if (newInput != null) this.mapUpstream(newInput, outerInput);
+                }
+            }
 
-            final InputSlot<?> outerInput = this.resolveUpstream(oldInput);
-            if (outerInput != null) {
-                this.mapUpstream(newInput, outerInput);
-                this.delete(oldInput);
+        } else {
+            // Fallback strategy.
+            this.logger.warn("Using bare indices to replace {} (parent {}) with {}.", oldOperator, oldOperator.getParent(), newOperator);
+            assert oldOperator.getNumInputs() == newOperator.getNumInputs()
+                    : String.format("Operators %s and %s are not matching.", oldOperator, newOperator);
+
+            for (int i = 0; i < oldOperator.getNumInputs(); i++) {
+                final InputSlot<?> oldInput = oldOperator.getInput(i);
+                final InputSlot<?> newInput = newOperator.getInput(i);
+
+                final InputSlot<?> outerInput = this.resolveUpstream(oldInput);
+                if (outerInput != null) {
+                    this.mapUpstream(newInput, outerInput);
+                    this.delete(oldInput);
+                }
             }
         }
     }
@@ -144,6 +180,7 @@ public class SlotMapping {
      */
     private void delete(InputSlot<?> key) {
         this.upstreamMapping.remove(key);
+        this.downstreamMapping = null;
     }
 
     /**
@@ -153,6 +190,7 @@ public class SlotMapping {
      */
     private void delete(OutputSlot<?> key) {
         this.upstreamMapping.remove(key);
+        this.downstreamMapping = null;
     }
 
     /**
@@ -161,21 +199,46 @@ public class SlotMapping {
      * @param oldOperator the old wrapped operator
      * @param newOperator the new wrapped operator
      */
+    @SuppressWarnings("unchecked")
     public void replaceOutputSlotMappings(Operator oldOperator, Operator newOperator) {
-        if (oldOperator.getNumOutputs() != newOperator.getNumOutputs()) {
-            throw new IllegalArgumentException("Operators are not matching.");
-        }
+        if (oldOperator.getParent() == newOperator) {
+            // Default strategy: The oldOperator is now wrapped by the newOperator.
+            final Map<Slot, Collection> downstreamMapping = this.getOrCreateDownstreamMapping();
+            final SlotMapping oldToNewSlotMapping = oldOperator.getContainer().getSlotMapping();
+            for (int i = 0; i < oldOperator.getNumOutputs(); i++) {
+                final OutputSlot<?> oldOutput = oldOperator.getOutput(i);
+                final Collection<OutputSlot<?>> outerOutputs = downstreamMapping.get(oldOutput);
+                if (outerOutputs == null) continue;
 
-        for (int i = 0; i < oldOperator.getNumOutputs(); i++) {
-            final OutputSlot<?> oldOutput = oldOperator.getOutput(i);
-            final OutputSlot<?> newOutput = newOperator.getOutput(i);
+                // We cannot have multiple OutputSlots, we could not map them downstream to a single OutputSlot.
+                final OutputSlot<?> newOutput = RheemCollections.getSingleOrNull(
+                        (Collection<OutputSlot<?>>) oldToNewSlotMapping
+                                .getOrCreateDownstreamMapping()
+                                .getOrDefault(oldOutput, Collections.emptySet())
+                );
 
-            this.upstreamMapping.entrySet().stream()
-                    .filter(entry -> entry.getValue() == oldOutput)
-                    .findFirst()
-                    .map(Map.Entry::getKey)
-                    .ifPresent(outerOutput -> this.mapUpstream((OutputSlot<?>) outerOutput, newOutput));
-            // No need for delete as we are replacing the old mapping.
+                for (OutputSlot<?> outerOutput : outerOutputs) {
+                    this.mapUpstream(outerOutput, newOutput);
+                }
+            }
+
+        } else {
+            // Fallback strategy.
+            this.logger.warn("Using bare indices to replace {} (parent {}) with {}.", oldOperator, oldOperator.getParent(), newOperator);
+            assert oldOperator.getNumOutputs() == newOperator.getNumOutputs()
+                    : String.format("Operators %s and %s are not matching.", oldOperator, newOperator);
+
+            for (int i = 0; i < oldOperator.getNumOutputs(); i++) {
+                final OutputSlot<?> oldOutput = oldOperator.getOutput(i);
+                final OutputSlot<?> newOutput = newOperator.getOutput(i);
+
+                this.upstreamMapping.entrySet().stream()
+                        .filter(entry -> entry.getValue() == oldOutput)
+                        .findFirst()
+                        .map(Map.Entry::getKey)
+                        .ifPresent(outerOutput -> this.mapUpstream((OutputSlot<?>) outerOutput, newOutput));
+                // No need for delete as we are replacing the old mapping.
+            }
         }
     }
 
