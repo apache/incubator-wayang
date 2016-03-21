@@ -7,6 +7,8 @@ import org.qcri.rheem.core.util.StopWatch;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.java.operators.JavaMapOperator;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.util.Random;
 
 /**
@@ -45,8 +47,14 @@ public class Profiler {
 
             System.out.println("Execute...");
             final StopWatch.Round execution = stopWatch.start("Execution");
+            final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+            threadMXBean.setThreadCpuTimeEnabled(true);
+            long startCpuTime = threadMXBean.getCurrentThreadCpuTime();
             javaMapProfiler.run();
+            long endCpuTime = threadMXBean.getCurrentThreadCpuTime();
             execution.stop();
+
+            System.out.printf("Measured CPU time: %d\n", endCpuTime - startCpuTime);
 
             System.out.println(stopWatch.toPrettyString());
             System.out.println();
