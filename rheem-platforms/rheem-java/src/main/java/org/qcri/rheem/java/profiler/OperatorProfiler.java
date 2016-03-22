@@ -2,6 +2,7 @@ package org.qcri.rheem.java.profiler;
 
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.util.RheemArrays;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.channels.StreamChannel;
@@ -138,6 +139,22 @@ public abstract class OperatorProfiler {
                     ", networkBytes=" + this.networkBytes +
                     ", cpuCycles=" + this.cpuCycles +
                     '}';
+        }
+
+        public String getCsvHeader() {
+            return String.join(",", RheemCollections.map(this.inputCardinalities, (index, card) -> "input_card_" + index)) + "," +
+                    "output_card," +
+                    "disk," +
+                    "network," +
+                    "cpu";
+        }
+
+        public String toCsvString() {
+            return String.join(",", RheemCollections.map(this.inputCardinalities, Object::toString)) + ","
+                    + this.outputCardinality + ","
+                    + this.diskBytes + ","
+                    + this.networkBytes + ","
+                    + this.cpuCycles;
         }
     }
 
