@@ -46,4 +46,11 @@ public class RheemArrays {
     public static List<Integer> asList(int... values) {
         return Arrays.stream(values).mapToObj(Integer::valueOf).collect(Collectors.toList());
     }
+
+    /**
+     * Converts {@code long} varargs into a {@link List}.
+     */
+    public static List<Long> asList(long... values) {
+        return Arrays.stream(values).mapToObj(Long::valueOf).collect(Collectors.toList());
+    }
 }
