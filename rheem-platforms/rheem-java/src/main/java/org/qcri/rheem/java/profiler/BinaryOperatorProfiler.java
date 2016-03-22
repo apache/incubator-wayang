@@ -32,9 +32,14 @@ public class BinaryOperatorProfiler<In0, In1> extends OperatorProfiler {
         this.operatorGenerator = operatorGenerator;
     }
 
-    public void prepare(int inputCardinality0, int inputCardinality1) {
+    public void prepare(long... inputCardinalities) {
+        super.prepare(inputCardinalities);
+
         // Create operator.
         this.operator = this.operatorGenerator.get();
+        assert  inputCardinalities.length == this.operator.getNumInputs();
+        int inputCardinality0 = (int) inputCardinalities[0];
+        int inputCardinality1 = (int) inputCardinalities[1];
 
         // Create input data.
         Collection<In0> dataQuanta0 = new ArrayList<>(inputCardinality0);
@@ -54,14 +59,13 @@ public class BinaryOperatorProfiler<In0, In1> extends OperatorProfiler {
     }
 
 
-    public void run() {
+    public long executeOperator() {
         this.operator.evaluate(
                 new ChannelExecutor[]{this.inputChannelExecutor0, this.inputChannelExecutor1},
                 new ChannelExecutor[]{this.outputChannelExecutor},
                 new FunctionCompiler()
         );
-        this.outputChannelExecutor.provideStream().forEach(x -> {
-        });
+        return this.outputChannelExecutor.provideStream().count();
     }
 
     @Override

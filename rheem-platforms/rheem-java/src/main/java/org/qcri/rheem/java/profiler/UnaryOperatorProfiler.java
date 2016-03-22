@@ -1,11 +1,9 @@
 package org.qcri.rheem.java.profiler;
 
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
-import org.qcri.rheem.java.operators.JavaMapOperator;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,9 +27,13 @@ public class UnaryOperatorProfiler<In> extends OperatorProfiler {
         this.operatorGenerator = operatorGenerator;
     }
 
-    public void prepare(int inputCardinality) {
+    public void prepare(long... inputCardinalities) {
+        super.prepare(inputCardinalities);
+        int inputCardinality = (int) inputCardinalities[0];
+
         // Create operator.
         this.operator = this.operatorGenerator.get();
+        assert inputCardinalities.length == operator.getNumInputs();
 
         // Create input data.
         Collection<In> dataQuanta = new ArrayList<>(inputCardinality);
@@ -47,13 +49,13 @@ public class UnaryOperatorProfiler<In> extends OperatorProfiler {
 
 
 
-    public void run() {
+    public long executeOperator() {
         this.operator.evaluate(
                 new ChannelExecutor[]{this.inputChannelExecutor},
                 new ChannelExecutor[]{this.outputChannelExecutor},
                 new FunctionCompiler()
         );
-        this.outputChannelExecutor.provideStream().forEach(x -> {});
+        return this.outputChannelExecutor.provideStream().count();
     }
 
     @Override

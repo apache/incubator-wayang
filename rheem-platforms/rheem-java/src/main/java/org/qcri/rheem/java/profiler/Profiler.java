@@ -1,7 +1,5 @@
 package org.qcri.rheem.java.profiler;
 
-import org.hyperic.sigar.FileSystem;
-import org.hyperic.sigar.Sigar;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.types.DataSetType;
@@ -107,7 +105,6 @@ public class Profiler {
 
     private static <T> void profile(UnaryOperatorProfiler<T> unaryOperatorProfiler, int cardinality) {
         System.out.printf("Profiling %s with %d data quanta.\n", unaryOperatorProfiler, cardinality);
-        sleep(1000);
         final StopWatch stopWatch = new StopWatch();
 
         System.out.println("Prepare...");
@@ -117,15 +114,11 @@ public class Profiler {
 
         System.out.println("Execute...");
         final StopWatch.Round execution = stopWatch.start("Execution");
-        final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        threadMXBean.setThreadCpuTimeEnabled(true);
-        long startCpuTime = threadMXBean.getCurrentThreadCpuTime();
-        unaryOperatorProfiler.run();
-        long endCpuTime = threadMXBean.getCurrentThreadCpuTime();
+        final OperatorProfiler.Result result = unaryOperatorProfiler.run();
         execution.stop();
 
-        System.out.printf("Measured CPU time: %d\n", endCpuTime - startCpuTime);
-
+        System.out.println("Measurement:");
+        System.out.println(result);
         System.out.println(stopWatch.toPrettyString());
         System.out.println();
     }
@@ -144,41 +137,24 @@ public class Profiler {
                                        int cardinality0,
                                        int cardinality1) {
         System.out.printf("Profiling %s with %dx%d data quanta.\n", binaryOperatorProfiler.getOperator(), cardinality0, cardinality1);
-        sleep(1000);
         final StopWatch stopWatch = new StopWatch();
 
         System.out.println("Prepare...");
         final StopWatch.Round preparation = stopWatch.start("Preparation");
         binaryOperatorProfiler.prepare(cardinality0, cardinality1);
-        final SigarThread sigarThread = new SigarThread(10);
-        sigarThread.start();
-        final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        threadMXBean.setThreadCpuTimeEnabled(true);
         preparation.stop();
 
         System.out.println("Execute...");
-
         final StopWatch.Round execution = stopWatch.start("Execution");
-        sigarThread.measure();
-        long startCpuTime = threadMXBean.getCurrentThreadCpuTime();
-        binaryOperatorProfiler.run();
-        long endCpuTime = threadMXBean.getCurrentThreadCpuTime();
-        sigarThread.finish();
+        final OperatorProfiler.Result result = binaryOperatorProfiler.run();
         execution.stop();
 
-        System.out.printf("Measured CPU time: %d\n", endCpuTime - startCpuTime);
-        System.out.printf("Obtained %d Sigar measurements.\n", sigarThread.getMeasurements().size());
-
+        System.out.println("Measurement:");
+        System.out.println(result);
         System.out.println(stopWatch.toPrettyString());
         System.out.println();
     }
 
-    public static void sleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
+
 
 }
