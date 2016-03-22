@@ -33,6 +33,9 @@ public class Profiler {
         List<OperatorProfiler.Result> results;
 
         switch (operator) {
+            case "textsource":
+                results = profile(createJavaTextFileSource(), cardinalities);
+                break;
             case "map":
                 results = profile(createJavaMapProfiler(), cardinalities);
                 break;
@@ -61,10 +64,16 @@ public class Profiler {
         results.forEach(result -> System.out.println(result.toCsvString()));
     }
 
-    private static UnaryOperatorProfiler<Integer> createJavaMapProfiler() {
+    private static JavaTextFileSourceProfiler createJavaTextFileSource() {
         final Random random = new Random(42);
-        return new UnaryOperatorProfiler<>(
-                random::nextInt,
+        return new JavaTextFileSourceProfiler(
+                () -> createRandomString(20, 40, random)
+        );
+    }
+
+    private static UnaryOperatorProfiler createJavaMapProfiler() {
+        final Random random = new Random(42);
+        return new UnaryOperatorProfiler(
                 () -> new JavaMapOperator<>(
                         DataSetType.createDefault(Integer.class),
                         DataSetType.createDefault(Integer.class),
@@ -73,14 +82,14 @@ public class Profiler {
                                 Integer.class,
                                 Integer.class
                         )
-                )
+                ),
+                random::nextInt
         );
     }
 
-    private static UnaryOperatorProfiler<Integer> createJavaFlatMapProfiler() {
+    private static UnaryOperatorProfiler createJavaFlatMapProfiler() {
         final Random random = new Random(42);
-        return new UnaryOperatorProfiler<>(
-                random::nextInt,
+        return new UnaryOperatorProfiler(
                 () -> new JavaFlatMapOperator<>(
                         DataSetType.createDefault(Integer.class),
                         DataSetType.createDefault(Integer.class),
@@ -89,44 +98,43 @@ public class Profiler {
                                 Integer.class,
                                 Integer.class
                         )
-                )
+                ),
+                random::nextInt
         );
     }
 
-    private static UnaryOperatorProfiler<Integer> createJavaFilterProfiler() {
+    private static UnaryOperatorProfiler createJavaFilterProfiler() {
         final Random random = new Random(42);
-        return new UnaryOperatorProfiler<>(
-                random::nextInt,
+        return new UnaryOperatorProfiler(
                 () -> new JavaFilterOperator<>(
                         DataSetType.createDefault(Integer.class),
                         new PredicateDescriptor<>(i -> (i & 1) == 0, Integer.class)
-                )
+                ),
+                random::nextInt
         );
     }
 
 
-    private static UnaryOperatorProfiler<String> createJavaReduceProfiler() {
+    private static UnaryOperatorProfiler createJavaReduceProfiler() {
         final Random random = new Random(42);
         final Supplier<String> stringSupplier = createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, random, 4, 20);
-        return new UnaryOperatorProfiler<>(
-                stringSupplier,
+        return new UnaryOperatorProfiler(
                 () -> new JavaReduceByOperator<>(
                         DataSetType.createDefault(String.class),
                         new TransformationDescriptor<>(String::new, String.class, String.class),
                         new ReduceDescriptor<>((s1, s2) -> s1, String.class)
-                )
+                ),
+                stringSupplier
         );
     }
 
-    private static BinaryOperatorProfiler<String, String> createJavaJoinProfiler() {
+    private static BinaryOperatorProfiler createJavaJoinProfiler() {
         final List<String> stringReservoir = new ArrayList<>();
         final double reuseProbability = 0.3;
         final Random random = new Random(42);
         final int minLen = 4, maxLen = 6;
         Supplier<String> reservoirStringSupplier = createReservoirBasedStringSupplier(stringReservoir, reuseProbability, random, minLen, maxLen);
-        return new BinaryOperatorProfiler<>(
-                reservoirStringSupplier,
-                reservoirStringSupplier,
+        return new BinaryOperatorProfiler(
                 () -> new JavaJoinOperator<>(
                         DataSetType.createDefault(String.class),
                         DataSetType.createDefault(String.class),
@@ -140,19 +148,21 @@ public class Profiler {
                                 String.class,
                                 String.class
                         )
-                )
+                ),
+                reservoirStringSupplier,
+                reservoirStringSupplier
         );
     }
 
-    private static BinaryOperatorProfiler<String, String> createJavaUnionProfiler() {
+    private static BinaryOperatorProfiler createJavaUnionProfiler() {
         final List<String> stringReservoir = new ArrayList<>();
         final double reuseProbability = 0.3;
         final Random random = new Random(42);
         Supplier<String> reservoirStringSupplier = createReservoirBasedStringSupplier(stringReservoir, reuseProbability, random, 4, 6);
-        return new BinaryOperatorProfiler<>(
+        return new BinaryOperatorProfiler(
+                () -> new JavaUnionAllOperator<>(DataSetType.createDefault(String.class)),
                 reservoirStringSupplier,
-                reservoirStringSupplier,
-                () -> new JavaUnionAllOperator<>(DataSetType.createDefault(String.class))
+                reservoirStringSupplier
         );
     }
 
@@ -181,13 +191,13 @@ public class Profiler {
         return sb.toString();
     }
 
-    private static <T> List<OperatorProfiler.Result> profile(UnaryOperatorProfiler<T> unaryOperatorProfiler, Collection<Integer> cardinalities) {
+    private static List<OperatorProfiler.Result> profile(JavaTextFileSourceProfiler unaryOperatorProfiler, Collection<Integer> cardinalities) {
         return cardinalities.stream()
                 .map(cardinality -> profile(unaryOperatorProfiler, cardinality))
                 .collect(Collectors.toList());
     }
 
-    private static <T> OperatorProfiler.Result profile(UnaryOperatorProfiler<T> unaryOperatorProfiler, int cardinality) {
+    private static OperatorProfiler.Result profile(JavaTextFileSourceProfiler unaryOperatorProfiler, int cardinality) {
         System.out.printf("Profiling %s with %d data quanta.\n", unaryOperatorProfiler, cardinality);
         final StopWatch stopWatch = new StopWatch();
 
@@ -209,9 +219,37 @@ public class Profiler {
         return result;
     }
 
-    private static <T, U> List<OperatorProfiler.Result> profile(BinaryOperatorProfiler<T, U> binaryOperatorProfiler,
-                                                                Collection<Integer> cardinalities0,
-                                                                Collection<Integer> cardinalities1) {
+    private static List<OperatorProfiler.Result> profile(UnaryOperatorProfiler unaryOperatorProfiler, Collection<Integer> cardinalities) {
+        return cardinalities.stream()
+                .map(cardinality -> profile(unaryOperatorProfiler, cardinality))
+                .collect(Collectors.toList());
+    }
+
+    private static OperatorProfiler.Result profile(UnaryOperatorProfiler unaryOperatorProfiler, int cardinality) {
+        System.out.printf("Profiling %s with %d data quanta.\n", unaryOperatorProfiler, cardinality);
+        final StopWatch stopWatch = new StopWatch();
+
+        System.out.println("Prepare...");
+        final StopWatch.Round preparation = stopWatch.start("Preparation");
+        unaryOperatorProfiler.prepare(cardinality);
+        preparation.stop();
+
+        System.out.println("Execute...");
+        final StopWatch.Round execution = stopWatch.start("Execution");
+        final OperatorProfiler.Result result = unaryOperatorProfiler.run();
+        execution.stop();
+
+        System.out.println("Measurement:");
+        System.out.println(result);
+        System.out.println(stopWatch.toPrettyString());
+        System.out.println();
+
+        return result;
+    }
+
+    private static List<OperatorProfiler.Result> profile(BinaryOperatorProfiler binaryOperatorProfiler,
+                                                         Collection<Integer> cardinalities0,
+                                                         Collection<Integer> cardinalities1) {
         return cardinalities0.stream()
                 .flatMap(cardinality0 ->
                         cardinalities1.stream()
@@ -222,9 +260,9 @@ public class Profiler {
                 .collect(Collectors.toList());
     }
 
-    private static <T, U> OperatorProfiler.Result profile(BinaryOperatorProfiler<T, U> binaryOperatorProfiler,
-                                                          int cardinality0,
-                                                          int cardinality1) {
+    private static OperatorProfiler.Result profile(BinaryOperatorProfiler binaryOperatorProfiler,
+                                                   int cardinality0,
+                                                   int cardinality1) {
         System.out.printf("Profiling %s with %dx%d data quanta.\n", binaryOperatorProfiler.getOperator(), cardinality0, cardinality1);
         final StopWatch stopWatch = new StopWatch();
 

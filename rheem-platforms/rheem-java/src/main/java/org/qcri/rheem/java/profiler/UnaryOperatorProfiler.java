@@ -1,5 +1,6 @@
 package org.qcri.rheem.java.profiler;
 
+import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
@@ -12,41 +13,31 @@ import java.util.function.Supplier;
 /**
  * {@link OperatorProfiler} specifically for {@link JavaExecutionOperator}s with a single {@link InputSlot}.
  */
-public class UnaryOperatorProfiler<In> extends OperatorProfiler {
-
-    private final Supplier<In> dataQuantumGenerator;
-
-    private final Supplier<JavaExecutionOperator> operatorGenerator;
-
-    private JavaExecutionOperator operator;
+public class UnaryOperatorProfiler extends OperatorProfiler {
 
     private ChannelExecutor inputChannelExecutor, outputChannelExecutor;
 
-    public UnaryOperatorProfiler(Supplier<In> dataQuantumGenerator, Supplier<JavaExecutionOperator> operatorGenerator) {
-        this.dataQuantumGenerator = dataQuantumGenerator;
-        this.operatorGenerator = operatorGenerator;
+    public UnaryOperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?> dataQuantumGenerator) {
+        super(operatorGenerator, dataQuantumGenerator);
     }
 
     public void prepare(long... inputCardinalities) {
+        Validate.isTrue(inputCardinalities.length == 1);
+
         super.prepare(inputCardinalities);
         int inputCardinality = (int) inputCardinalities[0];
 
-        // Create operator.
-        this.operator = this.operatorGenerator.get();
-        assert inputCardinalities.length == operator.getNumInputs();
-
         // Create input data.
-        Collection<In> dataQuanta = new ArrayList<>(inputCardinality);
+        Collection<Object> dataQuanta = new ArrayList<>(inputCardinality);
+        final Supplier<?> supplier = this.dataQuantumGenerators.get(0);
         for (int i = 0; i < inputCardinality; i++) {
-            dataQuanta.add(this.dataQuantumGenerator.get());
+            dataQuanta.add(supplier.get());
         }
-        this.inputChannelExecutor = createChannelExecutor();
-        this.inputChannelExecutor.acceptCollection(dataQuanta);
+        this.inputChannelExecutor = createChannelExecutor(dataQuanta);
 
         // Allocate output.
         this.outputChannelExecutor = createChannelExecutor();
     }
-
 
 
     public long executeOperator() {

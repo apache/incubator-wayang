@@ -1,5 +1,6 @@
 package org.qcri.rheem.java.profiler;
 
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
@@ -10,8 +11,10 @@ import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Allows to instrument an {@link JavaExecutionOperator}.
@@ -20,9 +23,23 @@ public abstract class OperatorProfiler {
 
     public int CPU_MHZ = 2700;
 
+    protected Supplier<JavaExecutionOperator> operatorGenerator;
+
+    protected JavaExecutionOperator operator;
+
+    protected final List<Supplier<?>> dataQuantumGenerators;
+
     private List<Long> inputCardinalities;
 
+    public OperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator,
+                            Supplier<?>... dataQuantumGenerators) {
+        this.operatorGenerator = operatorGenerator;
+        this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
+    }
+
+
     public void prepare(long... inputCardinalities) {
+        this.operator = operatorGenerator.get();
         this.inputCardinalities = RheemArrays.asList(inputCardinalities);
     }
 
@@ -79,7 +96,9 @@ public abstract class OperatorProfiler {
         return JavaPlatform.getInstance().getChannelManager().createChannelExecutor(streamChannel);
     }
 
-    public abstract JavaExecutionOperator getOperator();
+    public JavaExecutionOperator getOperator() {
+        return this.operator;
+    }
 
     private static void sleep(long millis) {
         try {
