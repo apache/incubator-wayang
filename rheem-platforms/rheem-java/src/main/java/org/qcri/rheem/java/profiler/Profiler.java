@@ -1,5 +1,7 @@
 package org.qcri.rheem.java.profiler;
 
+import org.hyperic.sigar.FileSystem;
+import org.hyperic.sigar.Sigar;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.types.DataSetType;
@@ -148,18 +150,24 @@ public class Profiler {
         System.out.println("Prepare...");
         final StopWatch.Round preparation = stopWatch.start("Preparation");
         binaryOperatorProfiler.prepare(cardinality0, cardinality1);
+        final SigarThread sigarThread = new SigarThread(10);
+        sigarThread.start();
+        final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+        threadMXBean.setThreadCpuTimeEnabled(true);
         preparation.stop();
 
         System.out.println("Execute...");
+
         final StopWatch.Round execution = stopWatch.start("Execution");
-        final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        threadMXBean.setThreadCpuTimeEnabled(true);
+        sigarThread.measure();
         long startCpuTime = threadMXBean.getCurrentThreadCpuTime();
         binaryOperatorProfiler.run();
         long endCpuTime = threadMXBean.getCurrentThreadCpuTime();
+        sigarThread.finish();
         execution.stop();
 
         System.out.printf("Measured CPU time: %d\n", endCpuTime - startCpuTime);
+        System.out.printf("Obtained %d Sigar measurements.\n", sigarThread.getMeasurements().size());
 
         System.out.println(stopWatch.toPrettyString());
         System.out.println();
