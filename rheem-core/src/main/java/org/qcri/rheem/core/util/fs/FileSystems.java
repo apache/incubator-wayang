@@ -17,7 +17,10 @@ public class FileSystems {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystems.class);
 
-    private static Collection<FileSystem> registeredFileSystems = Arrays.asList(new LocalFileSystem());
+    private static Collection<FileSystem> registeredFileSystems = Arrays.asList(
+            new LocalFileSystem(),
+            new HadoopFileSystem()
+    );
 
     private FileSystems() {
     }
