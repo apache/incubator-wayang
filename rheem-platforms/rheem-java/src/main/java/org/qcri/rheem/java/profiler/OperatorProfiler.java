@@ -100,7 +100,7 @@ public abstract class OperatorProfiler {
         return this.operator;
     }
 
-    private static void sleep(long millis) {
+    public static void sleep(long millis) {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
