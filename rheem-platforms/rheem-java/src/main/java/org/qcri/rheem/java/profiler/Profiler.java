@@ -1,15 +1,10 @@
 package org.qcri.rheem.java.profiler;
 
-import org.qcri.rheem.core.function.FlatMapDescriptor;
-import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.StopWatch;
-import org.qcri.rheem.java.operators.*;
+import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -19,8 +14,6 @@ import java.util.stream.Collectors;
  * Utility to support finding reasonable {@link LoadProfileEstimator}s for {@link JavaExecutionOperator}s.
  */
 public class Profiler {
-
-    private static final String[] CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789".split("");
 
     public static void main(String[] args) {
         if (args.length == 0) {
@@ -34,29 +27,79 @@ public class Profiler {
 
         switch (operator) {
             case "textsource":
-                results = profile(createJavaTextFileSource(), cardinalities);
+                results = profile(OperatorProfilers.createJavaTextFileSource(), cardinalities);
                 break;
             case "map":
-                results = profile(createJavaMapProfiler(), cardinalities);
+                results = profile(OperatorProfilers.createJavaMapProfiler(), cardinalities);
                 break;
             case "filter":
-                results = profile(createJavaFilterProfiler(), cardinalities);
+                results = profile(OperatorProfilers.createJavaFilterProfiler(), cardinalities);
                 break;
             case "flatmap":
-                results = profile(createJavaFlatMapProfiler(), cardinalities);
+                results = profile(OperatorProfilers.createJavaFlatMapProfiler(), cardinalities);
                 break;
             case "reduce":
-                results = profile(createJavaReduceProfiler(), cardinalities);
+                results = profile(OperatorProfilers.createJavaReduceByProfiler(), cardinalities);
                 break;
             case "join":
-                results = profile(createJavaJoinProfiler(), cardinalities, cardinalities);
+                results = profile(OperatorProfilers.createJavaJoinProfiler(), cardinalities, cardinalities);
                 break;
             case "union":
-                results = profile(createJavaUnionProfiler(), cardinalities, cardinalities);
+                results = profile(OperatorProfilers.createJavaUnionProfiler(), cardinalities, cardinalities);
                 break;
             case "callbacksink":
-                results = profile(createJavaLocalCallbackSinkProfiler(), cardinalities);
+                results = profile(OperatorProfilers.createJavaLocalCallbackSinkProfiler(), cardinalities);
                 break;
+            case "collect":
+                results = profile(OperatorProfilers.createCollectingJavaLocalCallbackSinkProfiler(), cardinalities);
+                break;
+            case "word-count-split": {
+                final Supplier<String> randomStringSupplier = DataGenerators.createRandomStringSupplier(2, 10, new Random(42));
+                results = profile(
+                        OperatorProfilers.createJavaFlatMapProfiler(
+                                () -> String.format("%s %s %s %s %s %s %s %s %s",
+                                        randomStringSupplier.get(), randomStringSupplier.get(),
+                                        randomStringSupplier.get(), randomStringSupplier.get(),
+                                        randomStringSupplier.get(), randomStringSupplier.get(),
+                                        randomStringSupplier.get(), randomStringSupplier.get(),
+                                        randomStringSupplier.get()),
+                                str -> Arrays.asList(str.split(" ")),
+                                String.class,
+                                String.class
+                        ),
+                        cardinalities);
+                break;
+            }
+            case "word-count-canonicalize": {
+                final Supplier<String> randomStringSupplier = DataGenerators.createRandomStringSupplier(2, 10, new Random(42));
+                results = profile(
+                        OperatorProfilers.createJavaMapProfiler(
+                                randomStringSupplier,
+                                word -> new Tuple2<>(word.toLowerCase(), 1),
+                                String.class,
+                                Tuple2.class
+                        ),
+                        cardinalities
+                );
+                break;
+            }
+            case "word-count-count": {
+                final Supplier<String> stringSupplier = DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 2, 10);
+                results = profile(
+                        OperatorProfilers.createJavaReduceByProfiler(
+                                () -> new Tuple2<>(stringSupplier.get(), 1),
+                                pair -> pair.field0,
+                                (p1, p2) -> {
+                                    p1.field1 += p2.field1;
+                                    return p1;
+                                },
+                                cast(Tuple2.class),
+                                String.class
+                        ),
+                        cardinalities
+                );
+                break;
+            }
             default:
                 System.out.println("Unknown operator: " + operator);
                 return;
@@ -67,140 +110,11 @@ public class Profiler {
         results.forEach(result -> System.out.println(result.toCsvString()));
     }
 
-    private static JavaTextFileSourceProfiler createJavaTextFileSource() {
-        final Random random = new Random(42);
-        return new JavaTextFileSourceProfiler(
-                () -> createRandomString(20, 40, random)
-        );
+    @SuppressWarnings("unchecked")
+    private static <T> Class<T> cast(Class<?> cls) {
+        return (Class<T>) cls;
     }
 
-    private static UnaryOperatorProfiler createJavaMapProfiler() {
-        final Random random = new Random(42);
-        return new UnaryOperatorProfiler(
-                () -> new JavaMapOperator<>(
-                        DataSetType.createDefault(Integer.class),
-                        DataSetType.createDefault(Integer.class),
-                        new TransformationDescriptor<>(
-                                integer -> integer,
-                                Integer.class,
-                                Integer.class
-                        )
-                ),
-                random::nextInt
-        );
-    }
-
-    private static UnaryOperatorProfiler createJavaFlatMapProfiler() {
-        final Random random = new Random(42);
-        return new UnaryOperatorProfiler(
-                () -> new JavaFlatMapOperator<>(
-                        DataSetType.createDefault(Integer.class),
-                        DataSetType.createDefault(Integer.class),
-                        new FlatMapDescriptor<>(
-                                RheemArrays::asList,
-                                Integer.class,
-                                Integer.class
-                        )
-                ),
-                random::nextInt
-        );
-    }
-
-    private static UnaryOperatorProfiler createJavaFilterProfiler() {
-        final Random random = new Random(42);
-        return new UnaryOperatorProfiler(
-                () -> new JavaFilterOperator<>(
-                        DataSetType.createDefault(Integer.class),
-                        new PredicateDescriptor<>(i -> (i & 1) == 0, Integer.class)
-                ),
-                random::nextInt
-        );
-    }
-
-
-    private static UnaryOperatorProfiler createJavaReduceProfiler() {
-        final Random random = new Random(42);
-        final Supplier<String> stringSupplier = createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, random, 4, 20);
-        return new UnaryOperatorProfiler(
-                () -> new JavaReduceByOperator<>(
-                        DataSetType.createDefault(String.class),
-                        new TransformationDescriptor<>(String::new, String.class, String.class),
-                        new ReduceDescriptor<>((s1, s2) -> s1, String.class)
-                ),
-                stringSupplier
-        );
-    }
-
-    private static BinaryOperatorProfiler createJavaJoinProfiler() {
-        final List<String> stringReservoir = new ArrayList<>();
-        final double reuseProbability = 0.3;
-        final Random random = new Random(42);
-        final int minLen = 4, maxLen = 6;
-        Supplier<String> reservoirStringSupplier = createReservoirBasedStringSupplier(stringReservoir, reuseProbability, random, minLen, maxLen);
-        return new BinaryOperatorProfiler(
-                () -> new JavaJoinOperator<>(
-                        DataSetType.createDefault(String.class),
-                        DataSetType.createDefault(String.class),
-                        new TransformationDescriptor<>(
-                                String::new,
-                                String.class,
-                                String.class
-                        ),
-                        new TransformationDescriptor<>(
-                                String::new,
-                                String.class,
-                                String.class
-                        )
-                ),
-                reservoirStringSupplier,
-                reservoirStringSupplier
-        );
-    }
-
-    private static BinaryOperatorProfiler createJavaUnionProfiler() {
-        final List<String> stringReservoir = new ArrayList<>();
-        final double reuseProbability = 0.3;
-        final Random random = new Random(42);
-        Supplier<String> reservoirStringSupplier = createReservoirBasedStringSupplier(stringReservoir, reuseProbability, random, 4, 6);
-        return new BinaryOperatorProfiler(
-                () -> new JavaUnionAllOperator<>(DataSetType.createDefault(String.class)),
-                reservoirStringSupplier,
-                reservoirStringSupplier
-        );
-    }
-
-    private static SinkProfiler createJavaLocalCallbackSinkProfiler() {
-        final Random random = new Random(42);
-        return new SinkProfiler(
-                () -> new JavaLocalCallbackSink<>(obj -> { }, DataSetType.createDefault(Integer.class)),
-                random::nextInt
-        );
-    }
-
-    private static Supplier<String> createReservoirBasedStringSupplier(List<String> stringReservoir,
-                                                                       double reuseProbability,
-                                                                       Random random,
-                                                                       int minLen,
-                                                                       int maxLen) {
-        return () -> {
-            if (random.nextDouble() > reuseProbability || stringReservoir.isEmpty()) {
-                final String randomString = createRandomString(minLen, maxLen, random);
-                stringReservoir.add(randomString);
-                return randomString;
-            } else {
-                return stringReservoir.get(random.nextInt(stringReservoir.size()));
-            }
-        };
-    }
-
-    private static String createRandomString(int minLen, int maxLen, Random random) {
-        int len = (minLen == maxLen) ? minLen : (random.nextInt(maxLen - minLen) + minLen);
-        StringBuilder sb = new StringBuilder(len);
-        while (sb.length() < len) {
-            sb.append(CHARACTERS[random.nextInt(CHARACTERS.length)]);
-        }
-        return sb.toString();
-    }
 
     private static List<OperatorProfiler.Result> profile(JavaTextFileSourceProfiler unaryOperatorProfiler, Collection<Integer> cardinalities) {
         return cardinalities.stream()
