@@ -52,8 +52,7 @@ public abstract class LoadProfileToTimeConverter {
                         .map(property::apply)
                         .filter(Objects::nonNull)
                         .map(converter::convert)
-                        .reduce(TimeEstimate::plus)
-                        .get();
+                        .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
             }
 
         };

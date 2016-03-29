@@ -1,17 +1,21 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.FlatMapOperator;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
+import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 
 /**
@@ -60,5 +64,15 @@ public class JavaFlatMapOperator<InputType, OutputType>
     @Override
     protected ExecutionOperator createCopy() {
         return new JavaFlatMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 1, .8d, (inputCards, outputCards) -> 563 * inputCards[0] + 100511687),
+                new DefaultLoadEstimator(1, 1, 0, (inputCards, outputCards) -> 0)
+        );
+        mainEstimator.nest(configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getFunctionDescriptor()));
+        return Optional.of(mainEstimator);
     }
 }

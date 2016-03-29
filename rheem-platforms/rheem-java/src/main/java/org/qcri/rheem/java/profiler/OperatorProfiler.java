@@ -1,6 +1,5 @@
 package org.qcri.rheem.java.profiler;
 
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
@@ -21,7 +20,7 @@ import java.util.function.Supplier;
  */
 public abstract class OperatorProfiler {
 
-    public int CPU_MHZ = 2700;
+    public int cpuMhz;
 
     protected Supplier<JavaExecutionOperator> operatorGenerator;
 
@@ -35,11 +34,12 @@ public abstract class OperatorProfiler {
                             Supplier<?>... dataQuantumGenerators) {
         this.operatorGenerator = operatorGenerator;
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
+        this.cpuMhz = Integer.parseInt(System.getProperty("rheem.java.cpu.mhz", "2700"));
     }
 
 
     public void prepare(long... inputCardinalities) {
-        this.operator = operatorGenerator.get();
+        this.operator = this.operatorGenerator.get();
         this.inputCardinalities = RheemArrays.asList(inputCardinalities);
     }
 
@@ -67,7 +67,7 @@ public abstract class OperatorProfiler {
 
     private long calculateCpuCycles(long startNanos, long endNanos) {
         long passedNanos = endNanos - startNanos;
-        double cyclesPerNano = (this.CPU_MHZ * 1e6) / 1e9;
+        double cyclesPerNano = (this.cpuMhz * 1e6) / 1e9;
         return Math.round(cyclesPerNano * passedNanos);
     }
 

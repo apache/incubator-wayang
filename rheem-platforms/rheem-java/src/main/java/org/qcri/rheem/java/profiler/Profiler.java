@@ -54,6 +54,9 @@ public class Profiler {
             case "union":
                 results = profile(createJavaUnionProfiler(), cardinalities, cardinalities);
                 break;
+            case "callbacksink":
+                results = profile(createJavaLocalCallbackSinkProfiler(), cardinalities);
+                break;
             default:
                 System.out.println("Unknown operator: " + operator);
                 return;
@@ -163,6 +166,14 @@ public class Profiler {
                 () -> new JavaUnionAllOperator<>(DataSetType.createDefault(String.class)),
                 reservoirStringSupplier,
                 reservoirStringSupplier
+        );
+    }
+
+    private static SinkProfiler createJavaLocalCallbackSinkProfiler() {
+        final Random random = new Random(42);
+        return new SinkProfiler(
+                () -> new JavaLocalCallbackSink<>(obj -> { }, DataSetType.createDefault(Integer.class)),
+                random::nextInt
         );
     }
 
@@ -284,5 +295,32 @@ public class Profiler {
         return result;
     }
 
+    private static List<OperatorProfiler.Result> profile(SinkProfiler sinkProfiler, Collection<Integer> cardinalities) {
+        return cardinalities.stream()
+                .map(cardinality -> profile(sinkProfiler, cardinality))
+                .collect(Collectors.toList());
+    }
+
+    private static OperatorProfiler.Result profile(SinkProfiler sinkProfiler, int cardinality) {
+        System.out.printf("Profiling %s with %d data quanta.\n", sinkProfiler, cardinality);
+        final StopWatch stopWatch = new StopWatch();
+
+        System.out.println("Prepare...");
+        final StopWatch.Round preparation = stopWatch.start("Preparation");
+        sinkProfiler.prepare(cardinality);
+        preparation.stop();
+
+        System.out.println("Execute...");
+        final StopWatch.Round execution = stopWatch.start("Execution");
+        final OperatorProfiler.Result result = sinkProfiler.run();
+        execution.stop();
+
+        System.out.println("Measurement:");
+        System.out.println(result);
+        System.out.println(stopWatch.toPrettyString());
+        System.out.println();
+
+        return result;
+    }
 
 }
