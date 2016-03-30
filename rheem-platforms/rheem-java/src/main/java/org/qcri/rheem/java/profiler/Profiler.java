@@ -46,6 +46,35 @@ public class Profiler {
             case "reduce":
                 results = profile(OperatorProfilers.createJavaReduceByProfiler(), cardinalities);
                 break;
+            case "globalreduce":
+                results = profile(OperatorProfilers.createJavaGlobalReduceProfiler(), cardinalities);
+                break;
+            case "distinct":
+            case "distinct-string":
+                results = profile(OperatorProfilers.createJavaDistinctProfiler(), cardinalities);
+                break;
+            case "distinct-integer":
+                results = profile(OperatorProfilers.createJavaDistinctProfiler(
+                        DataGenerators.createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42)),
+                        Integer.class
+                ), cardinalities);
+                break;
+            case "sort":
+            case "sort-string":
+                results = profile(OperatorProfilers.createJavaSortProfiler(), cardinalities);
+                break;
+            case "sort-integer":
+                results = profile(OperatorProfilers.createJavaSortProfiler(
+                        DataGenerators.createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42)),
+                        Integer.class
+                ), cardinalities);
+                break;
+            case "count":
+                results = profile(OperatorProfilers.createJavaCountProfiler(), cardinalities);
+                break;
+            case "groupby":
+                results = profile(OperatorProfilers.createJavaMaterializedGroupByProfiler(), cardinalities);
+                break;
             case "join":
                 results = profile(OperatorProfilers.createJavaJoinProfiler(), cardinalities, cardinalities);
                 break;

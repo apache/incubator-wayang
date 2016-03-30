@@ -69,8 +69,8 @@ public class JavaFlatMapOperator<InputType, OutputType>
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .8d, (inputCards, outputCards) -> 563 * inputCards[0] + 100511687),
-                new DefaultLoadEstimator(1, 1, 0, (inputCards, outputCards) -> 0)
+                new DefaultLoadEstimator(this.getNumInputs(), 1, .8d, (inputCards, outputCards) -> 563 * inputCards[0] + 100511687),
+                new DefaultLoadEstimator(this.getNumInputs(), 1, 0, (inputCards, outputCards) -> 0)
         );
         mainEstimator.nest(configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getFunctionDescriptor()));
         return Optional.of(mainEstimator);

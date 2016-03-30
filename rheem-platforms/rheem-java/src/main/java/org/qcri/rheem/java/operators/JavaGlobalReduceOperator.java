@@ -1,7 +1,12 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.GlobalReduceOperator;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
@@ -51,6 +56,14 @@ public class JavaGlobalReduceOperator<Type>
         outputs[0].acceptCollection(reduction.isPresent() ?
                 Collections.singleton(reduction.get()) :
                 Collections.emptyList());
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        return Optional.of(new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
+                LoadEstimator.createFallback(1, 1)
+        ));
     }
 
     @Override

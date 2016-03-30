@@ -74,7 +74,7 @@ public class DefaultLoadEstimator extends LoadEstimator {
 
     @Override
     public LoadEstimate calculate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
-        Validate.isTrue(inputEstimates.length == this.numInputs || this.numInputs == UNSPECIFIED_NUM_SLOTS,
+        Validate.isTrue(inputEstimates.length >= this.numInputs || this.numInputs == UNSPECIFIED_NUM_SLOTS,
                 "Received %d input estimates, require %d.", inputEstimates.length, this.numInputs);
         Validate.isTrue(outputEstimates.length == this.numOutputs || this.numOutputs == UNSPECIFIED_NUM_SLOTS,
                 "Received %d output estimates, require %d.", outputEstimates.length, this.numOutputs);

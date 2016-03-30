@@ -42,6 +42,20 @@ public class DataGenerators {
         return sb.toString();
     }
 
+    public static Supplier<Integer> createReservoirBasedIntegerSupplier(List<Integer> reservoir,
+                                                                      double reuseProbability,
+                                                                      Random random) {
+        return () -> {
+            if (random.nextDouble() > reuseProbability || reservoir.isEmpty()) {
+                final Integer randomInteger = random.nextInt();
+                reservoir.add(randomInteger);
+                return randomInteger;
+            } else {
+                return reservoir.get(random.nextInt(reservoir.size()));
+            }
+        };
+    }
+
     public static Supplier<Integer> createRandomIntegerSupplier(Random random) {
         return random::nextInt;
     }

@@ -8,6 +8,9 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.mortbay.io.RuntimeIOException;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
@@ -21,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -74,6 +78,19 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
         } catch (IOException | RuntimeIOException e) {
             throw new RheemException("Could not write stream to sequence file.", e);
         }
+    }
+
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+        // NB: Not actually measured.
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 0, .8d, (inputCards, outputCards) -> 2000 * inputCards[0] + 810000),
+                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> inputCards[0] * 256),
+                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> 0)
+        );
+        return Optional.of(mainEstimator);
     }
 
     @Override

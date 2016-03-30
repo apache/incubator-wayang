@@ -110,6 +110,86 @@ public class OperatorProfilers {
         );
     }
 
+    public static UnaryOperatorProfiler createJavaGlobalReduceProfiler() {
+        return createJavaGlobalReduceProfiler(
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                (s1, s2) -> s1,
+                String.class
+        );
+    }
+
+    public static <In> UnaryOperatorProfiler createJavaGlobalReduceProfiler(Supplier<In> dataGenerator,
+                                                                             FunctionDescriptor.SerializableBinaryOperator<In> udf,
+                                                                             Class<In> inOutClass) {
+        return new UnaryOperatorProfiler(
+                () -> new JavaGlobalReduceOperator<>(
+                        DataSetType.createDefault(inOutClass),
+                        new ReduceDescriptor<>(udf, inOutClass)
+                ),
+                dataGenerator
+        );
+    }
+
+    public static UnaryOperatorProfiler createJavaMaterializedGroupByProfiler() {
+        return createJavaMaterializedGroupByProfiler(
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                String::new,
+                String.class,
+                String.class
+        );
+    }
+
+    public static <In, Key> UnaryOperatorProfiler createJavaMaterializedGroupByProfiler(Supplier<In> dataGenerator,
+                                                                             FunctionDescriptor.SerializableFunction<In, Key> keyUdf,
+                                                                             Class<In> inOutClass,
+                                                                             Class<Key> keyClass) {
+        return new UnaryOperatorProfiler(
+                () -> new JavaMaterializedGroupByOperator<>(
+                        new TransformationDescriptor<>(keyUdf, inOutClass, keyClass),
+                        DataSetType.createDefault(inOutClass),
+                        DataSetType.createDefaultUnchecked(Iterable.class)
+                ),
+                dataGenerator
+        );
+    }
+
+    public static UnaryOperatorProfiler createJavaCountProfiler() {
+        return createJavaCountProfiler(DataGenerators.createRandomIntegerSupplier(new Random(42)), Integer.class);
+    }
+
+    public static <T> UnaryOperatorProfiler createJavaCountProfiler(Supplier<T> dataGenerator,
+                                                                    Class<T> inClass) {
+        return new UnaryOperatorProfiler(
+                () -> new JavaCountOperator<>(DataSetType.createDefault(inClass)),
+                dataGenerator
+        );
+    }
+
+    public static UnaryOperatorProfiler createJavaDistinctProfiler() {
+        return createJavaDistinctProfiler(
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                String.class
+        );
+    }
+
+    public static <T> UnaryOperatorProfiler createJavaDistinctProfiler(Supplier<T> dataGenerator, Class<T> inClass) {
+        return new UnaryOperatorProfiler(
+                () -> new JavaDistinctOperator<>(DataSetType.createDefault(inClass)),
+                dataGenerator
+        );
+    }
+
+    public static UnaryOperatorProfiler createJavaSortProfiler() {
+        return createJavaSortProfiler(
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                String.class
+        );
+    }
+
+    public static <T> UnaryOperatorProfiler createJavaSortProfiler(Supplier<T> dataGenerator, Class<T> inClass) {
+        return new UnaryOperatorProfiler(() -> new JavaSortOperator<>(DataSetType.createDefault(inClass)), dataGenerator);
+    }
+
     public static BinaryOperatorProfiler createJavaJoinProfiler() {
         final List<String> stringReservoir = new ArrayList<>();
         final double reuseProbability = 0.3;

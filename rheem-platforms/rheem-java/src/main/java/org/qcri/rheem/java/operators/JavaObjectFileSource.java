@@ -8,6 +8,9 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
@@ -56,6 +59,22 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
         } catch (IOException e) {
             throw new RheemException(String.format("%s failed to read from %s.", this, this.sourcePath), e);
         }
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+        final OptionalLong optionalFileSize = FileSystems.getFileSize(this.sourcePath);
+        if (!optionalFileSize.isPresent()) {
+            LoggerFactory.getLogger(JavaTextFileSource.class).warn("Could not determine file size for {}.", this.sourcePath);
+        }
+        // NB: Not actually measured!
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(0, 1, .99d, (inputCards, outputCards) -> 1500 * outputCards[0] + 1400000),
+                optionalFileSize.isPresent() ?
+                        new DefaultLoadEstimator(0, 1, 1d, (inputCards, outputCards) -> optionalFileSize.getAsLong()) :
+                        new DefaultLoadEstimator(0, 1, .5d, (inputCards, outputCards) -> outputCards[0] * 100L)
+        );
+        return Optional.of(mainEstimator);
     }
 
     @Override

@@ -1,7 +1,11 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
@@ -17,6 +21,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
+import java.util.Optional;
 
 /**
  * {@link Operator} for the {@link JavaPlatform} that creates a TSV file.
@@ -73,6 +78,18 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
         } catch (IOException e) {
             throw new RheemException(String.format("%s failed on writing to %s.", this, this.targetPath), e);
         }
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        // NB: Not actually measured.
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 0, .8d, (inputCards, outputCards) -> 1000 * inputCards[0] + 810000),
+                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> inputCards[0] * 256),
+                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> 0)
+        );
+        return Optional.of(mainEstimator);
     }
 
     @Override
