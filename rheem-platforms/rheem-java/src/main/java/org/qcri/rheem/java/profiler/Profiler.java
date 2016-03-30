@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
  */
 public class Profiler {
 
+    private static final int GC_RUNS = 1;
+
     public static void main(String[] args) {
         if (args.length == 0) {
             System.err.printf("Usage: java %s <operator to profile> <cardinality>[,<cardinality>]\n", Profiler.class);
@@ -27,7 +29,10 @@ public class Profiler {
 
         switch (operator) {
             case "textsource":
-                results = profile(OperatorProfilers.createJavaTextFileSource(), cardinalities);
+                results = profile(OperatorProfilers.createJavaTextFileSourceProfiler(), cardinalities);
+                break;
+            case "collectionsource":
+                results = profile(OperatorProfilers.createJavaCollectionSourceProfiler(), cardinalities);
                 break;
             case "map":
                 results = profile(OperatorProfilers.createJavaMapProfiler(), cardinalities);
@@ -116,24 +121,30 @@ public class Profiler {
     }
 
 
-    private static List<OperatorProfiler.Result> profile(JavaTextFileSourceProfiler unaryOperatorProfiler, Collection<Integer> cardinalities) {
+    private static List<OperatorProfiler.Result> profile(SourceProfiler sourceProfiler, Collection<Integer> cardinalities) {
         return cardinalities.stream()
-                .map(cardinality -> profile(unaryOperatorProfiler, cardinality))
+                .map(cardinality -> profile(sourceProfiler, cardinality))
                 .collect(Collectors.toList());
     }
 
-    private static OperatorProfiler.Result profile(JavaTextFileSourceProfiler unaryOperatorProfiler, int cardinality) {
-        System.out.printf("Profiling %s with %d data quanta.\n", unaryOperatorProfiler, cardinality);
+    private static OperatorProfiler.Result profile(SourceProfiler sourceProfiler, int cardinality) {
+        System.out.println("Running garbage collector...");
+        for (int i = 0; i < GC_RUNS; i++) {
+            System.gc();
+        }
+        OperatorProfiler.sleep(1000);
+
+        System.out.printf("Profiling %s with %d data quanta.\n", sourceProfiler, cardinality);
         final StopWatch stopWatch = new StopWatch();
 
         System.out.println("Prepare...");
         final StopWatch.Round preparation = stopWatch.start("Preparation");
-        unaryOperatorProfiler.prepare(cardinality);
+        sourceProfiler.prepare(cardinality);
         preparation.stop();
 
         System.out.println("Execute...");
         final StopWatch.Round execution = stopWatch.start("Execution");
-        final OperatorProfiler.Result result = unaryOperatorProfiler.run();
+        final OperatorProfiler.Result result = sourceProfiler.run();
         execution.stop();
 
         System.out.println("Measurement:");
@@ -151,6 +162,12 @@ public class Profiler {
     }
 
     private static OperatorProfiler.Result profile(UnaryOperatorProfiler unaryOperatorProfiler, int cardinality) {
+        System.out.println("Running garbage collector...");
+        for (int i = 0; i < GC_RUNS; i++) {
+            System.gc();
+        }
+        OperatorProfiler.sleep(1000);
+
         System.out.printf("Profiling %s with %d data quanta.\n", unaryOperatorProfiler, cardinality);
         final StopWatch stopWatch = new StopWatch();
 
@@ -188,6 +205,12 @@ public class Profiler {
     private static OperatorProfiler.Result profile(BinaryOperatorProfiler binaryOperatorProfiler,
                                                    int cardinality0,
                                                    int cardinality1) {
+        System.out.println("Running garbage collector...");
+        for (int i = 0; i < GC_RUNS; i++) {
+            System.gc();
+        }
+        OperatorProfiler.sleep(1000);
+
         System.out.printf("Profiling %s with %dx%d data quanta.\n", binaryOperatorProfiler.getOperator(), cardinality0, cardinality1);
         final StopWatch stopWatch = new StopWatch();
 
@@ -216,6 +239,12 @@ public class Profiler {
     }
 
     private static OperatorProfiler.Result profile(SinkProfiler sinkProfiler, int cardinality) {
+        System.out.println("Running garbage collector...");
+        for (int i = 0; i < GC_RUNS; i++) {
+            System.gc();
+        }
+        OperatorProfiler.sleep(1000);
+
         System.out.printf("Profiling %s with %d data quanta.\n", sinkProfiler, cardinality);
         final StopWatch stopWatch = new StopWatch();
 

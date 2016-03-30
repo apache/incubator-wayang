@@ -13,8 +13,12 @@ import java.util.function.Supplier;
  */
 public class OperatorProfilers {
 
-    public static JavaTextFileSourceProfiler createJavaTextFileSource() {
+    public static JavaTextFileSourceProfiler createJavaTextFileSourceProfiler() {
         return new JavaTextFileSourceProfiler(DataGenerators.createRandomStringSupplier(20, 40, new Random(42)));
+    }
+
+    public static JavaCollectionSourceProfiler createJavaCollectionSourceProfiler() {
+        return new JavaCollectionSourceProfiler(DataGenerators.createRandomIntegerSupplier(new Random(42)));
     }
 
     public static UnaryOperatorProfiler createJavaMapProfiler() {
