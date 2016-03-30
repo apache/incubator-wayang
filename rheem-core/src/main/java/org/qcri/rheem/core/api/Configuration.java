@@ -196,16 +196,22 @@ public class Configuration {
             // Safety net: provide a fallback selectivity.
             KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> fallbackProvider =
                     new FunctionalKeyValueProvider<FunctionDescriptor, LoadProfileEstimator>(
-                            operator -> new NestableLoadProfileEstimator(
+                            functionDescriptor -> new NestableLoadProfileEstimator(
                                     DefaultLoadEstimator.createIOLinearEstimator(10000),
-                                    DefaultLoadEstimator.createIOLinearEstimator(10000),
-                                    null, null
+                                    DefaultLoadEstimator.createIOLinearEstimator(10000)
                             )
                     ).withSlf4jWarning("Creating fallback selectivity for {}.");
 
+            // Built-in layer: let the FunctionDescriptors provide the LoadProfileEstimators themselves.
+            KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> builtInProvider =
+                    new FunctionalKeyValueProvider<>(
+                            fallbackProvider,
+                            functionDescriptor -> functionDescriptor.getLoadProfileEstimator().orElse(null)
+                    );
+
             // Customizable layer: Users can override manually.
             KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> overrideProvider =
-                    new MapBasedKeyValueProvider<>(fallbackProvider);
+                    new MapBasedKeyValueProvider<>(builtInProvider);
 
             configuration.setFunctionLoadProfileEstimatorProvider(overrideProvider);
         }

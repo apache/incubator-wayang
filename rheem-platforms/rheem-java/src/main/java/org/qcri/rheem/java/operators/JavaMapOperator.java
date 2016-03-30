@@ -57,10 +57,8 @@ public class JavaMapOperator<InputType, OutputType>
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator operatorEstimator = new NestableLoadProfileEstimator(
-                DefaultLoadEstimator.createIOLinearEstimator(this, 10000),
-                DefaultLoadEstimator.createIOLinearEstimator(this, 1000),
-                DefaultLoadEstimator.createIOLinearEstimator(this, 1000),
-                DefaultLoadEstimator.createIOLinearEstimator(this, 0)
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 55 * inputCards[0] + 380000),
+                new DefaultLoadEstimator(1, 1, 0, (inputCards, outputCards) -> 0)
         );
         final LoadProfileEstimator functionEstimator =
                 configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getFunctionDescriptor());

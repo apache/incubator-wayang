@@ -1,12 +1,11 @@
 package org.qcri.rheem.core.function;
 
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 
 import java.io.Serializable;
+import java.util.Optional;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
@@ -15,38 +14,30 @@ import java.util.function.Function;
  */
 public abstract class FunctionDescriptor {
 
-    protected final LoadEstimator cpuLoadEstimator;
+    protected LoadEstimator cpuLoadEstimator;
 
-    protected final LoadEstimator memoryLoadEstimator;
+    protected LoadEstimator memoryLoadEstimator;
+
+    public FunctionDescriptor() {
+        this(null, null);
+    }
 
     public FunctionDescriptor(LoadEstimator cpuLoadEstimator, LoadEstimator memoryLoadEstimator) {
         this.cpuLoadEstimator = cpuLoadEstimator;
         this.memoryLoadEstimator = memoryLoadEstimator;
     }
 
-    /**
-     * Estimate the CPU usage of this instance.
-     *
-     * @param inputCardinalities  input {@link CardinalityEstimate}s; ordered by this instance's {@link InputSlot}s
-     * @param outputCardinalities output {@link CardinalityEstimate}s; ordered by this instance's {@link OutputSlot}s
-     * @return a {@link LoadEstimate}
-     */
-    public LoadEstimate estimateCpuUsage(CardinalityEstimate[] inputCardinalities,
-                                         CardinalityEstimate[] outputCardinalities) {
-        return this.cpuLoadEstimator.calculate(inputCardinalities, outputCardinalities);
+    public void setLoadEstimators(LoadEstimator cpuLoadEstimator, LoadEstimator memoryLoadEstimator) {
+        this.cpuLoadEstimator = cpuLoadEstimator;
+        this.memoryLoadEstimator = memoryLoadEstimator;
     }
 
-
-    /**
-     * Estimate the RAM usage of this instance.
-     *
-     * @param inputCardinalities  input {@link CardinalityEstimate}s; ordered by this instance's {@link InputSlot}s
-     * @param outputCardinalities output {@link CardinalityEstimate}s; ordered by this instance's {@link OutputSlot}s
-     * @return a {@link LoadEstimate}
-     */
-    public LoadEstimate estimateRamUsage(CardinalityEstimate[] inputCardinalities,
-                                         CardinalityEstimate[] outputCardinalities) {
-        return this.memoryLoadEstimator.calculate(inputCardinalities, outputCardinalities);
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator() {
+        if (this.cpuLoadEstimator != null && this.memoryLoadEstimator != null) {
+            return Optional.of(new NestableLoadProfileEstimator(this.cpuLoadEstimator, this.memoryLoadEstimator));
+        } else {
+            return Optional.empty();
+        }
     }
 
     /**

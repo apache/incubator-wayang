@@ -9,6 +9,7 @@ import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
@@ -45,6 +46,15 @@ public class WordCountIT {
         // Instantiate Rheem and activate the backend.
         RheemContext rheemContext = new RheemContext();
         rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.getConfiguration().getLoadProfileToTimeConverterProvider().set(
+                JavaPlatform.getInstance(),
+                LoadProfileToTimeConverter.createDefault(
+                        LoadToTimeConverter.createLinearCoverter(1d / (2700 * 1000)),
+                        LoadToTimeConverter.createLinearCoverter(2.2 / 1024 / 1024),
+                        LoadToTimeConverter.createLinearCoverter(1d / 1024 / 1024),
+                        (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+                )
+        );
 
         TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
 
@@ -56,6 +66,10 @@ public class WordCountIT {
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefault(String.class)
         );
+        flatMapOperator.getFunctionDescriptor().setLoadEstimators(
+                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 670),
+                LoadEstimator.createFallback(1, 1)
+        );
 
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
@@ -65,6 +79,10 @@ public class WordCountIT {
                         DataUnitType.createBasic(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class)
+        );
+        mapOperator.getFunctionDescriptor().setLoadEstimators(
+                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 245),
+                LoadEstimator.createFallback(1, 1)
         );
 
 
@@ -79,6 +97,14 @@ public class WordCountIT {
                                 }), DataUnitType.createGroupedUnchecked(Tuple2.class),
                                 DataUnitType.createBasicUnchecked(Tuple2.class)
                         ), DataSetType.createDefaultUnchecked(Tuple2.class)
+        );
+        reduceByOperator.getKeyDescriptor().setLoadEstimators(
+                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 50),
+                LoadEstimator.createFallback(1, 1)
+        );
+        reduceByOperator.getReduceDescriptor().setLoadEstimators(
+                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 350 + 500000),
+                LoadEstimator.createFallback(1, 1)
         );
 
 
