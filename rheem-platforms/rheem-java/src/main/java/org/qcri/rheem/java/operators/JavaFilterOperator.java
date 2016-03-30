@@ -1,13 +1,19 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.FilterOperator;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
@@ -45,6 +51,14 @@ public class JavaFilterOperator<Type>
 
         final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
         outputs[0].acceptStream(inputs[0].<Type>provideStream().filter(filterFunction));
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        return Optional.of(new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(this.getNumInputs(), 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
+                LoadEstimator.createFallback(this.getNumInputs(), 1)
+        ));
     }
 
     @Override

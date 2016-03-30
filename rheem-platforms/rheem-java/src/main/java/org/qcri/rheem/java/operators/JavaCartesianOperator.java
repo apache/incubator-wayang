@@ -2,6 +2,11 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CartesianOperator;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
 import org.qcri.rheem.core.types.DataSetType;
@@ -9,6 +14,7 @@ import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,6 +53,14 @@ public class JavaCartesianOperator<InputType0, InputType1>
             final Stream<InputType1> stream = inputs[1].provideStream();
             outputs[0].acceptStream(stream.flatMap(e1 -> collection.stream().map(e0 -> new Tuple2<InputType0, InputType1>(e0, e1))));
         }
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        return Optional.of(new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(2, 1, 0.9d, (inCards, outCards) -> outCards[0] * 21 + 900000),
+                LoadEstimator.createFallback(2, 1)
+        ));
     }
 
     @Override

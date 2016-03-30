@@ -1,13 +1,17 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
+import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 /**
  * Implementation of the {@link LocalCallbackSink} operator for the Java platform.
@@ -34,5 +38,15 @@ public class JavaLocalCallbackSink<T> extends LocalCallbackSink<T> implements Ja
     @Override
     protected ExecutionOperator createCopy() {
         return new JavaLocalCallbackSink<>(this.callback, this.getType());
+    }
+
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 0, .8d, (inputCards, outputCards) -> 28 * inputCards[0] + 810000),
+                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> 0)
+        );
+        return Optional.of(mainEstimator);
     }
 }

@@ -307,7 +307,7 @@ public class PlanImplementation {
         concatenation.operators.addAll(this.operators);
         concatenation.junctions.putAll(this.junctions);
         concatenation.settledAlternatives.putAll(this.settledAlternatives);
-        concatenation.addToTimeEstimate(this.getTimeEstimate());
+        concatenation.addToTimeEstimate(this.getTimeEstimate()); // FIXME: Is when concatenating overlapping instances?
 
         // Find the appropriate PlanImplementation for the junction.
         PlanImplementation junctionPlanImplementation;

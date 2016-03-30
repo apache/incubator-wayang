@@ -39,7 +39,7 @@ public class Configuration {
 
     private KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider;
 
-    private ConstantProvider<LoadProfileToTimeConverter> loadProfileToTimeConverterProvider;
+    private KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider;
 
     private CollectionProvider<Platform> platformProvider;
 
@@ -89,7 +89,7 @@ public class Configuration {
             this.functionLoadProfileEstimatorProvider =
                     new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider);
             this.loadProfileToTimeConverterProvider =
-                    new ConstantProvider<>(this.parent.loadProfileToTimeConverterProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider);
 
             // Providers for plan enumeration.
             this.pruningStrategiesProvider = new CollectionProvider<>(this.parent.pruningStrategiesProvider);
@@ -196,32 +196,41 @@ public class Configuration {
             // Safety net: provide a fallback selectivity.
             KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> fallbackProvider =
                     new FunctionalKeyValueProvider<FunctionDescriptor, LoadProfileEstimator>(
-                            operator -> new NestableLoadProfileEstimator(
+                            functionDescriptor -> new NestableLoadProfileEstimator(
                                     DefaultLoadEstimator.createIOLinearEstimator(10000),
-                                    DefaultLoadEstimator.createIOLinearEstimator(10000),
-                                    null, null
+                                    DefaultLoadEstimator.createIOLinearEstimator(10000)
                             )
                     ).withSlf4jWarning("Creating fallback selectivity for {}.");
 
+            // Built-in layer: let the FunctionDescriptors provide the LoadProfileEstimators themselves.
+            KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> builtInProvider =
+                    new FunctionalKeyValueProvider<>(
+                            fallbackProvider,
+                            functionDescriptor -> functionDescriptor.getLoadProfileEstimator().orElse(null)
+                    );
+
             // Customizable layer: Users can override manually.
             KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> overrideProvider =
-                    new MapBasedKeyValueProvider<>(fallbackProvider);
+                    new MapBasedKeyValueProvider<>(builtInProvider);
 
             configuration.setFunctionLoadProfileEstimatorProvider(overrideProvider);
         }
         {
             // Safety net: provide a fallback converter.
-            ConstantProvider<LoadProfileToTimeConverter> fallbackProvider =
-                    new ConstantProvider<>(LoadProfileToTimeConverter.createDefault(
-                            LoadToTimeConverter.createLinearCoverter(0.001d),
-                            LoadToTimeConverter.createLinearCoverter(0.001d),
-                            LoadToTimeConverter.createLinearCoverter(0.01d),
-                            (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
-                    )).withSlf4jWarning("Using fallback load-profile-to-time converter.");
+            final LoadProfileToTimeConverter fallbackConverter = LoadProfileToTimeConverter.createDefault(
+                    LoadToTimeConverter.createLinearCoverter(0.001d),
+                    LoadToTimeConverter.createLinearCoverter(0.001d),
+                    LoadToTimeConverter.createLinearCoverter(0.01d),
+                    (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+            );
+            KeyValueProvider<Platform, LoadProfileToTimeConverter> fallbackProvider =
+                    new FunctionalKeyValueProvider<Platform, LoadProfileToTimeConverter>(
+                            platform -> fallbackConverter
+                    ).withSlf4jWarning("Using fallback load-profile-to-time converter.");
 
             // Add provider to customize behavior on RheemContext level.
-            ConstantProvider<LoadProfileToTimeConverter> overrideProvider = new ConstantProvider<>(fallbackProvider);
-
+            KeyValueProvider<Platform, LoadProfileToTimeConverter> overrideProvider =
+                    new MapBasedKeyValueProvider<>(fallbackProvider);
             configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
         }
         {
@@ -302,11 +311,11 @@ public class Configuration {
         this.operatorLoadProfileEstimatorProvider = operatorLoadProfileEstimatorProvider;
     }
 
-    public ConstantProvider<LoadProfileToTimeConverter> getLoadProfileToTimeConverterProvider() {
+    public KeyValueProvider<Platform, LoadProfileToTimeConverter> getLoadProfileToTimeConverterProvider() {
         return this.loadProfileToTimeConverterProvider;
     }
 
-    public void setLoadProfileToTimeConverterProvider(ConstantProvider<LoadProfileToTimeConverter> loadProfileToTimeConverterProvider) {
+    public void setLoadProfileToTimeConverterProvider(KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider) {
         this.loadProfileToTimeConverterProvider = loadProfileToTimeConverterProvider;
     }
 

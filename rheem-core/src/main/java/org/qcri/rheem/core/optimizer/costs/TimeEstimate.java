@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer.costs;
 
 import org.qcri.rheem.core.optimizer.ProbabilisticIntervalEstimate;
+import org.qcri.rheem.core.util.Formats;
 
 import java.util.Comparator;
 
@@ -27,4 +28,12 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
         return (t1, t2) -> Long.compare(t1.getAverageEstimate(), t2.getAverageEstimate());
     }
 
+    @Override
+    public String toString() {
+        return String.format("%s[%s .. %s, conf=%s]",
+                this.getClass().getSimpleName(),
+                Formats.formatDuration(this.getLowerEstimate()),
+                Formats.formatDuration(this.getUpperEstimate()),
+                Formats.formatPercentage(this.getCorrectnessProbability()));
+    }
 }

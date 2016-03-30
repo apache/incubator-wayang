@@ -41,7 +41,7 @@ public class LocalFileSystem implements FileSystem {
             return url.getProtocol().equals("file") &&
                     (url.getHost().equals("") || url.getHost().equals("localhost"));
         } catch (MalformedURLException e) {
-            this.logger.error("Illegal URL: \"{}\"", urlAsString);
+            this.logger.error(String.format("Illegal URL: \"%s\"", urlAsString), e);
             return false;
         }
     }

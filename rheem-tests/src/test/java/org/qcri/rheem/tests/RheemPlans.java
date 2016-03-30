@@ -23,6 +23,8 @@ public class RheemPlans {
 
     public static final URI FILE_OTHER_LINES_TXT = createUri("/other-lines.txt");
 
+    public static final URI ULYSSES_TXT = createUri("/ulysses.txt");
+
     public static URI createUri(String resourcePath) {
         try {
             return Thread.currentThread().getClass().getResource(resourcePath).toURI();

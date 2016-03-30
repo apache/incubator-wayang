@@ -1,7 +1,12 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.LoopOperator;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
@@ -9,6 +14,7 @@ import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -103,6 +109,18 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         } else {
             target.acceptStream(source.provideStream());
         }
+    }
+
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        // NB: Not actually measured.
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(4, 3, .8d, CardinalityEstimate.EMPTY_ESTIMATE,
+                        (inputCards, outputCards) -> 500 * inputCards[ITERATION_CONVERGENCE_INPUT_INDEX] + 810000),
+                new DefaultLoadEstimator(4, 3, 0, CardinalityEstimate.EMPTY_ESTIMATE, (inputCards, outputCards) -> 0)
+        );
+        return Optional.of(mainEstimator);
     }
 
     @Override

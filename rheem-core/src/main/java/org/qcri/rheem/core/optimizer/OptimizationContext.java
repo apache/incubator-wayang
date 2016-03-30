@@ -414,23 +414,14 @@ public class OptimizationContext {
         public void updateTimeEstimate(Configuration configuration) {
             if (!this.operator.isExecutionOperator()) return;
 
-            final Optional<LoadProfileEstimator> optionalLoadProfileEstimator = configuration
+            final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
+            final LoadProfileEstimator loadProfileEstimator = configuration
                     .getOperatorLoadProfileEstimatorProvider()
-                    .optionallyProvideFor((ExecutionOperator) this.operator);
-            if (!optionalLoadProfileEstimator.isPresent()) {
-                OptimizationContext.this.logger.warn("No LoadProfileEstimator for {} configured.", this.operator);
-                return;
-            }
-            final LoadProfileEstimator loadProfileEstimator = optionalLoadProfileEstimator.get();
+                    .provideFor(executionOperator);
             this.loadProfile = loadProfileEstimator.estimate(this);
 
-            final Optional<LoadProfileToTimeConverter> optionalLoadProfileToTimeConverter =
-                    configuration.getLoadProfileToTimeConverterProvider().optionallyProvide();
-            if (!optionalLoadProfileEstimator.isPresent()) {
-                OptimizationContext.this.logger.warn("No LoadProfileToTimeConverter for {} configured.");
-                return;
-            }
-            final LoadProfileToTimeConverter timeConverter = optionalLoadProfileToTimeConverter.get();
+            final LoadProfileToTimeConverter timeConverter =
+                    configuration.getLoadProfileToTimeConverterProvider().provideFor(executionOperator.getPlatform());
             this.timeEstimate = timeConverter.convert(this.loadProfile);
         }
 

@@ -3,6 +3,9 @@ package org.qcri.rheem.java.operators;
 import org.apache.commons.io.IOUtils;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
@@ -12,12 +15,15 @@ import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.util.Iterator;
+import java.util.Optional;
+import java.util.OptionalLong;
 import java.util.Spliterators;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -116,6 +122,22 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
                 return returnValue;
             }
         };
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+        final OptionalLong optionalFileSize = FileSystems.getFileSize(this.sourcePath);
+        if (!optionalFileSize.isPresent()) {
+            LoggerFactory.getLogger(JavaTextFileSource.class).warn("Could not determine file size for {}.", this.sourcePath);
+        }
+        // NB: Not actually measured!
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(0, 1, .99d, (inputCards, outputCards) -> 1500 * outputCards[0] + 1400000),
+                optionalFileSize.isPresent() ?
+                        new DefaultLoadEstimator(0, 1, 1d, (inputCards, outputCards) -> optionalFileSize.getAsLong()) :
+                        new DefaultLoadEstimator(0, 1, .5d, (inputCards, outputCards) -> outputCards[0] * 100L)
+        );
+        return Optional.of(mainEstimator);
     }
 
     @Override

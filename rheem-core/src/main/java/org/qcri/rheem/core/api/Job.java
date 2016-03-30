@@ -81,13 +81,7 @@ public class Job {
     private final double minConfidence = 5., maxSpread = .7;
 
     private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
-            (producerTask, channel, consumerTask) -> false ;
-//    {
-//                final CardinalityEstimate ce = channel.getCardinalityEstimate(optimizationContext);
-//                return ce.getCorrectnessProbability() >= this.minConfidence
-//                        && CardinalityBreakpoint.calculateSpread(ce) <= this.maxSpread;
-//            };
-
+            (producerTask, channel, consumerTask) -> false;
 
     /**
      * Creates a new instance.
@@ -252,7 +246,8 @@ public class Job {
                     return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
                 })
                 .map(plan -> {
-                    this.logger.info("Picked plan's cost estimate is {}.", plan.getTimeEstimate());
+                    final TimeEstimate timeEstimate = plan.getTimeEstimate();
+                    this.logger.info("The picked plan's runtime estimate is {}.", timeEstimate);
                     return plan;
                 })
                 .orElseThrow(() -> new IllegalStateException("Could not find an execution plan."));

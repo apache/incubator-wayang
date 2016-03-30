@@ -2,8 +2,13 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.JoinOperator;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
@@ -84,6 +89,15 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
         }
 
         outputs[0].acceptStream(joinStream);
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        return Optional.of(new NestableLoadProfileEstimator(
+                        new DefaultLoadEstimator(2, 1, 0.9,
+                                (inCards, outCards) -> 1000 * inCards[0] + 1000 * inCards[1] + 200 * outCards[0] + 1000000
+                        ), LoadEstimator.createFallback(2, 1)
+                ));
     }
 
     @Override

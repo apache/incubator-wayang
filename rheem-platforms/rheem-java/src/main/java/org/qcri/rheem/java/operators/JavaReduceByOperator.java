@@ -1,8 +1,12 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.ReduceByOperator;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
@@ -59,6 +63,24 @@ public class JavaReduceByOperator<Type, KeyType>
                 .map(Optional::get);
 
         outputs[0].acceptStream(finishedStream);
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        final NestableLoadProfileEstimator operatorEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 1040 * outputCards[0] + 1100000),
+                new DefaultLoadEstimator(1, 1, 0, (inputCards, outputCards) -> 0)
+        );
+
+        final LoadProfileEstimator keyEstimator =
+                configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getKeyDescriptor());
+        operatorEstimator.nest(keyEstimator);
+
+        final LoadProfileEstimator reduceDescriptor =
+                configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getReduceDescriptor());
+        operatorEstimator.nest(reduceDescriptor);
+
+        return Optional.of(operatorEstimator);
     }
 
     @Override

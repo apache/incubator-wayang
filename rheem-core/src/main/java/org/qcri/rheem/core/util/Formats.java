@@ -18,4 +18,13 @@ public class Formats {
     }
 
 
+    /**
+     * Formats a value in {@code [0, 1]} as a percentage with 2 decimal places.
+     *
+     * @param val value to be formated
+     * @return formatted {@link String}
+     */
+    public static String formatPercentage(double val) {
+        return String.format("%.2f%%", val * 100d);
+    }
 }
