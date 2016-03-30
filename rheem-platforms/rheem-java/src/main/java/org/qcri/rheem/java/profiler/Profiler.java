@@ -52,6 +52,9 @@ public class Profiler {
             case "union":
                 results = profile(OperatorProfilers.createJavaUnionProfiler(), cardinalities, cardinalities);
                 break;
+            case "cartesian":
+                results = profile(OperatorProfilers.createJavaCartesianProfiler(), cardinalities, cardinalities);
+                break;
             case "callbacksink":
                 results = profile(OperatorProfilers.createJavaLocalCallbackSinkProfiler(), cardinalities);
                 break;

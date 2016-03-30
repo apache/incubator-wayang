@@ -136,6 +136,20 @@ public class OperatorProfilers {
         );
     }
 
+    /**
+     * Creates a {@link BinaryOperatorProfiler} for the {@link JavaCartesianOperator} with {@link Integer} data quanta.
+     */
+    public static BinaryOperatorProfiler createJavaCartesianProfiler() {
+        return new BinaryOperatorProfiler(
+                () -> new JavaCartesianOperator<>(
+                        DataSetType.createDefault(Integer.class),
+                        DataSetType.createDefault(Integer.class)
+                ),
+                DataGenerators.createRandomIntegerSupplier(new Random()),
+                DataGenerators.createRandomIntegerSupplier(new Random())
+        );
+    }
+
     public static BinaryOperatorProfiler createJavaUnionProfiler() {
         final List<String> stringReservoir = new ArrayList<>();
         final double reuseProbability = 0.3;
