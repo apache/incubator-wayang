@@ -1,9 +1,9 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.channels.TestChannelExecutor;
@@ -13,9 +13,10 @@ import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
-
-import static org.mockito.Mockito.mock;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Test suite for {@link SparkObjectFileSource}.
@@ -28,7 +29,7 @@ public class SparkObjectFileSourceTest extends SparkOperatorTestBase {
         try {
             // Prepare Spark.
             final SparkPlatform sparkPlatform = SparkPlatform.getInstance();
-            sparkExecutor = (SparkExecutor) sparkPlatform.createExecutor();
+            sparkExecutor = (SparkExecutor) sparkPlatform.createExecutor(Configuration.getDefaultConfiguration());
 
             // Prepare the source.
             final URL inputUrl = this.getClass().getResource("/0-to-10000.sequence_file");

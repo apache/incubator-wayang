@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
@@ -19,6 +20,12 @@ import java.util.*;
 public class CrossPlatformExecutor {
 
     public final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+
+    /**
+     * The {@link Job} that is being executed by this instance.
+     */
+    private final Job job;
 
     /**
      * Aggregates user-defined {@link Breakpoint}s. Will be cleared after each execution.
@@ -63,7 +70,8 @@ public class CrossPlatformExecutor {
 
     private ExecutionProfile executionProfile;
 
-    public CrossPlatformExecutor(InstrumentationStrategy instrumentationStrategy) {
+    public CrossPlatformExecutor(Job job, InstrumentationStrategy instrumentationStrategy) {
+        this.job = job;
         this.instrumentationStrategy = instrumentationStrategy;
     }
 
@@ -179,7 +187,7 @@ public class CrossPlatformExecutor {
     private Executor getOrCreateExecutorFor(ExecutionStage stage) {
         return this.executors.computeIfAbsent(
                 stage.getPlatformExecution(),
-                pe -> pe.getPlatform().getExecutorFactory().create()
+                pe -> pe.getPlatform().getExecutorFactory().create(this.job.getConfiguration())
         );
     }
 

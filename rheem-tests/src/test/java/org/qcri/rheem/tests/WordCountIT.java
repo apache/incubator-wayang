@@ -60,7 +60,7 @@ public class WordCountIT {
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
+                new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(String.class)
                 ), DataSetType.createDefault(String.class),
@@ -74,9 +74,9 @@ public class WordCountIT {
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
-                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(Tuple2.class)
+                new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
+                        DataUnitType.<String>createBasic(String.class),
+                        DataUnitType.<Tuple2<String, Integer>>createBasicUnchecked(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class)
         );
@@ -144,7 +144,7 @@ public class WordCountIT {
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
+                new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(String.class)
                 ), DataSetType.createDefault(String.class),
@@ -154,7 +154,7 @@ public class WordCountIT {
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
-                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
+                new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(Tuple2.class)
                 ), DataSetType.createDefault(String.class),

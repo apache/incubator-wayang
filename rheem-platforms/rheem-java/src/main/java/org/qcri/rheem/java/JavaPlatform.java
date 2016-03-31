@@ -74,6 +74,6 @@ public class JavaPlatform extends Platform {
 
     @Override
     public Executor.Factory getExecutorFactory() {
-        return () -> new JavaExecutor(this);
+        return configuration -> new JavaExecutor(this);
     }
 }

@@ -27,6 +27,8 @@ import java.util.*;
  */
 public class Configuration {
 
+    private static final Configuration defaultConfiguration = createDefaultConfiguration();
+
     private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
 
     private final Configuration parent;
@@ -54,10 +56,24 @@ public class Configuration {
     private KeyValueProvider<String, String> properties;
 
     /**
-     * Creates a new top-level instance.
+     * Creates a new top-level instance that bases directly from the default instance.
+     *
+     * @see #getDefaultConfiguration()
      */
     public Configuration() {
-        this(null);
+        this(getDefaultConfiguration());
+    }
+
+    /**
+     * Creates a new top-level instance that bases directly from the default instance and loads the specified
+     * configuration file.
+     *
+     * @see #getDefaultConfiguration()
+     * @see #load(String)
+     */
+    public Configuration(String configurationFileUrl) {
+        this(getDefaultConfiguration());
+        this.load(configurationFileUrl);
     }
 
     /**
@@ -98,9 +114,12 @@ public class Configuration {
         }
     }
 
-    public static Configuration load(String configurationUrl) {
-        Configuration configuration = createDefaultConfiguration();
-
+    /**
+     * Adjusts this instance to the properties specified in the given file.
+     *
+     * @param configurationUrl URL to the configuration file
+     */
+    public void load(String configurationUrl) {
         final Optional<FileSystem> fileSystem = FileSystems.getFileSystem(configurationUrl);
         if (!fileSystem.isPresent()) {
             throw new RheemException(String.format("Could not access %s.", configurationUrl));
@@ -111,18 +130,32 @@ public class Configuration {
             for (Map.Entry<Object, Object> propertyEntry : properties.entrySet()) {
                 final String key = propertyEntry.getKey().toString();
                 final String value = propertyEntry.getValue().toString();
-                configuration.setProperty(key, value);
+                this.handleConfigurationFileEntry(key, value);
             }
 
         } catch (IOException e) {
             throw new RheemException(String.format("Could not load configuration from %s.", configurationUrl), e);
         }
-
-        return configuration;
     }
 
-    public static Configuration createDefaultConfiguration() {
-        Configuration configuration = new Configuration();
+    private void handleConfigurationFileEntry(String key, String value) {
+        // TODO: At this point, we could insert specific handlers for special keys, e.g., considering cost functions.
+
+        // For now, we just add each entry into the #properties.
+        this.setProperty(key, value);
+    }
+
+
+    /**
+     * Returns the global default instance. It will be the fallback for all other instances and should only modified
+     * to provide default values.
+     */
+    public static Configuration getDefaultConfiguration() {
+        return defaultConfiguration;
+    }
+
+    private static Configuration createDefaultConfiguration() {
+        Configuration configuration = new Configuration((Configuration) null);
         bootstrapPlatforms(configuration);
         bootstrapCardinalityEstimationProvider(configuration);
         bootstrapSelectivityProviders(configuration);
@@ -392,19 +425,27 @@ public class Configuration {
         this.properties = properties;
     }
 
-    private void setProperty(String key, String value) {
+    public KeyValueProvider<String, String> getProperties() {
+        return this.properties;
+    }
+
+    public void setProperty(String key, String value) {
         this.properties.set(key, value);
     }
 
-    public Optional<String> getStringProperty(String key) {
+    public String getStringProperty(String key) {
+        return this.properties.provideFor(key);
+    }
+
+    public Optional<String> getOptionalStringProperty(String key) {
         return this.properties.optionallyProvideFor(key);
     }
 
     public String getStringProperty(String key, String fallback) {
-        return this.getStringProperty(key).orElse(fallback);
+        return this.getOptionalStringProperty(key).orElse(fallback);
     }
 
-    public OptionalLong getLongProperty(String key) {
+    public OptionalLong getOptionalLongProperty(String key) {
         final Optional<String> longValue = this.properties.optionallyProvideFor(key);
         if (longValue.isPresent()) {
             return OptionalLong.of(Long.valueOf(longValue.get()));
@@ -413,15 +454,23 @@ public class Configuration {
         }
     }
 
-    public long getLongProperty(String key, long fallback) {
-        return this.getLongProperty(key).orElse(fallback);
+    public long getLongProperty(String key) {
+        return this.getOptionalLongProperty(key).getAsLong();
     }
 
-    public Optional<Boolean> getBooleanProperty(String key) {
+    public long getLongProperty(String key, long fallback) {
+        return this.getOptionalLongProperty(key).orElse(fallback);
+    }
+
+    public Optional<Boolean> getOptionalBooleanProperty(String key) {
         return this.properties.optionallyProvideFor(key).map(Boolean::valueOf);
     }
 
+    public boolean getBooleanProperty(String key) {
+        return this.getOptionalBooleanProperty(key).get();
+    }
+
     public boolean getBooleanProperty(String key, boolean fallback) {
-        return this.getBooleanProperty(key).orElse(fallback);
+        return this.getOptionalBooleanProperty(key).orElse(fallback);
     }
 }

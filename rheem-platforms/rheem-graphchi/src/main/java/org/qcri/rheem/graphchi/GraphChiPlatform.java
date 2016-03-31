@@ -46,7 +46,7 @@ public class GraphChiPlatform extends Platform {
 
     @Override
     public Executor.Factory getExecutorFactory() {
-        return () -> new GraphChiExecutor(this);
+        return configuration -> new GraphChiExecutor(this);
     }
 
     @Override

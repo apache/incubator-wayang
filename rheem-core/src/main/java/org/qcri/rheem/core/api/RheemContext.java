@@ -24,7 +24,15 @@ public class RheemContext {
      */
     private CardinalityRepository cardinalityRepository;
 
-    private final Configuration configuration = Configuration.createDefaultConfiguration(this);
+    private final Configuration configuration;
+
+    public RheemContext() {
+        this(new Configuration());
+    }
+
+    public RheemContext(Configuration configuration) {
+        this.configuration = configuration;
+    }
 
     /**
      * Register a platform that Rheem will then use for execution.

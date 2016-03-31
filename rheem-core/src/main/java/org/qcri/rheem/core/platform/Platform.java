@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.platform;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.plan.executionplan.Channel;
@@ -49,9 +50,9 @@ public abstract class Platform {
      *
      * @return the {@link Executor}
      */
-    public Executor createExecutor() {
+    public Executor createExecutor(Configuration configuration) {
         Validate.isTrue(this.isExecutable());
-        return this.getExecutorFactory().create();
+        return this.getExecutorFactory().create(configuration);
     }
 
     public abstract Executor.Factory getExecutorFactory();

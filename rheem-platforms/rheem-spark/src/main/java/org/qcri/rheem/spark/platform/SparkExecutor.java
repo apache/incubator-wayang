@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.platform;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.basic.operators.LoopOperator;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
@@ -34,9 +35,9 @@ public class SparkExecutor extends PushExecutorTemplate<ChannelExecutor> {
 
     private final SparkPlatform platform;
 
-    public SparkExecutor(SparkPlatform platform) {
+    public SparkExecutor(SparkPlatform platform, Configuration configuration) {
         this.platform = platform;
-        this.sc = this.platform.getSparkContext();
+        this.sc = this.platform.getSparkContext(configuration);
     }
     @Override
     protected void open(ExecutionTask task, List<ChannelExecutor> inputChannelInstances) {
@@ -94,5 +95,12 @@ public class SparkExecutor extends PushExecutorTemplate<ChannelExecutor> {
     @Override
     public SparkPlatform getPlatform() {
         return this.platform;
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+
+        this.getPlatform().closeSparkContext(this.sc);
     }
 }

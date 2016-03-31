@@ -282,7 +282,7 @@ public class Job {
         FixBreakpoint breakpoint = new FixBreakpoint();
         if (this.crossPlatformExecutor == null) {
             final InstrumentationStrategy instrumentation = this.configuration.getInstrumentationStrategyProvider().provide();
-            this.crossPlatformExecutor = new CrossPlatformExecutor(instrumentation);
+            this.crossPlatformExecutor = new CrossPlatformExecutor(this, instrumentation);
             executionPlan.getStartingStages().forEach(breakpoint::breakAfter);
 
         } else {
