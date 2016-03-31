@@ -1,7 +1,7 @@
 package org.qcri.rheem.core.api;
 
-import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.configuration.*;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
@@ -15,8 +15,12 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy;
+import org.qcri.rheem.core.util.fs.FileSystem;
+import org.qcri.rheem.core.util.fs.FileSystems;
 
-import java.util.Comparator;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 
 /**
  * Describes both the configuration of a {@link RheemContext} and {@link Job}s.
@@ -24,8 +28,6 @@ import java.util.Comparator;
 public class Configuration {
 
     private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
-
-    private final RheemContext rheemContext;
 
     private final Configuration parent;
 
@@ -49,26 +51,19 @@ public class Configuration {
 
     private ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider;
 
+    private KeyValueProvider<String, String> properties;
+
     /**
      * Creates a new top-level instance.
      */
-    public Configuration(RheemContext rheemContext) {
-        this(rheemContext, null);
-    }
-
-    /**
-     * Creates a new instance as child of another instance.
-     */
-    private Configuration(Configuration parent) {
-        this(parent.rheemContext, parent);
+    public Configuration() {
+        this(null);
     }
 
     /**
      * Basic constructor.
      */
-    private Configuration(RheemContext rheemContext, Configuration parent) {
-        Validate.notNull(rheemContext);
-        this.rheemContext = rheemContext;
+    private Configuration(Configuration parent) {
         this.parent = parent;
 
         if (this.parent != null) {
@@ -97,16 +92,43 @@ public class Configuration {
             this.instrumentationStrategyProvider = new ConstantProvider<>(
                     this.parent.instrumentationStrategyProvider);
 
+            // Properties.
+            this.properties = new MapBasedKeyValueProvider<>(this.parent.properties);
+
         }
     }
 
-    public static Configuration createDefaultConfiguration(RheemContext rheemContext) {
-        Configuration configuration = new Configuration(rheemContext);
+    public static Configuration load(String configurationUrl) {
+        Configuration configuration = createDefaultConfiguration();
+
+        final Optional<FileSystem> fileSystem = FileSystems.getFileSystem(configurationUrl);
+        if (!fileSystem.isPresent()) {
+            throw new RheemException(String.format("Could not access %s.", configurationUrl));
+        }
+        try (InputStream configInputStream = fileSystem.get().open(configurationUrl)) {
+            final Properties properties = new Properties();
+            properties.load(configInputStream);
+            for (Map.Entry<Object, Object> propertyEntry : properties.entrySet()) {
+                final String key = propertyEntry.getKey().toString();
+                final String value = propertyEntry.getValue().toString();
+                configuration.setProperty(key, value);
+            }
+
+        } catch (IOException e) {
+            throw new RheemException(String.format("Could not load configuration from %s.", configurationUrl), e);
+        }
+
+        return configuration;
+    }
+
+    public static Configuration createDefaultConfiguration() {
+        Configuration configuration = new Configuration();
         bootstrapPlatforms(configuration);
         bootstrapCardinalityEstimationProvider(configuration);
         bootstrapSelectivityProviders(configuration);
         bootstrapLoadAndTimeEstimatorProviders(configuration);
         bootstrapPruningProviders(configuration);
+        bootstrapProperties(configuration);
         return configuration;
     }
 
@@ -264,6 +286,15 @@ public class Configuration {
         }
     }
 
+    private static void bootstrapProperties(Configuration configuration) {
+        // Here, we could put some default values.
+        final KeyValueProvider<String, String> defaultProperties = new MapBasedKeyValueProvider<>(null);
+
+        // Supplement with a customizable layer.
+        final KeyValueProvider<String, String> customizableProperties = new MapBasedKeyValueProvider<>(defaultProperties);
+
+        configuration.setProperties(customizableProperties);
+    }
 
     /**
      * Creates a child instance.
@@ -272,9 +303,6 @@ public class Configuration {
         return new Configuration(this);
     }
 
-    public RheemContext getRheemContext() {
-        return this.rheemContext;
-    }
 
     public KeyValueProvider<OutputSlot<?>, CardinalityEstimator> getCardinalityEstimatorProvider() {
         return this.cardinalityEstimatorProvider;
@@ -343,10 +371,10 @@ public class Configuration {
         this.timeEstimateComparatorProvider = timeEstimateComparatorProvider;
     }
 
-
     public CollectionProvider<PlanEnumerationPruningStrategy> getPruningStrategiesProvider() {
         return this.pruningStrategiesProvider;
     }
+
 
     public void setPruningStrategiesProvider(CollectionProvider<PlanEnumerationPruningStrategy> pruningStrategiesProvider) {
         this.pruningStrategiesProvider = pruningStrategiesProvider;
@@ -358,5 +386,42 @@ public class Configuration {
 
     public void setInstrumentationStrategyProvider(ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider) {
         this.instrumentationStrategyProvider = instrumentationStrategyProvider;
+    }
+
+    public void setProperties(KeyValueProvider<String, String> properties) {
+        this.properties = properties;
+    }
+
+    private void setProperty(String key, String value) {
+        this.properties.set(key, value);
+    }
+
+    public Optional<String> getStringProperty(String key) {
+        return this.properties.optionallyProvideFor(key);
+    }
+
+    public String getStringProperty(String key, String fallback) {
+        return this.getStringProperty(key).orElse(fallback);
+    }
+
+    public OptionalLong getLongProperty(String key) {
+        final Optional<String> longValue = this.properties.optionallyProvideFor(key);
+        if (longValue.isPresent()) {
+            return OptionalLong.of(Long.valueOf(longValue.get()));
+        } else {
+            return OptionalLong.empty();
+        }
+    }
+
+    public long getLongProperty(String key, long fallback) {
+        return this.getLongProperty(key).orElse(fallback);
+    }
+
+    public Optional<Boolean> getBooleanProperty(String key) {
+        return this.properties.optionallyProvideFor(key).map(Boolean::valueOf);
+    }
+
+    public boolean getBooleanProperty(String key, boolean fallback) {
+        return this.getBooleanProperty(key).orElse(fallback);
     }
 }
