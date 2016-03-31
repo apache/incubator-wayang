@@ -20,6 +20,7 @@ import org.qcri.rheem.core.util.fs.FileSystems;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 
 /**
@@ -61,7 +62,7 @@ public class Configuration {
      * @see #getDefaultConfiguration()
      */
     public Configuration() {
-        this(getDefaultConfiguration());
+        this(findUserConfigurationFile());
     }
 
     /**
@@ -73,7 +74,9 @@ public class Configuration {
      */
     public Configuration(String configurationFileUrl) {
         this(getDefaultConfiguration());
-        this.load(configurationFileUrl);
+        if (configurationFileUrl != null) {
+            this.load(configurationFileUrl);
+        }
     }
 
     /**
@@ -112,6 +115,20 @@ public class Configuration {
             this.properties = new MapBasedKeyValueProvider<>(this.parent.properties);
 
         }
+    }
+
+    private static String findUserConfigurationFile() {
+        final String systemProperty = System.getProperty("rheem.configuration");
+        if (systemProperty != null) {
+            return systemProperty;
+        }
+
+        final URL classPathResource = Thread.currentThread().getContextClassLoader().getResource("rheem.properties");
+        if (classPathResource != null) {
+            return classPathResource.toString();
+        }
+
+        return null;
     }
 
     /**
