@@ -15,9 +15,7 @@ import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Example Rheem App that does a word count -- the Hello World of Map/Reduce-like systems.
@@ -71,8 +69,7 @@ public class Main {
 
 
         // write results to a sink
-        List<Tuple2> results = new ArrayList<>();
-        LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
+        LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createStdoutSink(DataSetType.createDefault(Tuple2.class));
 
         // Build Rheem plan by connecting operators
         textFileSource.connectTo(0, flatMapOperator, 0);
