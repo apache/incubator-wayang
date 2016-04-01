@@ -36,7 +36,7 @@ public class ReflectionUtils {
             if (path.endsWith(".jar")) {
                 return path;
             } else {
-                logger.warn("Class {} is not loaded from a JAR file, but from {}.", cls, path);
+                logger.warn("Class {} is not loaded from a JAR file, but from {}. Thus, cannot provide the JAR file.", cls, path);
             }
         } catch (Exception e) {
             logger.error(String.format("Could not determine JAR file declaring %s.", cls), e);

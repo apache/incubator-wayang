@@ -95,6 +95,9 @@ public class Job {
         this.rheemContext = rheemContext;
         this.configuration = this.rheemContext.getConfiguration().fork();
         this.rheemPlan = rheemPlan;
+        for (String udfJar : udfJars) {
+            this.addUdfJar(udfJar);
+        }
     }
 
     /**
