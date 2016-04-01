@@ -9,6 +9,7 @@ import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -107,7 +108,7 @@ public class Main {
                 }
             }
 
-            rheemContext.execute(rheemPlan);
+            rheemContext.execute(rheemPlan, ReflectionUtils.getDeclaringJar(Main.class));
         } catch (Exception e) {
             System.err.println("App failed.");
             e.printStackTrace();

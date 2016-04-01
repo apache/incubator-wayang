@@ -11,7 +11,7 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <rheem.version>2.0-SNAPSHOT</rheem.version>
+        <rheem.version>0.1-SNAPSHOT</rheem.version>
     </properties>
 
     <dependencies>
@@ -22,7 +22,7 @@
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
-            <artifactId>rheem-base</artifactId>
+            <artifactId>rheem-basic</artifactId>
             <version>${rheem.version}</version>
         </dependency>
         <dependency>

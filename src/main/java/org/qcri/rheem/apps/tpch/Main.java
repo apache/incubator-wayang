@@ -6,6 +6,7 @@ import org.qcri.rheem.apps.tpch.data.q1.ReturnTuple;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -153,6 +154,6 @@ public class Main {
             }
         }
 
-        rheemContext.execute(rheemPlan);
+        rheemContext.execute(rheemPlan, ReflectionUtils.getDeclaringJar(Main.class));
     }
 }
