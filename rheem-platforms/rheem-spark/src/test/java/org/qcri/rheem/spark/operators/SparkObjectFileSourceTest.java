@@ -3,7 +3,6 @@ package org.qcri.rheem.spark.operators;
 import org.apache.commons.lang3.Validate;
 import org.junit.Assert;
 import org.junit.Test;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.channels.TestChannelExecutor;
@@ -29,7 +28,7 @@ public class SparkObjectFileSourceTest extends SparkOperatorTestBase {
         try {
             // Prepare Spark.
             final SparkPlatform sparkPlatform = SparkPlatform.getInstance();
-            sparkExecutor = (SparkExecutor) sparkPlatform.createExecutor(Configuration.getDefaultConfiguration());
+            sparkExecutor = (SparkExecutor) sparkPlatform.createExecutor(this.mockJob());
 
             // Prepare the source.
             final URL inputUrl = this.getClass().getResource("/0-to-10000.sequence_file");

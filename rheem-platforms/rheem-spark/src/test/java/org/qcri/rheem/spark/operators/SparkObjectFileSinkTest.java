@@ -2,11 +2,8 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.junit.Assert;
 import org.junit.Test;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.channels.TestChannelExecutor;
@@ -20,8 +17,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mockito.Mockito.mock;
-
 /**
  * Test suite for {@link SparkObjectFileSink}.
  */
@@ -33,7 +28,7 @@ public class SparkObjectFileSinkTest extends SparkOperatorTestBase {
         try {
             // Prepare Spark.
             final SparkPlatform sparkPlatform = SparkPlatform.getInstance();
-            sparkExecutor = (SparkExecutor) sparkPlatform.createExecutor(Configuration.getDefaultConfiguration());
+            sparkExecutor = (SparkExecutor) sparkPlatform.createExecutor(this.mockJob());
             final JavaSparkContext sc = sparkExecutor.sc;
 
             // Prepare the sink.

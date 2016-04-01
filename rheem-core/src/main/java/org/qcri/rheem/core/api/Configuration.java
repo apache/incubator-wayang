@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.api;
 
+import org.apache.commons.io.IOUtils;
 import org.qcri.rheem.core.api.configuration.*;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
@@ -17,6 +18,7 @@ import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -142,6 +144,19 @@ public class Configuration {
             throw new RheemException(String.format("Could not access %s.", configurationUrl));
         }
         try (InputStream configInputStream = fileSystem.get().open(configurationUrl)) {
+            this.load(configInputStream);
+        } catch (Exception e) {
+            throw new RheemException(String.format("Could not load configuration from %s.", configurationUrl), e);
+        }
+    }
+
+    /**
+     * Adjusts this instance to the properties specified in the given file.
+     *
+     * @param configInputStream of the file
+     */
+    public void load(InputStream configInputStream) {
+        try {
             final Properties properties = new Properties();
             properties.load(configInputStream);
             for (Map.Entry<Object, Object> propertyEntry : properties.entrySet()) {
@@ -149,9 +164,10 @@ public class Configuration {
                 final String value = propertyEntry.getValue().toString();
                 this.handleConfigurationFileEntry(key, value);
             }
-
         } catch (IOException e) {
-            throw new RheemException(String.format("Could not load configuration from %s.", configurationUrl), e);
+            throw new RheemException("Could not load configuration.", e);
+        } finally {
+            IOUtils.closeQuietly(configInputStream);
         }
     }
 
@@ -184,8 +200,12 @@ public class Configuration {
 
     private static void bootstrapPlatforms(Configuration configuration) {
         CollectionProvider<Platform> platformProvider = new CollectionProvider<>();
-        Platform platform = Platform.load(BASIC_PLATFORM);
-        platformProvider.addToWhitelist(platform);
+        try {
+            Platform platform = Platform.load(BASIC_PLATFORM);
+            platformProvider.addToWhitelist(platform);
+        } catch (Exception e) {
+            LoggerFactory.getLogger(Configuration.class).error("Could not load Rheem basic.");
+        }
         configuration.setPlatformProvider(platformProvider);
     }
 

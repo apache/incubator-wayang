@@ -18,6 +18,7 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.Counter;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 import org.qcri.rheem.java.operators.JavaReduceByOperator;

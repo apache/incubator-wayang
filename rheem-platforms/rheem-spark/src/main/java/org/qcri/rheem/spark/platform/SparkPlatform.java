@@ -2,13 +2,18 @@ package org.qcri.rheem.spark.platform;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.qcri.rheem.basic.plugin.RheemBasicPlatform;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.spark.channels.SparkChannelManager;
 import org.qcri.rheem.spark.mapping.*;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
@@ -32,6 +37,8 @@ public class SparkPlatform extends Platform {
      */
     private JavaSparkContext sparkContext;
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
+
     public static SparkPlatform getInstance() {
         if (instance == null) {
             instance = new SparkPlatform();
@@ -46,23 +53,26 @@ public class SparkPlatform extends Platform {
     }
 
     /**
-     * Configures the single maintained {@link JavaSparkContext} according to the {@code configuration} and returns it.
+     * Configures the single maintained {@link JavaSparkContext} according to the {@code job} and returns it.
      */
-    public JavaSparkContext getSparkContext(Configuration configuration) {
+    public JavaSparkContext getSparkContext(Job job) {
+
         // NB: There must be only one JavaSparkContext per JVM. Therefore, it is not local to the executor.
+        final SparkConf sparkConf;
         if (this.sparkContext != null) {
-            LoggerFactory.getLogger(this.getClass()).warn("There is already a SparkContext, which will be reused.");
-            return this.sparkContext;
+            this.logger.warn(
+                    "There is already a SparkContext (master: {}): , which will be reused. " +
+                    "Not all settings might be effective.", this.sparkContext.getConf().get("spark.master"));
+            sparkConf = this.sparkContext.getConf();
+        } else {
+            sparkConf = new SparkConf(true);
         }
 
-        final SparkConf sparkConf = new SparkConf(true);
+        Configuration configuration = job.getConfiguration();
         final String master = configuration.getStringProperty("spark.master");
         sparkConf.setMaster(master);
         final String appName = configuration.getStringProperty("spark.appName");
         sparkConf.setAppName(appName);
-        configuration.getOptionalStringProperty("spark.jars").ifPresent(
-                sparkJars -> sparkConf.setJars(sparkJars.split(","))
-        );
         configuration.getOptionalStringProperty("spark.executor.memory").ifPresent(
                 mem -> sparkConf.set("spark.executor.memory", mem)
         );
@@ -71,9 +81,31 @@ public class SparkPlatform extends Platform {
         );
         configuration.getOptionalStringProperty("spark.driver.memory").ifPresent(
                 cores -> sparkConf.set("spark.driver.memory", cores)
-        );
 
-        return this.sparkContext = new JavaSparkContext(sparkConf);
+        );
+        if (this.sparkContext == null) {
+            this.sparkContext = new JavaSparkContext(sparkConf);
+        }
+
+        // Set up the JAR files.
+        this.sparkContext.clearJars();
+        if (this.sparkContext.isLocal()) {
+            // Add Rheem JAR files.
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class));
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasicPlatform.class));
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemContext.class));
+            if (job.getUdfJarPaths().isEmpty()) {
+                this.logger.warn("Non-local SparkContext but not UDF JARs have been declared.");
+            }  else {
+                job.getUdfJarPaths().forEach(this::registerJarIfNotNull);
+            }
+        }
+
+        return this.sparkContext;
+    }
+
+    private void registerJarIfNotNull(String path) {
+        if (path != null) this.sparkContext.addJar(path);
     }
 
     void closeSparkContext(JavaSparkContext sc) {
@@ -84,8 +116,7 @@ public class SparkPlatform extends Platform {
     }
 
     private void initializeConfiguration() {
-        String configFileUrl = this.getClass().getResource(DEFAULT_CONFIG_FILE).toString();
-        Configuration.getDefaultConfiguration().load(configFileUrl);
+        Configuration.getDefaultConfiguration().load(this.getClass().getResourceAsStream(DEFAULT_CONFIG_FILE));
     }
 
     private void initializeMappings() {
@@ -118,7 +149,7 @@ public class SparkPlatform extends Platform {
 
     @Override
     public Executor.Factory getExecutorFactory() {
-        return configuration -> new SparkExecutor(this, configuration);
+        return job -> new SparkExecutor(this, job);
     }
 
     @Override

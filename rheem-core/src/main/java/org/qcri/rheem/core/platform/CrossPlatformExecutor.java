@@ -187,7 +187,7 @@ public class CrossPlatformExecutor {
     private Executor getOrCreateExecutorFor(ExecutionStage stage) {
         return this.executors.computeIfAbsent(
                 stage.getPlatformExecution(),
-                pe -> pe.getPlatform().getExecutorFactory().create(this.job.getConfiguration())
+                pe -> pe.getPlatform().getExecutorFactory().create(this.job)
         );
     }
 
