@@ -31,8 +31,6 @@ public class Main {
         // Assignment mode: none.
 
         TextFileSource textFileSource = new TextFileSource(inputFileUrl);
-        textFileSource.addTargetPlatform(JavaPlatform.getInstance());
-        textFileSource.addTargetPlatform(SparkPlatform.getInstance());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
