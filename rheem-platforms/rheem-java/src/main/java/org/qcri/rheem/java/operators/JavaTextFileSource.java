@@ -6,19 +6,21 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.stream.Stream;
 
 /**
  * This is execution operator implements the {@link TextFileSource}.
@@ -34,21 +36,23 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        URL url;
+        String url;
         try {
-            url = new URL(this.getInputUrl());
+            url = new URL(this.getInputUrl()).toString();
         } catch (MalformedURLException e) {
             throw new RuntimeException("Could not parse input URL.", e);
         }
-        if ("file".equals(url.getProtocol())) {
-            final Path path = new File(url.getPath()).toPath();
-            try {
-                outputs[0].acceptStream(Files.lines(path));
-            } catch (IOException e) {
-                throw new RheemException("Reading failed.", e);
-            }
-        } else {
-            throw new RuntimeException(String.format("Unsupported URL: %s", url));
+
+        FileSystem fs = FileSystems.getFileSystem(url).orElseThrow(
+                () -> new RheemException(String.format("Cannot access file system of %s.", url))
+        );
+
+        try {
+            final InputStream inputStream = fs.open(url);
+            Stream<String> lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
+            outputs[0].acceptStream(lines);
+        } catch (IOException e) {
+            throw new RheemException(String.format("Reading %s failed.", url), e);
         }
 
     }
