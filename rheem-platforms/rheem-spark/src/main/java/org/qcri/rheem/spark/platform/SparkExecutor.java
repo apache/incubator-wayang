@@ -37,6 +37,7 @@ public class SparkExecutor extends PushExecutorTemplate<ChannelExecutor> {
     private final SparkPlatform platform;
 
     public SparkExecutor(SparkPlatform platform, Job job) {
+        super(job);
         this.platform = platform;
         this.sc = this.platform.getSparkContext(job);
     }
