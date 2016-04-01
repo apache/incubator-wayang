@@ -89,11 +89,11 @@ public class SparkPlatform extends Platform {
 
         // Set up the JAR files.
         this.sparkContext.clearJars();
-        if (this.sparkContext.isLocal()) {
+        if (!this.sparkContext.isLocal()) {
             // Add Rheem JAR files.
-            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class));
-            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasicPlatform.class));
-            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemContext.class));
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // rheem-spark
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasicPlatform.class)); // rheem-basic
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemContext.class)); // rheem-core
             if (job.getUdfJarPaths().isEmpty()) {
                 this.logger.warn("Non-local SparkContext but not UDF JARs have been declared.");
             }  else {
