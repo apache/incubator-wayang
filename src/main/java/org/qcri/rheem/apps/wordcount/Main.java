@@ -103,7 +103,7 @@ public class Main {
                 }
             }
 
-            rheemContext.execute(rheemPlan, ReflectionUtils.getDeclaringJar(Main.class));
+            rheemContext.execute(rheemPlan, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
         } catch (Exception e) {
             System.err.println("App failed.");
             e.printStackTrace();
