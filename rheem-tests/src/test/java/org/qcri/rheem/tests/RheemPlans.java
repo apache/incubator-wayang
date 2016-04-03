@@ -394,21 +394,31 @@ public class RheemPlans {
     public static RheemPlan diverseScenario3(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
         // Build a Rheem plan.
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
+        textFileSource1.setName("Source 1");
         TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
+        textFileSource2.setName("Source 2");
         FilterOperator<String> noCommaOperator = new FilterOperator<>(s -> !s.contains(","), String.class);
+        noCommaOperator.setName("Filter comma");
         UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
+        unionOperator.setName("Union");
         LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
+        stdoutSink.setName("Print");
         SortOperator<String> sortOperator = new SortOperator<>(String.class);
+        sortOperator.setName("Sort");
         CountOperator<String> countLines = new CountOperator<>(String.class);
+        countLines.setName("Count");
         DoWhileOperator<String, Long> loopOperator = new DoWhileOperator<>(
                 DataSetType.createDefault(String.class),
                 DataSetType.createDefault(Long.class),
                 integers -> integers.iterator().next() > 100
         );
+        loopOperator.setName("Do while");
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
                 new TransformationDescriptor<>(String::toUpperCase, String.class, String.class)
         );
+        upperCaseOperator.setName("To uppercase");
         FilterOperator<String> dummyFilter = new FilterOperator<>(str -> true, String.class);
+        dummyFilter.setName("Dummy filter");
 
         // Read from file 1, remove commas, union with file 2, sort, upper case, then remove duplicates and output.
         loopOperator.initialize(textFileSource1, 0);
