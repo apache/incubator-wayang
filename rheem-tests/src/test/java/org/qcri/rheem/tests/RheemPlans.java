@@ -3,7 +3,6 @@ package org.qcri.rheem.tests;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.function.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
@@ -397,25 +396,30 @@ public class RheemPlans {
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
         TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
         FilterOperator<String> noCommaOperator = new FilterOperator<>(s -> !s.contains(","), String.class);
+        UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
+        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
+        SortOperator<String> sortOperator = new SortOperator<>(String.class);
+        CountOperator<String> countLines = new CountOperator<>(String.class);
+        LoopOperator<String, Long> loopOperator = new LoopOperator<>(
+                DataSetType.createDefault(String.class),
+                DataSetType.createDefault(Long.class),
+                integers -> integers.iterator().next() > 100
+        );
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
                 new TransformationDescriptor<>(String::toUpperCase, String.class, String.class)
         );
-        UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
-        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
+        FilterOperator<String> dummyFilter = new FilterOperator<>(str -> true, String.class);
         DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(String.class);
-        SortOperator<String> sortOperator = new SortOperator<>(String.class);
 
-        LoopOperator<String, Integer> loopOperator = null;
-        Operator converge = null;
         // Read from file 1, remove commas, union with file 2, sort, upper case, then remove duplicates and output.
-        loopOperator.initialize(textFileSource1, null); // TODO: Fix this test.
-        loopOperator.beginIteration(noCommaOperator, converge);
+        loopOperator.initialize(textFileSource1, new CollectionSource<>(Collections.emptyList(), Long.class));
+        loopOperator.beginIteration(noCommaOperator, null);
         textFileSource2.connectTo(0, unionOperator, 0);
         noCommaOperator.connectTo(0, unionOperator, 1);
         unionOperator.connectTo(0, sortOperator, 0);
-        sortOperator.connectTo(0, upperCaseOperator, 0);
-
-        loopOperator.endIteration(sortOperator, converge);
+        sortOperator.connectTo(0, countLines, 0);
+        sortOperator.connectTo(0, dummyFilter, 0);
+        loopOperator.endIteration(dummyFilter, countLines);
         loopOperator.outputConnectTo(upperCaseOperator, 0);
         upperCaseOperator.connectTo(0, distinctLinesOperator, 0);
         distinctLinesOperator.connectTo(0, stdoutSink, 0);

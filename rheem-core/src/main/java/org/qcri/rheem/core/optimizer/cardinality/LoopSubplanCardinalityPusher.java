@@ -51,7 +51,7 @@ public class LoopSubplanCardinalityPusher extends CardinalityPusher {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         this.bodyTraversal = CardinalityEstimationTraversal.createPushTraversal(
-                bodyInputSlots, this.bodyOutputSlots, Collections.emptyList(), configuration);
+                bodyInputSlots, loopHead.getLoopBodyInputs(), Collections.emptyList(), configuration);
     }
 
     @Override

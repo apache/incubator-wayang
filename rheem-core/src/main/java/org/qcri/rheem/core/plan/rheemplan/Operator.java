@@ -148,7 +148,7 @@ public interface Operator {
         final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputIndex);
         final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputIndex);
         if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
-            throw new IllegalArgumentException("Cannot connect slots: mismatching types");
+            throw new IllegalArgumentException(String.format("Cannot connect %s slot to %s slot.", outputSlot.getType(), inputSlot.getType()));
         }
         outputSlot.connectTo(inputSlot);
     }
