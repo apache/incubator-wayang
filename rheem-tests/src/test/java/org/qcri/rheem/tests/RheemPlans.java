@@ -409,7 +409,6 @@ public class RheemPlans {
                 new TransformationDescriptor<>(String::toUpperCase, String.class, String.class)
         );
         FilterOperator<String> dummyFilter = new FilterOperator<>(str -> true, String.class);
-        DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(String.class);
 
         // Read from file 1, remove commas, union with file 2, sort, upper case, then remove duplicates and output.
         loopOperator.initialize(textFileSource1, 0);
@@ -421,8 +420,7 @@ public class RheemPlans {
         sortOperator.connectTo(0, dummyFilter, 0);
         loopOperator.endIteration(dummyFilter, 0, countLines, 0);
         loopOperator.outputConnectTo(upperCaseOperator, 0);
-        upperCaseOperator.connectTo(0, distinctLinesOperator, 0);
-        distinctLinesOperator.connectTo(0, stdoutSink, 0);
+        upperCaseOperator.connectTo(0, stdoutSink, 0);
 
         // Create the RheemPlan.
         return new RheemPlan(stdoutSink);

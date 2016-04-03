@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 /**
- * This operator has three inputs and three outputs.
+ * This operator has three inputs and two outputs.
  */
 public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase implements ElementaryOperator, LoopHeadOperator {
 
@@ -72,7 +72,7 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
     }
 
     public DataSetType<ConvergenceType> getConvergenceType() {
-        return ((OutputSlot<ConvergenceType>) this.getOutput(CONVERGENCE_INPUT_INDEX)).getType();
+        return ((InputSlot<ConvergenceType>) this.getInput(CONVERGENCE_INPUT_INDEX)).getType();
     }
 
     public void initialize(Operator initOperator, int initOpOutputIndex) {
