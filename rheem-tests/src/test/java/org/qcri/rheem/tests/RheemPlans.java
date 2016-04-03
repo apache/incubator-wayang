@@ -400,7 +400,7 @@ public class RheemPlans {
         LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
         SortOperator<String> sortOperator = new SortOperator<>(String.class);
         CountOperator<String> countLines = new CountOperator<>(String.class);
-        LoopOperator<String, Long> loopOperator = new LoopOperator<>(
+        DoWhileOperator<String, Long> loopOperator = new DoWhileOperator<>(
                 DataSetType.createDefault(String.class),
                 DataSetType.createDefault(Long.class),
                 integers -> integers.iterator().next() > 100
@@ -412,14 +412,14 @@ public class RheemPlans {
         DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(String.class);
 
         // Read from file 1, remove commas, union with file 2, sort, upper case, then remove duplicates and output.
-        loopOperator.initialize(textFileSource1, new CollectionSource<>(Collections.emptyList(), Long.class));
-        loopOperator.beginIteration(noCommaOperator, null);
+        loopOperator.initialize(textFileSource1, 0);
+        loopOperator.beginIteration(noCommaOperator, 0);
         textFileSource2.connectTo(0, unionOperator, 0);
         noCommaOperator.connectTo(0, unionOperator, 1);
         unionOperator.connectTo(0, sortOperator, 0);
         sortOperator.connectTo(0, countLines, 0);
         sortOperator.connectTo(0, dummyFilter, 0);
-        loopOperator.endIteration(dummyFilter, countLines);
+        loopOperator.endIteration(dummyFilter, 0, countLines, 0);
         loopOperator.outputConnectTo(upperCaseOperator, 0);
         upperCaseOperator.connectTo(0, distinctLinesOperator, 0);
         distinctLinesOperator.connectTo(0, stdoutSink, 0);
