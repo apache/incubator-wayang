@@ -3,8 +3,6 @@ package org.qcri.rheem.spark.platform;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
@@ -86,6 +84,7 @@ public class SparkPlatform extends Platform {
         this.mappings.add(new TextFileSourceMapping());
         this.mappings.add(new UnionAllToSparkUnionAllMapping());
         this.mappings.add(new LoopToSparkLoopMapping());
+        this.mappings.add(new DoWhileMapping());
     }
 
     @Override
