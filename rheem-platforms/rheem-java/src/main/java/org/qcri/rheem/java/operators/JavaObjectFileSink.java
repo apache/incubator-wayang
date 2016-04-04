@@ -6,7 +6,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
-import org.mortbay.io.RuntimeIOException;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -23,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -66,7 +66,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
                     BytesWritable bytesWritable = new BytesWritable(bos.toByteArray());
                     writer.append(NullWritable.get(), bytesWritable);
                 } catch (IOException e) {
-                    throw new RuntimeIOException("Writing or serialization failed.", e);
+                    throw new UncheckedIOException("Writing or serialization failed.", e);
                 }
             });
             inputs[0].provideStream().forEach(streamChunker::push);
@@ -75,7 +75,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
                 this.outputChannelExecutor.setCardinality(streamChunker.numPushedObjects);
             }
             LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", this.targetPath);
-        } catch (IOException | RuntimeIOException e) {
+        } catch (IOException | UncheckedIOException e) {
             throw new RheemException("Could not write stream to sequence file.", e);
         }
     }

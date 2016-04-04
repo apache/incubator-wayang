@@ -1,7 +1,6 @@
 package org.qcri.rheem.java.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
@@ -14,8 +13,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * Test suite for {@link JavaObjectFileSink}.

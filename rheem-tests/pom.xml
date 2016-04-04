@@ -36,6 +36,12 @@
             <artifactId>rheem-graphchi</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
+
+        <!-- Spark is a provided dependency and thus not transitively injected via rheem-spark. -->
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_2.10</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
