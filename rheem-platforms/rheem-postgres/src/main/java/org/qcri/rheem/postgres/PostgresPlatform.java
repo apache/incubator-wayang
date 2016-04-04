@@ -15,6 +15,7 @@ import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.postgres.channels.PostgresChannelManager;
 import org.qcri.rheem.postgres.execution.PostgresExecutor;
+import org.qcri.rheem.postgres.mapping.PostgresTableSourceMapping;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -61,6 +62,7 @@ public class PostgresPlatform extends Platform {
 
         try {
             Class.forName("org.postgresql.Driver");
+            //TODO: Close connection when done, or better: Use connection pooling.
             connection = DriverManager
                     .getConnection(properties.getProperty("postgres.conn_str"),
                             properties.getProperty("postgres.user"),
@@ -75,6 +77,7 @@ public class PostgresPlatform extends Platform {
     }
 
     private void initializeMappings() {
+        this.mappings.add(new PostgresTableSourceMapping());
     }
 
     @Override

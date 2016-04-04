@@ -29,23 +29,24 @@ public class PostgresIntegrationIT {
 
     @Before
     public void setup() {
-        PostgresPlatform pg = PostgresPlatform.getInstance();
-        PreparedStatement ps = null;
+//        PostgresPlatform pg = PostgresPlatform.getInstance();
+//        PreparedStatement ps = null;
 
-        try {
-            Connection connection = pg.getConnection();
-            ps = connection.prepareStatement("select * from institute");
-            ResultSet rs = ps.executeQuery();
-            while ( rs.next() ) {
-                System.out.println(rs.getInt(1) + " " + rs.getString(2));
-            }
-            rs.close();
-            ps.close();
-            //connection.close();
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Connection connection = pg.getConnection();
+//            ps = connection.prepareStatement("select * from institute");
+//            ResultSet rs = ps.executeQuery();
+//            while ( rs.next() ) {
+//                System.out.println(rs.getInt(1) + " " + rs.getString(2));
+//            }
+//            rs.close();
+//            ps.close();
+//            //connection.close();
+//
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//        }
     }
 
     @After
@@ -56,19 +57,11 @@ public class PostgresIntegrationIT {
     @Test
     public void testReadAndWrite() throws URISyntaxException, IOException {
         // Build a Rheem plan.
-//        List<String> collector = new LinkedList<>();
-//        RheemPlan rheemPlan = RheemPlans.readWrite(RheemPlans.FILE_SOME_LINES_TXT, collector);
-//
-//        // Instantiate Rheem and activate the Java backend.
-//        RheemContext rheemContext = new RheemContext();
-//        rheemContext.register(JavaPlatform.getInstance());
-//
-//        // Have Rheem execute the plan.
-//        rheemContext.execute(rheemPlan);
-//
-//        // Verify the plan result.
-//        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
-//        Assert.assertEquals(lines, collector);
+        RheemPlan rheemPlan = RheemPlans.postgresReadStdout();
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(PostgresPlatform.getInstance());
+        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.execute(rheemPlan);
     }
 
     @Test

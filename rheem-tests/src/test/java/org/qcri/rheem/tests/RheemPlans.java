@@ -1,5 +1,6 @@
 package org.qcri.rheem.tests;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.function.*;
@@ -483,6 +484,16 @@ public class RheemPlans {
         // Create the RheemPlan.
         return new RheemPlan(stdoutSink);
     }
+
+    public static RheemPlan postgresReadStdout() {
+        //Tuple2.class
+        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
+        TableSource table = new TableSource("institute");
+        table.connectTo(0, stdoutSink, 0);
+        return new RheemPlan(stdoutSink);
+
+    }
+
 }
 
 

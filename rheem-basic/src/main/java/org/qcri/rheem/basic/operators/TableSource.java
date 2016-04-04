@@ -16,7 +16,7 @@ public class TableSource extends UnarySource {
     }
 
     public TableSource(String tableName) {
-        super(DataSetType.createDefault(Record.class), null);
+        super(DataSetType.createDefault(String.class), null);
         this.tableName = tableName;
     }
 }
