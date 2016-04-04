@@ -184,6 +184,19 @@ public class FullIntegrationIT {
     }
 
     @Test
+    public void testDiverseScenario3() throws URISyntaxException {
+        // Build the RheemPlan.
+        RheemPlan rheemPlan = RheemPlans.diverseScenario2(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+    }
+
+    @Test
     public void testDiverseScenario4() throws URISyntaxException {
         // Build the RheemPlan.
         RheemPlan rheemPlan = RheemPlans.diverseScenario4(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);

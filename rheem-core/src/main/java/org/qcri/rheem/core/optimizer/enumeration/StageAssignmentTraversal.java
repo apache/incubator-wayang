@@ -2,10 +2,7 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.executionplan.*;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,27 +94,13 @@ public class StageAssignmentTraversal {
      * @see StageSplittingCriterion#shouldSplit(ExecutionTask, Channel, ExecutionTask)
      */
     private static boolean isLoopBoarder(ExecutionTask producer, Channel channel, ExecutionTask consumer) {
-        // Check if the channel leaves a loop.
         final ExecutionOperator producerOperator = producer.getOperator();
-        if (producerOperator.isLoopHead()) {
-            LoopHeadOperator loopHead = (LoopHeadOperator) producerOperator;
-            final OutputSlot<?> output = producer.getOutputSlotFor(channel);
-            if (loopHead.getFinalLoopOutputs().contains(output)) {
-                return true;
-            }
-        }
+        final LinkedList<LoopSubplan> producerLoopStack = producerOperator.getLoopStack();
 
-        // Check if the channel enters a loop.
         final ExecutionOperator consumerOperator = consumer.getOperator();
-        if (consumerOperator.isLoopHead()) {
-            LoopHeadOperator loopHead = (LoopHeadOperator) consumerOperator;
-            final InputSlot<?> input = consumer.getInputSlotFor(channel);
-            if (loopHead.getLoopInitializationInputs().contains(input)) {
-                return true;
-            }
-        }
+        final LinkedList<LoopSubplan> consumerLoopStack = consumerOperator.getLoopStack();
 
-        return false;
+        return !producerLoopStack.equals(consumerLoopStack);
     }
 
     /**

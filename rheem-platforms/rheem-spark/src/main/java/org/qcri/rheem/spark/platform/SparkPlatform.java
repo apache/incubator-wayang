@@ -135,6 +135,7 @@ public class SparkPlatform extends Platform {
         this.mappings.add(new TextFileSourceMapping());
         this.mappings.add(new UnionAllToSparkUnionAllMapping());
         this.mappings.add(new LoopToSparkLoopMapping());
+        this.mappings.add(new DoWhileMapping());
     }
 
     @Override

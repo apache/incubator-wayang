@@ -1,0 +1,94 @@
+package org.qcri.rheem.spark.operators;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
+import org.qcri.rheem.basic.operators.DoWhileOperator;
+import org.qcri.rheem.basic.operators.LoopOperator;
+import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.platform.SparkExecutor;
+
+import java.util.Collection;
+
+/**
+ * Spark implementation of the {@link LoopOperator}.
+ */
+public class SparkDoWhileOperator<InputType, ConvergenceType>
+        extends DoWhileOperator<InputType, ConvergenceType>
+        implements SparkExecutionOperator {
+
+
+    /**
+     * Creates a new instance.
+     */
+    public SparkDoWhileOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
+                                PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate) {
+        super(inputType, convergenceType, criterionPredicate);
+    }
+
+    public SparkDoWhileOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
+                                PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
+        super(inputType, convergenceType, criterionDescriptor);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler,
+                         SparkExecutor sparkExecutor) {
+        assert inputs.length == this.getNumInputs();
+        assert outputs.length == this.getNumOutputs();
+
+        final Function<Collection<ConvergenceType>, Boolean> stoppingCondition =
+                compiler.compile(this.criterionDescriptor, this, inputs);
+        boolean endloop = false;
+
+        final Collection<ConvergenceType> convergenceCollection;
+        final JavaRDD<ConvergenceType> convergenceRDD;
+        final ChannelExecutor input;
+        switch (this.getState()) {
+            case NOT_STARTED:
+                assert inputs[INITIAL_INPUT_INDEX] != null;
+
+                input = inputs[INITIAL_INPUT_INDEX];
+                break;
+            case RUNNING:
+                assert inputs[ITERATION_INPUT_INDEX] != null;
+                assert inputs[CONVERGENCE_INPUT_INDEX] != null;
+
+                convergenceRDD = (JavaRDD<ConvergenceType>) inputs[CONVERGENCE_INPUT_INDEX].provideRdd().cache();
+                convergenceCollection = convergenceRDD.collect();
+                try {
+                    endloop = stoppingCondition.call(convergenceCollection);
+                } catch (Exception e) {
+                    throw new RheemException(String.format("Could not evaluate stopping condition for %s.", this), e);
+                }
+                input = inputs[ITERATION_INPUT_INDEX];
+                break;
+            default:
+                throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
+
+        }
+
+        if (endloop) {
+            // final loop output
+            outputs[FINAL_OUTPUT_INDEX].acceptRdd(input.provideRdd());
+            outputs[ITERATION_OUTPUT_INDEX] = null;
+            this.setState(State.FINISHED);
+        } else {
+            outputs[FINAL_OUTPUT_INDEX] = null;
+            outputs[ITERATION_OUTPUT_INDEX].acceptRdd(input.provideRdd());
+            this.setState(State.RUNNING);
+        }
+
+    }
+
+    @Override
+    protected ExecutionOperator createCopy() {
+        return new SparkDoWhileOperator<>(this.getInputType(), this.getConvergenceType(),
+                this.getCriterionDescriptor().getJavaImplementation());
+    }
+}

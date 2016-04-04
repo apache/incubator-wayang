@@ -2,6 +2,7 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.util.OneTimeExecutable;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -108,7 +109,9 @@ public class LoopIsolator extends OneTimeExecutable {
         // Sanity-check the outputs of the loopHead.
         for (OutputSlot<?> outputSlot : loopHead.getLoopBodyOutputs()) {
             final List<? extends InputSlot<?>> occupiedSlots = outputSlot.getOccupiedSlots();
-            Validate.isTrue(!occupiedSlots.isEmpty());
+            if (occupiedSlots.isEmpty()) {
+                LoggerFactory.getLogger(LoopIsolator.class).warn("{} is not feeding any input slot.", outputSlot);
+            }
         }
         for (OutputSlot<?> outputSlot : loopHead.getFinalLoopOutputs()) {
             final List<? extends InputSlot<?>> occupiedSlots = outputSlot.getOccupiedSlots();

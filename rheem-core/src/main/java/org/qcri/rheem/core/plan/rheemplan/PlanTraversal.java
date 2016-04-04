@@ -23,6 +23,8 @@ public class PlanTraversal {
 
     private Predicate<InputSlot<?>> inputFollowPredicate = inputSlot -> true;
 
+    private Predicate<InputSlot<?>> inputFollowDownstreamPredicate = inputSlot -> true;
+
     @Deprecated
     public PlanTraversal(boolean isFollowInputs, boolean isFollowOutputs) {
         this.isFollowInputs = isFollowInputs;
@@ -62,6 +64,11 @@ public class PlanTraversal {
 
     public PlanTraversal followingInputsIf(Predicate<InputSlot<?>> inputFollowPredicate) {
         this.inputFollowPredicate = inputFollowPredicate;
+        return this;
+    }
+
+    public PlanTraversal followingInputsDownstreamIf(Predicate<InputSlot<?>> inputFollowPredicate) {
+        this.inputFollowDownstreamPredicate = inputFollowPredicate;
         return this;
     }
 
@@ -142,6 +149,7 @@ public class PlanTraversal {
                 .map(outputSlot -> ((OutputSlot<Object>) outputSlot).getOccupiedSlots())
                 .flatMap(Collection::stream)
                 .filter(inputSlot -> inputSlot != null)
+                .filter(this.inputFollowDownstreamPredicate)
                 .forEach(inputSlot -> this.traverse(inputSlot.getOwner(), inputSlot, null));
     }
 

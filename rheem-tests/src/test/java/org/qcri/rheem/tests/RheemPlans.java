@@ -3,7 +3,6 @@ package org.qcri.rheem.tests;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.function.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
@@ -395,30 +394,43 @@ public class RheemPlans {
     public static RheemPlan diverseScenario3(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
         // Build a Rheem plan.
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
+        textFileSource1.setName("Source 1");
         TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
+        textFileSource2.setName("Source 2");
         FilterOperator<String> noCommaOperator = new FilterOperator<>(s -> !s.contains(","), String.class);
+        noCommaOperator.setName("Filter comma");
+        UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
+        unionOperator.setName("Union");
+        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
+        stdoutSink.setName("Print");
+        SortOperator<String> sortOperator = new SortOperator<>(String.class);
+        sortOperator.setName("Sort");
+        CountOperator<String> countLines = new CountOperator<>(String.class);
+        countLines.setName("Count");
+        DoWhileOperator<String, Long> loopOperator = new DoWhileOperator<>(
+                DataSetType.createDefault(String.class),
+                DataSetType.createDefault(Long.class),
+                integers -> integers.iterator().next() > 100
+        );
+        loopOperator.setName("Do while");
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
                 new TransformationDescriptor<>(String::toUpperCase, String.class, String.class)
         );
-        UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
-        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
-        DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(String.class);
-        SortOperator<String> sortOperator = new SortOperator<>(String.class);
+        upperCaseOperator.setName("To uppercase");
+        FilterOperator<String> dummyFilter = new FilterOperator<>(str -> true, String.class);
+        dummyFilter.setName("Dummy filter");
 
-        LoopOperator<String, Integer> loopOperator = null;
-        Operator converge = null;
         // Read from file 1, remove commas, union with file 2, sort, upper case, then remove duplicates and output.
-        loopOperator.initialize(textFileSource1, null); // TODO: Fix this test.
-        loopOperator.beginIteration(noCommaOperator, converge);
+        loopOperator.initialize(textFileSource1, 0);
+        loopOperator.beginIteration(noCommaOperator, 0);
         textFileSource2.connectTo(0, unionOperator, 0);
         noCommaOperator.connectTo(0, unionOperator, 1);
         unionOperator.connectTo(0, sortOperator, 0);
-        sortOperator.connectTo(0, upperCaseOperator, 0);
-
-        loopOperator.endIteration(sortOperator, converge);
+        sortOperator.connectTo(0, countLines, 0);
+        sortOperator.connectTo(0, dummyFilter, 0);
+        loopOperator.endIteration(dummyFilter, 0, countLines, 0);
         loopOperator.outputConnectTo(upperCaseOperator, 0);
-        upperCaseOperator.connectTo(0, distinctLinesOperator, 0);
-        distinctLinesOperator.connectTo(0, stdoutSink, 0);
+        upperCaseOperator.connectTo(0, stdoutSink, 0);
 
         // Create the RheemPlan.
         return new RheemPlan(stdoutSink);

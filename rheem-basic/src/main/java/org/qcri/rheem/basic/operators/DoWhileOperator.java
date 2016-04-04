@@ -14,18 +14,16 @@ import java.util.Collections;
 import java.util.Optional;
 
 /**
- * This operator has three inputs and three outputs.
+ * This operator has three inputs and two outputs.
  */
-public class LoopOperator<InputType, ConvergenceType> extends OperatorBase implements ElementaryOperator, LoopHeadOperator {
+public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase implements ElementaryOperator, LoopHeadOperator {
 
     public static final int INITIAL_INPUT_INDEX = 0;
-    public static final int INITIAL_CONVERGENCE_INPUT_INDEX = 1;
-    public static final int ITERATION_INPUT_INDEX = 2;
-    public static final int ITERATION_CONVERGENCE_INPUT_INDEX = 3;
+    public static final int ITERATION_INPUT_INDEX = 1;
+    public static final int CONVERGENCE_INPUT_INDEX = 2;
 
     public static final int ITERATION_OUTPUT_INDEX = 0;
-    public static final int ITERATION_CONVERGENCE_OUTPUT_INDEX = 1;
-    public static final int FINAL_OUTPUT_INDEX = 2;
+    public static final int FINAL_OUTPUT_INDEX = 1;
 
     /**
      * Function that this operator applies to the input elements.
@@ -46,8 +44,8 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
 
     // TODO: Add convenience constructors as in the other operators.
 
-    public LoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                        PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate) {
+    public DoWhileOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
+                           PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate) {
         this(inputType, convergenceType,
                 new PredicateDescriptor<>(criterionPredicate, (BasicDataUnitType) convergenceType.getDataUnitType()));
     }
@@ -55,17 +53,15 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     /**
      * Creates a new instance.
      */
-    public LoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                        PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
-        super(4, 3, true, null);
+    public DoWhileOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
+                           PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
+        super(3, 2, true, null);
         this.criterionDescriptor = criterionDescriptor;
         this.inputSlots[INITIAL_INPUT_INDEX] = new InputSlot<>("initialInput", this, inputType);
-        this.inputSlots[INITIAL_CONVERGENCE_INPUT_INDEX] = new InputSlot<>("initialConvergenceInput", this, convergenceType);
         this.inputSlots[ITERATION_INPUT_INDEX] = new InputSlot<>("iterationInput", this, inputType);
-        this.inputSlots[ITERATION_CONVERGENCE_INPUT_INDEX] = new InputSlot<>("convergenceInput", this, convergenceType);
+        this.inputSlots[CONVERGENCE_INPUT_INDEX] = new InputSlot<>("convergenceInput", this, convergenceType);
 
         this.outputSlots[ITERATION_OUTPUT_INDEX] = new OutputSlot<>("iterationOutput", this, inputType);
-        this.outputSlots[ITERATION_CONVERGENCE_OUTPUT_INDEX] = new OutputSlot<>("convergenceOutput", this, convergenceType);
         this.outputSlots[FINAL_OUTPUT_INDEX] = new OutputSlot<>("output", this, inputType);
         this.state = State.NOT_STARTED;
     }
@@ -76,44 +72,25 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     }
 
     public DataSetType<ConvergenceType> getConvergenceType() {
-        return ((InputSlot<ConvergenceType>) this.getInput(INITIAL_CONVERGENCE_INPUT_INDEX)).getType();
+        return ((InputSlot<ConvergenceType>) this.getInput(CONVERGENCE_INPUT_INDEX)).getType();
     }
 
-    public void initialize(Operator initOperator, int initOpOutputIndex, Operator convOperator, int convOpOutputIndex) {
+    public void initialize(Operator initOperator, int initOpOutputIndex) {
         initOperator.connectTo(initOpOutputIndex, this, INITIAL_INPUT_INDEX);
-        convOperator.connectTo(convOpOutputIndex, this, INITIAL_CONVERGENCE_INPUT_INDEX);
     }
 
-    public void initialize(Operator initOperator, Operator convOperator) {
-        this.initialize(initOperator, 0, convOperator, 0);
-    }
-
-    public void beginIteration(Operator beginOperator, int beginInputIndex, Operator convergeOperator,
-                               int convergeInputIndex) {
+    public void beginIteration(Operator beginOperator, int beginInputIndex) {
         this.connectTo(ITERATION_OUTPUT_INDEX, beginOperator, beginInputIndex);
-        this.connectTo(ITERATION_CONVERGENCE_OUTPUT_INDEX, convergeOperator, convergeInputIndex);
-    }
-
-    public void beginIteration(Operator beginOperator, Operator convergeOperator) {
-        this.beginIteration(beginOperator, 0, convergeOperator, 0);
     }
 
     public void endIteration(Operator endOperator, int endOpOutputIndex, Operator convergeOperator,
                              int convergeOutputIndex) {
         endOperator.connectTo(endOpOutputIndex, this, ITERATION_INPUT_INDEX);
-        convergeOperator.connectTo(convergeOutputIndex, this, ITERATION_CONVERGENCE_INPUT_INDEX);
-    }
-
-    public void endIteration(Operator endOperator, Operator convergeOperator) {
-        this.endIteration(endOperator, 0, convergeOperator, 0);
+        convergeOperator.connectTo(convergeOutputIndex, this, CONVERGENCE_INPUT_INDEX);
     }
 
     public void outputConnectTo(Operator outputOperator, int thatInputIndex) {
         this.connectTo(FINAL_OUTPUT_INDEX, outputOperator, thatInputIndex);
-    }
-
-    public void outputConnectTo(Operator outputOperator) {
-        this.outputConnectTo(outputOperator, 0);
     }
 
     public PredicateDescriptor<Collection<ConvergenceType>> getCriterionDescriptor() {
@@ -124,9 +101,6 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     public Collection<OutputSlot<?>> getForwards(InputSlot<?> input) {
         assert this.isOwnerOf(input);
         switch (input.getIndex()) {
-            case INITIAL_CONVERGENCE_INPUT_INDEX:
-            case ITERATION_CONVERGENCE_INPUT_INDEX:
-                return Collections.singleton(this.getOutput(ITERATION_CONVERGENCE_OUTPUT_INDEX));
             case INITIAL_INPUT_INDEX:
             case ITERATION_INPUT_INDEX:
                 return Arrays.asList(this.getOutput(ITERATION_OUTPUT_INDEX), this.getOutput(FINAL_OUTPUT_INDEX));
@@ -139,8 +113,7 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     public boolean isReading(InputSlot<?> input) {
         assert this.isOwnerOf(input);
         switch (input.getIndex()) {
-            case INITIAL_CONVERGENCE_INPUT_INDEX:
-            case ITERATION_CONVERGENCE_INPUT_INDEX:
+            case CONVERGENCE_INPUT_INDEX:
             case INITIAL_INPUT_INDEX:
             case ITERATION_INPUT_INDEX:
                 return true;
@@ -152,11 +125,6 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex, Configuration configuration) {
         switch (outputIndex) {
-            case ITERATION_CONVERGENCE_OUTPUT_INDEX:
-                return Optional.of(new SwitchForwardCardinalityEstimator(
-                        INITIAL_CONVERGENCE_INPUT_INDEX,
-                        ITERATION_CONVERGENCE_INPUT_INDEX
-                ));
             case ITERATION_OUTPUT_INDEX:
             case FINAL_OUTPUT_INDEX:
                 return Optional.of(new SwitchForwardCardinalityEstimator(INITIAL_INPUT_INDEX, ITERATION_INPUT_INDEX));
@@ -167,7 +135,7 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
 
     @Override
     public Collection<OutputSlot<?>> getLoopBodyOutputs() {
-        return Arrays.asList(this.getOutput(ITERATION_OUTPUT_INDEX), this.getOutput(ITERATION_CONVERGENCE_OUTPUT_INDEX));
+        return Collections.singletonList(this.getOutput(ITERATION_OUTPUT_INDEX));
     }
 
     @Override
@@ -177,15 +145,12 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
 
     @Override
     public Collection<InputSlot<?>> getLoopBodyInputs() {
-        return Arrays.asList(this.getInput(ITERATION_INPUT_INDEX), this.getInput(ITERATION_CONVERGENCE_INPUT_INDEX));
+        return Arrays.asList(this.getInput(ITERATION_INPUT_INDEX), this.getInput(CONVERGENCE_INPUT_INDEX));
     }
 
     @Override
     public Collection<InputSlot<?>> getLoopInitializationInputs() {
-        return Arrays.asList(
-                this.getInput(INITIAL_INPUT_INDEX),
-                this.getInput(INITIAL_CONVERGENCE_INPUT_INDEX)
-        );
+        return Collections.singletonList(this.getInput(INITIAL_INPUT_INDEX));
     }
 
     @Override

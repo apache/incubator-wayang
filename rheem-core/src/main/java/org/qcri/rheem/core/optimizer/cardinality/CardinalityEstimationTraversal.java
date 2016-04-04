@@ -43,14 +43,14 @@ public class CardinalityEstimationTraversal {
      * {@code inputSlots} and {@code sourceOperators}, thereby putting {@link CardinalityEstimate}s into the
      * {@code cache}.
      *
-     * @param inputSlots      open {@link InputSlot}s that will be initially activated
-     * @param outputSlots     that will not be followed; they are terminal in addition to {@link OutputSlot}s that
-     *                        have no occupied {@link InputSlot}s
-     * @param sourceOperators {@link Operator} that will be initially activated
-     * @param configuration   provides utilties for the estimation
+     * @param inputSlots       open {@link InputSlot}s that will be initially activated
+     * @param borderInputSlots that will not be followed; they are terminal in addition to {@link OutputSlot}s that
+     *                         have no occupied {@link InputSlot}s
+     * @param sourceOperators  {@link Operator} that will be initially activated
+     * @param configuration    provides utilties for the estimation
      */
     public static CardinalityEstimationTraversal createPushTraversal(Collection<InputSlot<?>> inputSlots,
-                                                                     Collection<OutputSlot<?>> outputSlots,
+                                                                     Collection<InputSlot<?>> borderInputSlots,
                                                                      Collection<Operator> sourceOperators,
                                                                      Configuration configuration) {
         Validate.notNull(inputSlots);
@@ -58,7 +58,7 @@ public class CardinalityEstimationTraversal {
         Validate.notNull(configuration);
 
         // Starting from the an output, find all required inputs.
-        return new Builder(inputSlots, outputSlots, sourceOperators, configuration).build();
+        return new Builder(inputSlots, borderInputSlots, sourceOperators, configuration).build();
     }
 
 
@@ -275,11 +275,11 @@ public class CardinalityEstimationTraversal {
         final Collection<InputSlot<?>> inputSlots;
 
         /**
-         * {@link OutputSlot}s that will not be followed; they are terminal. Note that these are not necessarily
+         * {@link InputSlot}s that will not be followed; they are terminal. Note that these are not necessarily
          * the only {@link OutputSlot}s in the created {@link CardinalityEstimationTraversal} that will not be
          * followed -- some {@link OutputSlot}s might not have occupied {@link InputSlot}s.
          */
-        final Set<OutputSlot<?>> terminalOutputSlots;
+        final Set<InputSlot<?>> borderInputSlots;
 
         /**
          * Source {@link Operator}s that should be part of the pushing.
@@ -299,14 +299,14 @@ public class CardinalityEstimationTraversal {
         /**
          * Creates a new instance.
          *
-         * @param inputSlots      see {@link #inputSlots}
-         * @param outputSlots     see {@link #terminalOutputSlots}
-         * @param sourceOperators see {@link #sourceOperators}
-         * @param configuration   see {@link #configuration}
+         * @param inputSlots       see {@link #inputSlots}
+         * @param borderInputSlots see {@link #borderInputSlots}
+         * @param sourceOperators  see {@link #sourceOperators}
+         * @param configuration    see {@link #configuration}
          */
-        private Builder(Collection<InputSlot<?>> inputSlots, Collection<OutputSlot<?>> outputSlots, Collection<Operator> sourceOperators, Configuration configuration) {
+        private Builder(Collection<InputSlot<?>> inputSlots, Collection<InputSlot<?>> borderInputSlots, Collection<Operator> sourceOperators, Configuration configuration) {
             this.inputSlots = inputSlots;
-            this.terminalOutputSlots = RheemCollections.asSet(outputSlots);
+            this.borderInputSlots = RheemCollections.asSet(borderInputSlots);
             this.configuration = configuration;
             this.sourceOperators = sourceOperators;
         }
@@ -331,7 +331,7 @@ public class CardinalityEstimationTraversal {
             // Go through all relevant operators of and create EstimatorActivators.
             PlanTraversal.downstream()
                     .withCallback(this::addAndRegisterActivator)
-                    .followingOutputsIf(output -> !this.terminalOutputSlots.contains(output))
+                    .followingInputsDownstreamIf(input -> !this.borderInputSlots.contains(input))
                     .traverse(this.sourceOperators)
                     .traverse(distinctInputs.stream().map(InputSlot::getOwner));
 
@@ -360,6 +360,7 @@ public class CardinalityEstimationTraversal {
         /**
          * If there is no registered {@link Activator} for the {@code operator} and/or no
          * {@link Activation}, then these will be created, registered, and connected.
+         *
          * @param operator
          */
         private void addAndRegisterActivator(Operator operator) {

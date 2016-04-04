@@ -1,19 +1,21 @@
 package org.qcri.rheem.java.mapping;
 
-import org.qcri.rheem.basic.operators.GlobalReduceOperator;
+import org.qcri.rheem.basic.operators.DoWhileOperator;
+import org.qcri.rheem.basic.operators.LoopOperator;
+import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.operators.JavaGlobalReduceOperator;
 import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.operators.JavaDoWhileOperator;
+import org.qcri.rheem.java.operators.JavaLoopOperator;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link GlobalReduceOperator} to {@link JavaGlobalReduceOperator}.
+ * Mapping from {@link LoopOperator} to {@link JavaLoopOperator}.
  */
 @SuppressWarnings("unchecked")
-public class JavaGlobalReduceOperatorMapping implements Mapping {
+public class DoWhileMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -28,15 +30,16 @@ public class JavaGlobalReduceOperatorMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "reduce", new GlobalReduceOperator<>(null, DataSetType.none()), false);
+                "loop", new DoWhileOperator<>(null, null, (PredicateDescriptor)null), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<GlobalReduceOperator>(
-                (matchedOperator, epoch) -> new JavaGlobalReduceOperator<>(
-                        matchedOperator.getType(),
-                        matchedOperator.getReduceDescriptor()
+        return new ReplacementSubplanFactory.OfSingleOperators<DoWhileOperator>(
+                (matchedOperator, epoch) -> new JavaDoWhileOperator<>(
+                        matchedOperator.getInputType(),
+                        matchedOperator.getConvergenceType(),
+                        matchedOperator.getCriterionDescriptor()
                 ).at(epoch)
         );
     }
