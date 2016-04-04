@@ -141,10 +141,14 @@ public class ExecutionPlan {
             this.logger.error("There are channels that are copies.");
         }
 
-        boolean isAllSiblingsConsistent = allChannels.stream()
-                .allMatch(channel -> channel.withSiblings(false).allMatch(allChannels::contains));
-        if (!isAllSiblingsConsistent) {
-            this.logger.error("There are siblings that are not part of the plan.");
+        boolean isAllSiblingsConsistent = true;
+        for (Channel channel : allChannels) {
+            for (Channel sibling : channel.getSiblings()) {
+                if (!allChannels.contains(sibling)) {
+                    this.logger.error("A sibling of {}, namely {}, seems to be invalid.", channel, sibling);
+                }
+                isAllSiblingsConsistent = false;
+            }
         }
 
         return isAllTasksAssigned && isAllChannelsOriginal && isAllSiblingsConsistent;

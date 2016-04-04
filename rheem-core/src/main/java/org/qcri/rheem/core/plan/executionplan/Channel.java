@@ -367,4 +367,8 @@ public abstract class Channel {
     public OutputSlot<?> getProducerSlot() {
         return this.producerSlot;
     }
+
+    public Set<Channel> getSiblings() {
+        return this.siblings;
+    }
 }
