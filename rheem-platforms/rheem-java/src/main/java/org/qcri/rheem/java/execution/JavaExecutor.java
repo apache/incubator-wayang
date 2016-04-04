@@ -1,5 +1,6 @@
 package org.qcri.rheem.java.execution;
 
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -24,7 +25,8 @@ public class JavaExecutor extends PushExecutorTemplate<ChannelExecutor> {
 
     public FunctionCompiler compiler = new FunctionCompiler();
 
-    public JavaExecutor(JavaPlatform javaPlatform) {
+    public JavaExecutor(JavaPlatform javaPlatform, Job job) {
+        super(job);
         this.platform = javaPlatform;
     }
 

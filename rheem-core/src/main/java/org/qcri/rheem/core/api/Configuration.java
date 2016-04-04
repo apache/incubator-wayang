@@ -1,7 +1,8 @@
 package org.qcri.rheem.core.api;
 
-import org.apache.commons.lang3.Validate;
+import org.apache.commons.io.IOUtils;
 import org.qcri.rheem.core.api.configuration.*;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
@@ -15,17 +16,23 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy;
+import org.qcri.rheem.core.util.fs.FileSystem;
+import org.qcri.rheem.core.util.fs.FileSystems;
+import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.*;
 
 /**
  * Describes both the configuration of a {@link RheemContext} and {@link Job}s.
  */
 public class Configuration {
 
-    private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
+    private static final Configuration defaultConfiguration = createDefaultConfiguration();
 
-    private final RheemContext rheemContext;
+    private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
 
     private final Configuration parent;
 
@@ -49,26 +56,35 @@ public class Configuration {
 
     private ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider;
 
+    private KeyValueProvider<String, String> properties;
+
     /**
-     * Creates a new top-level instance.
+     * Creates a new top-level instance that bases directly from the default instance.
+     *
+     * @see #getDefaultConfiguration()
      */
-    public Configuration(RheemContext rheemContext) {
-        this(rheemContext, null);
+    public Configuration() {
+        this(findUserConfigurationFile());
     }
 
     /**
-     * Creates a new instance as child of another instance.
+     * Creates a new top-level instance that bases directly from the default instance and loads the specified
+     * configuration file.
+     *
+     * @see #getDefaultConfiguration()
+     * @see #load(String)
      */
-    private Configuration(Configuration parent) {
-        this(parent.rheemContext, parent);
+    public Configuration(String configurationFileUrl) {
+        this(getDefaultConfiguration());
+        if (configurationFileUrl != null) {
+            this.load(configurationFileUrl);
+        }
     }
 
     /**
      * Basic constructor.
      */
-    private Configuration(RheemContext rheemContext, Configuration parent) {
-        Validate.notNull(rheemContext);
-        this.rheemContext = rheemContext;
+    private Configuration(Configuration parent) {
         this.parent = parent;
 
         if (this.parent != null) {
@@ -97,23 +113,99 @@ public class Configuration {
             this.instrumentationStrategyProvider = new ConstantProvider<>(
                     this.parent.instrumentationStrategyProvider);
 
+            // Properties.
+            this.properties = new MapBasedKeyValueProvider<>(this.parent.properties);
+
         }
     }
 
-    public static Configuration createDefaultConfiguration(RheemContext rheemContext) {
-        Configuration configuration = new Configuration(rheemContext);
+    private static String findUserConfigurationFile() {
+        final String systemProperty = System.getProperty("rheem.configuration");
+        if (systemProperty != null) {
+            return systemProperty;
+        }
+
+        final URL classPathResource = Thread.currentThread().getContextClassLoader().getResource("rheem.properties");
+        if (classPathResource != null) {
+            return classPathResource.toString();
+        }
+
+        return null;
+    }
+
+    /**
+     * Adjusts this instance to the properties specified in the given file.
+     *
+     * @param configurationUrl URL to the configuration file
+     */
+    public void load(String configurationUrl) {
+        final Optional<FileSystem> fileSystem = FileSystems.getFileSystem(configurationUrl);
+        if (!fileSystem.isPresent()) {
+            throw new RheemException(String.format("Could not access %s.", configurationUrl));
+        }
+        try (InputStream configInputStream = fileSystem.get().open(configurationUrl)) {
+            this.load(configInputStream);
+        } catch (Exception e) {
+            throw new RheemException(String.format("Could not load configuration from %s.", configurationUrl), e);
+        }
+    }
+
+    /**
+     * Adjusts this instance to the properties specified in the given file.
+     *
+     * @param configInputStream of the file
+     */
+    public void load(InputStream configInputStream) {
+        try {
+            final Properties properties = new Properties();
+            properties.load(configInputStream);
+            for (Map.Entry<Object, Object> propertyEntry : properties.entrySet()) {
+                final String key = propertyEntry.getKey().toString();
+                final String value = propertyEntry.getValue().toString();
+                this.handleConfigurationFileEntry(key, value);
+            }
+        } catch (IOException e) {
+            throw new RheemException("Could not load configuration.", e);
+        } finally {
+            IOUtils.closeQuietly(configInputStream);
+        }
+    }
+
+    private void handleConfigurationFileEntry(String key, String value) {
+        // TODO: At this point, we could insert specific handlers for special keys, e.g., considering cost functions.
+
+        // For now, we just add each entry into the #properties.
+        this.setProperty(key, value);
+    }
+
+
+    /**
+     * Returns the global default instance. It will be the fallback for all other instances and should only modified
+     * to provide default values.
+     */
+    public static Configuration getDefaultConfiguration() {
+        return defaultConfiguration;
+    }
+
+    private static Configuration createDefaultConfiguration() {
+        Configuration configuration = new Configuration((Configuration) null);
         bootstrapPlatforms(configuration);
         bootstrapCardinalityEstimationProvider(configuration);
         bootstrapSelectivityProviders(configuration);
         bootstrapLoadAndTimeEstimatorProviders(configuration);
         bootstrapPruningProviders(configuration);
+        bootstrapProperties(configuration);
         return configuration;
     }
 
     private static void bootstrapPlatforms(Configuration configuration) {
         CollectionProvider<Platform> platformProvider = new CollectionProvider<>();
-        Platform platform = Platform.load(BASIC_PLATFORM);
-        platformProvider.addToWhitelist(platform);
+        try {
+            Platform platform = Platform.load(BASIC_PLATFORM);
+            platformProvider.addToWhitelist(platform);
+        } catch (Exception e) {
+            LoggerFactory.getLogger(Configuration.class).error("Could not load Rheem basic.");
+        }
         configuration.setPlatformProvider(platformProvider);
     }
 
@@ -264,6 +356,15 @@ public class Configuration {
         }
     }
 
+    private static void bootstrapProperties(Configuration configuration) {
+        // Here, we could put some default values.
+        final KeyValueProvider<String, String> defaultProperties = new MapBasedKeyValueProvider<>(null);
+
+        // Supplement with a customizable layer.
+        final KeyValueProvider<String, String> customizableProperties = new MapBasedKeyValueProvider<>(defaultProperties);
+
+        configuration.setProperties(customizableProperties);
+    }
 
     /**
      * Creates a child instance.
@@ -272,9 +373,6 @@ public class Configuration {
         return new Configuration(this);
     }
 
-    public RheemContext getRheemContext() {
-        return this.rheemContext;
-    }
 
     public KeyValueProvider<OutputSlot<?>, CardinalityEstimator> getCardinalityEstimatorProvider() {
         return this.cardinalityEstimatorProvider;
@@ -343,10 +441,10 @@ public class Configuration {
         this.timeEstimateComparatorProvider = timeEstimateComparatorProvider;
     }
 
-
     public CollectionProvider<PlanEnumerationPruningStrategy> getPruningStrategiesProvider() {
         return this.pruningStrategiesProvider;
     }
+
 
     public void setPruningStrategiesProvider(CollectionProvider<PlanEnumerationPruningStrategy> pruningStrategiesProvider) {
         this.pruningStrategiesProvider = pruningStrategiesProvider;
@@ -358,5 +456,58 @@ public class Configuration {
 
     public void setInstrumentationStrategyProvider(ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider) {
         this.instrumentationStrategyProvider = instrumentationStrategyProvider;
+    }
+
+    public void setProperties(KeyValueProvider<String, String> properties) {
+        this.properties = properties;
+    }
+
+    public KeyValueProvider<String, String> getProperties() {
+        return this.properties;
+    }
+
+    public void setProperty(String key, String value) {
+        this.properties.set(key, value);
+    }
+
+    public String getStringProperty(String key) {
+        return this.properties.provideFor(key);
+    }
+
+    public Optional<String> getOptionalStringProperty(String key) {
+        return this.properties.optionallyProvideFor(key);
+    }
+
+    public String getStringProperty(String key, String fallback) {
+        return this.getOptionalStringProperty(key).orElse(fallback);
+    }
+
+    public OptionalLong getOptionalLongProperty(String key) {
+        final Optional<String> longValue = this.properties.optionallyProvideFor(key);
+        if (longValue.isPresent()) {
+            return OptionalLong.of(Long.valueOf(longValue.get()));
+        } else {
+            return OptionalLong.empty();
+        }
+    }
+
+    public long getLongProperty(String key) {
+        return this.getOptionalLongProperty(key).getAsLong();
+    }
+
+    public long getLongProperty(String key, long fallback) {
+        return this.getOptionalLongProperty(key).orElse(fallback);
+    }
+
+    public Optional<Boolean> getOptionalBooleanProperty(String key) {
+        return this.properties.optionallyProvideFor(key).map(Boolean::valueOf);
+    }
+
+    public boolean getBooleanProperty(String key) {
+        return this.getOptionalBooleanProperty(key).get();
+    }
+
+    public boolean getBooleanProperty(String key, boolean fallback) {
+        return this.getOptionalBooleanProperty(key).orElse(fallback);
     }
 }

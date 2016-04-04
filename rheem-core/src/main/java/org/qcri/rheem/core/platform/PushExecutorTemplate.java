@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -22,9 +23,15 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    protected final Job job;
+
     private Collection<ExecutionResource> allocatedResources = new LinkedList<>();
 
     private Map<Channel, CI> interStageChannelInstances = new HashMap<>(4);
+
+    public PushExecutorTemplate(Job job) {
+        this.job = job;
+    }
 
     @Override
     public ExecutionProfile execute(ExecutionStage stage) {

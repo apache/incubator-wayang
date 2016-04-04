@@ -3,13 +3,8 @@ package org.qcri.rheem.core.optimizer.cardinality;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 
 import java.util.function.ToLongFunction;
-
-import static org.mockito.Mockito.mock;
 
 
 
@@ -22,7 +17,7 @@ public class DefaultCardinalityEstimatorTest {
     @Test
     public void testBinaryInputEstimation() {
         // Mock Configuration so as to not depend on rheem-basic, which is loaded by default by RheemContext.
-        Configuration configuration = mock(Configuration.class);
+        Configuration configuration = new Configuration();
 
         CardinalityEstimate inputEstimate1 = new CardinalityEstimate(50, 60, 0.8);
         CardinalityEstimate inputEstimate2 = new CardinalityEstimate(10, 100, 0.4);

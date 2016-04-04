@@ -13,8 +13,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 
-import static org.mockito.Mockito.mock;
-
 /**
  * Test suite for {@link TextFileSource}.
  */
@@ -45,7 +43,7 @@ public class TextFileSourceTest {
             }
         }
 
-        Configuration configuration = mock(Configuration.class);
+        Configuration configuration = new Configuration();
         final Optional<CardinalityEstimator> cardinalityEstimator = textFileSource
                 .getCardinalityEstimator(0, configuration);
 

@@ -26,7 +26,7 @@ public class AggregatingCardinalityEstimatorTest {
         );
 
         CardinalityEstimate inputEstimate = new CardinalityEstimate(10, 100, 0.3);
-        CardinalityEstimate outputEstimate = estimator.estimate(mock(Configuration.class), inputEstimate);
+        CardinalityEstimate outputEstimate = estimator.estimate(new Configuration(), inputEstimate);
         CardinalityEstimate expectedEstimate = new CardinalityEstimate(2 * 10, 2 * 100, 0.3 * 0.9);
 
         Assert.assertEquals(expectedEstimate, outputEstimate);

@@ -2,19 +2,22 @@ package org.qcri.rheem.spark.platform;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.qcri.rheem.basic.plugin.RheemBasicPlatform;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.spark.channels.SparkChannelManager;
 import org.qcri.rheem.spark.mapping.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Properties;
 
 /**
  * {@link Platform} for a single JVM executor based on the {@link java.util.stream} library.
@@ -22,6 +25,8 @@ import java.util.Properties;
 public class SparkPlatform extends Platform {
 
     private static final String PLATFORM_NAME = "Apache Spark";
+
+    private static final String DEFAULT_CONFIG_FILE = "/rheem-spark-defaults.properties";
 
     private final Collection<Mapping> mappings = new LinkedList<>();
 
@@ -32,6 +37,8 @@ public class SparkPlatform extends Platform {
      */
     private JavaSparkContext sparkContext;
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
+
     public static SparkPlatform getInstance() {
         if (instance == null) {
             instance = new SparkPlatform();
@@ -41,31 +48,75 @@ public class SparkPlatform extends Platform {
 
     private SparkPlatform() {
         super(PLATFORM_NAME);
+        this.initializeConfiguration();
         this.initializeMappings();
     }
 
-    public JavaSparkContext getSparkContext() {
-        Properties default_properties = new Properties();
-        default_properties.setProperty("spark.appName", "rheem");
-        default_properties.setProperty("spark.master", "local");
-        Properties properties = new Properties(default_properties);
-        try {
-            properties.load(new FileReader(new File("app.properties")));
-        } catch (IOException e) {
-            System.out.println("Could not find app.properties file, using default local spark configuration.");
-        }
+    /**
+     * Configures the single maintained {@link JavaSparkContext} according to the {@code job} and returns it.
+     */
+    public JavaSparkContext getSparkContext(Job job) {
+
         // NB: There must be only one JavaSparkContext per JVM. Therefore, it is not local to the executor.
-        if (this.sparkContext == null) {
-            String appName = properties.getProperty("spark.appName");
-            String master = properties.getProperty("spark.master");
-            final SparkConf conf = new SparkConf().setAppName(appName).setMaster(master);
-            if (properties.getProperty("spark.jars")!=null){
-                String[] jarFiles = properties.getProperty("spark.jars").split(",");
-                conf.setJars(jarFiles);
-            }
-            this.sparkContext = new JavaSparkContext(conf);
+        final SparkConf sparkConf;
+        if (this.sparkContext != null) {
+            this.logger.warn(
+                    "There is already a SparkContext (master: {}): , which will be reused. " +
+                    "Not all settings might be effective.", this.sparkContext.getConf().get("spark.master"));
+            sparkConf = this.sparkContext.getConf();
+        } else {
+            sparkConf = new SparkConf(true);
         }
+
+        Configuration configuration = job.getConfiguration();
+        final String master = configuration.getStringProperty("spark.master");
+        sparkConf.setMaster(master);
+        final String appName = configuration.getStringProperty("spark.appName");
+        sparkConf.setAppName(appName);
+        configuration.getOptionalStringProperty("spark.executor.memory").ifPresent(
+                mem -> sparkConf.set("spark.executor.memory", mem)
+        );
+        configuration.getOptionalStringProperty("spark.driver.cores").ifPresent(
+                cores -> sparkConf.set("spark.driver.cores", cores)
+        );
+        configuration.getOptionalStringProperty("spark.driver.memory").ifPresent(
+                cores -> sparkConf.set("spark.driver.memory", cores)
+
+        );
+        if (this.sparkContext == null) {
+            this.sparkContext = new JavaSparkContext(sparkConf);
+        }
+
+        // Set up the JAR files.
+        this.sparkContext.clearJars();
+        if (!this.sparkContext.isLocal()) {
+            // Add Rheem JAR files.
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // rheem-spark
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasicPlatform.class)); // rheem-basic
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemContext.class)); // rheem-core
+            if (job.getUdfJarPaths().isEmpty()) {
+                this.logger.warn("Non-local SparkContext but not UDF JARs have been declared.");
+            }  else {
+                job.getUdfJarPaths().forEach(this::registerJarIfNotNull);
+            }
+        }
+
         return this.sparkContext;
+    }
+
+    private void registerJarIfNotNull(String path) {
+        if (path != null) this.sparkContext.addJar(path);
+    }
+
+    void closeSparkContext(JavaSparkContext sc) {
+        if (this.sparkContext == sc) {
+            this.sparkContext.close();
+            this.sparkContext = null;
+        }
+    }
+
+    private void initializeConfiguration() {
+        Configuration.getDefaultConfiguration().load(this.getClass().getResourceAsStream(DEFAULT_CONFIG_FILE));
     }
 
     private void initializeMappings() {
@@ -99,7 +150,7 @@ public class SparkPlatform extends Platform {
 
     @Override
     public Executor.Factory getExecutorFactory() {
-        return () -> new SparkExecutor(this);
+        return job -> new SparkExecutor(this, job);
     }
 
     @Override

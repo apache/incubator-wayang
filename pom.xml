@@ -11,7 +11,8 @@
         <scala.version>2.10.4</scala.version>
         <scala.compat.version>2.10</scala.compat.version>
         <spark.version>1.6.0</spark.version>
-        <hadoop.version>2.6.0</hadoop.version>
+        <!-- This Hadoop version is enforced by Spark in the version that is deployed in the Maven repository via code signing. -->
+        <hadoop.version>2.2.0</hadoop.version>
         <graphchi.version>0.2.2</graphchi.version>
     </properties>
 
@@ -37,6 +38,10 @@
                         <trimStackTrace>false</trimStackTrace>
                         <enableAssertions>true</enableAssertions>
                     </configuration>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-assembly-plugin</artifactId>
+                    <version>2.6</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -76,6 +81,7 @@
                         <artifactId>slf4j-log4j12</artifactId>
                     </exclusion>
                 </exclusions>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
@@ -87,6 +93,7 @@
                         <artifactId>slf4j-log4j12</artifactId>
                     </exclusion>
                 </exclusions>
+                <scope>provided</scope>
             </dependency>
 
             <!-- Apache Flink -->
@@ -109,18 +116,7 @@
             <!-- Apache Hadoop -->
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-common</artifactId>
-                <version>${hadoop.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.slf4j</groupId>
-                        <artifactId>slf4j-log4j12</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-hdfs</artifactId>
+                <artifactId>hadoop-client</artifactId>
                 <version>${hadoop.version}</version>
                 <exclusions>
                     <exclusion>
@@ -133,8 +129,14 @@
             <!-- GraphChi: Note might be necessary to build it manually. -->
             <dependency>
                 <groupId>org.graphchi</groupId>
-                <artifactId>graphchi-java</artifactId>
+                <artifactId>graphchi-java_2.10</artifactId>
                 <version>${graphchi.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.hadoop</groupId>
+                        <artifactId>hadoop-core</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -196,5 +198,6 @@
         <module>rheem-basic</module>
         <module>rheem-platforms</module>
         <module>rheem-tests</module>
+        <module>rheem-distro</module>
     </modules>
 </project>

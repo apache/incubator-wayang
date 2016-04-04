@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
@@ -34,7 +35,7 @@ public interface Executor {
         /**
          * @return a new {@link Executor}
          */
-        Executor create();
+        Executor create(Job job);
 
     }
 
