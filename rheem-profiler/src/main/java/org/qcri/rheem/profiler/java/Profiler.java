@@ -5,6 +5,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.StopWatch;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
+import org.qcri.rheem.profiler.data.DataGenerators;
 
 import java.util.*;
 import java.util.function.Supplier;

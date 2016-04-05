@@ -27,6 +27,10 @@
             <artifactId>rheem-java</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_2.10</artifactId>
+        </dependency>
     </dependencies>
 
 

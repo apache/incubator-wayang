@@ -56,6 +56,16 @@ public class SparkPlatform extends Platform {
      * Configures the single maintained {@link JavaSparkContext} according to the {@code job} and returns it.
      */
     public JavaSparkContext getSparkContext(Job job) {
+        return this.getSparkContext(job.getConfiguration(), job.getUdfJarPaths());
+    }
+
+    /**
+     * Configures the single maintained {@link JavaSparkContext} according to the {@code job} and returns it.
+     * <p>This method is intended to be used with profiling code.</p>
+     *
+     * @see #getSparkContext(Job)
+     */
+    public JavaSparkContext getSparkContext(Configuration configuration, Collection<String> udfJarPaths) {
 
         // NB: There must be only one JavaSparkContext per JVM. Therefore, it is not local to the executor.
         final SparkConf sparkConf;
@@ -68,7 +78,6 @@ public class SparkPlatform extends Platform {
             sparkConf = new SparkConf(true);
         }
 
-        Configuration configuration = job.getConfiguration();
         final String master = configuration.getStringProperty("spark.master");
         sparkConf.setMaster(master);
         final String appName = configuration.getStringProperty("spark.appName");
@@ -94,10 +103,10 @@ public class SparkPlatform extends Platform {
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // rheem-spark
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasicPlatform.class)); // rheem-basic
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemContext.class)); // rheem-core
-            if (job.getUdfJarPaths().isEmpty()) {
+            if (udfJarPaths.isEmpty()) {
                 this.logger.warn("Non-local SparkContext but not UDF JARs have been declared.");
             }  else {
-                job.getUdfJarPaths().forEach(this::registerJarIfNotNull);
+                udfJarPaths.forEach(this::registerJarIfNotNull);
             }
         }
 

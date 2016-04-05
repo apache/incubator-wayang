@@ -1,6 +1,7 @@
 package org.qcri.rheem.profiler.java;
 
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.JavaPlatform;
@@ -102,6 +103,7 @@ public abstract class OperatorProfiler {
 
     public static void sleep(long millis) {
         try {
+            System.out.printf("Sleeping for %s.\n", Formats.formatDuration(millis));
             Thread.sleep(millis);
         } catch (InterruptedException e) {
             e.printStackTrace();

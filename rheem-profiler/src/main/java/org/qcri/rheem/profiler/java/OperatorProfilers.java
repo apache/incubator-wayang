@@ -4,6 +4,7 @@ import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.java.operators.*;
+import org.qcri.rheem.profiler.data.DataGenerators;
 
 import java.util.*;
 import java.util.function.Supplier;
