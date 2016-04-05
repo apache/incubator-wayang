@@ -199,5 +199,6 @@
         <module>rheem-platforms</module>
         <module>rheem-tests</module>
         <module>rheem-distro</module>
+        <module>rheem-profiler</module>
     </modules>
 </project>

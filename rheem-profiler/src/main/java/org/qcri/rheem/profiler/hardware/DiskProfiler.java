@@ -1,9 +1,10 @@
-package org.qcri.rheem.java.profiler;
+package org.qcri.rheem.profiler.hardware;
 
 import org.apache.commons.lang.Validate;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
+import org.qcri.rheem.profiler.java.OperatorProfiler;
 
 import java.io.IOException;
 import java.io.InputStream;

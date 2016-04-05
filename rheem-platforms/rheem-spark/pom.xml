@@ -11,7 +11,10 @@
 
     <artifactId>rheem-spark</artifactId>
 
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
+    <modules>
+        <module>rheem-spark-profiler</module>
+    </modules>
 
     <dependencies>
         <dependency>

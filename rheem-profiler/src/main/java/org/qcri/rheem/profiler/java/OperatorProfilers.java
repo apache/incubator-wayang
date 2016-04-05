@@ -1,4 +1,4 @@
-package org.qcri.rheem.java.profiler;
+package org.qcri.rheem.profiler.java;
 
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.types.DataSetType;

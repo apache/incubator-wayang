@@ -1,4 +1,4 @@
-package org.qcri.rheem.java.profiler;
+package org.qcri.rheem.profiler.java;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;

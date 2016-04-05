@@ -1,4 +1,4 @@
-package org.qcri.rheem.java.profiler;
+package org.qcri.rheem.profiler.java;
 
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;

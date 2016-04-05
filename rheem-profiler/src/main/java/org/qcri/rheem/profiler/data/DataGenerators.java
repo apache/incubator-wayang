@@ -1,4 +1,4 @@
-package org.qcri.rheem.java.profiler;
+package org.qcri.rheem.profiler.data;
 
 import org.apache.commons.lang3.Validate;
 
