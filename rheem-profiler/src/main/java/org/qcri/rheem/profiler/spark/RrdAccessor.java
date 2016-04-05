@@ -42,6 +42,10 @@ public class RrdAccessor implements AutoCloseable {
     public double query(String dsName, long startTimestamp, long endTimestamp, ConsolFun consolidationFunction) {
         long tStart = convertToUnixTimestamp(startTimestamp);
         long tEnd = convertToUnixTimestamp(endTimestamp);
+        if (tStart == tEnd) {
+            this.logger.warn("Shifting end time by 1 second because it is identical with the start time.");
+            tEnd++;
+        }
         try {
             final FetchRequest request = this.rrdDb.createFetchRequest(consolidationFunction, tStart, tEnd);
             final FetchData fetchData = request.fetchData();
