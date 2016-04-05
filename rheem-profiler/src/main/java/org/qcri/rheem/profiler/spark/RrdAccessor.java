@@ -23,7 +23,7 @@ public class RrdAccessor implements AutoCloseable {
     private RrdAccessor(RrdDb rrdDb) {
         this.rrdDb = rrdDb;
         try {
-            this.logger.info("Opened RRD with %d archives and data sources %s.\n", rrdDb.getArcCount(), Arrays.toString(rrdDb.getDsNames()));
+            this.logger.info("Opened RRD with {} archives and data sources {}.", rrdDb.getArcCount(), Arrays.toString(rrdDb.getDsNames()));
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }

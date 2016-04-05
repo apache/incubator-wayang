@@ -62,6 +62,8 @@ public class Main {
                 }
             }
         } while (Double.isNaN(load));
+
+        System.out.printf("Fetched metric value from RRD: %f.\n");
     }
 
 }
