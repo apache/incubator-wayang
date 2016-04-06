@@ -3,7 +3,6 @@ package org.qcri.rheem.profiler.spark;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
@@ -43,7 +42,7 @@ public abstract class SparkOperatorProfiler {
 
     public int cpuMhz, numMachines, numCoresPerMachine;
 
-    public int dataQuantumGeneratorBatchSize = 5000000;
+    private final int dataQuantumGeneratorBatchSize;
 
     protected SparkExecutionOperator operator;
 
@@ -66,6 +65,8 @@ public abstract class SparkOperatorProfiler {
 
         this.gangliaRrdsDir = configuration.getStringProperty("rheem.ganglia.rrds", "/var/lib/ganglia/rrds");
         this.gangliaClusterName = configuration.getStringProperty("rheem.ganglia.cluster");
+
+        this.dataQuantumGeneratorBatchSize = (int) configuration.getLongProperty("rheem.profiler.datagen.batchsize", 5000000);
     }
 
     /**
@@ -94,9 +95,9 @@ public abstract class SparkOperatorProfiler {
         JavaRDD<T> finalInputRdd = null;
 
         // Create batches, parallelize them, and union them.
-        int remainder = (int) cardinality;
+        long remainder = cardinality;
         do {
-            int batchSize = Math.min(remainder, this.dataQuantumGeneratorBatchSize);
+            int batchSize = (int) Math.min(remainder, this.dataQuantumGeneratorBatchSize);
             List<T> batch = new ArrayList<>(batchSize);
             while (batch.size() < batchSize) {
                 batch.add(supplier.get());
@@ -118,7 +119,9 @@ public abstract class SparkOperatorProfiler {
      * Executes and profiles the profiling task. Requires that this instance is prepared.
      */
     public Result run() {
-        return this.executeOperator();
+        final Result result = this.executeOperator();
+        this.sparkExecutor.dispose();
+        return result;
     }
 
 
@@ -224,18 +227,6 @@ public abstract class SparkOperatorProfiler {
         final ChannelDescriptor channelDescriptor = RddChannel.DESCRIPTOR;
         final RddChannel channel = new RddChannel(channelDescriptor, null);
         return SparkPlatform.getInstance().getChannelManager().createChannelExecutor(channel, sparkExecutor);
-    }
-
-    /**
-     * Try to sleep for the specified time. Also, inform the user through the {@link System#out}.
-     */
-    public static void sleep(long millis) {
-        try {
-            System.out.printf("Sleeping for %s.\n", Formats.formatDuration(millis));
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
