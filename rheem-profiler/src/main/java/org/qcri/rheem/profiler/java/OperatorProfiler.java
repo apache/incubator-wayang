@@ -1,13 +1,13 @@
 package org.qcri.rheem.profiler.java;
 
 import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
+import org.qcri.rheem.profiler.util.ProfilingUtils;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -51,7 +51,7 @@ public abstract class OperatorProfiler {
     public Result run() {
         final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         threadMXBean.setThreadCpuTimeEnabled(true);
-        sleep(1000);
+        ProfilingUtils.sleep(1000);
         long startCpuTime = threadMXBean.getCurrentThreadCpuTime();
         final long outputCardinality = this.executeOperator();
         long endCpuTime = threadMXBean.getCurrentThreadCpuTime();
@@ -99,15 +99,6 @@ public abstract class OperatorProfiler {
 
     public JavaExecutionOperator getOperator() {
         return this.operator;
-    }
-
-    public static void sleep(long millis) {
-        try {
-            System.out.printf("Sleeping for %s.\n", Formats.formatDuration(millis));
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     /**

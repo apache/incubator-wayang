@@ -1,4 +1,4 @@
-package org.qcri.rheem.profiler.spark;
+package org.qcri.rheem.profiler.util;
 
 import org.rrd4j.ConsolFun;
 import org.rrd4j.core.FetchData;

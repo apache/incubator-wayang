@@ -6,6 +6,7 @@ import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.StopWatch;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.profiler.data.DataGenerators;
+import org.qcri.rheem.profiler.util.ProfilingUtils;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -165,7 +166,7 @@ public class Profiler {
         for (int i = 0; i < GC_RUNS; i++) {
             System.gc();
         }
-        OperatorProfiler.sleep(1000);
+        ProfilingUtils.sleep(1000);
 
         System.out.printf("Profiling %s with %d data quanta.\n", sourceProfiler, cardinality);
         final StopWatch stopWatch = new StopWatch();
@@ -199,7 +200,7 @@ public class Profiler {
         for (int i = 0; i < GC_RUNS; i++) {
             System.gc();
         }
-        OperatorProfiler.sleep(1000);
+        ProfilingUtils.sleep(1000);
 
         System.out.printf("Profiling %s with %d data quanta.\n", unaryOperatorProfiler, cardinality);
         final StopWatch stopWatch = new StopWatch();
@@ -242,7 +243,7 @@ public class Profiler {
         for (int i = 0; i < GC_RUNS; i++) {
             System.gc();
         }
-        OperatorProfiler.sleep(1000);
+        ProfilingUtils.sleep(1000);
 
         System.out.printf("Profiling %s with %dx%d data quanta.\n", binaryOperatorProfiler.getOperator(), cardinality0, cardinality1);
         final StopWatch stopWatch = new StopWatch();
@@ -276,7 +277,7 @@ public class Profiler {
         for (int i = 0; i < GC_RUNS; i++) {
             System.gc();
         }
-        OperatorProfiler.sleep(1000);
+        ProfilingUtils.sleep(1000);
 
         System.out.printf("Profiling %s with %d data quanta.\n", sinkProfiler, cardinality);
         final StopWatch stopWatch = new StopWatch();

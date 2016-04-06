@@ -4,7 +4,7 @@ import org.apache.commons.lang.Validate;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
-import org.qcri.rheem.profiler.java.OperatorProfiler;
+import org.qcri.rheem.profiler.util.ProfilingUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +36,7 @@ public class DiskProfiler {
     public String profile(int sizeInMB) {
         long writeNanos = this.profileWriting(sizeInMB);
         System.out.println("Sleeping for 10 sec...");
-        OperatorProfiler.sleep(10000);
+        ProfilingUtils.sleep(10000);
         long readNanos = this.profileReading(sizeInMB);
 
         return String.format("%d,%d,%d", sizeInMB, writeNanos, readNanos);
@@ -122,7 +122,7 @@ public class DiskProfiler {
         DiskProfiler diskProfiler = new DiskProfiler(args[0]);
         for (String arg : args[1].split(",")) {
             int sizeInMB = Integer.parseInt(arg);
-            OperatorProfiler.sleep(1000);
+            ProfilingUtils.sleep(1000);
             final String measurementCsvRow = diskProfiler.profile(sizeInMB);
             measurementCsvRows.add(measurementCsvRow);
         }
