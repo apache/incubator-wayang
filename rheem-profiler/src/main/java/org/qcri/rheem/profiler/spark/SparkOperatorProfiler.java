@@ -43,6 +43,8 @@ public abstract class SparkOperatorProfiler {
 
     private final String dataQuantumGeneratorLocation;
 
+    protected final long executionPaddingTime;
+
     protected SparkExecutionOperator operator;
 
     protected SparkExecutor sparkExecutor;
@@ -67,6 +69,7 @@ public abstract class SparkOperatorProfiler {
 
         this.dataQuantumGeneratorBatchSize = (int) configuration.getLongProperty("rheem.profiler.datagen.batchsize", 5000000);
         this.dataQuantumGeneratorLocation = configuration.getStringProperty("rheem.profiler.datagen.location", "worker");
+        this.executionPaddingTime = configuration.getLongProperty("rheem.profiler.execute.padding", 5000);
     }
 
     /**

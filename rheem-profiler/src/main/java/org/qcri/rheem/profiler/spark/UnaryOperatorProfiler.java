@@ -2,6 +2,7 @@ package org.qcri.rheem.profiler.spark;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 
@@ -32,6 +33,7 @@ public class UnaryOperatorProfiler extends SparkOperatorProfiler {
         final ChannelExecutor outputChannelExecutor = createChannelExecutor(this.sparkExecutor);
 
         // Let the operator execute.
+        ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
         this.operator.evaluate(
                 new ChannelExecutor[] { inputChannelExecutor },
@@ -43,6 +45,7 @@ public class UnaryOperatorProfiler extends SparkOperatorProfiler {
         // Force the execution of the operator.
         outputChannelExecutor.provideRdd().foreach(dataQuantum -> { });
         final long endTime = System.currentTimeMillis();
+        ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
 
         // Yet another run to count the output cardinality.
         final long outputCardinality = outputChannelExecutor.provideRdd().count();

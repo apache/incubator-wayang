@@ -1,19 +1,12 @@
 package org.qcri.rheem.profiler.spark;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.util.Formats;
-import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.StopWatch;
-import org.qcri.rheem.profiler.data.DataGenerators;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
-import org.qcri.rheem.profiler.util.RrdAccessor;
-import org.qcri.rheem.spark.platform.SparkPlatform;
-import org.rrd4j.ConsolFun;
 
-import java.util.*;
-import java.util.function.Supplier;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -47,9 +40,9 @@ public class Main {
 //            case "flatmap":
 //                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaFlatMapProfiler(), cardinalities);
 //                break;
-//            case "reduce":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaReduceByProfiler(), cardinalities);
-//                break;
+            case "reduce":
+                results = profile(OperatorProfilers.createSparkReduceByProfiler(), cardinalities);
+                break;
 //            case "globalreduce":
 //                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaGlobalReduceProfiler(), cardinalities);
 //                break;
@@ -179,55 +172,6 @@ public class Main {
         System.out.println();
 
         return result;
-    }
-
-    public static void main2(String[] args) {
-        if (args.length == 0) {
-            System.err.println("Usage: java ... <RRD file to monitor>");
-            System.exit(1);
-        }
-        final String rrdFile = args[0];
-
-        // Initialize Spark.
-        final SparkPlatform sparkPlatform = SparkPlatform.getInstance();
-        final org.apache.spark.api.java.JavaSparkContext sc = sparkPlatform.getSparkContext(
-                new Configuration(),
-                Collections.singleton(ReflectionUtils.getDeclaringJar(Main.class))
-        );
-
-        // Prepare some test data.
-        final int numInputDataQuanta = 1000000;
-        final Supplier<Integer> randomIntegerSupplier = DataGenerators.createRandomIntegerSupplier(0, 10000, new Random(42));
-        List<Integer> inputData = new ArrayList<>(numInputDataQuanta);
-        while (inputData.size() < numInputDataQuanta) {
-            inputData.add(randomIntegerSupplier.get());
-        }
-        final JavaRDD<Integer> inputRdd = sc.parallelize(inputData).coalesce(100, true).cache();
-        inputRdd.foreach(integer -> {});
-        ProfilingUtils.sleep(5000);
-
-        // Let's measure wall-clock time for now.
-
-        long startTime = System.currentTimeMillis();
-        inputRdd.reduce(Math::max);
-        long endTime = System.currentTimeMillis();
-
-        System.out.printf("Profiling finished in %s.\n", Formats.formatDuration(endTime - startTime));
-
-        double load = Double.NaN;
-        do {
-            ProfilingUtils.sleep(5000);
-            try (RrdAccessor rrdAccessor = RrdAccessor.open(rrdFile)) {
-                final long lastUpdateMillis = rrdAccessor.getLastUpdateMillis();
-                if (lastUpdateMillis >= endTime) {
-                    load = rrdAccessor.query("sum", startTime, endTime, ConsolFun.AVERAGE);
-                } else {
-                    System.out.printf("Last RRD file update is from %s.\n", new Date(lastUpdateMillis));
-                }
-            }
-        } while (Double.isNaN(load));
-
-        System.out.printf("Fetched metric value from RRD: %f.\n", load);
     }
 
 }
