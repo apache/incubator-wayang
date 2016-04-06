@@ -19,10 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -43,6 +40,8 @@ public abstract class SparkOperatorProfiler {
     public int cpuMhz, numMachines, numCoresPerMachine;
 
     private final int dataQuantumGeneratorBatchSize;
+
+    private final String dataQuantumGeneratorLocation;
 
     protected SparkExecutionOperator operator;
 
@@ -67,6 +66,7 @@ public abstract class SparkOperatorProfiler {
         this.gangliaClusterName = configuration.getStringProperty("rheem.ganglia.cluster");
 
         this.dataQuantumGeneratorBatchSize = (int) configuration.getLongProperty("rheem.profiler.datagen.batchsize", 5000000);
+        this.dataQuantumGeneratorLocation = configuration.getStringProperty("rheem.profiler.datagen.location", "worker");
     }
 
     /**
@@ -87,9 +87,25 @@ public abstract class SparkOperatorProfiler {
     protected abstract void prepareInput(int inputIndex, long inputCardinality);
 
     /**
-     * Helper method to generate data quanta and provide them as a cached {@link JavaRDD}.
+     * Helper method to generate data quanta and provide them as a cached {@link JavaRDD}. Uses an implementation
+     * based on the {@code rheem.profiler.datagen.location} property.
      */
     protected <T> JavaRDD<T> prepareInputRdd(long cardinality, int inputIndex) {
+        switch (this.dataQuantumGeneratorLocation) {
+            case "worker":
+                return this.prepareInputRddInWorker(cardinality, inputIndex);
+            case "driver":
+                return this.prepareInputRddInDriver(cardinality, inputIndex);
+            default:
+                this.logger.error("In correct data generation location (is: {}, allowed: worker/driver). Using worker.");
+                return this.prepareInputRddInWorker(cardinality, inputIndex);
+        }
+    }
+
+    /**
+     * Helper method to generate data quanta and provide them as a cached {@link JavaRDD}.
+     */
+    protected <T> JavaRDD<T> prepareInputRddInDriver(long cardinality, int inputIndex) {
         @SuppressWarnings("unchecked")
         final Supplier<T> supplier = (Supplier<T>) this.dataQuantumGenerators.get(inputIndex);
         JavaRDD<T> finalInputRdd = null;
@@ -107,6 +123,38 @@ public abstract class SparkOperatorProfiler {
             remainder -= batchSize;
         } while (remainder > 0);
 
+        // Shuffle and cache the RDD.
+        final JavaRDD<T> cachedInputRdd = finalInputRdd.coalesce(100, true).cache();
+        cachedInputRdd.foreach(dataQuantum -> {
+        });
+
+        return cachedInputRdd;
+    }
+
+    /**
+     * Helper method to generate data quanta and provide them as a cached {@link JavaRDD}.
+     */
+    protected <T> JavaRDD<T> prepareInputRddInWorker(long cardinality, int inputIndex) {
+
+        // Create batches, parallelize them, and union them.
+        final List<Integer> batchSizes = new LinkedList<>();
+        int numFullBatches = (int) (cardinality / this.dataQuantumGeneratorBatchSize);
+        for (int i = 0; i < numFullBatches; i++) {
+            batchSizes.add(this.dataQuantumGeneratorBatchSize);
+        }
+        batchSizes.add((int) (cardinality % this.dataQuantumGeneratorBatchSize));
+
+        @SuppressWarnings("unchecked")
+        final Supplier<T> supplier = (Supplier<T>) this.dataQuantumGenerators.get(inputIndex);
+        JavaRDD<T> finalInputRdd = this.sparkExecutor.sc
+                .parallelize(batchSizes, 1) // Single partition to ensure the same data generator.
+                .flatMap(batchSize -> {
+                    List<T> list = new ArrayList<>(batchSize);
+                    for (int i = 0; i < batchSize; i++) {
+                        list.add(supplier.get());
+                    }
+                    return list;
+                });
         // Shuffle and cache the RDD.
         final JavaRDD<T> cachedInputRdd = finalInputRdd.coalesce(100, true).cache();
         cachedInputRdd.foreach(dataQuantum -> {

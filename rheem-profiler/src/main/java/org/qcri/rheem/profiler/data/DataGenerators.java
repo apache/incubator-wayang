@@ -2,6 +2,7 @@ package org.qcri.rheem.profiler.data;
 
 import org.apache.commons.lang3.Validate;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
@@ -13,7 +14,7 @@ public class DataGenerators {
 
     private static final String[] CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
 
-    public static Supplier<String> createReservoirBasedStringSupplier(List<String> stringReservoir,
+    public static Generator<String> createReservoirBasedStringSupplier(List<String> stringReservoir,
                                                                       double reuseProbability,
                                                                       Random random,
                                                                       int minLen,
@@ -29,7 +30,7 @@ public class DataGenerators {
         };
     }
 
-    public static Supplier<String> createRandomStringSupplier(int minLen, int maxLen, Random random) {
+    public static Generator<String> createRandomStringSupplier(int minLen, int maxLen, Random random) {
         return () -> createRandomString(minLen, maxLen, random);
     }
 
@@ -42,9 +43,9 @@ public class DataGenerators {
         return sb.toString();
     }
 
-    public static Supplier<Integer> createReservoirBasedIntegerSupplier(List<Integer> reservoir,
-                                                                      double reuseProbability,
-                                                                      Random random) {
+    public static Generator<Integer> createReservoirBasedIntegerSupplier(List<Integer> reservoir,
+                                                                        double reuseProbability,
+                                                                        Random random) {
         return () -> {
             if (random.nextDouble() > reuseProbability || reservoir.isEmpty()) {
                 final Integer randomInteger = random.nextInt();
@@ -56,13 +57,16 @@ public class DataGenerators {
         };
     }
 
-    public static Supplier<Integer> createRandomIntegerSupplier(Random random) {
+    public static Generator<Integer> createRandomIntegerSupplier(Random random) {
         return random::nextInt;
     }
 
-    public static Supplier<Integer> createRandomIntegerSupplier(int min, int max, Random random) {
+    public static Generator<Integer> createRandomIntegerSupplier(int min, int max, Random random) {
         Validate.isTrue(min <= max);
         return () -> min + random.nextInt(max - min);
+    }
+
+    public interface Generator<T> extends Supplier<T>, Serializable {
     }
 
 }
