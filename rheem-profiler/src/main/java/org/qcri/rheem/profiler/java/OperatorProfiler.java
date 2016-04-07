@@ -8,6 +8,8 @@ import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -20,6 +22,8 @@ import java.util.function.Supplier;
  * Allows to instrument an {@link JavaExecutionOperator}.
  */
 public abstract class OperatorProfiler {
+
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public int cpuMhz;
 

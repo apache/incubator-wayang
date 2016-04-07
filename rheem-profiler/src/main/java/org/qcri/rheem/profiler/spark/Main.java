@@ -1,13 +1,14 @@
 package org.qcri.rheem.profiler.spark;
 
+import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.StopWatch;
-import org.qcri.rheem.profiler.util.ProfilingUtils;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Starts a profiling run of Spark.
@@ -15,24 +16,28 @@ import java.util.stream.Collectors;
 public class Main {
 
     public static void main(String[] args) {
-        if (args.length == 0) {
-            System.err.printf("Usage: java %s <operator to profile> <cardinality>[,<cardinality>]\n", Main.class);
+        if (args.length < 2) {
+            System.err.printf("Usage: java %s <operator to profile> [<cardinality n>[,<cardinality n>]*]+ \n", Main.class);
             System.exit(1);
         }
 
         String operator = args[0];
-        List<Integer> cardinalities = Arrays.stream(args[1].split(",")).map(Integer::valueOf).collect(Collectors.toList());
+        List<List<Long>> allCardinalities = new LinkedList<>();
+        for (int i = 1; i < args.length; i++) {
+            List<Long> cardinalities = Arrays.stream(args[i].split(",")).map(Long::valueOf).collect(Collectors.toList());
+            allCardinalities.add(cardinalities);
+        }
         List<SparkOperatorProfiler.Result> results;
 
         switch (operator) {
-//            case "textsource":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaTextFileSourceProfiler(), cardinalities);
-//                break;
+            case "textsource":
+                results = profile(OperatorProfilers.createSparkTextFileSourceProfiler(), allCardinalities);
+                break;
 //            case "collectionsource":
 //                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaCollectionSourceProfiler(), cardinalities);
 //                break;
             case "map":
-                results = profile(OperatorProfilers.createSparkMapProfiler(), cardinalities);
+                results = profile(OperatorProfilers.createSparkMapProfiler(), allCardinalities);
                 break;
 //            case "filter":
 //                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaFilterProfiler(), cardinalities);
@@ -41,7 +46,7 @@ public class Main {
 //                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaFlatMapProfiler(), cardinalities);
 //                break;
             case "reduce":
-                results = profile(OperatorProfilers.createSparkReduceByProfiler(), cardinalities);
+                results = profile(OperatorProfilers.createSparkReduceByProfiler(), allCardinalities);
                 break;
 //            case "globalreduce":
 //                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaGlobalReduceProfiler(), cardinalities);
@@ -144,32 +149,49 @@ public class Main {
         results.forEach(result -> System.out.println(result.toCsvString()));
     }
 
-    private static List<SparkOperatorProfiler.Result> profile(UnaryOperatorProfiler unaryOperatorProfiler, Collection<Integer> cardinalities) {
-        return cardinalities.stream()
-                .map(cardinality -> profile(unaryOperatorProfiler, cardinality))
+    /**
+     * Run the {@code opProfiler} with all combinations that can be derived from {@code allCardinalities}.
+     */
+    private static List<SparkOperatorProfiler.Result> profile(SparkOperatorProfiler opProfiler,
+                                                              List<List<Long>> allCardinalities) {
+
+        return StreamSupport.stream(RheemCollections.streamedCrossProduct(allCardinalities).spliterator(), false)
+                .map(cardinalities -> profile(opProfiler, RheemArrays.toArray(cardinalities)))
                 .collect(Collectors.toList());
+
+
     }
 
-    private static SparkOperatorProfiler.Result profile(UnaryOperatorProfiler unaryOperatorProfiler, int cardinality) {
-        ProfilingUtils.sleep(1000);
-
-        System.out.printf("Profiling %s with %d data quanta.\n", unaryOperatorProfiler, cardinality);
+    /**
+     * Run the {@code opProfiler} with the given {@code cardinalities}.
+     */
+    private static SparkOperatorProfiler.Result profile(SparkOperatorProfiler opProfiler, long... cardinalities) {
+        System.out.printf("Profiling %s with %s data quanta.\n", opProfiler, RheemArrays.asList(cardinalities));
         final StopWatch stopWatch = new StopWatch();
+        SparkOperatorProfiler.Result result = null;
 
-        System.out.println("Prepare...");
-        final StopWatch.Round preparation = stopWatch.start("Preparation");
-        unaryOperatorProfiler.prepare(cardinality);
-        preparation.stop();
+        try {
+            System.out.println("Prepare...");
+            final StopWatch.Round preparation = stopWatch.start("Preparation");
+            opProfiler.prepare(cardinalities);
+            preparation.stop();
 
-        System.out.println("Execute...");
-        final StopWatch.Round execution = stopWatch.start("Execution");
-        final SparkOperatorProfiler.Result result = unaryOperatorProfiler.run();
-        execution.stop();
+            System.out.println("Execute...");
+            final StopWatch.Round execution = stopWatch.start("Execution");
+            result = opProfiler.run();
+            execution.stop();
+        } finally {
+            System.out.println("Clean up...");
+            final StopWatch.Round cleanUp = stopWatch.start("Clean up");
+            opProfiler.cleanUp();
+            cleanUp.stop();
 
-        System.out.println("Measurement:");
-        System.out.println(result);
-        System.out.println(stopWatch.toPrettyString());
-        System.out.println();
+            System.out.println("Measurement:");
+            if (result != null) System.out.println(result);
+            System.out.println(stopWatch.toPrettyString());
+            System.out.println();
+        }
+
 
         return result;
     }

@@ -47,4 +47,10 @@ public interface FileSystem {
 
     Collection<String> listChildren(String url);
 
+    /**
+     * Deletes the given file at the given {@code url}. To delete directories, specify {@code isRecursiveDelete}.
+     *
+     * @return whether after the deletion, there is no more file associated with the given {@code url}
+     */
+    boolean delete(String url, boolean isRecursiveDelete) throws IOException;
 }

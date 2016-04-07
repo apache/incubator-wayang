@@ -26,7 +26,9 @@ public class JavaTextFileSourceProfiler extends SourceProfiler {
     @Override
     void setUpSourceData(long cardinality) throws Exception {
         if (this.tempFile != null) {
-            this.tempFile.delete();
+            if (!this.tempFile.delete()) {
+                this.logger.warn("Could not delete {}.", this.tempFile);
+            }
         }
         this.tempFile = File.createTempFile("rheem-java", "txt");
         this.tempFile.deleteOnExit();

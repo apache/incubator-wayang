@@ -281,6 +281,12 @@ public abstract class SparkOperatorProfiler {
     }
 
     /**
+     * Override this method to implement any clean-up logic.
+     */
+    public void cleanUp() {
+    }
+
+    /**
      * The result of a single profiling run.
      */
     public static class Result {
