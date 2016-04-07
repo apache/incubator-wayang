@@ -74,20 +74,20 @@ public class Main {
                 ), allCardinalities);
                 break;
             case "count":
-                results = profile(OperatorProfilers.createSparkCountOperator(), allCardinalities);
+                results = profile(OperatorProfilers.createSparkCountProfiler(), allCardinalities);
                 break;
-//            case "groupby":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaMaterializedGroupByProfiler(), cardinalities);
-//                break;
-//            case "join":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaJoinProfiler(), cardinalities, cardinalities);
-//                break;
-//            case "union":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaUnionProfiler(), cardinalities, cardinalities);
-//                break;
-//            case "cartesian":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaCartesianProfiler(), cardinalities, cardinalities);
-//                break;
+            case "groupby":
+                results = profile(OperatorProfilers.createSparkMaterializedGroupByProfiler(), allCardinalities);
+                break;
+            case "join":
+                results = profile(OperatorProfilers.createSparkJoinProfiler(), allCardinalities);
+                break;
+            case "union":
+                results = profile(OperatorProfilers.createSparkUnionProfiler(), allCardinalities);
+                break;
+            case "cartesian":
+                results = profile(OperatorProfilers.createSparkCartesianProfiler(), allCardinalities);
+                break;
 //            case "callbacksink":
 //                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaLocalCallbackSinkProfiler(), cardinalities);
 //                break;

@@ -261,8 +261,8 @@ public class OperatorProfilers {
     /**
      * Creates a default {@link SparkCountOperator} profiler.
      */
-    public static UnaryOperatorProfiler createSparkCountOperator() {
-        return createSparkCountOperator(
+    public static UnaryOperatorProfiler createSparkCountProfiler() {
+        return createSparkCountProfiler(
                 DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
                 String.class,
                 new Configuration()
@@ -272,13 +272,138 @@ public class OperatorProfilers {
     /**
      * Creates a custom {@link SparkCountOperator} profiler.
      */
-    public static <In> UnaryOperatorProfiler createSparkCountOperator(Supplier<In> dataGenerator,
-                                                                       Class<In> inClass,
-                                                                       Configuration configuration) {
+    public static <In> UnaryOperatorProfiler createSparkCountProfiler(Supplier<In> dataGenerator,
+                                                                      Class<In> inClass,
+                                                                      Configuration configuration) {
         return new UnaryOperatorProfiler(
                 () -> new SparkCountOperator<>(DataSetType.createDefault(inClass)),
                 configuration,
                 dataGenerator
+        );
+    }
+
+    /**
+     * Creates a default {@link SparkMaterializedGroupByOperator} profiler.
+     */
+    public static UnaryOperatorProfiler createSparkMaterializedGroupByProfiler() {
+        return createSparkMaterializedGroupByProfiler(
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                String::new,
+                String.class,
+                String.class,
+                new Configuration()
+        );
+    }
+
+    /**
+     * Creates a custom {@link SparkMaterializedGroupByOperator} profiler.
+     */
+    public static <In, Key> UnaryOperatorProfiler createSparkMaterializedGroupByProfiler(Supplier<In> dataGenerator,
+                                                                                         FunctionDescriptor.SerializableFunction<In, Key> keyUdf,
+                                                                                         Class<In> inClass,
+                                                                                         Class<Key> keyClass,
+                                                                                         Configuration configuration) {
+        return new UnaryOperatorProfiler(
+                () -> new SparkMaterializedGroupByOperator<>(
+                        new TransformationDescriptor<>(keyUdf, inClass, keyClass),
+                        DataSetType.createDefault(inClass),
+                        DataSetType.createGrouped(inClass)
+                ),
+                configuration,
+                dataGenerator
+        );
+    }
+
+    /**
+     * Creates a default {@link SparkJoinOperator} profiler.
+     */
+    public static BinaryOperatorProfiler createSparkJoinProfiler() {
+        // NB: If we generate the Strings from within Spark, we will have two different reservoirs for each input.
+        final DataGenerators.Generator<String> stringGenerator = DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20);
+        return createSparkJoinProfiler(
+                stringGenerator, String.class, String::new,
+                stringGenerator, String.class, String::new,
+                String.class, new Configuration()
+        );
+    }
+
+    /**
+     * Creates a custom {@link SparkJoinOperator} profiler.
+     */
+    public static <In0, In1, Key> BinaryOperatorProfiler createSparkJoinProfiler(
+            Supplier<In0> dataGenerator0,
+            Class<In0> inClass0,
+            FunctionDescriptor.SerializableFunction<In0, Key> keyUdf0,
+            Supplier<In1> dataGenerator1,
+            Class<In1> inClass1,
+            FunctionDescriptor.SerializableFunction<In1, Key> keyUdf1,
+            Class<Key> keyClass,
+            Configuration configuration) {
+        return new BinaryOperatorProfiler(
+                () -> new SparkJoinOperator<>(
+                        DataSetType.createDefault(inClass0),
+                        DataSetType.createDefault(inClass1),
+                        new TransformationDescriptor<>(keyUdf0, inClass0, keyClass),
+                        new TransformationDescriptor<>(keyUdf1, inClass1, keyClass)
+                ),
+                configuration,
+                dataGenerator0,
+                dataGenerator1
+        );
+    }
+
+    /**
+     * Creates a default {@link SparkUnionAllOperator} profiler.
+     */
+    public static BinaryOperatorProfiler createSparkUnionProfiler() {
+        return createSparkUnionProfiler(
+                DataGenerators.createRandomIntegerSupplier(new Random(42)),
+                DataGenerators.createRandomIntegerSupplier(new Random(23)),
+                Integer.class, new Configuration()
+        );
+    }
+
+    /**
+     * Creates a custom {@link SparkUnionAllOperator} profiler.
+     */
+    public static <Type> BinaryOperatorProfiler createSparkUnionProfiler(
+            Supplier<Type> dataGenerator0,
+            Supplier<Type> dataGenerator1,
+            Class<Type> typeClass,
+            Configuration configuration) {
+        return new BinaryOperatorProfiler(
+                () -> new SparkUnionAllOperator<>(DataSetType.createDefault(typeClass)),
+                configuration,
+                dataGenerator0,
+                dataGenerator1
+        );
+    }
+
+    /**
+     * Creates a default {@link SparkCartesianOperator} profiler.
+     */
+    public static BinaryOperatorProfiler createSparkCartesianProfiler() {
+        return createSparkCartesianProfiler(
+                DataGenerators.createRandomIntegerSupplier(new Random(42)),
+                DataGenerators.createRandomIntegerSupplier(new Random(23)),
+                Integer.class, Integer.class, new Configuration()
+        );
+    }
+
+    /**
+     * Creates a custom {@link SparkCartesianOperator} profiler.
+     */
+    public static <In0, In1> BinaryOperatorProfiler createSparkCartesianProfiler(
+            Supplier<In0> dataGenerator0,
+            Supplier<In1> dataGenerator1,
+            Class<In0> inClass0,
+            Class<In1> inClass1,
+            Configuration configuration) {
+        return new BinaryOperatorProfiler(
+                () -> new SparkCartesianOperator<>(DataSetType.createDefault(inClass0), DataSetType.createDefault(inClass1)),
+                configuration,
+                dataGenerator0,
+                dataGenerator1
         );
     }
 
