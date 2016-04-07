@@ -1,5 +1,6 @@
 package org.qcri.rheem.profiler.java;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.RheemArrays;
@@ -15,7 +16,11 @@ import java.util.function.Supplier;
 public class OperatorProfilers {
 
     public static JavaTextFileSourceProfiler createJavaTextFileSourceProfiler() {
-        return new JavaTextFileSourceProfiler(DataGenerators.createRandomStringSupplier(20, 40, new Random(42)));
+        Configuration configuration = new Configuration();
+        return new JavaTextFileSourceProfiler(
+                DataGenerators.createRandomStringSupplier(20, 40, new Random(42)),
+                configuration.getStringProperty("rheem.profiler.datagen.url")
+        );
     }
 
     public static JavaCollectionSourceProfiler createJavaCollectionSourceProfiler() {

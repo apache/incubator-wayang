@@ -14,13 +14,8 @@ public class JavaTextFileSourceProfiler extends SourceProfiler {
 
     private File tempFile;
 
-    public JavaTextFileSourceProfiler(Supplier<String> dataQuantumGenerator) {
-        super(null, dataQuantumGenerator);
-        this.operatorGenerator = this::createOperator; // We can only pass the method reference after super(...).
-    }
-
-    private JavaTextFileSource createOperator() {
-        return new JavaTextFileSource(this.tempFile.toURI().toString());
+    public JavaTextFileSourceProfiler(Supplier<String> dataQuantumGenerator, String fileUrl) {
+        super(() -> new JavaTextFileSource(fileUrl), dataQuantumGenerator);
     }
 
     @Override
