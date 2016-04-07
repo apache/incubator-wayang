@@ -73,9 +73,9 @@ public class Main {
                         new Configuration()
                 ), allCardinalities);
                 break;
-//            case "count":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaCountProfiler(), cardinalities);
-//                break;
+            case "count":
+                results = profile(OperatorProfilers.createSparkCountOperator(), allCardinalities);
+                break;
 //            case "groupby":
 //                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaMaterializedGroupByProfiler(), cardinalities);
 //                break;

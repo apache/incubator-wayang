@@ -258,4 +258,28 @@ public class OperatorProfilers {
         );
     }
 
+    /**
+     * Creates a default {@link SparkCountOperator} profiler.
+     */
+    public static UnaryOperatorProfiler createSparkCountOperator() {
+        return createSparkCountOperator(
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                String.class,
+                new Configuration()
+        );
+    }
+
+    /**
+     * Creates a custom {@link SparkCountOperator} profiler.
+     */
+    public static <In> UnaryOperatorProfiler createSparkCountOperator(Supplier<In> dataGenerator,
+                                                                       Class<In> inClass,
+                                                                       Configuration configuration) {
+        return new UnaryOperatorProfiler(
+                () -> new SparkCountOperator<>(DataSetType.createDefault(inClass)),
+                configuration,
+                dataGenerator
+        );
+    }
+
 }
