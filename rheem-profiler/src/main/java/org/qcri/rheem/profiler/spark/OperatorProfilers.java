@@ -182,4 +182,34 @@ public class OperatorProfilers {
         );
     }
 
+    /**
+     * Creates a default {@link SparkGlobalReduceOperator} profiler.
+     */
+    public static UnaryOperatorProfiler createSparkGlobalReduceProfiler() {
+        return createSparkGlobalReduceProfiler(
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                (s1, s2) -> s1,
+                String.class,
+                new Configuration()
+        );
+    }
+
+    /**
+     * Creates a custom {@link SparkGlobalReduceOperator} profiler.
+     */
+
+    public static <Type> UnaryOperatorProfiler createSparkGlobalReduceProfiler(Supplier<Type> dataGenerator,
+                                                                              FunctionDescriptor.SerializableBinaryOperator<Type> udf,
+                                                                              Class<Type> inOutClass,
+                                                                              Configuration configuration) {
+        return new UnaryOperatorProfiler(
+                () -> new SparkGlobalReduceOperator<>(
+                        DataSetType.createDefault(inOutClass),
+                        new ReduceDescriptor<>(udf, inOutClass)
+                ),
+                configuration,
+                dataGenerator
+        );
+    }
+
 }

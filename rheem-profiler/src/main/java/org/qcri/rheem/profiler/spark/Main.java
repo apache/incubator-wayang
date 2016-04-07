@@ -48,9 +48,9 @@ public class Main {
             case "reduce":
                 results = profile(OperatorProfilers.createSparkReduceByProfiler(), allCardinalities);
                 break;
-//            case "globalreduce":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaGlobalReduceProfiler(), cardinalities);
-//                break;
+            case "globalreduce":
+                results = profile(OperatorProfilers.createSparkGlobalReduceProfiler(), allCardinalities);
+                break;
 //            case "distinct":
 //            case "distinct-string":
 //                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaDistinctProfiler(), cardinalities);
