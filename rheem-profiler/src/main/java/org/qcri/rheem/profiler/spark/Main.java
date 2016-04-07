@@ -33,9 +33,9 @@ public class Main {
             case "textsource":
                 results = profile(OperatorProfilers.createSparkTextFileSourceProfiler(), allCardinalities);
                 break;
-//            case "collectionsource":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaCollectionSourceProfiler(), cardinalities);
-//                break;
+            case "collectionsource":
+                results = profile(OperatorProfilers.createSparkCollectionSourceProfiler(), allCardinalities);
+                break;
             case "map":
                 results = profile(OperatorProfilers.createSparkMapProfiler(), allCardinalities);
                 break;

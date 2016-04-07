@@ -7,6 +7,7 @@ import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.profiler.data.DataGenerators;
 import org.qcri.rheem.profiler.java.JavaTextFileSourceProfiler;
+import org.qcri.rheem.spark.operators.SparkCollectionSource;
 import org.qcri.rheem.spark.operators.SparkMapOperator;
 import org.qcri.rheem.spark.operators.SparkReduceByOperator;
 import org.qcri.rheem.spark.operators.SparkTextFileSource;
@@ -34,6 +35,24 @@ public class OperatorProfilers {
      * Create a custom {@link SparkTextFileSource} profiler.
      */
     public static SparkTextFileSourceProfiler createSparkTextFileSourceProfiler(Supplier<String> dataGenerator,
+                                                                                Configuration configuration) {
+        return new SparkTextFileSourceProfiler(configuration, dataGenerator);
+    }
+
+    /**
+     * Create a default {@link SparkCollectionSource} profiler.
+     */
+    public static SparkTextFileSourceProfiler createSparkCollectionSourceProfiler() {
+        return createSparkCollectionSourceProfiler(
+                DataGenerators.createRandomStringSupplier(20, 40, new Random(42)),
+                new Configuration()
+        );
+    }
+
+    /**
+     * Create a custom {@link SparkTextFileSource} profiler.
+     */
+    public static SparkTextFileSourceProfiler createSparkCollectionSourceProfiler(Supplier<String> dataGenerator,
                                                                                 Configuration configuration) {
         return new SparkTextFileSourceProfiler(configuration, dataGenerator);
     }
