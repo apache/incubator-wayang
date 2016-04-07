@@ -62,16 +62,17 @@ public class Main {
                         new Configuration()
                 ), allCardinalities);
                 break;
-//            case "sort":
-//            case "sort-string":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaSortProfiler(), cardinalities);
-//                break;
-//            case "sort-integer":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaSortProfiler(
-//                        DataGenerators.createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42)),
-//                        Integer.class
-//                ), cardinalities);
-//                break;
+            case "sort":
+            case "sort-string":
+                results = profile(OperatorProfilers.createSparkSortProfiler(), allCardinalities);
+                break;
+            case "sort-integer":
+                results = profile(OperatorProfilers.createSparkSortProfiler(
+                        DataGenerators.createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42)),
+                        Integer.class,
+                        new Configuration()
+                ), allCardinalities);
+                break;
 //            case "count":
 //                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaCountProfiler(), cardinalities);
 //                break;
