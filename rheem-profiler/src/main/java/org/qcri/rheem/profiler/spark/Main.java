@@ -39,12 +39,12 @@ public class Main {
             case "map":
                 results = profile(OperatorProfilers.createSparkMapProfiler(), allCardinalities);
                 break;
-//            case "filter":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaFilterProfiler(), cardinalities);
-//                break;
-//            case "flatmap":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaFlatMapProfiler(), cardinalities);
-//                break;
+            case "filter":
+                results = profile(OperatorProfilers.createSparkFilterProfiler(), allCardinalities);
+                break;
+            case "flatmap":
+                results = profile(OperatorProfilers.createSparkFlatMapProfiler(), allCardinalities);
+                break;
             case "reduce":
                 results = profile(OperatorProfilers.createSparkReduceByProfiler(), allCardinalities);
                 break;

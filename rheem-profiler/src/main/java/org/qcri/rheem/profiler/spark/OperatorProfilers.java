@@ -1,16 +1,11 @@
 package org.qcri.rheem.profiler.spark;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.function.FunctionDescriptor;
-import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.profiler.data.DataGenerators;
-import org.qcri.rheem.profiler.java.JavaTextFileSourceProfiler;
-import org.qcri.rheem.spark.operators.SparkCollectionSource;
-import org.qcri.rheem.spark.operators.SparkMapOperator;
-import org.qcri.rheem.spark.operators.SparkReduceByOperator;
-import org.qcri.rheem.spark.operators.SparkTextFileSource;
+import org.qcri.rheem.spark.operators.*;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -53,8 +48,40 @@ public class OperatorProfilers {
      * Create a custom {@link SparkTextFileSource} profiler.
      */
     public static SparkTextFileSourceProfiler createSparkCollectionSourceProfiler(Supplier<String> dataGenerator,
-                                                                                Configuration configuration) {
+                                                                                  Configuration configuration) {
         return new SparkTextFileSourceProfiler(configuration, dataGenerator);
+    }
+
+    /**
+     * Creates a default {@link SparkFlatMapOperator} profiler.
+     */
+    public static UnaryOperatorProfiler createSparkFlatMapProfiler() {
+        return createSparkFlatMapProfiler(
+                DataGenerators.createRandomIntegerSupplier(new Random(42)),
+                RheemArrays::asList,
+                Integer.class, Integer.class,
+                new Configuration()
+        );
+    }
+
+
+    /**
+     * Creates a custom {@link SparkFlatMapOperator} profiler.
+     */
+    public static <In, Out> UnaryOperatorProfiler createSparkFlatMapProfiler(Supplier<In> dataGenerator,
+                                                                             FunctionDescriptor.SerializableFunction<In, Iterable<Out>> udf,
+                                                                             Class<In> inClass,
+                                                                             Class<Out> outClass,
+                                                                             Configuration configuration) {
+        return new UnaryOperatorProfiler(
+                () -> new SparkFlatMapOperator<>(
+                        DataSetType.createDefault(inClass),
+                        DataSetType.createGrouped(outClass),
+                        new FlatMapDescriptor<>(udf, inClass, outClass)
+                ),
+                configuration,
+                dataGenerator
+        );
     }
 
     /**
@@ -73,16 +100,46 @@ public class OperatorProfilers {
     /**
      * Creates a custom {@link SparkMapOperator} profiler.
      */
-    public static <In, Out> org.qcri.rheem.profiler.spark.UnaryOperatorProfiler createSparkMapProfiler(Supplier<In> dataGenerator,
-                                                                                                       FunctionDescriptor.SerializableFunction<In, Out> udf,
-                                                                                                       Class<In> inClass,
-                                                                                                       Class<Out> outClass,
-                                                                                                       Configuration configuration) {
-        return new org.qcri.rheem.profiler.spark.UnaryOperatorProfiler(
+    public static <In, Out> UnaryOperatorProfiler createSparkMapProfiler(Supplier<In> dataGenerator,
+                                                                         FunctionDescriptor.SerializableFunction<In, Out> udf,
+                                                                         Class<In> inClass,
+                                                                         Class<Out> outClass,
+                                                                         Configuration configuration) {
+        return new UnaryOperatorProfiler(
                 () -> new SparkMapOperator<>(
                         DataSetType.createDefault(inClass),
                         DataSetType.createDefault(outClass),
                         new TransformationDescriptor<>(udf, inClass, outClass)
+                ),
+                configuration,
+                dataGenerator
+        );
+    }
+
+    /**
+     * Creates a default {@link SparkFilterOperator} profiler.
+     */
+    public static UnaryOperatorProfiler createSparkFilterProfiler() {
+        return createSparkFilterProfiler(
+                DataGenerators.createRandomIntegerSupplier(new Random(42)),
+                i -> true,
+                Integer.class,
+                new Configuration()
+        );
+    }
+
+
+    /**
+     * Creates a custom {@link SparkMapOperator} profiler.
+     */
+    public static <Type> UnaryOperatorProfiler createSparkFilterProfiler(Supplier<Type> dataGenerator,
+                                                                         PredicateDescriptor.SerializablePredicate<Type> udf,
+                                                                         Class<Type> inOutClass,
+                                                                         Configuration configuration) {
+        return new UnaryOperatorProfiler(
+                () -> new SparkFilterOperator<>(
+                        DataSetType.createDefault(inOutClass),
+                        new PredicateDescriptor<>(udf, inOutClass)
                 ),
                 configuration,
                 dataGenerator
