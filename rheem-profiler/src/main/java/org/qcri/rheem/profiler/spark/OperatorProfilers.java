@@ -164,7 +164,6 @@ public class OperatorProfilers {
     /**
      * Creates a custom {@link SparkReduceByOperator} profiler.
      */
-
     public static <In, Key> UnaryOperatorProfiler createSparkReduceByProfiler(Supplier<In> dataGenerator,
                                                                               FunctionDescriptor.SerializableFunction<In, Key> keyUdf,
                                                                               FunctionDescriptor.SerializableBinaryOperator<In> udf,
@@ -197,7 +196,6 @@ public class OperatorProfilers {
     /**
      * Creates a custom {@link SparkGlobalReduceOperator} profiler.
      */
-
     public static <Type> UnaryOperatorProfiler createSparkGlobalReduceProfiler(Supplier<Type> dataGenerator,
                                                                               FunctionDescriptor.SerializableBinaryOperator<Type> udf,
                                                                               Class<Type> inOutClass,
@@ -207,6 +205,30 @@ public class OperatorProfilers {
                         DataSetType.createDefault(inOutClass),
                         new ReduceDescriptor<>(udf, inOutClass)
                 ),
+                configuration,
+                dataGenerator
+        );
+    }
+
+    /**
+     * Creates a default {@link SparkDistinctOperator} profiler.
+     */
+    public static UnaryOperatorProfiler createSparkDistinctProfiler() {
+        return createSparkDistinctProfiler(
+                DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 4, 20),
+                String.class,
+                new Configuration()
+        );
+    }
+
+    /**
+     * Creates a custom {@link SparkGlobalReduceOperator} profiler.
+     */
+    public static <Type> UnaryOperatorProfiler createSparkDistinctProfiler(Supplier<Type> dataGenerator,
+                                                                              Class<Type> inOutClass,
+                                                                              Configuration configuration) {
+        return new UnaryOperatorProfiler(
+                () -> new SparkDistinctOperator<>(DataSetType.createDefault(inOutClass)),
                 configuration,
                 dataGenerator
         );

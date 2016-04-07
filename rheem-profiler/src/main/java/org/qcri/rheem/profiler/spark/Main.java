@@ -1,12 +1,12 @@
 package org.qcri.rheem.profiler.spark;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.StopWatch;
+import org.qcri.rheem.profiler.data.DataGenerators;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -51,16 +51,17 @@ public class Main {
             case "globalreduce":
                 results = profile(OperatorProfilers.createSparkGlobalReduceProfiler(), allCardinalities);
                 break;
-//            case "distinct":
-//            case "distinct-string":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaDistinctProfiler(), cardinalities);
-//                break;
-//            case "distinct-integer":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaDistinctProfiler(
-//                        DataGenerators.createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42)),
-//                        Integer.class
-//                ), cardinalities);
-//                break;
+            case "distinct":
+            case "distinct-string":
+                results = profile(OperatorProfilers.createSparkDistinctProfiler(), allCardinalities);
+                break;
+            case "distinct-integer":
+                results = profile(OperatorProfilers.createSparkDistinctProfiler(
+                        DataGenerators.createReservoirBasedIntegerSupplier(new ArrayList<>(), 0.7d, new Random(42)),
+                        Integer.class,
+                        new Configuration()
+                ), allCardinalities);
+                break;
 //            case "sort":
 //            case "sort-string":
 //                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaSortProfiler(), cardinalities);
