@@ -10,15 +10,14 @@ import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Optional;
-import java.util.Random;
 
 /**
- * A random sample operator randomly selects its inputs from the input slot and pushes that element to the output slot.
+ * A sample operator represents semantics as they are known from frameworks, such as Spark and Flink. It pulls each
+ * available element from the input slot, applies a Bernoulli probability to it, and decides whether it will be in the output and pushes that element to the output slot.
  */
-public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
+public class BernoulliSampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
-    protected final long sampleSize;
-    protected Random rand;
+    protected final double fraction;
 
     /**
      * Function that this operator applies to the input elements.
@@ -28,21 +27,20 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     /**
      * Creates a new instance.
      */
-    public SampleOperator(long sampleSize, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor, Class<Type> typeClass) {
-        this(sampleSize, new PredicateDescriptor<>(predicateDescriptor, BasicDataUnitType.createBasic(typeClass)));
+    public BernoulliSampleOperator(double fraction, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor, Class<Type> typeClass) {
+        this(fraction, new PredicateDescriptor<>(predicateDescriptor, BasicDataUnitType.createBasic(typeClass)));
     }
 
     /**
      * Creates a new instance.
      */
-    public SampleOperator(long sampleSize, PredicateDescriptor<Type> predicateDescriptor) {
+    public BernoulliSampleOperator(double fraction, PredicateDescriptor<Type> predicateDescriptor) {
         super(DataSetType.createDefault(predicateDescriptor.getInputType()),
                 DataSetType.createDefault(predicateDescriptor.getInputType()),
                 true,
                 null);
         this.predicateDescriptor = predicateDescriptor;
-        this.sampleSize = sampleSize;
-        rand = new Random();
+        this.fraction = fraction;
     }
 
     /**
@@ -50,8 +48,8 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      *
      * @param type type of the dataunit elements
      */
-    public SampleOperator(long sampleSize, DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
-        this(sampleSize, new PredicateDescriptor<>(predicateDescriptor, (BasicDataUnitType) type.getDataUnitType()), type);
+    public BernoulliSampleOperator(double fraction, DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
+        this(fraction, new PredicateDescriptor<>(predicateDescriptor, (BasicDataUnitType) type.getDataUnitType()), type);
     }
 
     /**
@@ -59,11 +57,10 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      *
      * @param type type of the dataunit elements
      */
-    public SampleOperator(long sampleSize, PredicateDescriptor<Type> predicateDescriptor, DataSetType<Type> type) {
+    public BernoulliSampleOperator(double fraction, PredicateDescriptor<Type> predicateDescriptor, DataSetType<Type> type) {
         super(type, type, true, null);
         this.predicateDescriptor = predicateDescriptor;
-        this.sampleSize = sampleSize;
-        rand = new Random();
+        this.fraction = fraction;
     }
 
     public PredicateDescriptor<Type> getPredicateDescriptor() {
@@ -72,7 +69,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
     public DataSetType getType() { return this.getInputType(); }
 
-    public long getSampleSize() { return this.sampleSize; }
+    public double getFraction() { return this.fraction; }
 
     @Override
     public Optional<CardinalityEstimator> getCardinalityEstimator(

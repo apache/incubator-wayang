@@ -1,11 +1,9 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.MapOperator;
-import org.qcri.rheem.basic.operators.SampleOperator;
+import org.qcri.rheem.basic.operators.BernoulliSampleOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
@@ -14,10 +12,10 @@ import org.qcri.rheem.spark.platform.SparkExecutor;
 
 
 /**
- * Spark implementation of the {@link MapOperator}.
+ * Spark implementation of the {@link SparkBernoulliSampleOperator}.
  */
 public class SparkBernoulliSampleOperator<Type>
-        extends SampleOperator<Type>
+        extends BernoulliSampleOperator<Type>
         implements SparkExecutionOperator {
 
     /**

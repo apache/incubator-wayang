@@ -136,7 +136,9 @@ public class SparkPlatform extends Platform {
         this.mappings.add(new UnionAllToSparkUnionAllMapping());
         this.mappings.add(new LoopToSparkLoopMapping());
         this.mappings.add(new DoWhileMapping());
-        this.mappings.add(new SampleToSparkBernoulliSampleMapping());
+        this.mappings.add(new BernoulliSampleToSparkBernoulliSampleMapping());
+        this.mappings.add(new SampleToSparkRandomSampleMapping());
+        this.mappings.add(new SampleToSparkShuffleSampleMapping());
     }
 
     @Override
