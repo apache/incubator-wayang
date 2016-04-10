@@ -7,7 +7,7 @@ import org.qcri.rheem.basic.data.Record;
 /**
  * Created by yidris on 3/10/16.
  */
-public class TableSource extends UnarySource {
+public class TableSource<T> extends UnarySource<T> {
 
     private final String tableName;
 
@@ -15,8 +15,12 @@ public class TableSource extends UnarySource {
         return tableName;
     }
 
-    public TableSource(String tableName) {
-        super(DataSetType.createDefault(String.class), null);
+    public TableSource(String tableName, Class<T> typeClass) {
+        this(tableName, DataSetType.createDefault(typeClass));
+    }
+
+    public TableSource(String tableName, DataSetType<T> type) {
+        super(type, null);
         this.tableName = tableName;
     }
 }

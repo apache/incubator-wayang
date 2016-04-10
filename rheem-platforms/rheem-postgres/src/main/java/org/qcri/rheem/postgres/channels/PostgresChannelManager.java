@@ -20,6 +20,7 @@ import java.util.Map;
 public class PostgresChannelManager extends DefaultChannelManager {
 
     public static final FileChannel.Descriptor HDFS_TSV_DESCRIPTOR = new FileChannel.Descriptor("hdfs", "tsv");
+    public static final ChannelDescriptor INTERNAL_DESCRIPTOR = PostgresInternalChannel.DESCRIPTOR;
 
     /**
      * {@link ChannelInitializer}s by class.
@@ -32,6 +33,7 @@ public class PostgresChannelManager extends DefaultChannelManager {
                 HDFS_TSV_DESCRIPTOR);
 
         this.channelInitializers.put(HDFS_TSV_DESCRIPTOR, new FileChannelInitializer());
+        //this.channelInitializers.put(INTERNAL_DESCRIPTOR, new PostgresInternalChannel.Initializer());
     }
 
     @Override

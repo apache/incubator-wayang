@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.sql.*;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -66,6 +67,10 @@ public class PostgresIntegrationIT {
 
     @Test
     public void testScenario2() throws URISyntaxException, IOException {
-
+        RheemPlan rheemPlan = RheemPlans.postgresScenario2();
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(PostgresPlatform.getInstance());
+        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.execute(rheemPlan);
     }
 }

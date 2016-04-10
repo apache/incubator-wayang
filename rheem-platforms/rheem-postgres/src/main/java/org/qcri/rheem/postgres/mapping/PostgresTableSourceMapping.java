@@ -3,6 +3,7 @@ package org.qcri.rheem.postgres.mapping;
 import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.postgres.operators.PostgresTableSource;
 import org.qcri.rheem.postgres.PostgresPlatform;
 
@@ -22,7 +23,7 @@ public class PostgresTableSourceMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "source", new org.qcri.rheem.basic.operators.TableSource(null), false);
+                "source", new org.qcri.rheem.basic.operators.TableSource(null, DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -31,7 +32,7 @@ public class PostgresTableSourceMapping implements Mapping {
         @Override
         protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final TableSource originalSource = (TableSource) subplanMatch.getMatch("source").getOperator();
-            return new PostgresTableSource(originalSource.getTableName()).at(epoch);
+            return new PostgresTableSource(originalSource.getTableName(), originalSource.getType()).at(epoch);
         }
     }
 }

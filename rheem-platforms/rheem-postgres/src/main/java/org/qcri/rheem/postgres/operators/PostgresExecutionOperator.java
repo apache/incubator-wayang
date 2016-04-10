@@ -7,12 +7,15 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.postgres.PostgresPlatform;
 import org.qcri.rheem.postgres.channels.PostgresChannelManager;
+import org.qcri.rheem.postgres.compiler.FunctionCompiler;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 public interface PostgresExecutionOperator extends ExecutionOperator {
-    void evaluate(Channel[] inputChannels, Channel[] outputChannels);
+
+    String evaluate(Channel[] inputChannels, Channel[] outputChannels, FunctionCompiler compiler);
 
 
     @Override
@@ -22,12 +25,15 @@ public interface PostgresExecutionOperator extends ExecutionOperator {
 
     @Override
     default List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        throw new RheemException(String.format("Input channels for postgres not implemented"));
+        return Collections.singletonList(PostgresChannelManager.INTERNAL_DESCRIPTOR);
     }
 
     @Override
     default List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        return Collections.singletonList(PostgresChannelManager.HDFS_TSV_DESCRIPTOR);
+        List<ChannelDescriptor> supportedChannels = new LinkedList<>();
+        supportedChannels.add(PostgresChannelManager.INTERNAL_DESCRIPTOR);
+        supportedChannels.add(PostgresChannelManager.HDFS_TSV_DESCRIPTOR);
+        return supportedChannels;
     }
 
 }
