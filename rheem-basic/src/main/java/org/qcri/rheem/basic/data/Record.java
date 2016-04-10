@@ -1,6 +1,7 @@
 package org.qcri.rheem.basic.data;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
@@ -10,13 +11,41 @@ import java.util.Objects;
  */
 public class Record implements Serializable {
 
-    public Object[] fields;
+    private Object[] values;
 
-    public Record() {
+    private RecordSchema schema;
+
+    public RecordSchema getSchema() {
+        return schema;
     }
 
-    public Record(Object... fields) {
-        this.fields = fields;
+    public Record(Object... values) {
+        String[] names = new String[values.length];
+        for (Integer i=0; i <values.length; i++){
+            names[i] = String.format("field%s", i);
+        }
+        Class [] types = new Class[values.length];
+        for (Integer i=0; i <values.length; i++){
+            types[i] = values[i].getClass();
+        }
+        this.schema = new RecordSchema(names, types);
+
+    }
+
+    public Record(String[] names, Object[] values) {
+        assert names.length == values.length;
+        this.values = values;
+        Class [] types = new Class[values.length];
+        for (Integer i=0; i <values.length; i++){
+            types[i] = values[i].getClass();
+        }
+        this.schema = new RecordSchema(names, types);
+
+    }
+
+    public Record(RecordSchema schema, Object[] values) {
+        this.values = values;
+        this.schema = schema;
     }
 
     @Override
@@ -24,17 +53,37 @@ public class Record implements Serializable {
         if (this == o) return true;
         if (o == null || this.getClass() != o.getClass()) return false;
         Record record2 = (Record) o;
-        return Arrays.equals(this.fields, record2.fields);
+        return Arrays.equals(this.values, record2.values);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(Arrays.hashCode(fields));
+        return Objects.hash(Arrays.hashCode(values));
     }
 
     @Override
     public String toString() {
-        return Arrays.toString(fields);
+        return Arrays.toString(values);
+    }
+
+    public Object getField(Integer index) {
+        return values[index];
+    }
+
+    public Object getField(String name) {
+        return values[schema.getFieldIndex(name)];
+    }
+
+    public String getFieldName(Integer index) {
+        return schema.getFieldName(index);
+    }
+
+    public Class getFieldType(Integer index) {
+        return schema.getFieldType(index);
+    }
+
+    public Class getFieldType(String name) {
+        return schema.getFieldType(name);
     }
 
 }
