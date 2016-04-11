@@ -19,7 +19,7 @@ public class RddChannel extends Channel {
 
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(RddChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL && IS_REUSABLE);
 
-    protected RddChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+    public RddChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
         super(descriptor, outputSlot);
         assert descriptor == DESCRIPTOR;
     }

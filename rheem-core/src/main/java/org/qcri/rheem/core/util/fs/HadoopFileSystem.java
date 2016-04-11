@@ -93,4 +93,9 @@ public class HadoopFileSystem implements FileSystem {
             throw new RheemException(String.format("Could not access %s.", url), e);
         }
     }
+
+    @Override
+    public boolean delete(String url, boolean isRecursiveDelete) throws IOException {
+        return this.getHdfs(url).delete(new Path(url), isRecursiveDelete);
+    }
 }

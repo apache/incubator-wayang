@@ -7,7 +7,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
-import scala.Tuple2;
 
 /**
  * Spark implementation of the {@link SortOperator}.
@@ -34,7 +33,10 @@ public class SparkSortOperator<Type>
         final JavaRDD<Type> inputRdd = inputs[0].provideRdd();
 
         // TODO: Better sort function!
-        final JavaRDD<Type> outputRdd = inputRdd.mapToPair(x-> new Tuple2<>(x, true)).sortByKey().map(y-> y._1);
+        final JavaRDD<Type> outputRdd = inputRdd
+                .<Type, Boolean>mapToPair(x-> new scala.Tuple2<Type, Boolean>(x, true))
+                .sortByKey()
+                .map(y-> y._1);
 
         outputs[0].acceptRdd(outputRdd);
     }
