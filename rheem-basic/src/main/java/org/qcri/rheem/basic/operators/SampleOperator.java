@@ -17,25 +17,46 @@ import java.util.Random;
  */
 public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
-    protected final long sampleSize;
+    protected int sampleSize;
+    protected double sampleFraction;
+    protected long totalSize;
     protected Random rand;
 
     /**
      * Function that this operator applies to the input elements.
      */
-    protected final PredicateDescriptor<Type> predicateDescriptor;
+    protected PredicateDescriptor<Type> predicateDescriptor = null;
 
     /**
-     * Creates a new instance.
+     * Creates a new instance given the sample size.
      */
-    public SampleOperator(long sampleSize, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor, Class<Type> typeClass) {
+    public SampleOperator(int sampleSize, DataSetType type) {
+        super(type, type,
+                true,
+                null);
+        this.sampleSize = sampleSize;
+        this.rand = new Random();
+    }
+
+    /**
+     *  Creates a new instance given the sample size and total dataset size.
+     */
+    public SampleOperator(int sampleSize, long totalSize, DataSetType type) {
+        this(sampleSize, type);
+        this.totalSize = totalSize;
+    }
+
+    /**
+     * Creates a new instance given the sample size and predicate descriptor.
+     */
+    public SampleOperator(int sampleSize, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor, Class<Type> typeClass) {
         this(sampleSize, new PredicateDescriptor<>(predicateDescriptor, BasicDataUnitType.createBasic(typeClass)));
     }
 
     /**
-     * Creates a new instance.
+     * Creates a new instance given the sample size and predicate descriptor.
      */
-    public SampleOperator(long sampleSize, PredicateDescriptor<Type> predicateDescriptor) {
+    public SampleOperator(int sampleSize, PredicateDescriptor<Type> predicateDescriptor) {
         super(DataSetType.createDefault(predicateDescriptor.getInputType()),
                 DataSetType.createDefault(predicateDescriptor.getInputType()),
                 true,
@@ -45,24 +66,35 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         rand = new Random();
     }
 
+
     /**
-     * Creates a new instance.
-     *
-     * @param type type of the dataunit elements
+     * Creates a new instance given the fraction of sample.
      */
-    public SampleOperator(long sampleSize, DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
-        this(sampleSize, new PredicateDescriptor<>(predicateDescriptor, (BasicDataUnitType) type.getDataUnitType()), type);
+    public SampleOperator(double sampleFraction, DataSetType type) {
+        super(type, type,
+                true,
+                null);
+        this.sampleFraction = sampleFraction;
+        this.rand = new Random();
     }
 
     /**
-     * Creates a new instance.
-     *
-     * @param type type of the dataunit elements
+     * Creates a new instance given the fraction of sample.
      */
-    public SampleOperator(long sampleSize, PredicateDescriptor<Type> predicateDescriptor, DataSetType<Type> type) {
-        super(type, type, true, null);
+    public SampleOperator(double sampleFraction, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor, Class<Type> typeClass) {
+        this(sampleFraction, new PredicateDescriptor<>(predicateDescriptor, BasicDataUnitType.createBasic(typeClass)));
+    }
+
+    /**
+     * Creates a new instance given the sample size and predicate descriptor.
+     */
+    public SampleOperator(double sampleFraction, PredicateDescriptor<Type> predicateDescriptor) {
+        super(DataSetType.createDefault(predicateDescriptor.getInputType()),
+                DataSetType.createDefault(predicateDescriptor.getInputType()),
+                true,
+                null);
         this.predicateDescriptor = predicateDescriptor;
-        this.sampleSize = sampleSize;
+        this.sampleFraction = sampleFraction;
         rand = new Random();
     }
 
@@ -72,10 +104,12 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
     public DataSetType getType() { return this.getInputType(); }
 
-    public long getSampleSize() { return this.sampleSize; }
+    public int getSampleSize() { return this.sampleSize; }
+
+    public double getSampleFraction() { return this.sampleFraction; }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> getCardinalityEstimator(//TODO
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

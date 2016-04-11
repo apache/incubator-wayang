@@ -45,7 +45,7 @@ public class SparkBernoulliSampleOperatorTest extends SparkOperatorTestBase {
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideRdd().collect();
         System.out.println(result);
-//        Assert.assertEquals(5, result.sampleSize());
+//        Assert.assertEquals(5, result.sampleSize()); //cannot check this, because the number is not always correct as it works with a probability
 
     }
 

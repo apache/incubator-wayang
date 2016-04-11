@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Test suite for {@link SparkRandomPartitionSampleOperatorTest}.
+ * Test suite for {@link SparkRandomPartitionSampleOperator}.
  */
 public class SparkRandomPartitionSampleOperatorTest extends SparkOperatorTestBase {
 

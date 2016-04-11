@@ -1,19 +1,20 @@
-package org.qcri.rheem.spark.mapping;
+package org.qcri.rheem.java.mapping;
 
-import org.qcri.rheem.basic.operators.BernoulliSampleOperator;
+import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.spark.operators.SparkBernoulliSampleOperator;
-import org.qcri.rheem.spark.platform.SparkPlatform;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.operators.JavaReservoirSampleOperator;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link BernoulliSampleOperator} to {@link SparkBernoulliSampleOperator}.
+ * Mapping from {@link SampleOperator} to {@link JavaReservoirSampleOperator}.
  */
 @SuppressWarnings("unchecked")
-public class BernoulliSampleToSparkBernoulliSampleMapping implements Mapping {
+public class SampleToJavaReservoirSampleMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -21,22 +22,21 @@ public class BernoulliSampleToSparkBernoulliSampleMapping implements Mapping {
                 new PlanTransformation(
                         this.createSubplanPattern(),
                         this.createReplacementSubplanFactory(),
-                        SparkPlatform.getInstance()
+                        JavaPlatform.getInstance()
                 )
         );
     }
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "bernoulliSample", new BernoulliSampleOperator<>((double) 0, (PredicateDescriptor) null, null), false); //TODO: check if the zero here affects execution
+                "reservoir_sample", new SampleOperator<>(0, (DataSetType) null), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<BernoulliSampleOperator>(
-                (matchedOperator, epoch) -> new SparkBernoulliSampleOperator<>(
-                        matchedOperator.getFraction(),
-                        matchedOperator.getType(),
+        return new ReplacementSubplanFactory.OfSingleOperators<SampleOperator>(
+                (matchedOperator, epoch) -> new JavaReservoirSampleOperator<>(
+                        matchedOperator.getSampleSize(),
                         matchedOperator.getPredicateDescriptor()
                 ).at(epoch)
         );

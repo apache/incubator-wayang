@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.mapping;
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkRandomPartitionSampleOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -28,7 +29,7 @@ public class SampleToSparkRandomSampleMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "random_partition", new SampleOperator<>((long) 0, (PredicateDescriptor) null, null), false); //TODO: check if the zero here affects execution
+                "random_partition", new SampleOperator<>(0, (DataSetType) null), false); //TODO: check if the zero here affects execution
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -36,7 +37,6 @@ public class SampleToSparkRandomSampleMapping implements Mapping {
         return new ReplacementSubplanFactory.OfSingleOperators<SampleOperator>(
                 (matchedOperator, epoch) -> new SparkRandomPartitionSampleOperator<>(
                         matchedOperator.getSampleSize(),
-                        matchedOperator.getType(),
                         matchedOperator.getPredicateDescriptor()
                 ).at(epoch)
         );

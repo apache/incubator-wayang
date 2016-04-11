@@ -33,7 +33,6 @@ public class SparkShufflePartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
-    long totalSize;
     int partitionID = 0;
     int tupleID = 0;
 
@@ -41,19 +40,21 @@ public class SparkShufflePartitionSampleOperator<Type>
      * Creates a new instance.
      *
      * @param predicateDescriptor
+     * @param sampleSize
      */
-    public SparkShufflePartitionSampleOperator(long sampleSize, DataSetType type,
+    public SparkShufflePartitionSampleOperator(int sampleSize,
                                                PredicateDescriptor<Type> predicateDescriptor) {
-        super(sampleSize, predicateDescriptor, type);
+        super(sampleSize, predicateDescriptor);
     }
 
     /**
      * Creates a new instance.
      *
      * @param sampleSize
+     * @param totalSize
      */
-    public SparkShufflePartitionSampleOperator(long sampleSize, long totalSize, DataSetType type) {
-        super(sampleSize, null, type);
+    public SparkShufflePartitionSampleOperator(int sampleSize, long totalSize, DataSetType type) {
+        super(sampleSize, totalSize, type);
         this.totalSize = totalSize;
     }
 
@@ -63,6 +64,9 @@ public class SparkShufflePartitionSampleOperator<Type>
     public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+
+        if (totalSize == 0) //total size of input dataset was not given
+            totalSize = inputs[0].provideRdd().count();
 
         if (sampleSize >= totalSize) { //return all and return
             outputs[0].acceptRdd(inputs[0].provideRdd());
@@ -105,7 +109,7 @@ public class SparkShufflePartitionSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkShufflePartitionSampleOperator<>(this.sampleSize, this.getInputType(), this.getPredicateDescriptor());
+        return new SparkShufflePartitionSampleOperator<>(this.sampleSize, this.getPredicateDescriptor());
     }
 }
 

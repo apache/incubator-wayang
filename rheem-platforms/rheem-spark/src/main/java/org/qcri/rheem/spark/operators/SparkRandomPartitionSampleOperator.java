@@ -22,22 +22,19 @@ import java.util.concurrent.Future;
 
 
 /**
- * Spark implementation of the {@link SparkRandomPartitionSampleOperator}.
+ * Spark implementation of the {@link SparkRandomPartitionSampleOperator}. Sampling with replacement (i.e., the sample may contain duplicates)
  */
 public class SparkRandomPartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
-
-    long totalSize;
 
     /**
      * Creates a new instance.
      *
      * @param predicateDescriptor
      */
-    public SparkRandomPartitionSampleOperator(long sampleSize, DataSetType type,
-                                              PredicateDescriptor<Type> predicateDescriptor) {
-        super(sampleSize, predicateDescriptor, type);
+    public SparkRandomPartitionSampleOperator(int sampleSize, PredicateDescriptor<Type> predicateDescriptor) {
+        super(sampleSize, predicateDescriptor);
     }
 
     /**
@@ -45,8 +42,8 @@ public class SparkRandomPartitionSampleOperator<Type>
      *
      * @param sampleSize
      */
-    public SparkRandomPartitionSampleOperator(long sampleSize, long totalSize, DataSetType type) {
-        super(sampleSize, null, type);
+    public SparkRandomPartitionSampleOperator(int sampleSize, long totalSize, DataSetType type) {
+        super(sampleSize, totalSize, type);
         this.totalSize = totalSize;
     }
 
@@ -59,6 +56,9 @@ public class SparkRandomPartitionSampleOperator<Type>
     public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+
+        if (totalSize == 0) //total size of input dataset was not given
+            totalSize = inputs[0].provideRdd().count();
 
         if (sampleSize >= totalSize) { //return all and return
             outputs[0].acceptRdd(inputs[0].provideRdd());
@@ -142,7 +142,7 @@ public class SparkRandomPartitionSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkRandomPartitionSampleOperator<>(this.sampleSize, this.getInputType(), this.getPredicateDescriptor());
+        return new SparkRandomPartitionSampleOperator<>(this.sampleSize, this.getPredicateDescriptor());
     }
 }
 
