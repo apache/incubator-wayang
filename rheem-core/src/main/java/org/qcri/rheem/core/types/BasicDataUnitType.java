@@ -7,7 +7,7 @@ import java.util.Objects;
  */
 public class BasicDataUnitType<T> extends DataUnitType<T> {
 
-    private final Class<?> typeClass;
+    private final Class<T> typeClass;
 
     protected BasicDataUnitType(Class<T> typeClass) {
         this.typeClass = typeClass;
@@ -37,7 +37,8 @@ public class BasicDataUnitType<T> extends DataUnitType<T> {
         return String.format("%s[%s]", this.getClass().getSimpleName(), this.typeClass.getSimpleName());
     }
 
-    public Class<?> getTypeClass() {
+    @Override
+    public Class getTypeClass() {
         return this.typeClass;
     }
 }

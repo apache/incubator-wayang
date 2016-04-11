@@ -1,5 +1,6 @@
 package org.qcri.rheem.tests;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.function.*;
@@ -7,10 +8,13 @@ import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.RheemArrays;
+import org.qcri.rheem.postgres.PostgresPlatform;
+import org.qcri.rheem.postgres.compiler.FunctionCompiler;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -482,6 +486,86 @@ public class RheemPlans {
 
         // Create the RheemPlan.
         return new RheemPlan(stdoutSink);
+    }
+
+    public static RheemPlan postgresReadStdout() {
+        //Tuple2.class
+        LocalCallbackSink<Tuple2> stdoutSink = LocalCallbackSink.createStdoutSink(Tuple2.class);
+        TableSource table = new TableSource("employee", Tuple2.class);
+        table.connectTo(0, stdoutSink, 0);
+        return new RheemPlan(stdoutSink);
+
+    }
+
+    public static RheemPlan postgresScenario2() {
+        //Tuple2.class
+        LocalCallbackSink<Tuple2> stdoutSink = LocalCallbackSink.createStdoutSink(Tuple2.class);
+        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Tuple2.class, "id", "salary");
+        FilterOperator<Tuple2> filterOp = new FilterOperator<Tuple2>(
+                new PredicateDescriptor.SerializablePredicate<Tuple2>() {
+                    @Override
+                    @FunctionCompiler.SQL("salary>1000")
+                    public boolean test(Tuple2 s) {
+                        return (Float)s.getField1()>1000;
+                    }
+                }, Tuple2.class);
+
+        TableSource table = new TableSource("employee", Tuple2.class);
+        table.connectTo(0, projectionOperator, 0);
+        projectionOperator.connectTo(0, filterOp, 0);
+        filterOp.connectTo(0, stdoutSink, 0);
+        //filterOp.addTargetPlatform(JavaPlatform.getInstance());
+        return new RheemPlan(stdoutSink);
+
+    }
+
+    public static RheemPlan postgresScenario3() {
+
+        LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
+        // Select second field.
+        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Float.class, 1);
+
+        FilterOperator<Float> filterOp = new FilterOperator<Float>(
+                new PredicateDescriptor.SerializablePredicate<Float>() {
+                    @Override
+                    @FunctionCompiler.SQL("salary>1000")
+                    public boolean test(Float s) {
+                        return s>1000;
+                    }
+                }, Float.class);
+
+        TableSource table = new TableSource("employee", Tuple2.class);
+        table.connectTo(0, projectionOperator, 0);
+        projectionOperator.connectTo(0, filterOp, 0);
+        filterOp.connectTo(0, stdoutSink, 0);
+        //filterOp.addTargetPlatform(JavaPlatform.getInstance());
+        return new RheemPlan(stdoutSink);
+
+    }
+
+    public static RheemPlan postgresMixedScenario4() {
+
+        LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
+        // Select second field.
+        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Float.class, 1);
+        DistinctOperator<Float> distinctLinesOperator = new DistinctOperator<>(Float.class);
+
+        FilterOperator<Float> filterOp = new FilterOperator<Float>(
+                new PredicateDescriptor.SerializablePredicate<Float>() {
+                    @Override
+                    @FunctionCompiler.SQL("salary>1000")
+                    public boolean test(Float s) {
+                        return s>1000;
+                    }
+                }, Float.class);
+
+        TableSource table = new TableSource("employee", Tuple2.class);
+        table.connectTo(0, projectionOperator, 0);
+        projectionOperator.connectTo(0, filterOp, 0);
+        filterOp.connectTo(0, distinctLinesOperator, 0);
+        distinctLinesOperator.connectTo(0, stdoutSink, 0);
+        return new RheemPlan(stdoutSink);
+
     }
 }
 

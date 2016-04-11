@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.apache.commons.io.IOUtils;
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
@@ -53,15 +54,40 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
     }
 
     private Stream<T> createStream(String path) {
-        // TODO: Important. Enrich type informations to create the correct parser!
         Function<String, T> parser = (line) -> {
-            int tabPos = line.indexOf('\t');
-            return (T) new Tuple2<>(
-                    Integer.valueOf(line.substring(0, tabPos)),
-                    Float.valueOf(line.substring(tabPos + 1)));
+            return lineParse(line);
         };
 
         return this.streamLines(path).map(parser);
+    }
+
+    private T lineParse(String line) {
+        // TODO rewrite in less verbose way.
+        Class typeClass = this.getType().getDataUnitType().getTypeClass();
+        int tabPos = line.indexOf('\t');
+        if (tabPos==-1) {
+            if (typeClass == Integer.class) {
+                return (T) Integer.valueOf(line);
+            } else if (typeClass == Float.class) {
+                return (T) Float.valueOf(line);
+            } else if (typeClass == String.class) {
+                return (T) String.valueOf(line);
+            }
+            else throw new RheemException(String.format("Cannot parse TSV file line %s", line));
+        }
+        else if (typeClass == Record.class) {
+            // TODO: Fix Record parsing.
+            return (T) new Record();
+        }
+        else if (typeClass == Tuple2.class) {
+            // TODO: Fix Tuple2 parsing
+            return (T) new Tuple2(
+                    Integer.valueOf(line.substring(0, tabPos)),
+                    Float.valueOf(line.substring(tabPos + 1)));
+        }
+        else
+            throw new RheemException(String.format("Cannot parse TSV file line %s", line));
+
     }
 
     /**
