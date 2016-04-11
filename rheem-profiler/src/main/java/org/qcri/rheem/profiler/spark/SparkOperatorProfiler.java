@@ -37,7 +37,7 @@ public abstract class SparkOperatorProfiler {
 
     private final String gangliaClusterName;
 
-    public int cpuMhz, numMachines, numCoresPerMachine;
+    public int cpuMhz, numMachines, numCoresPerMachine, numPartitions;
 
     private final int dataQuantumGeneratorBatchSize;
 
@@ -63,6 +63,7 @@ public abstract class SparkOperatorProfiler {
         this.cpuMhz = (int) configuration.getLongProperty("rheem.spark.cpu.mhz", 2700);
         this.numMachines = (int) configuration.getLongProperty("rheem.spark.machines", 1);
         this.numCoresPerMachine = (int) configuration.getLongProperty("rheem.spark.cores-per-machine", 1);
+        this.numPartitions = (int) configuration.getLongProperty("rheem.spark.partitions", -1);
 
         this.gangliaRrdsDir = configuration.getStringProperty("rheem.ganglia.rrds", "/var/lib/ganglia/rrds");
         this.gangliaClusterName = configuration.getStringProperty("rheem.ganglia.cluster");
@@ -127,7 +128,7 @@ public abstract class SparkOperatorProfiler {
         } while (remainder > 0);
 
         // Shuffle and cache the RDD.
-        final JavaRDD<T> cachedInputRdd = finalInputRdd.coalesce(100, true).cache();
+        final JavaRDD<T> cachedInputRdd = this.partition(finalInputRdd).cache();
         cachedInputRdd.foreach(dataQuantum -> {
         });
 
@@ -159,11 +160,18 @@ public abstract class SparkOperatorProfiler {
                     return list;
                 });
         // Shuffle and cache the RDD.
-        final JavaRDD<T> cachedInputRdd = finalInputRdd.coalesce(100, true).cache();
+        final JavaRDD<T> cachedInputRdd = this.partition(finalInputRdd).cache();
         cachedInputRdd.foreach(dataQuantum -> {
         });
 
         return cachedInputRdd;
+    }
+
+    /**
+     * If a desired number of partitions for the input {@link JavaRDD}s is requested, enforce this.
+     */
+    protected <T> JavaRDD<T> partition(JavaRDD<T> rdd) {
+        return this.numPartitions == -1 ? rdd : rdd.coalesce(this.numPartitions, true);
     }
 
     /**
