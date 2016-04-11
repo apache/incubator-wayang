@@ -15,8 +15,6 @@ import org.qcri.rheem.core.plan.rheemplan.test.TestMapOperator;
 import org.qcri.rheem.core.plan.rheemplan.test.TestSource;
 import org.qcri.rheem.core.types.DataSetType;
 
-import static org.mockito.Mockito.*;
-
 /**
  * Test suite for {@link org.qcri.rheem.core.optimizer.cardinality.SubplanCardinalityPusher}.
  */
@@ -26,8 +24,7 @@ public class SubplanCardinalityPusherTest {
 
     @Before
     public void setUp() {
-        this.configuration = mock(Configuration.class);
-
+        this.configuration = new Configuration();
         KeyValueProvider<OutputSlot<?>, CardinalityEstimator> estimatorProvider =
                 new FunctionalKeyValueProvider<>((outputSlot, requestee) -> {
                     assert outputSlot.getOwner().isElementary()
@@ -36,7 +33,7 @@ public class SubplanCardinalityPusherTest {
                             .getCardinalityEstimator(outputSlot.getIndex(), this.configuration)
                             .orElse(null);
                 });
-        when(this.configuration.getCardinalityEstimatorProvider()).thenReturn(estimatorProvider);
+        this.configuration.setCardinalityEstimatorProvider(estimatorProvider);
     }
 
 

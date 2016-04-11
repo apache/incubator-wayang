@@ -1,10 +1,7 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.broadcast.Broadcast;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
@@ -22,8 +19,8 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
 
     private OptionalLong measuredCardinality;
 
-    public SparkBroadcastOperator(DataSetType<Type> type) {
-        super(1, 1, false, null);
+    public SparkBroadcastOperator(DataSetType<Type> type, OperatorContainer operatorContainer) {
+        super(1, 1, false, operatorContainer);
         this.inputSlots[0] = new InputSlot<>("input", this, type);
         this.outputSlots[0] = new OutputSlot<>("output", this, type);
     }
@@ -46,7 +43,7 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkBroadcastOperator<>(this.getType());
+        return new SparkBroadcastOperator<>(this.getType(), this.getContainer());
     }
 
     public void markForInstrumentation() {

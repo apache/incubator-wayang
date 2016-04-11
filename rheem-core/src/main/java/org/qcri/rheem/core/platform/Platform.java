@@ -1,13 +1,12 @@
 package org.qcri.rheem.core.platform;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -49,9 +48,9 @@ public abstract class Platform {
      *
      * @return the {@link Executor}
      */
-    public Executor createExecutor() {
+    public Executor createExecutor(Job job) {
         Validate.isTrue(this.isExecutable());
-        return this.getExecutorFactory().create();
+        return this.getExecutorFactory().create(job);
     }
 
     public abstract Executor.Factory getExecutorFactory();

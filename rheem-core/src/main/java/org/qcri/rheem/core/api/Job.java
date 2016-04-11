@@ -20,14 +20,12 @@ import org.qcri.rheem.core.platform.ExecutionProfile;
 import org.qcri.rheem.core.platform.FixBreakpoint;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -78,6 +76,11 @@ public class Job {
      */
     private final StopWatch stopWatch = new StopWatch();
 
+    /**
+     * JAR files that are needed to execute the UDFs.
+     */
+    private final Set<String> udfJarPaths = new HashSet<>();
+
     private final double minConfidence = 5., maxSpread = .7;
 
     private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
@@ -85,11 +88,25 @@ public class Job {
 
     /**
      * Creates a new instance.
+     *
+     * @param udfJars paths to JAR files needed to run the UDFs (see {@link ReflectionUtils#getDeclaringJar(Class)})
      */
-    Job(RheemContext rheemContext, RheemPlan rheemPlan) {
+    Job(RheemContext rheemContext, RheemPlan rheemPlan, String... udfJars) {
         this.rheemContext = rheemContext;
         this.configuration = this.rheemContext.getConfiguration().fork();
         this.rheemPlan = rheemPlan;
+        for (String udfJar : udfJars) {
+            this.addUdfJar(udfJar);
+        }
+    }
+
+    /**
+     * Adds a {@code path} to a JAR that is required in one or more UDFs.
+     *
+     * @see ReflectionUtils#getDeclaringJar(Class)
+     */
+    public void addUdfJar(String path) {
+        this.udfJarPaths.add(path);
     }
 
     /**
@@ -282,7 +299,7 @@ public class Job {
         FixBreakpoint breakpoint = new FixBreakpoint();
         if (this.crossPlatformExecutor == null) {
             final InstrumentationStrategy instrumentation = this.configuration.getInstrumentationStrategyProvider().provide();
-            this.crossPlatformExecutor = new CrossPlatformExecutor(instrumentation);
+            this.crossPlatformExecutor = new CrossPlatformExecutor(this, instrumentation);
             executionPlan.getStartingStages().forEach(breakpoint::breakAfter);
 
         } else {
@@ -393,5 +410,9 @@ public class Job {
      */
     public Configuration getConfiguration() {
         return this.configuration;
+    }
+
+    public Set<String> getUdfJarPaths() {
+        return this.udfJarPaths;
     }
 }

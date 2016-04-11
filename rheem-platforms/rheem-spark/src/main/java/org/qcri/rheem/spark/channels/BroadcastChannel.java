@@ -64,7 +64,10 @@ public class BroadcastChannel extends Channel {
                     .filter(consumer -> consumer.getOperator() instanceof SparkBroadcastOperator)
                     .findAny()
                     .orElseGet(() -> {
-                        SparkBroadcastOperator sbo = new SparkBroadcastOperator(source.getDataSetType());
+                        SparkBroadcastOperator sbo = new SparkBroadcastOperator(
+                                source.getDataSetType(),
+                                source.getProducerSlot().getOwner().getContainer()
+                        );
                         ExecutionTask task = new ExecutionTask(sbo);
                         rddChannel.addConsumer(task, 0);
                         return task;

@@ -14,8 +14,7 @@
     <dependencies>
         <dependency>
             <groupId>org.graphchi</groupId>
-            <artifactId>graphchi-java_2.11</artifactId>
-            <version>0.2.2</version>
+            <artifactId>graphchi-java_2.10</artifactId>
         </dependency>
 
         <dependency>
@@ -30,7 +29,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-common</artifactId>
+            <artifactId>hadoop-client</artifactId>
         </dependency>
     </dependencies>
 
