@@ -172,6 +172,7 @@ public abstract class SparkOperatorProfiler {
     public Result run() {
         final Result result = this.executeOperator();
         this.sparkExecutor.dispose();
+        this.sparkExecutor = null;
         return result;
     }
 

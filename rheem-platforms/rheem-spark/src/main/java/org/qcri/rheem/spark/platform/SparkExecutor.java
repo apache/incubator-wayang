@@ -1,29 +1,21 @@
 package org.qcri.rheem.spark.platform;
 
 import org.apache.spark.api.java.JavaSparkContext;
-import org.qcri.rheem.basic.operators.LoopOperator;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
-import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.platform.ExecutionProfile;
 import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.channels.SparkChannelManager;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
-import org.qcri.rheem.spark.operators.SparkLoopOperator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * {@link Executor} implementation for the {@link SparkPlatform}.
