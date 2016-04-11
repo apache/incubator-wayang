@@ -97,7 +97,7 @@ public class PostgresPlatform extends Platform {
 
     @Override
     public Executor.Factory getExecutorFactory() {
-        return () -> new PostgresExecutor(this);
+        return job -> new PostgresExecutor(this);
     }
 
     @Override
