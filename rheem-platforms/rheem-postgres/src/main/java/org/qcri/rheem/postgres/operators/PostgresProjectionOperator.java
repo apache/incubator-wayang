@@ -18,11 +18,6 @@ import java.util.List;
 public class PostgresProjectionOperator<InputType, OutputType> extends ProjectionOperator
         implements PostgresExecutionOperator{
 
-    public Boolean isProjectByIndexes() {
-        return projectByIndexes;
-    }
-
-    private Boolean projectByIndexes = false;
 
     public PostgresProjectionOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass,
                               String... fieldNames) {
@@ -32,7 +27,6 @@ public class PostgresProjectionOperator<InputType, OutputType> extends Projectio
     public PostgresProjectionOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass,
                               Integer... fieldIndexes) {
         super(inputTypeClass, outputTypeClass, fieldIndexes);
-        projectByIndexes = true;
     }
 
     public PostgresProjectionOperator(ProjectionDescriptor<InputType, OutputType> functionDescriptor) {
@@ -51,7 +45,8 @@ public class PostgresProjectionOperator<InputType, OutputType> extends Projectio
         List<String> colNames = new ArrayList<>();
         List<Integer> colIndexes = this.getFunctionDescriptor().getFieldIndexes();
         for (Integer index : colIndexes){
-            colNames.add(metaRs.getMetaData().getColumnName(index));
+            //postgres column index starts at 1
+            colNames.add(metaRs.getMetaData().getColumnName(index+1));
         }
         this.getFunctionDescriptor().setFieldNames(colNames);
         stmt.close();

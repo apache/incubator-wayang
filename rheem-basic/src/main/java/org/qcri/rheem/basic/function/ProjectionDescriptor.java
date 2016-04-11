@@ -16,9 +16,13 @@ public class ProjectionDescriptor<Input, Output> extends TransformationDescripto
 
     private List<String> fieldNames;
 
-
-
     private final List<Integer> fieldIndexes;
+
+    public Boolean isProjectByIndexes() {
+        return projectByIndexes;
+    }
+
+    private Boolean projectByIndexes = false;
 
     public ProjectionDescriptor(Class<Input> inputTypeClass,
                                 Class<Output> outputTypeClass,
@@ -46,6 +50,7 @@ public class ProjectionDescriptor<Input, Output> extends TransformationDescripto
         super(createJavaImplementation(fieldIndexes, inputType), inputType, outputType);
         this.fieldIndexes = Collections.unmodifiableList(Arrays.asList(fieldIndexes));
         this.fieldNames = null;
+        projectByIndexes = true;
     }
 
     private static <Input, Output> FunctionDescriptor.SerializableFunction<Input, Output>

@@ -500,6 +500,7 @@ public class RheemPlans {
     public static RheemPlan postgresScenario2() {
         //Tuple2.class
         LocalCallbackSink<Tuple2> stdoutSink = LocalCallbackSink.createStdoutSink(Tuple2.class);
+        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Tuple2.class, "id", "salary");
         FilterOperator<Tuple2> filterOp = new FilterOperator<Tuple2>(
                 new PredicateDescriptor.SerializablePredicate<Tuple2>() {
                     @Override
@@ -509,15 +510,63 @@ public class RheemPlans {
                     }
                 }, Tuple2.class);
 
-        //filterOp.addTargetPlatform(PostgresPlatform.getInstance());
         TableSource table = new TableSource("employee", Tuple2.class);
-        table.connectTo(0, stdoutSink, 0);
-        //filterOp.connectTo(0, stdoutSink, 0);
-        //filterOp.addTargetPlatform(PostgresPlatform.getInstance());
+        table.connectTo(0, projectionOperator, 0);
+        projectionOperator.connectTo(0, filterOp, 0);
+        filterOp.connectTo(0, stdoutSink, 0);
+        //filterOp.addTargetPlatform(JavaPlatform.getInstance());
         return new RheemPlan(stdoutSink);
 
     }
 
+    public static RheemPlan postgresScenario3() {
+
+        LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
+        // Select second field.
+        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Float.class, 1);
+
+        FilterOperator<Float> filterOp = new FilterOperator<Float>(
+                new PredicateDescriptor.SerializablePredicate<Float>() {
+                    @Override
+                    @FunctionCompiler.SQL("salary>1000")
+                    public boolean test(Float s) {
+                        return s>1000;
+                    }
+                }, Float.class);
+
+        TableSource table = new TableSource("employee", Tuple2.class);
+        table.connectTo(0, projectionOperator, 0);
+        projectionOperator.connectTo(0, filterOp, 0);
+        filterOp.connectTo(0, stdoutSink, 0);
+        //filterOp.addTargetPlatform(JavaPlatform.getInstance());
+        return new RheemPlan(stdoutSink);
+
+    }
+
+    public static RheemPlan postgresMixedScenario4() {
+
+        LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
+        // Select second field.
+        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Float.class, 1);
+        DistinctOperator<Float> distinctLinesOperator = new DistinctOperator<>(Float.class);
+
+        FilterOperator<Float> filterOp = new FilterOperator<Float>(
+                new PredicateDescriptor.SerializablePredicate<Float>() {
+                    @Override
+                    @FunctionCompiler.SQL("salary>1000")
+                    public boolean test(Float s) {
+                        return s>1000;
+                    }
+                }, Float.class);
+
+        TableSource table = new TableSource("employee", Tuple2.class);
+        table.connectTo(0, projectionOperator, 0);
+        projectionOperator.connectTo(0, filterOp, 0);
+        filterOp.connectTo(0, distinctLinesOperator, 0);
+        distinctLinesOperator.connectTo(0, stdoutSink, 0);
+        return new RheemPlan(stdoutSink);
+
+    }
 }
 
 

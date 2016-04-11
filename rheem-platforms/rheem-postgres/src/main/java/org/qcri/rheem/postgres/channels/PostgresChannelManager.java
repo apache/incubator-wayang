@@ -32,44 +32,14 @@ public class PostgresChannelManager extends DefaultChannelManager {
                 HDFS_TSV_DESCRIPTOR,
                 HDFS_TSV_DESCRIPTOR);
 
+        this.channelInitializers.put(INTERNAL_DESCRIPTOR, new PostgresInternalChannel.Initializer());
         this.channelInitializers.put(HDFS_TSV_DESCRIPTOR, new FileChannelInitializer());
-        //this.channelInitializers.put(INTERNAL_DESCRIPTOR, new PostgresInternalChannel.Initializer());
+
     }
 
     @Override
     public ChannelInitializer getChannelInitializer(ChannelDescriptor channelDescriptor) {
         return this.channelInitializers.get(channelDescriptor);
     }
-
-    @Override
-    public Map<ChannelDescriptor, Channel> setUpSourceSide(Junction junction, List<ChannelDescriptor> preferredChannelDescriptors, OptimizationContext optimizationContext) {
-
-        // Expect only a single type of ChannelDescriptor.
-        final ChannelDescriptor channelDescriptor = preferredChannelDescriptors.stream()
-                .reduce((cd1, cd2) -> {
-                    assert cd1.equals(cd2);
-                    return cd1;
-                })
-                .orElseThrow(() -> new IllegalStateException("Not a single ChannelDescriptor given."));
-
-        // Create the Channel.
-        final ChannelInitializer channelInitializer = this.getChannelInitializer(channelDescriptor);
-        final Tuple<Channel, Channel> channelSetup = channelInitializer.setUpOutput(channelDescriptor, junction.getSourceOutput(), optimizationContext);
-        junction.setSourceChannel(channelSetup.getField0());
-
-        // Construct and return the result.
-        Map<ChannelDescriptor, Channel> result = new HashMap<>(preferredChannelDescriptors.size());
-        for (ChannelDescriptor preferredChannelDescriptor : preferredChannelDescriptors) {
-            result.put(preferredChannelDescriptor, channelSetup.getField1());
-        }
-        return result;
-    }
-
-    @Override
-    public void setUpTargetSide(Junction junction, int targetIndex, Channel externalChannel,
-                                OptimizationContext optimizationContext) {
-
-
-        junction.setTargetChannel(targetIndex, externalChannel);
-    }
+    
 }

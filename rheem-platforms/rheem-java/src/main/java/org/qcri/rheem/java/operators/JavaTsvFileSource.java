@@ -65,24 +65,25 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
         // TODO rewrite in less verbose way.
         Class typeClass = this.getType().getDataUnitType().getTypeClass();
         int tabPos = line.indexOf('\t');
-        if (typeClass == Integer.class){
-            return (T) Integer.valueOf(line.substring(0, tabPos));
-        }
-        else if (typeClass == Float.class){
-            return (T) Float.valueOf(line.substring(0, tabPos));
-        }
-        else if (typeClass == String.class) {
-            return (T) String.valueOf(line.substring(0, tabPos));
-        }
-        else if (typeClass == Tuple2.class){
-            // TODO: Fix Tuple2 parsing
-            return (T) new Tuple2(
-                    Integer.valueOf(line.substring(0, tabPos)),
-                    Float.valueOf(line.substring(tabPos + 1)));
+        if (tabPos==-1) {
+            if (typeClass == Integer.class) {
+                return (T) Integer.valueOf(line);
+            } else if (typeClass == Float.class) {
+                return (T) Float.valueOf(line);
+            } else if (typeClass == String.class) {
+                return (T) String.valueOf(line);
+            }
+            else throw new RheemException(String.format("Cannot parse TSV file line %s", line));
         }
         else if (typeClass == Record.class) {
             // TODO: Fix Record parsing.
             return (T) new Record();
+        }
+        else if (typeClass == Tuple2.class) {
+            // TODO: Fix Tuple2 parsing
+            return (T) new Tuple2(
+                    Integer.valueOf(line.substring(0, tabPos)),
+                    Float.valueOf(line.substring(tabPos + 1)));
         }
         else
             throw new RheemException(String.format("Cannot parse TSV file line %s", line));

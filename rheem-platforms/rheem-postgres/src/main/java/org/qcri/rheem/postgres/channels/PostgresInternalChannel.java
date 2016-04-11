@@ -38,13 +38,15 @@ public class PostgresInternalChannel extends Channel {
         @Override
         public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot,
                                                    OptimizationContext optimizationContext) {
-            throw new UnsupportedOperationException("Not (yet) implemented.");
+            PostgresInternalChannel channel = new PostgresInternalChannel(descriptor, outputSlot);
+            return new Tuple<>(channel, channel);
+
         }
 
         @Override
         public Channel setUpOutput(ChannelDescriptor descriptor, Channel source,
                                    OptimizationContext optimizationContext) {
-            throw new UnsupportedOperationException("Not (yet) implemented.");
+            return source;
         }
     }
 }

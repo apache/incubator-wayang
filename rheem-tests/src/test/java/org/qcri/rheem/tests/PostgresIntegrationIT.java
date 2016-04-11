@@ -10,6 +10,7 @@ import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.postgres.PostgresPlatform;
+import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -73,4 +74,24 @@ public class PostgresIntegrationIT {
         rheemContext.register(JavaPlatform.getInstance());
         rheemContext.execute(rheemPlan);
     }
+
+    @Test
+    public void testScenario3() throws URISyntaxException, IOException {
+        RheemPlan rheemPlan = RheemPlans.postgresScenario3();
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(PostgresPlatform.getInstance());
+        rheemContext.register(JavaPlatform.getInstance());
+        //rheemContext.register(SparkPlatform.getInstance());
+        rheemContext.execute(rheemPlan);
+    }
+
+    @Test
+    public void postgresMixedScenario4() throws URISyntaxException, IOException {
+        RheemPlan rheemPlan = RheemPlans.postgresMixedScenario4();
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(PostgresPlatform.getInstance());
+        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.execute(rheemPlan);
+    }
+
 }

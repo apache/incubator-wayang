@@ -31,7 +31,7 @@ public class PostgresProjectionMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "projection", new ProjectionOperator<>((ProjectionDescriptor) null), false);
+                "projection", new ProjectionOperator<>((ProjectionDescriptor) null, null, null), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

@@ -76,17 +76,6 @@ public class PostgresExecutor implements Executor {
             }
         }
 
-//        filterOp = new PostgresFilterOperator<Tuple2>(
-//                new PredicateDescriptor.SerializablePredicate<Tuple2>() {
-//                    @Override
-//                    @FunctionCompiler.SQL("salary>1000")
-//                    public boolean test(Tuple2 s) {
-//                        return (Float)s.getField1()>1000;
-//                    }
-//                }, Tuple2.class);
-
-//        projectionOperator = new PostgresProjectionOperator(Tuple2.class, Tuple2.class, 1);
-//        projectionOperator = new PostgresProjectionOperator(Tuple2.class, Tuple2.class, "id", "salary");
         Connection connection = platform.getConnection();
         PreparedStatement ps = null;
         String query = "";

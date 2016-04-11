@@ -14,7 +14,6 @@ import org.qcri.rheem.postgres.PostgresPlatform;
  */
 public class FileChannelInitializer implements ChannelInitializer {
 
-
         @Override
         public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
             final FileChannel fileChannel = new FileChannel((FileChannel.Descriptor) descriptor, outputSlot);
@@ -23,8 +22,9 @@ public class FileChannelInitializer implements ChannelInitializer {
         }
 
         @Override
-        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
-            throw new UnsupportedOperationException("Not (yet) implemented.");
+        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source,
+                                   OptimizationContext optimizationContext) {
+            return source;
         }
 
 }
