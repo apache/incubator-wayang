@@ -242,7 +242,7 @@ public class Job {
         final ExecutionPlan executionPlan = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         this.stopWatch.stop("Create Initial Execution Plan", "Split Stages");
 
-        assert executionPlan.isSane();
+        //assert executionPlan.isSane();
 
 
         this.stopWatch.stopAll("Create Initial Execution Plan");

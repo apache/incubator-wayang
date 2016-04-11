@@ -33,4 +33,5 @@ public abstract class DataUnitType<T> {
         return new BasicDataUnitType<>((Class<T>) cls);
     }
 
+    public abstract Class getTypeClass();
 }
