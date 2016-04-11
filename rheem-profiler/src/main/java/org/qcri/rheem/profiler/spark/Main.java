@@ -88,12 +88,9 @@ public class Main {
             case "cartesian":
                 results = profile(OperatorProfilers.createSparkCartesianProfiler(), allCardinalities);
                 break;
-//            case "callbacksink":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createJavaLocalCallbackSinkProfiler(), cardinalities);
-//                break;
-//            case "collect":
-//                results = profile(org.qcri.rheem.profiler.java.OperatorProfilers.createCollectingJavaLocalCallbackSinkProfiler(), cardinalities);
-//                break;
+            case "callbacksink":
+                results = profile(OperatorProfilers.createSparkLocalCallbackSinkProfiler(), allCardinalities);
+                break;
 //            case "word-count-split": {
 //                final Supplier<String> randomStringSupplier = DataGenerators.createRandomStringSupplier(2, 10, new Random(42));
 //                results = profile(

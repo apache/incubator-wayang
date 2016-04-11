@@ -14,7 +14,7 @@ import java.util.function.Supplier;
 /**
  * {@link SparkOperatorProfiler} for the {@link SparkTextFileSource}.
  */
-public class SparkTextFileSourceProfiler extends SourceOperatorProfiler {
+public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
 
     private final String fileUrl;
 

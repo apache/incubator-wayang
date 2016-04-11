@@ -1,20 +1,17 @@
 package org.qcri.rheem.profiler.spark;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.spark.operators.SparkCollectionSource;
 import org.qcri.rheem.spark.operators.SparkTextFileSource;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 
 /**
  * {@link SparkOperatorProfiler} for the {@link SparkTextFileSource}.
  */
-public class SparkCollectionSourceProfiler extends SourceOperatorProfiler {
+public class SparkCollectionSourceProfiler extends SparkSourceProfiler {
 
     private final ArrayList<Object> collection;
 

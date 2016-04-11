@@ -10,11 +10,11 @@ import java.util.function.Supplier;
 /**
  * {@link SparkOperatorProfiler} implementation for {@link SparkExecutionOperator}s with one input and one output.
  */
-public abstract class SourceOperatorProfiler extends SparkOperatorProfiler {
+public abstract class SparkSourceProfiler extends SparkOperatorProfiler {
 
-    public SourceOperatorProfiler(Supplier<SparkExecutionOperator> operatorGenerator,
-                                  Configuration configuration,
-                                  Supplier<?> dataQuantumGenerator) {
+    public SparkSourceProfiler(Supplier<SparkExecutionOperator> operatorGenerator,
+                               Configuration configuration,
+                               Supplier<?> dataQuantumGenerator) {
         super(operatorGenerator, configuration, dataQuantumGenerator);
     }
 

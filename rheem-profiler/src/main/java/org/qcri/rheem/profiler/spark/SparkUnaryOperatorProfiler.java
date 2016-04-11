@@ -11,13 +11,13 @@ import java.util.function.Supplier;
 /**
  * {@link SparkOperatorProfiler} implementation for {@link SparkExecutionOperator}s with one input and one output.
  */
-public class UnaryOperatorProfiler extends SparkOperatorProfiler {
+public class SparkUnaryOperatorProfiler extends SparkOperatorProfiler {
 
     private JavaRDD<?> inputRdd;
 
-    public UnaryOperatorProfiler(Supplier<SparkExecutionOperator> operatorGenerator,
-                                 Configuration configuration,
-                                 Supplier<?> dataQuantumGenerator) {
+    public SparkUnaryOperatorProfiler(Supplier<SparkExecutionOperator> operatorGenerator,
+                                      Configuration configuration,
+                                      Supplier<?> dataQuantumGenerator) {
         super(operatorGenerator, configuration, dataQuantumGenerator);
     }
 
