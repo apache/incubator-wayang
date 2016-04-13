@@ -100,4 +100,22 @@ public class LocalFileSystem implements FileSystem {
             return Collections.emptyList();
         }
     }
+
+    @Override
+    public boolean delete(String url, boolean isRecursiveDelete) throws IOException {
+        try {
+            final File file = toFile(url);
+            if (!isRecursiveDelete && file.isDirectory()) return false;
+            return this.delete(file);
+        } catch (URISyntaxException e) {
+            throw new IOException("Cannot access file.", e);
+        }
+    }
+
+    private boolean delete(File file) {
+        boolean canDelete = !file.isDirectory() || Arrays.stream(file.listFiles()).allMatch(this::delete);
+        return canDelete && file.delete();
+
+    }
+
 }
