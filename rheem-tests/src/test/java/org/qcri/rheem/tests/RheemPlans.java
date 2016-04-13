@@ -554,10 +554,12 @@ public class RheemPlans {
                 new PredicateDescriptor.SerializablePredicate<Float>() {
                     @Override
                     @FunctionCompiler.SQL("salary>1000")
-                    public boolean test(Float s) {
-                        return s>1000;
+                    public boolean test(Float salary) {
+                        return salary>1000;
                     }
                 }, Float.class);
+
+        //FilterOperator<Float> filterOp = new FilterOperator<Float>(salary-> salary>1000, Float.class);
 
         TableSource table = new TableSource("employee", Tuple2.class);
         table.connectTo(0, projectionOperator, 0);
