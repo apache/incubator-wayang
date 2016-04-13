@@ -1,27 +1,16 @@
 package org.qcri.rheem.tests;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.qcri.rheem.basic.data.Tuple2;
+import org.junit.*;
 import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.postgres.PostgresPlatform;
-import org.qcri.rheem.spark.platform.SparkPlatform;
+
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.*;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 /**
@@ -29,31 +18,47 @@ import java.util.stream.Stream;
  */
 public class PostgresIntegrationIT {
 
-    @Before
-    public void setup() {
-//        PostgresPlatform pg = PostgresPlatform.getInstance();
-//        PreparedStatement ps = null;
+    private static final PostgresPlatform pg = PostgresPlatform.getInstance();
 
+    @BeforeClass
+    public static void setup() {
 
-//        try {
-//            Connection connection = pg.getConnection();
-//            ps = connection.prepareStatement("select * from institute");
-//            ResultSet rs = ps.executeQuery();
-//            while ( rs.next() ) {
-//                System.out.println(rs.getInt(1) + " " + rs.getString(2));
-//            }
-//            rs.close();
-//            ps.close();
-//            //connection.close();
-//
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
+        Statement stmt = null;
+
+        try {
+            Connection connection = pg.getConnection();
+            stmt = connection.createStatement();
+
+            String sql = "DROP TABLE IF EXISTS EMPLOYEE;";
+            stmt.executeUpdate(sql);
+
+            sql = "CREATE TABLE EMPLOYEE (ID INTEGER, SALARY DECIMAL);";
+            stmt.executeUpdate(sql);
+
+            sql = "INSERT INTO EMPLOYEE (ID, SALARY) VALUES (1, 800.5), (2, 1100),(3, 3000),(4, 5000.8);";
+            stmt.executeUpdate(sql);
+
+            stmt.close();
+
+        } catch (SQLException e) {
+            throw new RheemException(e);
+        }
     }
 
-    @After
-    public void tearDown() {
+    @AfterClass
+    public static void tearDown() {
+        Statement stmt = null;
 
+        try {
+            Connection connection = pg.getConnection();
+            String sql = "DROP TABLE IF EXISTS EMPLOYEE;";
+            stmt = connection.createStatement();
+            stmt.executeUpdate(sql);
+            stmt.close();
+
+        } catch (SQLException e) {
+            throw new RheemException(e);
+        }
     }
 
     @Test
