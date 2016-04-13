@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Properties;
 
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
@@ -71,8 +72,7 @@ public class PostgresPlatform extends Platform {
                             properties.getProperty("postgres.pwd"));
             //connection.setAutoCommit(false);
         } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(1);
+            throw new RheemException(e);
         }
 
 
