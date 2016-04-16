@@ -32,6 +32,23 @@ public class SparkPlatform extends Platform {
 
     private static SparkPlatform instance = null;
 
+    private static final String[] REQUIRED_SPARK_PROPERTIES = {
+            "spark.master",
+            "spark.app.name"
+    };
+
+    private static final String[] OPTIONAL_SPARK_PROPERTIES = {
+            "spark.executor.memory",
+            "spark.executor.extraJavaOptions",
+            "spark.eventLog.enabled",
+            "spark.eventLog.dir",
+            "spark.serializer",
+            "spark.kryo.classesToRegister",
+            "spark.kryo.registrator",
+            "spark.local.dir",
+            "spark.logConf"
+    };
+
     /**
      * <i>Lazy-initialized.</i> Allows to create Spark jobs. Is shared among all executors.
      */
@@ -56,33 +73,37 @@ public class SparkPlatform extends Platform {
      * Configures the single maintained {@link JavaSparkContext} according to the {@code job} and returns it.
      */
     public JavaSparkContext getSparkContext(Job job) {
+        return this.getSparkContext(job.getConfiguration(), job.getUdfJarPaths());
+    }
+
+    /**
+     * Configures the single maintained {@link JavaSparkContext} according to the {@code job} and returns it.
+     * <p>This method is intended to be used with profiling code.</p>
+     *
+     * @see #getSparkContext(Job)
+     */
+    public JavaSparkContext getSparkContext(Configuration configuration, Collection<String> udfJarPaths) {
 
         // NB: There must be only one JavaSparkContext per JVM. Therefore, it is not local to the executor.
         final SparkConf sparkConf;
         if (this.sparkContext != null) {
             this.logger.warn(
                     "There is already a SparkContext (master: {}): , which will be reused. " +
-                    "Not all settings might be effective.", this.sparkContext.getConf().get("spark.master"));
+                            "Not all settings might be effective.", this.sparkContext.getConf().get("spark.master"));
             sparkConf = this.sparkContext.getConf();
         } else {
             sparkConf = new SparkConf(true);
         }
 
-        Configuration configuration = job.getConfiguration();
-        final String master = configuration.getStringProperty("spark.master");
-        sparkConf.setMaster(master);
-        final String appName = configuration.getStringProperty("spark.appName");
-        sparkConf.setAppName(appName);
-        configuration.getOptionalStringProperty("spark.executor.memory").ifPresent(
-                mem -> sparkConf.set("spark.executor.memory", mem)
-        );
-        configuration.getOptionalStringProperty("spark.driver.cores").ifPresent(
-                cores -> sparkConf.set("spark.driver.cores", cores)
-        );
-        configuration.getOptionalStringProperty("spark.driver.memory").ifPresent(
-                cores -> sparkConf.set("spark.driver.memory", cores)
+        for (String property : REQUIRED_SPARK_PROPERTIES) {
+            sparkConf.set(property, configuration.getStringProperty(property));
+        }
+        for (String property : OPTIONAL_SPARK_PROPERTIES) {
+            configuration.getOptionalStringProperty(property).ifPresent(
+                    value -> sparkConf.set(property, value)
+            );
+        }
 
-        );
         if (this.sparkContext == null) {
             this.sparkContext = new JavaSparkContext(sparkConf);
         }
@@ -94,10 +115,10 @@ public class SparkPlatform extends Platform {
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // rheem-spark
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasicPlatform.class)); // rheem-basic
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemContext.class)); // rheem-core
-            if (job.getUdfJarPaths().isEmpty()) {
+            if (udfJarPaths.isEmpty()) {
                 this.logger.warn("Non-local SparkContext but not UDF JARs have been declared.");
-            }  else {
-                job.getUdfJarPaths().forEach(this::registerJarIfNotNull);
+            } else {
+                udfJarPaths.forEach(this::registerJarIfNotNull);
             }
         }
 

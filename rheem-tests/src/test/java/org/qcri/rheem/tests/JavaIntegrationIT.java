@@ -205,7 +205,6 @@ public class JavaIntegrationIT {
         rheemContext.execute(rheemPlan);
     }
 
-    @Ignore
     @Test
     public void testDiverseScenario4() throws URISyntaxException {
         // Build the RheemPlan.

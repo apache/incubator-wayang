@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.util;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -52,5 +53,17 @@ public class RheemArrays {
      */
     public static List<Long> asList(long... values) {
         return Arrays.stream(values).mapToObj(Long::valueOf).collect(Collectors.toList());
+    }
+
+    /**
+     * Convertes the {@code values} into a {@code long} array. This prohibits {@code null} values.
+     */
+    public static long[] toArray(Collection<Long> values) {
+        final long[] array = new long[values.size()];
+        int i = 0;
+        for (Long value : values) {
+            array[i++] = value;
+        }
+        return array;
     }
 }

@@ -59,7 +59,8 @@ public class Configuration {
     private KeyValueProvider<String, String> properties;
 
     /**
-     * Creates a new top-level instance that bases directly from the default instance.
+     * Creates a new top-level instance that bases directly from the default instance. Will try to load the
+     * user configuration file.
      *
      * @see #getDefaultConfiguration()
      */

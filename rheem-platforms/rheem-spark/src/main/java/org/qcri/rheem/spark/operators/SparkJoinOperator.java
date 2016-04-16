@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.basic.data.Tuple2;
@@ -23,10 +22,9 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
 
     /**
      * Creates a new instance.
-     *
      */
-    public SparkJoinOperator(DataSetType <InputType0> inputType0, DataSetType inputType1,
-                            TransformationDescriptor<InputType0, KeyType> keyDescriptor0,
+    public SparkJoinOperator(DataSetType<InputType0> inputType0, DataSetType<InputType1> inputType1,
+                             TransformationDescriptor<InputType0, KeyType> keyDescriptor0,
                              TransformationDescriptor<InputType1, KeyType> keyDescriptor1) {
 
         super(inputType0, inputType1, keyDescriptor0, keyDescriptor1);
