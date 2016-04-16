@@ -17,7 +17,6 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
     protected int sampleSize;
     protected long datasetSize;
-    protected Random rand;
 
 
     /**
@@ -28,7 +27,6 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
                 true,
                 null);
         this.sampleSize = sampleSize;
-        this.rand = new Random();
     }
 
     /**

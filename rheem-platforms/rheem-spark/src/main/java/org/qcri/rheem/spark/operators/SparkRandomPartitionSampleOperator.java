@@ -1,14 +1,16 @@
 package org.qcri.rheem.spark.operators;
 
-import gnu.trove.map.hash.THashMap;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.SampleOperator;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
 import scala.runtime.AbstractFunction1;
 
@@ -27,6 +29,9 @@ public class SparkRandomPartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
+    protected Random rand;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     /**
      * Creates a new instance.
      *
@@ -34,6 +39,7 @@ public class SparkRandomPartitionSampleOperator<Type>
      */
     public SparkRandomPartitionSampleOperator(int sampleSize, DataSetType type) {
         super(sampleSize, type);
+        rand = new Random();
     }
 
     /**
@@ -44,6 +50,7 @@ public class SparkRandomPartitionSampleOperator<Type>
      */
     public SparkRandomPartitionSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
         super(sampleSize, datasetSize, type);
+        rand = new Random();
     }
 
     int nb_partitions = 0;
@@ -57,9 +64,9 @@ public class SparkRandomPartitionSampleOperator<Type>
         assert outputs.length == this.getNumOutputs();
 
         if (datasetSize == 0) //total size of input dataset was not given
-            datasetSize = inputs[0].provideRdd().count();
+            datasetSize = inputs[0].provideRdd().cache().count();
 
-        if (sampleSize >= datasetSize) { //return all and return
+        if (sampleSize >= datasetSize) { //return whole dataset
             outputs[0].acceptRdd(inputs[0].provideRdd());
             return;
         }
@@ -72,7 +79,7 @@ public class SparkRandomPartitionSampleOperator<Type>
             int tasks = sparkContext.defaultParallelism();
             nb_partitions = inputRdd.partitions().size();
             partitionSize = (int) Math.ceil((double) datasetSize / nb_partitions);
-            parallel = Math.min((int) sampleSize, tasks);
+            parallel = Math.min(sampleSize, tasks);
             first = false;
         }
 
@@ -81,13 +88,13 @@ public class SparkRandomPartitionSampleOperator<Type>
             int tid = rand.nextInt(partitionSize); // sample item inside the partition
             List<Integer> partitions = Collections.singletonList(pid);
             Object samples = sparkContext.runJob(inputRdd.rdd(),
-                    new PartitionSampleFunction(tid, ((int) (tid + sampleSize))),
+                    new PartitionSampleFunction(tid, ((tid + sampleSize))),
                     (scala.collection.Seq) JavaConversions.asScalaBuffer(partitions),
                     true, scala.reflect.ClassTag$.MODULE$.apply(List.class));
             result = ((List<Type>[]) samples)[0];
         }
         else {
-            THashMap<Integer, ArrayList<Integer>> map = new THashMap<>(); //list should be ordered..
+            HashMap<Integer, ArrayList<Integer>> map = new HashMap<>(); //list should be ordered..
             for (int i = 0; i < sampleSize; i++) {
                 int pid = rand.nextInt(nb_partitions); //sample partition
                 int tid = rand.nextInt(partitionSize); // sample item inside the partition
@@ -124,10 +131,10 @@ public class SparkRandomPartitionSampleOperator<Type>
             for (int i = 0; i < map.size(); i ++)
                 try {
                     allSamples.addAll(((List<Type>[]) results.get(i).get())[0]);
-                } catch (InterruptedException e) { //TODO: check with sebastian if we need some other kind of exception
-                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    this.logger.error("Random partition sampling failed due to threads.", e);
                 } catch (ExecutionException e) {
-                    e.printStackTrace();
+                    throw new RheemException("Random partition sampling failed.", e);
                 }
 
             executorService.shutdown();
@@ -160,17 +167,17 @@ class PartitionSampleFunction<V> extends AbstractFunction1<scala.collection.Iter
 
         //sampling
         List<V> list = new ArrayList<>(end_id - start_id);
-        int count = 0;
+        int index = 0;
         V element = null;
         while (iterator.hasNext()) {
             element = iterator.next();
-            if (count >= start_id & count < end_id)
+            if (index >= start_id & index < end_id)
                 list.add(element);
-            count++;
-            if (count > end_id)
+            index++;
+            if (index > end_id)
                 break;
         }
-        if (count < end_id)
+        if (index < end_id)
             list.add(element); //take last element
         ///FIXME: there are cases were the list will be smaller because of miscalculation of the partition size for mini-batch
 

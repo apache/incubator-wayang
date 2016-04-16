@@ -17,6 +17,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 
 /**
@@ -26,6 +27,7 @@ public class SparkShufflePartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
+    Random rand;
     int partitionID = 0;
     int tupleID = 0;
 
@@ -36,6 +38,7 @@ public class SparkShufflePartitionSampleOperator<Type>
      */
     public SparkShufflePartitionSampleOperator(int sampleSize, DataSetType type) {
         super(sampleSize, type);
+        rand = new Random();
     }
 
     /**
@@ -45,6 +48,7 @@ public class SparkShufflePartitionSampleOperator<Type>
      */
     public SparkShufflePartitionSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
         super(sampleSize, datasetSize, type);
+        rand = new Random();
     }
 
     int nb_partitions = 0;
@@ -55,7 +59,7 @@ public class SparkShufflePartitionSampleOperator<Type>
         assert outputs.length == this.getNumOutputs();
 
         if (datasetSize == 0) //total size of input dataset was not given
-            datasetSize = inputs[0].provideRdd().count();
+            datasetSize = inputs[0].provideRdd().cache().count();
 
         if (sampleSize >= datasetSize) { //return all and return
             outputs[0].acceptRdd(inputs[0].provideRdd());
@@ -71,8 +75,7 @@ public class SparkShufflePartitionSampleOperator<Type>
             if (tupleID == 0) {
                 nb_partitions = inputRdd.partitions().size();
                 //choose a random partition
-//                partitionID = rand.nextInt(nb_partitions);
-                partitionID = 0;
+                partitionID = rand.nextInt(nb_partitions);
                 inputRdd = inputRdd.<Type>mapPartitionsWithIndex(new ShufflePartition<>(partitionID), true).cache();
                 miscalculated = false;
             }

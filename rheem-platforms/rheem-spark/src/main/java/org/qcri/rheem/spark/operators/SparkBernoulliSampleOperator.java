@@ -47,7 +47,7 @@ public class SparkBernoulliSampleOperator<Type>
         if (datasetSize > 0) //sample size was given as input
             sampleFraction = ((double)sampleSize) / datasetSize;
         else
-            sampleFraction = ((double) sampleSize) / inputRdd.count();
+            sampleFraction = ((double) sampleSize) / inputRdd.cache().count();
         final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction);
 
         outputs[0].acceptRdd(outputRdd);

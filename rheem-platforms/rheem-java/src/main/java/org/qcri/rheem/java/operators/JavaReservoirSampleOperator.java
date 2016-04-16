@@ -27,6 +27,7 @@ public class JavaReservoirSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
+    Random rand;
 
     /**
      * Creates a new instance.
@@ -35,6 +36,7 @@ public class JavaReservoirSampleOperator<Type>
      */
     public JavaReservoirSampleOperator(int sampleSize, DataSetType type) {
         super(sampleSize, type);
+        rand = new Random();
     }
 
     /**
@@ -45,6 +47,7 @@ public class JavaReservoirSampleOperator<Type>
      */
     public JavaReservoirSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
         super(sampleSize, datasetSize, type);
+        rand = new Random();
     }
 
 
@@ -54,7 +57,8 @@ public class JavaReservoirSampleOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final List<Type> initList = (List) inputs[0].<Type>provideStream().collect(Collectors.toList());
+
+        final List<Type> initList = (List) inputs[0].<Type>provideStream().collect(Collectors.toList()); //FIXME: this is super inefficient, avoid collecting all elements
         outputs[0].acceptStream(reservoirSample(rand, initList, sampleSize).stream());
     }
 
