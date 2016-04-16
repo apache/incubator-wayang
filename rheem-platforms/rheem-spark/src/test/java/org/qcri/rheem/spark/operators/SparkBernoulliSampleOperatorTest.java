@@ -22,12 +22,11 @@ public class SparkBernoulliSampleOperatorTest extends SparkOperatorTestBase {
     public void testExecution() {
         // Prepare test data.
         JavaRDD<Integer> inputStream = this.getSC().parallelize(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
-        double sampleFraction = 0.5;
 
         // Build the distinct operator.
         SparkBernoulliSampleOperator<Integer> sampleOperator =
                 new SparkBernoulliSampleOperator<>(
-                        sampleFraction,
+                        5,
                         DataSetType.createDefaultUnchecked(Integer.class)
                 );
 
@@ -45,7 +44,7 @@ public class SparkBernoulliSampleOperatorTest extends SparkOperatorTestBase {
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideRdd().collect();
         System.out.println(result);
-//        Assert.assertEquals(5, result.sampleSize()); //cannot check this, because the number is not always correct as it works with a probability
+//        Assert.assertEquals(5, result.sampleSize()); //cannot check this, because the sample size returned is not always exact
 
     }
 

@@ -4,7 +4,6 @@ import gnu.trove.map.hash.THashMap;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.SampleOperator;
-import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
@@ -31,20 +30,20 @@ public class SparkRandomPartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      *
-     * @param predicateDescriptor
+     * @param sampleSize
      */
-    public SparkRandomPartitionSampleOperator(int sampleSize, PredicateDescriptor<Type> predicateDescriptor) {
-        super(sampleSize, predicateDescriptor);
+    public SparkRandomPartitionSampleOperator(int sampleSize, DataSetType type) {
+        super(sampleSize, type);
     }
 
     /**
      * Creates a new instance.
      *
      * @param sampleSize
+     * @param datasetSize
      */
-    public SparkRandomPartitionSampleOperator(int sampleSize, long totalSize, DataSetType type) {
-        super(sampleSize, totalSize, type);
-        this.totalSize = totalSize;
+    public SparkRandomPartitionSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
+        super(sampleSize, datasetSize, type);
     }
 
     int nb_partitions = 0;
@@ -57,10 +56,10 @@ public class SparkRandomPartitionSampleOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        if (totalSize == 0) //total size of input dataset was not given
-            totalSize = inputs[0].provideRdd().count();
+        if (datasetSize == 0) //total size of input dataset was not given
+            datasetSize = inputs[0].provideRdd().count();
 
-        if (sampleSize >= totalSize) { //return all and return
+        if (sampleSize >= datasetSize) { //return all and return
             outputs[0].acceptRdd(inputs[0].provideRdd());
             return;
         }
@@ -72,7 +71,7 @@ public class SparkRandomPartitionSampleOperator<Type>
         if (first) { //first time -> retrieve some statistics for partitions
             int tasks = sparkContext.defaultParallelism();
             nb_partitions = inputRdd.partitions().size();
-            partitionSize = (int) Math.ceil((double) totalSize / nb_partitions);
+            partitionSize = (int) Math.ceil((double) datasetSize / nb_partitions);
             parallel = Math.min((int) sampleSize, tasks);
             first = false;
         }
@@ -142,7 +141,7 @@ public class SparkRandomPartitionSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkRandomPartitionSampleOperator<>(this.sampleSize, this.getPredicateDescriptor());
+        return new SparkRandomPartitionSampleOperator<>(this.sampleSize, this.getType());
     }
 }
 

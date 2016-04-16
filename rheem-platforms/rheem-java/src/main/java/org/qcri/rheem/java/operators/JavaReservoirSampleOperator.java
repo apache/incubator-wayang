@@ -31,32 +31,23 @@ public class JavaReservoirSampleOperator<Type>
     /**
      * Creates a new instance.
      *
-     * @param sampleSize size of sample
+     * @param sampleSize
      */
-    public JavaReservoirSampleOperator(int sampleSize, PredicateDescriptor<Type> predicateDescriptor) {
-        super(sampleSize, predicateDescriptor);
-    }
-
-    public JavaReservoirSampleOperator(int sampleSize, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor, Class<Type> typeClass) {
-        super(sampleSize, predicateDescriptor, typeClass);
+    public JavaReservoirSampleOperator(int sampleSize, DataSetType type) {
+        super(sampleSize, type);
     }
 
     /**
      * Creates a new instance.
      *
      * @param sampleSize
+     * @param datasetSize
      */
-    public JavaReservoirSampleOperator(int sampleSize, long totalSize, DataSetType type) {
-        super(sampleSize, totalSize, type);
+    public JavaReservoirSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
+        super(sampleSize, datasetSize, type);
     }
 
-    @Override
-    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
-        final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
-        JavaExecutor.openFunction(this, filterFunction, inputs);
-    }
 
-    int count = 0;
     @Override
     @SuppressWarnings("unchecked")
     public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
@@ -64,8 +55,6 @@ public class JavaReservoirSampleOperator<Type>
         assert outputs.length == this.getNumOutputs();
 
         final List<Type> initList = (List) inputs[0].<Type>provideStream().collect(Collectors.toList());
-        if (sampleSize == 0 && sampleFraction != 0.0) // if fraction was given as input
-            sampleSize = (int) Math.round(sampleFraction * initList.size());
         outputs[0].acceptStream(reservoirSample(rand, initList, sampleSize).stream());
     }
 
@@ -95,6 +84,6 @@ public class JavaReservoirSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaReservoirSampleOperator<>(this.sampleSize, this.getPredicateDescriptor());
+        return new JavaReservoirSampleOperator<>(this.sampleSize, this.getType());
     }
 }

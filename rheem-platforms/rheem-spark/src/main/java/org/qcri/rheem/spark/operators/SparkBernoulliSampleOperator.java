@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.SampleOperator;
-import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
@@ -17,27 +16,24 @@ public class SparkBernoulliSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
+
     /**
      * Creates a new instance.
      *
-     * @param predicateDescriptor
+     * @param sampleSize
      */
-    public SparkBernoulliSampleOperator(double fraction, PredicateDescriptor<Type> predicateDescriptor) {
-        super(fraction, predicateDescriptor);
-    }
-
-    public SparkBernoulliSampleOperator(double fraction, DataSetType type) {
-        super(fraction, type);
+    public SparkBernoulliSampleOperator(int sampleSize, DataSetType type) {
+        super(sampleSize, type);
     }
 
     /**
      * Creates a new instance.
      *
      * @param sampleSize
-     * @param totalSize
+     * @param datasetSize
      */
-    public SparkBernoulliSampleOperator(int sampleSize, long totalSize, DataSetType type) {
-        super(sampleSize, totalSize, type);
+    public SparkBernoulliSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
+        super(sampleSize, datasetSize, type);
     }
 
     @Override
@@ -45,9 +41,13 @@ public class SparkBernoulliSampleOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        double sampleFraction;
+
         final JavaRDD<Type> inputRdd = inputs[0].provideRdd();
-        if (sampleSize > 0 && sampleFraction == 0) //sample size was given as input
-            sampleFraction = ((double)sampleSize) / totalSize;
+        if (datasetSize > 0) //sample size was given as input
+            sampleFraction = ((double)sampleSize) / datasetSize;
+        else
+            sampleFraction = ((double) sampleSize) / inputRdd.count();
         final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction);
 
         outputs[0].acceptRdd(outputRdd);
@@ -55,6 +55,6 @@ public class SparkBernoulliSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkBernoulliSampleOperator<>(this.sampleFraction, this.getPredicateDescriptor());
+        return new SparkBernoulliSampleOperator<>(this.sampleSize, this.datasetSize, this.getType());
     }
 }

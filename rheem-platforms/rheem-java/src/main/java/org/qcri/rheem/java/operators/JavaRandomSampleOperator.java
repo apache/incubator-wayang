@@ -2,7 +2,6 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -11,12 +10,10 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.ChannelExecutor;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -32,30 +29,21 @@ public class JavaRandomSampleOperator<Type>
      *
      * @param sampleSize size of sample
      */
-    public JavaRandomSampleOperator(int sampleSize, PredicateDescriptor<Type> predicateDescriptor) {
-        super(sampleSize, predicateDescriptor);
-    }
-
-    @Override
-    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
-        final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
-        JavaExecutor.openFunction(this, filterFunction, inputs);
-    }
-
-    public JavaRandomSampleOperator(int sampleSize, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor, Class<Type> typeClass) {
-        super(sampleSize, predicateDescriptor, typeClass);
+    public JavaRandomSampleOperator(int sampleSize, DataSetType type) {
+        super(sampleSize, type);
     }
 
     /**
      * Creates a new instance.
      *
-     * @param sampleSize
+     * @param sampleSize size of sample
+     * @param datasetSize size of data
      */
-    public JavaRandomSampleOperator(int sampleSize, long totalSize, DataSetType type) {
-        super(sampleSize, totalSize, type);
+    public JavaRandomSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
+        super(sampleSize, datasetSize, type);
     }
 
-    int count = 0;
+
     @Override
     @SuppressWarnings("unchecked")
     public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
@@ -63,14 +51,11 @@ public class JavaRandomSampleOperator<Type>
         assert outputs.length == this.getNumOutputs();
 
         final List initList = (List) inputs[0].<Type>provideStream().collect(Collectors.toList());
-        if (count == 0) { //first time
-            count = initList.size();
-            if (sampleSize == 0 && sampleFraction > 0.0) //if fraction was given as input
-                sampleSize = (int) Math.round(sampleFraction * initList.size());
-        }
-        final List sampled = new ArrayList((int)sampleSize);
+        if (this.datasetSize == 0)
+            this.datasetSize = initList.size();
+        final List sampled = new ArrayList(sampleSize);
         for (int i = 0; i < sampleSize; i++)
-            sampled.add(initList.get(rand.nextInt(count)));
+            sampled.add(initList.get(rand.nextInt((int) datasetSize))); //TODO: transforming long to int
         outputs[0].acceptStream(sampled.stream());
     }
 
@@ -84,6 +69,6 @@ public class JavaRandomSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaRandomSampleOperator<>(this.sampleSize, this.getPredicateDescriptor());
+        return new JavaRandomSampleOperator<>(this.sampleSize, this.getType());
     }
 }

@@ -35,10 +35,19 @@ public class SampleToSparkRandomSampleMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<SampleOperator>(
-                (matchedOperator, epoch) -> new SparkRandomPartitionSampleOperator<>(
-                        matchedOperator.getSampleSize(),
-                        matchedOperator.getPredicateDescriptor()
-                ).at(epoch)
+                (matchedOperator, epoch) -> {
+                    if (matchedOperator.getDatasetSize() > 0)
+                        return new SparkRandomPartitionSampleOperator<>(
+                                matchedOperator.getSampleSize(),
+                                matchedOperator.getDatasetSize(),
+                                matchedOperator.getType()
+                        ).at(epoch);
+                    else
+                        return new SparkRandomPartitionSampleOperator<>(
+                                matchedOperator.getSampleSize(),
+                                matchedOperator.getType()
+                        ).at(epoch);
+                }
         );
     }
 }

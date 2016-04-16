@@ -26,7 +26,7 @@ public class SparkShufflePartitionSampleOperatorTest extends SparkOperatorTestBa
         SparkShufflePartitionSampleOperator<Integer> sampleOperator =
                 new SparkShufflePartitionSampleOperator<>(
                         sampleSize,
-                        inputStream.count(),
+                        10,
                         DataSetType.createDefaultUnchecked(Integer.class)
                 );
 

@@ -26,7 +26,6 @@ public class SparkRandomPartitionSampleOperatorTest extends SparkOperatorTestBas
         SparkRandomPartitionSampleOperator<Integer> sampleOperator =
                 new SparkRandomPartitionSampleOperator<>(
                         sampleSize,
-                        inputStream.count(),
                         DataSetType.createDefaultUnchecked(Integer.class)
                 );
 

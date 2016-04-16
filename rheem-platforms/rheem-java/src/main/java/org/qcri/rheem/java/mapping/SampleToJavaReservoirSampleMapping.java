@@ -5,6 +5,7 @@ import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.operators.JavaRandomSampleOperator;
 import org.qcri.rheem.java.operators.JavaReservoirSampleOperator;
 
 import java.util.Collection;
@@ -35,10 +36,17 @@ public class SampleToJavaReservoirSampleMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<SampleOperator>(
-                (matchedOperator, epoch) -> new JavaReservoirSampleOperator<>(
-                        matchedOperator.getSampleSize(),
-                        matchedOperator.getPredicateDescriptor()
-                ).at(epoch)
+                (matchedOperator, epoch) -> {
+                    if (matchedOperator.getDatasetSize() > 0)
+                        return new JavaRandomSampleOperator<>(
+                                matchedOperator.getSampleSize(),
+                                matchedOperator.getDatasetSize(),
+                                matchedOperator.getType()).at(epoch);
+                    else
+                        return new JavaRandomSampleOperator<>(
+                                matchedOperator.getSampleSize(),
+                                matchedOperator.getType()).at(epoch);
+                }
         );
     }
 }
