@@ -51,6 +51,8 @@ public class JavaPlatform extends Platform {
         this.mappings.add(new CartesianToJavaCartesianMapping());
         this.mappings.add(new LoopToJavaLoopMapping());
         this.mappings.add(new DoWhileMapping());
+        this.mappings.add(new SampleToJavaRandomSampleMapping());
+        this.mappings.add(new SampleToJavaReservoirSampleMapping());
     }
 
     @Override

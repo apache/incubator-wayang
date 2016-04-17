@@ -223,4 +223,19 @@ public class FullIntegrationIT {
         rheemContext.execute(rheemPlan);
         System.out.println(collector);
     }
+
+    @Test
+    public void testSimpleSample() throws URISyntaxException {
+        // Build the RheemPlan.
+        final List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.simpleSample(collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(SparkPlatform.getInstance());
+        rheemContext.register(JavaPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+        System.out.println(collector);
+    }
 }
