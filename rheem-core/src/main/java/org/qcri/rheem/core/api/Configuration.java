@@ -48,6 +48,8 @@ public class Configuration {
 
     private KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider;
 
+    private KeyValueProvider<Platform, Long> platformStartUpTimeProvider;
+
     private CollectionProvider<Platform> platformProvider;
 
     private ConstantProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
@@ -107,6 +109,8 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider);
             this.loadProfileToTimeConverterProvider =
                     new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider);
+            this.platformStartUpTimeProvider =
+                    new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider);
 
             // Providers for plan enumeration.
             this.pruningStrategiesProvider = new CollectionProvider<>(this.parent.pruningStrategiesProvider);
@@ -327,6 +331,14 @@ public class Configuration {
             configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
         }
         {
+            // Safety net: provide a fallback start up costs.
+            final KeyValueProvider<Platform, Long> fallbackProvider =
+                    new FunctionalKeyValueProvider<Platform, Long>(platform -> 0L)
+                            .withSlf4jWarning("Using fallback start up cost provider.");
+            KeyValueProvider<Platform, Long> overrideProvider = new MapBasedKeyValueProvider<>(fallbackProvider);
+            configuration.setPlatformStartUpTimeProvider(overrideProvider);
+        }
+        {
             ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
                     new ConstantProvider<>(TimeEstimate.expectationValueComparator());
             ConstantProvider<Comparator<TimeEstimate>> overrideProvider =
@@ -457,6 +469,14 @@ public class Configuration {
 
     public void setInstrumentationStrategyProvider(ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider) {
         this.instrumentationStrategyProvider = instrumentationStrategyProvider;
+    }
+
+    public KeyValueProvider<Platform, Long> getPlatformStartUpTimeProvider() {
+        return this.platformStartUpTimeProvider;
+    }
+
+    public void setPlatformStartUpTimeProvider(KeyValueProvider<Platform, Long> platformStartUpTimeProvider) {
+        this.platformStartUpTimeProvider = platformStartUpTimeProvider;
     }
 
     public void setProperties(KeyValueProvider<String, String> properties) {
