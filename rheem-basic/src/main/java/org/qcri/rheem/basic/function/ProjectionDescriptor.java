@@ -18,11 +18,11 @@ public class ProjectionDescriptor<Input, Output> extends TransformationDescripto
 
     private final List<Integer> fieldIndexes;
 
-    public Boolean isProjectByIndexes() {
+    public boolean isProjectByIndexes() {
         return projectByIndexes;
     }
 
-    private Boolean projectByIndexes = false;
+    private boolean projectByIndexes = false;
 
     public ProjectionDescriptor(Class<Input> inputTypeClass,
                                 Class<Output> outputTypeClass,

@@ -18,7 +18,7 @@ public class ProjectionOperator<InputType, OutputType> extends UnaryToUnaryOpera
      */
     protected final ProjectionDescriptor<InputType, OutputType> functionDescriptor;
 
-    public Boolean isProjectByIndexes() {
+    public boolean isProjectByIndexes() {
         return functionDescriptor.isProjectByIndexes();
     }
 

@@ -1,5 +1,6 @@
 package org.qcri.rheem.postgres.compiler;
 
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 
 
@@ -38,9 +39,8 @@ public class FunctionCompiler {
             return whereClause.value();
         } catch (Exception e) {
             e.printStackTrace();
-            System.exit(1);
+            throw new RheemException("Could not compile predicate to SQL: ", e);
         }
-        return "";
     }
 
 

@@ -239,6 +239,32 @@ public class RheemPlans {
     }
 
     /**
+     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link SampleOperator}. It will
+     * then map each value to its double and output the results in the {@code collector}.
+     */
+    public static RheemPlan simpleSample(Collection<Integer> collector, final int... values)
+            throws URISyntaxException {
+        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        source.setName("source");
+
+        SampleOperator<Integer> sampleOperator = new SampleOperator<>(3, DataSetType.createDefault(Integer.class));
+        sampleOperator.setName("sample");
+
+        MapOperator<Integer, Integer> mapOperator = new MapOperator<>(n -> 2*n, Integer.class, Integer.class);
+        mapOperator.setName("map");
+
+        LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(collector, Integer.class);
+        sink.setName("sink");
+
+        source.connectTo(0, sampleOperator, 0);
+        sampleOperator.connectTo(0, mapOperator,0);
+        mapOperator.connectTo(0, sink, 0);
+
+        // Create the RheemPlan.
+        return new RheemPlan(sink);
+    }
+
+    /**
      * Creates a cross-community PageRank Rheem plan, that incorporates the {@link PageRankOperator}.
      */
     public static RheemPlan createCrossCommunityPageRank() {
@@ -554,10 +580,12 @@ public class RheemPlans {
                 new PredicateDescriptor.SerializablePredicate<Float>() {
                     @Override
                     @FunctionCompiler.SQL("salary>1000")
-                    public boolean test(Float s) {
-                        return s>1000;
+                    public boolean test(Float salary) {
+                        return salary>1000;
                     }
                 }, Float.class);
+
+        //FilterOperator<Float> filterOp = new FilterOperator<Float>(salary-> salary>1000, Float.class);
 
         TableSource table = new TableSource("employee", Tuple2.class);
         table.connectTo(0, projectionOperator, 0);
