@@ -11,8 +11,6 @@ import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
@@ -49,16 +47,6 @@ public class WordCountIT {
         // Instantiate Rheem and activate the backend.
         RheemContext rheemContext = new RheemContext();
         rheemContext.register(JavaPlatform.getInstance());
-        rheemContext.getConfiguration().getLoadProfileToTimeConverterProvider().set(
-                JavaPlatform.getInstance(),
-                LoadProfileToTimeConverter.createDefault(
-                        LoadToTimeConverter.createLinearCoverter(1d / (2700 * 1000)),
-                        LoadToTimeConverter.createLinearCoverter(2.2 / 1024 / 1024),
-                        LoadToTimeConverter.createLinearCoverter(1d / 1024 / 1024),
-                        (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
-                )
-        );
-
         TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
 
         // for each line (input) output an iterator of the words

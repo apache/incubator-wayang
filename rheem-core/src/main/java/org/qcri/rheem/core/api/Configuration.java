@@ -313,24 +313,6 @@ public class Configuration {
             configuration.setFunctionLoadProfileEstimatorProvider(overrideProvider);
         }
         {
-            // Safety net: provide a fallback converter.
-            final LoadProfileToTimeConverter fallbackConverter = LoadProfileToTimeConverter.createDefault(
-                    LoadToTimeConverter.createLinearCoverter(0.001d),
-                    LoadToTimeConverter.createLinearCoverter(0.001d),
-                    LoadToTimeConverter.createLinearCoverter(0.01d),
-                    (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
-            );
-            KeyValueProvider<Platform, LoadProfileToTimeConverter> fallbackProvider =
-                    new FunctionalKeyValueProvider<Platform, LoadProfileToTimeConverter>(
-                            platform -> fallbackConverter
-                    ).withSlf4jWarning("Using fallback load-profile-to-time converter.");
-
-            // Add provider to customize behavior on RheemContext level.
-            KeyValueProvider<Platform, LoadProfileToTimeConverter> overrideProvider =
-                    new MapBasedKeyValueProvider<>(fallbackProvider);
-            configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
-        }
-        {
             // Safety net: provide a fallback start up costs.
             final KeyValueProvider<Platform, Long> fallbackProvider =
                     new FunctionalKeyValueProvider<Platform, Long>(platform -> 0L)
@@ -420,16 +402,6 @@ public class Configuration {
 
     public void setOperatorLoadProfileEstimatorProvider(KeyValueProvider<ExecutionOperator, LoadProfileEstimator> operatorLoadProfileEstimatorProvider) {
         this.operatorLoadProfileEstimatorProvider = operatorLoadProfileEstimatorProvider;
-    }
-
-    @Deprecated
-    public KeyValueProvider<Platform, LoadProfileToTimeConverter> getLoadProfileToTimeConverterProvider() {
-        return this.loadProfileToTimeConverterProvider;
-    }
-
-    @Deprecated
-    public void setLoadProfileToTimeConverterProvider(KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider) {
-        this.loadProfileToTimeConverterProvider = loadProfileToTimeConverterProvider;
     }
 
     public KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> getFunctionLoadProfileEstimatorProvider() {

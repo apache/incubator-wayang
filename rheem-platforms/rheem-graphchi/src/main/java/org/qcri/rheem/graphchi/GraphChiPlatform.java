@@ -4,6 +4,7 @@ import edu.cmu.graphchi.io.CompressedIO;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.graphchi.channels.GraphChiChannelManager;
@@ -18,7 +19,12 @@ import java.util.LinkedList;
  */
 public class GraphChiPlatform extends Platform {
 
+    public static final String CPU_MHZ_PROPERTY = "rheem.graphchi.cpu.mhz";
+    public static final String CORES_PROPERTY = "rheem.graphchi.cores";
+    public static final String HDFS_MS_PER_MB_PROPERTY = "rheem.graphchi.hdfs.ms-per-mb";
     private static Platform instance;
+
+    private static final String DEFAULT_CONFIG_FILE = "/rheem-graphchi-defaults.properties";
 
     private final Collection<Mapping> mappings = new LinkedList<>();
 
@@ -36,7 +42,12 @@ public class GraphChiPlatform extends Platform {
         GraphChiPlatform.class.getClassLoader().setClassAssertionStatus(
                 "edu.cmu.graphchi.preprocessing.FastSharder", false);
 
+        this.initializeConfiguration();
         this.mappings.add(new PageRankMapping());
+    }
+
+    private void initializeConfiguration() {
+        Configuration.getDefaultConfiguration().load(this.getClass().getResourceAsStream(DEFAULT_CONFIG_FILE));
     }
 
     public static Platform getInstance() {
@@ -68,6 +79,14 @@ public class GraphChiPlatform extends Platform {
 
     @Override
     public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
-        throw new RuntimeException("Not yet implemented.");
+        int cpuMhz = (int) configuration.getLongProperty(CPU_MHZ_PROPERTY);
+        int numCores = (int) configuration.getLongProperty(CORES_PROPERTY);
+        double hdfsMsPerMb = configuration.getDoubleProperty(HDFS_MS_PER_MB_PROPERTY);
+        return LoadProfileToTimeConverter.createDefault(
+                LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000)),
+                LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000),
+                LoadToTimeConverter.createLinearCoverter(0),
+                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+        );
     }
 }
