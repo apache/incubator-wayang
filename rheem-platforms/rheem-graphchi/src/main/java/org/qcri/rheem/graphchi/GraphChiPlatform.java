@@ -20,11 +20,14 @@ import java.util.LinkedList;
 public class GraphChiPlatform extends Platform {
 
     public static final String CPU_MHZ_PROPERTY = "rheem.graphchi.cpu.mhz";
+
     public static final String CORES_PROPERTY = "rheem.graphchi.cores";
+
     public static final String HDFS_MS_PER_MB_PROPERTY = "rheem.graphchi.hdfs.ms-per-mb";
-    private static Platform instance;
 
     private static final String DEFAULT_CONFIG_FILE = "/rheem-graphchi-defaults.properties";
+
+    private static Platform instance;
 
     private final Collection<Mapping> mappings = new LinkedList<>();
 
