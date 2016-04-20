@@ -1,7 +1,9 @@
 package org.qcri.rheem.graphchi;
 
 import edu.cmu.graphchi.io.CompressedIO;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.graphchi.channels.GraphChiChannelManager;
@@ -62,5 +64,10 @@ public class GraphChiPlatform extends Platform {
     @Override
     protected GraphChiChannelManager createChannelManager() {
         return new GraphChiChannelManager(this);
+    }
+
+    @Override
+    public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
+        throw new RuntimeException("Not yet implemented.");
     }
 }

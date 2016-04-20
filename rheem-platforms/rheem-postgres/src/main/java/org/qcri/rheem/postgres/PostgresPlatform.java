@@ -9,8 +9,10 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Properties;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
@@ -108,5 +110,10 @@ public class PostgresPlatform extends Platform {
     @Override
     public PostgresChannelManager getChannelManager() {
         return (PostgresChannelManager) super.getChannelManager();
+    }
+
+    @Override
+    public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
+        throw new RuntimeException("Not yet implemented.");
     }
 }

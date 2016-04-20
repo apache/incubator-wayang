@@ -5,6 +5,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
 import java.util.Arrays;
+import java.util.function.ToDoubleBiFunction;
 import java.util.function.ToLongBiFunction;
 import java.util.stream.LongStream;
 
@@ -39,6 +40,13 @@ public class DefaultLoadEstimator extends LoadEstimator {
         this.numOutputs = numOutputs;
         this.correctnessProbablity = correctnessProbablity;
         this.singlePointEstimator = singlePointFunction;
+    }
+
+    /**
+     * Utility to create new instances: Rounds the results of a given estimation function.
+     */
+    public static ToLongBiFunction<long[], long[]> rounded(ToDoubleBiFunction<long[], long[]> f) {
+        return (inputCards, outputCards) -> Math.round(f.applyAsDouble(inputCards, outputCards));
     }
 
     /**

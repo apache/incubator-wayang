@@ -422,10 +422,12 @@ public class Configuration {
         this.operatorLoadProfileEstimatorProvider = operatorLoadProfileEstimatorProvider;
     }
 
+    @Deprecated
     public KeyValueProvider<Platform, LoadProfileToTimeConverter> getLoadProfileToTimeConverterProvider() {
         return this.loadProfileToTimeConverterProvider;
     }
 
+    @Deprecated
     public void setLoadProfileToTimeConverterProvider(KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider) {
         this.loadProfileToTimeConverterProvider = loadProfileToTimeConverterProvider;
     }
@@ -518,6 +520,23 @@ public class Configuration {
 
     public long getLongProperty(String key, long fallback) {
         return this.getOptionalLongProperty(key).orElse(fallback);
+    }
+
+    public OptionalDouble getOptionalDoubleProperty(String key) {
+        final Optional<String> optionalDouble = this.properties.optionallyProvideFor(key);
+        if (optionalDouble.isPresent()) {
+            return OptionalDouble.of(Double.valueOf(optionalDouble.get()));
+        } else {
+            return OptionalDouble.empty();
+        }
+    }
+
+    public double getDoubleProperty(String key) {
+        return this.getOptionalDoubleProperty(key).getAsDouble();
+    }
+
+    public double getDoubleProperty(String key, long fallback) {
+        return this.getOptionalDoubleProperty(key).orElse(fallback);
     }
 
     public Optional<Boolean> getOptionalBooleanProperty(String key) {

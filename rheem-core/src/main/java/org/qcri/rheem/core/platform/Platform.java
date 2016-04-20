@@ -1,9 +1,11 @@
 package org.qcri.rheem.core.platform;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -11,6 +13,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * A platform describes an execution engine that executes {@link ExecutionOperator}s.
@@ -93,5 +96,10 @@ public abstract class Platform {
         // Overwrite as necessary.
         return true;
     }
+
+    /**
+     * @return a default {@link LoadProfileToTimeConverter}
+     */
+    public abstract LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration);
 
 }

@@ -13,6 +13,16 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
 
     private final LoadEstimator cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator;
 
+    /**
+     * The degree to which the load profile can utilize available resources.
+     */
+    private final double resourceUtilization;
+
+    /**
+     * Milliseconds overhead that this load profile incurs.
+     */
+    private final long overheadMillis;
+
     private Collection<LoadProfileEstimator> nestedLoadEstimators = new LinkedList<>();
 
     /**
@@ -37,10 +47,31 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                                         LoadEstimator ramLoadEstimator,
                                         LoadEstimator diskLoadEstimator,
                                         LoadEstimator networkLoadEstimator) {
+        this(cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator, 1d, 0L);
+    }
+
+    /**
+     * Creates an new instance.
+     *
+     * @param cpuLoadEstimator     estimates CPU load in terms of cycles
+     * @param ramLoadEstimator     estimates RAM load in terms of bytes
+     * @param diskLoadEstimator    estimates disk accesses in terms of bytes
+     * @param networkLoadEstimator estimates network in terms of bytes
+     * @param resourceUtilization  degree to which the load profile can utilize available resources
+     * @param overheadMillis       overhead that this load profile incurs
+     */
+    public NestableLoadProfileEstimator(LoadEstimator cpuLoadEstimator,
+                                        LoadEstimator ramLoadEstimator,
+                                        LoadEstimator diskLoadEstimator,
+                                        LoadEstimator networkLoadEstimator,
+                                        double resourceUtilization,
+                                        long overheadMillis) {
         this.cpuLoadEstimator = cpuLoadEstimator;
         this.ramLoadEstimator = ramLoadEstimator;
         this.diskLoadEstimator = diskLoadEstimator;
         this.networkLoadEstimator = networkLoadEstimator;
+        this.resourceUtilization = resourceUtilization;
+        this.overheadMillis = overheadMillis;
     }
 
     public void nest(LoadProfileEstimator nestedEstimator) {
@@ -66,7 +97,14 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                 this.diskLoadEstimator.calculate(inputEstimates, outputEstimates);
         final LoadEstimate networkLoadEstimate = this.networkLoadEstimator == null ? null :
                 this.networkLoadEstimator.calculate(inputEstimates, outputEstimates);
-        return new LoadProfile(cpuLoadEstimate, ramLoadEstimate, networkLoadEstimate, diskLoadEstimate);
+        final LoadProfile loadProfile = new LoadProfile(cpuLoadEstimate, ramLoadEstimate, networkLoadEstimate, diskLoadEstimate);
+        if (this.getOverheadMillis() > 0) {
+            loadProfile.setOverheadMillis(this.getOverheadMillis());
+        }
+        if(this.getResourceUtilization() < 1d) {
+            loadProfile.setRatioMachines(this.getResourceUtilization());
+        }
+        return loadProfile;
     }
 
     private void performNestedEstimations(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates, LoadProfile mainLoadProfile) {
@@ -76,5 +114,11 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
         }
     }
 
+    public long getOverheadMillis() {
+        return this.overheadMillis;
+    }
 
+    public double getResourceUtilization() {
+        return this.resourceUtilization;
+    }
 }

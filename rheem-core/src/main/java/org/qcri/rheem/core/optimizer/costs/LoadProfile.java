@@ -28,6 +28,11 @@ public class LoadProfile {
      */
     private double ratioMachines = Double.NaN, ratioCores = Double.NaN;
 
+    /**
+     * Overhead time that occurs when working on this load profile.
+     */
+    private long overheadMillis;
+
     public LoadProfile(LoadEstimate cpuUsage,
                         LoadEstimate ramUsage,
                         LoadEstimate networkUsage,
@@ -59,14 +64,17 @@ public class LoadProfile {
         return this.diskUsage;
     }
 
+    @Deprecated
     public void setMaxCores(int maxCores) {
         this.maxCores = maxCores;
     }
 
+    @Deprecated
     public void setMaxMachines(int maxMachines) {
         this.maxMachines = maxMachines;
     }
 
+    @Deprecated
     public void setRatioCores(double ratioCores) {
         this.ratioCores = ratioCores;
     }
@@ -75,6 +83,7 @@ public class LoadProfile {
         this.ratioMachines = ratioMachines;
     }
 
+    @Deprecated
     public int getNumUsedMachines(int numAvailableMachines) {
         if (this.maxMachines != -1) {
             return Math.min(this.maxMachines, numAvailableMachines);
@@ -87,6 +96,7 @@ public class LoadProfile {
         return numAvailableMachines;
     }
 
+    @Deprecated
     public int getNumUsedCores(int numAvailableCores) {
         if (this.maxCores != -1) {
             return Math.min(this.maxCores, numAvailableCores);
@@ -99,11 +109,23 @@ public class LoadProfile {
         return numAvailableCores;
     }
 
+    public double getRatioCores() {
+        return this.ratioCores;
+    }
+
     public Collection<LoadProfile> getSubprofiles() {
         return this.subprofiles;
     }
 
     public void nest(LoadProfile subprofile) {
         this.subprofiles.add(subprofile);
+    }
+
+    public long getOverheadMillis() {
+        return this.overheadMillis;
+    }
+
+    public void setOverheadMillis(long overheadMillis) {
+        this.overheadMillis = overheadMillis;
     }
 }

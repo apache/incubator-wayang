@@ -7,11 +7,16 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
+
+import java.util.Optional;
 
 /**
  * Spark implementation of the {@link JoinOperator}.
@@ -69,5 +74,19 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
         public Tuple2<InputType0, InputType1> call(scala.Tuple2<KeyType, scala.Tuple2<InputType0, InputType1>> scalaTuple) throws Exception {
             return new Tuple2<>(scalaTuple._2._1, scalaTuple._2._2);
         }
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 170000 * (inputCards[0] + inputCards[1] + outputCards[0]) + 22725168000L),
+                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 20 * inputCards[0]),
+                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 20 * (inputCards[0] + inputCards[1] + outputCards[0]) + 430000),
+                0.3d,
+                1000
+        );
+
+        return Optional.of(mainEstimator);
     }
 }
