@@ -4,6 +4,9 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.qcri.rheem.basic.operators.SampleOperator;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
@@ -14,10 +17,7 @@ import scala.collection.convert.Wrappers;
 import scala.runtime.AbstractFunction1;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 
 /**
@@ -102,6 +102,21 @@ public class SparkShufflePartitionSampleOperator<Type>
     @Override
     protected ExecutionOperator createCopy() {
         return new SparkShufflePartitionSampleOperator<>(this.sampleSize, this.getType());
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+        // NB: This was not measured but is guesswork, adapted from SparkFilterOperator.
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                0.23d,
+                550
+        );
+
+        return Optional.of(mainEstimator);
     }
 }
 

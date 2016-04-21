@@ -1,6 +1,9 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.broadcast.Broadcast;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
@@ -8,6 +11,7 @@ import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 /**
@@ -52,5 +56,20 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
 
     public OptionalLong getMeasuredCardinality() {
         return this.measuredCardinality;
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+        // NB: This operator was not measured. The figures are based on SparkCollectionSource and SparkLocalCallbackSink.
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 5500 * outputCards[0] + 6272516800L),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 100 * outputCards[0] + 12000),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> Math.round(9.5d * inputCards[0] + 45000)),
+                0.3d,
+                3000
+        );
+
+        return Optional.of(mainEstimator);
     }
 }
