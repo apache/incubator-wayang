@@ -7,6 +7,8 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.util.RheemCollections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,6 +20,8 @@ import java.util.function.Predicate;
  * Describes the implementation of one {@link OutputSlot} to its occupied {@link InputSlot}s.
  */
 public class Junction {
+
+    private static final Logger logger = LoggerFactory.getLogger(Junction.class);
 
     private final OutputSlot<?> sourceOutput;
 
@@ -171,7 +175,11 @@ public class Junction {
                                   List<InputSlot<?>> inputSlots,
                                   OptimizationContext baseOptimizationCtx) {
         final Junction junction = new Junction(outputSlot, inputSlots, baseOptimizationCtx);
-        return junction.setUp() ? junction : null;
+        if (!junction.setUp()) {
+            logger.debug("No junction could be established between {} and {}.", outputSlot, inputSlots);
+            return null;
+        }
+        return junction;
     }
 
     public OutputSlot<?> getSourceOutput() {

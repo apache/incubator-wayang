@@ -9,6 +9,8 @@ import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.util.Canonicalizer;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,6 +21,7 @@ import java.util.stream.Stream;
  */
 public class PlanImplementation {
 
+    private static final Logger logger = LoggerFactory.getLogger(PlanImplementation.class);
 
     /**
      * {@link ExecutionOperator}s contained in this instance.
@@ -283,6 +286,9 @@ public class PlanImplementation {
                 }
         );
         final Junction junction = Junction.create(execOutputWithContext.getField0(), execInputs, this.optimizationContext);
+        if (junction == null) {
+            return null;
+        }
 
         // Delegate.
         return this.concatenate(targets, junction, execOutputWithContext.getField1(), concatenationEnumeration);
@@ -297,6 +303,7 @@ public class PlanImplementation {
                                    Junction junction,
                                    PlanImplementation outputPlanImplemtation,
                                    PlanEnumeration concatenationEnumeration) {
+
         final PlanImplementation concatenation = new PlanImplementation(
                 concatenationEnumeration,
                 new HashMap<>(this.junctions.size() + 1),
