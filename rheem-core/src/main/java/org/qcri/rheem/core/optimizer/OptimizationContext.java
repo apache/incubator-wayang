@@ -8,6 +8,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -420,8 +421,8 @@ public class OptimizationContext {
                     .provideFor(executionOperator);
             this.loadProfile = loadProfileEstimator.estimate(this);
 
-            final LoadProfileToTimeConverter timeConverter =
-                    configuration.getLoadProfileToTimeConverterProvider().provideFor(executionOperator.getPlatform());
+            final Platform platform = executionOperator.getPlatform();
+            final LoadProfileToTimeConverter timeConverter = platform.createLoadProfileToTimeConverter(configuration);
             this.timeEstimate = timeConverter.convert(this.loadProfile);
         }
 

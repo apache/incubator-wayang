@@ -7,6 +7,8 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
@@ -46,7 +48,9 @@ public class SparkPlatform extends Platform {
             "spark.kryo.classesToRegister",
             "spark.kryo.registrator",
             "spark.local.dir",
-            "spark.logConf"
+            "spark.logConf",
+            "spark.driver.host",
+            "spark.driver.port"
     };
 
     /**
@@ -160,6 +164,21 @@ public class SparkPlatform extends Platform {
         this.mappings.add(new SampleToSparkBernoulliSampleMapping());
         this.mappings.add(new SampleToSparkRandomSampleMapping());
         this.mappings.add(new SampleToSparkShuffleSampleMapping());
+    }
+
+    @Override
+    public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
+        int cpuMhz = (int) configuration.getLongProperty("rheem.spark.cpu.mhz");
+        int numMachines = (int) configuration.getLongProperty("rheem.spark.machines");
+        int numCores = (int) (numMachines * configuration.getLongProperty("rheem.spark.cores-per-machine"));
+        double hdfsMsPerMb = configuration.getDoubleProperty("rheem.spark.hdfs.ms-per-mb");
+        double networkMsPerMb = configuration.getDoubleProperty("rheem.spark.network.ms-per-mb");
+        return LoadProfileToTimeConverter.createDefault(
+                LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000)),
+                LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000),
+                LoadToTimeConverter.createLinearCoverter(networkMsPerMb / 1000000),
+                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+        );
     }
 
     @Override

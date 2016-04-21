@@ -10,7 +10,11 @@ import java.util.Comparator;
  */
 public class TimeEstimate extends ProbabilisticIntervalEstimate {
 
-    public static final TimeEstimate ZERO = new TimeEstimate(0, 0, 1d);
+    public static final TimeEstimate ZERO = new TimeEstimate(0);
+
+    public TimeEstimate(long estimate) {
+        super(estimate, estimate, 1d);
+    }
 
     public TimeEstimate(long lowerEstimate, long upperEstimate, double correctnessProb) {
         super(lowerEstimate, upperEstimate, correctnessProb);
@@ -35,5 +39,13 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
                 Formats.formatDuration(this.getLowerEstimate()),
                 Formats.formatDuration(this.getUpperEstimate()),
                 Formats.formatPercentage(this.getCorrectnessProbability()));
+    }
+
+    public TimeEstimate times(double scalar) {
+        return new TimeEstimate(
+                Math.round(this.getLowerEstimate() * scalar),
+                Math.round(this.getUpperEstimate() * scalar),
+                this.getCorrectnessProbability()
+        );
     }
 }

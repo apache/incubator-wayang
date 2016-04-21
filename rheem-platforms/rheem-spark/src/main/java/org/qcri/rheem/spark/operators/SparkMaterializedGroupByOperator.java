@@ -4,6 +4,9 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
@@ -12,6 +15,7 @@ import org.qcri.rheem.spark.platform.SparkExecutor;
 import scala.Tuple2;
 
 import java.util.Iterator;
+import java.util.Optional;
 
 
 /**
@@ -56,6 +60,20 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
             return groupWithKey._2;
         }
 
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 17000 * inputCards[0] + 6272516800L),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> Math.round(0.3 * inputCards[0] + 430000)),
+                0.09d,
+                100
+        );
+
+        return Optional.of(mainEstimator);
     }
 
 }

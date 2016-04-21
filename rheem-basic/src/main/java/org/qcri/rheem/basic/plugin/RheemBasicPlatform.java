@@ -3,10 +3,10 @@ package org.qcri.rheem.basic.plugin;
 import org.qcri.rheem.basic.mapping.GlobalReduceMapping;
 import org.qcri.rheem.basic.mapping.MaterializedGroupByMapping;
 import org.qcri.rheem.basic.mapping.ReduceByMapping;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
@@ -60,5 +60,10 @@ public class RheemBasicPlatform extends Platform {
     @Override
     public boolean isExecutable() {
         return false;
+    }
+
+    @Override
+    public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
+        throw new RuntimeException("This platform has no ExecutionOperators.");
     }
 }

@@ -15,6 +15,24 @@ public class LoadProfile {
 
     private final Collection<LoadProfile> subprofiles = new LinkedList<>();
 
+    /**
+     * If not {@code -1}, tells the maximum number of machines/cores utilized in this {@link LoadProfile}. Preferred
+     * over {@link #ratioMachines} and {@link #ratioCores}, respectively.
+     */
+    private int maxMachines = -1, maxCores = -1;
+
+
+    /**
+     * If not {@link Double#NaN}, tells the ratio of available machines/cores utilized in this {@link LoadProfile}.
+     * Only considered if {@link #maxMachines} and {@link #maxCores}, respectively, are not specified.
+     */
+    private double ratioMachines = Double.NaN, ratioCores = Double.NaN;
+
+    /**
+     * Overhead time that occurs when working on this load profile.
+     */
+    private long overheadMillis;
+
     public LoadProfile(LoadEstimate cpuUsage,
                         LoadEstimate ramUsage,
                         LoadEstimate networkUsage,
@@ -46,11 +64,68 @@ public class LoadProfile {
         return this.diskUsage;
     }
 
+    @Deprecated
+    public void setMaxCores(int maxCores) {
+        this.maxCores = maxCores;
+    }
+
+    @Deprecated
+    public void setMaxMachines(int maxMachines) {
+        this.maxMachines = maxMachines;
+    }
+
+    @Deprecated
+    public void setRatioCores(double ratioCores) {
+        this.ratioCores = ratioCores;
+    }
+
+    public void setRatioMachines(double ratioMachines) {
+        this.ratioMachines = ratioMachines;
+    }
+
+    @Deprecated
+    public int getNumUsedMachines(int numAvailableMachines) {
+        if (this.maxMachines != -1) {
+            return Math.min(this.maxMachines, numAvailableMachines);
+        }
+
+        if (!Double.isNaN(this.ratioMachines)) {
+            return (int) Math.max(1, Math.round(this.ratioMachines * numAvailableMachines));
+        }
+
+        return numAvailableMachines;
+    }
+
+    @Deprecated
+    public int getNumUsedCores(int numAvailableCores) {
+        if (this.maxCores != -1) {
+            return Math.min(this.maxCores, numAvailableCores);
+        }
+
+        if (!Double.isNaN(this.ratioCores)) {
+            return (int) Math.max(1, Math.round(this.ratioCores * numAvailableCores));
+        }
+
+        return numAvailableCores;
+    }
+
+    public double getRatioCores() {
+        return this.ratioCores;
+    }
+
     public Collection<LoadProfile> getSubprofiles() {
         return this.subprofiles;
     }
 
     public void nest(LoadProfile subprofile) {
         this.subprofiles.add(subprofile);
+    }
+
+    public long getOverheadMillis() {
+        return this.overheadMillis;
+    }
+
+    public void setOverheadMillis(long overheadMillis) {
+        this.overheadMillis = overheadMillis;
     }
 }

@@ -61,8 +61,9 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
         final FileSystem inputFs = FileSystems.getFileSystem(inputPath).get();
 
         // Create shards.
-        String graphName = File.createTempFile("rheem-graphchi", "graph").toString();
-//        String graphName = String.format("rheem-graphchi-%06x", new Random().nextInt(0xFFFFFF));
+        final File tempFile = File.createTempFile("rheem-graphchi", "graph");
+        tempFile.deleteOnExit();
+        String graphName = tempFile.toString();
         // As suggested by GraphChi, we propose to use approximately 1 shard per 1,000,000 edges.
         final int numShards = 2 + (int) inputFs.getFileSize(actualInputPath) / (10 * 1000000);
         if (!new File(ChiFilenames.getFilenameIntervals(graphName, numShards)).exists()) {

@@ -4,6 +4,9 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.ChannelExecutor;
@@ -12,6 +15,7 @@ import org.qcri.rheem.spark.platform.SparkExecutor;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Spark implementation of the {@link GlobalReduceOperator}.
@@ -50,5 +54,19 @@ public class SparkGlobalReduceOperator<Type>
     @Override
     protected ExecutionOperator createCopy() {
         return new SparkGlobalReduceOperator<>(this.getInputType(), this.getReduceDescriptor());
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 300 * inputCards[0] + 3000000000L),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 200000),
+                0.2d,
+                1000
+        );
+
+        return Optional.of(mainEstimator);
     }
 }

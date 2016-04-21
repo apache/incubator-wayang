@@ -48,6 +48,8 @@ public class Configuration {
 
     private KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider;
 
+    private KeyValueProvider<Platform, Long> platformStartUpTimeProvider;
+
     private CollectionProvider<Platform> platformProvider;
 
     private ConstantProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
@@ -107,6 +109,8 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider);
             this.loadProfileToTimeConverterProvider =
                     new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider);
+            this.platformStartUpTimeProvider =
+                    new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider);
 
             // Providers for plan enumeration.
             this.pruningStrategiesProvider = new CollectionProvider<>(this.parent.pruningStrategiesProvider);
@@ -309,22 +313,12 @@ public class Configuration {
             configuration.setFunctionLoadProfileEstimatorProvider(overrideProvider);
         }
         {
-            // Safety net: provide a fallback converter.
-            final LoadProfileToTimeConverter fallbackConverter = LoadProfileToTimeConverter.createDefault(
-                    LoadToTimeConverter.createLinearCoverter(0.001d),
-                    LoadToTimeConverter.createLinearCoverter(0.001d),
-                    LoadToTimeConverter.createLinearCoverter(0.01d),
-                    (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
-            );
-            KeyValueProvider<Platform, LoadProfileToTimeConverter> fallbackProvider =
-                    new FunctionalKeyValueProvider<Platform, LoadProfileToTimeConverter>(
-                            platform -> fallbackConverter
-                    ).withSlf4jWarning("Using fallback load-profile-to-time converter.");
-
-            // Add provider to customize behavior on RheemContext level.
-            KeyValueProvider<Platform, LoadProfileToTimeConverter> overrideProvider =
-                    new MapBasedKeyValueProvider<>(fallbackProvider);
-            configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
+            // Safety net: provide a fallback start up costs.
+            final KeyValueProvider<Platform, Long> fallbackProvider =
+                    new FunctionalKeyValueProvider<Platform, Long>(platform -> 0L)
+                            .withSlf4jWarning("Using fallback start up cost provider.");
+            KeyValueProvider<Platform, Long> overrideProvider = new MapBasedKeyValueProvider<>(fallbackProvider);
+            configuration.setPlatformStartUpTimeProvider(overrideProvider);
         }
         {
             ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
@@ -410,14 +404,6 @@ public class Configuration {
         this.operatorLoadProfileEstimatorProvider = operatorLoadProfileEstimatorProvider;
     }
 
-    public KeyValueProvider<Platform, LoadProfileToTimeConverter> getLoadProfileToTimeConverterProvider() {
-        return this.loadProfileToTimeConverterProvider;
-    }
-
-    public void setLoadProfileToTimeConverterProvider(KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider) {
-        this.loadProfileToTimeConverterProvider = loadProfileToTimeConverterProvider;
-    }
-
     public KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> getFunctionLoadProfileEstimatorProvider() {
         return this.functionLoadProfileEstimatorProvider;
     }
@@ -459,6 +445,14 @@ public class Configuration {
         this.instrumentationStrategyProvider = instrumentationStrategyProvider;
     }
 
+    public KeyValueProvider<Platform, Long> getPlatformStartUpTimeProvider() {
+        return this.platformStartUpTimeProvider;
+    }
+
+    public void setPlatformStartUpTimeProvider(KeyValueProvider<Platform, Long> platformStartUpTimeProvider) {
+        this.platformStartUpTimeProvider = platformStartUpTimeProvider;
+    }
+
     public void setProperties(KeyValueProvider<String, String> properties) {
         this.properties = properties;
     }
@@ -498,6 +492,23 @@ public class Configuration {
 
     public long getLongProperty(String key, long fallback) {
         return this.getOptionalLongProperty(key).orElse(fallback);
+    }
+
+    public OptionalDouble getOptionalDoubleProperty(String key) {
+        final Optional<String> optionalDouble = this.properties.optionallyProvideFor(key);
+        if (optionalDouble.isPresent()) {
+            return OptionalDouble.of(Double.valueOf(optionalDouble.get()));
+        } else {
+            return OptionalDouble.empty();
+        }
+    }
+
+    public double getDoubleProperty(String key) {
+        return this.getOptionalDoubleProperty(key).getAsDouble();
+    }
+
+    public double getDoubleProperty(String key, long fallback) {
+        return this.getOptionalDoubleProperty(key).orElse(fallback);
     }
 
     public Optional<Boolean> getOptionalBooleanProperty(String key) {

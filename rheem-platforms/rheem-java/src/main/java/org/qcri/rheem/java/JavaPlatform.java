@@ -1,6 +1,9 @@
 package org.qcri.rheem.java;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
@@ -18,6 +21,8 @@ public class JavaPlatform extends Platform {
 
     private static final String PLATFORM_NAME = "Java Streams";
 
+    private static final String DEFAULT_CONFIG_FILE = "/rheem-java-defaults.properties";
+
     private final Collection<Mapping> mappings = new LinkedList<>();
 
     private static JavaPlatform instance = null;
@@ -31,7 +36,12 @@ public class JavaPlatform extends Platform {
     
     private JavaPlatform() {
         super(PLATFORM_NAME);
+        this.initializeConfiguration();
         this.initializeMappings();
+    }
+
+    private void initializeConfiguration() {
+        Configuration.getDefaultConfiguration().load(this.getClass().getResourceAsStream(DEFAULT_CONFIG_FILE));
     }
 
     private void initializeMappings() {
@@ -78,5 +88,18 @@ public class JavaPlatform extends Platform {
     @Override
     public Executor.Factory getExecutorFactory() {
         return job -> new JavaExecutor(this, job);
+    }
+
+    @Override
+    public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
+        int cpuMhz = (int) configuration.getLongProperty("rheem.java.cpu.mhz");
+        int numCores = (int) configuration.getLongProperty("rheem.java.cores");
+        double hdfsMsPerMb = configuration.getDoubleProperty("rheem.java.hdfs.ms-per-mb");
+        return LoadProfileToTimeConverter.createDefault(
+                LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000)),
+                LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000),
+                LoadToTimeConverter.createLinearCoverter(0),
+                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+        );
     }
 }

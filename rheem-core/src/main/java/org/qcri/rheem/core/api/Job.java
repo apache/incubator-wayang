@@ -256,6 +256,10 @@ public class Job {
                                                      Set<Channel> openChannels,
                                                      Set<ExecutionStage> executedStages) {
 
+        executionPlans.forEach(plan ->
+                System.out.printf("Plan (estimated time: %s)\n%s\n", plan.getTimeEstimate(), plan.getOperators())
+        );
+
         return executionPlans.stream()
                 .reduce((p1, p2) -> {
                     final TimeEstimate t1 = p1.getTimeEstimate();
