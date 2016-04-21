@@ -1,5 +1,7 @@
 package org.qcri.rheem.basic.data;
 
+import org.slf4j.LoggerFactory;
+
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -26,8 +28,16 @@ public class Tuple2<T0, T1> implements Serializable {
         this.field1 = field1;
 
         String[] names = new String[]{"field0", "field1"};
-        Class [] types = new Class[]{field0.getClass(), field1.getClass()};
+        Class[] types = new Class[]{this.getClass(field0), this.getClass(field1)};
         this.schema = new RecordSchema(names, types);
+    }
+
+    private Class<?> getClass(Object o) {
+        if (o == null) {
+            LoggerFactory.getLogger(this.getClass()).warn("Cannot infer record schema of partial tuple {}.", this);
+            return Void.class;
+        }
+        return o.getClass();
     }
 
     @Override

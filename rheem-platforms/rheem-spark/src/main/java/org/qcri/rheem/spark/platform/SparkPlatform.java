@@ -48,7 +48,9 @@ public class SparkPlatform extends Platform {
             "spark.kryo.classesToRegister",
             "spark.kryo.registrator",
             "spark.local.dir",
-            "spark.logConf"
+            "spark.logConf",
+            "spark.driver.host",
+            "spark.driver.port"
     };
 
     /**

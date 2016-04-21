@@ -16,6 +16,7 @@ import java.sql.*;
 /**
  * Test the Postgres integration with Rheem.
  */
+@Ignore("Requires specific PostgreSQL installation.")
 public class PostgresIntegrationIT {
 
     private static final PostgresPlatform pg = PostgresPlatform.getInstance();
