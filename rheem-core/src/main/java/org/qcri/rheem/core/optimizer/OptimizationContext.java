@@ -60,8 +60,8 @@ public class OptimizationContext {
     /**
      * Create a new, plain instance.
      */
-    public OptimizationContext() {
-        this(null, null, null, -1);
+    public OptimizationContext(Configuration configuration) {
+        this(configuration, null, null, -1);
     }
 
     /**
@@ -422,7 +422,7 @@ public class OptimizationContext {
             this.loadProfile = loadProfileEstimator.estimate(this);
 
             final Platform platform = executionOperator.getPlatform();
-            final LoadProfileToTimeConverter timeConverter = platform.createLoadProfileToTimeConverter(configuration);
+            final LoadProfileToTimeConverter timeConverter = configuration.getLoadProfileToTimeConverterProvider().provideFor(platform);
             this.timeEstimate = timeConverter.convert(this.loadProfile);
         }
 

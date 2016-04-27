@@ -13,7 +13,6 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Optional;
 
 /**
  * A platform describes an execution engine that executes {@link ExecutionOperator}s.
@@ -45,6 +44,20 @@ public abstract class Platform {
     protected Platform(String name) {
         this.name = name;
     }
+
+    /**
+     * Registers this instances with the given {@code configuration}.
+     */
+    public void registerWith(Configuration configuration) {
+        configuration.getPlatformProvider().addToWhitelist(this);
+        this.registerChannelConversions(configuration);
+    }
+
+    /**
+     * Registers supported todo...
+     * @param configuration
+     */
+    protected abstract void registerChannelConversions(Configuration configuration);
 
     /**
      * <i>Shortcut.</i> Creates an {@link Executor} using the {@link #getExecutorFactory()}.

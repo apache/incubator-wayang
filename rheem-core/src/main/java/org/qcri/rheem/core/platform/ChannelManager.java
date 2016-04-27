@@ -1,9 +1,11 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +21,11 @@ public interface ChannelManager {
      * @return the {@link ChannelInitializer}
      */
     ChannelInitializer getChannelInitializer(ChannelDescriptor channelDescriptor);
+
+    /**
+     * @return {@link ChannelConversion}s that this instance provides
+     */
+    Collection<ChannelConversion> getChannelConversions();
 
     /**
      * Exchange the given {@link Channel} with one that is capable of inter-stage processing.

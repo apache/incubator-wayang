@@ -357,6 +357,7 @@ public abstract class Channel {
     }
 
     void setProducer(ExecutionTask producer) {
+        assert this.producerSlot == null || producer.getOperator() == this.producerSlot.getOwner();
         this.producer = producer;
     }
 

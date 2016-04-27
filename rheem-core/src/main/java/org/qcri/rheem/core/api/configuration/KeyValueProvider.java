@@ -71,6 +71,12 @@ public abstract class KeyValueProvider<Key, Value> {
         this.parent = parent;
     }
 
+    /**
+     * Log a warning in SLF4J format when using this instance to provide a value. The requested key will be passed
+     * as parameter.
+     *
+     * @return this instance
+     */
     public KeyValueProvider<Key, Value> withSlf4jWarning(String slf4jFormat) {
         this.warningSlf4jFormat = slf4jFormat;
         return this;

@@ -126,6 +126,7 @@ public class RheemCollections {
         List<T> baseList = asList(base);
         List<List<T>> powerList = new ArrayList<>();
         createPowerListAux(baseList, 0, maxElements, powerList);
+        powerList.sort((a, b) -> Integer.compare(a.size(), b.size()));
         return powerList;
     }
 

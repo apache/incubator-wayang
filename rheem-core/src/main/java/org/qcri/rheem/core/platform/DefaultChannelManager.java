@@ -3,16 +3,14 @@ package org.qcri.rheem.core.platform;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.util.Tuple;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -25,6 +23,8 @@ public abstract class DefaultChannelManager implements ChannelManager {
     private final ChannelDescriptor reusableInternalChannelDescriptor;
 
     private final ChannelDescriptor nonreusableInternalChannelDescriptor;
+
+    private final Set<ChannelConversion> channelConversions = new HashSet<>();
 
     public DefaultChannelManager(Platform platform,
                                  ChannelDescriptor reusableInternalChannelDescriptor,
@@ -182,4 +182,11 @@ public abstract class DefaultChannelManager implements ChannelManager {
         return false;
     }
 
+    @Override
+    public Collection<ChannelConversion> getChannelConversions() {
+        return this.channelConversions;
+    }
+
+    /** todo: Use */
+    protected abstract void register(ChannelConversion channelConversion);
 }

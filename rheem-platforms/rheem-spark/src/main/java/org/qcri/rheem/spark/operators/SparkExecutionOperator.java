@@ -45,4 +45,11 @@ public interface SparkExecutionOperator extends ExecutionOperator {
         return this.getPlatform().getChannelManager().getAllSupportedChannels();
     }
 
+    /**
+     * @return whether the Spark operation that is being wrapped by this instance is creating a result in the driver
+     */
+    default boolean isDriverBound() {
+        return false;
+    }
+
 }

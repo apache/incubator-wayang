@@ -9,6 +9,7 @@ import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.DefaultChannelManager;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -57,6 +58,9 @@ public class SparkChannelManager extends DefaultChannelManager {
                 new HdfsFileInitializer(),
                 (channel, sparkExecutor) -> new HdfsFileInitializer.Executor((FileChannel) channel),
                 true, false);
+        this.addChannel(CollectionChannel.DESCRIPTOR,
+                (channel, sparkExecutor) -> new CollectionChannel.Initializer(),
+                true, false));
     }
 
     private void addChannel(ChannelDescriptor channelClass,

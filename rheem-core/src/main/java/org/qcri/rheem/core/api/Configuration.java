@@ -316,9 +316,30 @@ public class Configuration {
             // Safety net: provide a fallback start up costs.
             final KeyValueProvider<Platform, Long> fallbackProvider =
                     new FunctionalKeyValueProvider<Platform, Long>(platform -> 0L)
-                            .withSlf4jWarning("Using fallback start up cost provider.");
+                            .withSlf4jWarning("Using fallback start up cost provider for {}.");
             KeyValueProvider<Platform, Long> overrideProvider = new MapBasedKeyValueProvider<>(fallbackProvider);
             configuration.setPlatformStartUpTimeProvider(overrideProvider);
+        }
+        {
+            // Safety net: provide a fallback start up costs.
+            final KeyValueProvider<Platform, LoadProfileToTimeConverter> fallbackProvider =
+                    new FunctionalKeyValueProvider<Platform, LoadProfileToTimeConverter>(
+                            platform -> LoadProfileToTimeConverter.createDefault(
+                                    LoadToTimeConverter.createLinearCoverter(0.0000005), // 1 CPU with 2 GHz
+                                    LoadToTimeConverter.createLinearCoverter(0.00001), // 10 ms to read/write 1 MB
+                                    LoadToTimeConverter.createLinearCoverter(0.00001),  // 10 ms to receive/send 1 MB
+                                    (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+                            )
+                    )
+                            .withSlf4jWarning("Using fallback load-to-time converter for {}.");
+            final KeyValueProvider<Platform, LoadProfileToTimeConverter> defaultProvider =
+                    new FunctionalKeyValueProvider<>(
+                            fallbackProvider,
+                            platform -> platform.createLoadProfileToTimeConverter(configuration) // todo
+                    );
+            final KeyValueProvider<Platform, LoadProfileToTimeConverter> overrideProvider =
+                    new MapBasedKeyValueProvider<>(defaultProvider);
+            configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
         }
         {
             ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
@@ -475,6 +496,14 @@ public class Configuration {
 
     public String getStringProperty(String key, String fallback) {
         return this.getOptionalStringProperty(key).orElse(fallback);
+    }
+
+    public KeyValueProvider<Platform, LoadProfileToTimeConverter> getLoadProfileToTimeConverterProvider() {
+        return this.loadProfileToTimeConverterProvider;
+    }
+
+    public void setLoadProfileToTimeConverterProvider(KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider) {
+        this.loadProfileToTimeConverterProvider = loadProfileToTimeConverterProvider;
     }
 
     public OptionalLong getOptionalLongProperty(String key) {
