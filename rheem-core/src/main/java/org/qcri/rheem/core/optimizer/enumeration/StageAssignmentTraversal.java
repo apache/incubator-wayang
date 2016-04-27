@@ -600,11 +600,12 @@ public class StageAssignmentTraversal {
                     if (!isInterStageRequired) continue;
                     this.outboundTasks.add(task);
                     if (outputChannel.isInterStageCapable()) continue;
-                    if (!task.getOperator().getPlatform().getChannelManager()
-                            .exchangeWithInterstageCapable(outputChannel)) {
-                        StageAssignmentTraversal.this.logger.warn("Could not exchange {} with an interstage-capable channel.",
-                                outputChannel);
-                    }
+                    // TODO: We cannot "exchange" Channels so easily any more.
+//                    if (!task.getOperator().getPlatform().getChannelManager()
+//                            .exchangeWithInterstageCapable(outputChannel)) {
+//                        StageAssignmentTraversal.this.logger.warn("Could not exchange {} with an interstage-capable channel.",
+//                                outputChannel);
+//                    }
                 }
             }
 

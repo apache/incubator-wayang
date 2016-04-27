@@ -47,6 +47,13 @@ public abstract class ChannelConversion {
         return this.targetChannelDescriptor;
     }
 
+    /**
+     * Estimate the required time to carry out the conversion for a given {@code cardinality}.
+     *
+     * @param cardinality   the {@link CardinalityEstimate} of data to be converted
+     * @param configuration provides estimators
+     * @return the {@link TimeEstimate}
+     */
     public abstract TimeEstimate estimateConversionTime(CardinalityEstimate cardinality, Configuration configuration);
 
     @Override

@@ -10,10 +10,8 @@ import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Predicate;
 
 /**
@@ -47,92 +45,8 @@ public class Junction {
         this.targetChannels = RheemCollections.map(this.targetInputs, input -> null);
     }
 
-    /**
-     * Algorithm to negotiate about best {@link Channel}s between the {@link #sourceOutput} and the
-     * {@link #targetInputs}. The below describes the interplay with a {@link DefaultChannelManager}.
-     * <p>
-     * <p>We assume a 1/3 layer-model is the solution to this problem:
-     * <ul>
-     * <li>internal {@link Channel} only if available</li>
-     * <li>internal->external->internal {@link Channel} if only external {@link Channel}s possible</li>
-     * </ul>
-     * </p>
-     * <p>
-     * <p>The negotiation algorithm works as follows:
-     * <ol>
-     * <li>Negotiate on best {@link Channel} for each {@link InputSlot}.</li>
-     * <li>Find out if we need a reusable internal {@link Channel} on the source side.</li>
-     * <li>Set up this internal {@link Channel} and register with appropriate {@link #targetInputs}.</li>
-     * <li>Set up each required external {@link Channel} based on the internal {@link Channel}.</li>
-     * <li>Set up internal target {@link Channel}s based on the external {@link Channel}.</li>
-     * </ol>
-     * </p>
-     * <p>
-     * NB: We do not merge external consumers with the same Platform. We could in fact set up a single internal
-     * Channel for them, but how do we know, if they will belong to the same PlatformExecution?
-     * </p>
-     *
-     * @return whether the setup was successful
-     */
-    public boolean setUp() {
-        // Find the best-matching ChannelDescriptor for each InputSlot.
-        List<ChannelDescriptor> preferredChannelDescriptors = this.getPreferredChannelDescriptors();
-        if (preferredChannelDescriptors == null) return false;
-
-        // Set up the "source side" of the junction.
-        final ChannelManager sourceChannelManager = this.getSourceChannelManager();
-        final Map<ChannelDescriptor, Channel> externalChannels =
-                sourceChannelManager.setUpSourceSide(this, preferredChannelDescriptors, this.localOptimizationContext);
-        if (externalChannels == null) return false;
-
-        // Set up remaining connections that go via external Channels.
-        for (int targetIndex = 0; targetIndex < this.targetChannels.size(); targetIndex++) {
-            final ChannelDescriptor extChannelDescriptor = preferredChannelDescriptors.get(targetIndex);
-            if (extChannelDescriptor.isInternal()) continue;
-
-            final Channel externalChannel = externalChannels.get(extChannelDescriptor);
-            assert externalChannel != null;
-            final ChannelManager targetChannelManager = this.getTargetChannelManager(targetIndex);
-            targetChannelManager.setUpTargetSide(this, targetIndex, externalChannel, this.localOptimizationContext);
-        }
-
-        // TODO: We could do a post-processing of the plan, once we have settled the PlatformExecution.
-
-        return true;
-    }
-
-    /**
-     * Finds the preferred {@link ChannelDescriptor} between the {@link #sourceOutput} and each {@link #targetInputs}
-     * or {@code null} if not all {@link #targetInputs} can be connected.
-     */
-    private List<ChannelDescriptor> getPreferredChannelDescriptors() {
-        final List<ChannelDescriptor> supportedOutputChannels = this.getSourceOperator()
-                .getSupportedOutputChannels(this.sourceOutput.getIndex());
-        List<ChannelDescriptor> preferredChannelDescriptors = new ArrayList<>(this.targetInputs.size());
-        for (InputSlot<?> inputSlot : this.targetInputs) {
-            final ExecutionOperator targetOperator = (ExecutionOperator) inputSlot.getOwner();
-            final List<ChannelDescriptor> supportedInputChannels = targetOperator.getSupportedInputChannels(inputSlot.getIndex());
-
-            ChannelDescriptor preferredChannelDescriptor = this.pickChannelDescriptor(supportedOutputChannels, supportedInputChannels);
-            if (preferredChannelDescriptor == null) {
-                return null;
-            } else {
-                preferredChannelDescriptors.add(preferredChannelDescriptor);
-            }
-        }
-        return preferredChannelDescriptors;
-    }
-
-    public ChannelManager getSourceChannelManager() {
-        return ((ExecutionOperator) this.sourceOutput.getOwner()).getPlatform().getChannelManager();
-    }
-
     public ExecutionOperator getSourceOperator() {
         return (ExecutionOperator) this.sourceOutput.getOwner();
-    }
-
-    public ChannelManager getTargetChannelManager(int targetIndex) {
-        return this.getTargetOperator(targetIndex).getPlatform().getChannelManager();
     }
 
     public ExecutionOperator getTargetOperator(int targetIndex) {
@@ -169,17 +83,6 @@ public class Junction {
             }
         }
         return null;
-    }
-
-    public static Junction create(OutputSlot<?> outputSlot,
-                                  List<InputSlot<?>> inputSlots,
-                                  OptimizationContext baseOptimizationCtx) {
-        final Junction junction = new Junction(outputSlot, inputSlots, baseOptimizationCtx);
-        if (!junction.setUp()) {
-            logger.debug("No junction could be established between {} and {}.", outputSlot, inputSlots);
-            return null;
-        }
-        return junction;
     }
 
     public OutputSlot<?> getSourceOutput() {

@@ -8,7 +8,10 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Junction;
-import org.qcri.rheem.core.test.*;
+import org.qcri.rheem.core.test.DummyExecutionOperator;
+import org.qcri.rheem.core.test.DummyExternalReusableChannel;
+import org.qcri.rheem.core.test.DummyNonReusableChannel;
+import org.qcri.rheem.core.test.DummyReusableChannel;
 
 import java.util.Arrays;
 import java.util.function.Supplier;
@@ -89,8 +92,7 @@ public class ChannelConversionGraphTest {
         channelConversionGraph.findMinimumCostJunction(
                 sourceOperator.getOutput(0),
                 Arrays.asList(destOperator0.getInput(0), destOperator1.getInput(0)),
-                optimizationContext,
-                configuration
+                optimizationContext
         );
     }
 
@@ -118,8 +120,7 @@ public class ChannelConversionGraphTest {
         Junction junction = channelConversionGraph.findMinimumCostJunction(
                 sourceOperator.getOutput(0),
                 Arrays.asList(destOperator0.getInput(0), destOperator1.getInput(0)),
-                optimizationContext,
-                configuration
+                optimizationContext
         );
     }
 
@@ -147,8 +148,7 @@ public class ChannelConversionGraphTest {
         Junction junction = channelConversionGraph.findMinimumCostJunction(
                 sourceOperator.getOutput(0),
                 Arrays.asList(destOperator0.getInput(0), destOperator1.getInput(0)),
-                optimizationContext,
-                configuration
+                optimizationContext
         );
     }
 
