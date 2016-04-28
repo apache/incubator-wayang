@@ -4,7 +4,7 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
@@ -89,13 +89,13 @@ public abstract class OperatorProfiler {
      */
     protected abstract long executeOperator();
 
-    protected static ChannelExecutor createChannelExecutor(final Collection<?> collection) {
-        final ChannelExecutor channelExecutor = createChannelExecutor();
+    protected static JavaChannelInstance createChannelExecutor(final Collection<?> collection) {
+        final JavaChannelInstance channelExecutor = createChannelExecutor();
         channelExecutor.acceptCollection(collection);
         return channelExecutor;
     }
 
-    protected static ChannelExecutor createChannelExecutor() {
+    protected static JavaChannelInstance createChannelExecutor() {
         final ChannelDescriptor channelDescriptor = StreamChannel.DESCRIPTOR;
         final StreamChannel streamChannel = new StreamChannel(channelDescriptor, null);
         return JavaPlatform.getInstance().getChannelManager().createChannelExecutor(streamChannel);

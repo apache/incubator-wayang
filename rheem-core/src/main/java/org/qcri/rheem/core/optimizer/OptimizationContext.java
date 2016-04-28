@@ -410,9 +410,8 @@ public class OptimizationContext {
          * Update the {@link LoadProfile} and {@link TimeEstimate} of this instance.
          *
          * @param configuration provides the necessary functions
-         * @deprecated Use {@link #updateTimeEstimate()}.
          */
-        public void updateTimeEstimate(Configuration configuration) {
+        private void updateTimeEstimate(Configuration configuration) {
             if (!this.operator.isExecutionOperator()) return;
 
             final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;

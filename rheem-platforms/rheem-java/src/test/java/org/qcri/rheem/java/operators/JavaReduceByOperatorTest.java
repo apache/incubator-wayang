@@ -7,8 +7,7 @@ import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.TestChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -19,7 +18,7 @@ import java.util.stream.Stream;
 /**
  * Test suite for {@link JavaReduceByOperator}.
  */
-public class JavaReduceByOperatorTest {
+public class JavaReduceByOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
     public void testExecution() {
@@ -43,8 +42,8 @@ public class JavaReduceByOperatorTest {
                                 DataUnitType.createBasicUnchecked(Tuple2.class)
                         ));
 
-        ChannelExecutor[] inputs = new ChannelExecutor[]{new TestChannelExecutor(inputStream)};
-        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+        JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
+        JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
 
         // Execute the reduce operator.
         reduceByOperator.evaluate(inputs, outputs, new FunctionCompiler());

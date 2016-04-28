@@ -2,6 +2,7 @@ package org.qcri.rheem.core.plan.executionplan.test;
 
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 
 /**
  * {@link Channel} implementation that can be used for test purposes.
@@ -22,5 +23,10 @@ public class TestChannel extends Channel {
         throw new RuntimeException("Not implemented.");
     }
 
+
+    @Override
+    public ChannelInstance createInstance() {
+        throw new UnsupportedOperationException();
+    }
 
 }

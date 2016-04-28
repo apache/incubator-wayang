@@ -8,15 +8,16 @@ import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.Collection;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Java implementation of the {@link LoopOperator}.
@@ -40,14 +41,14 @@ public class JavaLoopOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
+    public void open(JavaChannelInstance[] inputs, FunctionCompiler compiler) {
         final Predicate<Collection<ConvergenceType>> udf = compiler.compile(this.criterionDescriptor);
         JavaExecutor.openFunction(this, udf, inputs);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -55,20 +56,20 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         boolean endloop = false;
 
         final Collection<ConvergenceType> convergenceCollection;
-        final ChannelExecutor input;
+        final JavaChannelInstance input;
         switch (this.getState()) {
             case NOT_STARTED:
                 assert inputs[INITIAL_INPUT_INDEX] != null;
                 assert inputs[INITIAL_CONVERGENCE_INPUT_INDEX] != null;
 
                 input = inputs[INITIAL_INPUT_INDEX];
-                convergenceCollection = getAsCollection(inputs[INITIAL_CONVERGENCE_INPUT_INDEX]);
+                convergenceCollection = ((CollectionChannel.Instance) inputs[INITIAL_CONVERGENCE_INPUT_INDEX]).provideCollection();
                 break;
             case RUNNING:
                 assert inputs[ITERATION_INPUT_INDEX] != null;
                 assert inputs[ITERATION_CONVERGENCE_INPUT_INDEX] != null;
 
-                convergenceCollection = getAsCollection(inputs[ITERATION_CONVERGENCE_INPUT_INDEX]);
+                convergenceCollection = ((CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX]).provideCollection();
                 endloop = stoppingCondition.test(convergenceCollection);
                 input = inputs[ITERATION_INPUT_INDEX];
                 break;
@@ -86,29 +87,15 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
             forward(input, outputs[ITERATION_OUTPUT_INDEX]);
-            // We do not use forward(...) because we might not be able to consume the input ChannelExecutor twice.
-            outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX].acceptCollection(convergenceCollection);
+            // We do not use forward(...) because we might not be able to consume the input JavaChannelInstance twice.
+            ((CollectionChannel.Instance) outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]).accept(convergenceCollection);
             this.setState(State.RUNNING);
         }
     }
 
-    /**
-     * Provides the content of the {@code channelExecutor} as a {@link Collection}.
-     */
-    private static <T> Collection<T> getAsCollection(ChannelExecutor channelExecutor) {
-        if (channelExecutor.canProvideCollection()) {
-            return channelExecutor.provideCollection();
-        } else {
-            return channelExecutor.<T>provideStream().collect(Collectors.toList());
-        }
-    }
 
-    private static void forward(ChannelExecutor source, ChannelExecutor target) {
-        if (source.canProvideCollection()) {
-            target.acceptCollection(source.provideCollection());
-        } else {
-            target.acceptStream(source.provideStream());
-        }
+    private void forward(JavaChannelInstance input, JavaChannelInstance output) {
+        ((StreamChannel.Instance) output).accept(input.provideStream());
     }
 
 
@@ -127,5 +114,35 @@ public class JavaLoopOperator<InputType, ConvergenceType>
     protected ExecutionOperator createCopy() {
         return new JavaLoopOperator<>(this.getInputType(), this.getConvergenceType(),
                 this.getCriterionDescriptor().getJavaImplementation());
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        switch (index) {
+            case INITIAL_INPUT_INDEX:
+            case ITERATION_INPUT_INDEX:
+                return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
+            case INITIAL_CONVERGENCE_INPUT_INDEX:
+            case ITERATION_CONVERGENCE_INPUT_INDEX:
+                return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+            default:
+                throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
+        }
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        switch (index) {
+            case ITERATION_OUTPUT_INDEX:
+            case FINAL_OUTPUT_INDEX:
+                return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
+            case INITIAL_CONVERGENCE_INPUT_INDEX:
+            case ITERATION_CONVERGENCE_INPUT_INDEX:
+                return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+            default:
+                throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
+        }        // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
     }
 }

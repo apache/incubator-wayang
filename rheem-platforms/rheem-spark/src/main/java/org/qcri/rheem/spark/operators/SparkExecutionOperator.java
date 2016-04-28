@@ -32,19 +32,6 @@ public interface SparkExecutionOperator extends ExecutionOperator {
      */
     void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor);
 
-    @Override
-    default List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        final InputSlot<?> input = this.getInput(index);
-        return input.isBroadcast() ?
-                this.getPlatform().getChannelManager().getSupportedBroadcastChannels() :
-                this.getPlatform().getChannelManager().getSupportedChannels();
-    }
-
-    @Override
-    default List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        return this.getPlatform().getChannelManager().getAllSupportedChannels();
-    }
-
     /**
      * @return whether the Spark operation that is being wrapped by this instance is creating a result in the driver
      */

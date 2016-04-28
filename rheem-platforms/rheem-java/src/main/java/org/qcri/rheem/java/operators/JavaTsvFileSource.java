@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.apache.commons.io.IOUtils;
+import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.exception.RheemException;
@@ -10,11 +11,13 @@ import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.slf4j.LoggerFactory;
 
@@ -22,10 +25,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.OptionalLong;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -45,18 +45,16 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
     }
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
         assert outputs.length == this.getNumOutputs();
 
         final String actualInputPath = FileSystems.findActualSingleInputPath(this.sourcePath);
         Stream<T> stream = this.createStream(actualInputPath);
-        outputs[0].acceptStream(stream);
+        ((StreamChannel.Instance) outputs[0]).accept(stream);
     }
 
     private Stream<T> createStream(String path) {
-        Function<String, T> parser = (line) -> {
-            return lineParse(line);
-        };
+        Function<String, T> parser = this::lineParse;
 
         return this.streamLines(path).map(parser);
     }
@@ -169,6 +167,17 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
     @Override
     protected ExecutionOperator createCopy() {
         return new JavaTsvFileSource<>(this.sourcePath, this.getType());
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
 }

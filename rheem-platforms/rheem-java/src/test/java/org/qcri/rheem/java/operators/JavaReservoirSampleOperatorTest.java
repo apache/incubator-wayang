@@ -3,8 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.TestChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +13,7 @@ import java.util.stream.Stream;
 /**
  * Test suite for {@link JavaReservoirSampleOperator}.
  */
-public class JavaReservoirSampleOperatorTest {
+public class JavaReservoirSampleOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
     public void testExecution() {
@@ -30,8 +29,8 @@ public class JavaReservoirSampleOperatorTest {
                         DataSetType.createDefaultUnchecked(Integer.class)
                 );
 
-        ChannelExecutor[] inputs = new ChannelExecutor[]{new TestChannelExecutor(inputStream)};
-        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+        JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
+        JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
 
         // Execute.
         sampleOperator.evaluate(inputs, outputs, null);

@@ -1,13 +1,11 @@
 package org.qcri.rheem.profiler.java;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.function.Supplier;
 
 /**
@@ -15,7 +13,7 @@ import java.util.function.Supplier;
  */
 public abstract class SourceProfiler extends OperatorProfiler {
 
-    private ChannelExecutor outputChannelExecutor;
+    private JavaChannelInstance outputChannelExecutor;
 
     public SourceProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?>... dataQuantumGenerators) {
         super(operatorGenerator, dataQuantumGenerators);
@@ -44,8 +42,8 @@ public abstract class SourceProfiler extends OperatorProfiler {
     @Override
     protected long executeOperator() {
         this.operator.evaluate(
-                new ChannelExecutor[]{},
-                new ChannelExecutor[]{this.outputChannelExecutor},
+                new JavaChannelInstance[]{},
+                new JavaChannelInstance[]{this.outputChannelExecutor},
                 new FunctionCompiler()
         );
         return this.outputChannelExecutor.provideStream().count();

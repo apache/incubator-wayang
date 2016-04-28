@@ -6,8 +6,8 @@ import org.qcri.rheem.basic.mapping.ReduceByMapping;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 
@@ -53,13 +53,12 @@ public class RheemBasicPlatform extends Platform {
     }
 
     @Override
-    protected ChannelManager createChannelManager() {
-        return null;
+    public boolean isExecutable() {
+        return false;
     }
 
     @Override
-    public boolean isExecutable() {
-        return false;
+    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
     }
 
     @Override

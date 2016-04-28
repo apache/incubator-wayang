@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.slf4j.Logger;
@@ -372,4 +373,9 @@ public abstract class Channel {
     public Set<Channel> getSiblings() {
         return this.siblings;
     }
+
+    /**
+     * Create a {@link ChannelInstance} for this instance.
+     */
+    public abstract ChannelInstance createInstance();
 }

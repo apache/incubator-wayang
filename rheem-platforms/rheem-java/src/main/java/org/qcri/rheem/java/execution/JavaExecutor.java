@@ -8,8 +8,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
 import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.JavaChannelManager;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
@@ -19,7 +18,7 @@ import java.util.List;
 /**
  * {@link Executor} implementation for the {@link JavaPlatform}.
  */
-public class JavaExecutor extends PushExecutorTemplate<ChannelExecutor> {
+public class JavaExecutor extends PushExecutorTemplate<JavaChannelInstance> {
 
     private final JavaPlatform platform;
 
@@ -36,22 +35,22 @@ public class JavaExecutor extends PushExecutorTemplate<ChannelExecutor> {
     }
 
     @Override
-    protected void open(ExecutionTask task, List<ChannelExecutor> inputChannelInstances) {
+    protected void open(ExecutionTask task, List<JavaChannelInstance> inputChannelInstances) {
         cast(task.getOperator()).open(toArray(inputChannelInstances), this.compiler);
     }
 
     @Override
-    protected List<ChannelExecutor> execute(ExecutionTask task, List<ChannelExecutor> inputChannelInstances, boolean isForceExecution) {
+    protected List<JavaChannelInstance> execute(ExecutionTask task, List<JavaChannelInstance> inputChannelInstances, boolean isForceExecution) {
         // Provide the ChannelExecutors for the output of the task.
-        final ChannelExecutor[] outputChannelExecutors = this.createOutputChannelExecutors(task);
+        final JavaChannelInstance[] outputChannelExecutors = this.createOutputChannelExecutors(task);
 
         // Execute.
         cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelExecutors, this.compiler);
 
         // Force execution if necessary.
         if (isForceExecution) {
-            for (ChannelExecutor outputChannelExecutor : outputChannelExecutors) {
-                if (outputChannelExecutor == null || !outputChannelExecutor.ensureExecution()) {
+            for (JavaChannelInstance outputChannelExecutor : outputChannelExecutors) {
+                if (outputChannelExecutor == null || !outputChannelExecutor.getChannel().isReusable()) {
                     this.logger.warn("Execution of {} might not have been enforced properly. " +
                             "This might break the execution or cause side-effects with the re-optimization.",
                             task);
@@ -63,12 +62,11 @@ public class JavaExecutor extends PushExecutorTemplate<ChannelExecutor> {
     }
 
 
-    private ChannelExecutor[] createOutputChannelExecutors(ExecutionTask task) {
-        final JavaChannelManager channelManager = this.getPlatform().getChannelManager();
-        ChannelExecutor[] channelExecutors = new ChannelExecutor[task.getNumOuputChannels()];
+    private JavaChannelInstance[] createOutputChannelExecutors(ExecutionTask task) {
+        JavaChannelInstance[] channelExecutors = new JavaChannelInstance[task.getNumOuputChannels()];
         for (int outputIndex = 0; outputIndex < channelExecutors.length; outputIndex++) {
             final Channel outputChannel = task.getOutputChannel(outputIndex);
-            channelExecutors[outputIndex] = channelManager.createChannelExecutor(outputChannel);
+            channelExecutors[outputIndex] = (JavaChannelInstance) outputChannel.createInstance();
         }
         return channelExecutors;
     }
@@ -77,12 +75,12 @@ public class JavaExecutor extends PushExecutorTemplate<ChannelExecutor> {
         return (JavaExecutionOperator) executionOperator;
     }
 
-    private static ChannelExecutor[] toArray(List<ChannelExecutor> channelExecutors) {
-        final ChannelExecutor[] array = new ChannelExecutor[channelExecutors.size()];
+    private static JavaChannelInstance[] toArray(List<JavaChannelInstance> channelExecutors) {
+        final JavaChannelInstance[] array = new JavaChannelInstance[channelExecutors.size()];
         return channelExecutors.toArray(array);
     }
 
-    public static void openFunction(JavaExecutionOperator operator, Object function, ChannelExecutor[] inputs) {
+    public static void openFunction(JavaExecutionOperator operator, Object function, JavaChannelInstance[] inputs) {
         if (function instanceof ExtendedFunction) {
             ExtendedFunction extendedFunction = (ExtendedFunction) function;
             extendedFunction.open(new JavaExecutionContext(operator, inputs));

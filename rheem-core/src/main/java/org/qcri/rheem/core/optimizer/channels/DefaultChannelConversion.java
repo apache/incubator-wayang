@@ -10,6 +10,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 /**
@@ -17,31 +18,43 @@ import java.util.function.Supplier;
  */
 public class DefaultChannelConversion extends ChannelConversion {
 
-    private final Supplier<ExecutionOperator> executionOperatorFactory;
+    private final BiFunction<Channel, Configuration, ExecutionOperator> executionOperatorFactory;
 
     public DefaultChannelConversion(
             ChannelDescriptor sourceChannelDescriptor,
             ChannelDescriptor targetChannelDescriptor,
             Supplier<ExecutionOperator> executionOperatorFactory) {
+        this(
+                sourceChannelDescriptor,
+                targetChannelDescriptor,
+                (sourceChannel, configuration) -> executionOperatorFactory.get()
+        );
+    }
+
+    public DefaultChannelConversion(
+            ChannelDescriptor sourceChannelDescriptor,
+            ChannelDescriptor targetChannelDescriptor,
+            BiFunction<Channel, Configuration, ExecutionOperator> executionOperatorFactory) {
         super(sourceChannelDescriptor, targetChannelDescriptor);
         this.executionOperatorFactory = executionOperatorFactory;
     }
 
     @Override
     public Channel convert(Channel sourceChannel, Configuration configuration) {
-        final ExecutionOperator executionOperator = this.executionOperatorFactory.get();
+        final ExecutionOperator executionOperator = this.executionOperatorFactory.apply(sourceChannel, configuration);
         assert executionOperator.getNumInputs() <= 1 && executionOperator.getNumOutputs() <= 1;
 
         final ExecutionTask task = new ExecutionTask(executionOperator, 1, 1);
         sourceChannel.addConsumer(task, 0);
         final Channel outputChannel = task.initializeOutputChannel(0, configuration);
+        sourceChannel.addSibling(outputChannel);
         return outputChannel;
     }
 
     @Override
     public TimeEstimate estimateConversionTime(CardinalityEstimate cardinality, Configuration configuration) {
         // Create OperatorContext.
-        final ExecutionOperator executionOperator = this.executionOperatorFactory.get();
+        final ExecutionOperator executionOperator = this.executionOperatorFactory.apply(null, configuration);
         final OptimizationContext optimizationContext = new OptimizationContext(configuration);
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(executionOperator);
 

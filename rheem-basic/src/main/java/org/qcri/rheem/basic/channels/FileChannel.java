@@ -3,19 +3,29 @@ package org.qcri.rheem.basic.channels;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.util.fs.FileSystem;
+import org.qcri.rheem.core.util.fs.FileSystems;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Represents a {@link Channel} that is realized via a file/set of files.
  */
 public class FileChannel extends Channel {
+
+    public static final FileChannel.Descriptor HDFS_TSV_DESCRIPTOR = new FileChannel.Descriptor("hdfs", "tsv");
+
+    public static final FileChannel.Descriptor HDFS_OBJECT_FILE_DESCRIPTOR = new FileChannel.Descriptor("hdfs", "object-file");
 
     private static final boolean IS_REUSABLE = true;
 
@@ -80,6 +90,11 @@ public class FileChannel extends Channel {
         return (FileChannel.Descriptor) super.getDescriptor();
     }
 
+    @Override
+    public ChannelInstance createInstance() {
+        return new Instance();
+    }
+
     /**
      * {@link ChannelDescriptor} for {@link FileChannel}s.
      */
@@ -131,6 +146,29 @@ public class FileChannel extends Channel {
         @Override
         public int hashCode() {
             return Objects.hash(super.hashCode(), this.location, this.serialization);
+        }
+    }
+
+    /**
+     * {@link ChannelInstance} implementation for {@link FileChannel}s.
+     */
+    public class Instance extends AbstractChannelInstance {
+
+        public FileChannel getChannel() {
+            return FileChannel.this;
+        }
+
+        @Override
+        public void tryToRelease() throws RheemException {
+            final String path = this.getChannel().getSinglePath();
+            final Optional<FileSystem> fileSystemOptional = FileSystems.getFileSystem(path);
+            fileSystemOptional.ifPresent(fs -> {
+                try {
+                    fs.delete(path, true);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
         }
     }
 }

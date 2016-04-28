@@ -4,8 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.TestChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
@@ -20,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * Test suite for {@link JavaObjectFileSource}.
  */
-public class JavaObjectFileSourceTest {
+public class JavaObjectFileSourceTest extends JavaExecutionOperatorTestBase {
 
     @Test
     public void testReading() throws IOException {
@@ -33,8 +32,8 @@ public class JavaObjectFileSourceTest {
 
 
             // Execute.
-            ChannelExecutor[] inputs = new ChannelExecutor[]{};
-            ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+            JavaChannelInstance[] inputs = new JavaChannelInstance[]{};
+            JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
             source.evaluate(inputs, outputs, new FunctionCompiler());
 
             // Verify.

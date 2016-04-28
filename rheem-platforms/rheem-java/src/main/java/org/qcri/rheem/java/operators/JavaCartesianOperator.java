@@ -8,13 +8,15 @@ import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
-import java.util.Collection;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,24 +36,25 @@ public class JavaCartesianOperator<InputType0, InputType1>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
         if (inputs.length != 2) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }
 
-        if (inputs[0].canProvideCollection()) {
-            final Collection<InputType0> collection = inputs[0].provideCollection();
+        StreamChannel.Instance outputChannel = (StreamChannel.Instance) outputs[0];
+        if (inputs[0] instanceof CollectionChannel.Instance) {
+            final Collection<InputType0> collection = ((CollectionChannel.Instance) inputs[0]).provideCollection();
             final Stream<InputType1> stream = inputs[1].provideStream();
-            outputs[0].acceptStream(stream.flatMap(e1 -> collection.stream().map(e0 -> new Tuple2<InputType0, InputType1>(e0, e1))));
-        } else if (inputs[1].canProvideCollection()) {
+            outputChannel.accept(stream.flatMap(e1 -> collection.stream().map(e0 -> new Tuple2<InputType0, InputType1>(e0, e1))));
+        } else if (inputs[1] instanceof CollectionChannel.Instance) {
             final Stream<InputType0> stream = inputs[0].provideStream();
-            final Collection<InputType1> collection = inputs[1].provideCollection();
-            outputs[0].acceptStream(stream.flatMap(e0 -> collection.stream().map(e1 -> new Tuple2<InputType0, InputType1>(e0, e1))));
+            final Collection<InputType1> collection = ((CollectionChannel.Instance) inputs[1]).provideCollection();
+            outputChannel.accept(stream.flatMap(e0 -> collection.stream().map(e1 -> new Tuple2<InputType0, InputType1>(e0, e1))));
         } else {
             // Fallback: Materialize one side.
             final Collection<InputType0> collection = (Collection<InputType0>) inputs[0].provideStream().collect(Collectors.toList());
             final Stream<InputType1> stream = inputs[1].provideStream();
-            outputs[0].acceptStream(stream.flatMap(e1 -> collection.stream().map(e0 -> new Tuple2<InputType0, InputType1>(e0, e1))));
+            outputChannel.accept(stream.flatMap(e1 -> collection.stream().map(e0 -> new Tuple2<InputType0, InputType1>(e0, e1))));
         }
     }
 
@@ -66,5 +69,17 @@ public class JavaCartesianOperator<InputType0, InputType1>
     @Override
     protected ExecutionOperator createCopy() {
         return new JavaCartesianOperator<>(this.getInputType0(), this.getInputType1());
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 }

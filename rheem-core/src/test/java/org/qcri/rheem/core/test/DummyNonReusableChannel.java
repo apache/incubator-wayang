@@ -3,6 +3,7 @@ package org.qcri.rheem.core.test;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 
 /**
  * Dummy {@link Channel}.
@@ -23,6 +24,11 @@ public class DummyNonReusableChannel extends Channel {
 
     @Override
     public Channel copy() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ChannelInstance createInstance() {
         throw new UnsupportedOperationException();
     }
 }

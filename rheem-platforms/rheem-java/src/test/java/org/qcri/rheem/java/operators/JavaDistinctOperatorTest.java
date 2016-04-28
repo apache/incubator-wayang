@@ -3,8 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.TestChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -15,7 +14,7 @@ import java.util.stream.Stream;
 /**
  * Test suite for {@link JavaDistinctOperator}.
  */
-public class JavaDistinctOperatorTest {
+public class JavaDistinctOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
     public void testExecution() {
@@ -29,8 +28,8 @@ public class JavaDistinctOperatorTest {
                 );
 
         // Execute.
-        ChannelExecutor[] inputs = new ChannelExecutor[]{new TestChannelExecutor(inputStream)};
-        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+        JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
+        JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
         distinctOperator.evaluate(inputs, outputs, new FunctionCompiler());
 
         // Verify the outcome.

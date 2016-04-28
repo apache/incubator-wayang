@@ -1,12 +1,11 @@
 package org.qcri.rheem.spark.channels;
 
-import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.apache.spark.broadcast.Broadcast;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.util.Tuple;
-import org.qcri.rheem.spark.operators.SparkBroadcastOperator;
+import org.qcri.rheem.core.platform.ChannelInstance;
 
 /**
  * {@link Channel} that represents a broadcasted value.
@@ -35,55 +34,34 @@ public class BroadcastChannel extends Channel {
     }
 
     /**
-     * {@link SparkChannelInitializer} for the {@link BroadcastChannel}.
+     * {@link ChannelInstance} implementation for {@link BroadcastChannel}s.
      */
-    public static class Initializer implements SparkChannelInitializer {
+    public class Instance extends AbstractChannelInstance {
 
-        @Override
-        public RddChannel provideRddChannel(Channel channel, OptimizationContext optimizationContext) {
-            throw new UnsupportedOperationException("Not yet implemented.");
+        private Broadcast<?> broadcast;
+
+        public void accept(Broadcast broadcast) {
+            assert this.broadcast == null : String.format("Broadcast for %s already initialized.", this.getChannel());
+            this.broadcast = broadcast;
+        }
+
+        @SuppressWarnings("unchecked")
+        public Broadcast<?> provide() {
+            assert this.broadcast != null : String.format("Broadcast for %s not initialized.", this.getChannel());
+            return this.broadcast;
         }
 
         @Override
-        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
-            final SparkChannelInitializer rddInitializer = this.getChannelManager().getChannelInitializer(RddChannel.DESCRIPTOR);
-            final Tuple<Channel, Channel> rddChannelSetup = rddInitializer.setUpOutput(RddChannel.DESCRIPTOR, outputSlot, optimizationContext);
-            Channel broadcastChannel = this.setUpOutput(descriptor, rddChannelSetup.getField1(), optimizationContext);
-            return new Tuple<>(rddChannelSetup.getField0(), broadcastChannel);
+        public void tryToRelease() {
+            this.broadcast.destroy(false);
         }
 
         @Override
-        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext) {
-            assert descriptor == BroadcastChannel.DESCRIPTOR;
-
-            // Set up an intermediate Channel at first.
-            final RddChannel rddChannel = this.createRddChannel(source, optimizationContext);
-
-            // Next, broadcast the data.
-            final ExecutionTask broadcastTask = rddChannel.getConsumers().stream()
-                    .filter(consumer -> consumer.getOperator() instanceof SparkBroadcastOperator)
-                    .findAny()
-                    .orElseGet(() -> {
-                        SparkBroadcastOperator sbo = new SparkBroadcastOperator(
-                                source.getDataSetType(),
-                                source.getProducerSlot().getOwner().getContainer()
-                        );
-                        ExecutionTask task = new ExecutionTask(sbo);
-                        rddChannel.addConsumer(task, 0);
-                        return task;
-                    });
-
-            // Finally, get or create the BroadcastChannel.
-            if (broadcastTask.getOutputChannel(0) != null) {
-                assert broadcastTask.getOutputChannel(0) instanceof BroadcastChannel;
-                return broadcastTask.getOutputChannel(0);
-            } else {
-                final BroadcastChannel broadcastChannel = new BroadcastChannel(descriptor, broadcastTask.getOperator().getOutput(0));
-                broadcastTask.setOutputChannel(0, broadcastChannel);
-                source.addSibling(broadcastChannel);
-                return broadcastChannel;
-            }
+        public BroadcastChannel getChannel() {
+            return BroadcastChannel.this;
         }
     }
+
+}
 
 }

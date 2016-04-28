@@ -1,7 +1,7 @@
 package org.qcri.rheem.profiler.java;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
@@ -14,7 +14,7 @@ import java.util.function.Supplier;
  */
 public class SinkProfiler extends OperatorProfiler {
 
-    private ChannelExecutor inputChannelExecutor;
+    private JavaChannelInstance inputChannelExecutor;
 
     public SinkProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?>... dataQuantumGenerators) {
         super(operatorGenerator, dataQuantumGenerators);
@@ -39,8 +39,8 @@ public class SinkProfiler extends OperatorProfiler {
     @Override
     protected long executeOperator() {
         this.operator.evaluate(
-                new ChannelExecutor[]{this.inputChannelExecutor},
-                new ChannelExecutor[]{},
+                new JavaChannelInstance[]{this.inputChannelExecutor},
+                new JavaChannelInstance[]{},
                 new FunctionCompiler()
         );
         return 0L;

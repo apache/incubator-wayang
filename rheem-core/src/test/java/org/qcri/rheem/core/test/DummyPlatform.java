@@ -4,6 +4,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
@@ -32,8 +33,7 @@ public class DummyPlatform extends Platform {
     }
 
     @Override
-    protected void registerChannelConversions(Configuration configuration) {
-        throw new UnsupportedOperationException();
+    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
     }
 
     @Override
@@ -49,41 +49,6 @@ public class DummyPlatform extends Platform {
     @Override
     public boolean isExecutable() {
         return true;
-    }
-
-    @Override
-    protected ChannelManager createChannelManager() {
-        return new ChannelManager() {
-            @Override
-            public ChannelInitializer getChannelInitializer(ChannelDescriptor channelDescriptor) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Collection<ChannelConversion> getChannelConversions() {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public boolean exchangeWithInterstageCapable(Channel channel) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public ChannelDescriptor getInternalChannelDescriptor(boolean isRequestReusable) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public Map<ChannelDescriptor, Channel> setUpSourceSide(Junction junction, List<ChannelDescriptor> preferredChannelDescriptors, OptimizationContext optimizationContext) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public void setUpTargetSide(Junction junction, int targetIndex, Channel externalChannel, OptimizationContext optimizationContext) {
-                throw new UnsupportedOperationException();
-            }
-        };
     }
 
     @Override

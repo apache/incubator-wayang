@@ -10,8 +10,11 @@ import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.*;
@@ -36,7 +39,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -88,7 +91,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
                             .map(dataQuantum1 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
         }
 
-        outputs[0].acceptStream(joinStream);
+        ((StreamChannel.Instance) outputs[0]).accept(joinStream);
     }
 
     @Override
@@ -104,5 +107,17 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
     protected ExecutionOperator createCopy() {
         return new JavaJoinOperator<>(this.getInputType0(), this.getInputType1(),
                 this.getKeyDescriptor0(), this.getKeyDescriptor1());
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 }

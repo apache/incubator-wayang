@@ -1,7 +1,7 @@
 package org.qcri.rheem.profiler.java;
 
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
@@ -14,7 +14,7 @@ import java.util.function.Supplier;
  */
 public class BinaryOperatorProfiler extends OperatorProfiler {
 
-    private ChannelExecutor inputChannelExecutor0, inputChannelExecutor1, outputChannelExecutor;
+    private JavaChannelInstance inputChannelExecutor0, inputChannelExecutor1, outputChannelExecutor;
 
     public BinaryOperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator,
                                   Supplier<?> dataQuantumGenerator0,
@@ -54,8 +54,8 @@ public class BinaryOperatorProfiler extends OperatorProfiler {
 
     public long executeOperator() {
         this.operator.evaluate(
-                new ChannelExecutor[]{this.inputChannelExecutor0, this.inputChannelExecutor1},
-                new ChannelExecutor[]{this.outputChannelExecutor},
+                new JavaChannelInstance[]{this.inputChannelExecutor0, this.inputChannelExecutor1},
+                new JavaChannelInstance[]{this.outputChannelExecutor},
                 new FunctionCompiler()
         );
         return this.outputChannelExecutor.provideStream().count();

@@ -4,8 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.TestChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -16,7 +15,7 @@ import java.util.stream.Stream;
 /**
  * Test suite for {@link JavaCartesianOperator}.
  */
-public class JavaCartesianOperatorTest {
+public class JavaCartesianOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
     public void testExecution() {
@@ -31,11 +30,11 @@ public class JavaCartesianOperatorTest {
                         DataSetType.createDefaultUnchecked(String.class));
 
         // Execute.
-        ChannelExecutor[] inputs = new ChannelExecutor[]{
-                new TestChannelExecutor(inputStream0),
-                new TestChannelExecutor(inputStream1)
+        JavaChannelInstance[] inputs = new JavaChannelInstance[]{
+                createStreamChannelInstance(inputStream0),
+                createStreamChannelInstance(inputStream1)
         };
-        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
+        JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
         cartesianOperator.evaluate(inputs, outputs, new FunctionCompiler());
 
         // Verify the outcome.

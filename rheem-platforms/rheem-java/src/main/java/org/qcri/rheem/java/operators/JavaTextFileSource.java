@@ -6,9 +6,11 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +20,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Stream;
@@ -32,7 +36,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
     }
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -50,7 +54,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         try {
             final InputStream inputStream = fs.open(url);
             Stream<String> lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
-            outputs[0].acceptStream(lines);
+            ((StreamChannel.Instance) outputs[0]).accept(lines);
         } catch (IOException e) {
             throw new RheemException(String.format("Reading %s failed.", url), e);
         }
@@ -76,5 +80,16 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
     @Override
     public JavaTextFileSource copy() {
         return new JavaTextFileSource(this.getInputUrl());
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        throw new UnsupportedOperationException(String.format("%s does not have input channels.", this));
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 }

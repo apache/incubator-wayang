@@ -7,14 +7,15 @@ import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Java implementation of the {@link JavaRandomSampleOperator}. This sampling method is with replacement (i.e., duplicates may appear in the sample).
@@ -49,15 +50,16 @@ public class JavaRandomSampleOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        // FIXME: If the dataset size is unknown, we execute the Stream twice, which should not happen.
         if (datasetSize == 0) //total size of input dataset was not given
             datasetSize = inputs[0].provideStream().count();
 
         if (sampleSize >= datasetSize) { //return all
-            outputs[0].acceptStream(inputs[0].provideStream());
+            ((StreamChannel.Instance) outputs[0]).accept(inputs[0].provideStream());
             return;
         }
 
@@ -71,7 +73,7 @@ public class JavaRandomSampleOperator<Type>
         }
         Arrays.sort(sampleIndices);
 
-        outputs[0].acceptStream(inputs[0].<Type>provideStream().filter(new Predicate<Type>() {
+        ((StreamChannel.Instance) outputs[0]).accept(inputs[0].<Type>provideStream().filter(new Predicate<Type>() {
                     int streamIndex = 0; int sampleIndex = 0;
                     @Override
                     public boolean test(Type element) {
@@ -100,5 +102,18 @@ public class JavaRandomSampleOperator<Type>
     @Override
     protected ExecutionOperator createCopy() {
         return new JavaRandomSampleOperator<>(this.sampleSize, this.getType());
+    }
+
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 }

@@ -92,7 +92,7 @@ public class SparkLoopOperator<InputType, ConvergenceType>
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
             outputs[ITERATION_OUTPUT_INDEX].acceptRdd(input.provideRdd());
-            // We do not use forward(...) because we might not be able to consume the input ChannelExecutor twice.
+            // We do not use forward(...) because we might not be able to consume the input JavaChannelInstance twice.
             outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX].acceptRdd(convergenceRDD);
             this.setState(State.RUNNING);
         }

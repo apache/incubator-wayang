@@ -8,18 +8,18 @@ import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
+import java.util.*;
+import java.util.function.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Java implementation of the {@link ReduceByOperator}.
@@ -42,13 +42,13 @@ public class JavaReduceByOperator<Type, KeyType>
     }
 
     @Override
-    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
+    public void open(JavaChannelInstance[] inputs, FunctionCompiler compiler) {
         final BiFunction<Type, Type, Type> udf = compiler.compile(this.reduceDescriptor);
         JavaExecutor.openFunction(this, udf, inputs);
     }
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -56,13 +56,10 @@ public class JavaReduceByOperator<Type, KeyType>
         final BinaryOperator<Type> reduceFunction = compiler.compile(this.reduceDescriptor);
         JavaExecutor.openFunction(this, reduceFunction, inputs);
 
-        final Map<KeyType, Optional<Type>> reductionResult = inputs[0].<Type>provideStream().collect(
-                Collectors.groupingBy(keyExtractor, Collectors.reducing(reduceFunction)));
-        final Stream<Type> finishedStream = reductionResult.values().stream()
-                .filter(Optional::isPresent)
-                .map(Optional::get);
-
-        outputs[0].acceptStream(finishedStream);
+        final Map<KeyType, Type> reductionResult = inputs[0].<Type>provideStream().collect(
+                Collectors.groupingBy(keyExtractor, new ReducingCollector<>(reduceFunction))
+        );
+        ((CollectionChannel.Instance) outputs[0]).accept(reductionResult.values());
     }
 
     @Override
@@ -86,5 +83,73 @@ public class JavaReduceByOperator<Type, KeyType>
     @Override
     protected ExecutionOperator createCopy() {
         return new JavaReduceByOperator<>(this.getType(), this.getKeyDescriptor(), this.getReduceDescriptor());
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+    }
+
+    /**
+     * Immitates {@link Collectors#reducing(BinaryOperator)} but assumes that there is always at least one element
+     * in each reduction.
+     */
+    private static class ReducingCollector<T> implements Collector<T, List<T>, T> {
+
+        private final BinaryOperator<T> reduceFunction;
+
+        ReducingCollector(BinaryOperator<T> reduceFunction) {
+            this.reduceFunction = reduceFunction;
+        }
+
+        @Override
+        public Supplier<List<T>> supplier() {
+            return () -> new ArrayList<>(1);
+        }
+
+        @Override
+        public BiConsumer<List<T>, T> accumulator() {
+            return (list, element) -> {
+                if (list.isEmpty()) {
+                    list.add(element);
+                } else {
+                    list.set(0, this.reduceFunction.apply(list.get(0), element));
+                }
+            };
+        }
+
+        @Override
+        public BinaryOperator<List<T>> combiner() {
+            return (list1, list2) -> {
+                if (list1.isEmpty()) {
+                    return list2;
+                } else if (list2.isEmpty()) {
+                    return list2;
+                } else {
+                    list1.set(0, this.reduceFunction.apply(list1.get(0), list2.get(0)));
+                    return list1;
+                }
+            };
+        }
+
+        @Override
+        public Function<List<T>, T> finisher() {
+            return list -> {
+                assert !list.isEmpty();
+                return list.get(0);
+            };
+        }
+
+        @Override
+        public Set<Characteristics> characteristics() {
+            return Collections.emptySet();
+        }
     }
 }
