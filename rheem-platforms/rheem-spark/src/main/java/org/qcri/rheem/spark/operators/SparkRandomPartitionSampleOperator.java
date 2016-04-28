@@ -5,8 +5,10 @@ import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.slf4j.Logger;
@@ -59,20 +61,25 @@ public class SparkRandomPartitionSampleOperator<Type>
     boolean first = true;
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        RddChannel.Instance input = (RddChannel.Instance) inputs[0];
+        RddChannel.Instance output = (RddChannel.Instance) outputs[0];
+
+        final JavaRDD<Object> inputRdd = input.provideRdd();
         if (datasetSize == 0) //total size of input dataset was not given
-            datasetSize = inputs[0].provideRdd().cache().count();
+        {
+            datasetSize = inputRdd.cache().count();
+        }
 
         if (sampleSize >= datasetSize) { //return whole dataset
-            outputs[0].acceptRdd(inputs[0].provideRdd());
+            output.accept(inputRdd, sparkExecutor);
             return;
         }
 
         List<Type> result;
-        final JavaRDD<Type> inputRdd = inputs[0].provideRdd();
         final SparkContext sparkContext = inputRdd.context();
 
         if (first) { //first time -> retrieve some statistics for partitions
@@ -92,8 +99,7 @@ public class SparkRandomPartitionSampleOperator<Type>
                     (scala.collection.Seq) JavaConversions.asScalaBuffer(partitions),
                     true, scala.reflect.ClassTag$.MODULE$.apply(List.class));
             result = ((List<Type>[]) samples)[0];
-        }
-        else {
+        } else {
             HashMap<Integer, ArrayList<Integer>> map = new HashMap<>(); //list should be ordered..
             for (int i = 0; i < sampleSize; i++) {
                 int pid = rand.nextInt(nb_partitions); //sample partition
@@ -121,14 +127,14 @@ public class SparkRandomPartitionSampleOperator<Type>
                 Collections.sort(list); // order list of tids
 
                 // Start a thread
-                results.add(executorService.submit( () ->
+                results.add(executorService.submit(() ->
                         sparkContext.runJob(inputRdd.rdd(),
                                 new PartitionSampleListFunction(list),
                                 (scala.collection.Seq) JavaConversions.asScalaBuffer(partitions),
                                 true, scala.reflect.ClassTag$.MODULE$.apply(List.class))));
             }
 
-            for (int i = 0; i < map.size(); i ++)
+            for (int i = 0; i < map.size(); i++)
                 try {
                     allSamples.addAll(((List<Type>[]) results.get(i).get())[0]);
                 } catch (InterruptedException e) {
@@ -142,13 +148,27 @@ public class SparkRandomPartitionSampleOperator<Type>
             result = allSamples;
         }
 
-        final JavaRDD<Type> outputRdd = sparkExecutor.sc.parallelize(result); //FIXME: this is not efficient
-        outputs[0].acceptRdd(outputRdd);
+        final JavaRDD<Type> outputRdd = sparkExecutor.sc.parallelize(result);
+        //FIXME: this is not efficient... We can now also choose to output a collection. However, this needs to be
+        // settled at "plan compile time".
+        output.accept(outputRdd, sparkExecutor);
     }
 
     @Override
     protected ExecutionOperator createCopy() {
         return new SparkRandomPartitionSampleOperator<>(this.sampleSize, this.getType());
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 }
 

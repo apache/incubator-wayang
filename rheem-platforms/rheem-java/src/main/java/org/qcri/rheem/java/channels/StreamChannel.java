@@ -114,7 +114,7 @@ public class StreamChannel extends Channel {
         // However, this would require to call Stream#close() on all methods.
         private long cardinality = 0;
 
-        public void accept(Stream<?> stream) {
+        public <T> void accept(Stream<T> stream) {
             assert this.stream == null;
             this.stream = stream;
             if (this.isMarkedForInstrumentation()) {

@@ -1,14 +1,10 @@
 package org.qcri.rheem.spark.operators;
 
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
-
-import java.util.List;
 
 /**
  * Execution operator for the {@link SparkPlatform}.
@@ -21,22 +17,15 @@ public interface SparkExecutionOperator extends ExecutionOperator {
     }
 
     /**
-     * Evaluates this operator. Takes a set of {@link ChannelExecutor}s according to the operator inputs and manipulates
-     * a set of {@link ChannelExecutor}s according to the operator outputs -- unless the operator is a sink, then it triggers
+     * Evaluates this operator. Takes a set of {@link ChannelInstance}s according to the operator inputs and manipulates
+     * a set of {@link ChannelInstance}s according to the operator outputs -- unless the operator is a sink, then it triggers
      * execution.
      *
-     * @param inputs        {@link ChannelExecutor}s that satisfy the inputs of this operator
-     * @param outputs       {@link ChannelExecutor}s that accept the outputs of this operator
+     * @param inputs        {@link ChannelInstance}s that satisfy the inputs of this operator
+     * @param outputs       {@link ChannelInstance}s that accept the outputs of this operator
      * @param compiler      compiles functions used by the operator
      * @param sparkExecutor {@link SparkExecutor} that executes this instance
      */
-    void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor);
-
-    /**
-     * @return whether the Spark operation that is being wrapped by this instance is creating a result in the driver
-     */
-    default boolean isDriverBound() {
-        return false;
-    }
+    void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor);
 
 }

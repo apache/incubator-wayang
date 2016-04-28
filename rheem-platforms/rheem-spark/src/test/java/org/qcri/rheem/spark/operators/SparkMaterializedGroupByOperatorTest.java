@@ -1,15 +1,13 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
-import org.qcri.rheem.spark.channels.TestChannelExecutor;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -29,12 +27,10 @@ public class SparkMaterializedGroupByOperatorTest extends SparkOperatorTestBase 
     public void testExecution() {
         // Prepare test data.
         AtomicInteger counter = new AtomicInteger(0);
-        List<Tuple2<String, Integer>> inputList = Arrays.stream("abcaba".split(""))
+        RddChannel.Instance input = this.createRddChannelInstance(Arrays.stream("abcaba".split(""))
                 .map(string -> new Tuple2<>(string, counter.getAndIncrement()))
-                .collect(Collectors.toList());
-
-        final JavaSparkContext sc = this.getSC();
-        final JavaRDD<Tuple2<String, Integer>> inputRdd = sc.parallelize(inputList);
+                .collect(Collectors.toList()));
+        RddChannel.Instance output = this.createRddChannelInstance();
 
         // Build the reduce operator.
         SparkMaterializedGroupByOperator<Tuple2<String, Integer>, String> collocateByOperator =
@@ -47,20 +43,16 @@ public class SparkMaterializedGroupByOperatorTest extends SparkOperatorTestBase 
                         DataSetType.createGroupedUnchecked(Tuple2.class)
                 );
 
-        // Set up the ChannelExecutors.
-        final ChannelExecutor[] inputs = new ChannelExecutor[]{
-                new TestChannelExecutor(inputRdd)
-        };
-        final ChannelExecutor[] outputs = new ChannelExecutor[]{
-                new TestChannelExecutor()
-        };
+        // Set up the ChannelInstances.
+        final ChannelInstance[] inputs = new ChannelInstance[]{input};
+        final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
         collocateByOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
         final List<Iterable<Tuple2<String, Integer>>> originalResult =
-                outputs[0].<Iterable<Tuple2<String, Integer>>>provideRdd().collect();
+                output.<Iterable<Tuple2<String, Integer>>>provideRdd().collect();
         Set<List<Tuple2<String, Integer>>> result = originalResult.stream()
                 .map(this::toList)
                 .collect(Collectors.toSet());

@@ -1,6 +1,5 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.DoWhileOperator;
 import org.qcri.rheem.basic.operators.LoopOperator;
@@ -12,13 +11,15 @@ import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
-import java.util.Collection;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Spark implementation of the {@link LoopOperator}.
@@ -43,36 +44,33 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler,
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler,
                          SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        final RddChannel.Instance iterationInput;
         final Function<Collection<ConvergenceType>, Boolean> stoppingCondition =
                 compiler.compile(this.criterionDescriptor, this, inputs);
         boolean endloop = false;
-
-        final Collection<ConvergenceType> convergenceCollection;
-        final JavaRDD<ConvergenceType> convergenceRDD;
-        final ChannelExecutor input;
         switch (this.getState()) {
             case NOT_STARTED:
                 assert inputs[INITIAL_INPUT_INDEX] != null;
 
-                input = inputs[INITIAL_INPUT_INDEX];
+                iterationInput = (RddChannel.Instance) inputs[INITIAL_INPUT_INDEX];
                 break;
             case RUNNING:
                 assert inputs[ITERATION_INPUT_INDEX] != null;
                 assert inputs[CONVERGENCE_INPUT_INDEX] != null;
 
-                convergenceRDD = (JavaRDD<ConvergenceType>) inputs[CONVERGENCE_INPUT_INDEX].provideRdd().cache();
-                convergenceCollection = convergenceRDD.collect();
+                iterationInput = (RddChannel.Instance) inputs[ITERATION_INPUT_INDEX];
+                final CollectionChannel.Instance convergenceInput = (CollectionChannel.Instance) inputs[CONVERGENCE_INPUT_INDEX];
+                final Collection<ConvergenceType> convergenceCollection = convergenceInput.provideCollection();
                 try {
                     endloop = stoppingCondition.call(convergenceCollection);
                 } catch (Exception e) {
                     throw new RheemException(String.format("Could not evaluate stopping condition for %s.", this), e);
                 }
-                input = inputs[ITERATION_INPUT_INDEX];
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -81,12 +79,12 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            outputs[FINAL_OUTPUT_INDEX].acceptRdd(input.provideRdd());
+            ((RddChannel.Instance) outputs[FINAL_OUTPUT_INDEX]).accept(iterationInput.provideRdd(), sparkExecutor);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            outputs[ITERATION_OUTPUT_INDEX].acceptRdd(input.provideRdd());
+            ((RddChannel.Instance) outputs[ITERATION_OUTPUT_INDEX]).accept(iterationInput.provideRdd(), sparkExecutor);
             this.setState(State.RUNNING);
         }
 
@@ -102,13 +100,34 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
         // NB: Not actually measured, adapted from the SparkCollectionSource.
         final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(3, 2, .8d, CardinalityEstimate.EMPTY_ESTIMATE,(inputCards, outputCards) -> 4000 * inputCards[0] + 6272516800L),
-                new DefaultLoadEstimator(3, 2, .9d, CardinalityEstimate.EMPTY_ESTIMATE,(inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator(3, 2, .9d, CardinalityEstimate.EMPTY_ESTIMATE,(inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(3, 2, .9d, CardinalityEstimate.EMPTY_ESTIMATE,(inputCards, outputCards) -> Math.round(4.5d * inputCards[0] + 43000)),
+                new DefaultLoadEstimator(3, 2, .8d, CardinalityEstimate.EMPTY_ESTIMATE, (inputCards, outputCards) -> 4000 * inputCards[0] + 6272516800L),
+                new DefaultLoadEstimator(3, 2, .9d, CardinalityEstimate.EMPTY_ESTIMATE, (inputCards, outputCards) -> 10000),
+                new DefaultLoadEstimator(3, 2, .9d, CardinalityEstimate.EMPTY_ESTIMATE, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(3, 2, .9d, CardinalityEstimate.EMPTY_ESTIMATE, (inputCards, outputCards) -> Math.round(4.5d * inputCards[0] + 43000)),
                 0.08d,
                 1500
         );
         return Optional.of(mainEstimator);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        switch (index) {
+            case INITIAL_INPUT_INDEX:
+            case ITERATION_INPUT_INDEX:
+                return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+            case CONVERGENCE_INPUT_INDEX:
+                return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+            default:
+                throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
+        }
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
+        // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
     }
 }

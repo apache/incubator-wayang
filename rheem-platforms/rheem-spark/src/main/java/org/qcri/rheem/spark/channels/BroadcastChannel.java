@@ -19,7 +19,7 @@ public class BroadcastChannel extends Channel {
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(
             BroadcastChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL && IS_REUSABLE);
 
-    protected BroadcastChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
+    public BroadcastChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
         super(descriptor, outputSlot);
     }
 
@@ -31,6 +31,11 @@ public class BroadcastChannel extends Channel {
     @Override
     public BroadcastChannel copy() {
         return new BroadcastChannel(this);
+    }
+
+    @Override
+    public ChannelInstance createInstance() {
+        return new Instance();
     }
 
     /**
@@ -46,7 +51,7 @@ public class BroadcastChannel extends Channel {
         }
 
         @SuppressWarnings("unchecked")
-        public Broadcast<?> provide() {
+        public Broadcast<?> provideBroadcast() {
             assert this.broadcast != null : String.format("Broadcast for %s not initialized.", this.getChannel());
             return this.broadcast;
         }
@@ -60,8 +65,7 @@ public class BroadcastChannel extends Channel {
         public BroadcastChannel getChannel() {
             return BroadcastChannel.this;
         }
-    }
 
-}
+    }
 
 }

@@ -8,7 +8,6 @@ import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
@@ -45,16 +44,30 @@ public class JavaCartesianOperator<InputType0, InputType1>
         if (inputs[0] instanceof CollectionChannel.Instance) {
             final Collection<InputType0> collection = ((CollectionChannel.Instance) inputs[0]).provideCollection();
             final Stream<InputType1> stream = inputs[1].provideStream();
-            outputChannel.accept(stream.flatMap(e1 -> collection.stream().map(e0 -> new Tuple2<InputType0, InputType1>(e0, e1))));
+            outputChannel.<Tuple2<InputType0, InputType1>>accept(
+                    stream.flatMap(e1 -> collection.stream().map(
+                            e0 -> new Tuple2<>(e0, e1)
+                    ))
+            );
+
         } else if (inputs[1] instanceof CollectionChannel.Instance) {
             final Stream<InputType0> stream = inputs[0].provideStream();
             final Collection<InputType1> collection = ((CollectionChannel.Instance) inputs[1]).provideCollection();
-            outputChannel.accept(stream.flatMap(e0 -> collection.stream().map(e1 -> new Tuple2<InputType0, InputType1>(e0, e1))));
+            outputChannel.<Tuple2<InputType0, InputType1>>accept(
+                    stream.flatMap(e0 -> collection.stream().map(
+                            e1 -> new Tuple2<>(e0, e1)
+                    ))
+            );
+
         } else {
             // Fallback: Materialize one side.
             final Collection<InputType0> collection = (Collection<InputType0>) inputs[0].provideStream().collect(Collectors.toList());
             final Stream<InputType1> stream = inputs[1].provideStream();
-            outputChannel.accept(stream.flatMap(e1 -> collection.stream().map(e0 -> new Tuple2<InputType0, InputType1>(e0, e1))));
+            outputChannel.<Tuple2<InputType0, InputType1>>accept(
+                    stream.flatMap(e1 -> collection.stream().map(
+                            e0 -> new Tuple2<>(e0, e1)
+                    ))
+            );
         }
     }
 

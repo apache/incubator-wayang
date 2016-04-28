@@ -6,11 +6,15 @@ import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -29,12 +33,13 @@ public class SparkLocalCallbackSink<T> extends LocalCallbackSink<T> implements S
     }
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final JavaRDD<T> inputRdd = inputs[0].provideRdd();
-        inputRdd.toLocalIterator().forEachRemaining(this.callback::accept);
+        final RddChannel.Instance input = (RddChannel.Instance) inputs[0];
+        final JavaRDD<T> inputRdd = input.provideRdd();
+        inputRdd.toLocalIterator().forEachRemaining(this.callback);
     }
 
     @Override
@@ -54,5 +59,16 @@ public class SparkLocalCallbackSink<T> extends LocalCallbackSink<T> implements S
         );
 
         return Optional.of(mainEstimator);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        throw new UnsupportedOperationException(String.format("%s does not have output channels.", this));
     }
 }

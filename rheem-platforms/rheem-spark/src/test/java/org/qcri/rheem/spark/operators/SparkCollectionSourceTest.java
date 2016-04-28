@@ -1,16 +1,14 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaRDDLike;
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
-import org.qcri.rheem.spark.channels.TestChannelExecutor;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -24,17 +22,16 @@ public class SparkCollectionSourceTest extends SparkOperatorTestBase {
         SparkCollectionSource<Integer> collectionSource = new SparkCollectionSource<>(
                 inputValues,
                 DataSetType.createDefault(Integer.class));
+        RddChannel.Instance output = this.createRddChannelInstance();
 
-        // Set up the ChannelExecutors.
-        final ChannelExecutor[] inputs = new ChannelExecutor[]{};
-        final ChannelExecutor[] outputs = new ChannelExecutor[]{
-                new TestChannelExecutor()
-        };
+        // Set up the ChannelInstances.
+        final ChannelInstance[] inputs = new ChannelInstance[]{};
+        final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
         collectionSource.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
-        final Set<Integer> outputValues = new HashSet<>(outputs[0].<Integer>provideRdd().collect());
+        final Set<Integer> outputValues = new HashSet<>(output.<Integer>provideRdd().collect());
         Assert.assertEquals(outputValues, inputValues);
     }
 }

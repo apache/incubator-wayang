@@ -8,13 +8,17 @@ import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import scala.Tuple2;
 
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -33,11 +37,14 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final JavaRDD<Type> inputRdd = inputs[0].provideRdd();
+        RddChannel.Instance input = (RddChannel.Instance) inputs[0];
+        RddChannel.Instance output = (RddChannel.Instance) outputs[0];
+
+        final JavaRDD<Type> inputRdd = input.provideRdd();
         final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor, this, inputs);
         final Function<scala.Tuple2<KeyType, Iterable<Type>>, Iterable<Type>> projector = new GroupProjector<>();
         final JavaRDD<Iterable<Type>> outputRdd = inputRdd
@@ -45,7 +52,7 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
                 .map(projector);
 
         // TODO: MaterializedGroupByOperator actually prescribes to return Iterators, not Iterables.
-        outputs[0].acceptRdd(outputRdd);
+        output.accept(outputRdd, sparkExecutor);
     }
 
     @Override
@@ -74,6 +81,16 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
         );
 
         return Optional.of(mainEstimator);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
 }

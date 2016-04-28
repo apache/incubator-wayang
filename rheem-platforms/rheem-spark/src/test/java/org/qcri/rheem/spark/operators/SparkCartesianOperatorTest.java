@@ -1,12 +1,11 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
-import org.qcri.rheem.spark.channels.TestChannelExecutor;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -20,8 +19,9 @@ public class SparkCartesianOperatorTest extends SparkOperatorTestBase {
     @Test
     public void testExecution() {
         // Prepare test data.
-        JavaRDD<Integer> inputRdd0 = this.getSC().parallelize(Arrays.asList(1, 2));
-        JavaRDD<String> inputRdd1 = this.getSC().parallelize(Arrays.asList("a", "b", "c"));
+        RddChannel.Instance input0 = this.createRddChannelInstance(Arrays.asList(1, 2));
+        RddChannel.Instance input1 = this.createRddChannelInstance(Arrays.asList("a", "b", "c"));
+        RddChannel.Instance output = this.createRddChannelInstance();
 
         // Build the Cartesian operator.
         SparkCartesianOperator<Integer, String> cartesianOperator =
@@ -29,20 +29,15 @@ public class SparkCartesianOperatorTest extends SparkOperatorTestBase {
                         DataSetType.createDefaultUnchecked(Integer.class),
                         DataSetType.createDefaultUnchecked(String.class));
 
-        // Set up the ChannelExecutors.
-        final ChannelExecutor[] inputs = new ChannelExecutor[]{
-                new TestChannelExecutor(inputRdd0),
-                new TestChannelExecutor(inputRdd1)
-        };
-        final ChannelExecutor[] outputs = new ChannelExecutor[]{
-                new TestChannelExecutor()
-        };
+        // Set up the ChannelInstances.
+        final ChannelInstance[] inputs = new ChannelInstance[]{input0, input1};
+        final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
         cartesianOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
-        final List<Tuple2<Integer, String>> result = outputs[0].<Tuple2<Integer, String>>provideRdd().collect();
+        final List<Tuple2<Integer, String>> result = output.<Tuple2<Integer, String>>provideRdd().collect();
         Assert.assertEquals(6, result.size());
         Assert.assertEquals(result.get(0), new Tuple2(1, "a"));
 

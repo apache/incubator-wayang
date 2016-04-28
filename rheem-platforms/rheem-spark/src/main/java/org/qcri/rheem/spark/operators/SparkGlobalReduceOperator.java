@@ -8,11 +8,15 @@ import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -37,18 +41,19 @@ public class SparkGlobalReduceOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        final RddChannel.Instance input = (RddChannel.Instance) inputs[0];
+        final CollectionChannel.Instance output = (CollectionChannel.Instance) outputs[0];
+
+
         final Function2<Type, Type, Type> reduceFunction = compiler.compile(this.reduceDescriptor, this, inputs);
 
-        final JavaRDD<Type> inputRdd = inputs[0].provideRdd();
+        final JavaRDD<Type> inputRdd = input.provideRdd();
         List<Type> outputList = Collections.singletonList(inputRdd.reduce(reduceFunction));
-        // FIXME: This is likely inefficient. The SparkExecutor should be capable of handling these primitive values and put them into RDDs on demand only. However, let's see if this is really a problem.
-        JavaRDD<Type> outputRdd = sparkExecutor.sc.parallelize(outputList);
-
-        outputs[0].acceptRdd(outputRdd);
+        output.accept(outputList);
     }
 
     @Override
@@ -68,5 +73,15 @@ public class SparkGlobalReduceOperator<Type>
         );
 
         return Optional.of(mainEstimator);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 }

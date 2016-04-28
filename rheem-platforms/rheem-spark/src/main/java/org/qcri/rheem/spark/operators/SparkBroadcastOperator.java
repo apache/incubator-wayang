@@ -6,23 +6,22 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Takes care of creating a {@link Broadcast} that can be used later on.
  */
 public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkExecutionOperator {
-
-    private boolean isMarkedForInstrumentation;
-
-    private OptionalLong measuredCardinality;
 
     public SparkBroadcastOperator(DataSetType<Type> type, OperatorContainer operatorContainer) {
         super(1, 1, false, operatorContainer);
@@ -31,14 +30,16 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
     }
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final List<?> collect = inputs[0].provideRdd().collect();
-        this.measuredCardinality = this.isMarkedForInstrumentation ? OptionalLong.of(collect.size()) : OptionalLong.empty();
-        final Broadcast<?> broadcast = sparkExecutor.sc.broadcast(collect);
-        outputs[0].acceptBroadcast(broadcast);
+        final CollectionChannel.Instance input = (CollectionChannel.Instance) inputs[0];
+        final BroadcastChannel.Instance output = (BroadcastChannel.Instance) outputs[0];
+
+        final Collection<?> collection = input.provideCollection();
+        final Broadcast<?> broadcast = sparkExecutor.sc.broadcast(collection);
+        output.accept(broadcast);
     }
 
     @SuppressWarnings("unchecked")
@@ -49,14 +50,6 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
     @Override
     protected ExecutionOperator createCopy() {
         return new SparkBroadcastOperator<>(this.getType(), this.getContainer());
-    }
-
-    public void markForInstrumentation() {
-        this.isMarkedForInstrumentation = true;
-    }
-
-    public OptionalLong getMeasuredCardinality() {
-        return this.measuredCardinality;
     }
 
     @Override

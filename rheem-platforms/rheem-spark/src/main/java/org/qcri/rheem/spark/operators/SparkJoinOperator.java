@@ -11,11 +11,16 @@ import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -36,25 +41,30 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final JavaRDD<InputType0> inputRdd0 = inputs[0].provideRdd();
-        final JavaRDD<InputType1> inputRdd1 = inputs[1].provideRdd();
+        final RddChannel.Instance input0 = (RddChannel.Instance) inputs[0];
+        final RddChannel.Instance input1 = (RddChannel.Instance) inputs[1];
+        final RddChannel.Instance output = (RddChannel.Instance) outputs[0];
+
+        final JavaRDD<InputType0> inputRdd0 = input0.provideRdd();
+        final JavaRDD<InputType1> inputRdd1 = input1.provideRdd();
 
         final PairFunction<InputType0, KeyType, InputType0> keyExtractor0 = compiler.compileToKeyExtractor(this.keyDescriptor0);
         final PairFunction<InputType1, KeyType, InputType1> keyExtractor1 = compiler.compileToKeyExtractor(this.keyDescriptor1);
         JavaPairRDD<KeyType, InputType0> pairStream0 = inputRdd0.mapToPair(keyExtractor0);
         JavaPairRDD<KeyType, InputType1> pairStream1 = inputRdd1.mapToPair(keyExtractor1);
 
-        final JavaPairRDD<KeyType, scala.Tuple2<InputType0, InputType1>> outputPair = pairStream0.join(pairStream1);
+        final JavaPairRDD<KeyType, scala.Tuple2<InputType0, InputType1>> outputPair =
+                pairStream0.<InputType1>join(pairStream1);
 
         // convert from scala tuple to rheem tuple
         final JavaRDD<Tuple2<InputType0, InputType1>> outputRdd = outputPair
                 .map(new TupleConverter<>());
 
-        outputs[0].acceptRdd(outputRdd);
+        output.accept(outputRdd, sparkExecutor);
     }
 
     @Override
@@ -88,5 +98,17 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
         );
 
         return Optional.of(mainEstimator);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 }

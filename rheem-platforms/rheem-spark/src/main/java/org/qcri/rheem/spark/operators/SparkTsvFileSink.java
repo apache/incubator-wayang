@@ -1,6 +1,7 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -8,13 +9,17 @@ import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
-import org.qcri.rheem.spark.channels.HdfsFileInitializer;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -24,8 +29,6 @@ import java.util.Optional;
  * @see SparkObjectFileSource
  */
 public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implements SparkExecutionOperator {
-
-    private HdfsFileInitializer.Executor outputChannelExecutor;
 
     private final String targetPath;
 
@@ -37,10 +40,11 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
     }
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler, SparkExecutor executor) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor executor) {
         assert inputs.length == this.getNumInputs();
 
-        final JavaRDD<Object> rdd = inputs[0].provideRdd();
+        final RddChannel.Instance input = (RddChannel.Instance) inputs[0];
+        final JavaRDD<Object> rdd = input.provideRdd();
         rdd
                 .map(dataQuantum -> {
                     // TODO: Once there are more tuple types, make this generic.
@@ -49,6 +53,8 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
                     return String.valueOf(tuple2.field0) + '\t' + String.valueOf(tuple2.field1);
                 })
                 .saveAsTextFile(this.targetPath);
+
+        // Todo: Save chosen path in output ChannelInstance.
     }
 
     @Override
@@ -68,6 +74,16 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
                 1000
         );
         return Optional.of(mainEstimator);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
     }
 
 }

@@ -1,6 +1,5 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.api.Configuration;
@@ -11,13 +10,15 @@ import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
-import java.util.Collection;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Spark implementation of the {@link LoopOperator}.
@@ -31,43 +32,44 @@ public class SparkLoopOperator<InputType, ConvergenceType>
      * Creates a new instance.
      */
     public SparkLoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                            PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate) {
+                             PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate) {
         super(inputType, convergenceType, criterionPredicate);
     }
 
     public SparkLoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                            PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
+                             PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
         super(inputType, convergenceType, criterionDescriptor);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler,
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler,
                          SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+
+        final RddChannel.Instance iterationInput;
+        final CollectionChannel.Instance convergenceInput;
 
         final Function<Collection<ConvergenceType>, Boolean> stoppingCondition =
                 compiler.compile(this.criterionDescriptor, this, inputs);
         boolean endloop = false;
 
-        final Collection<ConvergenceType> convergenceCollection;
-        final JavaRDD<ConvergenceType> convergenceRDD;
-        final ChannelExecutor input;
         switch (this.getState()) {
             case NOT_STARTED:
                 assert inputs[INITIAL_INPUT_INDEX] != null;
                 assert inputs[INITIAL_CONVERGENCE_INPUT_INDEX] != null;
 
-                input = inputs[INITIAL_INPUT_INDEX];
-                convergenceRDD = inputs[INITIAL_CONVERGENCE_INPUT_INDEX].provideRdd();
+                iterationInput = (RddChannel.Instance) inputs[INITIAL_INPUT_INDEX];
+                convergenceInput = (CollectionChannel.Instance) inputs[INITIAL_CONVERGENCE_INPUT_INDEX];
                 break;
             case RUNNING:
                 assert inputs[ITERATION_INPUT_INDEX] != null;
                 assert inputs[ITERATION_CONVERGENCE_INPUT_INDEX] != null;
 
-                convergenceRDD = (JavaRDD<ConvergenceType>) inputs[ITERATION_CONVERGENCE_INPUT_INDEX].provideRdd().cache();
-                convergenceCollection = convergenceRDD.collect();
+                iterationInput = (RddChannel.Instance) inputs[INITIAL_INPUT_INDEX];
+                convergenceInput = (CollectionChannel.Instance) inputs[INITIAL_CONVERGENCE_INPUT_INDEX];
+                Collection<ConvergenceType> convergenceCollection = convergenceInput.provideCollection();
                 try {
                     endloop = stoppingCondition.call(convergenceCollection);
                 } catch (Exception e) {
@@ -76,7 +78,6 @@ public class SparkLoopOperator<InputType, ConvergenceType>
                             e
                     );
                 }
-                input = inputs[ITERATION_INPUT_INDEX];
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -85,15 +86,15 @@ public class SparkLoopOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            outputs[FINAL_OUTPUT_INDEX].acceptRdd(input.provideRdd());
+            ((RddChannel.Instance) outputs[FINAL_OUTPUT_INDEX]).accept(iterationInput.provideRdd(), sparkExecutor);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            outputs[ITERATION_OUTPUT_INDEX].acceptRdd(input.provideRdd());
+            ((RddChannel.Instance) outputs[ITERATION_OUTPUT_INDEX]).accept(iterationInput.provideRdd(), sparkExecutor);
             // We do not use forward(...) because we might not be able to consume the input JavaChannelInstance twice.
-            outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX].acceptRdd(convergenceRDD);
+            ((CollectionChannel.Instance) outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]).accept(convergenceInput.provideCollection());
             this.setState(State.RUNNING);
         }
 
@@ -121,5 +122,36 @@ public class SparkLoopOperator<InputType, ConvergenceType>
                 1500
         );
         return Optional.of(mainEstimator);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        switch (index) {
+            case INITIAL_INPUT_INDEX:
+            case ITERATION_INPUT_INDEX:
+                return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+            case INITIAL_CONVERGENCE_INPUT_INDEX:
+            case ITERATION_CONVERGENCE_INPUT_INDEX:
+                return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+            default:
+                throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
+        }
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        switch (index) {
+            case ITERATION_OUTPUT_INDEX:
+            case FINAL_OUTPUT_INDEX:
+                // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
+                return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
+            case INITIAL_CONVERGENCE_INPUT_INDEX:
+            case ITERATION_CONVERGENCE_INPUT_INDEX:
+                return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+            default:
+                throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
+        }
     }
 }
