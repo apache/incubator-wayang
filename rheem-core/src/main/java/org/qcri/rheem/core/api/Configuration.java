@@ -30,7 +30,16 @@ import java.util.*;
  */
 public class Configuration {
 
-    private static final Configuration defaultConfiguration = createDefaultConfiguration();
+    private static final Configuration defaultConfiguration = new Configuration((Configuration) null);
+
+    static  {
+        bootstrapCardinalityEstimationProvider(defaultConfiguration);
+        bootstrapSelectivityProviders(defaultConfiguration);
+        bootstrapLoadAndTimeEstimatorProviders(defaultConfiguration);
+        bootstrapPruningProviders(defaultConfiguration);
+        bootstrapProperties(defaultConfiguration);
+        bootstrapPlatforms(defaultConfiguration);
+    }
 
     private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
 
@@ -190,17 +199,6 @@ public class Configuration {
      */
     public static Configuration getDefaultConfiguration() {
         return defaultConfiguration;
-    }
-
-    private static Configuration createDefaultConfiguration() {
-        Configuration configuration = new Configuration((Configuration) null);
-        bootstrapPlatforms(configuration);
-        bootstrapCardinalityEstimationProvider(configuration);
-        bootstrapSelectivityProviders(configuration);
-        bootstrapLoadAndTimeEstimatorProviders(configuration);
-        bootstrapPruningProviders(configuration);
-        bootstrapProperties(configuration);
-        return configuration;
     }
 
     private static void bootstrapPlatforms(Configuration configuration) {
