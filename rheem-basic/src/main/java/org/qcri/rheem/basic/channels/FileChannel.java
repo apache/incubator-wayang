@@ -37,7 +37,7 @@ public class FileChannel extends Channel {
         this(descriptor, null);
     }
 
-    public FileChannel(FileChannel.Descriptor descriptor, OutputSlot<?> outputSlot) {
+    public FileChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
         super(descriptor, outputSlot);
     }
 
@@ -71,7 +71,7 @@ public class FileChannel extends Channel {
      * @return the single element from {@link #getPaths()}
      */
     public String getSinglePath() {
-        assert this.paths.size() == 1;
+        assert this.paths.size() == 1 : String.format("Unsupported number of paths in %s.", this.paths);
         return this.paths.iterator().next();
     }
 
