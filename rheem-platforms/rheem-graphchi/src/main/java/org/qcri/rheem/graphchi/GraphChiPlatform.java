@@ -3,11 +3,11 @@ package org.qcri.rheem.graphchi;
 import edu.cmu.graphchi.io.CompressedIO;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.graphchi.channels.GraphChiChannelManager;
 import org.qcri.rheem.graphchi.execution.GraphChiExecutor;
 import org.qcri.rheem.graphchi.mappings.PageRankMapping;
 
@@ -61,6 +61,11 @@ public class GraphChiPlatform extends Platform {
     }
 
     @Override
+    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
+        // No ChannelConversions supported so far.
+    }
+
+    @Override
     public Executor.Factory getExecutorFactory() {
         return configuration -> new GraphChiExecutor(this);
     }
@@ -73,11 +78,6 @@ public class GraphChiPlatform extends Platform {
     @Override
     public boolean isExecutable() {
         return true;
-    }
-
-    @Override
-    protected GraphChiChannelManager createChannelManager() {
-        return new GraphChiChannelManager(this);
     }
 
     @Override

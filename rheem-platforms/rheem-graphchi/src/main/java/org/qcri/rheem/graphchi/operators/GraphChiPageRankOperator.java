@@ -17,7 +17,6 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
-import org.qcri.rheem.graphchi.channels.GraphChiChannelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,12 +129,12 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        return Collections.singletonList(GraphChiChannelManager.HDFS_TSV_DESCRIPTOR);
+        return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        return Collections.singletonList(GraphChiChannelManager.HDFS_TSV_DESCRIPTOR);
+        return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
     }
 
 }
