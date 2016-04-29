@@ -14,6 +14,8 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -27,7 +29,10 @@ public class ChannelConversionGraph {
     private final Map<ChannelDescriptor, List<ChannelConversion>> conversions = new HashMap<>();
 
     private final Comparator<TimeEstimate> timeEstimateComparator;
+
     private static final BitSet EMPTY_BITSET = new BitSet(0);
+
+    private static final Logger logger = LoggerFactory.getLogger(ChannelConversionGraph.class);
 
     public ChannelConversionGraph(Configuration configuration) {
         this.configuration = configuration;
@@ -164,6 +169,7 @@ public class ChannelConversionGraph {
             this.sourceOutput = sourceOutput;
             final ExecutionOperator outputOperator = (ExecutionOperator) this.sourceOutput.getOwner();
             final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(outputOperator);
+            assert operatorContext != null : String.format("Optimization info for %s missing.", outputOperator);
             this.cardinality = operatorContext.getOutputCardinality(this.sourceOutput.getIndex());
             this.sourceChannelDescriptor = outputOperator.getOutputChannelDescriptor(this.sourceOutput.getIndex());
             this.destInputs = destInputs;
@@ -191,6 +197,8 @@ public class ChannelConversionGraph {
             final Tree tree = this.searchTree();
             if (tree != null) {
                 this.createJunction(tree);
+            } else {
+                logger.debug("Could not connect {} with {}.", this.sourceOutput, this.destInputs);
             }
         }
 
@@ -232,7 +240,7 @@ public class ChannelConversionGraph {
                 this.kernelDestChannelDescriptorSetsToIndices.computeIfAbsent(
                         channelsToIndicesChange.getField0(),
                         key -> new BitSet(this.destChannelDescriptorSets.size())
-                ).set(channelsToIndicesChange.getField1().nextSetBit(0));
+                ).or(channelsToIndicesChange.getField1());
             }
 
             // Index the requested

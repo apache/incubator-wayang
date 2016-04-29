@@ -444,7 +444,10 @@ public class PlanEnumerator {
         );
 
         if (concatenatedEnumeration.getPlanImplementations().isEmpty() && this.isTopLevel()) {
-            throw new RheemException(String.format("No implementations found for %s.", concatenatedEnumeration));
+            throw new RheemException(String.format("No implementations that concatenate %s with %s.",
+                    concatenationActivator.outputSlot,
+                    concatenationActivator.outputSlot.getOccupiedSlots()
+            ));
         }
 
         this.postProcess(concatenatedEnumeration, concatenationActivator.optimizationContext);

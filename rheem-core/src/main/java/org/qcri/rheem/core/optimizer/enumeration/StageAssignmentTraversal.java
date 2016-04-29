@@ -339,9 +339,15 @@ public class StageAssignmentTraversal {
         }
 
         if (!separableTasks.isEmpty()) {
-            assert separableTasks.size() < stage.getTasks().size();
-            final InterimStage separatedStage = this.splitStage(stage, separableTasks);
-            this.applySplittingCriteria(separatedStage);
+            if (separableTasks.size() < stage.getTasks().size()) {
+                final InterimStage separatedStage = this.splitStage(stage, separableTasks);
+                this.applySplittingCriteria(separatedStage);
+            } else {
+                // TODO: How can this happen?
+                this.logger.warn(
+                        "Cannot separate {} tasks from stage with {} tasks! Proceed without splitting...",
+                        separableTasks.size(), stage.getTasks().size());
+            }
         }
     }
 

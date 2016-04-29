@@ -11,6 +11,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
@@ -75,7 +76,11 @@ public class SparkFlatMapOperator<InputType, OutputType>
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+        if (index == 0) {
+            return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+        } else {
+            return Collections.singletonList(BroadcastChannel.DESCRIPTOR);
+        }
     }
 
     @Override

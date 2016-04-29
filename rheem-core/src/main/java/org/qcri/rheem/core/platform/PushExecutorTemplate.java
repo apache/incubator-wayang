@@ -247,12 +247,20 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
         public void accept(CI inputChannelInstance) {
             // Identify the input index of the inputChannelInstance wrt. the ExecutionTask.
             final Channel channel = inputChannelInstance.getChannel();
-            final InputSlot<?> inputSlot = this.task.getInputSlotFor(channel);
-            assert inputSlot != null
-                    : String.format("Could not identify an InputSlot in %s for %s.", this.task, inputChannelInstance);
-            final int inputIndex = inputSlot.getIndex();
+            final int inputIndex;
+            if (this.task.getOperator().getNumInputs() == 0) {
+                // If we have a ChannelInstance but no InputSlots, we fall-back to index 0 as per convention.
+                assert this.inputChannelInstances.isEmpty();
+                this.inputChannelInstances.add(null);
+                inputIndex = 0;
+            } else {
+                final InputSlot<?> inputSlot = this.task.getInputSlotFor(channel);
+                assert inputSlot != null
+                        : String.format("Could not identify an InputSlot in %s for %s.", this.task, inputChannelInstance);
+                inputIndex = inputSlot.getIndex();
 
-            // Register the inputChannelInstance.
+            }
+            // Register the inputChannelInstance (and check for conflicts).
             assert this.inputChannelInstances.get(inputIndex) == null
                     : String.format("Tried to replace %s with %s as %dth input of %s.",
                     this.inputChannelInstances.get(inputIndex), inputChannelInstance, inputIndex, this.task);

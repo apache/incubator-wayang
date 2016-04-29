@@ -3,12 +3,11 @@ package org.qcri.rheem.postgres;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
-import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.postgres.channels.PostgresChannelManager;
 import org.qcri.rheem.postgres.execution.PostgresExecutor;
 import org.qcri.rheem.postgres.mapping.PostgresFilterMapping;
 import org.qcri.rheem.postgres.mapping.PostgresProjectionMapping;
@@ -34,7 +33,7 @@ public class PostgresPlatform extends Platform {
     public static final String CORES_PROPERTY = "rheem.postgres.cores";
 
     public static final String HDFS_MS_PER_MB_PROPERTY = "rheem.postgres.hdfs.ms-per-mb";
-    
+
     public static final String JDBC_URL_PROPERTY = "rheem.postgres.jdbc.url";
 
     public static final String USER_PROPERTY = "rheem.postgres.user";
@@ -117,18 +116,13 @@ public class PostgresPlatform extends Platform {
     }
 
     @Override
+    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
+
+    }
+
+    @Override
     public Executor.Factory getExecutorFactory() {
         return job -> new PostgresExecutor(this);
-    }
-
-    @Override
-    protected ChannelManager createChannelManager() {
-        return new PostgresChannelManager(this);
-    }
-
-    @Override
-    public PostgresChannelManager getChannelManager() {
-        return (PostgresChannelManager) super.getChannelManager();
     }
 
     @Override

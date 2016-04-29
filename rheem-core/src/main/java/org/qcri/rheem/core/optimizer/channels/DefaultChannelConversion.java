@@ -71,7 +71,7 @@ public class DefaultChannelConversion extends ChannelConversion {
         for (int inputIndex = 0; inputIndex < numInputs; inputIndex++) {
             operatorContext.setInputCardinality(inputIndex, cardinality);
         }
-        final int numOutputs = operatorContext.getOperator().getNumInputs();
+        final int numOutputs = operatorContext.getOperator().getNumOutputs();
         for (int outputIndex = 0; outputIndex < numOutputs; outputIndex++) {
             operatorContext.setOutputCardinality(outputIndex, cardinality);
         }

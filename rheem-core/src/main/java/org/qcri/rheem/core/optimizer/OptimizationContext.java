@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -164,8 +165,12 @@ public class OptimizationContext {
      */
     public OperatorContext getOperatorContext(Operator operator) {
         OperatorContext operatorContext = this.operatorContexts.get(operator);
-        if (operatorContext == null && this.base != null) {
-            operatorContext = this.base.getOperatorContext(operator);
+        if (operatorContext == null) {
+            if (this.base != null) {
+                operatorContext = this.base.getOperatorContext(operator);
+            } else if (this.hostLoopContext != null) {
+                operatorContext = this.hostLoopContext.getOptimizationContext().getOperatorContext(operator);
+            }
         }
         return operatorContext;
     }
@@ -418,7 +423,11 @@ public class OptimizationContext {
             final LoadProfileEstimator loadProfileEstimator = configuration
                     .getOperatorLoadProfileEstimatorProvider()
                     .provideFor(executionOperator);
-            this.loadProfile = loadProfileEstimator.estimate(this);
+            try {
+                this.loadProfile = loadProfileEstimator.estimate(this);
+            } catch (Exception e) {
+                throw new RheemException(String.format("Load profile estimation for %s failed.", this.operator), e);
+            }
 
             final Platform platform = executionOperator.getPlatform();
             final LoadProfileToTimeConverter timeConverter = configuration.getLoadProfileToTimeConverterProvider().provideFor(platform);
