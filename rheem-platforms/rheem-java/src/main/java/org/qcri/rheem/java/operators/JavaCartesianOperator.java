@@ -9,6 +9,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -35,7 +36,7 @@ public class JavaCartesianOperator<InputType0, InputType1>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         if (inputs.length != 2) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }
@@ -43,7 +44,7 @@ public class JavaCartesianOperator<InputType0, InputType1>
         StreamChannel.Instance outputChannel = (StreamChannel.Instance) outputs[0];
         if (inputs[0] instanceof CollectionChannel.Instance) {
             final Collection<InputType0> collection = ((CollectionChannel.Instance) inputs[0]).provideCollection();
-            final Stream<InputType1> stream = inputs[1].provideStream();
+            final Stream<InputType1> stream = ((JavaChannelInstance) inputs[1]).provideStream();
             outputChannel.<Tuple2<InputType0, InputType1>>accept(
                     stream.flatMap(e1 -> collection.stream().map(
                             e0 -> new Tuple2<>(e0, e1)
@@ -51,7 +52,7 @@ public class JavaCartesianOperator<InputType0, InputType1>
             );
 
         } else if (inputs[1] instanceof CollectionChannel.Instance) {
-            final Stream<InputType0> stream = inputs[0].provideStream();
+            final Stream<InputType0> stream = ((JavaChannelInstance) inputs[0]).provideStream();
             final Collection<InputType1> collection = ((CollectionChannel.Instance) inputs[1]).provideCollection();
             outputChannel.<Tuple2<InputType0, InputType1>>accept(
                     stream.flatMap(e0 -> collection.stream().map(
@@ -61,8 +62,8 @@ public class JavaCartesianOperator<InputType0, InputType1>
 
         } else {
             // Fallback: Materialize one side.
-            final Collection<InputType0> collection = (Collection<InputType0>) inputs[0].provideStream().collect(Collectors.toList());
-            final Stream<InputType1> stream = inputs[1].provideStream();
+            final Collection<InputType0> collection = (Collection<InputType0>) ((JavaChannelInstance) inputs[0]).provideStream().collect(Collectors.toList());
+            final Stream<InputType1> stream = ((JavaChannelInstance) inputs[1]).provideStream();
             outputChannel.<Tuple2<InputType0, InputType1>>accept(
                     stream.flatMap(e1 -> collection.stream().map(
                             e0 -> new Tuple2<>(e0, e1)

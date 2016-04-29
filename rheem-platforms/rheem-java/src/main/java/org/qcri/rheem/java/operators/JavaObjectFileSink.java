@@ -15,6 +15,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
@@ -40,8 +41,6 @@ import java.util.stream.Stream;
  */
 public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecutionOperator {
 
-    private FileChannel.Instance outputChannelInstance;
-
     private final String targetPath;
 
     public JavaObjectFileSink(String targetPath, DataSetType type) {
@@ -50,7 +49,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
     }
 
     @Override
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
 
         // Prepare Hadoop's SequenceFile.Writer.
@@ -74,11 +73,8 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
                     throw new UncheckedIOException("Writing or serialization failed.", e);
                 }
             });
-            inputs[0].provideStream().forEach(streamChunker::push);
+            ((JavaChannelInstance) inputs[0]).provideStream().forEach(streamChunker::push);
             streamChunker.fire();
-            if (this.outputChannelInstance != null) {
-                this.outputChannelInstance.setMeasuredCardinality(streamChunker.numPushedObjects);
-            }
             LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", this.targetPath);
         } catch (IOException | UncheckedIOException e) {
             throw new RheemException("Could not write stream to sequence file.", e);
@@ -101,15 +97,6 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
     @Override
     protected ExecutionOperator createCopy() {
         return new JavaObjectFileSink<>(this.targetPath, this.getType());
-    }
-
-    @Override
-    public void instrumentSink(JavaChannelInstance channelExecutor) {
-        this.outputChannelInstance = (FileChannel.Instance) channelExecutor;
-    }
-
-    public String getTargetPath() {
-        return this.targetPath;
     }
 
     @Override

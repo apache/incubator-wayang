@@ -12,11 +12,11 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
     }
 
     @Override
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert outputs.length == this.getNumOutputs();
 
         final String actualInputPath = FileSystems.findActualSingleInputPath(this.sourcePath);
@@ -63,27 +63,23 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
         // TODO rewrite in less verbose way.
         Class typeClass = this.getType().getDataUnitType().getTypeClass();
         int tabPos = line.indexOf('\t');
-        if (tabPos==-1) {
+        if (tabPos == -1) {
             if (typeClass == Integer.class) {
                 return (T) Integer.valueOf(line);
             } else if (typeClass == Float.class) {
                 return (T) Float.valueOf(line);
             } else if (typeClass == String.class) {
                 return (T) String.valueOf(line);
-            }
-            else throw new RheemException(String.format("Cannot parse TSV file line %s", line));
-        }
-        else if (typeClass == Record.class) {
+            } else throw new RheemException(String.format("Cannot parse TSV file line %s", line));
+        } else if (typeClass == Record.class) {
             // TODO: Fix Record parsing.
             return (T) new Record();
-        }
-        else if (typeClass == Tuple2.class) {
+        } else if (typeClass == Tuple2.class) {
             // TODO: Fix Tuple2 parsing
             return (T) new Tuple2(
                     Integer.valueOf(line.substring(0, tabPos)),
                     Float.valueOf(line.substring(tabPos + 1)));
-        }
-        else
+        } else
             throw new RheemException(String.format("Cannot parse TSV file line %s", line));
 
     }

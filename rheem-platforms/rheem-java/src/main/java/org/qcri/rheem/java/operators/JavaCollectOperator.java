@@ -4,6 +4,7 @@ import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -26,7 +27,7 @@ public class JavaCollectOperator<Type> extends OperatorBase implements JavaExecu
     }
 
     @Override
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         final StreamChannel.Instance streamChannelInstance = (StreamChannel.Instance) inputs[0];
         final CollectionChannel.Instance collectionChannelInstance = (CollectionChannel.Instance) outputs[0];
 

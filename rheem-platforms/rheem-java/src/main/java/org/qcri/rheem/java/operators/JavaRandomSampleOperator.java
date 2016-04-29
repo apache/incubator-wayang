@@ -8,6 +8,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -39,7 +40,7 @@ public class JavaRandomSampleOperator<Type>
     /**
      * Creates a new instance.
      *
-     * @param sampleSize size of sample
+     * @param sampleSize  size of sample
      * @param datasetSize size of data
      */
     public JavaRandomSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
@@ -50,16 +51,16 @@ public class JavaRandomSampleOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
         // FIXME: If the dataset size is unknown, we execute the Stream twice, which should not happen.
         if (datasetSize == 0) //total size of input dataset was not given
-            datasetSize = inputs[0].provideStream().count();
+            datasetSize = ((JavaChannelInstance) inputs[0]).provideStream().count();
 
         if (sampleSize >= datasetSize) { //return all
-            ((StreamChannel.Instance) outputs[0]).accept(inputs[0].provideStream());
+            ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).provideStream());
             return;
         }
 
@@ -73,8 +74,10 @@ public class JavaRandomSampleOperator<Type>
         }
         Arrays.sort(sampleIndices);
 
-        ((StreamChannel.Instance) outputs[0]).accept(inputs[0].<Type>provideStream().filter(new Predicate<Type>() {
-                    int streamIndex = 0; int sampleIndex = 0;
+        ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<Type>provideStream().filter(new Predicate<Type>() {
+                    int streamIndex = 0;
+                    int sampleIndex = 0;
+
                     @Override
                     public boolean test(Type element) {
                         if (sampleIndex == sampleIndices.length) //we already picked all our samples

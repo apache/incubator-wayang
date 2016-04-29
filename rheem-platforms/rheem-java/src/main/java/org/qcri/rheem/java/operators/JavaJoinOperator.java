@@ -11,6 +11,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -39,7 +40,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -59,7 +60,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
             final int expectedNumElements =
                     (int) (cardinalityEstimate0.getUpperEstimate() - cardinalityEstimate0.getLowerEstimate()) / 2;
             Map<KeyType, Collection<InputType0>> probeTable = new HashMap<>(expectedNumElements);
-            inputs[0].<InputType0>provideStream().forEach(dataQuantum0 ->
+            ((JavaChannelInstance) inputs[0]).<InputType0>provideStream().forEach(dataQuantum0 ->
                     probeTable.compute(keyExtractor0.apply(dataQuantum0),
                             (key, value) -> {
                                 value = value == null ? new LinkedList<>() : value;
@@ -68,7 +69,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
                             }
                     )
             );
-            joinStream = inputs[1].<InputType1>provideStream().flatMap(dataQuantum1 ->
+            joinStream = ((JavaChannelInstance) inputs[1]).<InputType1>provideStream().flatMap(dataQuantum1 ->
                     probeTable.getOrDefault(keyExtractor1.apply(dataQuantum1), Collections.emptyList()).stream()
                             .map(dataQuantum0 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
 
@@ -77,7 +78,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
                     1000 :
                     (int) (cardinalityEstimate1.getUpperEstimate() - cardinalityEstimate1.getLowerEstimate()) / 2;
             Map<KeyType, Collection<InputType1>> probeTable = new HashMap<>(expectedNumElements);
-            inputs[1].<InputType1>provideStream().forEach(dataQuantum1 ->
+            ((JavaChannelInstance) inputs[1]).<InputType1>provideStream().forEach(dataQuantum1 ->
                     probeTable.compute(keyExtractor1.apply(dataQuantum1),
                             (key, value) -> {
                                 value = value == null ? new LinkedList<>() : value;
@@ -86,7 +87,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
                             }
                     )
             );
-            joinStream = inputs[0].<InputType0>provideStream().flatMap(dataQuantum0 ->
+            joinStream = ((JavaChannelInstance) inputs[0]).<InputType0>provideStream().flatMap(dataQuantum0 ->
                     probeTable.getOrDefault(keyExtractor0.apply(dataQuantum0), Collections.emptyList()).stream()
                             .map(dataQuantum1 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
         }
@@ -97,10 +98,10 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
         return Optional.of(new NestableLoadProfileEstimator(
-                        new DefaultLoadEstimator(2, 1, 0.9,
-                                (inCards, outCards) -> 1000 * inCards[0] + 1000 * inCards[1] + 200 * outCards[0] + 1000000
-                        ), LoadEstimator.createFallback(2, 1)
-                ));
+                new DefaultLoadEstimator(2, 1, 0.9,
+                        (inCards, outCards) -> 1000 * inCards[0] + 1000 * inCards[1] + 200 * outCards[0] + 1000000
+                ), LoadEstimator.createFallback(2, 1)
+        ));
     }
 
     @Override

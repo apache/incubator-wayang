@@ -11,6 +11,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
@@ -37,19 +38,17 @@ import java.util.Optional;
  */
 public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implements JavaExecutionOperator {
 
-    private FileChannel.Instance outputChannelExecutor;
-
     private final String targetPath;
 
     public JavaTsvFileSink(String targetPath, DataSetType type) {
         super(type, null);
         assert type.equals(DataSetType.createDefault(Tuple2.class)) :
-        String.format("Illegal type for %s: %s", this, type);
+                String.format("Illegal type for %s: %s", this, type);
         this.targetPath = targetPath;
     }
 
     @Override
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
 
         // Prepare Hadoop's SequenceFile.Writer.
@@ -63,7 +62,7 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
                 )
         )) {
             try {
-                inputs[0].provideStream().forEach(
+                ((JavaChannelInstance) inputs[0]).provideStream().forEach(
                         dataQuantum -> {
                             try {
                                 // TODO: Once there are more tuple types, make this generic.
@@ -102,16 +101,6 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
     protected ExecutionOperator createCopy() {
         return new JavaTsvFileSink<>(this.targetPath, this.getType());
     }
-
-    @Override
-    public void instrumentSink(JavaChannelInstance channelExecutor) {
-        this.outputChannelExecutor = (FileChannel.Instance) channelExecutor; // TODO: What is this doing????
-    }
-
-    public String getTargetPath() {
-        return this.targetPath;
-    }
-
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {

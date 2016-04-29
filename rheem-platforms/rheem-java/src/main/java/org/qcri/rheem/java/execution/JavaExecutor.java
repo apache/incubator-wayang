@@ -43,17 +43,17 @@ public class JavaExecutor extends PushExecutorTemplate {
     @Override
     protected List<ChannelInstance> execute(ExecutionTask task, List<ChannelInstance> inputChannelInstances, boolean isForceExecution) {
         // Provide the ChannelInstances for the output of the task.
-        final JavaChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(task);
+        final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(task);
 
         // Execute.
         cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this.compiler);
 
         // Force execution if necessary.
         if (isForceExecution) {
-            for (JavaChannelInstance outputChannelInstance : outputChannelInstances) {
+            for (ChannelInstance outputChannelInstance : outputChannelInstances) {
                 if (outputChannelInstance == null || !outputChannelInstance.getChannel().isReusable()) {
                     this.logger.warn("Execution of {} might not have been enforced properly. " +
-                            "This might break the execution or cause side-effects with the re-optimization.",
+                                    "This might break the execution or cause side-effects with the re-optimization.",
                             task);
                 }
             }
@@ -63,11 +63,11 @@ public class JavaExecutor extends PushExecutorTemplate {
     }
 
 
-    private JavaChannelInstance[] createOutputChannelInstances(ExecutionTask task) {
-        JavaChannelInstance[] channelInstances = new JavaChannelInstance[task.getNumOuputChannels()];
+    private ChannelInstance[] createOutputChannelInstances(ExecutionTask task) {
+        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
         for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
             final Channel outputChannel = task.getOutputChannel(outputIndex);
-            channelInstances[outputIndex] = (JavaChannelInstance) outputChannel.createInstance();
+            channelInstances[outputIndex] = outputChannel.createInstance();
         }
         return channelInstances;
     }
@@ -81,7 +81,7 @@ public class JavaExecutor extends PushExecutorTemplate {
         return channelInstances.toArray(array);
     }
 
-    public static void openFunction(JavaExecutionOperator operator, Object function, JavaChannelInstance[] inputs) {
+    public static void openFunction(JavaExecutionOperator operator, Object function, ChannelInstance[] inputs) {
         if (function instanceof ExtendedFunction) {
             ExtendedFunction extendedFunction = (ExtendedFunction) function;
             extendedFunction.open(new JavaExecutionContext(operator, inputs));

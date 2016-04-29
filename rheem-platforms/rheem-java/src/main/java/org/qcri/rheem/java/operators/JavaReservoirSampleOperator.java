@@ -8,6 +8,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -50,12 +51,13 @@ public class JavaReservoirSampleOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
 
-        final List<Type> initList = (List) inputs[0].<Type>provideStream().collect(Collectors.toList()); //FIXME: this is super inefficient, avoid collecting all elements
+        final List<Type> initList = (List) ((JavaChannelInstance) inputs[0]).<Type>provideStream().collect(Collectors.toList());
+        //FIXME: this is super inefficient, avoid collecting all elements
         ((CollectionChannel.Instance) outputs[0]).accept(reservoirSample(rand, initList, sampleSize));
     }
 

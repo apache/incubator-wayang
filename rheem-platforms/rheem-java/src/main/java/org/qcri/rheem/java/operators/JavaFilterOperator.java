@@ -9,6 +9,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -40,7 +41,7 @@ public class JavaFilterOperator<Type>
     }
 
     @Override
-    public void open(JavaChannelInstance[] inputs, FunctionCompiler compiler) {
+    public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
         final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
         JavaExecutor.openFunction(this, filterFunction, inputs);
     }
@@ -51,12 +52,12 @@ public class JavaFilterOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
         final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
-        ((StreamChannel.Instance) outputs[0]).accept(inputs[0].<Type>provideStream().filter(filterFunction));
+        ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<Type>provideStream().filter(filterFunction));
     }
 
     @Override

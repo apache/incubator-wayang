@@ -8,6 +8,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -37,11 +38,14 @@ public class JavaUnionAllOperator<Type>
     }
 
     @Override
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        ((StreamChannel.Instance) outputs[0]).accept(Stream.concat(inputs[0].provideStream(), inputs[1].provideStream()));
+        ((StreamChannel.Instance) outputs[0]).accept(Stream.concat(
+                ((JavaChannelInstance) inputs[0]).provideStream(),
+                ((JavaChannelInstance) inputs[1]).provideStream())
+        );
     }
 
     @Override

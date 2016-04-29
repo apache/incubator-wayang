@@ -3,6 +3,7 @@ package org.qcri.rheem.java.execution;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -17,9 +18,9 @@ public class JavaExecutionContext implements ExecutionContext {
 
     private final JavaExecutionOperator operator;
 
-    private final JavaChannelInstance[] inputs;
+    private final ChannelInstance[] inputs;
 
-    public JavaExecutionContext(JavaExecutionOperator operator, JavaChannelInstance[] inputs) {
+    public JavaExecutionContext(JavaExecutionOperator operator, ChannelInstance[] inputs) {
         this.operator = operator;
         this.inputs = inputs;
     }

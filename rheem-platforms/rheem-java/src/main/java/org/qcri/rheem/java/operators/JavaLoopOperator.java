@@ -9,6 +9,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -41,14 +42,14 @@ public class JavaLoopOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public void open(JavaChannelInstance[] inputs, FunctionCompiler compiler) {
+    public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
         final Predicate<Collection<ConvergenceType>> udf = compiler.compile(this.criterionDescriptor);
         JavaExecutor.openFunction(this, udf, inputs);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -62,7 +63,7 @@ public class JavaLoopOperator<InputType, ConvergenceType>
                 assert inputs[INITIAL_INPUT_INDEX] != null;
                 assert inputs[INITIAL_CONVERGENCE_INPUT_INDEX] != null;
 
-                input = inputs[INITIAL_INPUT_INDEX];
+                input = (JavaChannelInstance) inputs[INITIAL_INPUT_INDEX];
                 convergenceCollection = ((CollectionChannel.Instance) inputs[INITIAL_CONVERGENCE_INPUT_INDEX]).provideCollection();
                 break;
             case RUNNING:
@@ -71,7 +72,7 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
                 convergenceCollection = ((CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX]).provideCollection();
                 endloop = stoppingCondition.test(convergenceCollection);
-                input = inputs[ITERATION_INPUT_INDEX];
+                input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -80,13 +81,13 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            forward(input, outputs[FINAL_OUTPUT_INDEX]);
+            forward(input, (JavaChannelInstance) outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            forward(input, outputs[ITERATION_OUTPUT_INDEX]);
+            forward(input, (JavaChannelInstance) outputs[ITERATION_OUTPUT_INDEX]);
             // We do not use forward(...) because we might not be able to consume the input JavaChannelInstance twice.
             ((CollectionChannel.Instance) outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]).accept(convergenceCollection);
             this.setState(State.RUNNING);

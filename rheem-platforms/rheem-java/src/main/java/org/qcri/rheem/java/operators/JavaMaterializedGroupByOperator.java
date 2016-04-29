@@ -9,6 +9,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -34,12 +35,12 @@ public class JavaMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
         final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor);
-        final Map<KeyType, List<Type>> collocation = inputs[0].<Type>provideStream().collect(
+        final Map<KeyType, List<Type>> collocation = ((JavaChannelInstance) inputs[0]).<Type>provideStream().collect(
                 Collectors.groupingBy(
                         keyExtractor,
                         Collectors.toList())); // Not sure if this is thread-safe... Will we use #parallelStream()?

@@ -9,9 +9,9 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
-import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Collection;
@@ -30,7 +30,7 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(JavaChannelInstance[] inputs, JavaChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == 0;
         assert outputs.length == 1;
         ((CollectionChannel.Instance) outputs[0]).accept(this.getCollection());
