@@ -3,7 +3,7 @@ package org.qcri.rheem.graphchi.execution;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
 import org.qcri.rheem.graphchi.operators.GraphChiOperator;
@@ -22,9 +22,11 @@ public class GraphChiExecutor implements Executor {
     }
 
     @Override
-    public ExecutionProfile execute(final ExecutionStage stage) {
+    public ExecutionState execute(final ExecutionStage stage, ExecutionState executionState) {
         Queue<ExecutionTask> scheduledTasks = new LinkedList<>(stage.getStartTasks());
         Set<ExecutionTask> executedTasks = new HashSet<>();
+
+        // TODO: Load ChannelInstances from executionState.
 
         while (!scheduledTasks.isEmpty()) {
             final ExecutionTask task = scheduledTasks.poll();
@@ -38,7 +40,7 @@ public class GraphChiExecutor implements Executor {
                     .forEach(scheduledTasks::add);
         }
 
-        return new ExecutionProfile();
+        return new ExecutionState();
     }
 
     /**

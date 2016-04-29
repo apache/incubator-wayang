@@ -2,12 +2,10 @@ package org.qcri.rheem.postgres.execution;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.basic.channels.FileChannel;
-import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.fs.FileSystem;
@@ -37,7 +35,8 @@ public class PostgresExecutor implements Executor {
     }
 
     @Override
-    public ExecutionProfile execute(ExecutionStage stage) {
+    public ExecutionState execute(ExecutionStage stage, ExecutionState executionState) {
+        // TODO: Load ChannelInstances from executionState?
         ResultSet rs = null;
         FunctionCompiler functionCompiler = new FunctionCompiler();
         Collection<?> startTasks = stage.getStartTasks();
@@ -122,7 +121,7 @@ public class PostgresExecutor implements Executor {
             e.printStackTrace();
             throw new RheemException(e);
         }
-        return new ExecutionProfile();
+        return new ExecutionState();
 
     }
 

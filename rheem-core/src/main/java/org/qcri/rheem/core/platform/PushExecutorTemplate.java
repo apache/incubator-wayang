@@ -4,7 +4,6 @@ import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
@@ -19,23 +18,24 @@ import java.util.*;
  * {@link Executor} implementation that employs a push model, i.e., data quanta are "pushed"
  * through the {@link ExecutionStage}.
  */
-public abstract class PushExecutorTemplate<CI extends ChannelInstance> implements Executor {
+public abstract class PushExecutorTemplate implements Executor {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected final Job job;
 
-    private Collection<ExecutionResource> allocatedResources = new LinkedList<>();
-
-    private Map<Channel, CI> interStageChannelInstances = new HashMap<>(4);
+    /**
+     * Resources that are local to a single run of {@link #execute(ExecutionStage, ExecutionState)}.
+     */
+    private Collection<ExecutionResource> tempResources = new LinkedList<>();
 
     public PushExecutorTemplate(Job job) {
         this.job = job;
     }
 
     @Override
-    public ExecutionProfile execute(ExecutionStage stage) {
-        final StageExecution stageExecution = new StageExecution(stage);
+    public ExecutionState execute(ExecutionStage stage, ExecutionState executionState) {
+        final StageExecution stageExecution = new StageExecution(stage, executionState);
         return stageExecution.executeStage();
     }
 
@@ -43,27 +43,24 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
     /**
      * Executes an {@link ExecutionTask}.
      *
-     * @param taskActivator    provides the {@link ExecutionTask} and its input dependencies.
+     * @param taskActivator    provides the {@link ExecutionTask} and its input dependenchannelInstancees.
      * @param isForceExecution whether execution is forced, i.e., lazy execution of {@link ExecutionTask} is prohibited
      * @return the output {@link ChannelInstance}s of the {@link ExecutionTask}
      */
-    private Collection<CI> execute(TaskActivator taskActivator, boolean isForceExecution) {
+    private Collection<ChannelInstance> execute(TaskActivator taskActivator, boolean isForceExecution) {
         // Execute the ExecutionTask.
         this.open(taskActivator.getTask(), taskActivator.getInputChannelInstances());
-        final List<CI> outputChannelInstances = this.execute(
+        final List<ChannelInstance> outputChannelInstances = this.execute(
                 taskActivator.getTask(),
                 taskActivator.getInputChannelInstances(),
                 isForceExecution
         );
 
-        for (CI outputChannelInstance : outputChannelInstances) {
-            if (outputChannelInstance == null) continue;
-
-            // Register the outputChannelInstances as allocated resources, so that we can clean up later.
-            this.allocatedResources.add(outputChannelInstance);
-
-            // Keep inter-stage ChannelInstances around.
-            this.keepIfInterStageChannelInstance(outputChannelInstance);
+        // Register the outputChannelInstances as allocated resources, so that we can clean up later.
+        for (ChannelInstance outputChannelInstance : outputChannelInstances) {
+            if (outputChannelInstance != null && !outputChannelInstance.getChannel().isBetweenStages()) {
+                this.tempResources.add(outputChannelInstance);
+            }
         }
 
         return outputChannelInstances;
@@ -76,7 +73,7 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
      * @param inputChannelInstances inputs into the {@code task}
      * @return the {@link ChannelInstance}s created as output of {@code task}
      */
-    protected abstract void open(ExecutionTask task, List<CI> inputChannelInstances);
+    protected abstract void open(ExecutionTask task, List<ChannelInstance> inputChannelInstances);
 
     /**
      * Executes the given {@code task} and return the output {@link ChannelInstance}s.
@@ -86,43 +83,19 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
      * @param isForceExecution      forbids lazy execution
      * @return the {@link ChannelInstance}s created as output of {@code task}
      */
-    protected abstract List<CI> execute(ExecutionTask task, List<CI> inputChannelInstances, boolean isForceExecution);
-
-    /**
-     * If the given {@code channelInstance} is needed later on, keep it around in {@link #interStageChannelInstances}.
-     * @param channelInstance
-     */
-    private void keepIfInterStageChannelInstance(CI channelInstance) {
-        // Reckon with null values (cf. LoopHeadOperator).
-        if (channelInstance == null) return;
-
-        // Find out which ExecutionStage is currently dealt with.
-        final Channel channel = channelInstance.getChannel();
-        final ExecutionStage currentStage = channel.getProducer().getStage();
-        final PlatformExecution currentPlatformExecution = currentStage.getPlatformExecution();
-
-        // Keep the ChannelInstance if there is any other ExecutionStage from the same PlatformExecution requiring it.
-        if (channel.getConsumers().stream().anyMatch(
-                consumer ->
-                        consumer.getStage() != currentStage
-                                && consumer.getStage().getPlatformExecution() == currentPlatformExecution
-        )) {
-            this.interStageChannelInstances.put(channel, channelInstance);
-        }
-
-    }
+    protected abstract List<ChannelInstance> execute(ExecutionTask task, List<ChannelInstance> inputChannelInstances, boolean isForceExecution);
 
 
     @Override
     public void dispose() {
-        this.allocatedResources.forEach(ExecutionResource::release);
-        this.allocatedResources.clear();
+        this.tempResources.forEach(ExecutionResource::release);
+        this.tempResources.clear();
     }
 
     /**
-     * Keeps track of state that is required within the execution of a single {@link ExecutionStage}. Specifically,
+     * Keeps track of state that is required within the execution of a single {@link ExecutionStage}. SpechannelInstancefically,
      * it issues to the {@link PushExecutorTemplate}, which {@link ExecutionTask}s should be executed in which
-     * order with which input dependencies.
+     * order with which input dependenchannelInstancees.
      */
     protected class StageExecution extends OneTimeExecutable {
 
@@ -134,22 +107,31 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
 
         private final Collection<ChannelInstance> allChannelInstances = new LinkedList<>();
 
-        private StageExecution(ExecutionStage stage) {
+        /**
+         * State from preceeding executions.
+         */
+        private final ExecutionState executionState;
+
+        private StageExecution(ExecutionStage stage, ExecutionState executionState) {
+            this.executionState = executionState;
+
             // Initialize the readyActivators.
             assert !stage.getStartTasks().isEmpty() : String.format("No start tasks for {}.", stage);
-            for (ExecutionTask startTask : stage.getStartTasks()) {
-                TaskActivator activator = new TaskActivator(startTask);
-                assert activator.isReady() : String.format("Stage starter %s is not immediately ready.", startTask);
-                this.readyActivators.add(activator);
-            }
+            stage.getStartTasks().forEach(this::scheduleStartTask);
 
             // Initialize the terminalTasks.
             this.terminalTasks = RheemCollections.asSet(stage.getTerminalTasks());
         }
 
-        public ExecutionProfile executeStage() {
+        private void scheduleStartTask(ExecutionTask startTask) {
+            TaskActivator activator = new TaskActivator(startTask, this.executionState);
+            assert activator.isReady() : String.format("Stage starter %s is not immediately ready.", startTask);
+            this.readyActivators.add(activator);
+        }
+
+        ExecutionState executeStage() {
             this.execute();
-            return this.assembleExecutionProfile();
+            return this.assembleExecutionState();
         }
 
         @Override
@@ -158,9 +140,9 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
             while ((readyActivator = this.readyActivators.poll()) != null) {
                 // Execute the ExecutionTask.
                 final ExecutionTask task = readyActivator.getTask();
-                final Collection<CI> outputChannelInstances = this.execute(readyActivator, task);
+                final Collection<ChannelInstance> outputChannelInstances = this.execute(readyActivator, task);
 
-                // Register the outputChannelInstances (to obtain cardinality measurements).
+                // Register the outputChannelInstances (to obtain cardinality measurements and for furhter stages).
                 outputChannelInstances.stream().filter(Objects::nonNull).forEach(this.allChannelInstances::add);
 
                 // Activate successor ExecutionTasks.
@@ -168,13 +150,13 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
             }
         }
 
-        private Collection<CI> execute(TaskActivator readyActivator, ExecutionTask task) {
+        private Collection<ChannelInstance> execute(TaskActivator readyActivator, ExecutionTask task) {
             final boolean isForceExecution = this.terminalTasks.contains(task);
             return this.executor().execute(readyActivator, isForceExecution);
         }
 
-        private void activateSuccessorTasks(ExecutionTask task, Collection<CI> outputChannelInstances) {
-            for (CI outputChannelInstance : outputChannelInstances) {
+        private void activateSuccessorTasks(ExecutionTask task, Collection<ChannelInstance> outputChannelInstances) {
+            for (ChannelInstance outputChannelInstance : outputChannelInstances) {
                 if (outputChannelInstance == null) continue; // Partial results possible (cf. LoopHeadOperator).
 
                 final Channel channel = outputChannelInstance.getChannel();
@@ -182,7 +164,9 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
                     if (consumer.getStage() != task.getStage()) continue; // Stay within ExecutionStage.
 
                     // Get or create the TaskActivator.
-                    final TaskActivator consumerActivator = this.stagedActivators.computeIfAbsent(consumer, TaskActivator::new);
+                    final TaskActivator consumerActivator = this.stagedActivators.computeIfAbsent(
+                            consumer, (task1) -> new TaskActivator(task1, this.executionState)
+                    );
 
                     // Register the outputChannelInstance.
                     consumerActivator.accept(outputChannelInstance);
@@ -196,14 +180,21 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
             }
         }
 
-        private PushExecutorTemplate<CI> executor() {
+        private PushExecutorTemplate executor() {
             return PushExecutorTemplate.this;
         }
 
-        private ExecutionProfile assembleExecutionProfile() {
-            ExecutionProfile executionProfile = new ExecutionProfile();
-            final Map<Channel, Long> cardinalities = executionProfile.getCardinalities();
+        private ExecutionState assembleExecutionState() {
+            ExecutionState executionState = new ExecutionState();
+            final Map<Channel, Long> cardinalities = executionState.getCardinalities();
             for (final ChannelInstance channelInstance : this.allChannelInstances) {
+
+                // Capture outbound ChannelInstances.
+                if (channelInstance.getChannel().isBetweenStages()) {
+                    executionState.getChannelInstances().put(channelInstance.getChannel(), channelInstance);
+                }
+
+                // Try to store cardinalities.
                 final OptionalLong measuredCardinality = channelInstance.getMeasuredCardinality();
                 if (measuredCardinality.isPresent()) {
                     cardinalities.put(channelInstance.getChannel(), measuredCardinality.getAsLong());
@@ -213,26 +204,26 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
                     );
                 }
             }
-            return executionProfile;
+            return executionState;
         }
     }
 
-    protected class TaskActivator {
+    private class TaskActivator {
 
         private final ExecutionTask task;
 
-        private final ArrayList<CI> inputChannelInstances;
+        private final ArrayList<ChannelInstance> inputChannelInstances;
 
-        protected TaskActivator(ExecutionTask task) {
+        TaskActivator(ExecutionTask task, ExecutionState executionState) {
             this.task = task;
             this.inputChannelInstances = RheemCollections.createNullFilledArrayList(this.getOperator().getNumInputs());
-            this.acceptInterStageChannelInstances();
+            this.acceptFrom(executionState);
         }
 
-        private void acceptInterStageChannelInstances() {
+        private void acceptFrom(ExecutionState executionState) {
             for (int inputIndex = 0; inputIndex < this.task.getNumInputChannels(); inputIndex++) {
                 final Channel channel = this.task.getInputChannel(inputIndex);
-                final CI channelInstance = PushExecutorTemplate.this.interStageChannelInstances.get(channel);
+                final ChannelInstance channelInstance = executionState.getChannelInstances().get(channel);
                 if (channelInstance != null) {
                     this.accept(channelInstance);
                 }
@@ -244,7 +235,7 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
          *
          * @param inputChannelInstance the input {@link ChannelInstance}
          */
-        public void accept(CI inputChannelInstance) {
+        public void accept(ChannelInstance inputChannelInstance) {
             // Identify the input index of the inputChannelInstance wrt. the ExecutionTask.
             final Channel channel = inputChannelInstance.getChannel();
             final int inputIndex;
@@ -276,19 +267,19 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
             return this.task.getOperator();
         }
 
-        protected List<CI> getInputChannelInstances() {
+        protected List<ChannelInstance> getInputChannelInstances() {
             return this.inputChannelInstances;
         }
 
         /**
-         * @return whether the {@link #task} has sufficient input dependencies satisfied
+         * @return whether the {@link #task} has suffichannelInstanceent input dependenchannelInstancees satisfied
          */
         protected boolean isReady() {
             return this.isLoopInitializationReady() || this.isLoopIterationReady() || this.isPlainReady();
         }
 
         /**
-         * @return whether the {@link #task} has all input dependencies satisfied
+         * @return whether the {@link #task} has all input dependenchannelInstancees satisfied
          */
         protected boolean isPlainReady() {
             for (InputSlot<?> inputSlot : this.getOperator().getAllInputs()) {
@@ -298,7 +289,7 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
         }
 
         /**
-         * @return whether the {@link #task} has all loop initialization input dependencies satisfied
+         * @return whether the {@link #task} has all loop initialization input dependenchannelInstancees satisfied
          */
         protected boolean isLoopInitializationReady() {
             if (!this.getOperator().isLoopHead()) return false;
@@ -311,7 +302,7 @@ public abstract class PushExecutorTemplate<CI extends ChannelInstance> implement
         }
 
         /**
-         * @return whether the {@link #task} has all loop iteration input dependencies satisfied
+         * @return whether the {@link #task} has all loop iteration input dependenchannelInstancees satisfied
          */
         protected boolean isLoopIterationReady() {
             if (!this.getOperator().isLoopHead()) return false;

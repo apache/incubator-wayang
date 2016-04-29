@@ -13,9 +13,10 @@ public interface Executor {
      * Executes the given {@code stage}.
      *
      * @param stage should be executed; must be executable by this instance, though
+     * @param executionState
      * @return collected metadata from instrumentation
      */
-    ExecutionProfile execute(ExecutionStage stage);
+    ExecutionState execute(ExecutionStage stage, ExecutionState executionState);
 
     /**
      * Releases any instances acquired by this instance to execute {@link ExecutionStage}s.

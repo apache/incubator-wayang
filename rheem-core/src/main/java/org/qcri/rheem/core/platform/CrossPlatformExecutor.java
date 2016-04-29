@@ -68,7 +68,7 @@ public class CrossPlatformExecutor {
      */
     private Set<ExecutionStage> completedStages = new HashSet<>();
 
-    private ExecutionProfile executionProfile;
+    private ExecutionState executionState;
 
     public CrossPlatformExecutor(Job job, InstrumentationStrategy instrumentationStrategy) {
         this.job = job;
@@ -96,7 +96,7 @@ public class CrossPlatformExecutor {
         this.suspendedStages.clear();
         this.activatedStages.addAll(executionPlan.getStartingStages());
 
-        this.executionProfile = new ExecutionProfile();
+        this.executionState = new ExecutionState();
     }
 
     private void runToBreakpoint() {
@@ -170,8 +170,8 @@ public class CrossPlatformExecutor {
         if (shouldExecute) {
             this.instrumentationStrategy.applyTo(activatedStage);
             Executor executor = this.getOrCreateExecutorFor(activatedStage);
-            final ExecutionProfile executionProfile = this.submit(activatedStage, executor);
-            this.executionProfile.merge(executionProfile);
+            final ExecutionState executionState = this.submit(activatedStage, executor);
+            this.executionState.merge(executionState);
             activatedStage.setWasExecuted(true);
             this.completedStages.add(activatedStage);
 
@@ -194,21 +194,21 @@ public class CrossPlatformExecutor {
     /**
      * Submit the {@code stage} to the {@code executor}.
      *
-     * @return the {@link ExecutionProfile} that has been gathered during execution
+     * @return the {@link ExecutionState} that has been gathered during execution
      */
-    private ExecutionProfile submit(ExecutionStage stage, Executor executor) {
+    private ExecutionState submit(ExecutionStage stage, Executor executor) {
         CrossPlatformExecutor.this.logger.info("Start executing {}.", stage);
         CrossPlatformExecutor.this.logger.info("Stage plan:\n{}", stage.toExtensiveString());
         long startTime = System.currentTimeMillis();
-        final ExecutionProfile executionProfile = executor.execute(stage);
+        final ExecutionState executionState = executor.execute(stage, this.executionState);
         long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime));
 //        throw new RuntimeException("todo");
-//        executionProfile.getCardinalities().forEach((channel, cardinality) ->
+//        executionState.getCardinalities().forEach((channel, cardinality) ->
 //                CrossPlatformExecutor.this.logger.debug("Cardinality of {}: actual {}, estimated {}",
 //                        channel, cardinality, channel.getCardinalityEstimate(optimizationContext))
 //        );
-        return executionProfile;
+        return executionState;
     }
 
     /**
@@ -266,17 +266,17 @@ public class CrossPlatformExecutor {
      */
     public static class State {
 
-        private final ExecutionProfile profile = new ExecutionProfile();
+        private final ExecutionState profile = new ExecutionState();
 
         private final Set<ExecutionStage> completedStages = new HashSet<>(), suspendedStages = new HashSet<>();
 
         public State(CrossPlatformExecutor crossPlatformExecutor) {
-            this.profile.merge(crossPlatformExecutor.executionProfile);
+            this.profile.merge(crossPlatformExecutor.executionState);
             this.completedStages.addAll(crossPlatformExecutor.completedStages);
             this.suspendedStages.addAll(crossPlatformExecutor.suspendedStages);
         }
 
-        public ExecutionProfile getProfile() {
+        public ExecutionState getProfile() {
             return this.profile;
         }
 

@@ -378,4 +378,25 @@ public abstract class Channel {
      * Create a {@link ChannelInstance} for this instance.
      */
     public abstract ChannelInstance createInstance();
+
+    /**
+     * Tests for inter-stage instances.
+     *
+     * @return whether this instance connects {@link ExecutionTask}s of different {@link ExecutionStage}s.
+     */
+    public boolean isBetweenStages() {
+        if (this.producer == null || this.consumers.isEmpty()) {
+            return false;
+        }
+        final ExecutionStage producerStage = this.producer.getStage();
+        if (producerStage == null) {
+            return false;
+        }
+        for (ExecutionTask consumer : this.consumers) {
+            if (consumer.getStage() != null && !producerStage.equals(consumer.getStage())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

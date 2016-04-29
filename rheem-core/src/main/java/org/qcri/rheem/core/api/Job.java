@@ -16,7 +16,7 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.CardinalityBreakpoint;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
-import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.FixBreakpoint;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
@@ -276,7 +276,7 @@ public class Job {
 
     /**
      * Go over the given {@link RheemPlan} and update the cardinalities of data being passed between its
-     * {@link Operator}s using the given {@link ExecutionProfile}.
+     * {@link Operator}s using the given {@link ExecutionState}.
      */
     private void reestimateCardinalities(CrossPlatformExecutor.State executionState) {
         this.cardinalityEstimatorManager.pushCardinalityUpdates(executionState);

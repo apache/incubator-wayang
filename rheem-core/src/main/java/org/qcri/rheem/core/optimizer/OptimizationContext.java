@@ -8,7 +8,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.slf4j.Logger;
@@ -307,7 +307,7 @@ public class OptimizationContext {
         private LoadProfile loadProfile;
 
         /**
-         * {@link TimeEstimate} for the {@link ExecutionProfile}.
+         * {@link TimeEstimate} for the {@link ExecutionState}.
          */
         private TimeEstimate timeEstimate;
 

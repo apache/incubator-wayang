@@ -5,6 +5,7 @@ import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
 import org.qcri.rheem.java.JavaPlatform;
@@ -18,7 +19,7 @@ import java.util.List;
 /**
  * {@link Executor} implementation for the {@link JavaPlatform}.
  */
-public class JavaExecutor extends PushExecutorTemplate<JavaChannelInstance> {
+public class JavaExecutor extends PushExecutorTemplate {
 
     private final JavaPlatform platform;
 
@@ -35,12 +36,12 @@ public class JavaExecutor extends PushExecutorTemplate<JavaChannelInstance> {
     }
 
     @Override
-    protected void open(ExecutionTask task, List<JavaChannelInstance> inputChannelInstances) {
+    protected void open(ExecutionTask task, List<ChannelInstance> inputChannelInstances) {
         cast(task.getOperator()).open(toArray(inputChannelInstances), this.compiler);
     }
 
     @Override
-    protected List<JavaChannelInstance> execute(ExecutionTask task, List<JavaChannelInstance> inputChannelInstances, boolean isForceExecution) {
+    protected List<ChannelInstance> execute(ExecutionTask task, List<ChannelInstance> inputChannelInstances, boolean isForceExecution) {
         // Provide the ChannelInstances for the output of the task.
         final JavaChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(task);
 
@@ -75,7 +76,7 @@ public class JavaExecutor extends PushExecutorTemplate<JavaChannelInstance> {
         return (JavaExecutionOperator) executionOperator;
     }
 
-    private static JavaChannelInstance[] toArray(List<JavaChannelInstance> channelInstances) {
+    private static JavaChannelInstance[] toArray(List<ChannelInstance> channelInstances) {
         final JavaChannelInstance[] array = new JavaChannelInstance[channelInstances.size()];
         return channelInstances.toArray(array);
     }

@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.channels;
 
 import org.qcri.rheem.basic.channels.FileChannel;
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.types.DataSetType;
@@ -26,19 +27,19 @@ public class ChannelConversions {
     public static final ChannelConversion STREAM_TO_HDFS_TSV = new DefaultChannelConversion(
             StreamChannel.DESCRIPTOR,
             FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new JavaTsvFileSink<>(FileChannel.pickTempPath(), DataSetType.createDefault(Void.class)) // TODO
+            () -> new JavaTsvFileSink<>(FileChannel.pickTempPath(), DataSetType.createDefault(Tuple2.class)) // TODO
     );
 
     public static final ChannelConversion COLLECTION_TO_HDFS_TSV = new DefaultChannelConversion(
             CollectionChannel.DESCRIPTOR,
             FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new JavaTsvFileSink<>(FileChannel.pickTempPath(), DataSetType.createDefault(Void.class)) // TODO
+            () -> new JavaTsvFileSink<>(FileChannel.pickTempPath(), DataSetType.createDefault(Tuple2.class)) // TODO
     );
 
     public static final ChannelConversion HDFS_TSV_TO_STREAM = new DefaultChannelConversion(
             FileChannel.HDFS_TSV_DESCRIPTOR,
             StreamChannel.DESCRIPTOR,
-            () -> new JavaTsvFileSource<>(FileChannel.pickTempPath(), DataSetType.createDefault(Void.class)) // TODO
+            () -> new JavaTsvFileSource<>(FileChannel.pickTempPath(), DataSetType.createDefault(Tuple2.class)) // TODO
     );
 
     public static final ChannelConversion STREAM_TO_HDFS_OBJECT_FILE = new DefaultChannelConversion(

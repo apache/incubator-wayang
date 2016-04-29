@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * {@link Executor} implementation for the {@link SparkPlatform}.
  */
-public class SparkExecutor extends PushExecutorTemplate<ChannelInstance> {
+public class SparkExecutor extends PushExecutorTemplate {
 
     public final JavaSparkContext sc;
 

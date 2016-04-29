@@ -207,4 +207,5 @@ public class ExecutionTask {
     public Platform getPlatform() {
         return this.operator.getPlatform();
     }
+
 }

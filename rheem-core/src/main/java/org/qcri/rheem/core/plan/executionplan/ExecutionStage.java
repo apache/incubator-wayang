@@ -129,10 +129,8 @@ public class ExecutionStage {
      */
     public Collection<Channel> getOutboundChannels() {
         return this.getAllTasks().stream()
-                .flatMap(task ->
-                        Arrays.stream(task.getOutputChannels()).filter(channel ->
-                                channel.getConsumers().stream().anyMatch(consumer -> consumer.getStage() != this)
-                        )
+                .flatMap(
+                        task -> Arrays.stream(task.getOutputChannels()).filter(Channel::isBetweenStages)
                 ).collect(Collectors.toList());
 
     }

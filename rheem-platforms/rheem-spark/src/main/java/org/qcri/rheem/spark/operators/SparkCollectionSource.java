@@ -50,6 +50,7 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
         } else {
             final CollectionChannel.Instance input = (CollectionChannel.Instance) inputs[0];
             collection = input.provideCollection();
+            assert collection != null : String.format("Instance of %s is not providing a collection.", input.getChannel());
         }
         final List<Type> list = RheemCollections.asList(collection);
 
