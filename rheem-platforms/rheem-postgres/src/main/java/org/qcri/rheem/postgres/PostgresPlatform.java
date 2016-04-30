@@ -1,7 +1,6 @@
 package org.qcri.rheem.postgres;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
@@ -13,14 +12,9 @@ import org.qcri.rheem.postgres.mapping.PostgresFilterMapping;
 import org.qcri.rheem.postgres.mapping.PostgresProjectionMapping;
 import org.qcri.rheem.postgres.mapping.PostgresTableSourceMapping;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Properties;
 
 /**
  * {@link Platform} implementation for the PostgreSQL database.
@@ -66,32 +60,6 @@ public class PostgresPlatform extends Platform {
         super(PLATFORM_NAME);
         this.initializeMappings();
         this.initializeConfiguration();
-        Properties default_properties = new Properties();
-        default_properties.setProperty("postgres.conn_str", "jdbc:postgresql://localhost:5432/rheemdb");
-        default_properties.setProperty("postgres.user", "rheem");
-        default_properties.setProperty("postgres.pwd", "123");
-        Properties properties = new Properties(default_properties);
-
-        try {
-            properties.load(new FileReader(new File("app.properties")));
-        } catch (IOException e) {
-            System.out.println("Could not find app.properties file, using default local postgres configuration.");
-        }
-
-        try {
-            Class.forName("org.postgresql.Driver");
-            // TODO: Refactor this to use a connection per executor. There we get a hold of the Configuration.
-            //TODO: Close connection when done, or better: Use connection pooling.
-            connection = DriverManager
-                    .getConnection(properties.getProperty("postgres.conn_str"),
-                            properties.getProperty("postgres.user"),
-                            properties.getProperty("postgres.pwd"));
-            //connection.setAutoCommit(false);
-        } catch (Exception e) {
-            throw new RheemException(e);
-        }
-
-
     }
 
     private void initializeConfiguration() {
@@ -122,7 +90,7 @@ public class PostgresPlatform extends Platform {
 
     @Override
     public Executor.Factory getExecutorFactory() {
-        return job -> new PostgresExecutor(this);
+        return job -> new PostgresExecutor(this, job);
     }
 
     @Override

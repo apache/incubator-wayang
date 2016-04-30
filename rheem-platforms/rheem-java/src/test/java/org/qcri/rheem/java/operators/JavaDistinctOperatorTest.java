@@ -30,7 +30,7 @@ public class JavaDistinctOperatorTest extends JavaExecutionOperatorTestBase {
         // Execute.
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-        distinctOperator.evaluate(inputs, outputs, new FunctionCompiler());
+        distinctOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());

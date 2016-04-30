@@ -12,6 +12,7 @@ import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
@@ -32,6 +33,10 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
 
     private final String targetPath;
 
+    public SparkTsvFileSink(DataSetType type) {
+        this(null, type);
+    }
+
     public SparkTsvFileSink(String targetPath, DataSetType type) {
         super(type, null);
         assert type.equals(DataSetType.createDefault(Tuple2.class)) :
@@ -43,6 +48,9 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor executor) {
         assert inputs.length == this.getNumInputs();
 
+        final FileChannel.Instance output = (FileChannel.Instance) outputs[0];
+        final String targetPath = output.addGivenOrTempPath(this.targetPath, executor.getConfiguration());
+
         final RddChannel.Instance input = (RddChannel.Instance) inputs[0];
         final JavaRDD<Object> rdd = input.provideRdd();
         rdd
@@ -52,9 +60,9 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
                     Tuple2<Object, Object> tuple2 = (Tuple2<Object, Object>) dataQuantum;
                     return String.valueOf(tuple2.field0) + '\t' + String.valueOf(tuple2.field1);
                 })
-                .saveAsTextFile(this.targetPath);
+                .saveAsTextFile(targetPath);
 
-        // Todo: Save chosen path in output ChannelInstance.
+
     }
 
     @Override

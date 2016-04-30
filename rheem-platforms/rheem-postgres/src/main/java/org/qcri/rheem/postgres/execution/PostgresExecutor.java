@@ -2,6 +2,8 @@ package org.qcri.rheem.postgres.execution;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.basic.channels.FileChannel;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -15,6 +17,8 @@ import org.qcri.rheem.postgres.compiler.FunctionCompiler;
 import org.qcri.rheem.postgres.operators.PostgresFilterOperator;
 import org.qcri.rheem.postgres.operators.PostgresProjectionOperator;
 import org.qcri.rheem.postgres.operators.PostgresTableSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -24,28 +28,46 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * Created by yidris on 3/23/16.
+ * {@link Executor} implementation for the {@link PostgresPlatform}.
  */
 public class PostgresExecutor implements Executor {
 
-    private PostgresPlatform platform;
+    private final PostgresPlatform platform;
 
-    public PostgresExecutor(PostgresPlatform platform) {
+    private final Connection connection;
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    public PostgresExecutor(PostgresPlatform platform, Job job) {
         this.platform = platform;
+        this.connection = this.createJdbcConnection(job.getConfiguration());
+    }
+
+    private Connection createJdbcConnection(Configuration configuration) {
+        try {
+            Class.forName("org.postgresql.Driver");
+            return DriverManager.getConnection(
+                    configuration.getStringProperty("rheem.postgres.jdbc.url"),
+                    configuration.getStringProperty("rheem.postgres.jdbc.user", null),
+                    configuration.getStringProperty("rheem.postgres.jdbc.password", null)
+            );
+        } catch (Exception e) {
+            throw new RheemException("Could not connect to PostgreSQL.", e);
+        }
     }
 
     @Override
     public ExecutionState execute(ExecutionStage stage, ExecutionState executionState) {
-        // TODO: Load ChannelInstances from executionState?
+        // TODO: Load ChannelInstances from executionState? (as of now there is no input into PostgreSQL).
         ResultSet rs = null;
         FunctionCompiler functionCompiler = new FunctionCompiler();
         Collection<?> startTasks = stage.getStartTasks();
         Collection<?> termTasks = stage.getTerminalTasks();
 
-        Validate.isTrue(startTasks.size()==1, "Invalid postgres stage: multiple sources are not currently supported");
+        Validate.isTrue(startTasks.size() == 1, "Invalid postgres stage: multiple sources are not currently supported");
         ExecutionTask startTask = (ExecutionTask) startTasks.toArray()[0];
 
-        Validate.isTrue(termTasks.size()==1,
+        Validate.isTrue(termTasks.size() == 1,
                 "Invalid postgres stage: multiple terminal tasks are not currently supported");
         ExecutionTask termTask = (ExecutionTask) termTasks.toArray()[0];
 
@@ -57,33 +79,29 @@ public class PostgresExecutor implements Executor {
         PostgresProjectionOperator projectionOperator = null;
 
         Set<ExecutionTask> allTasks = stage.getAllTasks();
-        assert allTasks.size()<=3;
-        for (ExecutionTask t: allTasks) {
-            if (t==startTask)
+        assert allTasks.size() <= 3;
+        for (ExecutionTask t : allTasks) {
+            if (t == startTask)
                 continue;
-            if (t.getOperator() instanceof PostgresFilterOperator){
-                assert filterOp==null; // Allow one filter operator per stage for now.
-                filterOp = (PostgresFilterOperator)t.getOperator();
-            }
-            else if (t.getOperator() instanceof PostgresProjectionOperator){
-                assert projectionOperator==null; //Allow one projection operator per stage for now.
-                projectionOperator = (PostgresProjectionOperator)t.getOperator();
+            if (t.getOperator() instanceof PostgresFilterOperator) {
+                assert filterOp == null; // Allow one filter operator per stage for now.
+                filterOp = (PostgresFilterOperator) t.getOperator();
+            } else if (t.getOperator() instanceof PostgresProjectionOperator) {
+                assert projectionOperator == null; //Allow one projection operator per stage for now.
+                projectionOperator = (PostgresProjectionOperator) t.getOperator();
 
-            }
-            else{
+            } else {
                 throw new RheemException(String.format("Invalid postgres execution task %s", t.toString()));
             }
         }
 
-        Connection connection = platform.getConnection();
-        PreparedStatement ps = null;
         String query = "";
         String select_columns = "*";
         String where_clause = "";
         query = tableOp.evaluate(null, null, functionCompiler);
 
-        if (projectionOperator!=null) {
-            if (projectionOperator.isProjectByIndexes()){
+        if (projectionOperator != null) {
+            if (projectionOperator.isProjectByIndexes()) {
                 try {
                     select_columns = projectionOperator.evaluateByIndexes(null, null,
                             functionCompiler, connection, String.format(query, "*"));
@@ -91,56 +109,50 @@ public class PostgresExecutor implements Executor {
                     e.printStackTrace();
                     throw new RheemException(e);
                 }
-            }
-            else
+            } else
                 select_columns = projectionOperator.evaluate(null, null, functionCompiler);
         }
         query = String.format(query, select_columns);
 
-        if(filterOp!=null) {
+        if (filterOp != null) {
             where_clause = filterOp.evaluate(null, null, functionCompiler);
             query = query + " where " + where_clause;
         }
 
-        try {
-            ps = connection.prepareStatement(query);
+        try (final PreparedStatement ps = this.connection.prepareStatement(query)) {
             rs = ps.executeQuery();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RheemException(e);
-        }
-        final FileChannel outputFileChannel = (FileChannel) termTask.getOutputChannel(0);
-        try {
-            this.saveResult(outputFileChannel, rs);
-            rs.close();
-            ps.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RheemException(e);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RheemException(e);
-        }
-        return new ExecutionState();
+            final FileChannel.Instance outputFileChannelInstance =
+                    (FileChannel.Instance) termTask.getOutputChannel(0).createInstance();
+            this.saveResult(outputFileChannelInstance, rs);
 
+            final ExecutionState newExecutionState = new ExecutionState();
+            newExecutionState.getChannelInstances().put(outputFileChannelInstance.getChannel(), outputFileChannelInstance);
+            return newExecutionState;
+        } catch (IOException | SQLException e) {
+            throw new RheemException("PostgreSQL execution failed.", e);
+        }
     }
 
     @Override
     public void dispose() {
-
+        try {
+            this.connection.close();
+        } catch (SQLException e) {
+            this.logger.error("Could not close JDBC connection to PostgreSQL correctly.", e);
+        }
     }
 
     @Override
     public Platform getPlatform() {
-        return platform;
+        return this.platform;
     }
 
 
-    private void saveResult(FileChannel outputFileChannel, ResultSet rs) throws IOException, SQLException {
+    private void saveResult(FileChannel.Instance outputFileChannelInstance, ResultSet rs) throws IOException, SQLException {
         // Output results.
-        final FileSystem outFs = FileSystems.getFileSystem(outputFileChannel.getSinglePath()).get();
-        try (final OutputStreamWriter writer = new OutputStreamWriter(outFs.create(outputFileChannel.getSinglePath()))) {
-            while ( rs.next() ) {
+        final FileSystem outFs = FileSystems.getFileSystem(outputFileChannelInstance.getSinglePath()).get();
+        try (final OutputStreamWriter writer = new OutputStreamWriter(outFs.create(outputFileChannelInstance.getSinglePath()))) {
+            while (rs.next()) {
                 //System.out.println(rs.getInt(1) + " " + rs.getString(2));
                 ResultSetMetaData rsmd = rs.getMetaData();
                 for (int i = 1; i <= rsmd.getColumnCount(); i++) {
@@ -149,12 +161,11 @@ public class PostgresExecutor implements Executor {
                         writer.write('\t');
                     }
                 }
-                if (!rs.isLast()){
+                if (!rs.isLast()) {
                     writer.write('\n');
                 }
             }
-        }
-         catch (UncheckedIOException e) {
+        } catch (UncheckedIOException e) {
             throw e.getCause();
         }
     }

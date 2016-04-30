@@ -32,7 +32,7 @@ public class JavaFilterOperatorTest extends JavaExecutionOperatorTestBase {
 
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-        filterOperator.evaluate(inputs, outputs, new FunctionCompiler());
+        filterOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());

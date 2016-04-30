@@ -50,7 +50,7 @@ public class JavaJoinOperatorTest extends JavaExecutionOperatorTestBase {
                 createStreamChannelInstance(inputStream1)
         };
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-        join.evaluate(inputs, outputs, new FunctionCompiler());
+        join.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         final List<Tuple2<Tuple2<Integer, String>, Tuple2<String, Integer>>> result =

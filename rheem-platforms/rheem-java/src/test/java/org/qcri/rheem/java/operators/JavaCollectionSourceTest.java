@@ -25,7 +25,7 @@ public class JavaCollectionSourceTest extends JavaExecutionOperatorTestBase {
         JavaChannelInstance[] inputs = new JavaChannelInstance[0];
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
 
-        collectionSource.evaluate(inputs, outputs, new FunctionCompiler());
+        collectionSource.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         final Set<Object> outputValues = outputs[0].provideStream().collect(Collectors.toSet());
         Assert.assertEquals(outputValues, inputValues);

@@ -14,7 +14,7 @@ import java.util.function.Supplier;
  */
 public class BinaryOperatorProfiler extends OperatorProfiler {
 
-    private JavaChannelInstance inputChannelExecutor0, inputChannelExecutor1, outputChannelExecutor;
+    private JavaChannelInstance inputChannelInstance0, inputChannelInstance1, outputChannelInstance;
 
     public BinaryOperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator,
                                   Supplier<?> dataQuantumGenerator0,
@@ -38,27 +38,27 @@ public class BinaryOperatorProfiler extends OperatorProfiler {
         for (int i = 0; i < inputCardinality0; i++) {
             dataQuanta0.add(supplier0.get());
         }
-        this.inputChannelExecutor0 = createChannelExecutor(dataQuanta0);
+        this.inputChannelInstance0 = createChannelInstance(dataQuanta0);
 
         Collection<Object> dataQuanta1 = new ArrayList<>(inputCardinality1);
         final Supplier<?> supplier1 = this.dataQuantumGenerators.get(1);
         for (int i = 0; i < inputCardinality1; i++) {
             dataQuanta1.add(supplier1.get());
         }
-        this.inputChannelExecutor1 = createChannelExecutor(dataQuanta1);
+        this.inputChannelInstance1 = createChannelInstance(dataQuanta1);
 
         // Allocate output.
-        this.outputChannelExecutor = createChannelExecutor();
+        this.outputChannelInstance = createChannelInstance();
     }
 
 
     public long executeOperator() {
         this.operator.evaluate(
-                new JavaChannelInstance[]{this.inputChannelExecutor0, this.inputChannelExecutor1},
-                new JavaChannelInstance[]{this.outputChannelExecutor},
-                new FunctionCompiler()
+                new JavaChannelInstance[]{this.inputChannelInstance0, this.inputChannelInstance1},
+                new JavaChannelInstance[]{this.outputChannelInstance},
+                new FunctionCompiler(null)
         );
-        return this.outputChannelExecutor.provideStream().count();
+        return this.outputChannelInstance.provideStream().count();
     }
 
     @Override

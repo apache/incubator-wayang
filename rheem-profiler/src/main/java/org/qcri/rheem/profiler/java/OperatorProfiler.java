@@ -1,11 +1,11 @@
 package org.qcri.rheem.profiler.java;
 
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.channels.StreamChannel;
+import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.slf4j.Logger;
@@ -89,16 +89,16 @@ public abstract class OperatorProfiler {
      */
     protected abstract long executeOperator();
 
-    protected static JavaChannelInstance createChannelExecutor(final Collection<?> collection) {
-        final JavaChannelInstance channelExecutor = createChannelExecutor();
-        channelExecutor.acceptCollection(collection);
-        return channelExecutor;
+    protected static CollectionChannel.Instance createChannelInstance(final Collection<?> collection) {
+        final CollectionChannel.Instance channelInstance = createChannelInstance();
+        channelInstance.accept(collection);
+        return channelInstance;
     }
 
-    protected static JavaChannelInstance createChannelExecutor() {
-        final ChannelDescriptor channelDescriptor = StreamChannel.DESCRIPTOR;
-        final StreamChannel streamChannel = new StreamChannel(channelDescriptor, null);
-        return JavaPlatform.getInstance().getChannelManager().createChannelExecutor(streamChannel);
+    protected static CollectionChannel.Instance createChannelInstance() {
+        final ChannelDescriptor channelDescriptor = CollectionChannel.DESCRIPTOR;
+        final Channel channel = channelDescriptor.createChannel(null, new Configuration());
+        return (CollectionChannel.Instance) channel.createInstance();
     }
 
     public JavaExecutionOperator getOperator() {

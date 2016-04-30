@@ -15,7 +15,7 @@ import java.util.function.Supplier;
  */
 public class UnaryOperatorProfiler extends OperatorProfiler {
 
-    private JavaChannelInstance inputChannelExecutor, outputChannelExecutor;
+    private JavaChannelInstance inputChannelInstance, outputChannelInstance;
 
     public UnaryOperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?> dataQuantumGenerator) {
         super(operatorGenerator, dataQuantumGenerator);
@@ -33,20 +33,20 @@ public class UnaryOperatorProfiler extends OperatorProfiler {
         for (int i = 0; i < inputCardinality; i++) {
             dataQuanta.add(supplier.get());
         }
-        this.inputChannelExecutor = createChannelExecutor(dataQuanta);
+        this.inputChannelInstance = createChannelInstance(dataQuanta);
 
         // Allocate output.
-        this.outputChannelExecutor = createChannelExecutor();
+        this.outputChannelInstance = createChannelInstance();
     }
 
 
     public long executeOperator() {
         this.operator.evaluate(
-                new JavaChannelInstance[]{this.inputChannelExecutor},
-                new JavaChannelInstance[]{this.outputChannelExecutor},
-                new FunctionCompiler()
+                new JavaChannelInstance[]{this.inputChannelInstance},
+                new JavaChannelInstance[]{this.outputChannelInstance},
+                new FunctionCompiler(null)
         );
-        return this.outputChannelExecutor.provideStream().count();
+        return this.outputChannelInstance.provideStream().count();
     }
 
     @Override

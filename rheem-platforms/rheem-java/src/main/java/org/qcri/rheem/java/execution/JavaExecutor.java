@@ -9,7 +9,6 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
 import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
@@ -23,11 +22,12 @@ public class JavaExecutor extends PushExecutorTemplate {
 
     private final JavaPlatform platform;
 
-    public FunctionCompiler compiler = new FunctionCompiler();
+    private final FunctionCompiler compiler;
 
     public JavaExecutor(JavaPlatform javaPlatform, Job job) {
         super(job);
         this.platform = javaPlatform;
+        this.compiler = new FunctionCompiler(job.getConfiguration());
     }
 
     @Override
@@ -76,8 +76,8 @@ public class JavaExecutor extends PushExecutorTemplate {
         return (JavaExecutionOperator) executionOperator;
     }
 
-    private static JavaChannelInstance[] toArray(List<ChannelInstance> channelInstances) {
-        final JavaChannelInstance[] array = new JavaChannelInstance[channelInstances.size()];
+    private static ChannelInstance[] toArray(List<ChannelInstance> channelInstances) {
+        final ChannelInstance[] array = new ChannelInstance[channelInstances.size()];
         return channelInstances.toArray(array);
     }
 

@@ -40,7 +40,11 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
 
     private final String targetPath;
 
-    public JavaTsvFileSink(String targetPath, DataSetType type) {
+    public JavaTsvFileSink(DataSetType<T> type) {
+        this(null, type);
+    }
+
+    public JavaTsvFileSink(String targetPath, DataSetType<T> type) {
         super(type, null);
         assert type.equals(DataSetType.createDefault(Tuple2.class)) :
                 String.format("Illegal type for %s: %s", this, type);
@@ -52,13 +56,15 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
         assert inputs.length == this.getNumInputs();
 
         // Prepare Hadoop's SequenceFile.Writer.
-        final FileSystem fileSystem = FileSystems.getFileSystem(this.targetPath).orElseThrow(
+        FileChannel.Instance output = (FileChannel.Instance) outputs[0];
+        final String path = output.addGivenOrTempPath(this.targetPath, compiler.getConfiguration());
+        final FileSystem fileSystem = FileSystems.getFileSystem(path).orElseThrow(
                 () -> new IllegalStateException(String.format("No file system found for \"%s\".", this.targetPath))
         );
 
         try (final BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(
-                        fileSystem.create(this.targetPath), "UTF-8"
+                        fileSystem.create(path), "UTF-8"
                 )
         )) {
             try {

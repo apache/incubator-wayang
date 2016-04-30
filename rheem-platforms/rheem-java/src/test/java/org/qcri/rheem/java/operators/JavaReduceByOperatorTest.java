@@ -46,7 +46,7 @@ public class JavaReduceByOperatorTest extends JavaExecutionOperatorTestBase {
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
 
         // Execute the reduce operator.
-        reduceByOperator.evaluate(inputs, outputs, new FunctionCompiler());
+        reduceByOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         final Set<Tuple2<String, Integer>> result =

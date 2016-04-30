@@ -7,7 +7,6 @@ import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
-import org.qcri.rheem.java.operators.JavaTsvFileSource;
 import org.qcri.rheem.spark.operators.*;
 
 import java.util.Arrays;
@@ -21,61 +20,61 @@ public class ChannelConversions {
     public static final ChannelConversion COLLECTION_TO_BROADCAST = new DefaultChannelConversion(
             CollectionChannel.DESCRIPTOR,
             BroadcastChannel.DESCRIPTOR,
-            () -> new SparkBroadcastOperator<>(DataSetType.createDefault(Void.class), null) // TODO
+            () -> new SparkBroadcastOperator<>(DataSetType.createDefault(Void.class), null)
     );
 
     public static final ChannelConversion COLLECTION_TO_UNCACHED_RDD = new DefaultChannelConversion(
             CollectionChannel.DESCRIPTOR,
             RddChannel.UNCACHED_DESCRIPTOR,
-            () -> new SparkCollectionSource<>(DataSetType.createDefault(Void.class)) // TODO
+            () -> new SparkCollectionSource<>(DataSetType.createDefault(Void.class))
     );
 
     public static final ChannelConversion UNCACHED_RDD_TO_COLLECTION = new DefaultChannelConversion(
             RddChannel.UNCACHED_DESCRIPTOR,
             CollectionChannel.DESCRIPTOR,
-            () -> new SparkCollectOperator<>(DataSetType.createDefault(Void.class)) // TODO
+            () -> new SparkCollectOperator<>(DataSetType.createDefault(Void.class))
     );
 
     public static final ChannelConversion CACHED_RDD_TO_COLLECTION = new DefaultChannelConversion(
             RddChannel.CACHED_DESCRIPTOR,
             CollectionChannel.DESCRIPTOR,
-            () -> new SparkCollectOperator<>(DataSetType.createDefault(Void.class)) // TODO
+            () -> new SparkCollectOperator<>(DataSetType.createDefault(Void.class))
     );
 
     public static final ChannelConversion CACHED_RDD_TO_HDFS_TSV = new DefaultChannelConversion(
             RddChannel.CACHED_DESCRIPTOR,
             FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new SparkTsvFileSink<>(FileChannel.pickTempPath(), DataSetType.createDefault(Tuple2.class)) // TODO
+            () -> new SparkTsvFileSink<>(DataSetType.createDefault(Tuple2.class))
     );
 
     public static final ChannelConversion UNCACHED_RDD_TO_HDFS_TSV = new DefaultChannelConversion(
             RddChannel.UNCACHED_DESCRIPTOR,
             FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new SparkTsvFileSink<>(FileChannel.pickTempPath(), DataSetType.createDefault(Tuple2.class)) // TODO
+            () -> new SparkTsvFileSink<>(DataSetType.createDefault(Tuple2.class))
     );
 
     public static final ChannelConversion HDFS_TSV_TO_UNCACHED_RDD = new DefaultChannelConversion(
             FileChannel.HDFS_TSV_DESCRIPTOR,
             RddChannel.UNCACHED_DESCRIPTOR,
-            () -> new SparkTsvFileSource(DataSetType.createDefault(Tuple2.class)) // TODO
+            () -> new SparkTsvFileSource(DataSetType.createDefault(Tuple2.class))
     );
 
     public static final ChannelConversion CACHED_RDD_TO_HDFS_OBJECT_FILE = new DefaultChannelConversion(
             RddChannel.CACHED_DESCRIPTOR,
             FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR,
-            () -> new SparkObjectFileSink<>(FileChannel.pickTempPath(), DataSetType.createDefault(Void.class)) // TODO
+            () -> new SparkObjectFileSink<>(DataSetType.createDefault(Void.class))
     );
 
     public static final ChannelConversion UNCACHED_RDD_TO_HDFS_OBJECT_FILE = new DefaultChannelConversion(
             RddChannel.UNCACHED_DESCRIPTOR,
             FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR,
-            () -> new SparkObjectFileSink<>(FileChannel.pickTempPath(), DataSetType.createDefault(Void.class)) // TODO
+            () -> new SparkObjectFileSink<>(DataSetType.createDefault(Void.class))
     );
 
     public static final ChannelConversion HDFS_OBJECT_FILE_TO_UNCACHED_RDD = new DefaultChannelConversion(
             FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR,
             RddChannel.UNCACHED_DESCRIPTOR,
-            () -> new SparkObjectFileSource<>(DataSetType.createDefault(Void.class)) // TODO
+            () -> new SparkObjectFileSource<>(DataSetType.createDefault(Void.class))
     );
 
     public static Collection<ChannelConversion> ALL = Arrays.asList(

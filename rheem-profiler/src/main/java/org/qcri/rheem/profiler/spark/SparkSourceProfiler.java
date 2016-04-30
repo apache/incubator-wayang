@@ -1,8 +1,9 @@
 package org.qcri.rheem.profiler.spark;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 
 import java.util.function.Supplier;
@@ -20,26 +21,26 @@ public abstract class SparkSourceProfiler extends SparkOperatorProfiler {
 
     @Override
     protected Result executeOperator() {
-        final ChannelExecutor outputChannelExecutor = createChannelExecutor(this.sparkExecutor);
+        final RddChannel.Instance outputChannelInstance = createChannelInstance(this.sparkExecutor);
 
         // Let the operator execute.
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
         this.operator.evaluate(
-                new ChannelExecutor[]{},
-                new ChannelExecutor[]{outputChannelExecutor},
+                new ChannelInstance[]{},
+                new ChannelInstance[]{outputChannelInstance},
                 this.functionCompiler,
                 this.sparkExecutor
         );
 
         // Force the execution of the operator.
-        outputChannelExecutor.provideRdd().foreach(dataQuantum -> {
+        outputChannelInstance.provideRdd().foreach(dataQuantum -> {
         });
         final long endTime = System.currentTimeMillis();
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
 
         // Yet another run to count the output cardinality.
-        final long outputCardinality = outputChannelExecutor.provideRdd().count();
+        final long outputCardinality = outputChannelInstance.provideRdd().count();
 
         // Gather and assemble all result metrics.
         return new Result(

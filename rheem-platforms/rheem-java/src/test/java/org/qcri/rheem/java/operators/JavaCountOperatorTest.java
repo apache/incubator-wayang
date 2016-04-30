@@ -30,7 +30,7 @@ public class JavaCountOperatorTest extends JavaExecutionOperatorTestBase {
         // Execute.
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
-        countOperator.evaluate(inputs, outputs, new FunctionCompiler());
+        countOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());

@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 public class SparkOperatorTestBase {
 
 
-    private Configuration configuration;
+    protected Configuration configuration;
 
     protected SparkExecutor sparkExecutor;
 

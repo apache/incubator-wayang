@@ -1,5 +1,6 @@
 package org.qcri.rheem.basic.channels;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -13,10 +14,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Represents a {@link Channel} that is realized via a file/set of files.
@@ -31,8 +29,6 @@ public class FileChannel extends Channel {
 
     private static final boolean IS_INTERNAL = false;
 
-    private Collection<String> paths = new LinkedList<>();
-
     public FileChannel(FileChannel.Descriptor descriptor) {
         this(descriptor, null);
     }
@@ -43,37 +39,8 @@ public class FileChannel extends Channel {
 
     private FileChannel(FileChannel parent) {
         super(parent);
-        this.paths.addAll(parent.getPaths());
     }
 
-    public static String pickTempPath() {
-        // TODO: Do this properly via the configuration.
-        try {
-            final Path tempDirectory = Files.createTempDirectory("rheem-filechannels");
-            Path tempPath = tempDirectory.resolve("data");
-            return tempPath.toUri().toString();
-        } catch (IOException e) {
-            throw new RheemException(e);
-        }
-    }
-
-    public void addPath(String path) {
-        this.paths.add(path);
-    }
-
-    public Collection<String> getPaths() {
-        return this.paths;
-    }
-
-    /**
-     * If there is only a single element on {@link #getPaths()}, retrieves it. Otherwise, fails.
-     *
-     * @return the single element from {@link #getPaths()}
-     */
-    public String getSinglePath() {
-        assert this.paths.size() == 1 : String.format("Unsupported number of paths in %s.", this.paths);
-        return this.paths.iterator().next();
-    }
 
     @Override
     public FileChannel copy() {
@@ -82,7 +49,7 @@ public class FileChannel extends Channel {
 
     @Override
     public String toString() {
-        return String.format("%s%s", this.getClass().getSimpleName(), this.paths);
+        return String.format("%s%s", this.getClass().getSimpleName(), this.getDescriptor() );
     }
 
     @Override
@@ -154,13 +121,50 @@ public class FileChannel extends Channel {
      */
     public class Instance extends AbstractChannelInstance {
 
+        private Collection<String> paths = new LinkedList<>();
+
         public FileChannel getChannel() {
             return FileChannel.this;
         }
 
+        public void addPath(String path) {
+            this.paths.add(path);
+        }
+
+        String generateTempPath(Configuration configuration) {
+            final String tempDir = configuration.getStringProperty("rheem.basic.tempdir");
+            Random random = new Random();
+            return String.format("%s/%04x-%04x-%04x-%04x.tmp", tempDir,
+                    random.nextInt() & 0xFFFF,
+                    random.nextInt() & 0xFFFF,
+                    random.nextInt() & 0xFFFF,
+                    random.nextInt() & 0xFFFF
+            );
+        }
+
+        public String addGivenOrTempPath(String pathOrNull, Configuration configuration) {
+            final String path = pathOrNull == null ? this.generateTempPath(configuration) : pathOrNull;
+            this.addPath(path);
+            return path;
+        }
+
+        public Collection<String> getPaths() {
+            return this.paths;
+        }
+
+        /**
+         * If there is only a single element on {@link #getPaths()}, retrieves it. Otherwise, fails.
+         *
+         * @return the single element from {@link #getPaths()}
+         */
+        public String getSinglePath() {
+            assert this.paths.size() == 1 : String.format("Unsupported number of paths in %s.", this.paths);
+            return this.paths.iterator().next();
+        }
+
         @Override
         public void tryToRelease() throws RheemException {
-            final String path = this.getChannel().getSinglePath();
+            final String path = this.getSinglePath();
             final Optional<FileSystem> fileSystemOptional = FileSystems.getFileSystem(path);
             fileSystemOptional.ifPresent(fs -> {
                 try {

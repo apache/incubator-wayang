@@ -41,7 +41,7 @@ public class JavaMaterializedGroupByOperatorTest extends JavaExecutionOperatorTe
         // Execute.
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
-        collocateByOperator.evaluate(inputs, outputs, new FunctionCompiler());
+        collocateByOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         final List<Tuple2<String, Integer>> result = outputs[0].<Tuple2<String, Integer>>provideStream()

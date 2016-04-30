@@ -43,7 +43,10 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
 
     private final String targetPath;
 
-    public JavaObjectFileSink(String targetPath, DataSetType type) {
+    public JavaObjectFileSink(DataSetType<T> type) {
+        this(null, type);
+    }
+    public JavaObjectFileSink(String targetPath, DataSetType<T> type) {
         super(type, null);
         this.targetPath = targetPath;
     }
@@ -53,7 +56,10 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
         assert inputs.length == this.getNumInputs();
 
         // Prepare Hadoop's SequenceFile.Writer.
-        final SequenceFile.Writer.Option fileOption = SequenceFile.Writer.file(new Path(this.targetPath));
+        FileChannel.Instance output = (FileChannel.Instance) outputs[0];
+        final String path = output.addGivenOrTempPath(this.targetPath, compiler.getConfiguration());
+
+        final SequenceFile.Writer.Option fileOption = SequenceFile.Writer.file(new Path(path));
         final SequenceFile.Writer.Option keyClassOption = SequenceFile.Writer.keyClass(NullWritable.class);
         final SequenceFile.Writer.Option valueClassOption = SequenceFile.Writer.valueClass(BytesWritable.class);
         try (SequenceFile.Writer writer = SequenceFile.createWriter(new Configuration(true), fileOption, keyClassOption, valueClassOption)) {
@@ -75,7 +81,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
             });
             ((JavaChannelInstance) inputs[0]).provideStream().forEach(streamChunker::push);
             streamChunker.fire();
-            LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", this.targetPath);
+            LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", path);
         } catch (IOException | UncheckedIOException e) {
             throw new RheemException("Could not write stream to sequence file.", e);
         }

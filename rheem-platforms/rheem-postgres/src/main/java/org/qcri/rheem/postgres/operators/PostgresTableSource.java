@@ -1,12 +1,12 @@
 package org.qcri.rheem.postgres.operators;
 
 import org.qcri.rheem.basic.operators.TableSource;
-import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.postgres.compiler.FunctionCompiler;
 
 /**
- * Created by yidris on 3/22/16.
+ * PostgreSQL implementation for the {@link TableSource}.
  */
 public class PostgresTableSource extends TableSource implements PostgresExecutionOperator {
 
@@ -15,7 +15,7 @@ public class PostgresTableSource extends TableSource implements PostgresExecutio
     }
 
     @Override
-    public String evaluate(Channel[] inputChannels, Channel[] outputChannels, FunctionCompiler compiler) {
+    public String evaluate(ChannelInstance[] inputChannels, ChannelInstance[] outputChannels, FunctionCompiler compiler) {
         return "select %s from " + this.getTableName();
     }
 }

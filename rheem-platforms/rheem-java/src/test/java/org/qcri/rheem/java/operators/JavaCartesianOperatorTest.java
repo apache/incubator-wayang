@@ -35,7 +35,7 @@ public class JavaCartesianOperatorTest extends JavaExecutionOperatorTestBase {
                 createStreamChannelInstance(inputStream1)
         };
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-        cartesianOperator.evaluate(inputs, outputs, new FunctionCompiler());
+        cartesianOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         final List<Tuple2<Integer, String>> result = outputs[0].<Tuple2<Integer, String>>provideStream()

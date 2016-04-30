@@ -41,7 +41,11 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
 
     private final String sourcePath;
 
-    public JavaObjectFileSource(String sourcePath, DataSetType type) {
+    public JavaObjectFileSource(DataSetType<T> type) {
+        this(null, type);
+    }
+
+    public JavaObjectFileSource(String sourcePath, DataSetType<T> type) {
         super(type, null);
         this.sourcePath = sourcePath;
     }
@@ -51,20 +55,28 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
         assert outputs.length == this.getNumOutputs();
 
         SequenceFileIterator sequenceFileIterator;
+            final String path;
+        if (this.sourcePath == null) {
+            final FileChannel.Instance input = (FileChannel.Instance) inputs[0];
+            path = input.getSinglePath();
+        } else {
+            assert inputs.length == 0;
+            path = this.sourcePath;
+        }
         try {
-            final String actualInputPath = FileSystems.findActualSingleInputPath(this.sourcePath);
+            final String actualInputPath = FileSystems.findActualSingleInputPath(path);
             sequenceFileIterator = new SequenceFileIterator<>(actualInputPath);
             Stream<?> sequenceFileStream =
                     StreamSupport.stream(Spliterators.spliteratorUnknownSize(sequenceFileIterator, 0), false);
             ((StreamChannel.Instance) outputs[0]).accept(sequenceFileStream);
         } catch (IOException e) {
-            throw new RheemException(String.format("%s failed to read from %s.", this, this.sourcePath), e);
+            throw new RheemException(String.format("%s failed to read from %s.", this, path), e);
         }
     }
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final OptionalLong optionalFileSize = FileSystems.getFileSize(this.sourcePath);
+        final OptionalLong optionalFileSize = this.sourcePath == null ? OptionalLong.empty() : FileSystems.getFileSize(this.sourcePath);
         if (!optionalFileSize.isPresent()) {
             LoggerFactory.getLogger(JavaTextFileSource.class).warn("Could not determine file size for {}.", this.sourcePath);
         }

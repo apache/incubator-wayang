@@ -3,17 +3,16 @@ package org.qcri.rheem.profiler.spark;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.qcri.rheem.profiler.util.RrdAccessor;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import org.qcri.rheem.spark.platform.SparkExecutor;
-import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.rrd4j.ConsolFun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -271,22 +270,22 @@ public abstract class SparkOperatorProfiler {
     protected abstract Result executeOperator();
 
     /**
-     * Creates a {@link ChannelExecutor} that carries the given {@code rdd}.
+     * Creates a {@link ChannelInstance} that carries the given {@code rdd}.
      */
-    protected static ChannelExecutor createChannelExecutor(final JavaRDD<?> rdd, SparkExecutor sparkExecutor) {
-        final ChannelExecutor channelExecutor = createChannelExecutor(sparkExecutor);
-        channelExecutor.acceptRdd(rdd);
-        return channelExecutor;
+    protected static RddChannel.Instance createChannelInstance(final JavaRDD<?> rdd, SparkExecutor sparkExecutor) {
+        final RddChannel.Instance channelInstance = createChannelInstance(sparkExecutor);
+        channelInstance.accept(rdd, sparkExecutor);
+        return channelInstance;
     }
 
 
     /**
-     * Creates an empty {@link ChannelExecutor}.
+     * Creates an empty {@link ChannelInstance}.
      */
-    protected static ChannelExecutor createChannelExecutor(SparkExecutor sparkExecutor) {
-        final ChannelDescriptor channelDescriptor = RddChannel.DESCRIPTOR;
-        final RddChannel channel = new RddChannel(channelDescriptor, null);
-        return SparkPlatform.getInstance().getChannelManager().createChannelExecutor(channel, sparkExecutor);
+    protected static RddChannel.Instance createChannelInstance(SparkExecutor sparkExecutor) {
+        final ChannelDescriptor channelDescriptor = RddChannel.CACHED_DESCRIPTOR;
+        final RddChannel channel = (RddChannel) channelDescriptor.createChannel(null, sparkExecutor.getConfiguration());
+        return (RddChannel.Instance) channel.createInstance();
     }
 
     /**

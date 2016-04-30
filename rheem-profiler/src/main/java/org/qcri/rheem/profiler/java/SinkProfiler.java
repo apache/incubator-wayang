@@ -14,7 +14,7 @@ import java.util.function.Supplier;
  */
 public class SinkProfiler extends OperatorProfiler {
 
-    private JavaChannelInstance inputChannelExecutor;
+    private JavaChannelInstance inputChannelInstance;
 
     public SinkProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?>... dataQuantumGenerators) {
         super(operatorGenerator, dataQuantumGenerators);
@@ -33,15 +33,15 @@ public class SinkProfiler extends OperatorProfiler {
         for (int i = 0; i < inputCardinality; i++) {
             dataQuanta.add(supplier.get());
         }
-        this.inputChannelExecutor = createChannelExecutor(dataQuanta);
+        this.inputChannelInstance = createChannelInstance(dataQuanta);
     }
 
     @Override
     protected long executeOperator() {
         this.operator.evaluate(
-                new JavaChannelInstance[]{this.inputChannelExecutor},
+                new JavaChannelInstance[]{this.inputChannelInstance},
                 new JavaChannelInstance[]{},
-                new FunctionCompiler()
+                new FunctionCompiler(null)
         );
         return 0L;
     }

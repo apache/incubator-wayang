@@ -29,7 +29,11 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
 
     private final String targetPath;
 
-    public SparkObjectFileSink(String targetPath, DataSetType type) {
+    public SparkObjectFileSink(DataSetType<T> type) {
+        this(null, type);
+    }
+
+    public SparkObjectFileSink(String targetPath, DataSetType<T> type) {
         super(type, null);
         this.targetPath = targetPath;
     }
@@ -37,23 +41,21 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
-        assert outputs.length == this.getNumOutputs();
+        assert outputs.length <= 1;
 
+        final FileChannel.Instance output = (FileChannel.Instance) outputs[0];
+        final String targetPath = output.addGivenOrTempPath(this.targetPath, sparkExecutor.getConfiguration());
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
 
         input.provideRdd()
                 .repartition(1) // TODO: Remove. This only hotfixes the issue that JavaObjectFileSource reads only a single file.
                 .saveAsObjectFile(this.targetPath);
-        LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", this.targetPath);
+        LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", targetPath);
     }
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkObjectFileSink<>(this.targetPath, this.getType());
-    }
-
-    public String getTargetPath() {
-        return this.targetPath;
+        return new SparkObjectFileSink<>(targetPath, this.getType());
     }
 
     @Override

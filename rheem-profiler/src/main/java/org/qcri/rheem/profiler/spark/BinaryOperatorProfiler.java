@@ -2,8 +2,9 @@ package org.qcri.rheem.profiler.spark;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 
 import java.util.function.Supplier;
@@ -38,27 +39,28 @@ public class BinaryOperatorProfiler extends SparkOperatorProfiler {
 
     @Override
     protected Result executeOperator() {
-        final ChannelExecutor inputChannelExecutor0 = createChannelExecutor(this.inputRdd0, this.sparkExecutor);
-        final ChannelExecutor inputChannelExecutor1 = createChannelExecutor(this.inputRdd1, this.sparkExecutor);
-        final ChannelExecutor outputChannelExecutor = createChannelExecutor(this.sparkExecutor);
+        final RddChannel.Instance inputChannelInstance0 = createChannelInstance(this.inputRdd0, this.sparkExecutor);
+        final RddChannel.Instance inputChannelInstance1 = createChannelInstance(this.inputRdd1, this.sparkExecutor);
+        final RddChannel.Instance outputChannelInstance = createChannelInstance(this.sparkExecutor);
 
         // Let the operator execute.
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
         this.operator.evaluate(
-                new ChannelExecutor[] { inputChannelExecutor0, inputChannelExecutor1 },
-                new ChannelExecutor[] { outputChannelExecutor },
+                new ChannelInstance[]{inputChannelInstance0, inputChannelInstance1},
+                new ChannelInstance[]{outputChannelInstance},
                 this.functionCompiler,
                 this.sparkExecutor
         );
 
         // Force the execution of the operator.
-        outputChannelExecutor.provideRdd().foreach(dataQuantum -> { });
+        outputChannelInstance.provideRdd().foreach(dataQuantum -> {
+        });
         final long endTime = System.currentTimeMillis();
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
 
         // Yet another run to count the output cardinality.
-        final long outputCardinality = outputChannelExecutor.provideRdd().count();
+        final long outputCardinality = outputChannelInstance.provideRdd().count();
 
         // Gather and assemble all result metrics.
         return new Result(

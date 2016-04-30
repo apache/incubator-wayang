@@ -13,7 +13,7 @@ import java.util.function.Supplier;
  */
 public abstract class SourceProfiler extends OperatorProfiler {
 
-    private JavaChannelInstance outputChannelExecutor;
+    private JavaChannelInstance outputChannelInstance;
 
     public SourceProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?>... dataQuantumGenerators) {
         super(operatorGenerator, dataQuantumGenerators);
@@ -34,7 +34,7 @@ public abstract class SourceProfiler extends OperatorProfiler {
 
         super.prepare(inputCardinalities);
 
-        this.outputChannelExecutor = createChannelExecutor();
+        this.outputChannelInstance = createChannelInstance();
     }
 
     abstract void setUpSourceData(long cardinality) throws Exception;
@@ -43,10 +43,10 @@ public abstract class SourceProfiler extends OperatorProfiler {
     protected long executeOperator() {
         this.operator.evaluate(
                 new JavaChannelInstance[]{},
-                new JavaChannelInstance[]{this.outputChannelExecutor},
-                new FunctionCompiler()
+                new JavaChannelInstance[]{this.outputChannelInstance},
+                new FunctionCompiler(null)
         );
-        return this.outputChannelExecutor.provideStream().count();
+        return this.outputChannelInstance.provideStream().count();
     }
 
 }

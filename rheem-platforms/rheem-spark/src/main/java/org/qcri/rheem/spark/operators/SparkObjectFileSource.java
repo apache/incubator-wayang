@@ -48,14 +48,15 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         final String sourcePath;
         if (this.sourcePath != null) {
+            assert inputs.length == 0;
             sourcePath = this.sourcePath;
         } else {
             FileChannel.Instance input = (FileChannel.Instance) inputs[0];
-            sourcePath = input.getChannel().getSinglePath();
+            sourcePath = input.getSinglePath();
         }
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
-        final String actualInputPath = FileSystems.findActualSingleInputPath(this.sourcePath);
+        final String actualInputPath = FileSystems.findActualSingleInputPath(sourcePath);
         final JavaRDD<Object> rdd = sparkExecutor.sc.objectFile(actualInputPath);
         output.accept(rdd, sparkExecutor);
     }

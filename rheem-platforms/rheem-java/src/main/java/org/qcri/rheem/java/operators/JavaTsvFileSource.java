@@ -44,11 +44,23 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
         this.sourcePath = sourcePath;
     }
 
+    public JavaTsvFileSource(DataSetType<Tuple2> type) {
+        this(null, type);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert outputs.length == this.getNumOutputs();
 
-        final String actualInputPath = FileSystems.findActualSingleInputPath(this.sourcePath);
+        final String path;
+        if (this.sourcePath == null) {
+            final FileChannel.Instance input = (FileChannel.Instance) inputs[0];
+            path = input.getSinglePath();
+        } else {
+            assert inputs.length == 0;
+            path = this.sourcePath;
+        }
+        final String actualInputPath = FileSystems.findActualSingleInputPath(path);
         Stream<T> stream = this.createStream(actualInputPath);
         ((StreamChannel.Instance) outputs[0]).accept(stream);
     }
@@ -146,7 +158,7 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final OptionalLong optionalFileSize = FileSystems.getFileSize(this.sourcePath);
+        final OptionalLong optionalFileSize = this.sourcePath == null ? OptionalLong.empty() : FileSystems.getFileSize(this.sourcePath);
         if (!optionalFileSize.isPresent()) {
             LoggerFactory.getLogger(JavaTextFileSource.class).warn("Could not determine file size for {}.", this.sourcePath);
         }

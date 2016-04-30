@@ -27,7 +27,7 @@ public class JavaLocalCallbackSinkTest extends JavaExecutionOperatorTestBase {
         // Execute.
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createCollectionChannelInstance(inputValues)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{};
-        sink.evaluate(inputs, outputs, new FunctionCompiler());
+        sink.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         Assert.assertEquals(collector, inputValues);

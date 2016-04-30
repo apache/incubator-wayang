@@ -1,5 +1,6 @@
 package org.qcri.rheem.java.compiler;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
@@ -13,6 +14,12 @@ import java.util.function.Predicate;
  * A compiler translates Rheem functions into executable Java functions.
  */
 public class FunctionCompiler {
+
+    private final Configuration configuration;
+
+    public FunctionCompiler(Configuration configuration) {
+        this.configuration = configuration;
+    }
 
     /**
      * Compile a transformation.
@@ -53,5 +60,9 @@ public class FunctionCompiler {
 
     public <Type> Predicate<Type> compile(PredicateDescriptor<Type> predicateDescriptor) {
         return predicateDescriptor.getJavaImplementation();
+    }
+
+    public Configuration getConfiguration() {
+        return this.configuration;
     }
 }

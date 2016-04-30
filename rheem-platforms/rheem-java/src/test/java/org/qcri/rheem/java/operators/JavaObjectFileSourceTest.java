@@ -34,7 +34,7 @@ public class JavaObjectFileSourceTest extends JavaExecutionOperatorTestBase {
             // Execute.
             JavaChannelInstance[] inputs = new JavaChannelInstance[]{};
             JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-            source.evaluate(inputs, outputs, new FunctionCompiler());
+            source.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
             // Verify.
             Set<Integer> expectedValues = new HashSet<>(JavaObjectFileSourceTest.enumerateRange(10000));

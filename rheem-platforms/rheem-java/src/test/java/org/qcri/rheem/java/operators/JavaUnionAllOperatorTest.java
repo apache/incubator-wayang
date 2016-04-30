@@ -32,7 +32,7 @@ public class JavaUnionAllOperatorTest extends JavaExecutionOperatorTestBase {
                 createStreamChannelInstance(inputStream1)
         };
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-        unionAllOperator.evaluate(inputs, outputs, new FunctionCompiler());
+        unionAllOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream()
