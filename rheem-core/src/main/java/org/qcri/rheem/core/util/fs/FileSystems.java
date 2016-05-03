@@ -1,6 +1,5 @@
 package org.qcri.rheem.core.util.fs;
 
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.util.LruCache;
 import org.slf4j.Logger;
@@ -53,7 +52,7 @@ public class FileSystems {
             try {
                 final long fileSize = fileSystem.get().getFileSize(fileUrl);
                 fileSizeCache.put(fileUrl, fileSize);
-                return  OptionalLong.of(fileSize);
+                return OptionalLong.of(fileSize);
             } catch (FileNotFoundException e) {
                 LOGGER.warn("Could not determine file size.", e);
             }
