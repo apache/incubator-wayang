@@ -30,7 +30,16 @@ import java.util.*;
  */
 public class Configuration {
 
-    private static final Configuration defaultConfiguration = createDefaultConfiguration();
+    private static final Configuration defaultConfiguration = new Configuration((Configuration) null);
+
+    static {
+        bootstrapCardinalityEstimationProvider(defaultConfiguration);
+        bootstrapSelectivityProviders(defaultConfiguration);
+        bootstrapLoadAndTimeEstimatorProviders(defaultConfiguration);
+        bootstrapPruningProviders(defaultConfiguration);
+        bootstrapProperties(defaultConfiguration);
+        bootstrapPlatforms(defaultConfiguration);
+    }
 
     private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
 
@@ -192,17 +201,6 @@ public class Configuration {
         return defaultConfiguration;
     }
 
-    private static Configuration createDefaultConfiguration() {
-        Configuration configuration = new Configuration((Configuration) null);
-        bootstrapPlatforms(configuration);
-        bootstrapCardinalityEstimationProvider(configuration);
-        bootstrapSelectivityProviders(configuration);
-        bootstrapLoadAndTimeEstimatorProviders(configuration);
-        bootstrapPruningProviders(configuration);
-        bootstrapProperties(configuration);
-        return configuration;
-    }
-
     private static void bootstrapPlatforms(Configuration configuration) {
         CollectionProvider<Platform> platformProvider = new CollectionProvider<>();
         try {
@@ -218,7 +216,8 @@ public class Configuration {
         // Safety net: provide a fallback estimator.
         KeyValueProvider<OutputSlot<?>, CardinalityEstimator> fallbackProvider =
                 new FunctionalKeyValueProvider<OutputSlot<?>, CardinalityEstimator>(
-                        outputSlot -> new FallbackCardinalityEstimator()
+                        outputSlot -> new FallbackCardinalityEstimator(),
+                        configuration
                 ).withSlf4jWarning("Creating fallback estimator for {}.");
 
         // Default option: Implementations define their estimators.
@@ -243,7 +242,8 @@ public class Configuration {
             // Safety net: provide a fallback selectivity.
             KeyValueProvider<PredicateDescriptor, Double> fallbackProvider =
                     new FunctionalKeyValueProvider<PredicateDescriptor, Double>(
-                            predicateClass -> 0.5d
+                            predicateClass -> 0.5d,
+                            configuration
                     ).withSlf4jWarning("Creating fallback selectivity for {}.");
 
             // Customizable layer: Users can override manually.
@@ -257,7 +257,7 @@ public class Configuration {
 
             // Customizable layer: Users can override manually.
             KeyValueProvider<FlatMapDescriptor<?, ?>, Double> overrideProvider =
-                    new MapBasedKeyValueProvider<>(null);
+                    new MapBasedKeyValueProvider<>(configuration, false);
 
             configuration.setMultimapSelectivityProvider(overrideProvider);
         }
@@ -273,7 +273,8 @@ public class Configuration {
                                     DefaultLoadEstimator.createIOLinearEstimator(operator, 10000),
                                     DefaultLoadEstimator.createIOLinearEstimator(operator, 1000),
                                     DefaultLoadEstimator.createIOLinearEstimator(operator, 1000)
-                            )
+                            ),
+                            configuration
                     ).withSlf4jWarning("Creating fallback selectivity for {}.");
 
             // Built-in option: let the ExecutionOperators provide the LoadProfileEstimator.
@@ -296,7 +297,8 @@ public class Configuration {
                             functionDescriptor -> new NestableLoadProfileEstimator(
                                     DefaultLoadEstimator.createIOLinearEstimator(10000),
                                     DefaultLoadEstimator.createIOLinearEstimator(10000)
-                            )
+                            ),
+                            configuration
                     ).withSlf4jWarning("Creating fallback selectivity for {}.");
 
             // Built-in layer: let the FunctionDescriptors provide the LoadProfileEstimators themselves.
@@ -315,10 +317,34 @@ public class Configuration {
         {
             // Safety net: provide a fallback start up costs.
             final KeyValueProvider<Platform, Long> fallbackProvider =
-                    new FunctionalKeyValueProvider<Platform, Long>(platform -> 0L)
-                            .withSlf4jWarning("Using fallback start up cost provider.");
+                    new FunctionalKeyValueProvider<Platform, Long>(platform -> 0L, configuration)
+                            .withSlf4jWarning("Using fallback start up cost provider for {}.");
             KeyValueProvider<Platform, Long> overrideProvider = new MapBasedKeyValueProvider<>(fallbackProvider);
             configuration.setPlatformStartUpTimeProvider(overrideProvider);
+        }
+        {
+            // Safety net: provide a fallback start up costs.
+            final KeyValueProvider<Platform, LoadProfileToTimeConverter> fallbackProvider =
+                    new FunctionalKeyValueProvider<Platform, LoadProfileToTimeConverter>(
+                            platform -> LoadProfileToTimeConverter.createDefault(
+                                    LoadToTimeConverter.createLinearCoverter(0.0000005), // 1 CPU with 2 GHz
+                                    LoadToTimeConverter.createLinearCoverter(0.00001), // 10 ms to read/write 1 MB
+                                    LoadToTimeConverter.createLinearCoverter(0.00001),  // 10 ms to receive/send 1 MB
+                                    (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+                            ),
+                            configuration
+                    )
+                            .withSlf4jWarning("Using fallback load-to-time converter for {}.");
+            final KeyValueProvider<Platform, LoadProfileToTimeConverter> defaultProvider =
+                    new FunctionalKeyValueProvider<>(
+                            fallbackProvider,
+                            (platform, requestee) -> platform.createLoadProfileToTimeConverter(
+                                    requestee.getConfiguration()
+                            )
+                    );
+            final KeyValueProvider<Platform, LoadProfileToTimeConverter> overrideProvider =
+                    new MapBasedKeyValueProvider<>(defaultProvider, false);
+            configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
         }
         {
             ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
@@ -353,7 +379,7 @@ public class Configuration {
 
     private static void bootstrapProperties(Configuration configuration) {
         // Here, we could put some default values.
-        final KeyValueProvider<String, String> defaultProperties = new MapBasedKeyValueProvider<>(null);
+        final KeyValueProvider<String, String> defaultProperties = new MapBasedKeyValueProvider<>(configuration, false);
 
         // Supplement with a customizable layer.
         final KeyValueProvider<String, String> customizableProperties = new MapBasedKeyValueProvider<>(defaultProperties);
@@ -475,6 +501,14 @@ public class Configuration {
 
     public String getStringProperty(String key, String fallback) {
         return this.getOptionalStringProperty(key).orElse(fallback);
+    }
+
+    public KeyValueProvider<Platform, LoadProfileToTimeConverter> getLoadProfileToTimeConverterProvider() {
+        return this.loadProfileToTimeConverterProvider;
+    }
+
+    public void setLoadProfileToTimeConverterProvider(KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider) {
+        this.loadProfileToTimeConverterProvider = loadProfileToTimeConverterProvider;
     }
 
     public OptionalLong getOptionalLongProperty(String key) {

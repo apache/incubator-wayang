@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.util.fs;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.util.LruCache;
 import org.slf4j.Logger;

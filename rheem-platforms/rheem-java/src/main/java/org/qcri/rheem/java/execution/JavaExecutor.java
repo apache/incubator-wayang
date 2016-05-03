@@ -5,11 +5,10 @@ import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
 import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.JavaChannelManager;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
@@ -19,15 +18,16 @@ import java.util.List;
 /**
  * {@link Executor} implementation for the {@link JavaPlatform}.
  */
-public class JavaExecutor extends PushExecutorTemplate<ChannelExecutor> {
+public class JavaExecutor extends PushExecutorTemplate {
 
     private final JavaPlatform platform;
 
-    public FunctionCompiler compiler = new FunctionCompiler();
+    private final FunctionCompiler compiler;
 
     public JavaExecutor(JavaPlatform javaPlatform, Job job) {
         super(job);
         this.platform = javaPlatform;
+        this.compiler = new FunctionCompiler(job.getConfiguration());
     }
 
     @Override
@@ -36,53 +36,52 @@ public class JavaExecutor extends PushExecutorTemplate<ChannelExecutor> {
     }
 
     @Override
-    protected void open(ExecutionTask task, List<ChannelExecutor> inputChannelInstances) {
+    protected void open(ExecutionTask task, List<ChannelInstance> inputChannelInstances) {
         cast(task.getOperator()).open(toArray(inputChannelInstances), this.compiler);
     }
 
     @Override
-    protected List<ChannelExecutor> execute(ExecutionTask task, List<ChannelExecutor> inputChannelInstances, boolean isForceExecution) {
-        // Provide the ChannelExecutors for the output of the task.
-        final ChannelExecutor[] outputChannelExecutors = this.createOutputChannelExecutors(task);
+    protected List<ChannelInstance> execute(ExecutionTask task, List<ChannelInstance> inputChannelInstances, boolean isForceExecution) {
+        // Provide the ChannelInstances for the output of the task.
+        final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(task);
 
         // Execute.
-        cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelExecutors, this.compiler);
+        cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this.compiler);
 
         // Force execution if necessary.
         if (isForceExecution) {
-            for (ChannelExecutor outputChannelExecutor : outputChannelExecutors) {
-                if (outputChannelExecutor == null || !outputChannelExecutor.ensureExecution()) {
+            for (ChannelInstance outputChannelInstance : outputChannelInstances) {
+                if (outputChannelInstance == null || !outputChannelInstance.getChannel().isReusable()) {
                     this.logger.warn("Execution of {} might not have been enforced properly. " +
-                            "This might break the execution or cause side-effects with the re-optimization.",
+                                    "This might break the execution or cause side-effects with the re-optimization.",
                             task);
                 }
             }
         }
 
-        return Arrays.asList(outputChannelExecutors);
+        return Arrays.asList(outputChannelInstances);
     }
 
 
-    private ChannelExecutor[] createOutputChannelExecutors(ExecutionTask task) {
-        final JavaChannelManager channelManager = this.getPlatform().getChannelManager();
-        ChannelExecutor[] channelExecutors = new ChannelExecutor[task.getNumOuputChannels()];
-        for (int outputIndex = 0; outputIndex < channelExecutors.length; outputIndex++) {
+    private ChannelInstance[] createOutputChannelInstances(ExecutionTask task) {
+        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
+        for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
             final Channel outputChannel = task.getOutputChannel(outputIndex);
-            channelExecutors[outputIndex] = channelManager.createChannelExecutor(outputChannel);
+            channelInstances[outputIndex] = outputChannel.createInstance();
         }
-        return channelExecutors;
+        return channelInstances;
     }
 
     private static JavaExecutionOperator cast(ExecutionOperator executionOperator) {
         return (JavaExecutionOperator) executionOperator;
     }
 
-    private static ChannelExecutor[] toArray(List<ChannelExecutor> channelExecutors) {
-        final ChannelExecutor[] array = new ChannelExecutor[channelExecutors.size()];
-        return channelExecutors.toArray(array);
+    private static ChannelInstance[] toArray(List<ChannelInstance> channelInstances) {
+        final ChannelInstance[] array = new ChannelInstance[channelInstances.size()];
+        return channelInstances.toArray(array);
     }
 
-    public static void openFunction(JavaExecutionOperator operator, Object function, ChannelExecutor[] inputs) {
+    public static void openFunction(JavaExecutionOperator operator, Object function, ChannelInstance[] inputs) {
         if (function instanceof ExtendedFunction) {
             ExtendedFunction extendedFunction = (ExtendedFunction) function;
             extendedFunction.open(new JavaExecutionContext(operator, inputs));

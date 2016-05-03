@@ -2,14 +2,15 @@ package org.qcri.rheem.java;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
-import org.qcri.rheem.core.platform.ChannelManager;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.java.channels.JavaChannelManager;
-import org.qcri.rheem.java.mapping.*;
+import org.qcri.rheem.java.channels.ChannelConversions;
 import org.qcri.rheem.java.execution.JavaExecutor;
+import org.qcri.rheem.java.mapping.*;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -76,13 +77,8 @@ public class JavaPlatform extends Platform {
     }
 
     @Override
-    protected ChannelManager createChannelManager() {
-        return new JavaChannelManager(this);
-    }
-
-    @Override
-    public JavaChannelManager getChannelManager() {
-        return (JavaChannelManager) super.getChannelManager();
+    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
+        ChannelConversions.ALL.forEach(channelConversionGraph::add);
     }
 
     @Override

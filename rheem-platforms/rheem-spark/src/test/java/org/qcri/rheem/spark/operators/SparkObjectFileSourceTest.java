@@ -3,12 +3,11 @@ package org.qcri.rheem.spark.operators;
 import org.apache.commons.lang3.Validate;
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
-import org.qcri.rheem.spark.channels.TestChannelExecutor;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
-import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.io.IOException;
 import java.net.URL;
@@ -26,28 +25,23 @@ public class SparkObjectFileSourceTest extends SparkOperatorTestBase {
     public void testWritingDoesNotFail() throws IOException {
         SparkExecutor sparkExecutor = null;
         try {
-            // Prepare Spark.
-            final SparkPlatform sparkPlatform = SparkPlatform.getInstance();
-            sparkExecutor = (SparkExecutor) sparkPlatform.createExecutor(this.mockJob());
 
             // Prepare the source.
             final URL inputUrl = this.getClass().getResource("/0-to-10000.sequence_file");
             SparkObjectFileSource<Integer> source = new SparkObjectFileSource<>(
                     inputUrl.toString(), DataSetType.createDefault(Integer.class));
 
-            // Set up the ChannelExecutors.
-            final ChannelExecutor[] inputs = new ChannelExecutor[]{
-            };
-            final ChannelExecutor[] outputs = new ChannelExecutor[]{
-                    new TestChannelExecutor()
-            };
+            // Set up the ChannelInstances.
+            final ChannelInstance[] inputs = new ChannelInstance[]{};
+            final RddChannel.Instance output = this.createRddChannelInstance();
+            final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
             // Execute.
             source.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
             // Verify.
             Set<Integer> expectedValues = new HashSet<>(SparkObjectFileSourceTest.enumerateRange(10000));
-            final List<Integer> rddList = outputs[0].<Integer>provideRdd().collect();
+            final List<Integer> rddList = output.<Integer>provideRdd().collect();
             for (Integer rddValue : rddList) {
                 Assert.assertTrue("Value: " + rddValue, expectedValues.remove(rddValue));
             }

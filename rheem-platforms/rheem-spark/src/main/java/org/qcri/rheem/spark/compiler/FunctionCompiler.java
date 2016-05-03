@@ -5,7 +5,7 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.core.function.*;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 
@@ -23,7 +23,7 @@ public class FunctionCompiler {
      */
     public <I, O> Function<I, O> compile(TransformationDescriptor<I, O> descriptor,
                                          SparkExecutionOperator operator,
-                                         ChannelExecutor[] inputs) {
+                                         ChannelInstance[] inputs) {
         final java.util.function.Function<I, O> javaImplementation = descriptor.getJavaImplementation();
         if (javaImplementation instanceof FunctionDescriptor.ExtendedSerializableFunction) {
             return new ExtendedFunctionAdapter<>(
@@ -50,8 +50,8 @@ public class FunctionCompiler {
      * on Apache Spark.
      */
     public <I, O> FlatMapFunction<I, O> compile(FlatMapDescriptor<I, O> descriptor,
-                                                          SparkExecutionOperator operator,
-                                                          ChannelExecutor[] inputs) {
+                                                SparkExecutionOperator operator,
+                                                ChannelInstance[] inputs) {
         final java.util.function.Function<I, Iterable<O>> javaImplementation = descriptor.getJavaImplementation();
         if (javaImplementation instanceof FunctionDescriptor.ExtendedSerializableFunction) {
             return new ExtendedFunctionAdapter2<>(
@@ -68,8 +68,8 @@ public class FunctionCompiler {
      * on Apache Spark.
      */
     public <T> Function2<T, T, T> compile(ReduceDescriptor<T> descriptor,
-                                                   SparkExecutionOperator operator,
-                                                   ChannelExecutor[] inputs) {
+                                          SparkExecutionOperator operator,
+                                          ChannelInstance[] inputs) {
         final BinaryOperator<T> javaImplementation = descriptor.getJavaImplementation();
         if (javaImplementation instanceof FunctionDescriptor.ExtendedSerializableBinaryOperator) {
             return new ExtendedBinaryOperatorAdapter<>(
@@ -88,7 +88,7 @@ public class FunctionCompiler {
     public <Type> Function<Type, Boolean> compile(
             PredicateDescriptor<Type> predicateDescriptor,
             SparkExecutionOperator operator,
-            ChannelExecutor[] inputs) {
+            ChannelInstance[] inputs) {
         final Predicate<Type> javaImplementation = predicateDescriptor.getJavaImplementation();
         if (javaImplementation instanceof PredicateDescriptor.ExtendedSerializablePredicate) {
             return new ExtendedPredicateAdapater<>(

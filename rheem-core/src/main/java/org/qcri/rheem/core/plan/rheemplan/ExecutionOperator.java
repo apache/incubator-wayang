@@ -6,6 +6,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -54,7 +55,27 @@ public interface ExecutionOperator extends ElementaryOperator {
      *
      * @param index the index of the {@link OutputSlot}
      * @return an {@link List} of {@link Channel}s' {@link Class}es, ordered by their preference of use
+     * @see #getOutputChannelDescriptor(int)
+     * @deprecated {@link ExecutionOperator}s should only support a single {@link ChannelDescriptor}
      */
+    @Deprecated
     List<ChannelDescriptor> getSupportedOutputChannels(int index);
+
+    /**
+     * Display the {@link Channel} used to implement a certain {@link OutputSlot}.
+     *
+     * @param index index of the {@link OutputSlot}
+     * @return the {@link ChannelDescriptor} for the mentioned {@link Channel}
+     */
+    default ChannelDescriptor getOutputChannelDescriptor(int index) {
+        final List<ChannelDescriptor> supportedOutputChannels = this.getSupportedOutputChannels(index);
+        assert !supportedOutputChannels.isEmpty() : String.format("No supported output channels for %s.", this);
+        if (supportedOutputChannels.size() > 1) {
+            LoggerFactory.getLogger(this.getClass()).warn("Treat {} as the only supported channel for {}.",
+                    supportedOutputChannels.get(0), this.getOutput(index)
+            );
+        }
+        return supportedOutputChannels.get(0);
+    }
 
 }

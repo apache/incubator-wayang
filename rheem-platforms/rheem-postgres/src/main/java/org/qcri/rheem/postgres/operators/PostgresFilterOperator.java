@@ -2,13 +2,10 @@ package org.qcri.rheem.postgres.operators;
 
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.postgres.compiler.FunctionCompiler;
-
-import java.util.function.Predicate;
-
 
 
 /**
@@ -17,7 +14,6 @@ import java.util.function.Predicate;
 public class PostgresFilterOperator<Type>
         extends FilterOperator<Type>
         implements PostgresExecutionOperator {
-
 
     /**
      * Creates a new instance.
@@ -39,12 +35,11 @@ public class PostgresFilterOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public String evaluate(Channel[] inputChannels, Channel[] outputChannels, FunctionCompiler compiler) {
+    public String evaluate(ChannelInstance[] inputChannels, ChannelInstance[] outputChannels, FunctionCompiler compiler) {
 
         final String whereClause = compiler.compile(this.predicateDescriptor);
         return whereClause;
     }
-
 
     @Override
     protected ExecutionOperator createCopy() {

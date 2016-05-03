@@ -3,6 +3,7 @@ package org.qcri.rheem.core.optimizer.enumeration;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
@@ -87,6 +88,11 @@ public class PlanEnumerator {
     private final OptimizationContext optimizationContext;
 
     /**
+     * {@link ChannelConversionGraph} to be used by this instance.
+     */
+    private final ChannelConversionGraph channelConversionGraph;
+
+    /**
      * Creates a new instance.
      *
      * @param rheemPlan a hyperplan that should be used for enumeration.
@@ -95,6 +101,7 @@ public class PlanEnumerator {
                           OptimizationContext optimizationContext) {
         this(rheemPlan.collectReachableTopLevelSources(),
                 optimizationContext,
+                new ChannelConversionGraph(optimizationContext.getConfiguration()),
                 new LinkedList<>(),
                 null,
                 Collections.emptyMap(),
@@ -113,6 +120,7 @@ public class PlanEnumerator {
 
         this(rheemPlan.collectReachableTopLevelSources(),
                 optimizationContext,
+                new ChannelConversionGraph(optimizationContext.getConfiguration()),
                 new LinkedList<>(),
                 null,
                 new HashMap<>(),
@@ -131,12 +139,14 @@ public class PlanEnumerator {
      */
     private PlanEnumerator(Collection<Operator> startOperators,
                            OptimizationContext optimizationContext,
+                           ChannelConversionGraph channelConversionGraph,
                            Collection<PlanEnumerationPruningStrategy> pruningStrategies,
                            OperatorAlternative.Alternative enumeratedAlternative,
                            Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
                            Map<ExecutionOperator, ExecutionTask> executedTasks) {
 
         this.optimizationContext = optimizationContext;
+        this.channelConversionGraph = channelConversionGraph;
         this.pruningStrategies = pruningStrategies;
         this.enumeratedAlternative = enumeratedAlternative;
         this.presettledAlternatives = presettledAlternatives;
@@ -342,9 +352,12 @@ public class PlanEnumerator {
             if (branchEnumeration == null) {
                 branchEnumeration = operatorEnumeration;
             } else {
-                branchEnumeration = branchEnumeration.concatenate(lastOperator.getOutput(0),
+                branchEnumeration = branchEnumeration.concatenate(
+                        lastOperator.getOutput(0),
                         Collections.singletonMap(operator.getInput(0), operatorEnumeration),
-                        optimizationContext);
+                        optimizationContext,
+                        this.channelConversionGraph
+                );
             }
 
             lastOperator = operator;
@@ -391,6 +404,7 @@ public class PlanEnumerator {
     private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative, OptimizationContext optimizationContext) {
         return new PlanEnumerator(Operators.collectStartOperators(alternative),
                 optimizationContext,
+                this.channelConversionGraph,
                 this.pruningStrategies,
                 alternative,
                 this.presettledAlternatives,
@@ -403,6 +417,7 @@ public class PlanEnumerator {
     PlanEnumerator forkFor(LoopHeadOperator loopHeadOperator, OptimizationContext optimizationContext) {
         return new PlanEnumerator(Operators.collectStartOperators(loopHeadOperator.getContainer()),
                 optimizationContext,
+                this.channelConversionGraph,
                 this.pruningStrategies,
                 null,
                 this.presettledAlternatives,
@@ -424,11 +439,15 @@ public class PlanEnumerator {
         final PlanEnumeration concatenatedEnumeration = concatenationActivator.baseEnumeration.concatenate(
                 concatenationActivator.outputSlot,
                 concatenationActivator.getAdjacentEnumerations(),
-                concatenationActivator.getOptimizationContext()
+                concatenationActivator.getOptimizationContext(),
+                this.channelConversionGraph
         );
 
         if (concatenatedEnumeration.getPlanImplementations().isEmpty() && this.isTopLevel()) {
-            throw new RheemException(String.format("No implementations found for %s.", concatenatedEnumeration));
+            throw new RheemException(String.format("No implementations that concatenate %s with %s.",
+                    concatenationActivator.outputSlot,
+                    concatenationActivator.outputSlot.getOccupiedSlots()
+            ));
         }
 
         this.postProcess(concatenatedEnumeration, concatenationActivator.optimizationContext);
@@ -615,6 +634,10 @@ public class PlanEnumerator {
 
     public Configuration getConfiguration() {
         return this.optimizationContext.getConfiguration();
+    }
+
+    ChannelConversionGraph getChannelConversionGraph() {
+        return channelConversionGraph;
     }
 
     /**

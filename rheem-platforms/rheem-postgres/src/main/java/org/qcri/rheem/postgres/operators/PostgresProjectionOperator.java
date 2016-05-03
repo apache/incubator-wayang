@@ -2,7 +2,7 @@ package org.qcri.rheem.postgres.operators;
 
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.basic.operators.ProjectionOperator;
-import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.postgres.compiler.FunctionCompiler;
 
 import java.sql.Connection;
@@ -13,19 +13,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by yidris on 3/23/16.
+ * PostgreSQL implementation for the {@link ProjectionOperator}.
  */
 public class PostgresProjectionOperator<InputType, OutputType> extends ProjectionOperator
-        implements PostgresExecutionOperator{
+        implements PostgresExecutionOperator {
 
 
     public PostgresProjectionOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass,
-                              String... fieldNames) {
+                                      String... fieldNames) {
         super(inputTypeClass, outputTypeClass, fieldNames);
     }
 
     public PostgresProjectionOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass,
-                              Integer... fieldIndexes) {
+                                      Integer... fieldIndexes) {
         super(inputTypeClass, outputTypeClass, fieldIndexes);
     }
 
@@ -33,20 +33,21 @@ public class PostgresProjectionOperator<InputType, OutputType> extends Projectio
         super(functionDescriptor);
     }
 
-    public String evaluate(Channel[] inputChannels, Channel[] outputChannels, FunctionCompiler compiler) {
+    @Override
+    public String evaluate(ChannelInstance[] inputChannels, ChannelInstance[] outputChannels, FunctionCompiler compiler) {
         List<String> colNames = this.getFunctionDescriptor().getFieldNames();
         return String.join(",", colNames);
     }
 
-    public String evaluateByIndexes(Channel[] inputChannels, Channel[] outputChannels, FunctionCompiler compiler,
+    public String evaluateByIndexes(ChannelInstance[] inputChannels, ChannelInstance[] outputChannels, FunctionCompiler compiler,
                                     Connection conn, String selectQuery) throws SQLException {
         Statement stmt = conn.createStatement();
         ResultSet metaRs = stmt.executeQuery(selectQuery + " limit 1");
         List<String> colNames = new ArrayList<>();
         List<Integer> colIndexes = this.getFunctionDescriptor().getFieldIndexes();
-        for (Integer index : colIndexes){
+        for (Integer index : colIndexes) {
             //postgres column index starts at 1
-            colNames.add(metaRs.getMetaData().getColumnName(index+1));
+            colNames.add(metaRs.getMetaData().getColumnName(index + 1));
         }
         this.getFunctionDescriptor().setFieldNames(colNames);
         stmt.close();

@@ -12,7 +12,7 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
-import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.platform.ExecutionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,15 +46,15 @@ public class CardinalityRepository {
      * Store the input and output cardinalities for all those {@link Operator}s that have a measured output
      * cardinality.
      *
-     * @param executionProfile    contains the cardinalites of the instrumented {@link Slot}s; those cardinalities should
+     * @param executionState    contains the cardinalites of the instrumented {@link Slot}s; those cardinalities should
      *                            be already injected in the {@code rheemPlan}
      * @param optimizationContext keeps {@link CardinalityEstimate}s for all {@link Slot}s around;
      *                            it is assumed, that any measured cardinalities are already
      *                            injected in this {@link OptimizationContext} to guarantee that we capture the most
      *                            possible accurate data
      */
-    public void storeAll(ExecutionProfile executionProfile, OptimizationContext optimizationContext) {
-        final Map<Channel, Long> cardinalities = executionProfile.getCardinalities();
+    public void storeAll(ExecutionState executionState, OptimizationContext optimizationContext) {
+        final Map<Channel, Long> cardinalities = executionState.getCardinalities();
         for (Map.Entry<Channel, Long> entry : cardinalities.entrySet()) {
             final Channel channel = entry.getKey();
             final long cardinality = entry.getValue();

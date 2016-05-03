@@ -339,9 +339,15 @@ public class StageAssignmentTraversal {
         }
 
         if (!separableTasks.isEmpty()) {
-            assert separableTasks.size() < stage.getTasks().size();
-            final InterimStage separatedStage = this.splitStage(stage, separableTasks);
-            this.applySplittingCriteria(separatedStage);
+            if (separableTasks.size() < stage.getTasks().size()) {
+                final InterimStage separatedStage = this.splitStage(stage, separableTasks);
+                this.applySplittingCriteria(separatedStage);
+            } else {
+                // TODO: How can this happen?
+                this.logger.warn(
+                        "Cannot separate {} tasks from stage with {} tasks! Proceed without splitting...",
+                        separableTasks.size(), stage.getTasks().size());
+            }
         }
     }
 
@@ -600,11 +606,12 @@ public class StageAssignmentTraversal {
                     if (!isInterStageRequired) continue;
                     this.outboundTasks.add(task);
                     if (outputChannel.isInterStageCapable()) continue;
-                    if (!task.getOperator().getPlatform().getChannelManager()
-                            .exchangeWithInterstageCapable(outputChannel)) {
-                        StageAssignmentTraversal.this.logger.warn("Could not exchange {} with an interstage-capable channel.",
-                                outputChannel);
-                    }
+                    // TODO: We cannot "exchange" Channels so easily any more.
+//                    if (!task.getOperator().getPlatform().getChannelManager()
+//                            .exchangeWithInterstageCapable(outputChannel)) {
+//                        StageAssignmentTraversal.this.logger.warn("Could not exchange {} with an interstage-capable channel.",
+//                                outputChannel);
+//                    }
                 }
             }
 

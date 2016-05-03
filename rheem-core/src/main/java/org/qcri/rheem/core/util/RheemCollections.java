@@ -35,6 +35,16 @@ public class RheemCollections {
     }
 
     /**
+     * Provides the given {@code collection} as {@link List}, thereby checking if it is already a {@link List}.
+     */
+    public static <T> List<T> asList(Collection<T> collection) {
+        if (collection instanceof List<?>) {
+            return (List<T>) collection;
+        }
+        return new ArrayList<>(collection);
+    }
+
+    /**
      * Validate that there is only a single element in the {@code collection} and return it.
      */
     public static <T> T getSingle(Collection<T> collection) {
@@ -98,5 +108,53 @@ public class RheemCollections {
             list.add(null);
         }
         return list;
+    }
+
+    /**
+     * Creates the <i>power list</i> of the given {@code base} (akin to power sets of sets).
+     */
+    public static <T> Collection<List<T>> createPowerList(Collection<T> base) {
+        return createPowerList(base, base.size());
+    }
+
+    /**
+     * Creates the <i>power list</i> of the given {@code base} (akin to power sets of sets).
+     *
+     * @param maxElements maximum number of elements in the {@link List}s in the power list
+     */
+    public static <T> Collection<List<T>> createPowerList(Collection<T> base, int maxElements) {
+        List<T> baseList = asList(base);
+        List<List<T>> powerList = new ArrayList<>();
+        createPowerListAux(baseList, 0, maxElements, powerList);
+        powerList.sort((a, b) -> Integer.compare(a.size(), b.size()));
+        return powerList;
+    }
+
+    /**
+     * Helper method to create power lists.
+     *
+     * @param base        the {@link List} whose power list is to be created
+     * @param startIndex  index of the first element in {@code base} to be considered
+     * @param maxElements the maximum number of elements in {@link List}s within the power list
+     * @param collector   collects power list members
+     */
+    private static <T> void createPowerListAux(List<T> base, int startIndex, int maxElements, List<List<T>> collector) {
+        if (startIndex >= base.size()) {
+            collector.add(Collections.emptyList());
+        } else {
+            T head = base.get(startIndex);
+            int collectorStartIndex = collector.size();
+            createPowerListAux(base, startIndex + 1, maxElements, collector);
+            int collectorEndIndex = collector.size();
+            for (int i = collectorStartIndex; i < collectorEndIndex; i++) {
+                final List<T> recursivelyCreatedElement = collector.get(i);
+                if (recursivelyCreatedElement.size() < maxElements) {
+                    List<T> derivativeElement = new ArrayList<>(recursivelyCreatedElement.size() + 1);
+                    derivativeElement.add(head);
+                    derivativeElement.addAll(recursivelyCreatedElement);
+                    collector.add(derivativeElement);
+                }
+            }
+        }
     }
 }

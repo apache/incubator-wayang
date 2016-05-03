@@ -2,9 +2,10 @@ package org.qcri.rheem.java.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.junit.Test;
+import org.qcri.rheem.basic.channels.FileChannel;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.TestChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.io.IOException;
@@ -17,7 +18,7 @@ import java.util.stream.Stream;
 /**
  * Test suite for {@link JavaObjectFileSink}.
  */
-public class JavaObjectFileSinkTest {
+public class JavaObjectFileSinkTest extends JavaExecutionOperatorTestBase {
 
     @Test
     public void testWritingDoesNotFail() throws IOException {
@@ -32,9 +33,10 @@ public class JavaObjectFileSinkTest {
         );
 
         // Execute.
-        ChannelExecutor[] inputs = new ChannelExecutor[]{new TestChannelExecutor(integerStream)};
-        ChannelExecutor[] outputs = new ChannelExecutor[]{};
-        sink.evaluate(inputs, outputs, new FunctionCompiler());
+        ChannelInstance[] inputs = new ChannelInstance[]{createStreamChannelInstance(integerStream)};
+        final ChannelInstance outputChannel = FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR.createChannel(null, configuration).createInstance();
+        ChannelInstance[] outputs = new ChannelInstance[]{outputChannel};
+        sink.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 }
 
     static List<Integer> enumerateRange(int to) {

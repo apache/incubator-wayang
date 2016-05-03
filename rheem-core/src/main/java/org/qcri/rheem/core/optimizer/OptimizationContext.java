@@ -1,13 +1,14 @@
 package org.qcri.rheem.core.optimizer;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.slf4j.Logger;
@@ -60,8 +61,8 @@ public class OptimizationContext {
     /**
      * Create a new, plain instance.
      */
-    public OptimizationContext() {
-        this(null, null, null, -1);
+    public OptimizationContext(Configuration configuration) {
+        this(configuration, null, null, -1);
     }
 
     /**
@@ -164,8 +165,12 @@ public class OptimizationContext {
      */
     public OperatorContext getOperatorContext(Operator operator) {
         OperatorContext operatorContext = this.operatorContexts.get(operator);
-        if (operatorContext == null && this.base != null) {
-            operatorContext = this.base.getOperatorContext(operator);
+        if (operatorContext == null) {
+            if (this.base != null) {
+                operatorContext = this.base.getOperatorContext(operator);
+            } else if (this.hostLoopContext != null) {
+                operatorContext = this.hostLoopContext.getOptimizationContext().getOperatorContext(operator);
+            }
         }
         return operatorContext;
     }
@@ -302,7 +307,7 @@ public class OptimizationContext {
         private LoadProfile loadProfile;
 
         /**
-         * {@link TimeEstimate} for the {@link ExecutionProfile}.
+         * {@link TimeEstimate} for the {@link ExecutionState}.
          */
         private TimeEstimate timeEstimate;
 
@@ -410,19 +415,22 @@ public class OptimizationContext {
          * Update the {@link LoadProfile} and {@link TimeEstimate} of this instance.
          *
          * @param configuration provides the necessary functions
-         * @deprecated Use {@link #updateTimeEstimate()}.
          */
-        public void updateTimeEstimate(Configuration configuration) {
+        private void updateTimeEstimate(Configuration configuration) {
             if (!this.operator.isExecutionOperator()) return;
 
             final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
             final LoadProfileEstimator loadProfileEstimator = configuration
                     .getOperatorLoadProfileEstimatorProvider()
                     .provideFor(executionOperator);
-            this.loadProfile = loadProfileEstimator.estimate(this);
+            try {
+                this.loadProfile = loadProfileEstimator.estimate(this);
+            } catch (Exception e) {
+                throw new RheemException(String.format("Load profile estimation for %s failed.", this.operator), e);
+            }
 
             final Platform platform = executionOperator.getPlatform();
-            final LoadProfileToTimeConverter timeConverter = platform.createLoadProfileToTimeConverter(configuration);
+            final LoadProfileToTimeConverter timeConverter = configuration.getLoadProfileToTimeConverterProvider().provideFor(platform);
             this.timeEstimate = timeConverter.convert(this.loadProfile);
         }
 

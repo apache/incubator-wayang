@@ -4,7 +4,9 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.Tuple;
 
 /**
@@ -33,6 +35,11 @@ public class PostgresInternalChannel extends Channel {
         return new PostgresInternalChannel(this);
     }
 
+    @Override
+    public ChannelInstance createInstance() {
+        return new Instance();
+    }
+
     public static class Initializer implements ChannelInitializer {
 
         @Override
@@ -47,6 +54,14 @@ public class PostgresInternalChannel extends Channel {
         public Channel setUpOutput(ChannelDescriptor descriptor, Channel source,
                                    OptimizationContext optimizationContext) {
             return source;
+        }
+    }
+
+    public class Instance extends AbstractChannelInstance {
+
+        @Override
+        public Channel getChannel() {
+            return PostgresInternalChannel.this;
         }
     }
 }

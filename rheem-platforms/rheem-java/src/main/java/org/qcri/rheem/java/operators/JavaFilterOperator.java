@@ -8,11 +8,18 @@ import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -34,7 +41,7 @@ public class JavaFilterOperator<Type>
     }
 
     @Override
-    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
+    public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
         final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
         JavaExecutor.openFunction(this, filterFunction, inputs);
     }
@@ -45,12 +52,12 @@ public class JavaFilterOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
         final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
-        outputs[0].acceptStream(inputs[0].<Type>provideStream().filter(filterFunction));
+        ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<Type>provideStream().filter(filterFunction));
     }
 
     @Override
@@ -64,5 +71,18 @@ public class JavaFilterOperator<Type>
     @Override
     protected ExecutionOperator createCopy() {
         return new JavaFilterOperator<>(this.getInputType(), this.getPredicateDescriptor());
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        if (this.getInput(index).isBroadcast()) return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+        return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 }

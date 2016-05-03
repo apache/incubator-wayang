@@ -1,15 +1,16 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
-import org.qcri.rheem.spark.channels.TestChannelExecutor;
+import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -24,7 +25,8 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
     @Test
     public void testExecution() {
         // Prepare test data.
-        final JavaRDD<Integer> inputRdd = super.getSC().parallelize(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+        RddChannel.Instance input = this.createRddChannelInstance(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+        CollectionChannel.Instance output = this.createCollectionChannelInstance();
 
         // Build the reduce operator.
         SparkGlobalReduceOperator<Integer> globalReduce =
@@ -36,19 +38,15 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
                         )
                 );
 
-        // Set up the ChannelExecutors.
-        final ChannelExecutor[] inputs = new ChannelExecutor[]{
-                new TestChannelExecutor(inputRdd)
-        };
-        final ChannelExecutor[] outputs = new ChannelExecutor[]{
-                new TestChannelExecutor()
-        };
+        // Set up the ChannelInstances.
+        final ChannelInstance[] inputs = new ChannelInstance[]{input};
+        final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
         globalReduce.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
-        final List<Integer> result = outputs[0].<Integer>provideRdd().collect();
+        final List<Integer> result = RheemCollections.asList(output.provideCollection());
         Assert.assertEquals(1, result.size());
         Assert.assertEquals(Integer.valueOf((10 + 1) * (10 / 2)), result.get(0)); // Props to Gauss!
 
@@ -58,7 +56,8 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
     @Test
     public void testExecutionWithoutData() {
         // Prepare test data.
-        final JavaRDD<Integer> inputRdd = super.getSC().parallelize(Collections.emptyList());
+        RddChannel.Instance input = this.createRddChannelInstance(Collections.emptyList());
+        CollectionChannel.Instance output = this.createCollectionChannelInstance();
 
         // Build the reduce operator.
         SparkGlobalReduceOperator<Integer> globalReduce =
@@ -70,21 +69,17 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
                         )
                 );
 
-        // Set up the ChannelExecutors.
-        final ChannelExecutor[] inputs = new ChannelExecutor[]{
-                new TestChannelExecutor(inputRdd)
-        };
-        final ChannelExecutor[] outputs = new ChannelExecutor[]{
-                new TestChannelExecutor()
-        };
+        // Set up the ChannelInstances.
+        final ChannelInstance[] inputs = new ChannelInstance[]{input};
+        final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
         globalReduce.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
-        final List<Integer> result = outputs[0].<Integer>provideRdd().collect();
+        final List<Integer> result = RheemCollections.asList(output.provideCollection());
         Assert.assertEquals(1, result.size());
-        Assert.assertEquals(Integer.valueOf((10 + 1) * (10 / 2)), result.get(0)); // Props to Gauss!
+        Assert.assertEquals(Integer.valueOf(0), result.get(0));
 
     }
 }

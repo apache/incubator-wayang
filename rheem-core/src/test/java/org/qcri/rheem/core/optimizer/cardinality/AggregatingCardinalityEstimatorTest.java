@@ -3,14 +3,8 @@ package org.qcri.rheem.core.optimizer.cardinality;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityEstimator;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 
 import java.util.Arrays;
-
-import static org.mockito.Mockito.mock;
 
 /**
  * Test suite for {@link AggregatingCardinalityEstimator}.

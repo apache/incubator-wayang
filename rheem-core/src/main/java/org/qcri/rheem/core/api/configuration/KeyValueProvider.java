@@ -13,19 +13,26 @@ import java.util.Optional;
 public abstract class KeyValueProvider<Key, Value> {
 
     public static class NoSuchKeyException extends RheemException {
+
         public NoSuchKeyException(String message) {
             super(message);
         }
     }
-
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected KeyValueProvider<Key, Value> parent;
 
+    protected final Configuration configuration;
+
     private String warningSlf4jFormat;
 
     protected KeyValueProvider(KeyValueProvider<Key, Value> parent) {
+        this(parent, parent.configuration);
+    }
+
+    protected KeyValueProvider(KeyValueProvider<Key, Value> parent, Configuration configuration) {
         this.parent = parent;
+        this.configuration = configuration;
     }
 
     public Value provideFor(Key key) {
@@ -66,11 +73,17 @@ public abstract class KeyValueProvider<Key, Value> {
      */
     protected abstract Value tryToProvide(Key key, KeyValueProvider<Key, Value> requestee);
 
-
     public void setParent(KeyValueProvider<Key, Value> parent) {
         this.parent = parent;
     }
 
+
+    /**
+     * Log a warning in SLF4J format when using this instance to provide a value. The requested key will be passed
+     * as parameter.
+     *
+     * @return this instance
+     */
     public KeyValueProvider<Key, Value> withSlf4jWarning(String slf4jFormat) {
         this.warningSlf4jFormat = slf4jFormat;
         return this;
@@ -78,5 +91,9 @@ public abstract class KeyValueProvider<Key, Value> {
 
     public void set(Key key, Value value) {
         throw new RheemException(String.format("Setting values not supported for %s.", this.getClass().getSimpleName()));
+    }
+
+    public Configuration getConfiguration() {
+        return this.configuration;
     }
 }

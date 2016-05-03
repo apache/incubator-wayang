@@ -3,8 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.TestChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -15,7 +14,7 @@ import java.util.stream.Stream;
 /**
  * Test suite for {@link JavaUnionAllOperator}.
  */
-public class JavaUnionAllOperatorTest {
+public class JavaUnionAllOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
     public void testExecution() {
@@ -28,12 +27,12 @@ public class JavaUnionAllOperatorTest {
                 new JavaUnionAllOperator<>(DataSetType.createDefaultUnchecked(Integer.class));
 
         // Execute.
-        ChannelExecutor[] inputs = new ChannelExecutor[]{
-                new TestChannelExecutor(inputStream0),
-                new TestChannelExecutor(inputStream1)
+        JavaChannelInstance[] inputs = new JavaChannelInstance[]{
+                createStreamChannelInstance(inputStream0),
+                createStreamChannelInstance(inputStream1)
         };
-        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
-        unionAllOperator.evaluate(inputs, outputs, new FunctionCompiler());
+        JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
+        unionAllOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream()

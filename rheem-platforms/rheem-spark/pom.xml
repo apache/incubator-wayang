@@ -24,6 +24,12 @@
             <artifactId>rheem-basic</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
+        <!-- rheem-java is required to allow for direct communication between spark and java -->
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-java</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.10</artifactId>

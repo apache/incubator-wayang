@@ -1,9 +1,12 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
+import java.lang.reflect.Constructor;
 import java.util.Objects;
 
 /**
@@ -82,5 +85,24 @@ public class ChannelDescriptor {
      */
     public boolean isInternal() {
         return !this.isInterPlatformCapable();
+    }
+
+    /**
+     * Creates a new {@link Channel} as described by this instance.
+     *
+     * @param configuration can provide additional information required for the creation
+     * @return the {@link Channel}
+     */
+    public Channel createChannel(OutputSlot<?> output, Configuration configuration) {
+        Class<? extends Channel> channelClass = this.getChannelClass();
+        try {
+            final Constructor<? extends Channel> constructor = channelClass.getConstructor(ChannelDescriptor.class, OutputSlot.class);
+            return constructor.newInstance(this, output);
+        } catch (Exception e) {
+            throw new UnsupportedOperationException(
+                    String.format("Default channel creation is not working for %s. Please override.", this.getChannelClass().getSimpleName()),
+                    e
+            );
+        }
     }
 }

@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.slf4j.Logger;
@@ -357,6 +358,7 @@ public abstract class Channel {
     }
 
     void setProducer(ExecutionTask producer) {
+        assert this.producerSlot == null || producer.getOperator() == this.producerSlot.getOwner();
         this.producer = producer;
     }
 
@@ -370,5 +372,31 @@ public abstract class Channel {
 
     public Set<Channel> getSiblings() {
         return this.siblings;
+    }
+
+    /**
+     * Create a {@link ChannelInstance} for this instance.
+     */
+    public abstract ChannelInstance createInstance();
+
+    /**
+     * Tests for inter-stage instances.
+     *
+     * @return whether this instance connects {@link ExecutionTask}s of different {@link ExecutionStage}s.
+     */
+    public boolean isBetweenStages() {
+        if (this.producer == null || this.consumers.isEmpty()) {
+            return false;
+        }
+        final ExecutionStage producerStage = this.producer.getStage();
+        if (producerStage == null) {
+            return false;
+        }
+        for (ExecutionTask consumer : this.consumers) {
+            if (consumer.getStage() != null && !producerStage.equals(consumer.getStage())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

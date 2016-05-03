@@ -2,8 +2,8 @@ package org.qcri.rheem.profiler.spark;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 
 import java.util.function.Supplier;
@@ -29,14 +29,14 @@ public class SinkProfiler extends SparkOperatorProfiler {
 
     @Override
     protected Result executeOperator() {
-        final ChannelExecutor inputChannelExecutor = createChannelExecutor(this.inputRdd, this.sparkExecutor);
+        final ChannelInstance inputChannelInstance = createChannelInstance(this.inputRdd, this.sparkExecutor);
 
         // Let the operator execute.
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
         this.operator.evaluate(
-                new ChannelExecutor[] { inputChannelExecutor },
-                new ChannelExecutor[] {  },
+                new ChannelInstance[]{inputChannelInstance},
+                new ChannelInstance[]{},
                 this.functionCompiler,
                 this.sparkExecutor
         );

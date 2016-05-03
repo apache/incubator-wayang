@@ -5,6 +5,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -13,7 +14,6 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Optional;
 
 /**
  * A platform describes an execution engine that executes {@link ExecutionOperator}s.
@@ -21,8 +21,6 @@ import java.util.Optional;
 public abstract class Platform {
 
     private final String name;
-
-    private final ChannelManager channelManager = this.createChannelManager();
 
     /**
      * Loads a specific {@link Platform} implementation. For platforms to interoperate with this method, they must
@@ -47,6 +45,11 @@ public abstract class Platform {
     }
 
     /**
+     * Registers supported todo...
+     */
+    public abstract void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph);
+
+    /**
      * <i>Shortcut.</i> Creates an {@link Executor} using the {@link #getExecutorFactory()}.
      *
      * @return the {@link Executor}
@@ -66,23 +69,7 @@ public abstract class Platform {
 
     public abstract boolean isExecutable();
 
-    /**
-     * @return the instance that should be returned by {@link #getChannelManager()}
-     */
-    protected abstract ChannelManager createChannelManager();
-
-    /**
-     * If this instance provides {@link ExecutionOperator}s, then this method provides a {@link ChannelManager}
-     * to connect them.
-     *
-     * @return the {@link ChannelManager} of this instance or {@code null} if none
-     */
-    public ChannelManager getChannelManager() {
-        return this.channelManager;
-    }
-
-
-    // TODO: Return some more descriptors about the state of the platform (e.g., available machines, RAM, ...)
+    // TODO: Return some more descriptors about the state of the platform (e.g., available machines, RAM, ...)?
 
     @Override
     public String toString() {

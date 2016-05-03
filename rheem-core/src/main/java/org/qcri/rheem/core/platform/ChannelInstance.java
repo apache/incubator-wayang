@@ -23,4 +23,16 @@ public interface ChannelInstance extends ExecutionResource {
      */
     OptionalLong getMeasuredCardinality();
 
+    /**
+     * Register the measured cardinality with this instance.
+     */
+    void setMeasuredCardinality(long cardinality);
+
+    /**
+     * Tells whether this instance should be instrumented
+     */
+    default boolean isMarkedForInstrumentation() {
+        return this.getChannel().isMarkedForInstrumentation();
+    }
+
 }

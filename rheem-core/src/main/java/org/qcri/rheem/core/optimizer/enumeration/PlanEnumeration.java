@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.MultiMap;
@@ -157,7 +158,8 @@ public class PlanEnumeration {
      */
     public PlanEnumeration concatenate(OutputSlot<?> openOutputSlot,
                                        Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
-                                       OptimizationContext optimizationContext) {
+                                       OptimizationContext optimizationContext,
+                                       ChannelConversionGraph channelConversionGraph) {
 
         assert this.getServingOutputSlots().stream()
                 .map(Tuple::getField0)
@@ -189,7 +191,7 @@ public class PlanEnumeration {
         result.servingOutputSlots.removeIf(slotService -> slotService.getField0().equals(openOutputSlot));
 
         result.planImplementations.addAll(
-                this.concatenatePartialPlans(openOutputSlot, targetEnumerations, optimizationContext, result)
+                this.concatenatePartialPlans(openOutputSlot, targetEnumerations, optimizationContext, channelConversionGraph, result)
         );
 
         // Build the instance.
@@ -204,6 +206,7 @@ public class PlanEnumeration {
     private Collection<PlanImplementation> concatenatePartialPlans(OutputSlot<?> openOutputSlot,
                                                                    Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
                                                                    OptimizationContext optimizationContext,
+                                                                   ChannelConversionGraph channelConversionGraph,
                                                                    PlanEnumeration concatenationEnumeration) {
 
 //        // Group the base and target PlanImplementations by their operator.
@@ -274,7 +277,8 @@ public class PlanEnumeration {
 
                 // Concatenate the PlanImplementations.
                 final PlanImplementation concatenationImpl = thisImpl.concatenate(
-                        openOutputSlot, targetImpls, inputSlots, concatenationEnumeration, optimizationContext);
+                        openOutputSlot, targetImpls, inputSlots, concatenationEnumeration, optimizationContext, channelConversionGraph
+                );
                 if (concatenationImpl != null) {
                     resultCollector.add(concatenationImpl);
                 }

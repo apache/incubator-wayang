@@ -1,6 +1,9 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
-import org.qcri.rheem.core.plan.executionplan.*;
+import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
+import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
 import org.qcri.rheem.core.platform.Junction;
@@ -103,12 +106,12 @@ public class ExecutionTaskFlowCompiler
                     final Activator consumerActivator = this.activators.computeIfAbsent(activatorKey, Activator::new);
                     final ExecutionTask consumerTask = this.getOrCreateExecutionTask(consumerOperator);
                     consumerActivator.executionTask = consumerTask;
-                    final Platform consumerPlatform = consumerTask.getOperator().getPlatform();
-                    final ChannelInitializer channelInitializer =
-                            consumerPlatform.getChannelManager().getChannelInitializer(channelCopy.getDescriptor());
-                    if (channelInitializer == null) {
-                        throw new AbortException(String.format("Cannot connect %s to %s.", channel, consumerTask));
-                    }
+//                    final Platform consumerPlatform = consumerTask.getOperator().getPlatform();
+//                    final ChannelInitializer channelInitializer =
+//                            consumerPlatform.getChannelManager().getChannelInitializer(channelCopy.getDescriptor());
+//                    if (channelInitializer == null) {
+//                        throw new AbortException(String.format("Cannot connect %s to %s.", channel, consumerTask));
+//                    }
                     // Is this correct?
                     channelCopy.addConsumer(consumerTask, consumerInput.getIndex());
                     // todo: rewrite the whole thing

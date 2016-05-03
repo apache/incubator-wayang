@@ -2,7 +2,7 @@ package org.qcri.rheem.profiler.java;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
@@ -15,7 +15,7 @@ import java.util.function.Supplier;
  */
 public class UnaryOperatorProfiler extends OperatorProfiler {
 
-    private ChannelExecutor inputChannelExecutor, outputChannelExecutor;
+    private JavaChannelInstance inputChannelInstance, outputChannelInstance;
 
     public UnaryOperatorProfiler(Supplier<JavaExecutionOperator> operatorGenerator, Supplier<?> dataQuantumGenerator) {
         super(operatorGenerator, dataQuantumGenerator);
@@ -33,20 +33,20 @@ public class UnaryOperatorProfiler extends OperatorProfiler {
         for (int i = 0; i < inputCardinality; i++) {
             dataQuanta.add(supplier.get());
         }
-        this.inputChannelExecutor = createChannelExecutor(dataQuanta);
+        this.inputChannelInstance = createChannelInstance(dataQuanta);
 
         // Allocate output.
-        this.outputChannelExecutor = createChannelExecutor();
+        this.outputChannelInstance = createChannelInstance();
     }
 
 
     public long executeOperator() {
         this.operator.evaluate(
-                new ChannelExecutor[]{this.inputChannelExecutor},
-                new ChannelExecutor[]{this.outputChannelExecutor},
-                new FunctionCompiler()
+                new JavaChannelInstance[]{this.inputChannelInstance},
+                new JavaChannelInstance[]{this.outputChannelInstance},
+                new FunctionCompiler(null)
         );
-        return this.outputChannelExecutor.provideStream().count();
+        return this.outputChannelInstance.provideStream().count();
     }
 
     @Override
