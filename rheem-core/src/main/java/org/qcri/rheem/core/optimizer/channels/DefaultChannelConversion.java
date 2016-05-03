@@ -3,7 +3,6 @@ package org.qcri.rheem.core.optimizer.channels;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -14,7 +13,7 @@ import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 /**
- * todo
+ * Default implementation of the {@link ChannelConversion}. Can be used without further subclassing.
  */
 public class DefaultChannelConversion extends ChannelConversion {
 

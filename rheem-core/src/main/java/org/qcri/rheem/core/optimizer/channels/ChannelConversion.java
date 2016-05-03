@@ -5,7 +5,6 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.util.Tuple;
 
 /**
  * Can convert a given {@link Channel} to another {@link Channel}.
@@ -29,15 +28,6 @@ public abstract class ChannelConversion {
      * @return the newly created {@link Channel}
      */
     public abstract Channel convert(final Channel sourceChannel, Configuration configuration);
-
-    /**
-     * Describes the conversion being done by this instance.
-     *
-     * @return a {@link Tuple} <code>(source channel, target channel)</code>
-     */
-    public Tuple<ChannelDescriptor, ChannelDescriptor> getConversionKey() {
-        return new Tuple<>(this.getSourceChannelDescriptor(), this.getTargetChannelDescriptor());
-    }
 
     public ChannelDescriptor getSourceChannelDescriptor() {
         return this.sourceChannelDescriptor;

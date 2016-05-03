@@ -7,7 +7,6 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
 
-import java.io.File;
 import java.io.IOException;
 
 import static org.mockito.Mockito.mock;

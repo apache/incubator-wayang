@@ -26,13 +26,15 @@ public class SubplanCardinalityPusherTest {
     public void setUp() {
         this.configuration = new Configuration();
         KeyValueProvider<OutputSlot<?>, CardinalityEstimator> estimatorProvider =
-                new FunctionalKeyValueProvider<>((outputSlot, requestee) -> {
-                    assert outputSlot.getOwner().isElementary()
-                            : String.format("Cannot provide estimator for composite %s.", outputSlot.getOwner());
-                    return ((ElementaryOperator) outputSlot.getOwner())
-                            .getCardinalityEstimator(outputSlot.getIndex(), this.configuration)
-                            .orElse(null);
-                });
+                new FunctionalKeyValueProvider<>(
+                        (outputSlot, requestee) -> {
+                            assert outputSlot.getOwner().isElementary()
+                                    : String.format("Cannot provide estimator for composite %s.", outputSlot.getOwner());
+                            return ((ElementaryOperator) outputSlot.getOwner())
+                                    .getCardinalityEstimator(outputSlot.getIndex(), this.configuration)
+                                    .orElse(null);
+                        },
+                        this.configuration);
         this.configuration.setCardinalityEstimatorProvider(estimatorProvider);
     }
 

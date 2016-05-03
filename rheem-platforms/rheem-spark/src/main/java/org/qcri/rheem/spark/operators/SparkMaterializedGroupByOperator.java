@@ -51,7 +51,6 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
                 .groupBy(keyExtractor)
                 .map(projector);
 
-        // TODO: MaterializedGroupByOperator actually prescribes to return Iterators, not Iterables.
         output.accept(outputRdd, sparkExecutor);
     }
 
