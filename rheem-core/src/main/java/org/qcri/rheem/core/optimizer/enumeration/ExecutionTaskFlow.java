@@ -98,6 +98,7 @@ public class ExecutionTaskFlow {
                 return new ExecutionTaskFlow(compiler.getTerminalTasks(), compiler.getInputChannels());
             }
         } catch (AbstractTopologicalTraversal.AbortException e) {
+            throw new RuntimeException(e);
         }
         return null;
 

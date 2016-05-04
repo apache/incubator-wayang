@@ -314,7 +314,7 @@ public class Job {
                     .forEach(breakpoint::breakAfter);
         }
         this.crossPlatformExecutor.extendBreakpoint(breakpoint);
-        this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(this.maxSpread, this.minConfidence));
+//        this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(this.configuration));
         breakpointRound.stop();
 
         // Trigger the execution.

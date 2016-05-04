@@ -88,7 +88,7 @@ public class ExecutionTaskFlowCompiler
             Collection<InputSlot<?>> consumerInputs = this.findRheemPlanInputSlotFor(producerOutput);
 
             // Finally, produce Activations.
-            if (consumerInputs.isEmpty()) {
+            if (!consumerInputs.isEmpty()) {
                 Channel channelCopy = channel.copy();
                 this.inputChannels.add(channelCopy);
                 // If the channel was only "partially open", then we need to consider not to re-create existing ExecutionTasks.

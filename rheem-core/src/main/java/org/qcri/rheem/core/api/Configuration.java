@@ -30,6 +30,8 @@ import java.util.*;
  */
 public class Configuration {
 
+    private static final String DEFAULT_CONFIGURATION_FILE = "/rheem-core-defaults.properties";
+
     private static final Configuration defaultConfiguration = new Configuration((Configuration) null);
 
     static {
@@ -385,6 +387,8 @@ public class Configuration {
         final KeyValueProvider<String, String> customizableProperties = new MapBasedKeyValueProvider<>(defaultProperties);
 
         configuration.setProperties(customizableProperties);
+
+        configuration.load(configuration.getClass().getResourceAsStream(DEFAULT_CONFIGURATION_FILE));
     }
 
     /**

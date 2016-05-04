@@ -21,7 +21,6 @@ public class CrossPlatformExecutor {
 
     public final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-
     /**
      * The {@link Job} that is being executed by this instance.
      */
