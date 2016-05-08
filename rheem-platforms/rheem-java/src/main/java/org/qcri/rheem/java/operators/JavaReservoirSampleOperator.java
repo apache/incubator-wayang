@@ -17,6 +17,7 @@ import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Java implementation of the {@link JavaReservoirSampleOperator}.
@@ -55,16 +56,14 @@ public class JavaReservoirSampleOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-
-        final List<Type> initList = (List) ((JavaChannelInstance) inputs[0]).<Type>provideStream().collect(Collectors.toList());
-        //FIXME: this is super inefficient, avoid collecting all elements
-        ((CollectionChannel.Instance) outputs[0]).accept(reservoirSample(rand, initList, sampleSize));
+        ((CollectionChannel.Instance) outputs[0]).accept(reservoirSample(rand, ((JavaChannelInstance) inputs[0]).<Type>provideStream().iterator(), sampleSize));
     }
 
-    private static <T> List<T> reservoirSample(Random rand, Iterable<T> items, long m){
+    private static <T> List<T> reservoirSample(Random rand, Iterator<T> items, long m){
         ArrayList<T> res = new ArrayList<T>(Math.toIntExact(m));
         int count = 0;
-        for (T item : items) {
+        while (items.hasNext()) {
+            T item = items.next();
             count++;
             if (count <= m)
                 res.add(item);
