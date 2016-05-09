@@ -76,9 +76,14 @@ public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecut
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         // NB: Not measured, instead adapted from SparkTextFileSource.
-        final OptionalLong optionalFileSize = this.sourcePath == null ? OptionalLong.empty() : FileSystems.getFileSize(this.sourcePath);
-        if (!optionalFileSize.isPresent()) {
-            LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
+        final OptionalLong optionalFileSize;
+        if (this.sourcePath == null) {
+            optionalFileSize = OptionalLong.empty();
+        } else {
+            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
+            if (!optionalFileSize.isPresent()) {
+                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
+            }
         }
 
         final NestableLoadProfileEstimator mainEstimator;

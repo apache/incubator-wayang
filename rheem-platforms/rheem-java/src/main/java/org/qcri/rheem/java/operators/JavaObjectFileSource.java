@@ -55,7 +55,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
         assert outputs.length == this.getNumOutputs();
 
         SequenceFileIterator sequenceFileIterator;
-            final String path;
+        final String path;
         if (this.sourcePath == null) {
             final FileChannel.Instance input = (FileChannel.Instance) inputs[0];
             path = input.getSinglePath();
@@ -76,9 +76,14 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final OptionalLong optionalFileSize = this.sourcePath == null ? OptionalLong.empty() : FileSystems.getFileSize(this.sourcePath);
-        if (!optionalFileSize.isPresent()) {
-            LoggerFactory.getLogger(JavaTextFileSource.class).warn("Could not determine file size for {}.", this.sourcePath);
+        final OptionalLong optionalFileSize;
+        if (this.sourcePath == null) {
+            optionalFileSize = OptionalLong.empty();
+        } else {
+            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
+            if (!optionalFileSize.isPresent()) {
+                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
+            }
         }
         // NB: Not actually measured!
         final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(

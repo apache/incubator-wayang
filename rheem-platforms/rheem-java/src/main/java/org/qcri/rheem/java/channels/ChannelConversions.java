@@ -54,7 +54,7 @@ public class ChannelConversions {
             () -> new JavaObjectFileSink<>(DataSetType.createDefault(Void.class))
     );
 
-    public static final ChannelConversion HDFS_OBJECT_FILE_TSV_TO_STREAM = new DefaultChannelConversion(
+    public static final ChannelConversion HDFS_OBJECT_FILE_TO_STREAM = new DefaultChannelConversion(
             FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR,
             StreamChannel.DESCRIPTOR,
             () -> new JavaObjectFileSource<>(DataSetType.createDefault(Void.class))
@@ -63,10 +63,11 @@ public class ChannelConversions {
     public static Collection<ChannelConversion> ALL = Arrays.asList(
             STREAM_TO_COLLECTION,
             STREAM_TO_HDFS_OBJECT_FILE,
-            STREAM_TO_HDFS_TSV,
             COLLECTION_TO_HDFS_OBJECT_FILE,
-            COLLECTION_TO_HDFS_TSV,
-            HDFS_TSV_TO_STREAM,
-            HDFS_OBJECT_FILE_TSV_TO_STREAM
+            HDFS_OBJECT_FILE_TO_STREAM,
+            HDFS_TSV_TO_STREAM
+            // TODO: Create proper TSV serialization.
+            // STREAM_TO_HDFS_TSV,
+            // COLLECTION_TO_HDFS_TSV,
     );
 }

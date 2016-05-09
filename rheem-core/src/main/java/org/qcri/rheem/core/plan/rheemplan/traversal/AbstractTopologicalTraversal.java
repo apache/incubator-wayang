@@ -17,23 +17,21 @@ import java.util.Queue;
  * <p>In a topological traversal, before a node of a DAG is visited, all it predecessors are visited. Moreover,
  * every node is visited only once. Finally, the nodes can propagate information from predecessor to successor.</p>
  */
-public abstract class AbstractTopologicalTraversal<Payload,
+public abstract class AbstractTopologicalTraversal<
         ActivatorType extends AbstractTopologicalTraversal.Activator<ActivationType>,
-        ActivationType extends AbstractTopologicalTraversal.Activation<ActivatorType>> {
+        ActivationType extends AbstractTopologicalTraversal.Activation<ActivatorType>
+        > {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * Perform a traversal starting from source {@link Operator}s and initially activated {@link Operator}s.
      *
-     * @param payloads <i>Not needed so far... remove?</i> fed as parameters into the initially activated {@link Operator}s,
-     *                 whereby indices of this array are matched with the parameter of {@link #getInitialActivations(int)}.
      * @return whether the traversal was <i>not</i> aborted
      */
-    @SafeVarargs
-    public final boolean traverse(Payload... payloads) {
+    public final boolean traverse() {
         try {
-            final Queue<ActivatorType> activators = this.initializeActivatorQueue(payloads);
+            final Queue<ActivatorType> activators = this.initializeActivatorQueue();
             if (activators.isEmpty()) {
                 throw new AbortException("No activators available.");
             }
@@ -52,8 +50,7 @@ public abstract class AbstractTopologicalTraversal<Payload,
     /**
      * Set up a queue of initial {@link Activator}s for an estimation pass.
      */
-    @SafeVarargs
-    private final Queue<ActivatorType> initializeActivatorQueue(Payload... payloads) {
+    private final Queue<ActivatorType> initializeActivatorQueue() {
         // Set up the initial Activators.
         Queue<ActivatorType> activatorQueue = new LinkedList<>(this.getInitialActivators());
 

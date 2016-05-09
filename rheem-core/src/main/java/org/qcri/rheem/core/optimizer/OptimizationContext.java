@@ -3,6 +3,7 @@ package org.qcri.rheem.core.optimizer;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
@@ -59,17 +60,22 @@ public class OptimizationContext {
     private final Configuration configuration;
 
     /**
+     * {@link ChannelConversionGraph} used for the optimization.
+     */
+    private final ChannelConversionGraph channelConversionGraph;
+
+    /**
      * Create a new, plain instance.
      */
     public OptimizationContext(Configuration configuration) {
-        this(configuration, null, null, -1);
+        this(configuration, null, null, -1, new ChannelConversionGraph(configuration));
     }
 
     /**
      * Forks an {@link OptimizationContext} by providing a write-layer on top of the {@code base}.
      */
     public OptimizationContext(OptimizationContext base) {
-        this(base.configuration, base, base.hostLoopContext, base.iterationNumber);
+        this(base.configuration, base, base.hostLoopContext, base.iterationNumber, base.channelConversionGraph);
     }
 
     /**
@@ -78,7 +84,7 @@ public class OptimizationContext {
      * @param rheemPlan that the new instance should describe; loops should already be isolated
      */
     public OptimizationContext(RheemPlan rheemPlan, Configuration configuration) {
-        this(configuration, null, null, -1);
+        this(configuration, null, null, -1, new ChannelConversionGraph(configuration));
         PlanTraversal.upstream()
                 .withCallback(this::addOneTimeOperator)
                 .traverse(rheemPlan.getSinks());
@@ -90,7 +96,7 @@ public class OptimizationContext {
      * @param operator the single {@link Operator} of this instance
      */
     public OptimizationContext(Operator operator, Configuration configuration) {
-        this(configuration, null, null, -1);
+        this(configuration, null, null, -1, new ChannelConversionGraph(configuration));
         this.addOneTimeOperator(operator);
     }
 
@@ -98,18 +104,20 @@ public class OptimizationContext {
      * Creates a new (nested) instance for the given {@code loop}.
      */
     private OptimizationContext(LoopSubplan loop, LoopContext hostLoopContext, int iterationNumber, Configuration configuration) {
-        this(configuration, null, hostLoopContext, iterationNumber);
+        this(configuration, null, hostLoopContext, iterationNumber, hostLoopContext.getOptimizationContext().getChannelConversionGraph());
         this.addOneTimeOperators(loop);
     }
 
     /**
      * Base constructor.
      */
-    private OptimizationContext(Configuration configuration, OptimizationContext base, LoopContext hostLoopContext, int iterationNumber) {
+    private OptimizationContext(Configuration configuration, OptimizationContext base, LoopContext hostLoopContext,
+                                int iterationNumber, ChannelConversionGraph channelConversionGraph) {
         this.configuration = configuration;
         this.base = base;
         this.hostLoopContext = hostLoopContext;
         this.iterationNumber = iterationNumber;
+        this.channelConversionGraph = channelConversionGraph;
     }
 
     /**
@@ -273,6 +281,10 @@ public class OptimizationContext {
         }
 
         return isComplete;
+    }
+
+    public ChannelConversionGraph getChannelConversionGraph() {
+        return this.channelConversionGraph;
     }
 
     public OptimizationContext getBase() {

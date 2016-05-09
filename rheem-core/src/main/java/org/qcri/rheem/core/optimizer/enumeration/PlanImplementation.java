@@ -2,7 +2,6 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.*;
@@ -263,19 +262,15 @@ public class PlanImplementation {
      * Creates a {@link Junction} between the {@link OutputSlot} and {@link InputSlot}s and with this concatenates
      * the {@link PlanImplementation}s.
      *
-     * @param output
-     * @param targets
-     * @param inputs
-     * @param concatenationEnumeration
-     * @param optimizationContext
+     * @param existingChannel an existing {@link Channel} from that all {@code inputs} must be served or {@code null} otherwise
      * @return
      */
     public PlanImplementation concatenate(OutputSlot<?> output,
+                                          Channel existingChannel,
                                           List<PlanImplementation> targets,
                                           List<InputSlot<?>> inputs,
                                           PlanEnumeration concatenationEnumeration,
-                                          OptimizationContext optimizationContext,
-                                          ChannelConversionGraph channelConversionGraph) {
+                                          OptimizationContext optimizationContext) {
 
         // Construct the Junction between the PlanImplementations.
         final Tuple<OutputSlot<?>, PlanImplementation> execOutputWithContext =
@@ -287,8 +282,8 @@ public class PlanImplementation {
                     return RheemCollections.getSingle(targetImpl.findExecutionOperatorInputs(input));
                 }
         );
-        final Junction junction = channelConversionGraph.findMinimumCostJunction(
-                execOutputWithContext.getField0(), execInputs, this.optimizationContext // What about the given optimazationContext?
+        final Junction junction = optimizationContext.getChannelConversionGraph().findMinimumCostJunction(
+                execOutputWithContext.getField0(), existingChannel, execInputs, this.optimizationContext // What about the given optimazationContext?
         );
         //Junction.create(execOutputWithContext.getField0(), execInputs, this.optimizationContext);
         if (junction == null) {
