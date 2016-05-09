@@ -6,6 +6,7 @@ import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
+import org.qcri.rheem.core.platform.Breakpoint;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Platform;
@@ -60,6 +61,11 @@ public abstract class Channel {
      * {@link RheemPlan} and share properties such as {@link #getCardinalityEstimate(OptimizationContext)} and {@link #getDataSetType()}.
      */
     private Set<Channel> siblings = new HashSet<>(2);
+
+    /**
+     * This flag indicates whether this instance must not be used to halt at a {@link Breakpoint}.
+     */
+    private boolean isBreakingProhibited = false;
 
 
     /**
@@ -350,11 +356,13 @@ public abstract class Channel {
     }
 
     /**
-     * Copies the consumers of the given {@code channel} into this instance.
+     * Copies the siblings of the given {@code channel} into this instance.
      */
     private void adoptSiblings(Channel channel) {
-        this.addSibling(channel);
-        this.removeSiblingsWhere(sibling -> sibling == channel);
+        for (Channel newSibling : channel.siblings) {
+            this.addSibling(newSibling);
+        }
+        channel.removeSiblings();
     }
 
     void setProducer(ExecutionTask producer) {
@@ -398,5 +406,23 @@ public abstract class Channel {
             }
         }
         return false;
+    }
+
+    /**
+     * We use this flag to indicate that we cannot re-optimize starting from this instance for various reasons.
+     *
+     * @return whether halting execution at this instance is prohibited
+     */
+    public boolean isBreakingProhibited() {
+        return this.isBreakingProhibited;
+    }
+
+    /**
+     * We use this flag to indicate that we cannot re-optimize starting from this instance for various reasons.
+     *
+     * @param breakingProhibited whether halting execution at this instance is prohibited
+     */
+    public void setBreakingProhibited(boolean breakingProhibited) {
+        this.isBreakingProhibited = breakingProhibited;
     }
 }

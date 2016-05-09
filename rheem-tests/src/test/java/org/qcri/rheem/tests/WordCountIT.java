@@ -291,17 +291,19 @@ public class WordCountIT {
                 DataSetType.createDefault(String.class)
         );
         flatMapOperator.addTargetPlatform(JavaPlatform.getInstance());
+        flatMapOperator.setName("Split words");
 
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
-                new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
+                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class)
         );
         mapOperator.addTargetPlatform(SparkPlatform.getInstance());
+        mapOperator.setName("Create counters");
 
 
         // groupby the key (word) and add up the values (frequency)
@@ -317,6 +319,7 @@ public class WordCountIT {
         ), DataSetType.createDefaultUnchecked(Tuple2.class)
         );
         reduceByOperator.addTargetPlatform(SparkPlatform.getInstance());
+        reduceByOperator.setName("Add counters");
 
 
         // write results to a sink

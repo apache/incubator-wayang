@@ -155,6 +155,9 @@ public class ExecutionStage {
         return sb.toString();
     }
 
+    /**
+     * Appends this instance's details to the given {@link StringBuilder}.
+     */
     public void toExtensiveString(StringBuilder sb) {
         Set<ExecutionTask> seenTasks = new HashSet<>();
         for (ExecutionTask startTask : this.startTasks) {

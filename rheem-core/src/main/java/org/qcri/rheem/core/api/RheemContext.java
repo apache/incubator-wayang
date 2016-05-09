@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.api;
 
 import org.apache.commons.lang3.StringUtils;
+import org.qcri.rheem.core.api.configuration.ExplicitCollectionProvider;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Platform;
@@ -41,7 +42,7 @@ public class RheemContext {
      * @param platform the {@link Platform} to register
      */
     public void register(Platform platform) {
-        this.configuration.getPlatformProvider().addToWhitelist(platform);
+        ((ExplicitCollectionProvider<Platform>) this.configuration.getPlatformProvider()).addToWhitelist(platform);
     }
 
     /**

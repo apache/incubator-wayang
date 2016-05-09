@@ -158,10 +158,16 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final OptionalLong optionalFileSize = this.sourcePath == null ? OptionalLong.empty() : FileSystems.getFileSize(this.sourcePath);
-        if (!optionalFileSize.isPresent()) {
-            LoggerFactory.getLogger(JavaTextFileSource.class).warn("Could not determine file size for {}.", this.sourcePath);
+        final OptionalLong optionalFileSize;
+        if (this.sourcePath == null) {
+            optionalFileSize = OptionalLong.empty();
+        } else {
+            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
+            if (!optionalFileSize.isPresent()) {
+                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
+            }
         }
+
         // NB: Not actually measured!
         final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
                 new DefaultLoadEstimator(0, 1, .99d, (inputCards, outputCards) -> 1500 * outputCards[0] + 1400000),

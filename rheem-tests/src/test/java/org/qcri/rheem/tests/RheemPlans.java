@@ -147,13 +147,19 @@ public class RheemPlans {
 
         // Build a Rheem plan.
         TextFileSource textFileSource = new TextFileSource(inputFileUri.toString());
+        textFileSource.setName("Load input file");
         SortOperator<String> sortOperator = new SortOperator<>(String.class);
+        sortOperator.setName("Sort lines");
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
                 String::toUpperCase, String.class, String.class
         );
+        upperCaseOperator.setName("To uppercase");
         DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(String.class);
+        distinctLinesOperator.setName("Make lines distinct");
         CountOperator<String> countLinesOperator = new CountOperator<>(String.class);
+        countLinesOperator.setName("Count lines");
         LocalCallbackSink<Long> stdoutSink = LocalCallbackSink.createStdoutSink(Long.class);
+        stdoutSink.setName("Print count");
 
         textFileSource.connectTo(0, sortOperator, 0);
         sortOperator.connectTo(0, upperCaseOperator, 0);

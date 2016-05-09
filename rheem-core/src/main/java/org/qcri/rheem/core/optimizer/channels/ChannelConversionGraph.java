@@ -2,6 +2,7 @@ package org.qcri.rheem.core.optimizer.channels;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
@@ -66,13 +67,27 @@ public class ChannelConversionGraph {
      *
      * @param output              {@link OutputSlot} of an {@link ExecutionOperator} that should be consumed
      * @param destInputSlots      {@link InputSlot}s of {@link ExecutionOperator}s that should receive data from the {@code output}
-     * @param optimizationContext describes the above mentioned {@link ExecutionOperator} key figures
-     * @return a {@link Junction} or {@code null} if none could be found
+     * @param optimizationContext describes the above mentioned {@link ExecutionOperator} key figures   @return a {@link Junction} or {@code null} if none could be found
      */
     public Junction findMinimumCostJunction(OutputSlot<?> output,
                                             List<InputSlot<?>> destInputSlots,
                                             OptimizationContext optimizationContext) {
-        return new ShortestTreeSearcher(output, destInputSlots, optimizationContext, this.configuration).getJunction();
+        return this.findMinimumCostJunction(output, null, destInputSlots, optimizationContext);
+    }
+
+    /**
+     * Finds the minimum tree {@link Junction} (w.r.t. {@link TimeEstimate}s that connects the given {@link OutputSlot} to the
+     * {@code destInputSlots}.
+     *
+     * @param output              {@link OutputSlot} of an {@link ExecutionOperator} that should be consumed
+     * @param existingChannel     an existing {@link Channel} that must be part of the tree or {@code null}
+     * @param destInputSlots      {@link InputSlot}s of {@link ExecutionOperator}s that should receive data from the {@code output}
+     * @param optimizationContext describes the above mentioned {@link ExecutionOperator} key figures   @return a {@link Junction} or {@code null} if none could be found
+     */
+    public Junction findMinimumCostJunction(OutputSlot<?> output,
+                                            Channel existingChannel, List<InputSlot<?>> destInputSlots,
+                                            OptimizationContext optimizationContext) {
+        return new ShortestTreeSearcher(output, existingChannel, destInputSlots, optimizationContext, this.configuration).getJunction();
     }
 
     /**
@@ -136,7 +151,7 @@ public class ChannelConversionGraph {
 
 
     /**
-     * Finds the shortest tree between the {@link #sourceChannelDescriptor} and the {@link #destChannelDescriptorSets}.
+     * Finds the shortest tree between the {@link #startChannelDescriptor} and the {@link #destChannelDescriptorSets}.
      */
     private class ShortestTreeSearcher extends OneTimeExecutable {
 
@@ -144,7 +159,11 @@ public class ChannelConversionGraph {
 
         private final CardinalityEstimate cardinality;
 
-        private final ChannelDescriptor sourceChannelDescriptor;
+        private final ChannelDescriptor startChannelDescriptor;
+
+        private final Channel sourceChannel, startChannel;
+
+        private final Collection<ChannelDescriptor> previsitedChannels;
 
         private final List<InputSlot<?>> destInputs;
 
@@ -163,6 +182,7 @@ public class ChannelConversionGraph {
         private Junction result = null;
 
         private ShortestTreeSearcher(OutputSlot<?> sourceOutput,
+                                     Channel existingChannel,
                                      List<InputSlot<?>> destInputs,
                                      OptimizationContext optimizationContext,
                                      Configuration configuration) {
@@ -171,7 +191,22 @@ public class ChannelConversionGraph {
             final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(outputOperator);
             assert operatorContext != null : String.format("Optimization info for %s missing.", outputOperator);
             this.cardinality = operatorContext.getOutputCardinality(this.sourceOutput.getIndex());
-            this.sourceChannelDescriptor = outputOperator.getOutputChannelDescriptor(this.sourceOutput.getIndex());
+            if (existingChannel != null) {
+                Channel allegedSourceChannel = existingChannel;
+                this.previsitedChannels = new ArrayList<>(4);
+                while (allegedSourceChannel.getProducer().getOperator() != outputOperator) {
+                    allegedSourceChannel = OptimizationUtils.getPredecessorChannel(allegedSourceChannel);
+                    this.previsitedChannels.add(allegedSourceChannel.getDescriptor());
+                }
+                this.sourceChannel = allegedSourceChannel;
+                this.startChannel = existingChannel.copy();
+                this.startChannelDescriptor = this.startChannel.getDescriptor();
+            } else {
+                this.startChannelDescriptor = outputOperator.getOutputChannelDescriptor(this.sourceOutput.getIndex());
+                this.sourceChannel = null;
+                this.previsitedChannels = Collections.emptyList();
+                this.startChannel = null;
+            }
             this.destInputs = destInputs;
             this.destChannelDescriptorSets = RheemCollections.map(destInputs, this::resolveSupportedChannels);
             this.optimizationContext = new OptimizationContext(optimizationContext);
@@ -264,9 +299,9 @@ public class ChannelConversionGraph {
          * Starts the actual search.
          */
         private Tree searchTree() {
-            final HashSet<ChannelDescriptor> visitedChannelDescriptors = new HashSet<>();
-            visitedChannelDescriptors.add(this.sourceChannelDescriptor);
-            final Map<BitSet, Tree> solutions = this.enumerate(new Stack<>(), visitedChannelDescriptors, this.sourceChannelDescriptor, EMPTY_BITSET);
+            final HashSet<ChannelDescriptor> visitedChannelDescriptors = new HashSet<>(this.previsitedChannels);
+            visitedChannelDescriptors.add(this.startChannelDescriptor);
+            final Map<BitSet, Tree> solutions = this.enumerate(visitedChannelDescriptors, this.startChannelDescriptor, EMPTY_BITSET);
             BitSet requestedIndices = new BitSet(this.destChannelDescriptorSets.size());
             requestedIndices.flip(0, this.destChannelDescriptorSets.size());
             return solutions.get(requestedIndices);
@@ -275,8 +310,6 @@ public class ChannelConversionGraph {
         /**
          * Recursive {@link Tree} enumeration strategy.
          *
-         * @param conversionPath            previously followed {@link ChannelConversion}s;
-         *                                  can be altered but must be in original state before leaving the method
          * @param visitedChannelDescriptors previously visited {@link ChannelDescriptor}s (inclusive of {@code channelDescriptor};
          *                                  can be altered but must be in original state before leaving the method
          * @param channelDescriptor         the currently enumerated {@link ChannelDescriptor}
@@ -286,7 +319,6 @@ public class ChannelConversionGraph {
          * @return solutions to the search problem reachable from this node; {@link Tree}s must still be rerooted
          */
         public Map<BitSet, Tree> enumerate(
-                Stack<ChannelConversion> conversionPath,
                 Set<ChannelDescriptor> visitedChannelDescriptors,
                 ChannelDescriptor channelDescriptor,
                 BitSet settledDestinationIndices) {
@@ -322,9 +354,7 @@ public class ChannelConversionGraph {
             for (ChannelConversion channelConversion : channelConversions) {
                 final ChannelDescriptor targetChannelDescriptor = channelConversion.getTargetChannelDescriptor();
                 if (visitedChannelDescriptors.add(targetChannelDescriptor)) {
-                    conversionPath.add(channelConversion);
                     final Map<BitSet, Tree> childSolutions = this.enumerate(
-                            conversionPath,
                             visitedChannelDescriptors,
                             targetChannelDescriptor,
                             settledDestinationIndices
@@ -340,7 +370,6 @@ public class ChannelConversionGraph {
                     childSolutionSets.add(childSolutions);
 
                     visitedChannelDescriptors.remove(targetChannelDescriptor);
-                    conversionPath.pop();
                 }
             }
             settledDestinationIndices.andNot(newSettledIndices);
@@ -384,20 +413,25 @@ public class ChannelConversionGraph {
 
         private void createJunction(Tree tree) {
             final Junction junction = new Junction(this.sourceOutput, this.destInputs, this.optimizationContext);
-            Channel sourceChannel = this.sourceChannelDescriptor.createChannel(this.sourceOutput, this.configuration);
+            Channel sourceChannel = this.sourceChannel == null ?
+                    this.startChannelDescriptor.createChannel(this.sourceOutput, this.configuration) :
+                    this.sourceChannel;
             junction.setSourceChannel(sourceChannel);
-            this.createJunctionAux(tree.root, sourceChannel, junction);
+            Channel startChannel = this.startChannel == null ? sourceChannel : this.startChannel;
+            this.createJunctionAux(tree.root, startChannel, junction, true);
             this.result = junction;
         }
 
-        private void createJunctionAux(TreeVertex vertex, Channel channel, Junction junction) {
+        private void createJunctionAux(TreeVertex vertex, Channel channel, Junction junction, boolean isOnAllPaths) {
+            channel.setBreakingProhibited(!isOnAllPaths);
             for (int index = vertex.settledIndices.nextSetBit(0); index >= 0; index = vertex.settledIndices.nextSetBit(index + 1)) {
                 junction.setTargetChannel(index, channel);
             }
+            isOnAllPaths &= vertex.settledIndices.isEmpty() && vertex.outEdges.size() <= 1;
             for (TreeEdge edge : vertex.outEdges) {
                 final ChannelConversion channelConversion = edge.channelConversion;
                 final Channel targetChannel = channelConversion.convert(channel, this.configuration);
-                this.createJunctionAux(edge.destination, targetChannel, junction);
+                this.createJunctionAux(edge.destination, targetChannel, junction, isOnAllPaths);
             }
         }
 

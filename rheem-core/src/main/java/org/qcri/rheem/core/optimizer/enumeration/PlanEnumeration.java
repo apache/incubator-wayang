@@ -1,12 +1,14 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
+import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.MultiMap;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
  * the same part of the {@link RheemPlan}, concatenated if there are contact points, and pruned.</p>
  */
 public class PlanEnumeration {
+
+    private static final Logger logger = LoggerFactory.getLogger(PlanEnumeration.class);
 
     /**
      * The {@link OperatorAlternative}s for that an {@link OperatorAlternative.Alternative} has been picked.
@@ -157,24 +161,35 @@ public class PlanEnumeration {
      * All {@link PlanEnumeration}s should be distinct.
      */
     public PlanEnumeration concatenate(OutputSlot<?> openOutputSlot,
+                                       Channel existingChannel,
                                        Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
-                                       OptimizationContext optimizationContext,
-                                       ChannelConversionGraph channelConversionGraph) {
+                                       OptimizationContext optimizationContext) {
 
+        // Check the parameters' validity.
         assert this.getServingOutputSlots().stream()
                 .map(Tuple::getField0)
                 .anyMatch(openOutputSlot::equals)
                 : String.format("Cannot concatenate %s: it is not a served output.", openOutputSlot);
         assert !targetEnumerations.isEmpty();
 
+        if (logger.isInfoEnabled()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Concatenating ").append(this.getPlanImplementations().size());
+            for (PlanEnumeration targetEnumeration : targetEnumerations.values()) {
+                sb.append("x").append(targetEnumeration.getPlanImplementations().size());
+            }
+            sb.append(" plan implementations.");
+            logger.info(sb.toString());
+        }
 
+        // Prepare the result instance from this instance.
         PlanEnumeration result = new PlanEnumeration();
         result.scope.addAll(this.getScope());
         result.requestedInputSlots.addAll(this.getRequestedInputSlots());
         result.servingOutputSlots.addAll(this.getServingOutputSlots());
         result.executedTasks.putAll(this.getExecutedTasks());
 
-
+        // Update the result instance from the target instances.
         for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : targetEnumerations.entrySet()) {
             final InputSlot<?> openInputSlot = entry.getKey();
             final PlanEnumeration targetEnumeration = entry.getValue();
@@ -190,11 +205,10 @@ public class PlanEnumeration {
         result.requestedInputSlots.removeAll(targetEnumerations.keySet());
         result.servingOutputSlots.removeIf(slotService -> slotService.getField0().equals(openOutputSlot));
 
+        // Create the PlanImplementations.
         result.planImplementations.addAll(
-                this.concatenatePartialPlans(openOutputSlot, targetEnumerations, optimizationContext, channelConversionGraph, result)
+                this.concatenatePartialPlans(openOutputSlot, existingChannel, targetEnumerations, optimizationContext, result)
         );
-
-        // Build the instance.
         return result;
     }
 
@@ -204,9 +218,9 @@ public class PlanEnumeration {
      * All {@link PlanEnumeration}s should be distinct.
      */
     private Collection<PlanImplementation> concatenatePartialPlans(OutputSlot<?> openOutputSlot,
+                                                                   Channel existingChannel,
                                                                    Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
                                                                    OptimizationContext optimizationContext,
-                                                                   ChannelConversionGraph channelConversionGraph,
                                                                    PlanEnumeration concatenationEnumeration) {
 
 //        // Group the base and target PlanImplementations by their operator.
@@ -262,7 +276,7 @@ public class PlanEnumeration {
 
         // Simple implementation waives optimization potential.
 
-        // Allocated result collector.
+        // Allocate the result collector.
         Collection<PlanImplementation> resultCollector = new LinkedList<>();
 
         // Iterate over the cross product of PlanImplementations.
@@ -277,7 +291,7 @@ public class PlanEnumeration {
 
                 // Concatenate the PlanImplementations.
                 final PlanImplementation concatenationImpl = thisImpl.concatenate(
-                        openOutputSlot, targetImpls, inputSlots, concatenationEnumeration, optimizationContext, channelConversionGraph
+                        openOutputSlot, existingChannel, targetImpls, inputSlots, concatenationEnumeration, optimizationContext
                 );
                 if (concatenationImpl != null) {
                     resultCollector.add(concatenationImpl);

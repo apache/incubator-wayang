@@ -64,10 +64,16 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        final OptionalLong optionalFileSize = FileSystems.getFileSize(this.getInputUrl());
-        if (!optionalFileSize.isPresent()) {
-            LoggerFactory.getLogger(JavaTextFileSource.class).warn("Could not determine file size for {}.", this.getInputUrl());
+        final OptionalLong optionalFileSize;
+        if (this.getInputUrl() == null) {
+            optionalFileSize = OptionalLong.empty();
+        } else {
+            optionalFileSize = FileSystems.getFileSize(this.getInputUrl());
+            if (!optionalFileSize.isPresent()) {
+                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.getInputUrl());
+            }
         }
+
         final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
                 new DefaultLoadEstimator(0, 1, .99d, (inputCards, outputCards) -> 425 * outputCards[0] + 1400000),
                 optionalFileSize.isPresent() ?

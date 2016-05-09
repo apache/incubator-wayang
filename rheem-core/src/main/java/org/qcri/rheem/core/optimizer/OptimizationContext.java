@@ -3,10 +3,12 @@ package org.qcri.rheem.core.optimizer;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Platform;
@@ -15,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -59,17 +62,32 @@ public class OptimizationContext {
     private final Configuration configuration;
 
     /**
+     * {@link ChannelConversionGraph} used for the optimization.
+     */
+    private final ChannelConversionGraph channelConversionGraph;
+
+    /**
+     * {@link PlanEnumerationPruningStrategy}s to be used during optimization (in the given order).
+     */
+    private final List<PlanEnumerationPruningStrategy> pruningStrategies;
+
+    /**
      * Create a new, plain instance.
      */
     public OptimizationContext(Configuration configuration) {
-        this(configuration, null, null, -1);
+        this(configuration,
+                null,
+                null,
+                -1,
+                new ChannelConversionGraph(configuration),
+                initializePruningStrategies(configuration));
     }
 
     /**
      * Forks an {@link OptimizationContext} by providing a write-layer on top of the {@code base}.
      */
     public OptimizationContext(OptimizationContext base) {
-        this(base.configuration, base, base.hostLoopContext, base.iterationNumber);
+        this(base.configuration, base, base.hostLoopContext, base.iterationNumber, base.channelConversionGraph, base.pruningStrategies);
     }
 
     /**
@@ -78,7 +96,7 @@ public class OptimizationContext {
      * @param rheemPlan that the new instance should describe; loops should already be isolated
      */
     public OptimizationContext(RheemPlan rheemPlan, Configuration configuration) {
-        this(configuration, null, null, -1);
+        this(configuration, null, null, -1, new ChannelConversionGraph(configuration), initializePruningStrategies(configuration));
         PlanTraversal.upstream()
                 .withCallback(this::addOneTimeOperator)
                 .traverse(rheemPlan.getSinks());
@@ -90,7 +108,7 @@ public class OptimizationContext {
      * @param operator the single {@link Operator} of this instance
      */
     public OptimizationContext(Operator operator, Configuration configuration) {
-        this(configuration, null, null, -1);
+        this(configuration, null, null, -1, new ChannelConversionGraph(configuration), initializePruningStrategies(configuration));
         this.addOneTimeOperator(operator);
     }
 
@@ -98,18 +116,36 @@ public class OptimizationContext {
      * Creates a new (nested) instance for the given {@code loop}.
      */
     private OptimizationContext(LoopSubplan loop, LoopContext hostLoopContext, int iterationNumber, Configuration configuration) {
-        this(configuration, null, hostLoopContext, iterationNumber);
+        this(configuration, null, hostLoopContext, iterationNumber,
+                hostLoopContext.getOptimizationContext().getChannelConversionGraph(),
+                hostLoopContext.getOptimizationContext().getPruningStrategies());
         this.addOneTimeOperators(loop);
     }
 
     /**
      * Base constructor.
      */
-    private OptimizationContext(Configuration configuration, OptimizationContext base, LoopContext hostLoopContext, int iterationNumber) {
+    private OptimizationContext(Configuration configuration, OptimizationContext base, LoopContext hostLoopContext,
+                                int iterationNumber, ChannelConversionGraph channelConversionGraph,
+                                List<PlanEnumerationPruningStrategy> pruningStrategies) {
         this.configuration = configuration;
         this.base = base;
         this.hostLoopContext = hostLoopContext;
         this.iterationNumber = iterationNumber;
+        this.channelConversionGraph = channelConversionGraph;
+        this.pruningStrategies = pruningStrategies;
+    }
+
+    /**
+     * Initializes the {@link PlanEnumerationPruningStrategy}s from the {@link Configuration}.
+     *
+     * @param configuration defines the {@link PlanEnumerationPruningStrategy}s
+     * @return a {@link List} of configured {@link PlanEnumerationPruningStrategy}s
+     */
+    private static List<PlanEnumerationPruningStrategy> initializePruningStrategies(Configuration configuration) {
+        return configuration.getPruningStrategyClassProvider().provideAll().stream()
+                .map(strategyClass -> OptimizationUtils.createPruningStrategy(strategyClass, configuration))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -275,8 +311,16 @@ public class OptimizationContext {
         return isComplete;
     }
 
+    public ChannelConversionGraph getChannelConversionGraph() {
+        return this.channelConversionGraph;
+    }
+
     public OptimizationContext getBase() {
         return this.base;
+    }
+
+    public List<PlanEnumerationPruningStrategy> getPruningStrategies() {
+        return this.pruningStrategies;
     }
 
     /**
@@ -431,7 +475,7 @@ public class OptimizationContext {
 
             final Platform platform = executionOperator.getPlatform();
             final LoadProfileToTimeConverter timeConverter = configuration.getLoadProfileToTimeConverterProvider().provideFor(platform);
-            this.timeEstimate = timeConverter.convert(this.loadProfile);
+            this.timeEstimate = TimeEstimate.MINIMUM.plus(timeConverter.convert(this.loadProfile));
         }
 
         public void increaseBy(OperatorContext that) {

@@ -98,9 +98,9 @@ public class ExecutionPlan {
             openChannel.mergeIntoOriginal();
             final Channel original = openChannel.getOriginal();
             final ExecutionStage producerStage = original.getProducer().getStage();
+            assert producerStage != null : String.format("No stage found for %s.", original.getProducer());
             for (ExecutionTask consumer : original.getConsumers()) {
                 final ExecutionStage consumerStage = consumer.getStage();
-                assert producerStage != null : String.format("No stage found for %s.", original.getProducer());
                 assert consumerStage != null : String.format("No stage found for %s.", consumer);
                 // Equal stages possible on "partially open" Channels.
                 if (producerStage != consumerStage) {
@@ -146,8 +146,8 @@ public class ExecutionPlan {
             for (Channel sibling : channel.getSiblings()) {
                 if (!allChannels.contains(sibling)) {
                     this.logger.error("A sibling of {}, namely {}, seems to be invalid.", channel, sibling);
+                    isAllSiblingsConsistent = false;
                 }
-                isAllSiblingsConsistent = false;
             }
         }
 

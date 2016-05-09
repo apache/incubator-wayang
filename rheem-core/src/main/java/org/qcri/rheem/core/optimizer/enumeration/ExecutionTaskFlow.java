@@ -94,10 +94,11 @@ public class ExecutionTaskFlow {
         try {
             final ExecutionTaskFlowCompiler compiler = new ExecutionTaskFlowCompiler(
                     startOperators, planImplementation, oldExecutionPlan, openChannels, completedStages);
-            if (compiler.traverse((Void[]) null)) {
+            if (compiler.traverse()) {
                 return new ExecutionTaskFlow(compiler.getTerminalTasks(), compiler.getInputChannels());
             }
         } catch (AbstractTopologicalTraversal.AbortException e) {
+            throw new RuntimeException(e);
         }
         return null;
 

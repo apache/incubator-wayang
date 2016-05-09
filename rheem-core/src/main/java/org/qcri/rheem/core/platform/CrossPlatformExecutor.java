@@ -21,7 +21,6 @@ public class CrossPlatformExecutor {
 
     public final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-
     /**
      * The {@link Job} that is being executed by this instance.
      */
@@ -68,7 +67,7 @@ public class CrossPlatformExecutor {
      */
     private Set<ExecutionStage> completedStages = new HashSet<>();
 
-    private ExecutionState executionState;
+    private ExecutionState executionState = new ExecutionState();
 
     public CrossPlatformExecutor(Job job, InstrumentationStrategy instrumentationStrategy) {
         this.job = job;
@@ -95,8 +94,6 @@ public class CrossPlatformExecutor {
         this.activatedStages.clear();
         this.suspendedStages.clear();
         this.activatedStages.addAll(executionPlan.getStartingStages());
-
-        this.executionState = new ExecutionState();
     }
 
     private void runToBreakpoint() {

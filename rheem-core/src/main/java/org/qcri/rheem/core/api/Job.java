@@ -3,6 +3,7 @@ package org.qcri.rheem.core.api;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
@@ -14,10 +15,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.core.platform.CardinalityBreakpoint;
-import org.qcri.rheem.core.platform.CrossPlatformExecutor;
-import org.qcri.rheem.core.platform.ExecutionState;
-import org.qcri.rheem.core.platform.FixBreakpoint;
+import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -80,8 +78,6 @@ public class Job {
      * JAR files that are needed to execute the UDFs.
      */
     private final Set<String> udfJarPaths = new HashSet<>();
-
-    private final double minConfidence = 5., maxSpread = .7;
 
     private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
             (producerTask, channel, consumerTask) -> false;
@@ -219,7 +215,7 @@ public class Job {
         final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
 
         // Enumerate all possible plan.
-        final PlanEnumerator planEnumerator = this.createPlanEnumerator(null);
+        final PlanEnumerator planEnumerator = this.createPlanEnumerator();
 
         this.stopWatch.start("Create Initial Execution Plan", "Enumerate");
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
@@ -285,11 +281,17 @@ public class Job {
     /**
      * Creates a new {@link PlanEnumerator} for the {@link #rheemPlan} and {@link #configuration}.
      */
-    private PlanEnumerator createPlanEnumerator(ExecutionPlan existingPlan) {
-        final PlanEnumerator planEnumerator = existingPlan == null ?
+    private PlanEnumerator createPlanEnumerator() {
+        return this.createPlanEnumerator(null, null);
+    }
+
+    /**
+     * Creates a new {@link PlanEnumerator} for the {@link #rheemPlan} and {@link #configuration}.
+     */
+    private PlanEnumerator createPlanEnumerator(ExecutionPlan existingPlan, Set<Channel> openChannels) {
+        return existingPlan == null ?
                 new PlanEnumerator(this.rheemPlan, this.optimizationContext) :
-                new PlanEnumerator(this.rheemPlan, this.optimizationContext, existingPlan);
-        return planEnumerator;
+                new PlanEnumerator(this.rheemPlan, this.optimizationContext, existingPlan, openChannels);
     }
 
     /**
@@ -298,24 +300,18 @@ public class Job {
     private CrossPlatformExecutor.State execute(ExecutionPlan executionPlan, int executionId) {
         final StopWatch.Round round = this.stopWatch.start(String.format("Execution %d", executionId));
 
-        // Set up appropriate Breakpoints.
-        final StopWatch.Round breakpointRound = round.startSubround("Configure Breakpoint");
-        FixBreakpoint breakpoint = new FixBreakpoint();
+        // Ensure existence of the #crossPlatformExecutor.
         if (this.crossPlatformExecutor == null) {
             final InstrumentationStrategy instrumentation = this.configuration.getInstrumentationStrategyProvider().provide();
             this.crossPlatformExecutor = new CrossPlatformExecutor(this, instrumentation);
-            executionPlan.getStartingStages().forEach(breakpoint::breakAfter);
-
-        } else {
-            final CrossPlatformExecutor.State state = this.crossPlatformExecutor.captureState();
-            state.getCompletedStages().stream()
-                    .flatMap(stage -> stage.getSuccessors().stream())
-                    .filter(stage -> !state.getCompletedStages().contains(stage))
-                    .forEach(breakpoint::breakAfter);
         }
-        this.crossPlatformExecutor.extendBreakpoint(breakpoint);
-        this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(this.maxSpread, this.minConfidence));
-        breakpointRound.stop();
+
+        if (this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize")) {
+            this.setUpBreakpoint(executionPlan, round);
+        }
+
+        // Log the current executionPlan.
+        this.logStages(executionPlan);
 
         // Trigger the execution.
         final StopWatch.Round executeRound = round.startSubround("Execute");
@@ -325,6 +321,50 @@ public class Job {
 
         // Return the state.
         return state;
+    }
+
+    /**
+     * Sets up a {@link Breakpoint} for an {@link ExecutionPlan}.
+     *
+     * @param executionPlan for that the {@link Breakpoint} should be set
+     * @param round         {@link StopWatch.Round} to be extended for any interesting time measurements
+     */
+    private void setUpBreakpoint(ExecutionPlan executionPlan, StopWatch.Round round) {
+
+        // Set up appropriate Breakpoints.
+        final StopWatch.Round breakpointRound = round.startSubround("Configure Breakpoint");
+        FixBreakpoint breakpoint = new FixBreakpoint();
+        final CrossPlatformExecutor.State state = this.crossPlatformExecutor.captureState();
+        if (state.getCompletedStages().isEmpty()) {
+            executionPlan.getStartingStages().forEach(breakpoint::breakAfter);
+        } else {
+            state.getCompletedStages().stream()
+                    .flatMap(stage -> stage.getSuccessors().stream())
+                    .filter(stage -> !state.getCompletedStages().contains(stage))
+                    .forEach(breakpoint::breakAfter);
+        }
+        this.crossPlatformExecutor.extendBreakpoint(breakpoint);
+        this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(this.configuration));
+        breakpointRound.stop();
+    }
+
+    private void logStages(ExecutionPlan executionPlan) {
+        if (this.logger.isInfoEnabled()) {
+
+            StringBuilder sb = new StringBuilder();
+            Set<ExecutionStage> seenStages = new HashSet<>();
+            Queue<ExecutionStage> stagedStages = new LinkedList<>(executionPlan.getStartingStages());
+            ExecutionStage nextStage;
+            while ((nextStage = stagedStages.poll()) != null) {
+                sb.append(nextStage).append(":\n");
+                nextStage.toExtensiveString(sb);
+                nextStage.getSuccessors().stream()
+                        .filter(seenStages::add)
+                        .forEach(stagedStages::add);
+            }
+
+            this.logger.info("Current execution plan:\n{}", sb.toString());
+        }
     }
 
     /**
@@ -346,10 +386,11 @@ public class Job {
         }
 
         // Collect any instrumentation results for the future.
-        round.startSubround("Store Cardinalities");
-        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
-        cardinalityRepository.storeAll(state.getProfile(), this.optimizationContext);
-        round.stopSubround("Update Execution Plan");
+        // TODO: Fix and re-enable!
+//        round.startSubround("Store Cardinalities");
+//        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
+//        cardinalityRepository.storeAll(state.getProfile(), this.optimizationContext);
+//        round.stopSubround("Update Execution Plan");
 
         round.stop(true, true);
     }
@@ -378,7 +419,7 @@ public class Job {
         executionPlan.retain(completedStages);
 
         // Enumerate all possible plan.
-        final PlanEnumerator planEnumerator = this.createPlanEnumerator(executionPlan);
+        final PlanEnumerator planEnumerator = this.createPlanEnumerator(executionPlan, openChannels);
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
         final Collection<PlanImplementation> executionPlans = comprehensiveEnumeration.getPlanImplementations();
         this.logger.info("Enumerated {} plans.", executionPlans.size());
@@ -394,7 +435,7 @@ public class Job {
         ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.recreateFrom(
                 planImplementation, executionPlan, openChannels, state.getCompletedStages()
         );
-        final ExecutionPlan executionPlanExpansion = ExecutionPlan.createFrom(executionTaskFlow, stageSplittingCriterion);
+        final ExecutionPlan executionPlanExpansion = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);
 
         assert executionPlan.isSane();
