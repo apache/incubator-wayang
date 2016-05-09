@@ -33,7 +33,7 @@ public class SparkBernoulliSampleOperator<Type>
      * @param sampleSize
      */
     public SparkBernoulliSampleOperator(int sampleSize, DataSetType type) {
-        super(sampleSize, type);
+        super(sampleSize, type, Methods.BERNOULLI);
     }
 
     /**
@@ -43,7 +43,7 @@ public class SparkBernoulliSampleOperator<Type>
      * @param datasetSize
      */
     public SparkBernoulliSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
-        super(sampleSize, datasetSize, type);
+        super(sampleSize, datasetSize, type, Methods.BERNOULLI);
     }
 
     @Override

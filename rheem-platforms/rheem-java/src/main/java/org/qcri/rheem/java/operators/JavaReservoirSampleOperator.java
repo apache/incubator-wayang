@@ -16,8 +16,6 @@ import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Java implementation of the {@link JavaReservoirSampleOperator}.
@@ -34,7 +32,7 @@ public class JavaReservoirSampleOperator<Type>
      * @param sampleSize
      */
     public JavaReservoirSampleOperator(int sampleSize, DataSetType type) {
-        super(sampleSize, type);
+        super(sampleSize, type, Methods.RESERVOIR);
         rand = new Random();
     }
 
@@ -45,7 +43,7 @@ public class JavaReservoirSampleOperator<Type>
      * @param datasetSize
      */
     public JavaReservoirSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
-        super(sampleSize, datasetSize, type);
+        super(sampleSize, datasetSize, type, Methods.RESERVOIR);
         rand = new Random();
     }
 
