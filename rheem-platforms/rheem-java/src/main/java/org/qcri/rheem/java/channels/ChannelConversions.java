@@ -65,9 +65,8 @@ public class ChannelConversions {
             STREAM_TO_HDFS_OBJECT_FILE,
             COLLECTION_TO_HDFS_OBJECT_FILE,
             HDFS_OBJECT_FILE_TO_STREAM,
-            HDFS_TSV_TO_STREAM
-            // TODO: Create proper TSV serialization.
-            // STREAM_TO_HDFS_TSV,
-            // COLLECTION_TO_HDFS_TSV,
+            HDFS_TSV_TO_STREAM,
+            STREAM_TO_HDFS_TSV,
+            COLLECTION_TO_HDFS_TSV
     );
 }

@@ -12,6 +12,8 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
 
     public static final TimeEstimate ZERO = new TimeEstimate(0);
 
+    public static final TimeEstimate MINIMUM = new TimeEstimate(1);
+
     public TimeEstimate(long estimate) {
         super(estimate, estimate, 1d);
     }
@@ -29,7 +31,16 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
     }
 
     public static final Comparator<TimeEstimate> expectationValueComparator() {
-        return (t1, t2) -> Long.compare(t1.getAverageEstimate(), t2.getAverageEstimate());
+        return (t1, t2) -> {
+            if (t1.getCorrectnessProbability() == 0d) {
+                if (t2.getCorrectnessProbability() != 0d) {
+                    return 1;
+                }
+            } else if (t2.getCorrectnessProbability() == 0d) {
+                return -1;
+            }
+            return Long.compare(t1.getAverageEstimate(), t2.getAverageEstimate());
+        };
     }
 
     @Override

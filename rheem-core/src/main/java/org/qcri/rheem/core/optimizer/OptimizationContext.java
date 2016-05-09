@@ -443,7 +443,7 @@ public class OptimizationContext {
 
             final Platform platform = executionOperator.getPlatform();
             final LoadProfileToTimeConverter timeConverter = configuration.getLoadProfileToTimeConverterProvider().provideFor(platform);
-            this.timeEstimate = timeConverter.convert(this.loadProfile);
+            this.timeEstimate = TimeEstimate.MINIMUM.plus(timeConverter.convert(this.loadProfile));
         }
 
         public void increaseBy(OperatorContext that) {

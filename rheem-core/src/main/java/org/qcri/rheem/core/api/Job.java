@@ -309,6 +309,9 @@ public class Job {
             this.setUpBreakpoint(executionPlan, round);
         }
 
+        // Log the current executionPlan.
+        this.logStages(executionPlan);
+
         // Trigger the execution.
         final StopWatch.Round executeRound = round.startSubround("Execute");
         final CrossPlatformExecutor.State state = this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
@@ -342,6 +345,25 @@ public class Job {
         this.crossPlatformExecutor.extendBreakpoint(breakpoint);
         this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(this.configuration));
         breakpointRound.stop();
+    }
+
+    private void logStages(ExecutionPlan executionPlan) {
+        if (this.logger.isInfoEnabled()) {
+
+            StringBuilder sb = new StringBuilder();
+            Set<ExecutionStage> seenStages = new HashSet<>();
+            Queue<ExecutionStage> stagedStages = new LinkedList<>(executionPlan.getStartingStages());
+            ExecutionStage nextStage;
+            while ((nextStage = stagedStages.poll()) != null) {
+                sb.append(nextStage).append(":\n");
+                nextStage.toExtensiveString(sb);
+                nextStage.getSuccessors().stream()
+                        .filter(seenStages::add)
+                        .forEach(stagedStages::add);
+            }
+
+            this.logger.info("Current execution plan:\n{}", sb.toString());
+        }
     }
 
     /**
