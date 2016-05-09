@@ -16,16 +16,22 @@ import java.util.stream.Collectors;
  */
 public class InternalOperatorPruningStrategy implements PlanEnumerationPruningStrategy {
 
+    private Comparator<TimeEstimate> timeEstimateComparator;
+
     @Override
-    public void prune(PlanEnumeration planEnumeration, Configuration configuration) {
+    public void configure(Configuration configuration) {
+        this.timeEstimateComparator = configuration.getTimeEstimateComparatorProvider().provide();
+    }
+
+    @Override
+    public void prune(PlanEnumeration planEnumeration) {
         // Group plans.
         final Collection<List<PlanImplementation>> competingPlans =
                 planEnumeration.getPlanImplementations().stream()
                         .collect(Collectors.groupingBy(PlanImplementation::getInterfaceOperators))
                         .values();
-        final Comparator<TimeEstimate> timeEstimateComparator = configuration.getTimeEstimateComparatorProvider().provide();
         final List<PlanImplementation> bestPlans = competingPlans.stream()
-                .map(plans -> this.selectBestPlanNary(plans, timeEstimateComparator))
+                .map(plans -> this.selectBestPlanNary(plans, this.timeEstimateComparator))
                 .collect(Collectors.toList());
         planEnumeration.getPlanImplementations().retainAll(bestPlans);
     }

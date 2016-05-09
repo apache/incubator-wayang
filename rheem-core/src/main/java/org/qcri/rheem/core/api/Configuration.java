@@ -18,6 +18,7 @@ import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -29,6 +30,8 @@ import java.util.*;
  * Describes both the configuration of a {@link RheemContext} and {@link Job}s.
  */
 public class Configuration {
+
+    private static final Logger logger = LoggerFactory.getLogger(Configuration.class);
 
     private static final String DEFAULT_CONFIGURATION_FILE = "/rheem-core-defaults.properties";
 
@@ -61,11 +64,11 @@ public class Configuration {
 
     private KeyValueProvider<Platform, Long> platformStartUpTimeProvider;
 
-    private CollectionProvider<Platform> platformProvider;
+    private ExplicitCollectionProvider<Platform> platformProvider;
 
     private ConstantProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
 
-    private CollectionProvider<PlanEnumerationPruningStrategy> pruningStrategiesProvider;
+    private CollectionProvider<Class<PlanEnumerationPruningStrategy>> pruningStrategyClassProvider;
 
     private ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider;
 
@@ -103,7 +106,7 @@ public class Configuration {
 
         if (this.parent != null) {
             // Providers for platforms.
-            this.platformProvider = new CollectionProvider<>(this.parent.platformProvider);
+            this.platformProvider = new ExplicitCollectionProvider<>(this, this.parent.platformProvider);
 
             // Providers for cardinality estimation.
             this.cardinalityEstimatorProvider =
@@ -124,7 +127,7 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider);
 
             // Providers for plan enumeration.
-            this.pruningStrategiesProvider = new CollectionProvider<>(this.parent.pruningStrategiesProvider);
+            this.pruningStrategyClassProvider = new ExplicitCollectionProvider<>(this, this.parent.pruningStrategyClassProvider);
             this.timeEstimateComparatorProvider = new ConstantProvider<>(this.parent.timeEstimateComparatorProvider);
             this.instrumentationStrategyProvider = new ConstantProvider<>(
                     this.parent.instrumentationStrategyProvider);
@@ -187,9 +190,13 @@ public class Configuration {
         }
     }
 
+    /**
+     * Handle a just loaded property.
+     *
+     * @param key   the property's key
+     * @param value the property's value
+     */
     private void handleConfigurationFileEntry(String key, String value) {
-        // TODO: At this point, we could insert specific handlers for special keys, e.g., considering cost functions.
-
         // For now, we just add each entry into the #properties.
         this.setProperty(key, value);
     }
@@ -204,7 +211,7 @@ public class Configuration {
     }
 
     private static void bootstrapPlatforms(Configuration configuration) {
-        CollectionProvider<Platform> platformProvider = new CollectionProvider<>();
+        ExplicitCollectionProvider<Platform> platformProvider = new ExplicitCollectionProvider<>(configuration);
         try {
             Platform platform = Platform.load(BASIC_PLATFORM);
             platformProvider.addToWhitelist(platform);
@@ -359,11 +366,31 @@ public class Configuration {
 
     private static void bootstrapPruningProviders(Configuration configuration) {
         {
-            // By default, no pruning is applied.
-            CollectionProvider<PlanEnumerationPruningStrategy> defaultProvider =
-                    new CollectionProvider<>();
-            configuration.setPruningStrategiesProvider(defaultProvider);
-
+            // By default, load pruning from the rheem.core.optimizer.pruning.strategies property.
+            CollectionProvider<Class<PlanEnumerationPruningStrategy>> propertyBasedProvider =
+                    new FunctionalCollectionProvider<>(
+                            config -> {
+                                final String strategyClassNames = config.getStringProperty("rheem.core.optimizer.pruning.strategies");
+                                if (strategyClassNames == null || strategyClassNames.isEmpty()) {
+                                    return Collections.emptySet();
+                                }
+                                Collection<Class<PlanEnumerationPruningStrategy>> strategyClasses = new LinkedList<>();
+                                for (String strategyClassName : strategyClassNames.split(",")) {
+                                    try {
+                                        @SuppressWarnings("unchecked")
+                                        final Class<PlanEnumerationPruningStrategy> strategyClass = (Class<PlanEnumerationPruningStrategy>) Class.forName(strategyClassName);
+                                        strategyClasses.add(strategyClass);
+                                    } catch (ClassNotFoundException e) {
+                                        logger.warn("Illegal pruning strategy class name: \"{}\".", strategyClassName);
+                                    }
+                                }
+                                return strategyClasses;
+                            },
+                            configuration
+                    );
+            CollectionProvider<Class<PlanEnumerationPruningStrategy>> overrideProvider =
+                    new ExplicitCollectionProvider<>(configuration, propertyBasedProvider);
+            configuration.setPruningStrategyClassProvider(overrideProvider);
         }
         {
             ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
@@ -442,11 +469,11 @@ public class Configuration {
         this.functionLoadProfileEstimatorProvider = functionLoadProfileEstimatorProvider;
     }
 
-    public CollectionProvider<Platform> getPlatformProvider() {
+    public ExplicitCollectionProvider<Platform> getPlatformProvider() {
         return this.platformProvider;
     }
 
-    public void setPlatformProvider(CollectionProvider<Platform> platformProvider) {
+    public void setPlatformProvider(ExplicitCollectionProvider<Platform> platformProvider) {
         this.platformProvider = platformProvider;
     }
 
@@ -458,13 +485,13 @@ public class Configuration {
         this.timeEstimateComparatorProvider = timeEstimateComparatorProvider;
     }
 
-    public CollectionProvider<PlanEnumerationPruningStrategy> getPruningStrategiesProvider() {
-        return this.pruningStrategiesProvider;
+    public CollectionProvider<Class<PlanEnumerationPruningStrategy>> getPruningStrategyClassProvider() {
+        return this.pruningStrategyClassProvider;
     }
 
 
-    public void setPruningStrategiesProvider(CollectionProvider<PlanEnumerationPruningStrategy> pruningStrategiesProvider) {
-        this.pruningStrategiesProvider = pruningStrategiesProvider;
+    public void setPruningStrategyClassProvider(CollectionProvider<Class<PlanEnumerationPruningStrategy>> pruningStrategyClassProvider) {
+        this.pruningStrategyClassProvider = pruningStrategyClassProvider;
     }
 
     public ConstantProvider<InstrumentationStrategy> getInstrumentationStrategyProvider() {
@@ -559,5 +586,9 @@ public class Configuration {
 
     public boolean getBooleanProperty(String key, boolean fallback) {
         return this.getOptionalBooleanProperty(key).orElse(fallback);
+    }
+
+    public Configuration getParent() {
+        return parent;
     }
 }

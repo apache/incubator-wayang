@@ -3,8 +3,7 @@ package org.qcri.rheem.core.mapping;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 
 /**
- * An operator match correlates an {@link OperatorPattern} to an actually matched
- * {@link Operator}.
+ * An operator match correlates an {@link OperatorPattern} to an actually matched {@link Operator}.
  */
 public class OperatorMatch {
 

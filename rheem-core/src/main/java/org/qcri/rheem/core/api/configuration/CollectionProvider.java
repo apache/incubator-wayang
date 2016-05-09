@@ -1,72 +1,52 @@
 package org.qcri.rheem.core.api.configuration;
 
-import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 
 /**
  * Provides a {@link Collection} of objects.
  */
-public class CollectionProvider<Value> implements Iterable<Value> {
+public abstract class CollectionProvider<Value> implements Iterable<Value> {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected CollectionProvider<Value> parent;
 
-    private Set<Value> whitelist = new HashSet<>();
+    protected final Configuration configuration;
 
-    private Set<Value> blacklist = new HashSet<>();
-
-    private String warningSlf4j;
-
-    public CollectionProvider() {
-        this(null);
+    public CollectionProvider(Configuration configuration) {
+        this(configuration, null);
     }
 
-    public CollectionProvider(CollectionProvider<Value> parent) {
+    public CollectionProvider(Configuration configuration, CollectionProvider parent) {
+        this.configuration = configuration;
         this.parent = parent;
     }
+
 
     public void setParent(CollectionProvider<Value> parent) {
         this.parent = parent;
     }
 
-    public void addToWhitelist(Value value) {
-        Validate.isTrue(!this.blacklist.contains(value), "%s is already in the blacklist.", value);
-        this.whitelist.add(value);
-    }
-
-    public void addAllToWhitelist(Collection<Value> values) {
-        Validate.isTrue(values.stream().noneMatch(this.blacklist::contains), "Some given value is already in the blacklist.");
-        this.whitelist.addAll(values);
-    }
-
-    public void addToBlacklist(Value value) {
-        Validate.isTrue(!this.whitelist.contains(value), "%s is already in the whitelist.", value);
-        this.blacklist.add(value);
-    }
-
-    public void addAllToBlacklist(Collection<Value> values) {
-        Validate.isTrue(values.stream().noneMatch(this.whitelist::contains), "Some given value is already in the whitelist.");
-        this.blacklist.addAll(values);
-    }
-
+    /**
+     * Provide all objects.
+     *
+     * @return the provided objects from this instance and its parents (unless those are masked).
+     */
     public Collection<Value> provideAll() {
-        Set<Value> containedValues = new HashSet<>();
-        Set<Value> excludedValues = new HashSet<>();
-        return this.provideAll(containedValues, excludedValues);
+        return this.provideAll(this.configuration);
     }
 
-    private Collection<Value> provideAll(Set<Value> containedValues, Set<Value> excludedValues) {
-        excludedValues.addAll(this.blacklist);
-        this.whitelist.stream().filter(value -> !excludedValues.contains(value)).forEach(containedValues::add);
-        return this.parent == null ? containedValues : this.parent.provideAll(containedValues, excludedValues);
-    }
+    /**
+     * Provide all objects.
+     *
+     * @return the provided objects from this instance and its parents (unless those are masked).
+     */
+    protected abstract Collection<Value> provideAll(Configuration configuration);
 
     @Override
     public Iterator<Value> iterator() {

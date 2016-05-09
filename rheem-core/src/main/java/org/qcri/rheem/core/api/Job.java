@@ -385,10 +385,11 @@ public class Job {
         }
 
         // Collect any instrumentation results for the future.
-        round.startSubround("Store Cardinalities");
-        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
-        cardinalityRepository.storeAll(state.getProfile(), this.optimizationContext);
-        round.stopSubround("Update Execution Plan");
+        // TODO: Fix and re-enable!
+//        round.startSubround("Store Cardinalities");
+//        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
+//        cardinalityRepository.storeAll(state.getProfile(), this.optimizationContext);
+//        round.stopSubround("Update Execution Plan");
 
         round.stop(true, true);
     }

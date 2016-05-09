@@ -173,7 +173,9 @@ public class PlanEnumerator {
         this.existingChannels = existingChannels;
 
         // Initialize pruning strategies.
-        this.getConfiguration().getPruningStrategiesProvider().forEach(this::addPruningStrategy);
+        this.getConfiguration().getPruningStrategyClassProvider().provideAll().stream()
+                .map(strategyClass -> OptimizationUtils.createPruningStrategy(strategyClass, this.optimizationContext.getConfiguration()))
+                .forEach(this::addPruningStrategy);
 
         // Set up start Operators.
         for (Operator startOperator : startOperators) {
@@ -644,7 +646,7 @@ public class PlanEnumerator {
     }
 
     private void prune(final PlanEnumeration planEnumeration) {
-        this.pruningStrategies.forEach(strategy -> strategy.prune(planEnumeration, this.getConfiguration()));
+        this.pruningStrategies.forEach(strategy -> strategy.prune(planEnumeration));
     }
 
     public boolean isTopLevel() {

@@ -1,11 +1,16 @@
 package org.qcri.rheem.core.optimizer;
 
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -14,6 +19,9 @@ import java.util.Objects;
  * Utility methods for the optimization process.
  */
 public class OptimizationUtils {
+
+//    private static final Logger logger = LoggerFactory.getLogger(OptimizationUtils.class);
+
     /**
      * Determine the producing {@link OutputSlot} of this {@link Channel} that lies within a {@link RheemPlan}.
      * We follow non-RheemPlan {@link ExecutionOperator}s because they should merely forward data.
@@ -64,5 +72,21 @@ public class OptimizationUtils {
         final ExecutionTask producer = channel.getProducer();
         assert producer != null && producer.getNumInputChannels() == 1;
         return producer.getInputChannel(0);
+    }
+
+    /**
+     * Creates a new {@link PlanEnumerationPruningStrategy} and configures it.
+     * @param strategyClass the {@link Class} of the {@link PlanEnumerationPruningStrategy}; must have a default constructor
+     * @param configuration provides any potential configuration values
+     * @return the configured {@link PlanEnumerationPruningStrategy} instance
+     */
+    public static <T extends PlanEnumerationPruningStrategy> T createPruningStrategy(Class<T> strategyClass, Configuration configuration) {
+        try {
+            final T strategy = strategyClass.newInstance();
+            strategy.configure(configuration);
+            return strategy;
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RheemException(String.format("Could not create pruning strategy for %s.", strategyClass.getCanonicalName()), e);
+        }
     }
 }
