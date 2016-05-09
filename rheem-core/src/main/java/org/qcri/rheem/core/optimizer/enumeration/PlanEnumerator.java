@@ -63,11 +63,6 @@ public class PlanEnumerator {
     private final Collection<PlanEnumeration> completedEnumerations = new LinkedList<>();
 
     /**
-     * {@link PlanEnumerationPruningStrategy}s to be applied while enumerating.
-     */
-    private final Collection<PlanEnumerationPruningStrategy> pruningStrategies;
-
-    /**
      * Once this instance has been executed (via {@link #run()}, the result will be stored in this field. Prior to that,
      * it is {@code null}.
      */
@@ -102,7 +97,6 @@ public class PlanEnumerator {
                           OptimizationContext optimizationContext) {
         this(rheemPlan.collectReachableTopLevelSources(),
                 optimizationContext,
-                new LinkedList<>(),
                 null,
                 Collections.emptyMap(),
                 Collections.emptyMap(),
@@ -122,7 +116,6 @@ public class PlanEnumerator {
 
         this(rheemPlan.collectReachableTopLevelSources(),
                 optimizationContext,
-                new LinkedList<>(),
                 null,
                 new HashMap<>(),
                 new HashMap<>(),
@@ -159,23 +152,17 @@ public class PlanEnumerator {
      */
     private PlanEnumerator(Collection<Operator> startOperators,
                            OptimizationContext optimizationContext,
-                           Collection<PlanEnumerationPruningStrategy> pruningStrategies,
                            OperatorAlternative.Alternative enumeratedAlternative,
                            Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
                            Map<ExecutionOperator, ExecutionTask> executedTasks,
                            Map<OutputSlot<?>, Channel> existingChannels) {
 
         this.optimizationContext = optimizationContext;
-        this.pruningStrategies = pruningStrategies;
         this.enumeratedAlternative = enumeratedAlternative;
         this.presettledAlternatives = presettledAlternatives;
         this.executedTasks = executedTasks;
         this.existingChannels = existingChannels;
 
-        // Initialize pruning strategies.
-        this.getConfiguration().getPruningStrategyClassProvider().provideAll().stream()
-                .map(strategyClass -> OptimizationUtils.createPruningStrategy(strategyClass, this.optimizationContext.getConfiguration()))
-                .forEach(this::addPruningStrategy);
 
         // Set up start Operators.
         for (Operator startOperator : startOperators) {
@@ -425,7 +412,6 @@ public class PlanEnumerator {
     private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative, OptimizationContext optimizationContext) {
         return new PlanEnumerator(Operators.collectStartOperators(alternative),
                 optimizationContext,
-                this.pruningStrategies,
                 alternative,
                 this.presettledAlternatives,
                 this.executedTasks,
@@ -438,7 +424,6 @@ public class PlanEnumerator {
     PlanEnumerator forkFor(LoopHeadOperator loopHeadOperator, OptimizationContext optimizationContext) {
         return new PlanEnumerator(Operators.collectStartOperators(loopHeadOperator.getContainer()),
                 optimizationContext,
-                this.pruningStrategies,
                 null,
                 this.presettledAlternatives,
                 this.executedTasks,
@@ -641,12 +626,13 @@ public class PlanEnumerator {
         this.resultReference = new AtomicReference<>(resultEnumeration);
     }
 
-    public void addPruningStrategy(PlanEnumerationPruningStrategy strategy) {
-        this.pruningStrategies.add(strategy);
-    }
-
+    /**
+     * Apply all the {@link PlanEnumerationPruningStrategy}s as defined by the {@link #optimizationContext}.
+     *
+     * @param planEnumeration to which the pruning should be applied
+     */
     private void prune(final PlanEnumeration planEnumeration) {
-        this.pruningStrategies.forEach(strategy -> strategy.prune(planEnumeration));
+        this.optimizationContext.getPruningStrategies().forEach(strategy -> strategy.prune(planEnumeration));
     }
 
     public boolean isTopLevel() {

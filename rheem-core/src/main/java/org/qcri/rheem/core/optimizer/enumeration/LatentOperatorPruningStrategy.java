@@ -10,11 +10,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * This {@link PlanEnumerationPruningStrategy} follows the idea that we can throw away a
+ * This {@link PlanEnumerationPruningStrategy} follows the idea that we can prune a
  * {@link PlanImplementation}, when there is a further one that is (i) better and (ii) has the exact same
  * operators with still-to-be-connected {@link Slot}s.
  */
-public class InternalOperatorPruningStrategy implements PlanEnumerationPruningStrategy {
+public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStrategy {
 
     private Comparator<TimeEstimate> timeEstimateComparator;
 
@@ -38,6 +38,7 @@ public class InternalOperatorPruningStrategy implements PlanEnumerationPruningSt
 
     private PlanImplementation selectBestPlanNary(List<PlanImplementation> planImplementation,
                                                   Comparator<TimeEstimate> timeEstimateComparator) {
+        assert !planImplementation.isEmpty();
         return planImplementation.stream()
                 .reduce((plan1, plan2) -> this.selectBestPlanBinary(plan1, plan2, timeEstimateComparator))
                 .get();
