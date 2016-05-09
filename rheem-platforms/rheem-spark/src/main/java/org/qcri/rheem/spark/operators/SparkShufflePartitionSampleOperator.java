@@ -69,7 +69,7 @@ public class SparkShufflePartitionSampleOperator<Type>
             datasetSize = inputRdd.cache().count();
 
         if (sampleSize >= datasetSize) { //return all and return
-            ((RddChannel.Instance) outputs[0]).accept(inputRdd, sparkExecutor);
+            ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
             return;
         }
 

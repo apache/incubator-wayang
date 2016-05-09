@@ -76,7 +76,7 @@ public class SparkRandomPartitionSampleOperator<Type>
         }
 
         if (sampleSize >= datasetSize) { //return whole dataset
-            ((RddChannel.Instance) outputs[0]).accept(inputRdd, sparkExecutor);
+            ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
             return;
         }
 
