@@ -8,6 +8,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
@@ -40,7 +41,7 @@ public class SparkRandomPartitionSampleOperator<Type>
      * @param sampleSize
      */
     public SparkRandomPartitionSampleOperator(int sampleSize, DataSetType type) {
-        super(sampleSize, type);
+        super(sampleSize, type, Methods.RANDOM);
         rand = new Random();
     }
 
@@ -51,7 +52,7 @@ public class SparkRandomPartitionSampleOperator<Type>
      * @param datasetSize
      */
     public SparkRandomPartitionSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
-        super(sampleSize, datasetSize, type);
+        super(sampleSize, datasetSize, type, Methods.RANDOM);
         rand = new Random();
     }
 
@@ -59,6 +60,7 @@ public class SparkRandomPartitionSampleOperator<Type>
     int partitionSize = 0;
     int parallel = 0;
     boolean first = true;
+    int threshold = 5000;
 
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
@@ -66,7 +68,6 @@ public class SparkRandomPartitionSampleOperator<Type>
         assert outputs.length == this.getNumOutputs();
 
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
-        RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
         final JavaRDD<Object> inputRdd = input.provideRdd();
         if (datasetSize == 0) //total size of input dataset was not given
@@ -75,7 +76,7 @@ public class SparkRandomPartitionSampleOperator<Type>
         }
 
         if (sampleSize >= datasetSize) { //return whole dataset
-            output.accept(inputRdd, sparkExecutor);
+            ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
             return;
         }
 
@@ -148,10 +149,8 @@ public class SparkRandomPartitionSampleOperator<Type>
             result = allSamples;
         }
 
-        final JavaRDD<Type> outputRdd = sparkExecutor.sc.parallelize(result);
-        //FIXME: this is not efficient... We can now also choose to output a collection. However, this needs to be
-        // settled at "plan compile time".
-        output.accept(outputRdd, sparkExecutor);
+        // assuming the sample is small better use a collection instance, the optimizer can transform the output if necessary
+        ((CollectionChannel.Instance) outputs[0]).accept(result);
     }
 
     @Override
@@ -168,7 +167,7 @@ public class SparkRandomPartitionSampleOperator<Type>
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
-        return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
+        return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 }
 

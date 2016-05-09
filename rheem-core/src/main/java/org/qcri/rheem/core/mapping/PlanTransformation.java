@@ -56,6 +56,11 @@ public class PlanTransformation {
         int numTransformations = 0;
         List<SubplanMatch> matches = this.pattern.match(plan, epoch - 1);
         for (SubplanMatch match : matches) {
+
+            if (!this.meetsPlatformRestrictions(match)) {
+                continue;
+            }
+
             final Operator replacement = this.replacementFactory.createReplacementSubplan(match, epoch);
 
             if (match.getInputMatch() == match.getOutputMatch()) {
@@ -69,10 +74,6 @@ public class PlanTransformation {
                         match.getOutputMatch().getOperator(),
                         replacement,
                         epoch);
-            }
-
-            if (!this.meetsPlatformRestrictions(match)) {
-                continue;
             }
 
             if (this.isReplacing) {
@@ -90,6 +91,7 @@ public class PlanTransformation {
      * Check if this instances does not violate any of the {@link Operator#getTargetPlatforms()} restrictions.
      */
     private boolean meetsPlatformRestrictions(SubplanMatch match) {
+
         // Short-cut: This transformation is not introducing some platform dependency.
         if (this.getTargetPlatforms().isEmpty()) {
             return true;
