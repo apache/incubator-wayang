@@ -7,7 +7,6 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.util.RheemArrays;
-import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
@@ -216,11 +215,9 @@ public class FullIntegrationIT {
 
         rheemPlan.collectTopLevelOperatorByName("source").addTargetPlatform(SparkPlatform.getInstance());
         rheemPlan.collectTopLevelOperatorByName("convergenceSource").addTargetPlatform(SparkPlatform.getInstance());
-
         rheemPlan.collectTopLevelOperatorByName("loop").addTargetPlatform(JavaPlatform.getInstance());
         rheemPlan.collectTopLevelOperatorByName("step").addTargetPlatform(JavaPlatform.getInstance());
         rheemPlan.collectTopLevelOperatorByName("counter").addTargetPlatform(JavaPlatform.getInstance());
-
         rheemPlan.collectTopLevelOperatorByName("sink").addTargetPlatform(SparkPlatform.getInstance());
 
         // Instantiate Rheem and activate the Java backend.
@@ -230,7 +227,7 @@ public class FullIntegrationIT {
 
         rheemContext.execute(rheemPlan);
 
-        final HashSet<Integer> expected = new HashSet<>(RheemArrays.asList(RheemArrays.range(0, 23)));
+        final HashSet<Integer> expected = new HashSet<>(RheemArrays.asList(RheemArrays.range(0, 24)));
         Assert.assertEquals(expected, collector);
     }
 
@@ -240,13 +237,21 @@ public class FullIntegrationIT {
         final List<Integer> collector = new LinkedList<>();
         RheemPlan rheemPlan = RheemPlans.simpleLoop(3, collector, 0, 1, 2);
 
+        rheemPlan.collectTopLevelOperatorByName("source").addTargetPlatform(SparkPlatform.getInstance());
+        rheemPlan.collectTopLevelOperatorByName("convergenceSource").addTargetPlatform(SparkPlatform.getInstance());
+        rheemPlan.collectTopLevelOperatorByName("loop").addTargetPlatform(JavaPlatform.getInstance());
+        rheemPlan.collectTopLevelOperatorByName("step").addTargetPlatform(SparkPlatform.getInstance());
+        rheemPlan.collectTopLevelOperatorByName("counter").addTargetPlatform(JavaPlatform.getInstance());
+        rheemPlan.collectTopLevelOperatorByName("sink").addTargetPlatform(SparkPlatform.getInstance());
+
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();
         rheemContext.register(SparkPlatform.getInstance());
         rheemContext.register(JavaPlatform.getInstance());
 
         rheemContext.execute(rheemPlan);
-        System.out.println(collector);
+        final HashSet<Integer> expected = new HashSet<>(RheemArrays.asList(RheemArrays.range(0, 24)));
+        Assert.assertEquals(expected, collector);
     }
 
     @Test

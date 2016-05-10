@@ -12,13 +12,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Predicate;
 
 /**
  * Describes the implementation of one {@link OutputSlot} to its occupied {@link InputSlot}s.
  */
 public class Junction {
 
+    @SuppressWarnings("unused")
     private static final Logger logger = LoggerFactory.getLogger(Junction.class);
 
     private final OutputSlot<?> sourceOutput;
@@ -51,38 +51,6 @@ public class Junction {
 
     public ExecutionOperator getTargetOperator(int targetIndex) {
         return (ExecutionOperator) this.getTargetInputs().get(targetIndex).getOwner();
-    }
-
-    /**
-     * Picks a {@link Channel} class that exists in both given {@link List}s.
-     *
-     * @param supportedOutputChannels a {@link List} of (output) {@link Channel} classes
-     * @param supportedInputChannels  a {@link List} of (input) {@link Channel} classes
-     * @return the picked {@link Channel} class or {@code null} if none was picked
-     */
-    protected ChannelDescriptor pickChannelDescriptor(List<ChannelDescriptor> supportedOutputChannels,
-                                                      List<ChannelDescriptor> supportedInputChannels) {
-        return this.pickChannelDescriptor(supportedOutputChannels, supportedInputChannels, cd -> true);
-    }
-
-    /**
-     * Picks a {@link Channel} class that exists in both given {@link List}s.
-     *
-     * @param supportedOutputChannels a {@link List} of (output) {@link Channel} classes
-     * @param supportedInputChannels  a {@link List} of (input) {@link Channel} classes
-     * @param filter                  criterion on which {@link Channel}s are allowed
-     * @return the picked {@link Channel} class or {@code null} if none was picked
-     */
-    protected ChannelDescriptor pickChannelDescriptor(List<ChannelDescriptor> supportedOutputChannels,
-                                                      List<ChannelDescriptor> supportedInputChannels,
-                                                      Predicate<ChannelDescriptor> filter) {
-        for (ChannelDescriptor supportedOutputChannel : supportedOutputChannels) {
-            if (!filter.test(supportedOutputChannel)) continue;
-            if (supportedInputChannels.contains(supportedOutputChannel)) {
-                return supportedOutputChannel;
-            }
-        }
-        return null;
     }
 
     public OutputSlot<?> getSourceOutput() {

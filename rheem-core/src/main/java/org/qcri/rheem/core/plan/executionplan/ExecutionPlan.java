@@ -163,8 +163,6 @@ public class ExecutionPlan {
      */
     public static ExecutionPlan createFrom(ExecutionTaskFlow executionTaskFlow,
                                            StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion) {
-        final StageAssignmentTraversal stageAssignmentTraversal =
-                new StageAssignmentTraversal(executionTaskFlow, stageSplittingCriterion);
-        return stageAssignmentTraversal.run();
+        return StageAssignmentTraversal.assignStages(executionTaskFlow, stageSplittingCriterion);
     }
 }

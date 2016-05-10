@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  */
 public class StageAssignmentTraversal {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final Logger logger = LoggerFactory.getLogger(StageAssignmentTraversal.class);
 
     /**
      * Should be turned into a {@link ExecutionPlan}.
@@ -62,7 +62,7 @@ public class StageAssignmentTraversal {
      * @param executionTaskFlow           should be converted into a {@link ExecutionPlan}
      * @param additionalSplittingCriteria to create splits beside the precedence-based splitting
      */
-    public StageAssignmentTraversal(ExecutionTaskFlow executionTaskFlow,
+    StageAssignmentTraversal(ExecutionTaskFlow executionTaskFlow,
                                     StageSplittingCriterion... additionalSplittingCriteria) {
         // Some sanity checks.
         final Set<ExecutionTask> executionTasks = executionTaskFlow.collectAllTasks();
@@ -70,13 +70,13 @@ public class StageAssignmentTraversal {
             for (int i = 0; i < executionTask.getInputChannels().length; i++) {
                 Channel channel = executionTask.getInputChannels()[i];
                 if (channel == null) {
-                    this.logger.warn("{} does not have an input channel @{}.", executionTask, i);
+                    logger.warn("{} does not have an input channel @{}.", executionTask, i);
                 }
             }
             for (int i = 0; i < executionTask.getOutputChannels().length; i++) {
                 Channel channel = executionTask.getOutputChannels()[i];
                 if (channel == null) {
-                    this.logger.warn("{} does not have an output channel @{}.", executionTask, i);
+                    logger.warn("{} does not have an output channel @{}.", executionTask, i);
                 }
             }
         }
@@ -86,6 +86,12 @@ public class StageAssignmentTraversal {
         this.additionalSplittingCriteria = new ArrayList<>();
         this.additionalSplittingCriteria.add(StageAssignmentTraversal::isLoopBoarder);
         this.additionalSplittingCriteria.addAll(Arrays.asList(additionalSplittingCriteria));
+    }
+
+    public static ExecutionPlan assignStages(ExecutionTaskFlow executionTaskFlow,
+                                             StageSplittingCriterion... additionalSplittingCriteria) {
+        final StageAssignmentTraversal instance = new StageAssignmentTraversal(executionTaskFlow, additionalSplittingCriteria);
+        return instance.run();
     }
 
     /**
@@ -108,16 +114,16 @@ public class StageAssignmentTraversal {
      *
      * @return the {@link ExecutionPlan} for the {@link ExecutionTaskFlow} specified in the constructor
      */
-    public synchronized ExecutionPlan run() {
+    synchronized ExecutionPlan run() {
         // Create initial stages.
         this.initializeRun();
         this.discoverInitialStages();
 
         // Refine stages as much as necessary
         this.refineStages();
-        if (this.logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             for (InterimStage stage : this.allStages) {
-                this.logger.debug("Final stage {}: {}", stage, stage.getTasks());
+                logger.debug("Final stage {}: {}", stage, stage.getTasks());
             }
         }
 
@@ -226,12 +232,12 @@ public class StageAssignmentTraversal {
         assert task.getOperator().getPlatform().equals(newStage.getPlatform());
         newStage.addTask(task);
         final InterimStage oldStage = this.assignedInterimStages.put(task, newStage);
-        this.logger.debug("Reassigned %s from %s to %s.", task, oldStage, newStage);
+        logger.debug("Reassigned %s from %s to %s.", task, oldStage, newStage);
         final Set<InterimStage> thisRequiredStages = this.requiredStages.computeIfAbsent(
                 task, key -> new HashSet<>(4)
         );
         thisRequiredStages.add(newStage);
-        this.logger.debug("Assigning {} to {}.", task, newStage);
+        logger.debug("Assigning {} to {}.", task, newStage);
     }
 
     /**
@@ -344,7 +350,7 @@ public class StageAssignmentTraversal {
                 this.applySplittingCriteria(separatedStage);
             } else {
                 // TODO: How can this happen?
-                this.logger.warn(
+                logger.warn(
                         "Cannot separate {} tasks from stage with {} tasks! Proceed without splitting...",
                         separableTasks.size(), stage.getTasks().size());
             }
@@ -373,7 +379,7 @@ public class StageAssignmentTraversal {
         // Update the requiredStages of the task. On change, propagate the requirements downstream.
         final Set<InterimStage> currentlyRequiredStages = this.requiredStages.get(task);
         if (currentlyRequiredStages.addAll(requiredStages)) {
-            this.logger.debug("Updated required stages of {} to {}.", task, currentlyRequiredStages);
+            logger.debug("Updated required stages of {} to {}.", task, currentlyRequiredStages);
             currentStage.mark();
 
             for (Channel channel : task.getOutputChannels()) {
@@ -408,7 +414,7 @@ public class StageAssignmentTraversal {
         }
 
         if (separableTasks.isEmpty()) {
-            this.logger.debug("No separable tasks found in marked stage {}.", stage);
+            logger.debug("No separable tasks found in marked stage {}.", stage);
             return false;
         } else {
             this.splitStage(stage, separableTasks);
@@ -423,7 +429,7 @@ public class StageAssignmentTraversal {
      * @return the new {@link InterimStage}
      */
     private InterimStage splitStage(InterimStage stage, Set<ExecutionTask> separableTasks) {
-        this.logger.debug("Separating " + separableTasks + " from " + stage + "...");
+        logger.debug("Separating " + separableTasks + " from " + stage + "...");
         InterimStage newStage = stage.separate(separableTasks);
         this.addStage(newStage);
         for (ExecutionTask separatedTask : newStage.getTasks()) {
@@ -609,7 +615,7 @@ public class StageAssignmentTraversal {
                     // TODO: We cannot "exchange" Channels so easily any more.
 //                    if (!task.getOperator().getPlatform().getChannelManager()
 //                            .exchangeWithInterstageCapable(outputChannel)) {
-//                        StageAssignmentTraversal.this.logger.warn("Could not exchange {} with an interstage-capable channel.",
+//                        StageAssignmentTraversal.logger.warn("Could not exchange {} with an interstage-capable channel.",
 //                                outputChannel);
 //                    }
                 }

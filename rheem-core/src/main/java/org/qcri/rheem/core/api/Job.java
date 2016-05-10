@@ -79,6 +79,9 @@ public class Job {
      */
     private final Set<String> udfJarPaths = new HashSet<>();
 
+    /**
+     * <i>Currently not used.</i>
+     */
     private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
             (producerTask, channel, consumerTask) -> false;
 

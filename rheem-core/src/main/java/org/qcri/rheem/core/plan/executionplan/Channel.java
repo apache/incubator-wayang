@@ -2,10 +2,7 @@ package org.qcri.rheem.core.plan.executionplan;
 
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
-import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.core.plan.rheemplan.Slot;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Breakpoint;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -39,12 +36,12 @@ public abstract class Channel {
     /**
      * Produces the data flowing through this instance.
      */
-    protected ExecutionTask producer;
+    private ExecutionTask producer;
 
     /**
      * Consuming {@link ExecutionTask}s of this instance.
      */
-    protected final List<ExecutionTask> consumers = new LinkedList<>();
+    private final List<ExecutionTask> consumers = new LinkedList<>();
 
     /**
      * Mimed instance. Nullable.
@@ -376,6 +373,21 @@ public abstract class Channel {
 
     public OutputSlot<?> getProducerSlot() {
         return this.producerSlot;
+    }
+
+    /**
+     * Try to obtain the {@link ExecutionOperator} producing this instance, either from a given {@link OutputSlot} or
+     * a {@link ExecutionTask} that was specified as producer.
+     *
+     * @return the {@link ExecutionOperator} or {@code null} if none is set up
+     */
+    public ExecutionOperator getProducerOperator() {
+        if (this.producerSlot != null) {
+            return (ExecutionOperator) this.producerSlot.getOwner();
+        } else if (this.producer != null) {
+            return this.producer.getOperator();
+        }
+        return null;
     }
 
     public Set<Channel> getSiblings() {

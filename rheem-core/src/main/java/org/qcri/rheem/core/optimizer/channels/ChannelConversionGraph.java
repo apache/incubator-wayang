@@ -6,8 +6,10 @@ import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Junction;
@@ -412,13 +414,47 @@ public class ChannelConversionGraph {
         }
 
         private void createJunction(Tree tree) {
+            // Create the a new Junction.
             final Junction junction = new Junction(this.sourceOutput, this.destInputs, this.optimizationContext);
+
+            // Create the Channels and ExecutionTasks.
             Channel sourceChannel = this.sourceChannel == null ?
                     this.startChannelDescriptor.createChannel(this.sourceOutput, this.configuration) :
                     this.sourceChannel;
             junction.setSourceChannel(sourceChannel);
             Channel startChannel = this.startChannel == null ? sourceChannel : this.startChannel;
             this.createJunctionAux(tree.root, startChannel, junction, true);
+
+            // Assign appropriate LoopSubplans to the newly created ExecutionTasks.
+            //
+            // Determine the LoopSubplan from the "source side" of the Junction.
+            final OutputSlot<?> sourceOutput = sourceChannel.getProducerSlot();
+            final ExecutionOperator sourceOperator = (ExecutionOperator) sourceOutput.getOwner();
+            final LoopSubplan sourceLoop =
+                    (!sourceOperator.isLoopHead() || sourceOperator.isFeedforwardOutput(sourceOutput)) ?
+                            sourceOperator.getInnermostLoop() : null;
+
+            // If the source side is determining a LoopSubplan, it should be what the "target sides" request.
+            if (sourceLoop != null) {
+                for (int destIndex = 0; destIndex < this.destInputs.size(); destIndex++) {
+                    assert this.destInputs.get(destIndex).getOwner().getInnermostLoop() == sourceLoop :
+                            String.format(
+                                    "Expected that %s would belong to %s, just as %d.",
+                                    this.destInputs.get(destIndex), sourceLoop, sourceOutput
+                            );
+                    Channel targetChannel = junction.getTargetChannel(destIndex);
+                    while (targetChannel != sourceChannel) {
+                        final ExecutionTask producer = targetChannel.getProducer();
+                        producer.getOperator().setContainer(sourceLoop);
+                        assert producer.getNumInputChannels() == 1 : String.format(
+                                "Glue operator %s was expected to have exactly one input channel.",
+                                producer
+                        );
+                        targetChannel = producer.getInputChannel(0);
+                    }
+                }
+            }
+
             this.result = junction;
         }
 
