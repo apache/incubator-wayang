@@ -357,13 +357,13 @@ public class Job {
             ExecutionStage nextStage;
             while ((nextStage = stagedStages.poll()) != null) {
                 sb.append(nextStage).append(":\n");
-                nextStage.toExtensiveString(sb);
+                nextStage.toExtensiveString(sb, "* ");
                 nextStage.getSuccessors().stream()
                         .filter(seenStages::add)
                         .forEach(stagedStages::add);
             }
 
-            this.logger.info("Current execution plan:\n{}", sb.toString());
+            this.logger.info("Current execution plan:\n{}", executionPlan.toExtensiveString());
         }
     }
 

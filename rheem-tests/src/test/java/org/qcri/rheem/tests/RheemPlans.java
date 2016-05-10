@@ -211,7 +211,7 @@ public class RheemPlans {
         source.setName("source");
 
         CollectionSource<Integer> convergenceSource = new CollectionSource<>(RheemArrays.asList(0), Integer.class);
-        source.setName("convergenceSource");
+        convergenceSource.setName("convergenceSource");
 
 
         LoopOperator<Integer, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(Integer.class),

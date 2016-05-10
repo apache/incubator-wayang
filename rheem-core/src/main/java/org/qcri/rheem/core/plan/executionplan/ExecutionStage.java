@@ -109,6 +109,11 @@ public class ExecutionStage {
 
     @Override
     public String toString() {
+        return String.format("%s%s", this.getClass().getSimpleName(), this.getStartTasks());
+    }
+
+    @SuppressWarnings("unused")
+    public String toNameString() {
         return String.format("%s[%s-%d:%d-%6x]",
                 this.getClass().getSimpleName(),
                 this.platformExecution.getPlatform().getName(),
@@ -148,43 +153,64 @@ public class ExecutionStage {
 
     }
 
+    /**
+     * Prints the instance's {@link ExecutionTask}s and {@link Channel}s.
+     *
+     * @return a {@link String} containing the textual representation
+     */
     public String toExtensiveString() {
+        return this.toExtensiveString("");
+    }
+
+    /**
+     * Prints the instance's {@link ExecutionTask}s and {@link Channel}s.
+     *
+     * @param indent will be used to indent every line of the textual representation
+     * @return a {@link String} containing the textual representation
+     */
+    public String toExtensiveString(String indent) {
         final StringBuilder sb = new StringBuilder();
-        this.toExtensiveString(sb);
+        this.toExtensiveString(sb, indent);
         if (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\n') sb.setLength(sb.length() - 1);
         return sb.toString();
     }
 
     /**
-     * Appends this instance's details to the given {@link StringBuilder}.
+     * Appends this instance's {@link ExecutionTask}s and {@link Channel}s to the given {@link StringBuilder}.
+     *
+     * @param sb     to which the representation should be appended
+     * @param indent will be used to indent every line of the textual representation
      */
-    public void toExtensiveString(StringBuilder sb) {
+    public void toExtensiveString(StringBuilder sb, String indent) {
         Set<ExecutionTask> seenTasks = new HashSet<>();
         for (ExecutionTask startTask : this.startTasks) {
             for (Channel inputChannel : startTask.getInputChannels()) {
-                sb.append(this.prettyPrint(inputChannel))
+                sb.append(indent)
+                        .append(this.prettyPrint(inputChannel))
                         .append(" => ")
                         .append(this.prettyPrint(startTask)).append('\n');
             }
-            this.toExtensiveStringAux(startTask, seenTasks, sb);
+            this.toExtensiveStringAux(startTask, seenTasks, sb, indent);
         }
     }
 
-    private void toExtensiveStringAux(ExecutionTask task, Set<ExecutionTask> seenTasks, StringBuilder sb) {
+    private void toExtensiveStringAux(ExecutionTask task, Set<ExecutionTask> seenTasks, StringBuilder sb, String indent) {
         if (!seenTasks.add(task)) {
             return;
         }
         for (Channel channel : task.getOutputChannels()) {
             for (ExecutionTask consumer : channel.getConsumers()) {
                 if (consumer.getStage() == this) {
-                    sb.append(this.prettyPrint(task))
+                    sb.append(indent)
+                            .append(this.prettyPrint(task))
                             .append(" => ")
                             .append(this.prettyPrint(channel))
                             .append(" => ")
                             .append(this.prettyPrint(consumer)).append('\n');
-                    this.toExtensiveStringAux(consumer, seenTasks, sb);
+                    this.toExtensiveStringAux(consumer, seenTasks, sb, indent);
                 } else {
-                    sb.append(this.prettyPrint(task))
+                    sb.append(indent)
+                            .append(this.prettyPrint(task))
                             .append(" => ")
                             .append(this.prettyPrint(channel)).append('\n');
                 }

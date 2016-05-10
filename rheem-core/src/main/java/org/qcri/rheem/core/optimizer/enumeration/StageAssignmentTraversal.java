@@ -636,7 +636,8 @@ public class StageAssignmentTraversal {
 
         @Override
         public String toString() {
-            return String.format("InterimStage[%s:%d]", this.getPlatform().getName(), this.sequenceNumber);
+            return String.format("InterimStage%s", this.getStartTasks());
+//            return String.format("InterimStage[%s:%d]", this.getPlatform().getName(), this.sequenceNumber);
         }
 
         @Override
@@ -768,6 +769,7 @@ public class StageAssignmentTraversal {
     /**
      * Criterion to futher split {@link InterimStage} besides precedence.
      */
+    @FunctionalInterface
     public interface StageSplittingCriterion {
 
         /**
