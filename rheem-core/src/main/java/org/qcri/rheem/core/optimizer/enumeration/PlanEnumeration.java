@@ -209,6 +209,8 @@ public class PlanEnumeration {
         result.planImplementations.addAll(
                 this.concatenatePartialPlans(openOutputSlot, existingChannel, targetEnumerations, optimizationContext, result)
         );
+
+        logger.info("Created {} plan implementations.", result.getPlanImplementations().size());
         return result;
     }
 
