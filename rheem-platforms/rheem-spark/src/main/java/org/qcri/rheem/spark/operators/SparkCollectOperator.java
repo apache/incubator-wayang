@@ -1,5 +1,12 @@
 package org.qcri.rheem.spark.operators;
 
+import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -15,6 +22,7 @@ import org.qcri.rheem.spark.platform.SparkExecutor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Converts a {@link RddChannel} into a {@link CollectionChannel} of the {@link JavaPlatform}.
@@ -47,5 +55,29 @@ public class SparkCollectOperator<Type>
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public Optional<CardinalityEstimator> getCardinalityEstimator(
+            final int outputIndex,
+            final Configuration configuration) {
+        Validate.inclusiveBetween(0, 0, outputIndex);
+        return Optional.of(new DefaultCardinalityEstimator(1d, 1, this.isSupportingBroadcastInputs(),
+                inputCards -> inputCards[0]));
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        // NB: Not measured but adapted from SparkLocalCallbackSink.
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 4000 * inputCards[0] + 6272516800L),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> Math.round(4.5d * inputCards[0] + 43000)),
+                0.08d,
+                1000
+        );
+
+        return Optional.of(mainEstimator);
     }
 }
