@@ -434,8 +434,8 @@ public class ChannelConversionGraph {
                     (!sourceOperator.isLoopHead() || sourceOperator.isFeedforwardOutput(sourceOutput)) ?
                             sourceOperator.getInnermostLoop() : null;
 
-            // If the source side is determining a LoopSubplan, it should be what the "target sides" request.
             if (sourceLoop != null) {
+                // If the source side is determining a LoopSubplan, it should be what the "target sides" request.
                 for (int destIndex = 0; destIndex < this.destInputs.size(); destIndex++) {
                     assert this.destInputs.get(destIndex).getOwner().getInnermostLoop() == sourceLoop :
                             String.format(
@@ -453,6 +453,22 @@ public class ChannelConversionGraph {
                         targetChannel = producer.getInputChannel(0);
                     }
                 }
+
+            } else {
+                // TODO:
+                // Try to find for each distinct target LoopSubplan a "stallable" Channel, thereby ensuring not to
+                // assign ExecutionTasks twice.
+//                TIntCollection looplessDests = new TIntLinkedList();
+//                Map<LoopSubplan, TIntCollection> loopDests = new HashMap<>();
+//                for (int destIndex = 0; destIndex < this.destInputs.size(); destIndex++) {
+//                    final LoopSubplan targetLoop = this.destInputs.get(destIndex).getOwner().getInnermostLoop();
+//                    Channel targetChannel = junction.getTargetChannel(destIndex);
+//                    if (targetLoop == null) {
+//                        looplessDests.add(destIndex);
+//                    } else {
+//                        loopDests.computeIfAbsent(targetLoop, key -> new TIntLinkedList()).add(destIndex);
+//                    }
+//                }
             }
 
             this.result = junction;

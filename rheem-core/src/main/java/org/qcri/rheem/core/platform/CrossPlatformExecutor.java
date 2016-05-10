@@ -61,7 +61,6 @@ public class CrossPlatformExecutor {
      */
     private final InstrumentationStrategy instrumentationStrategy;
 
-
     /**
      * Keeps track of {@link ExecutionStage}s that have actually been executed by this instance.
      */

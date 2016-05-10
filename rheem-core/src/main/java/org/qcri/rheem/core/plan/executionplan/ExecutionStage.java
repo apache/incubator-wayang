@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
  * {@link PlatformExecution} and invoke a further {@link PlatformExecution} to proceed working with the results
  * of this stage. Also, this allows to consume data with a {@link PlatformExecution} only when it is needed, i.e.,
  * at a deferred stage. However, the level of control that can be imposed by Rheem can vary between {@link Platform}s</p>
+ * <p>Note that this class is immutable, i.e., it does not comprise any execution state.</p>
  */
 public class ExecutionStage {
 
@@ -41,21 +42,25 @@ public class ExecutionStage {
     private final Collection<ExecutionTask> terminalTasks = new LinkedList<>();
 
     /**
+     * The loop that this instance is part of or {@code null} if none.
+     */
+    private final ExecutionStageLoop executionStageLoop;
+
+    /**
      * For printing and debugging purposes only.
      */
     private final int sequenceNumber;
 
     /**
-     * Tells whether this instance has already been put into execution.
-     */
-    private boolean wasExecuted = false;
-
-    /**
      * Create a new instance and register it with the given {@link PlatformExecution}.
      */
-    ExecutionStage(PlatformExecution platformExecution, int sequenceNumber) {
+    ExecutionStage(PlatformExecution platformExecution, ExecutionStageLoop executionStageLoop, int sequenceNumber) {
         this.platformExecution = platformExecution;
         this.sequenceNumber = sequenceNumber;
+        this.executionStageLoop = executionStageLoop;
+        if (this.executionStageLoop != null) {
+            this.executionStageLoop.add(this);
+        }
         this.platformExecution.addStage(this);
     }
 
@@ -84,6 +89,13 @@ public class ExecutionStage {
 
     public void addTask(ExecutionTask task) {
         task.setStage(this);
+        this.updateLoop(task);
+    }
+
+    private void updateLoop(ExecutionTask task) {
+        if (this.executionStageLoop != null) {
+            this.executionStageLoop.update(this, task);
+        }
     }
 
     public void markAsStartTask(ExecutionTask executionTask) {
@@ -256,11 +268,13 @@ public class ExecutionStage {
         }
     }
 
+    // TODO
     public boolean wasExecuted() {
-        return this.wasExecuted;
+        throw new UnsupportedOperationException("Remove me.");
     }
 
-    public void setWasExecuted(boolean wasExecuted) {
-        this.wasExecuted = wasExecuted;
+    // TODO
+    public void setWasExecuted(boolean b) {
+        throw new UnsupportedOperationException("Remove me.");
     }
 }

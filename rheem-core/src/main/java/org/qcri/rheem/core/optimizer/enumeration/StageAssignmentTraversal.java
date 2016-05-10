@@ -2,8 +2,13 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.executionplan.*;
-import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.Iterators;
+import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +22,7 @@ import java.util.stream.Collectors;
  * {@link Channel}s that are copied. This is because of {@link ExecutionTaskFlowCompiler} that copies {@link Channel}s
  * to different alternative {@link ExecutionPlan}s on top of existing fixed {@link ExecutionTask}s.</p>
  */
-public class StageAssignmentTraversal {
+public class StageAssignmentTraversal extends OneTimeExecutable {
 
     private static final Logger logger = LoggerFactory.getLogger(StageAssignmentTraversal.class);
 
@@ -57,13 +62,23 @@ public class StageAssignmentTraversal {
     private Collection<InterimStage> newStages;
 
     /**
+     * Maintains {@link ExecutionStageLoop}s that are being created.
+     */
+    private Map<LoopSubplan, ExecutionStageLoop> stageLoops = new HashMap<>();
+
+    /**
+     * Accepts the result of this instance after execution.
+     */
+    private ExecutionPlan result;
+
+    /**
      * Creates a new instance.
      *
      * @param executionTaskFlow           should be converted into a {@link ExecutionPlan}
      * @param additionalSplittingCriteria to create splits beside the precedence-based splitting
      */
     StageAssignmentTraversal(ExecutionTaskFlow executionTaskFlow,
-                                    StageSplittingCriterion... additionalSplittingCriteria) {
+                             StageSplittingCriterion... additionalSplittingCriteria) {
         // Some sanity checks.
         final Set<ExecutionTask> executionTasks = executionTaskFlow.collectAllTasks();
         for (ExecutionTask executionTask : executionTasks) {
@@ -91,7 +106,7 @@ public class StageAssignmentTraversal {
     public static ExecutionPlan assignStages(ExecutionTaskFlow executionTaskFlow,
                                              StageSplittingCriterion... additionalSplittingCriteria) {
         final StageAssignmentTraversal instance = new StageAssignmentTraversal(executionTaskFlow, additionalSplittingCriteria);
-        return instance.run();
+        return instance.buildExecutionPlan();
     }
 
     /**
@@ -114,7 +129,13 @@ public class StageAssignmentTraversal {
      *
      * @return the {@link ExecutionPlan} for the {@link ExecutionTaskFlow} specified in the constructor
      */
-    synchronized ExecutionPlan run() {
+    private ExecutionPlan buildExecutionPlan() {
+        this.tryExecute();
+        return this.result;
+    }
+
+    @Override
+    protected void doExecute() {
         // Create initial stages.
         this.initializeRun();
         this.discoverInitialStages();
@@ -128,7 +149,7 @@ public class StageAssignmentTraversal {
         }
 
         // Assemble the ExecutionPlan.
-        return this.assembleExecutionPlan();
+        this.result = this.assembleExecutionPlan();
     }
 
     /**
@@ -648,7 +669,19 @@ public class StageAssignmentTraversal {
 
         @Override
         public ExecutionStage toExecutionStage() {
-            final ExecutionStage executionStage = this.platformExecution.createStage(this.sequenceNumber);
+            final Iterator<ExecutionTask> iterator = this.allTasks.iterator();
+            final LoopSubplan loop = iterator.next().getOperator().getInnermostLoop();
+            assert Iterators.allMatch(iterator,
+                    task -> task.getOperator().getInnermostLoop() == loop,
+                    true
+            );
+
+            ExecutionStageLoop executionStageLoop = null;
+            if (loop != null) {
+                executionStageLoop = StageAssignmentTraversal.this.stageLoops.computeIfAbsent(loop, ExecutionStageLoop::new);
+            }
+
+            final ExecutionStage executionStage = this.platformExecution.createStage(executionStageLoop, this.sequenceNumber);
             for (ExecutionTask task : this.allTasks) {
                 executionStage.addTask(task);
                 if (this.checkIfStartTask(task)) {
