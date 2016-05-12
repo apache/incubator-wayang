@@ -18,7 +18,7 @@ import java.util.*;
  * {@link Executor} implementation that employs a push model, i.e., data quanta are "pushed"
  * through the {@link ExecutionStage}.
  */
-public abstract class PushExecutorTemplate implements Executor {
+public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -88,7 +88,7 @@ public abstract class PushExecutorTemplate implements Executor {
 
     @Override
     public void dispose() {
-        this.tempResources.forEach(ExecutionResource::release);
+        this.tempResources.forEach(ExecutionResource::dispose);
         this.tempResources.clear();
     }
 

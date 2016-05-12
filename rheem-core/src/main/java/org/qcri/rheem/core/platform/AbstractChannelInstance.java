@@ -1,6 +1,5 @@
 package org.qcri.rheem.core.platform;
 
-import org.qcri.rheem.core.api.exception.RheemException;
 import org.slf4j.LoggerFactory;
 
 import java.util.OptionalLong;
@@ -8,9 +7,18 @@ import java.util.OptionalLong;
 /**
  * Template for {@link ChannelInstance} implementations.
  */
-public abstract class AbstractChannelInstance implements ChannelInstance {
+public abstract class AbstractChannelInstance extends ExecutionResourceTemplate implements ChannelInstance {
 
     private OptionalLong measuredCardinality = OptionalLong.empty();
+
+    /**
+     * Creates a new instance and registers it with its {@link Executor}.
+     *
+     * @param executor that maintains this instance
+     */
+    protected AbstractChannelInstance(Executor executor) {
+        super(executor);
+    }
 
     @Override
     public OptionalLong getMeasuredCardinality() {
@@ -28,21 +36,6 @@ public abstract class AbstractChannelInstance implements ChannelInstance {
                 )
         );
         this.measuredCardinality = OptionalLong.of(cardinality);
-    }
-
-    @Override
-    public void release() throws RheemException {
-        try {
-            this.tryToRelease();
-        } catch (Exception e) {
-            LoggerFactory.getLogger(this.getClass()).error("Could not release {}.", this.getChannel(), e);
-        }
-    }
-
-    /**
-     * Override this method to implement {@link #release()} without taking care of {@link Exception}s.
-     */
-    protected void tryToRelease() throws Exception {
     }
 
 }

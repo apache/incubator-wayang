@@ -6,6 +6,8 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.spark.platform.SparkExecutor;
 
 /**
  * {@link Channel} that represents a broadcasted value.
@@ -34,8 +36,8 @@ public class BroadcastChannel extends Channel {
     }
 
     @Override
-    public ChannelInstance createInstance() {
-        return new Instance();
+    public ChannelInstance createInstance(Executor executor) {
+        return new Instance((SparkExecutor) executor);
     }
 
     /**
@@ -44,6 +46,10 @@ public class BroadcastChannel extends Channel {
     public class Instance extends AbstractChannelInstance {
 
         private Broadcast<?> broadcast;
+
+        public Instance(SparkExecutor executor) {
+            super(executor);
+        }
 
         public void accept(Broadcast broadcast) {
             assert this.broadcast == null : String.format("Broadcast for %s already initialized.", this.getChannel());
@@ -57,8 +63,8 @@ public class BroadcastChannel extends Channel {
         }
 
         @Override
-        public void tryToRelease() {
-            this.broadcast.destroy(false);
+        protected void doDispose() {
+            this.doSafe(() -> this.broadcast.destroy(false));
         }
 
         @Override

@@ -29,6 +29,20 @@ public interface Executor {
     Platform getPlatform();
 
     /**
+     * Register a new {@link ExecutionResource} that is maintained by this instance.
+     *
+     * @param resource the {@link ExecutionResource}
+     */
+    void register(ExecutionResource resource);
+
+    /**
+     * Unregister a disposed {@link ExecutionResource} that was maintained by this instance.
+     *
+     * @param resource the {@link ExecutionResource}
+     */
+    void unregister(ExecutionResource resource);
+
+    /**
      * Factory for {@link Executor}s.
      */
     interface Factory {

@@ -27,7 +27,8 @@ public interface ExecutionState {
 
     /**
      * TODO: What are the cardinalities good for if they cannot be put into context of loops.
+     *
      * @return
      */
-    Map<Channel,Long> getCardinalities();
+    Map<Channel, Long> getCardinalities();
 }

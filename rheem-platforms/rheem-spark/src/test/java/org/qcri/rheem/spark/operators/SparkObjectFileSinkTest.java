@@ -37,7 +37,7 @@ public class SparkObjectFileSinkTest extends SparkOperatorTestBase {
 
             // Set up the ChannelInstances.
             final ChannelInstance[] inputs = new ChannelInstance[]{input};
-            final ChannelInstance outputChannel = FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR.createChannel(null, configuration).createInstance();
+            final ChannelInstance outputChannel = FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR.createChannel(null, configuration).createInstance(sparkExecutor);
             final ChannelInstance[] outputs = new ChannelInstance[]{outputChannel};
 
             // Execute.

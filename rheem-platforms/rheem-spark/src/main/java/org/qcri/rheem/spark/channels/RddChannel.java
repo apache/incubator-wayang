@@ -8,6 +8,7 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
 import java.util.OptionalLong;
@@ -47,8 +48,8 @@ public class RddChannel extends Channel {
     }
 
     @Override
-    public ChannelInstance createInstance() {
-        return new Instance();
+    public ChannelInstance createInstance(Executor executor) {
+        return new Instance((SparkExecutor) executor);
     }
 
     /**
@@ -59,6 +60,10 @@ public class RddChannel extends Channel {
         private JavaRDD<?> rdd;
 
         private Accumulator<Integer> accumulator;
+
+        public Instance(SparkExecutor executor) {
+            super(executor);
+        }
 
         public void accept(JavaRDD<?> rdd, SparkExecutor sparkExecutor) throws RheemException {
             if (this.isMarkedForInstrumentation()) {
@@ -80,12 +85,13 @@ public class RddChannel extends Channel {
         }
 
         @Override
-        public void tryToRelease() {
+        protected void doDispose() {
             if (this.accumulator != null) {
                 this.accumulator = null;
             }
             if (this.isRddCached() && this.rdd != null) {
-                this.rdd.unpersist();
+                this.doSafe(this.rdd::unpersist);
+                this.rdd = null;
             }
         }
 

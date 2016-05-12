@@ -4,6 +4,8 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
@@ -35,8 +37,8 @@ public class CollectionChannel extends Channel {
     }
 
     @Override
-    public Instance createInstance() {
-        return new Instance();
+    public Instance createInstance(Executor executor) {
+        return new Instance((JavaExecutor) executor);
     }
 
     /**
@@ -45,6 +47,10 @@ public class CollectionChannel extends Channel {
     public class Instance extends AbstractChannelInstance implements JavaChannelInstance {
 
         private Collection<?> collection;
+
+        public Instance(JavaExecutor executor) {
+            super(executor);
+        }
 
         public void accept(Collection<?> collection) {
             this.collection = collection;
@@ -68,7 +74,7 @@ public class CollectionChannel extends Channel {
         }
 
         @Override
-        public void tryToRelease() {
+        protected void doDispose() {
             this.collection = null;
         }
     }

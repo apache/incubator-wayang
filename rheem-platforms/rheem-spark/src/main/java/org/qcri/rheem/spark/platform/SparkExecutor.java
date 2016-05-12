@@ -65,7 +65,7 @@ public class SparkExecutor extends PushExecutorTemplate {
         ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
         for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
             final Channel outputChannel = task.getOutputChannel(outputIndex);
-            channelInstances[outputIndex] = outputChannel.createInstance();
+            channelInstances[outputIndex] = outputChannel.createInstance(this);
         }
         return channelInstances;
     }

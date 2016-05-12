@@ -5,6 +5,8 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
@@ -77,8 +79,8 @@ public class StreamChannel extends Channel {
 //    }
 
     @Override
-    public Instance createInstance() {
-        return new Instance();
+    public Instance createInstance(Executor executor) {
+        return new Instance((JavaExecutor) executor);
     }
 
 //    public static class Initializer implements JavaChannelInitializer {
@@ -114,6 +116,11 @@ public class StreamChannel extends Channel {
         // However, this would require to call Stream#close() on all methods.
         private long cardinality = 0;
 
+        public Instance(JavaExecutor executor) {
+            super(executor);
+        }
+
+
         public <T> void accept(Stream<T> stream) {
             assert this.stream == null;
             this.stream = stream;
@@ -148,7 +155,7 @@ public class StreamChannel extends Channel {
         }
 
         @Override
-        public void tryToRelease() throws RheemException {
+        protected void doDispose() throws RheemException {
             this.stream = null;
         }
     }

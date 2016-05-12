@@ -273,6 +273,8 @@ public class CrossPlatformExecutor implements ExecutionState {
                 this.tryToActivate(activator);
             }
         }
+
+        // Dispose obsolete ChannelInstances.
     }
 
     @Override

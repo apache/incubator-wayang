@@ -3,10 +3,7 @@ package org.qcri.rheem.core.plan.executionplan;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.platform.Breakpoint;
-import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +18,7 @@ import java.util.stream.Stream;
  */
 public abstract class Channel {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * Was used to set up this instance.
@@ -402,8 +399,10 @@ public abstract class Channel {
 
     /**
      * Create a {@link ChannelInstance} for this instance.
+     *
+     * @param executor that manages the resource or {@code null} if none
      */
-    public abstract ChannelInstance createInstance();
+    public abstract ChannelInstance createInstance(Executor executor);
 
     /**
      * Tests for inter-stage instances.

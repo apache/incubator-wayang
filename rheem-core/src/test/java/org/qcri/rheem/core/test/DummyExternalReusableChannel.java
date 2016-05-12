@@ -4,6 +4,7 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 
 /**
  * Dummy {@link Channel}.
@@ -28,7 +29,7 @@ public class DummyExternalReusableChannel extends Channel {
     }
 
     @Override
-    public ChannelInstance createInstance() {
+    public ChannelInstance createInstance(Executor executor) {
         throw new UnsupportedOperationException();
     }
 }

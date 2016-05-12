@@ -9,6 +9,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.ExecutorTemplate;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
@@ -30,7 +31,7 @@ import java.util.Set;
 /**
  * {@link Executor} implementation for the {@link PostgresPlatform}.
  */
-public class PostgresExecutor implements Executor {
+public class PostgresExecutor extends ExecutorTemplate {
 
     private final PostgresPlatform platform;
 
@@ -122,7 +123,7 @@ public class PostgresExecutor implements Executor {
         try (final PreparedStatement ps = this.connection.prepareStatement(query)) {
             rs = ps.executeQuery();
             final FileChannel.Instance outputFileChannelInstance =
-                    (FileChannel.Instance) termTask.getOutputChannel(0).createInstance();
+                    (FileChannel.Instance) termTask.getOutputChannel(0).createInstance(this);
             this.saveResult(outputFileChannelInstance, rs);
             executionState.register(outputFileChannelInstance);
         } catch (IOException | SQLException e) {

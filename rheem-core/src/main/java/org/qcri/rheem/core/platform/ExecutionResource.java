@@ -8,8 +8,15 @@ import org.qcri.rheem.core.api.exception.RheemException;
 public interface ExecutionResource {
 
     /**
-     * Releases the allocated assets of this resource.
+     * Releases the allocated assets of this resource and unregisters it with its {@link Executor} if there is one.
      */
-    void release() throws RheemException;
+    void dispose() throws RheemException;
+
+    /**
+     * An instance can be associated to an {@link Executor} that maintains it.
+     *
+     * @return the associated {@link Executor} or {@code null} if noen
+     */
+    Executor getExecutor();
 
 }

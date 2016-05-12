@@ -6,15 +6,16 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.ExecutorTemplate;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
 import org.qcri.rheem.graphchi.operators.GraphChiOperator;
 
 import java.util.*;
 
 /**
- * {@link Executor} for the GraphChiPlatform.
+ * {@link Executor} for the {@link GraphChiPlatform}.
  */
-public class GraphChiExecutor implements Executor {
+public class GraphChiExecutor extends ExecutorTemplate {
 
     private final GraphChiPlatform platform;
 
@@ -52,7 +53,7 @@ public class GraphChiExecutor implements Executor {
         }
         ChannelInstance[] outputChannelInstances = new ChannelInstance[task.getNumOuputChannels()];
         for (int i = 0; i < outputChannelInstances.length; i++) {
-            outputChannelInstances[i] = task.getOutputChannel(i).createInstance();
+            outputChannelInstances[i] = task.getOutputChannel(i).createInstance(this);
         }
         final GraphChiOperator graphChiOperator = (GraphChiOperator) task.getOperator();
         graphChiOperator.execute(inputChannelInstances, outputChannelInstances, this.configuration);
