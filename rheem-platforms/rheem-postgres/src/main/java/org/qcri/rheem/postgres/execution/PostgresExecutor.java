@@ -57,7 +57,7 @@ public class PostgresExecutor implements Executor {
     }
 
     @Override
-    public ExecutionState execute(ExecutionStage stage, ExecutionState executionState) {
+    public void execute(ExecutionStage stage, ExecutionState executionState) {
         // TODO: Load ChannelInstances from executionState? (as of now there is no input into PostgreSQL).
         ResultSet rs = null;
         FunctionCompiler functionCompiler = new FunctionCompiler();
@@ -124,10 +124,7 @@ public class PostgresExecutor implements Executor {
             final FileChannel.Instance outputFileChannelInstance =
                     (FileChannel.Instance) termTask.getOutputChannel(0).createInstance();
             this.saveResult(outputFileChannelInstance, rs);
-
-            final ExecutionState newExecutionState = new ExecutionState();
-            newExecutionState.getChannelInstances().put(outputFileChannelInstance.getChannel(), outputFileChannelInstance);
-            return newExecutionState;
+            executionState.register(outputFileChannelInstance);
         } catch (IOException | SQLException e) {
             throw new RheemException("PostgreSQL execution failed.", e);
         }

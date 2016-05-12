@@ -34,15 +34,15 @@ public abstract class AbstractChannelInstance implements ChannelInstance {
     public void release() throws RheemException {
         try {
             this.tryToRelease();
-        } catch (RheemException e) {
-            throw e;
         } catch (Exception e) {
-            throw new RheemException(String.format("Could not release %s.", this.getChannel()), e);
+            LoggerFactory.getLogger(this.getClass()).error("Could not release {}.", this.getChannel(), e);
         }
     }
 
     /**
      * Override this method to implement {@link #release()} without taking care of {@link Exception}s.
      */
-    protected void tryToRelease() throws Exception { };
+    protected void tryToRelease() throws Exception {
+    }
+
 }

@@ -3,7 +3,6 @@ package org.qcri.rheem.core.api;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
@@ -16,7 +15,6 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.*;
-import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.StopWatch;
@@ -129,10 +127,8 @@ public class Job {
 
             // Take care of the execution.
             int executionId = 0;
-            CrossPlatformExecutor.State state = null;
-            while (state == null || !state.isComplete()) {
-                state = this.execute(executionPlan, executionId);
-                this.postProcess(executionPlan, state, executionId);
+            while (!this.execute(executionPlan, executionId)) {
+                this.postProcess(executionPlan, executionId);
                 executionId++;
             }
         } catch (RheemException e) {
@@ -277,7 +273,7 @@ public class Job {
      * Go over the given {@link RheemPlan} and update the cardinalities of data being passed between its
      * {@link Operator}s using the given {@link ExecutionState}.
      */
-    private void reestimateCardinalities(CrossPlatformExecutor.State executionState) {
+    private void reestimateCardinalities(ExecutionState executionState) {
         this.cardinalityEstimatorManager.pushCardinalityUpdates(executionState);
     }
 
@@ -298,9 +294,14 @@ public class Job {
     }
 
     /**
-     * Dummy implementation: Have the platforms execute the given execution plan.
+     * Start executing the given {@link ExecutionPlan} with all bells and whistles, such as instrumentation,
+     * logging of the plan, and measuring the execution time.
+     *
+     * @param executionPlan that should be executed
+     * @param executionId   an identifier for the current execution
+     * @return whether the execution of the {@link ExecutionPlan} is completed
      */
-    private CrossPlatformExecutor.State execute(ExecutionPlan executionPlan, int executionId) {
+    private boolean execute(ExecutionPlan executionPlan, int executionId) {
         final StopWatch.Round round = this.stopWatch.start(String.format("Execution %d", executionId));
 
         // Ensure existence of the #crossPlatformExecutor.
@@ -318,12 +319,12 @@ public class Job {
 
         // Trigger the execution.
         final StopWatch.Round executeRound = round.startSubround("Execute");
-        final CrossPlatformExecutor.State state = this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
+        boolean isExecutionComplete = this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
         executeRound.stop();
         round.stop(true, true);
 
-        // Return the state.
-        return state;
+        // Return.
+        return isExecutionComplete;
     }
 
     /**
@@ -336,18 +337,19 @@ public class Job {
 
         // Set up appropriate Breakpoints.
         final StopWatch.Round breakpointRound = round.startSubround("Configure Breakpoint");
-        FixBreakpoint breakpoint = new FixBreakpoint();
-        final CrossPlatformExecutor.State state = this.crossPlatformExecutor.captureState();
-        if (state.getCompletedStages().isEmpty()) {
-            executionPlan.getStartingStages().forEach(breakpoint::breakAfter);
+        FixBreakpoint immediateBreakpoint = new FixBreakpoint();
+        final Set<ExecutionStage> completedStages = this.crossPlatformExecutor.getCompletedStages();
+        if (completedStages.isEmpty()) {
+            executionPlan.getStartingStages().forEach(immediateBreakpoint::breakAfter);
         } else {
-            state.getCompletedStages().stream()
+            completedStages.stream()
                     .flatMap(stage -> stage.getSuccessors().stream())
-                    .filter(stage -> !state.getCompletedStages().contains(stage))
-                    .forEach(breakpoint::breakAfter);
+                    .filter(stage -> !completedStages.contains(stage))
+                    .forEach(immediateBreakpoint::breakAfter);
         }
-        this.crossPlatformExecutor.extendBreakpoint(breakpoint);
-        this.crossPlatformExecutor.extendBreakpoint(new CardinalityBreakpoint(this.configuration));
+        this.crossPlatformExecutor.setBreakpoint(new ConjunctiveBreakpoint(
+                immediateBreakpoint, new CardinalityBreakpoint(this.configuration)
+        ));
         breakpointRound.stop();
     }
 
@@ -374,19 +376,16 @@ public class Job {
      * Injects the cardinalities obtained from {@link Channel} instrumentation, potentially updates the {@link ExecutionPlan}
      * through re-optimization, and collects measured data.
      */
-    private void postProcess(ExecutionPlan executionPlan, CrossPlatformExecutor.State state, int executionId) {
+    private void postProcess(ExecutionPlan executionPlan, int executionId) {
         final StopWatch.Round round = this.stopWatch.start(String.format("Post-processing %d", executionId));
 
         round.startSubround("Reestimate Cardinalities&Time");
-        this.reestimateCardinalities(state);
+        this.reestimateCardinalities(this.crossPlatformExecutor);
         round.stopSubround("Reestimate Cardinalities&Time");
 
-        if (!state.isComplete()) {
-            round.startSubround("Update Execution Plan");
-            this.updateExecutionPlan(executionPlan, state);
-            round.stopSubround("Update Execution Plan");
-
-        }
+        round.startSubround("Update Execution Plan");
+        this.updateExecutionPlan(executionPlan);
+        round.stopSubround("Update Execution Plan");
 
         // Collect any instrumentation results for the future.
         // TODO: Fix and re-enable!
@@ -401,12 +400,12 @@ public class Job {
     /**
      * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
      */
-    private void updateExecutionPlan(ExecutionPlan executionPlan, CrossPlatformExecutor.State state) {
+    private void updateExecutionPlan(ExecutionPlan executionPlan) {
         // Defines the plan that we want to use in the end.
         final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
 
         // Find and copy the open Channels.
-        final Set<ExecutionStage> completedStages = state.getCompletedStages();
+        final Set<ExecutionStage> completedStages =  this.crossPlatformExecutor.getCompletedStages();
         final Set<ExecutionTask> completedTasks = completedStages.stream()
                 .flatMap(stage -> stage.getAllTasks().stream())
                 .collect(Collectors.toSet());
@@ -436,7 +435,7 @@ public class Job {
                 openChannels, completedStages);
 
         ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.recreateFrom(
-                planImplementation, executionPlan, openChannels, state.getCompletedStages()
+                planImplementation, executionPlan, openChannels, completedStages
         );
         final ExecutionPlan executionPlanExpansion = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);

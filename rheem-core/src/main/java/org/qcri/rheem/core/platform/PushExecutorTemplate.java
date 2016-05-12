@@ -34,9 +34,9 @@ public abstract class PushExecutorTemplate implements Executor {
     }
 
     @Override
-    public ExecutionState execute(ExecutionStage stage, ExecutionState executionState) {
+    public void execute(ExecutionStage stage, ExecutionState executionState) {
         final StageExecution stageExecution = new StageExecution(stage, executionState);
-        return stageExecution.executeStage();
+        stageExecution.executeStage();
     }
 
 
@@ -129,9 +129,12 @@ public abstract class PushExecutorTemplate implements Executor {
             this.readyActivators.add(activator);
         }
 
-        ExecutionState executeStage() {
+        /**
+         * Executes the {@link ExecutionStage} and contributes results to the {@link #executionState}.
+         */
+        void executeStage() {
             this.execute();
-            return this.assembleExecutionState();
+            this.contributeToExecutionStage();
         }
 
         @Override
@@ -161,7 +164,8 @@ public abstract class PushExecutorTemplate implements Executor {
 
                 final Channel channel = outputChannelInstance.getChannel();
                 for (ExecutionTask consumer : channel.getConsumers()) {
-                    if (consumer.getStage() != task.getStage()) continue; // Stay within ExecutionStage.
+                    // Stay within ExecutionStage.
+                    if (consumer.getStage() != task.getStage() || channel.isStageExecutionBarrier()) continue;
 
                     // Get or create the TaskActivator.
                     final TaskActivator consumerActivator = this.stagedActivators.computeIfAbsent(
@@ -184,14 +188,13 @@ public abstract class PushExecutorTemplate implements Executor {
             return PushExecutorTemplate.this;
         }
 
-        private ExecutionState assembleExecutionState() {
-            ExecutionState executionState = new ExecutionState();
-            final Map<Channel, Long> cardinalities = executionState.getCardinalities();
+        private void contributeToExecutionStage() {
+            final Map<Channel, Long> cardinalities = this.executionState.getCardinalities();
             for (final ChannelInstance channelInstance : this.allChannelInstances) {
 
                 // Capture outbound ChannelInstances.
-                if (channelInstance.getChannel().isBetweenStages()) {
-                    executionState.getChannelInstances().put(channelInstance.getChannel(), channelInstance);
+                if (channelInstance.getChannel().isBetweenStages() || channelInstance.getChannel().isStageExecutionBarrier()) {
+                    this.executionState.register(channelInstance);
                 }
 
                 // Try to store cardinalities.
@@ -204,10 +207,13 @@ public abstract class PushExecutorTemplate implements Executor {
                     );
                 }
             }
-            return executionState;
         }
     }
 
+    /**
+     * Wraps an {@link ExecutionTask} and collects its input dependencies (i.e., {@link ChannelInstance}s). Then,
+     * allows for execution of the {@link ExecutionTask}.
+     */
     private class TaskActivator {
 
         private final ExecutionTask task;
@@ -223,7 +229,7 @@ public abstract class PushExecutorTemplate implements Executor {
         private void acceptFrom(ExecutionState executionState) {
             for (int inputIndex = 0; inputIndex < this.task.getNumInputChannels(); inputIndex++) {
                 final Channel channel = this.task.getInputChannel(inputIndex);
-                final ChannelInstance channelInstance = executionState.getChannelInstances().get(channel);
+                final ChannelInstance channelInstance = executionState.getChannelInstance(channel);
                 if (channelInstance != null) {
                     this.accept(channelInstance);
                 }

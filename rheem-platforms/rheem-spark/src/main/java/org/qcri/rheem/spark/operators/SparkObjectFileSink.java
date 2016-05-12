@@ -74,11 +74,11 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        return Collections.singletonList(FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR);
+        return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
+        return Collections.singletonList(FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR);
     }
 }

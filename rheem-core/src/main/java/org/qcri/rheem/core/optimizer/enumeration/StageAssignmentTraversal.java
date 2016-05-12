@@ -2,13 +2,11 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.executionplan.*;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Iterators;
 import org.qcri.rheem.core.util.OneTimeExecutable;
+import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,34 +30,29 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
     private final ExecutionTaskFlow executionTaskFlow;
 
     /**
-     * Maintains {@link ExecutionTask}s that might not yet be assigned to an {@link InterimStage} and must be explored.
-     */
-    private Queue<ExecutionTask> seeds;
-
-    /**
      * Assigns {@link ExecutionTask}s with {@link InterimStage}s.
      */
-    private Map<ExecutionTask, InterimStage> assignedInterimStages;
+    private final Map<ExecutionTask, InterimStage> assignedInterimStages = new HashMap<>();
 
     /**
      * Keeps track of {@link InterimStage}s that must be executed before executing a certain {@link ExecutionTask}.
      */
-    private Map<ExecutionTask, Set<InterimStage>> requiredStages;
+    private final Map<ExecutionTask, Set<InterimStage>> requiredStages = new HashMap<>();
 
     /**
      * Zero or more {@link StageSplittingCriterion}s to further refine {@link ExecutionStage}s.
      */
-    private Collection<StageSplittingCriterion> additionalSplittingCriteria;
+    private final Collection<StageSplittingCriterion> splittingCriteria = new LinkedList<>();
 
     /**
      * All {@link InterimStage}s created by this instance.
      */
-    private Collection<InterimStage> allStages;
+    private final Collection<InterimStage> allStages = new LinkedList<>();
 
     /**
      * Newly created {@link InterimStage}s that might be subject to refinement still.
      */
-    private Collection<InterimStage> newStages;
+    private final Collection<InterimStage> newStages = new LinkedList<>();
 
     /**
      * Maintains {@link ExecutionStageLoop}s that are being created.
@@ -74,11 +67,11 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
     /**
      * Creates a new instance.
      *
-     * @param executionTaskFlow           should be converted into a {@link ExecutionPlan}
-     * @param additionalSplittingCriteria to create splits beside the precedence-based splitting
+     * @param executionTaskFlow should be converted into an {@link ExecutionPlan}
+     * @param splittingCriteria to create splits beside the precedence-based splitting
      */
-    StageAssignmentTraversal(ExecutionTaskFlow executionTaskFlow,
-                             StageSplittingCriterion... additionalSplittingCriteria) {
+    private StageAssignmentTraversal(ExecutionTaskFlow executionTaskFlow,
+                                     StageSplittingCriterion... splittingCriteria) {
         // Some sanity checks.
         final Set<ExecutionTask> executionTasks = executionTaskFlow.collectAllTasks();
         for (ExecutionTask executionTask : executionTasks) {
@@ -96,13 +89,22 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
             }
         }
         assert executionTaskFlow.isComplete();
-        this.executionTaskFlow = executionTaskFlow;
 
-        this.additionalSplittingCriteria = new ArrayList<>();
-        this.additionalSplittingCriteria.add(StageAssignmentTraversal::isLoopBoarder);
-        this.additionalSplittingCriteria.addAll(Arrays.asList(additionalSplittingCriteria));
+        // Do some initialization.
+        this.executionTaskFlow = executionTaskFlow;
+        // TODO: The following criterion isolates LoopHeadOperators into own ExecutionStages, so as to avoid problems connected to circular dependencies. But this might not be as performant as it gets.
+        this.splittingCriteria.add(StageAssignmentTraversal::isLoopHeadInvolved);
+        this.splittingCriteria.add(StageAssignmentTraversal::isLoopBoarder); // Loop boards need be split always.
+        this.splittingCriteria.addAll(Arrays.asList(splittingCriteria));
     }
 
+    /**
+     * Convert an {@link ExecutionTaskFlow} into an {@link ExecutionPlan} by introducing {@link ExecutionStage}s.
+     *
+     * @param executionTaskFlow           should be converted
+     * @param additionalSplittingCriteria will be employed to split {@link ExecutionStage}s that are not split necessarily
+     * @return the {@link ExecutionPlan}
+     */
     public static ExecutionPlan assignStages(ExecutionTaskFlow executionTaskFlow,
                                              StageSplittingCriterion... additionalSplittingCriteria) {
         final StageAssignmentTraversal instance = new StageAssignmentTraversal(executionTaskFlow, additionalSplittingCriteria);
@@ -125,6 +127,15 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
     }
 
     /**
+     * Tells whether the given {@link Channel} connects a {@link LoopHeadOperator}.
+     *
+     * @see StageSplittingCriterion#shouldSplit(ExecutionTask, Channel, ExecutionTask)
+     */
+    private static boolean isLoopHeadInvolved(ExecutionTask producer, Channel channel, ExecutionTask consumer) {
+        return producer.getOperator().isLoopHead() || consumer.getOperator().isLoopHead();
+    }
+
+    /**
      * Perform the assignment.
      *
      * @return the {@link ExecutionPlan} for the {@link ExecutionTaskFlow} specified in the constructor
@@ -137,7 +148,6 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
     @Override
     protected void doExecute() {
         // Create initial stages.
-        this.initializeRun();
         this.discoverInitialStages();
 
         // Refine stages as much as necessary
@@ -153,17 +163,6 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
     }
 
     /**
-     * Sets up fields.
-     */
-    private void initializeRun() {
-        this.seeds = new LinkedList<>();
-        this.assignedInterimStages = new HashMap<>();
-        this.requiredStages = new HashMap<>();
-        this.newStages = new LinkedList<>();
-        this.allStages = new LinkedList<>();
-    }
-
-    /**
      * Create an initial assignment for each {@link ExecutionTask}, thereby keeping track of existing
      * {@link PlatformExecution}s.
      */
@@ -171,22 +170,27 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         // ExecutionTasks which have to be assigned an InterimStage.
         final Set<ExecutionTask> relevantTasks = new HashSet<>();
 
-        // ExecutionTasks that staged for exploration.
+        // ExecutionTasks that are staged for exploration.
         final Queue<ExecutionTask> stagedTasks = new LinkedList<>(this.executionTaskFlow.getSinkTasks());
 
         // Run until all ExecutionTasks have been checked.
         while (!stagedTasks.isEmpty()) {
             final ExecutionTask task = stagedTasks.poll();
+
+            // Collect the task and make sure we have not seen it yet.
             if (!relevantTasks.add(task)) continue;
 
             for (Channel inputChannel : task.getInputChannels()) {
                 if (!this.shouldVisitProducerOf(inputChannel)) { // Barrier.
+                    // At this point, we know that we are re-optimizing because the producer was already executed and
+                    // is therefore not visited.
                     final ExecutionTask producer = inputChannel.getProducer();
+
+                    // We need to see, if we must re-use the PlatformExecution of the producer.
                     // Most important seeds are those that might need to use an existing PlatformExecution:
-                    /// We need to create their InterimStages immediately to reuse the PlatformExecution before
-                    /// ExecutionTasks are assigned to other InterimStages.
-                    if (producer.getPlatform().equals(task.getPlatform()) &&
-                            producer.getPlatform().isSinglePlatformExecutionPossible(producer, inputChannel, task)) {
+                    // We need to create their InterimStages immediately to reuse the PlatformExecution before
+                    // ExecutionTasks are assigned to other InterimStages.
+                    if (this.checkIfShouldReusePlatformExecution(producer, inputChannel, task)) {
                         this.createStageFor(task, producer.getStage().getPlatformExecution());
                     }
                 } else {
@@ -198,9 +202,9 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         }
 
         // Now, we can assign all InterimStages with new PlatformExecutions.
-        this.seeds.addAll(relevantTasks);
-        while (!this.seeds.isEmpty()) {
-            final ExecutionTask task = this.seeds.poll();
+        Queue<ExecutionTask> seedTasks = new LinkedList<>(relevantTasks);
+        while (!seedTasks.isEmpty()) {
+            final ExecutionTask task = seedTasks.poll();
             this.createStageFor(task, null);
         }
 
@@ -209,23 +213,41 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
     }
 
     /**
-     * Starts building an {@link InterimStage} starting from the given {@link ExecutionTask}. If a {@link PlatformExecution}
-     * is provided, the {@link InterimStage} will be associated with it. Eventually, also {@link #seeds} will be planted
-     * for adjacent {@link InterimStage}s.
+     * Determines whether the {@code task} should reuse the {@link PlatformExecution} of the {@code producer}.
+     *
+     * @param producer     whose {@link PlatformExecution} might be reused
+     * @param inputChannel connects the {@code producer} to the {@code task}
+     * @param task         might reuse the {@link PlatformExecution} of {@code producer}
+     * @return whether to reuse
+     */
+    private boolean checkIfShouldReusePlatformExecution(ExecutionTask producer, Channel inputChannel, ExecutionTask task) {
+        final Platform producerPlatform = producer.getPlatform();
+        return producerPlatform.equals(task.getPlatform()) &&
+                producerPlatform.isSinglePlatformExecutionPossible(producer, inputChannel, task);
+    }
+
+    /**
+     * Starts building an {@link InterimStage} starting from the given {@link ExecutionTask} unless there is one already.
+     * If a {@link PlatformExecution} is provided, the {@link InterimStage} will be associated with it.
      */
     private void createStageFor(ExecutionTask task, PlatformExecution platformExecution) {
+        assert task.getStage() == null;
+
+        // See if there is already an InterimStage.
         if (this.assignedInterimStages.containsKey(task)) {
             return;
         }
-        Platform platform = task.getOperator().getPlatform();
-        if (task.getStage() == null) {
-            if (platformExecution == null) {
-                platformExecution = new PlatformExecution(platform);
-            }
-            InterimStage initialStage = new InterimStageImpl(platformExecution);
-            this.addStage(initialStage);
-            this.traverseTask(task, initialStage);
+
+        // Create a new PlatformExecution if none.
+        if (platformExecution == null) {
+            Platform platform = task.getOperator().getPlatform();
+            platformExecution = new PlatformExecution(platform);
         }
+
+        // Create the InterimStage and expand it.
+        InterimStage initialStage = new InterimStageImpl(platformExecution);
+        this.addStage(initialStage);
+        this.assignTaskAndExpand(task, initialStage);
     }
 
     /**
@@ -237,9 +259,9 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
     }
 
     /**
-     * Assign the given {@link ExecutionTask} to the given {@link InterimStage}s, then handle adjacent {@link ExecutionTask}s.
+     * Assign the given {@link ExecutionTask} to the given {@link InterimStage}s, then expands it to adjacent {@link ExecutionTask}s.
      */
-    private void traverseTask(ExecutionTask task, InterimStage interimStage) {
+    private void assignTaskAndExpand(ExecutionTask task, InterimStage interimStage) {
         this.assign(task, interimStage);
         this.expandDownstream(task, interimStage);
         this.expandUpstream(task, interimStage);
@@ -254,16 +276,10 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         newStage.addTask(task);
         final InterimStage oldStage = this.assignedInterimStages.put(task, newStage);
         logger.debug("Reassigned %s from %s to %s.", task, oldStage, newStage);
-        final Set<InterimStage> thisRequiredStages = this.requiredStages.computeIfAbsent(
-                task, key -> new HashSet<>(4)
-        );
-        thisRequiredStages.add(newStage);
-        logger.debug("Assigning {} to {}.", task, newStage);
     }
 
     /**
-     * Handle the downstream neighbors of the given {@code task}. Either expand the {@code expandableStage} or
-     * plant new {@link #seeds}.
+     * Handle the upstream neighbors of the given {@code task} by expanding the {@code expandableStage}.
      */
     private void expandDownstream(ExecutionTask task, InterimStage expandableStage) {
         for (Channel channel : task.getOutputChannels()) {
@@ -280,8 +296,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
     }
 
     /**
-     * Handle the upstream neighbors of the given {@code task}. Either expand the {@code expandableStage} or
-     * plant new {@link #seeds}.
+     * Handle the upstream neighbors of the given {@code task} by expanding the {@code expandableStage} if possible.
      */
     private void expandUpstream(ExecutionTask task, InterimStage expandableStage) {
         for (Channel channel : task.getInputChannels()) {
@@ -296,14 +311,12 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
     }
 
     /**
-     * Handle a given {@code task}. Either expand the {@code expandableStage} or plant new {@link #seeds}.
+     * Handle a given {@code task} by expanding the {@code expandableStage} if possible.
      */
     private void handleTaskWithoutPlatformExecution(ExecutionTask task, InterimStage expandableStage) {
         final Platform operatorPlatform = task.getOperator().getPlatform();
         if (expandableStage != null && operatorPlatform.equals(expandableStage.getPlatform())) {
-            this.traverseTask(task, expandableStage);
-        } else {
-            this.seeds.add(task);
+            this.assignTaskAndExpand(task, expandableStage);
         }
     }
 
@@ -311,17 +324,147 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
      * Refine the current {@link #newStages} and put the result to {@link #allStages}.
      */
     private void refineStages() {
-        // Apply the #additionalSplittingCriteria at first.
-        for (InterimStage stage : new ArrayList<>(this.newStages)) {
-            this.applySplittingCriteria(stage);
+        // Apply the #splittingCriteria at first.
+        new ArrayList<>(this.newStages).forEach(this::applySplittingCriteria);
+
+        this.splitStagesByPrecedence();
+    }
+
+    /**
+     * Applies all {@link #splittingCriteria} to the given {@code stage}, thereby refining it.
+     */
+    private void applySplittingCriteria(InterimStage stage) {
+        // Keeps track of ExecutionTasks that should be separated from those that are not in this Set.
+        Set<ExecutionTask> tasksToSeparate = new HashSet<>();
+
+        // Maintains ExecutionTasks whose outgoing Channels have been visited.
+        Set<ExecutionTask> seenTasks = new HashSet<>();
+
+        // Maintains ExecutionTasks to be visited and checked for split criteria.
+        Queue<ExecutionTask> taskQueue = new LinkedList<>(stage.getStartTasks());
+        while (!taskQueue.isEmpty()) {
+            final ExecutionTask task = taskQueue.poll();
+
+            // Avoid visiting the task twice.
+            if (seenTasks.add(task)) {
+
+                // Check if the task is already marked for separation.
+                boolean willTaskBeSeparated = tasksToSeparate.contains(task);
+
+                // Visit all successor tasks and check whether they should be separated.
+                for (Channel channel : task.getOutputChannels()) {
+                    for (ExecutionTask consumerTask : channel.getConsumers()) {
+                        // If the consumerTask is in other stage, there is no need to split.
+                        if (this.assignedInterimStages.get(consumerTask) != stage) {
+                            continue;
+                        }
+
+                        if (willTaskBeSeparated || this.splittingCriteria.stream().anyMatch(
+                                criterion -> criterion.shouldSplit(task, channel, consumerTask)
+                        )) {
+                            if (consumerTask.isFeedbackInput(channel)) {
+                                // TODO: Use marks to implement same-stage splits.
+                                // channel.setStageExecutionBarrier(true);
+                                continue;
+                            }
+                            tasksToSeparate.add(consumerTask);
+                        }
+                        taskQueue.add(consumerTask);
+                    }
+                }
+            }
         }
 
+        if (!tasksToSeparate.isEmpty()) {
+            assert tasksToSeparate.size() < stage.getTasks().size() : String.format(
+                    "Cannot separate all tasks from stage with tasks %s.", tasksToSeparate
+            );
+            // Prepare to split the ExecutionTasks that are not separated.
+            final HashSet<ExecutionTask> tasksToKeep = new HashSet<>(stage.getTasks());
+            tasksToKeep.removeAll(tasksToSeparate);
+
+            // Separate the ExecutionTasks and create stages for each connected component.
+            do {
+                Set<ExecutionTask> component = this.separateConnectedComponent(tasksToSeparate);
+                final InterimStage separatedStage = this.splitStage(stage, component);
+                this.applySplittingCriteria(separatedStage);
+            } while (!tasksToSeparate.isEmpty());
+
+            // Also split the remainder into connected components.
+            do {
+                Set<ExecutionTask> component = this.separateConnectedComponent(tasksToKeep);
+                final InterimStage separatedStage = this.splitStage(stage, component);
+                this.applySplittingCriteria(separatedStage);
+            } while (!tasksToKeep.isEmpty());
+        }
+    }
+
+    /**
+     * Removes a connected component of {@link ExecutionTask}s.
+     *
+     * @param tasks from that a connected component should be removed
+     * @return the connected component
+     */
+    private Set<ExecutionTask> separateConnectedComponent(Set<ExecutionTask> tasks) {
+        assert !tasks.isEmpty();
+
+        // Prepare data structures.
+        Queue<ExecutionTask> stagedTasks = new LinkedList<>();
+        Set<ExecutionTask> connectedComponent = new HashSet<>(tasks.size());
+
+        // Remove any element from the tasks.
+        final Iterator<ExecutionTask> iterator = tasks.iterator();
+        final ExecutionTask seed = iterator.next();
+        stagedTasks.add(seed);
+        iterator.remove();
+
+        // Expand the connected component.
+        ExecutionTask task;
+        while ((task = stagedTasks.poll()) != null) {
+            connectedComponent.add(task);
+            for (Channel channel : task.getInputChannels()) {
+                final ExecutionTask producer = channel.getProducer();
+                if (tasks.remove(producer)) {
+                    stagedTasks.add(producer);
+                }
+            }
+            for (Channel channel : task.getOutputChannels()) {
+                for (ExecutionTask consumer : channel.getConsumers()) {
+                    if (!consumer.isFeedbackInput(channel) && tasks.remove(consumer)) {
+                        stagedTasks.add(consumer);
+                    }
+                }
+            }
+        }
+
+        // Return the connected component.
+        return connectedComponent;
+    }
+
+    /**
+     * Spans a precedence graph between {@link #newStages} and splits them where necessary.
+     */
+    private void splitStagesByPrecedence() {
+        // Assign the required stages for each ExecutionTask: Each one requires its very own stage.
+        for (InterimStage stage : this.newStages) {
+            for (ExecutionTask task : stage.getTasks()) {
+                this.requiredStages.computeIfAbsent(task, key -> new HashSet<>(4)).add(stage);
+            }
+        }
+
+        // Update the precedence graph and split until we reach a stable state.
         while (!this.newStages.isEmpty()) {
+
             // Update the precedence graph.
             for (InterimStage currentStage : this.newStages) {
+
+                // We start from the outbound ExecutionTasks of each stage, because within each stage we will not create new precedences.
                 for (ExecutionTask outboundTask : currentStage.getOutboundTasks()) {
-                    final HashSet<InterimStage> requiredStages = new HashSet<>();
-                    requiredStages.addAll(this.requiredStages.get(outboundTask));
+
+                    // Start with the currently required stages.
+                    final HashSet<InterimStage> requiredStages = new HashSet<>(this.requiredStages.get(outboundTask));
+
+                    // Propagate these stages to all follow-up tasks.
                     for (Channel channel : outboundTask.getOutputChannels()) {
                         for (ExecutionTask consumer : channel.getConsumers()) {
                             this.updateRequiredStages(consumer, requiredStages);
@@ -330,57 +473,29 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
                 }
             }
 
-            // Partition stages. Might yield #newStages.
+            // Partition stages. Might yield new #newStages.
             this.newStages.clear();
-            for (InterimStage stage : new ArrayList<>(this.allStages)) {
-                this.partitionStage(stage);
-            }
+            new ArrayList<>(this.allStages).forEach(this::partitionStage);
         }
-    }
 
-    /**
-     * Applies all {@link #additionalSplittingCriteria} to the given {@code stage}, thereby refining it.
-     */
-    private void applySplittingCriteria(InterimStage stage) {
-        Set<ExecutionTask> separableTasks = new HashSet<>();
-        Queue<ExecutionTask> taskQueue = new LinkedList<>(stage.getStartTasks());
-        Set<ExecutionTask> seenTasks = new HashSet<>();
-        while (!taskQueue.isEmpty()) {
-            final ExecutionTask task = taskQueue.poll();
-            boolean isSplittableTask = separableTasks.contains(task);
-            if (seenTasks.add(task)) {
-                for (Channel channel : task.getOutputChannels()) {
-                    for (ExecutionTask consumerTask : channel.getConsumers()) {
-                        if (this.assignedInterimStages.get(consumerTask) != stage) {
-                            continue;
-                        }
-                        if (isSplittableTask || this.additionalSplittingCriteria.stream().anyMatch(
-                                criterion -> criterion.shouldSplit(task, channel, consumerTask)
-                        )) {
-                            separableTasks.add(consumerTask);
-                        }
-                        taskQueue.add(consumerTask);
+        // Put barriers between iterations.
+        for (InterimStage stage : this.allStages) {
+            for (ExecutionTask task : stage.getTasks()) {
+                final ExecutionOperator operator = task.getOperator();
+                if (operator.isLoopHead()) {
+                    final Collection<InputSlot<?>> loopBodyInputs = ((LoopHeadOperator) operator).getLoopBodyInputs();
+                    for (InputSlot<?> loopBodyInput : loopBodyInputs) {
+                        final Channel loopBodyInputChannel = task.getInputChannel(loopBodyInput.getIndex());
+                        loopBodyInputChannel.setStageExecutionBarrier(true);
                     }
                 }
-            }
-        }
-
-        if (!separableTasks.isEmpty()) {
-            if (separableTasks.size() < stage.getTasks().size()) {
-                final InterimStage separatedStage = this.splitStage(stage, separableTasks);
-                this.applySplittingCriteria(separatedStage);
-            } else {
-                // TODO: How can this happen?
-                logger.warn(
-                        "Cannot separate {} tasks from stage with {} tasks! Proceed without splitting...",
-                        separableTasks.size(), stage.getTasks().size());
             }
         }
     }
 
     /**
      * Update the {@link #requiredStages} while recursively traversing downstream over {@link ExecutionTask}s.
-     * Also, mark its {@link InterimStage} ({@link InterimStage#mark()})
+     * Also, mark its {@link InterimStage} ({@link InterimStage#markDependenciesUpdated()})
      * to keep track of dependencies between the {@link InterimStage}s that we have been unaware of so far.
      *
      * @param task           which is to be traversed next
@@ -392,17 +507,17 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         final InterimStage currentStage = this.assignedInterimStages.get(task);
 
         // Update the requiredStages by the InterimStage of the task.
-        if (!requiredStages.contains(currentStage)) {
-            requiredStages = new HashSet<>(requiredStages);
-            requiredStages.add(currentStage);
-        }
+        requiredStages.add(currentStage);
 
-        // Update the requiredStages of the task. On change, propagate the requirements downstream.
+        // Try to update the #requiredStages of our task.
         final Set<InterimStage> currentlyRequiredStages = this.requiredStages.get(task);
         if (currentlyRequiredStages.addAll(requiredStages)) {
+            // If there is a new required stage, mark the stage.
             logger.debug("Updated required stages of {} to {}.", task, currentlyRequiredStages);
-            currentStage.mark();
+            currentStage.markDependenciesUpdated();
 
+            // And propagate the dependencies downstream. We assume all downstream dependencies to be supersets of
+            // the current requiredStage, which should be true by construction.
             for (Channel channel : task.getOutputChannels()) {
                 for (ExecutionTask consumingTask : channel.getConsumers()) {
                     this.updateRequiredStages(consumingTask, requiredStages);
@@ -415,10 +530,12 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
     /**
      * Partition the {@code stage} into two halves. All {@link ExecutionTask}s that do not have the minimum count of
      * required {@link InterimStage}s will be put into a new {@link InterimStage}.
+     *
+     * @return whether a split occurred
      */
     private boolean partitionStage(InterimStage stage) {
         // Short-cut: if the stage has not been marked, its required stages did not change.
-        if (!stage.getAndResetMark()) {
+        if (!stage.getAndResetSplitMark()) {
             return false;
         }
         int minRequiredStages = -1;
@@ -532,9 +649,19 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
 
         InterimStage separate(Set<ExecutionTask> separableTasks);
 
-        boolean getAndResetMark();
+        /**
+         * Check whether this instance is marked to have new dependencies. If so, reset the mark.
+         *
+         * @return whether this instance was marked
+         * @see #markDependenciesUpdated()
+         */
+        boolean getAndResetSplitMark();
 
-        void mark();
+        /**
+         * Mark this instance. We use it, to mark instances that have gotten new {@link #requiredStages} during
+         * splitting of stages.
+         */
+        void markDependenciesUpdated();
 
         Set<ExecutionTask> getOutboundTasks();
 
@@ -650,12 +777,12 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         }
 
         @Override
-        public void mark() {
+        public void markDependenciesUpdated() {
             this.isMarked = true;
         }
 
         @Override
-        public boolean getAndResetMark() {
+        public boolean getAndResetSplitMark() {
             final boolean value = this.isMarked;
             this.isMarked = false;
             return value;
@@ -674,6 +801,10 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
             assert Iterators.allMatch(iterator,
                     task -> task.getOperator().getInnermostLoop() == loop,
                     true
+            ) : String.format("There are different loops in the stage with the tasks %s.",
+                    this.allTasks.stream()
+                            .map(task -> new Tuple<>(task, task.getOperator().getInnermostLoop()))
+                            .collect(Collectors.toList())
             );
 
             ExecutionStageLoop executionStageLoop = null;
@@ -787,7 +918,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
 //        }
 //
 //        @Override
-//        public boolean getAndResetMark() {
+//        public boolean getAndResetSplitMark() {
 //            boolean wasMarked = this.isMarked;
 //            this.isMarked = false;
 //            return wasMarked;

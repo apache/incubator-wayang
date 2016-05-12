@@ -4,7 +4,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.platform.CrossPlatformExecutor;
+import org.qcri.rheem.core.platform.ExecutionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,19 +61,19 @@ public class CardinalityEstimatorManager {
     }
 
     /**
-     * Injects the cardinalities of a current {@link CrossPlatformExecutor.State} into its associated {@link RheemPlan}
+     * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link RheemPlan}
      * (or its {@link OptimizationContext}, respectively) and then reperforms the cardinality estimation.
      */
-    public void pushCardinalityUpdates(CrossPlatformExecutor.State executionState) {
+    public void pushCardinalityUpdates(ExecutionState executionState) {
         this.injectMeasuredCardinalities(executionState);
         this.pushCardinalities();
     }
 
     /**
-     * Injects the cardinalities of a current {@link CrossPlatformExecutor.State} into its associated {@link RheemPlan}.
+     * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link RheemPlan}.
      */
-    private void injectMeasuredCardinalities(CrossPlatformExecutor.State executionState) {
-        executionState.getProfile().getCardinalities().forEach(this::injectMeasureCardinality);
+    private void injectMeasuredCardinalities(ExecutionState executionState) {
+        executionState.getCardinalities().forEach(this::injectMeasureCardinality);
     }
 
     /**

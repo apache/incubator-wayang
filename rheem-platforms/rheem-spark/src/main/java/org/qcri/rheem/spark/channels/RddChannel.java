@@ -18,7 +18,7 @@ import java.util.OptionalLong;
  */
 public class RddChannel extends Channel {
 
-    private static final boolean IS_UNCACHED_REUSABLE = true;
+    private static final boolean IS_UNCACHED_REUSABLE = false;
 
     private static final boolean IS_CACHED_REUSABLE = true;
 

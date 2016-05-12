@@ -202,6 +202,27 @@ public class ExecutionTask {
     }
 
     /**
+     * Determines whether the given input {@link Channel} implements a feedback {@link InputSlot} of the enclosed
+     * {@link ExecutionOperator}.
+     *
+     * @param inputChannel the {@link Channel}
+     * @return whether it implements a feedback {@link InputSlot}
+     * @see InputSlot#isFeedback()
+     */
+    public boolean isFeedbackInput(Channel inputChannel) {
+        // Check if we have a LoopHeadOperator in this instance.
+        final ExecutionOperator operator = this.getOperator();
+        if (!operator.isLoopHead()) return false;
+
+        // Check whether and to which InputSlot the inputChannel corresponds.
+        final InputSlot<?> input = this.getInputSlotFor(inputChannel);
+        if (input == null) return false;
+
+        // Determine if that InputSlot is a feedback InputSlot.
+        return input.isFeedback();
+    }
+
+    /**
      * @return the {@link Platform} for the encased {@link ExecutionOperator}
      */
     public Platform getPlatform() {

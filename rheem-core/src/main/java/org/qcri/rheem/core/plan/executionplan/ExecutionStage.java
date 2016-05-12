@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.plan.executionplan;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.*;
@@ -92,10 +93,25 @@ public class ExecutionStage {
         this.updateLoop(task);
     }
 
+    /**
+     * Notify the {@link #executionStageLoop} that there is a new {@link ExecutionTask} in this instance, which might
+     * comprise the {@link LoopHeadOperator}.
+     *
+     * @param task
+     */
     private void updateLoop(ExecutionTask task) {
         if (this.executionStageLoop != null) {
-            this.executionStageLoop.update(this, task);
+            this.executionStageLoop.update(task);
         }
+    }
+
+    /**
+     * Determine if this instance is the loop head of its {@link ExecutionStageLoop}.
+     *
+     * @return {@code true} if the above condition is fulfilled or there is no {@link ExecutionStageLoop}
+     */
+    public boolean isLoopHead() {
+        return this.executionStageLoop != null && this.executionStageLoop.getLoopHead() == this;
     }
 
     public void markAsStartTask(ExecutionTask executionTask) {
@@ -268,13 +284,4 @@ public class ExecutionStage {
         }
     }
 
-    // TODO
-    public boolean wasExecuted() {
-        throw new UnsupportedOperationException("Remove me.");
-    }
-
-    // TODO
-    public void setWasExecuted(boolean b) {
-        throw new UnsupportedOperationException("Remove me.");
-    }
 }
