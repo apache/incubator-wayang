@@ -49,7 +49,7 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
 
         input.provideRdd()
                 .repartition(1) // TODO: Remove. This only hotfixes the issue that JavaObjectFileSource reads only a single file.
-                .saveAsObjectFile(this.targetPath);
+                .saveAsObjectFile(targetPath);
         LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", targetPath);
     }
 
