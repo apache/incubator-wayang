@@ -416,6 +416,8 @@ public class CrossPlatformExecutor implements ExecutionState {
             // Distinguish the inbound Channels of the stage.
             final Collection<Channel> inboundChannels = this.stage.getInboundChannels();
             if (this.stage.isLoopHead()) {
+                assert this.stage.getAllTasks().size() == 1 : String.format("Loop head stage looks like this:\n%s", this.stage.getPlanAsString("! "));
+
                 // Loop heads are special in the sense that they don't require all of their inputs.
                 for (Channel inboundChannel : inboundChannels) {
                     for (ExecutionTask executionTask : inboundChannel.getConsumers()) {

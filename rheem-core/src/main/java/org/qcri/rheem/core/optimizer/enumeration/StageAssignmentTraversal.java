@@ -391,11 +391,13 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
             } while (!tasksToSeparate.isEmpty());
 
             // Also split the remainder into connected components.
-            do {
+            while (true) {
                 Set<ExecutionTask> component = this.separateConnectedComponent(tasksToKeep);
+                // Avoid "splitting" if the tasksToKeep are already a connected component.
+                if (tasksToKeep.isEmpty()) break;
                 final InterimStage separatedStage = this.splitStage(stage, component);
                 this.applySplittingCriteria(separatedStage);
-            } while (!tasksToKeep.isEmpty());
+            }
         }
     }
 
@@ -423,6 +425,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         while ((task = stagedTasks.poll()) != null) {
             connectedComponent.add(task);
             for (Channel channel : task.getInputChannels()) {
+                if (task.isFeedbackInput(channel)) continue;
                 final ExecutionTask producer = channel.getProducer();
                 if (tasks.remove(producer)) {
                     stagedTasks.add(producer);
