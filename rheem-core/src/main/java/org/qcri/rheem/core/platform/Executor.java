@@ -3,11 +3,12 @@ package org.qcri.rheem.core.platform;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.util.ReferenceCountable;
 
 /**
  * An executor executes {@link ExecutionOperator}s.
  */
-public interface Executor {
+public interface Executor extends ReferenceCountable {
 
     /**
      * Executes the given {@code stage}.

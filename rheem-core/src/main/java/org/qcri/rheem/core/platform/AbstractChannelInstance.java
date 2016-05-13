@@ -38,4 +38,8 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
         this.measuredCardinality = OptionalLong.of(cardinality);
     }
 
+    @Override
+    public String toString() {
+        return "*" + this.getChannel().toString();
+    }
 }

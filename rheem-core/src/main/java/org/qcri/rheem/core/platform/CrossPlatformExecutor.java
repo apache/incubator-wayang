@@ -37,12 +37,12 @@ public class CrossPlatformExecutor implements ExecutionState {
     /**
      * Activated and considered for execution.
      */
-    private final Queue<ExecutionStage> activatedStages = new LinkedList<>();
+    private final Queue<StageActivator> activatedStageActivators = new LinkedList<>();
 
     /**
      * Keeps track of {@link StageActivator}s.
      */
-    private final Map<ExecutionStage, StageActivator> stageActivators = new HashMap<>();
+    private final Map<ExecutionStage, StageActivator> pendingStageActivators = new HashMap<>();
 
     /**
      * Maintains the {@link Executor}s for each {@link PlatformExecution}.
@@ -52,7 +52,7 @@ public class CrossPlatformExecutor implements ExecutionState {
     /**
      * We keep them around if we want to go on without re-optimization.
      */
-    private final Collection<ExecutionStage> suspendedStages = new LinkedList<>();
+    private final Collection<StageActivator> suspendedStages = new LinkedList<>();
 
     /**
      * Marks {@link Channel}s for instrumentation.
@@ -102,14 +102,14 @@ public class CrossPlatformExecutor implements ExecutionState {
      */
     public void prepare(ExecutionPlan executionPlan) {
         this.allStages.clear();
-        this.activatedStages.clear();
+        this.activatedStageActivators.clear();
         this.suspendedStages.clear();
 
         // Remove obsolete StageActivators (after re-optimization).
         this.allStages.addAll(executionPlan.getStages());
-        new ArrayList<>(this.stageActivators.keySet()).stream()
+        new ArrayList<>(this.pendingStageActivators.keySet()).stream()
                 .filter(stage -> !this.allStages.contains(stage))
-                .forEach(this.stageActivators::remove);
+                .forEach(this.pendingStageActivators::remove);
 
         // Create StageActivators for all ExecutionStages.
         for (ExecutionStage stage : this.allStages) {
@@ -125,19 +125,20 @@ public class CrossPlatformExecutor implements ExecutionState {
      * @return the {@link StageActivator}
      */
     private StageActivator getOrCreateActivator(ExecutionStage stage) {
-        return this.stageActivators.computeIfAbsent(stage, StageActivator::new);
+        return this.pendingStageActivators.computeIfAbsent(stage, StageActivator::new);
     }
 
     /**
-     * If the {@link StageActivator} can be activate, move it from {@link #stageActivators} to {@link #activatedStages}.
+     * If the {@link StageActivator} can be activate, move it from {@link #pendingStageActivators} to {@link #activatedStageActivators}.
      *
      * @param activator that should be activated
      * @return whether an activation took place
      */
     private boolean tryToActivate(StageActivator activator) {
-        if (activator.canBeActivated()) {
-            this.activatedStages.add(activator.getStage());
-            this.stageActivators.remove(activator.getStage());
+        if (activator.updateInputChannelInstances()) {
+            // Activate the activator by moving it.
+            this.pendingStageActivators.remove(activator.getStage());
+            this.activatedStageActivators.add(activator);
             return true;
         }
         return false;
@@ -153,32 +154,50 @@ public class CrossPlatformExecutor implements ExecutionState {
         boolean isBreakpointsDisabled = false;
         do {
             // Execute and activate as long as possible.
-            while (!this.activatedStages.isEmpty()) {
-                final ExecutionStage nextStage = this.activatedStages.poll();
+            while (!this.activatedStageActivators.isEmpty()) {
+                final StageActivator stageActivator = this.activatedStageActivators.poll();
 
                 // Check if #breakpoint permits the execution.
-                if (!isBreakpointsDisabled && this.suspendIfBreakpointRequest(nextStage)) {
+                if (!isBreakpointsDisabled && this.suspendIfBreakpointRequest(stageActivator)) {
                     continue;
                 }
 
                 // Otherwise, execute the stage.
-                this.execute(nextStage);
+                final ExecutionStage stage = stageActivator.getStage();
+                this.execute(stage);
                 numExecutedStages++;
 
+                // We can now dispose the stageActivator that collected the input ChannelInstances.
+                stageActivator.dispose();
+
                 // Try to activate the successor stages.
-                this.tryToActivateSuccessors(nextStage);
+                this.tryToActivateSuccessors(stage);
+
+
+                // Dispose obsolete ChannelInstances.
+                final Iterator<Map.Entry<Channel, ChannelInstance>> iterator = this.channelInstances.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    final Map.Entry<Channel, ChannelInstance> channelInstanceEntry = iterator.next();
+                    final ChannelInstance channelInstance = channelInstanceEntry.getValue();
+
+                    // If this is instance is the only one to still use this ChannelInstance, discard it.
+                    if (channelInstance.getNumReferences() == 1) {
+                        channelInstance.noteDiscardedReference(true);
+                        iterator.remove();
+                    }
+                }
             }
 
             // Safety net to recover from illegal Breakpoint configurations.
             if (!isBreakpointsDisabled && numExecutedStages == 0) {
                 this.logger.warn("Could not execute a single stage. Will retry with disabled breakpoints.");
                 isBreakpointsDisabled = true;
-                this.activatedStages.addAll(this.suspendedStages);
+                this.activatedStageActivators.addAll(this.suspendedStages);
                 this.suspendedStages.clear();
             } else {
                 isBreakpointsDisabled = false;
             }
-        } while (!this.activatedStages.isEmpty());
+        } while (!this.activatedStageActivators.isEmpty());
 
         final long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} stages in {}.",
@@ -194,12 +213,12 @@ public class CrossPlatformExecutor implements ExecutionState {
      * If the {@link #breakpoint} requests not to execute the given {@link ExecutionStage}, put it to
      * {@link #suspendedStages}.
      *
-     * @param activatedStage that might be suspended
+     * @param stageActivator that might be suspended
      * @return whether the {@link ExecutionStage} was suspended
      */
-    private boolean suspendIfBreakpointRequest(ExecutionStage activatedStage) {
-        if (this.breakpoint.requestsBreakBefore(activatedStage)) {
-            this.suspendedStages.add(activatedStage);
+    private boolean suspendIfBreakpointRequest(StageActivator stageActivator) {
+        if (this.breakpoint.requestsBreakBefore(stageActivator.getStage())) {
+            this.suspendedStages.add(stageActivator);
             return true;
         }
         return false;
@@ -266,15 +285,22 @@ public class CrossPlatformExecutor implements ExecutionState {
      * activates them if possible by putting them in the given {@link Collection}.
      */
     private void tryToActivateSuccessors(ExecutionStage processedStage) {
-        for (ExecutionStage succeedingStage : processedStage.getSuccessors()) {
-            final Collection<Channel> inboundChannels = succeedingStage.getInboundChannels();
-            if (this.channelInstances.keySet().stream().anyMatch(inboundChannels::contains)) {
-                final StageActivator activator = this.getOrCreateActivator(succeedingStage);
-                this.tryToActivate(activator);
+        // Gather all successor ExecutionStages for that a new ChannelInstance has been produced.
+        final Collection<Channel> outboundChannels = processedStage.getOutboundChannels();
+        Set<ExecutionStage> successorStages = new HashSet<>(outboundChannels.size());
+        for (Channel outboundChannel : outboundChannels) {
+            if (this.getChannelInstance(outboundChannel) != null) {
+                for (ExecutionTask consumer : outboundChannel.getConsumers()) {
+                    successorStages.add(consumer.getStage());
+                }
             }
         }
 
-        // Dispose obsolete ChannelInstances.
+        // Try to activate follow-up stages.
+        for (ExecutionStage successorStage : successorStages) {
+            final StageActivator activator = this.getOrCreateActivator(successorStage);
+            this.tryToActivate(activator);
+        }
     }
 
     @Override
@@ -284,7 +310,11 @@ public class CrossPlatformExecutor implements ExecutionState {
 
     @Override
     public void register(ChannelInstance channelInstance) {
-        this.channelInstances.put(channelInstance.getChannel(), channelInstance);
+        final ChannelInstance oldChannelInstance = this.channelInstances.put(channelInstance.getChannel(), channelInstance);
+        channelInstance.noteObtainedReference();
+        if (oldChannelInstance != null) {
+            oldChannelInstance.noteDiscardedReference(true);
+        }
     }
 
     @Override
@@ -333,6 +363,11 @@ public class CrossPlatformExecutor implements ExecutionState {
         private final Collection<Channel> iterationInboundChannels = new LinkedList<>();
 
         /**
+         * Keep track of the {@link ChannelInstance}s that are inputs of the {@link #stage}.
+         */
+        private final Map<Channel, ChannelInstance> inputChannelInstances = new HashMap<>(4);
+
+        /**
          * Creates a new instance.
          *
          * @param stage that should be activated
@@ -367,34 +402,55 @@ public class CrossPlatformExecutor implements ExecutionState {
         }
 
         /**
-         * Tests whether the {@link #stage} can be activated.
+         * Try to satisfy the input {@link ChannelInstance} requirements by updating {@link #inputChannelInstances}.
          *
          * @return whether the activation is possible
          */
-        boolean canBeActivated() {
-            return this.checkChannelAvailability(this.miscInboundChannels) && (
-                    this.checkChannelAvailability(this.initializationInboundChannels) ||
-                            this.checkChannelAvailability(this.iterationInboundChannels)
+        boolean updateInputChannelInstances() {
+            return this.updateChannelInstances(this.miscInboundChannels) & (
+                    this.updateChannelInstances(this.initializationInboundChannels) |
+                            this.updateChannelInstances(this.iterationInboundChannels)
             );
         }
 
         /**
-         * Checks whether {@link ChannelInstance}s are available for all given {@link Channel}s.
+         * Try to satisfy the input {@link ChannelInstance} requirements for all given {@link Channel}s by updating {@link #inputChannelInstances}.
          *
          * @param channels for that the {@link ChannelInstance}s are requested
          * @return whether there are {@link ChannelInstance}s for all {@link Channel}s available
          */
-        private boolean checkChannelAvailability(Collection<Channel> channels) {
+        private boolean updateChannelInstances(Collection<Channel> channels) {
+            boolean isAllChannelsAvailable = true;
             for (Channel channel : channels) {
-                if (!CrossPlatformExecutor.this.channelInstances.containsKey(channel)) {
-                    return false;
+                // Check if the ChannelInstance is already known.
+                if (this.inputChannelInstances.containsKey(channel)) continue;
+                
+                // Otherwise, check if it is available now.
+                final ChannelInstance channelInstance = CrossPlatformExecutor.this.getChannelInstance(channel);
+                if (channelInstance != null) {
+                    // If so, reference it.
+                    this.inputChannelInstances.put(channel, channelInstance);
+                    channelInstance.noteObtainedReference();
+                } else {
+                    // Otherwise, we will have a negative result. Still, we need to grab all Channels to save them from disposal.
+                    isAllChannelsAvailable = false;
                 }
             }
-            return true;
+            return isAllChannelsAvailable;
         }
 
         public ExecutionStage getStage() {
             return this.stage;
+        }
+
+        /**
+         * Dispose this instance, in particular discard references to its {@link ChannelInstance}s.
+         */
+        void dispose() {
+            for (ChannelInstance channelInstance : this.inputChannelInstances.values()) {
+                channelInstance.noteDiscardedReference(true);
+            }
+            this.inputChannelInstances.clear();
         }
     }
 

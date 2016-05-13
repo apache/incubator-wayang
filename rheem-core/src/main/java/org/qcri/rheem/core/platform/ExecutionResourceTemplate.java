@@ -1,12 +1,13 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.util.AbstractReferenceCountable;
 import org.slf4j.LoggerFactory;
 
 /**
  * Implements various functionalities of an {@link ExecutionResource}.
  */
-public abstract class ExecutionResourceTemplate implements ExecutionResource {
+public abstract class ExecutionResourceTemplate extends AbstractReferenceCountable implements ExecutionResource {
 
     /**
      * Maintains this instance.
@@ -21,8 +22,14 @@ public abstract class ExecutionResourceTemplate implements ExecutionResource {
     protected ExecutionResourceTemplate(Executor executor) {
         this.executor = executor;
         if (this.executor != null) {
+            this.executor.noteObtainedReference();
             this.executor.register(this);
         }
+    }
+
+    @Override
+    protected void disposeUnreferenced() {
+        this.dispose();
     }
 
     @Override
@@ -34,6 +41,7 @@ public abstract class ExecutionResourceTemplate implements ExecutionResource {
         } finally {
             if (this.executor != null) {
                 this.executor.unregister(this);
+                this.executor.noteDiscardedReference(true);
             }
         }
     }
