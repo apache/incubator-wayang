@@ -40,7 +40,7 @@ public class ExecutionPlan {
                 final ExecutionStage stage = activatedStages.poll();
                 if (!seenStages.add(stage)) continue;
                 sb.append(">>> ").append(stage).append(":\n");
-                stage.toExtensiveString(sb, "> ");
+                stage.getPlanAsString(sb, "> ");
                 sb.append("\n");
 
                 for (ExecutionStage successor : stage.getSuccessors()) {

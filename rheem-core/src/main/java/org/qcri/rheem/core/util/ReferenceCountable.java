@@ -32,4 +32,13 @@ public interface ReferenceCountable {
      * @return whether this instance is not referenced any more
      */
     boolean disposeIfUnreferenced();
+
+    /**
+     * <i>Optional operation.</i> Tell whether this instance has been disposed.
+     *
+     * @return whether this instance has been disposed
+     */
+    default boolean isDisposed() {
+        throw new UnsupportedOperationException(String.format("%s does not support this method.", this.getClass()));
+    }
 }

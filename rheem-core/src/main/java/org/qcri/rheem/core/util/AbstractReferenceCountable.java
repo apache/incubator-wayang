@@ -1,11 +1,14 @@
 package org.qcri.rheem.core.util;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Implements a template for {@link ReferenceCountable} objects.
  */
 public abstract class AbstractReferenceCountable implements ReferenceCountable {
+
+    private static final Logger logger = LoggerFactory.getLogger(ReferenceCountable.class);
 
     /**
      * Maintains the number of references on this object.
@@ -15,7 +18,7 @@ public abstract class AbstractReferenceCountable implements ReferenceCountable {
     @Override
     public boolean disposeIfUnreferenced() {
         if (this.getNumReferences() == 0) {
-            LoggerFactory.getLogger(this.getClass()).info("Discarding {} for being unreferenced.", this);
+            logger.info("Discarding {} for being unreferenced.", this);
             this.disposeUnreferenced();
             return true;
         }
@@ -35,14 +38,14 @@ public abstract class AbstractReferenceCountable implements ReferenceCountable {
     @Override
     public void noteObtainedReference() {
         this.numReferences++;
-        LoggerFactory.getLogger(this.getClass()).info("{} has {} (+1) references now.", this, this.getNumReferences());
+        logger.debug("{} has {} (+1) references now.", this, this.getNumReferences());
     }
 
     @Override
     public void noteDiscardedReference(boolean isDisposeIfUnreferenced) {
         assert this.numReferences > 0;
         this.numReferences--;
-        LoggerFactory.getLogger(this.getClass()).info("{} has {} (-1) references now.", this, this.getNumReferences());
+        logger.debug("{} has {} (-1) references now.", this, this.getNumReferences());
         if (isDisposeIfUnreferenced) {
             this.disposeIfUnreferenced();
         }

@@ -1,11 +1,11 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Job;
-import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.*;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
+import org.qcri.rheem.core.util.AbstractReferenceCountable;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +53,13 @@ public class CrossPlatformExecutor implements ExecutionState {
      * We keep them around if we want to go on without re-optimization.
      */
     private final Collection<StageActivator> suspendedStages = new LinkedList<>();
+
+    /**
+     * When executing an {@link ExecutionStageLoop}, we might need to reuse several {@link ExecutionResource}s
+     * among all iterations. If we would go with our normal handling scheme, we might lose them after the first
+     * iteration. Therefore, we actively keep track of them via {@link ExecutionStageLoopContext}s.
+     */
+    private final Map<ExecutionStageLoop, ExecutionStageLoopContext> loopContexts = new HashMap<>();
 
     /**
      * Marks {@link Channel}s for instrumentation.
@@ -167,11 +174,11 @@ public class CrossPlatformExecutor implements ExecutionState {
                 this.execute(stage);
                 numExecutedStages++;
 
-                // We can now dispose the stageActivator that collected the input ChannelInstances.
-                stageActivator.dispose();
-
                 // Try to activate the successor stages.
                 this.tryToActivateSuccessors(stage);
+
+                // We can now dispose the stageActivator that collected the input ChannelInstances.
+                stageActivator.dispose();
 
 
                 // Dispose obsolete ChannelInstances.
@@ -203,10 +210,7 @@ public class CrossPlatformExecutor implements ExecutionState {
         CrossPlatformExecutor.this.logger.info("Executed {} stages in {}.",
                 numExecutedStages, Formats.formatDuration(finishTime - startTime));
 
-        // Sanity check. TODO: Should be an assertion, shouldn't it?
-        if (numExecutedStages == 0) {
-            throw new RheemException("Could not execute a single stage. Are the Rheem plan and breakpoints correct?");
-        }
+        assert numExecutedStages > 0 : "Did not execute a single stage.";
     }
 
     /**
@@ -238,8 +242,7 @@ public class CrossPlatformExecutor implements ExecutionState {
         Executor executor = this.getOrCreateExecutorFor(stage);
 
         // Have the execution done.
-        CrossPlatformExecutor.this.logger.info("Start executing {}.", stage);
-        CrossPlatformExecutor.this.logger.info("Stage plan:\n{}", stage.toExtensiveString());
+        CrossPlatformExecutor.this.logger.info("Start executing {}:\n{}", stage, stage.getPlanAsString("> "));
         long startTime = System.currentTimeMillis();
         executor.execute(stage, this);
         long finishTime = System.currentTimeMillis();
@@ -253,7 +256,6 @@ public class CrossPlatformExecutor implements ExecutionState {
 
         // Clean up.
         this.completedStages.add(stage);
-        this.disposeExecutorIfDone(stage.getPlatformExecution());
     }
 
     private Executor getOrCreateExecutorFor(ExecutionStage stage) {
@@ -261,23 +263,6 @@ public class CrossPlatformExecutor implements ExecutionState {
                 stage.getPlatformExecution(),
                 pe -> pe.getPlatform().getExecutorFactory().create(this.job)
         );
-    }
-
-    /**
-     * Increments the {@link #executionStageCounter} for the given {@link PlatformExecution} and disposes
-     * {@link Executor}s if it is no longer needed.
-     */
-    private void disposeExecutorIfDone(PlatformExecution platformExecution) {
-        // TODO
-//        int numExecutedStages = this.executionStageCounter.increment(platformExecution);
-//        if (numExecutedStages == platformExecution.getStages().size()) {
-//            // Be cautious: In replay mode, we do not want to re-summon the Executor.
-//            final Executor executor = this.executors.get(platformExecution);
-//            if (executor != null) {
-//                executor.dispose();
-//                this.executors.remove(platformExecution);
-//            }
-//        }
     }
 
     /**
@@ -301,6 +286,27 @@ public class CrossPlatformExecutor implements ExecutionState {
             final StageActivator activator = this.getOrCreateActivator(successorStage);
             this.tryToActivate(activator);
         }
+    }
+
+
+    /**
+     * Retrieve an existing {@link ExecutionStageLoopContext} or create a new one for a {@link ExecutionStageLoop}.
+     *
+     * @param loop for that a {@link ExecutionStageLoopContext} is requested
+     * @return the {@link ExecutionStageLoopContext}
+     */
+    private ExecutionStageLoopContext getOrCreateLoopContext(ExecutionStageLoop loop) {
+        return this.loopContexts.computeIfAbsent(loop, ExecutionStageLoopContext::new);
+    }
+
+    /**
+     * Removes an {@link ExecutionStageLoopContext}.
+     *
+     * @param loop that is described by the {@link ExecutionStageLoopContext}
+     */
+    private void removeLoopContext(ExecutionStageLoop loop) {
+        final ExecutionStageLoopContext context = this.loopContexts.remove(loop);
+        assert context.getNumReferences() == 0;
     }
 
     @Override
@@ -356,11 +362,36 @@ public class CrossPlatformExecutor implements ExecutionState {
          */
         private final ExecutionStage stage;
 
+        /**
+         * Regular inbound {@link Channel}s to the {@link #stage}.
+         */
         private final Collection<Channel> miscInboundChannels = new LinkedList<>();
 
+        /**
+         * Inbound {@link Channel}s to the {@link #stage}, that implement an initialization {@link InputSlot}
+         * of a {@link LoopHeadOperator}.
+         */
         private final Collection<Channel> initializationInboundChannels = new LinkedList<>();
 
+        /**
+         * Inbound {@link Channel}s to the {@link #stage}, that implement an iteration {@link InputSlot}
+         * of a {@link LoopHeadOperator}.
+         */
         private final Collection<Channel> iterationInboundChannels = new LinkedList<>();
+
+        /**
+         * Inbound {@link Channel}s to the {@link #stage}, that are loop invariant, i.e., that are needed across
+         * several iteration. Of course, this is only possible if {@link #stage} is in an {@link ExecutionStageLoop}.
+         */
+        private final Collection<Channel> loopInvariantInboundChannels = new LinkedList<>();
+
+        /**
+         * If the {@link #stage} is part of a {@link ExecutionStageLoop}, we need to keep track of an associated
+         * runtime {@link ExecutionStageLoopContext} that manages loop invariant {@link ExecutionResource}s. In particular,
+         * this instance is a stake-holder of this {@link ExecutionStageLoopContext} and tells that it must not be
+         * removed.
+         */
+        private final ExecutionStageLoopContext loopContext;
 
         /**
          * Keep track of the {@link ChannelInstance}s that are inputs of the {@link #stage}.
@@ -375,13 +406,23 @@ public class CrossPlatformExecutor implements ExecutionState {
         private StageActivator(ExecutionStage stage) {
             this.stage = stage;
 
+            if (this.stage.getLoop() != null) {
+                this.loopContext = CrossPlatformExecutor.this.getOrCreateLoopContext(this.stage.getLoop());
+                this.loopContext.noteObtainedReference();
+            } else {
+                this.loopContext = null;
+            }
+
             // Distinguish the inbound Channels of the stage.
             final Collection<Channel> inboundChannels = this.stage.getInboundChannels();
             if (this.stage.isLoopHead()) {
                 // Loop heads are special in the sense that they don't require all of their inputs.
                 for (Channel inboundChannel : inboundChannels) {
                     for (ExecutionTask executionTask : inboundChannel.getConsumers()) {
+                        // Avoid consumers from other ExecutionStages.
                         if (executionTask.getStage() != this.stage) continue;
+
+                        // Check special inputs with iteration semantics.
                         if (executionTask.getOperator().isLoopHead()) {
                             LoopHeadOperator loopHead = (LoopHeadOperator) executionTask.getOperator();
                             final InputSlot<?> targetInput = executionTask.getInputSlotFor(inboundChannel);
@@ -393,12 +434,39 @@ public class CrossPlatformExecutor implements ExecutionState {
                                 continue;
                             }
                         }
+
+                        // Otherwise, we treat it as a regular inbound Channel.
                         this.miscInboundChannels.add(inboundChannel);
+                        assert this.checkIfIsLoopInput(inboundChannel) :
+                                String.format("%s is not a loop input as expected.", inboundChannel);
+                        this.loopInvariantInboundChannels.add(inboundChannel);
                     }
                 }
+
             } else {
+                // If we do not have a loop head, we treat all Channels as regular ones.
                 this.miscInboundChannels.addAll(inboundChannels);
+
+                // Still, the Channels might be loop inputs.
+                for (Channel inboundChannel : inboundChannels) {
+                    if (this.checkIfIsLoopInput(inboundChannel)) {
+                        this.loopInvariantInboundChannels.add(inboundChannel);
+                    }
+                }
             }
+        }
+
+        /**
+         * Checks if the given {@link Channel} (inbound to {@link #stage}), is entering an {@link ExecutionStageLoop}
+         * when serving the {@link #stage}.
+         *
+         * @param inboundChannel {@link Channel} that is inbound to {@link #stage} and that might be a {@link ExecutionStageLoop} input
+         * @return whether the {@link Channel} is a {@link ExecutionStageLoop} input, i.e., it is not produced in an {@link ExecutionStageLoop}
+         * while this {@link #stage} is part of a {@link ExecutionStageLoop}
+         */
+        private boolean checkIfIsLoopInput(Channel inboundChannel) {
+            // NB: This code assumes no nested loops.
+            return this.stage.getLoop() != null && this.stage.getLoop() != inboundChannel.getProducer().getStage().getLoop();
         }
 
         /**
@@ -424,13 +492,18 @@ public class CrossPlatformExecutor implements ExecutionState {
             for (Channel channel : channels) {
                 // Check if the ChannelInstance is already known.
                 if (this.inputChannelInstances.containsKey(channel)) continue;
-                
+
                 // Otherwise, check if it is available now.
                 final ChannelInstance channelInstance = CrossPlatformExecutor.this.getChannelInstance(channel);
                 if (channelInstance != null) {
                     // If so, reference it.
                     this.inputChannelInstances.put(channel, channelInstance);
                     channelInstance.noteObtainedReference();
+
+                    // Also, check if this is a loop invariant input.
+                    if (this.loopInvariantInboundChannels.contains(channel)) {
+                        this.loopContext.registerLoopInvariant(channelInstance);
+                    }
                 } else {
                     // Otherwise, we will have a negative result. Still, we need to grab all Channels to save them from disposal.
                     isAllChannelsAvailable = false;
@@ -439,6 +512,11 @@ public class CrossPlatformExecutor implements ExecutionState {
             return isAllChannelsAvailable;
         }
 
+        /**
+         * Getter for the {@link ExecutionStage} activated by this instance.
+         *
+         * @return the {@link ExecutionStage}
+         */
         public ExecutionStage getStage() {
             return this.stage;
         }
@@ -447,12 +525,63 @@ public class CrossPlatformExecutor implements ExecutionState {
          * Dispose this instance, in particular discard references to its {@link ChannelInstance}s.
          */
         void dispose() {
+            // Release the inputChannelInstances.
             for (ChannelInstance channelInstance : this.inputChannelInstances.values()) {
                 channelInstance.noteDiscardedReference(true);
             }
             this.inputChannelInstances.clear();
+
+            // Release the loopContext.
+            if (this.loopContext != null) {
+                this.loopContext.noteDiscardedReference(true);
+            }
         }
     }
 
+
+    /**
+     * Keeps track of {@link ExecutionResource}s of an {@link ExecutionStageLoop}.
+     */
+    private class ExecutionStageLoopContext extends AbstractReferenceCountable {
+
+        /**
+         * The {@link ExecutionStageLoop} being described by this instance.
+         */
+        private final ExecutionStageLoop loop;
+
+        /**
+         * Maintains the loop invariant {@link ExecutionResource}s.
+         */
+        private final Set<ExecutionResource> loopInvariants = new HashSet<>(4);
+
+        /**
+         * Creates a new instance.
+         *
+         * @param executionStageLoop is described by the new instance
+         */
+        public ExecutionStageLoopContext(ExecutionStageLoop executionStageLoop) {
+            this.loop = executionStageLoop;
+        }
+
+        /**
+         * Registers a loop invariant {@link ExecutionResource} with this instance.
+         *
+         * @param loopInvariant the said {@link ExecutionResource}
+         */
+        void registerLoopInvariant(ExecutionResource loopInvariant) {
+            if (this.loopInvariants.add(loopInvariant)) {
+                loopInvariant.noteObtainedReference();
+            }
+        }
+
+        @Override
+        protected void disposeUnreferenced() {
+            for (ExecutionResource loopInvariant : this.loopInvariants) {
+                loopInvariant.noteDiscardedReference(true);
+            }
+            this.loopInvariants.clear();
+            CrossPlatformExecutor.this.removeLoopContext(this.loop);
+        }
+    }
 
 }

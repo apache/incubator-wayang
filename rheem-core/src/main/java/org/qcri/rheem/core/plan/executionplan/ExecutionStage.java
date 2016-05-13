@@ -114,6 +114,15 @@ public class ExecutionStage {
         return this.executionStageLoop != null && this.executionStageLoop.getLoopHead() == this;
     }
 
+    /**
+     * Retrieve the (innermost) {@link ExecutionStageLoop} that this instance is part of.
+     *
+     * @return the said {@link ExecutionStageLoop} or {@code null} if none
+     */
+    public ExecutionStageLoop getLoop() {
+        return this.executionStageLoop;
+    }
+
     public void markAsStartTask(ExecutionTask executionTask) {
         Validate.isTrue(executionTask.getStage() == this);
         this.startTasks.add(executionTask);
@@ -186,8 +195,8 @@ public class ExecutionStage {
      *
      * @return a {@link String} containing the textual representation
      */
-    public String toExtensiveString() {
-        return this.toExtensiveString("");
+    public String getPlanAsString() {
+        return this.getPlanAsString("");
     }
 
     /**
@@ -196,9 +205,9 @@ public class ExecutionStage {
      * @param indent will be used to indent every line of the textual representation
      * @return a {@link String} containing the textual representation
      */
-    public String toExtensiveString(String indent) {
+    public String getPlanAsString(String indent) {
         final StringBuilder sb = new StringBuilder();
-        this.toExtensiveString(sb, indent);
+        this.getPlanAsString(sb, indent);
         if (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\n') sb.setLength(sb.length() - 1);
         return sb.toString();
     }
@@ -209,7 +218,7 @@ public class ExecutionStage {
      * @param sb     to which the representation should be appended
      * @param indent will be used to indent every line of the textual representation
      */
-    public void toExtensiveString(StringBuilder sb, String indent) {
+    public void getPlanAsString(StringBuilder sb, String indent) {
         Set<ExecutionTask> seenTasks = new HashSet<>();
         for (ExecutionTask startTask : this.startTasks) {
             for (Channel inputChannel : startTask.getInputChannels()) {

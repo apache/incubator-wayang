@@ -48,9 +48,14 @@ public class FileChannel extends Channel {
 
     @Override
     public String toString() {
-        return String.format("%s%s", this.getClass().getSimpleName(), this.getDescriptor());
+        return String.format("%s[%s->%s,%s,%s]",
+                this.getClass().getSimpleName(),
+                this.getProducer() == null ? this.getProducerSlot() : this.getProducer(),
+                this.getConsumers(),
+                this.getDescriptor().getLocation(),
+                this.getDescriptor().getSerialization()
+        );
     }
-
     @Override
     public FileChannel.Descriptor getDescriptor() {
         return (FileChannel.Descriptor) super.getDescriptor();

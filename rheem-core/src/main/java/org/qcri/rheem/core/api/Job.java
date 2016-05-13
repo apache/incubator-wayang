@@ -362,7 +362,7 @@ public class Job {
             ExecutionStage nextStage;
             while ((nextStage = stagedStages.poll()) != null) {
                 sb.append(nextStage).append(":\n");
-                nextStage.toExtensiveString(sb, "* ");
+                nextStage.getPlanAsString(sb, "* ");
                 nextStage.getSuccessors().stream()
                         .filter(seenStages::add)
                         .forEach(stagedStages::add);
