@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This graph contains a set of {@link ChannelConversion}s.
@@ -212,6 +213,7 @@ public class ChannelConversionGraph {
             }
             this.destInputs = destInputs;
             this.destChannelDescriptorSets = RheemCollections.map(destInputs, this::resolveSupportedChannels);
+            assert this.destChannelDescriptorSets.stream().noneMatch(Collection::isEmpty);
             this.optimizationContext = new OptimizationContext(optimizationContext);
             this.configuration = configuration;
         }
@@ -221,9 +223,22 @@ public class ChannelConversionGraph {
             return this.result;
         }
 
+        /**
+         * Find the supported {@link ChannelDescriptor}s for the given {@link InputSlot}. If the latter is a
+         * "loop invariant" {@link InputSlot}, then require to only reusable {@link ChannelDescriptor}.
+         *
+         * @param input for which supported {@link ChannelDescriptor}s are requested
+         * @return all eligible {@link ChannelDescriptor}s
+         */
         private Set<ChannelDescriptor> resolveSupportedChannels(final InputSlot<?> input) {
             final ExecutionOperator owner = (ExecutionOperator) input.getOwner();
-            return RheemCollections.asSet(owner.getSupportedInputChannels(input.getIndex()));
+            final List<ChannelDescriptor> supportedInputChannels = owner.getSupportedInputChannels(input.getIndex());
+            if (input.isLoopInvariant()) {
+                // Loop input is needed in several iterations and must therefore be reusable.
+                return supportedInputChannels.stream().filter(ChannelDescriptor::isReusable).collect(Collectors.toSet());
+            } else {
+                return RheemCollections.asSet(supportedInputChannels);
+            }
         }
 
         @Override

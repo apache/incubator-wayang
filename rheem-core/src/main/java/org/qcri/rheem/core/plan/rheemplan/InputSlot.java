@@ -147,24 +147,6 @@ public class InputSlot<T> extends Slot<T> {
     }
 
     /**
-     * Recursively trace the given {@code inputSlot}.
-     *
-     * @param inputSlot the {@link InputSlot} to trace
-     * @return the {@link InputSlot} of the outermost {@link Operator} that represents the given {@code inputSlot} or
-     * {@code null} if the {@code inputSlot} has no representation in the outermost {@link Operator}.
-     * @see Operator#getContainer()
-     * @see OperatorContainer#traceInput(InputSlot)
-     */
-    public static <T> InputSlot<T> traceOutermostInput(InputSlot<T> inputSlot) {
-        while (inputSlot != null && inputSlot.getOwner().getContainer() != null) {
-            final OperatorContainer container = inputSlot.getOwner().getContainer();
-            inputSlot = container.traceInput(inputSlot);
-        }
-
-        return inputSlot;
-    }
-
-    /**
      * @return whether this is a broadcast
      */
     public boolean isBroadcast() {
@@ -185,5 +167,33 @@ public class InputSlot<T> extends Slot<T> {
         if (this.isBroadcast) {
             // TODO: Consider removing broadacast.
         }
+    }
+
+    /**
+     * Tells whether this instance is inside of a {@link LoopSubplan} and consumes an {@link OutputSlot} outside
+     * of that {@link LoopSubplan}.
+     *
+     * @return whether above condition is satisfied
+     */
+    public boolean isLoopInvariant() {
+        final Operator owner = this.getOwner();
+
+        // If this is a LoopHeadOperator initial/iteration input, we know that this is not loop invariant.
+        if (owner.isLoopHead() && (
+                ((LoopHeadOperator) owner).getLoopBodyInputs().contains(this)
+                        || ((LoopHeadOperator) owner).getLoopInitializationInputs().contains(this)
+        )) return false;
+
+            // Find the loop this instance is in.
+        final LoopSubplan innermostLoop = owner.getInnermostLoop();
+        if (innermostLoop == null) return false;
+
+        // Find the adjacent OutputSlot.
+        final InputSlot<T> outerInput = owner.getOutermostInputSlot(this);
+        final OutputSlot<T> occupant = outerInput.getOccupant();
+        if (occupant == null) return false;
+
+        // Check if the adjacent OutputSlot is in a different loop.
+        return occupant.getOwner().getInnermostLoop() != innermostLoop;
     }
 }
