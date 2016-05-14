@@ -17,6 +17,12 @@ import java.util.Collection;
  */
 public class ChannelConversions {
 
+    public static final ChannelConversion UNCACHED_RDD_TO_CACHED_RDD = new DefaultChannelConversion(
+            RddChannel.UNCACHED_DESCRIPTOR,
+            RddChannel.CACHED_DESCRIPTOR,
+            () -> new SparkCacheOperator<>(DataSetType.createDefault(Void.class))
+    );
+
     public static final ChannelConversion COLLECTION_TO_BROADCAST = new DefaultChannelConversion(
             CollectionChannel.DESCRIPTOR,
             BroadcastChannel.DESCRIPTOR,
@@ -78,6 +84,7 @@ public class ChannelConversions {
     );
 
     public static Collection<ChannelConversion> ALL = Arrays.asList(
+            UNCACHED_RDD_TO_CACHED_RDD,
             COLLECTION_TO_BROADCAST,
             COLLECTION_TO_UNCACHED_RDD,
             UNCACHED_RDD_TO_COLLECTION,
