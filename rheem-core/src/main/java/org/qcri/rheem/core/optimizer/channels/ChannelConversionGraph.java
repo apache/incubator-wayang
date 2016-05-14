@@ -263,7 +263,7 @@ public class ChannelConversionGraph {
             while (iterator.hasNext()) {
                 final Map.Entry<Set<ChannelDescriptor>, BitSet> entry = iterator.next();
                 final BitSet indices = entry.getValue();
-                if (indices.size() < 2) continue;
+                if (indices.cardinality() < 2) continue;
 
                 Set<ChannelDescriptor> channelDescriptors = entry.getKey();
                 int numReusableChannels = (int) channelDescriptors.stream().filter(ChannelDescriptor::isReusable).count();
