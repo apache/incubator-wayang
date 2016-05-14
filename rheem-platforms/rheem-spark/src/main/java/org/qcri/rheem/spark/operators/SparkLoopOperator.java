@@ -67,8 +67,8 @@ public class SparkLoopOperator<InputType, ConvergenceType>
                 assert inputs[ITERATION_INPUT_INDEX] != null;
                 assert inputs[ITERATION_CONVERGENCE_INPUT_INDEX] != null;
 
-                iterationInput = (RddChannel.Instance) inputs[INITIAL_INPUT_INDEX];
-                convergenceInput = (CollectionChannel.Instance) inputs[INITIAL_CONVERGENCE_INPUT_INDEX];
+                iterationInput = (RddChannel.Instance) inputs[ITERATION_INPUT_INDEX];
+                convergenceInput = (CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX];
                 Collection<ConvergenceType> convergenceCollection = convergenceInput.provideCollection();
                 try {
                     endloop = stoppingCondition.call(convergenceCollection);
