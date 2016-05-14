@@ -72,21 +72,27 @@ public class RheemPlans {
     public static RheemPlan multiSourceMultiSink(List<String> inputList1, List<String> inputList2,
                                                  List<String> collector1, List<String> collector2) {
         CollectionSource<String> source1 = new CollectionSource<>(inputList1, String.class);
+        source1.setName("source1");
         CollectionSource<String> source2 = new CollectionSource<>(inputList2, String.class);
+        source2.setName("source2");
 
         UnionAllOperator<String> coalesceOperator = new UnionAllOperator<>(String.class);
+        coalesceOperator.setName("source1+2");
         source1.connectTo(0, coalesceOperator, 0);
         source2.connectTo(0, coalesceOperator, 1);
 
         MapOperator<String, String> uppercaseOperator = new MapOperator<>(
                 String::toUpperCase, String.class, String.class
         );
+        uppercaseOperator.setName("uppercase");
         coalesceOperator.connectTo(0, uppercaseOperator, 0);
 
         LocalCallbackSink<String> sink1 = LocalCallbackSink.createCollectingSink(collector1, String.class);
+        sink1.setName("sink1");
         uppercaseOperator.connectTo(0, sink1, 0);
 
         LocalCallbackSink<String> sink2 = LocalCallbackSink.createCollectingSink(collector2, String.class);
+        sink2.setName("sink2");
         coalesceOperator.connectTo(0, sink2, 0);
 
         return new RheemPlan(sink1, sink2);

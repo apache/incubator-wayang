@@ -87,7 +87,8 @@ public class ChannelConversionGraph {
      * @param optimizationContext describes the above mentioned {@link ExecutionOperator} key figures   @return a {@link Junction} or {@code null} if none could be found
      */
     public Junction findMinimumCostJunction(OutputSlot<?> output,
-                                            Channel existingChannel, List<InputSlot<?>> destInputSlots,
+                                            Channel existingChannel,
+                                            List<InputSlot<?>> destInputSlots,
                                             OptimizationContext optimizationContext) {
         return new ShortestTreeSearcher(output, existingChannel, destInputSlots, optimizationContext, this.configuration).getJunction();
     }
