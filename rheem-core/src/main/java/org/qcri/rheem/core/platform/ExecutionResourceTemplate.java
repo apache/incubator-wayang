@@ -12,18 +12,19 @@ public abstract class ExecutionResourceTemplate extends AbstractReferenceCountab
     /**
      * Maintains this instance.
      */
-    private final Executor executor;
+    private final CompositeExecutionResource container;
 
     /**
-     * Creates a new instance and registers it with its {@link Executor}.
+     * Creates a new instance and registers it with an {@link CompositeExecutionResource}. If the latter is an
+     * {@link ExecutionResource} itself, then this instance obtains a reference on it during its life cycle.
      *
-     * @param executor that maintains this instance or {@code null} if none
+     * @param container that maintains this instance or {@code null} if none
      */
-    protected ExecutionResourceTemplate(Executor executor) {
-        this.executor = executor;
-        if (this.executor != null) {
-            this.executor.noteObtainedReference();
-            this.executor.register(this);
+    protected ExecutionResourceTemplate(CompositeExecutionResource container) {
+        this.container = container;
+        if (this.container != null) {
+            this.container.register(this);
+            this.container.noteObtainedReference();
         }
     }
 
@@ -39,9 +40,9 @@ public abstract class ExecutionResourceTemplate extends AbstractReferenceCountab
         } catch (Throwable t) {
             throw new RheemException(String.format("Releasing %s failed.", this), t);
         } finally {
-            if (this.executor != null) {
-                this.executor.unregister(this);
-                this.executor.noteDiscardedReference(true);
+            if (this.container != null) {
+                this.container.unregister(this);
+                this.container.noteDiscardedReference(true);
             }
         }
     }
@@ -64,11 +65,6 @@ public abstract class ExecutionResourceTemplate extends AbstractReferenceCountab
         } catch (Throwable t) {
             LoggerFactory.getLogger(this.getClass()).error("Action failed.", t);
         }
-    }
-
-    @Override
-    public Executor getExecutor() {
-        return this.executor;
     }
 
     /**

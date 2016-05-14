@@ -7,6 +7,7 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.util.RheemArrays;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
@@ -251,7 +252,7 @@ public class FullIntegrationIT {
 
         rheemContext.execute(rheemPlan);
         final HashSet<Integer> expected = new HashSet<>(RheemArrays.asList(RheemArrays.range(0, 24)));
-        Assert.assertEquals(expected, collector);
+        Assert.assertEquals(expected, RheemCollections.asSet(collector));
     }
 
     @Test

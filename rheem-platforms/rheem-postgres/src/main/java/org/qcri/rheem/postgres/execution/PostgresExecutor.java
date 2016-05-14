@@ -7,10 +7,7 @@ import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.platform.ExecutionState;
-import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.core.platform.ExecutorTemplate;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.postgres.PostgresPlatform;
@@ -40,6 +37,7 @@ public class PostgresExecutor extends ExecutorTemplate {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public PostgresExecutor(PostgresPlatform platform, Job job) {
+        super(job == null ? null : job.getCrossPlatformExecutor());
         this.platform = platform;
         this.connection = this.createJdbcConnection(job.getConfiguration());
     }

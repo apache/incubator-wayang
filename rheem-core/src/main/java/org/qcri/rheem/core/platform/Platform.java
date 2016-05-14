@@ -5,6 +5,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.plan.executionplan.Channel;
@@ -46,7 +47,9 @@ public abstract class Platform {
     }
 
     /**
-     * Registers supported todo...
+     * Register the {@link ChannelConversion}s provided by this instance to the given {@link ChannelConversionGraph}.
+     *
+     * @param channelConversionGraph to which the {@link ChannelConversion}s should be added
      */
     public abstract void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph);
 

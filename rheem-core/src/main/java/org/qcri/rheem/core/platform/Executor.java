@@ -3,12 +3,11 @@ package org.qcri.rheem.core.platform;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.util.ReferenceCountable;
 
 /**
  * An executor executes {@link ExecutionOperator}s.
  */
-public interface Executor extends ReferenceCountable {
+public interface Executor extends CompositeExecutionResource {
 
     /**
      * Executes the given {@code stage}.
@@ -30,18 +29,11 @@ public interface Executor extends ReferenceCountable {
     Platform getPlatform();
 
     /**
-     * Register a new {@link ExecutionResource} that is maintained by this instance.
+     * If this instance is instrumented by a {@link CrossPlatformExecutor}, this method provides the latter.
      *
-     * @param resource the {@link ExecutionResource}
+     * @return the instrumenting {@link CrossPlatformExecutor} or {@code null} if none
      */
-    void register(ExecutionResource resource);
-
-    /**
-     * Unregister a disposed {@link ExecutionResource} that was maintained by this instance.
-     *
-     * @param resource the {@link ExecutionResource}
-     */
-    void unregister(ExecutionResource resource);
+    CrossPlatformExecutor getCrossPlatformExecutor();
 
     /**
      * Factory for {@link Executor}s.

@@ -42,7 +42,7 @@ public class RheemContext {
      * @param platform the {@link Platform} to register
      */
     public void register(Platform platform) {
-        ((ExplicitCollectionProvider<Platform>) this.configuration.getPlatformProvider()).addToWhitelist(platform);
+        this.configuration.getPlatformProvider().addToWhitelist(platform);
     }
 
     /**

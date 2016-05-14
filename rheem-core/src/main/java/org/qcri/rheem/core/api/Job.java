@@ -16,6 +16,7 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
+import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.StopWatch;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 /**
  * Describes a job that is to be executed using Rheem.
  */
-public class Job {
+public class Job extends OneTimeExecutable {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -77,6 +78,7 @@ public class Job {
      */
     private final Set<String> udfJarPaths = new HashSet<>();
 
+
     /**
      * <i>Currently not used.</i>
      */
@@ -107,9 +109,22 @@ public class Job {
     }
 
     /**
-     * Execute this job.
+     * Run this instance. Must only be called once.
+     * @throws RheemException in case the execution fails for any reason
      */
-    public void execute() {
+    @Override
+    public void execute() throws RheemException {
+        try {
+            super.execute();
+        } catch (RheemException e) {
+            throw e;
+        } catch (Throwable t) {
+            throw new RheemException("Job execution failed.", t);
+        }
+    }
+
+    @Override
+    protected void doExecute() {
         // Make sure that each job is only executed once.
         if (this.hasBeenExecuted.getAndSet(true)) {
             throw new RheemException("Job has already been executed.");
@@ -134,7 +149,7 @@ public class Job {
         } catch (RheemException e) {
             throw e;
         } catch (Throwable t) {
-            throw new RheemException("Plan execution failed.", t);
+            throw new RheemException("Job execution failed.", t);
         } finally {
             this.stopWatch.stopAll();
             this.stopWatch.start("Release Resources");
@@ -405,7 +420,7 @@ public class Job {
         final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
 
         // Find and copy the open Channels.
-        final Set<ExecutionStage> completedStages =  this.crossPlatformExecutor.getCompletedStages();
+        final Set<ExecutionStage> completedStages = this.crossPlatformExecutor.getCompletedStages();
         final Set<ExecutionTask> completedTasks = completedStages.stream()
                 .flatMap(stage -> stage.getAllTasks().stream())
                 .collect(Collectors.toSet());
@@ -461,5 +476,14 @@ public class Job {
 
     public Set<String> getUdfJarPaths() {
         return this.udfJarPaths;
+    }
+
+    /**
+     * Provide the {@link CrossPlatformExecutor} used during the execution of this instance.
+     *
+     * @return the {@link CrossPlatformExecutor} or {@code null} if there is none allocated
+     */
+    public CrossPlatformExecutor getCrossPlatformExecutor() {
+        return this.crossPlatformExecutor;
     }
 }

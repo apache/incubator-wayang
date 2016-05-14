@@ -25,11 +25,14 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
     protected final Job job;
 
     public PushExecutorTemplate(Job job) {
+        super(job == null ? null : job.getCrossPlatformExecutor());
         this.job = job;
     }
 
     @Override
     public void execute(ExecutionStage stage, ExecutionState executionState) {
+        assert !this.isDisposed() : String.format("%s has been disposed.", this);
+
         final StageExecution stageExecution = new StageExecution(stage, executionState);
         stageExecution.executeStage();
     }
@@ -114,7 +117,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
          */
         void executeStage() {
             this.execute();
-            this.contributeToExecutionStage();
+            this.updateExecutionState();
         }
 
         @Override
@@ -186,7 +189,10 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
             return PushExecutorTemplate.this;
         }
 
-        private void contributeToExecutionStage() {
+        /**
+         * Put new {@link ChannelInstance}s to the {@link #executionState} and release input {@link ChannelInstance}s.
+         */
+        private void updateExecutionState() {
             final Map<Channel, Long> cardinalities = this.executionState.getCardinalities();
             for (final ChannelInstance channelInstance : this.allChannelInstances) {
 

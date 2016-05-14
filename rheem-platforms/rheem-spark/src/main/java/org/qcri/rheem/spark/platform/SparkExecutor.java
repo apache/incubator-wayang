@@ -22,6 +22,16 @@ import java.util.List;
  */
 public class SparkExecutor extends PushExecutorTemplate {
 
+    /**
+     * Reference to a {@link JavaSparkContext} to be used by this instance.
+     */
+    private final SparkContextReference sparkContextReference;
+
+    /**
+     * The {@link JavaSparkContext} to be used by this instance.
+     *
+     * @see #sparkContextReference
+     */
     public final JavaSparkContext sc;
 
     public FunctionCompiler compiler = new FunctionCompiler();
@@ -31,7 +41,9 @@ public class SparkExecutor extends PushExecutorTemplate {
     public SparkExecutor(SparkPlatform platform, Job job) {
         super(job);
         this.platform = platform;
-        this.sc = this.platform.getSparkContext(job);
+        this.sparkContextReference = this.platform.getSparkContext(job);
+        this.sparkContextReference.noteObtainedReference();
+        this.sc = this.sparkContextReference.get();
     }
 
     @Override
@@ -98,7 +110,6 @@ public class SparkExecutor extends PushExecutorTemplate {
     @Override
     public void dispose() {
         super.dispose();
-
-        this.getPlatform().closeSparkContext(this.sc);
+        this.sparkContextReference.noteDiscardedReference(true);
     }
 }

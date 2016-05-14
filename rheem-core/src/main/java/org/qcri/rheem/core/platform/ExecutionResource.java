@@ -13,11 +13,4 @@ public interface ExecutionResource extends ReferenceCountable {
      */
     void dispose() throws RheemException;
 
-    /**
-     * An instance can be associated to an {@link Executor} that maintains it.
-     *
-     * @return the associated {@link Executor} or {@code null} if noen
-     */
-    Executor getExecutor();
-
 }

@@ -77,6 +77,12 @@ public class CrossPlatformExecutor implements ExecutionState {
     private final Map<Channel, Long> cardinalities = new HashMap<>();
 
     /**
+     * Maintains {@link ExecutionResource}s that are "global" w.r.t. to this instance, i.e., they will not be
+     * instantly disposed if not currently used.
+     */
+    private final Set<ExecutionResource> globalResources = new HashSet<>(2);
+
+    /**
      * Keeps track of {@link ChannelInstance}s so as to reuse them among {@link Executor} runs.
      */
     private final Map<Channel, ChannelInstance> channelInstances = new HashMap<>();
@@ -261,7 +267,14 @@ public class CrossPlatformExecutor implements ExecutionState {
     private Executor getOrCreateExecutorFor(ExecutionStage stage) {
         return this.executors.computeIfAbsent(
                 stage.getPlatformExecution(),
-                pe -> pe.getPlatform().getExecutorFactory().create(this.job)
+                pe -> {
+                    // It is important to register the Executor. This way, we ensure that it will also not be disposed
+                    // among disconnected PlatformExecutions. The downside is, that we only remove it, once the
+                    // execution is done.
+                    final Executor executor = pe.getPlatform().getExecutorFactory().create(this.job);
+                    this.registerGlobal(executor);
+                    return executor;
+                }
         );
     }
 
@@ -323,6 +336,19 @@ public class CrossPlatformExecutor implements ExecutionState {
         }
     }
 
+    /**
+     * Register a global {@link ExecutionResource}, that will only be released once this instance has
+     * finished executing.
+     * @param resource that should be registered
+     */
+    public void registerGlobal(ExecutionResource resource) {
+        if (this.globalResources.add(resource)) {
+            resource.noteObtainedReference();
+        } else {
+            this.logger.warn("Registered {} twice.", resource);
+        }
+    }
+
     @Override
     public Map<Channel, Long> getCardinalities() {
         return this.cardinalities;
@@ -339,7 +365,9 @@ public class CrossPlatformExecutor implements ExecutionState {
 
 
     public void shutdown() {
-        this.executors.values().forEach(Executor::dispose);
+        // Release global resources.
+        this.globalResources.forEach(resource -> resource.noteDiscardedReference(true));
+        this.globalResources.clear();
     }
 
     /**
@@ -554,7 +582,7 @@ public class CrossPlatformExecutor implements ExecutionState {
         /**
          * Maintains the loop invariant {@link ExecutionResource}s.
          */
-        private final Set<ExecutionResource> loopInvariants = new HashSet<>(4);
+        private Set<ExecutionResource> loopInvariants = new HashSet<>(4);
 
         /**
          * Creates a new instance.
@@ -581,8 +609,13 @@ public class CrossPlatformExecutor implements ExecutionState {
             for (ExecutionResource loopInvariant : this.loopInvariants) {
                 loopInvariant.noteDiscardedReference(true);
             }
-            this.loopInvariants.clear();
+            this.loopInvariants = null;
             CrossPlatformExecutor.this.removeLoopContext(this.loop);
+        }
+
+        @Override
+        public boolean isDisposed() {
+            return this.loopInvariants == null;
         }
     }
 

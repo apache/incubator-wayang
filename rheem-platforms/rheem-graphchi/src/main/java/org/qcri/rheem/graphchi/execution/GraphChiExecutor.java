@@ -1,12 +1,10 @@
 package org.qcri.rheem.graphchi.execution;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.core.platform.ExecutionState;
-import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.core.platform.ExecutorTemplate;
+import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
 import org.qcri.rheem.graphchi.operators.GraphChiOperator;
 
@@ -21,9 +19,10 @@ public class GraphChiExecutor extends ExecutorTemplate {
 
     private final Configuration configuration;
 
-    public GraphChiExecutor(GraphChiPlatform platform, Configuration configuration) {
+    public GraphChiExecutor(GraphChiPlatform platform, Job job) {
+        super(job == null ? null : job.getCrossPlatformExecutor());
         this.platform = platform;
-        this.configuration = configuration;
+        this.configuration = job.getConfiguration();
     }
 
     @Override
