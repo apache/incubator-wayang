@@ -87,7 +87,10 @@ public class Junction {
     }
 
     public void setTargetChannel(int targetIndex, Channel targetChannel) {
-        assert this.targetChannels.get(targetIndex) == null;
+        assert this.targetChannels.get(targetIndex) == null : String.format(
+                "Cannot set target channel %d to %s; it is already occupied by %s.",
+                targetIndex, targetChannel, this.targetChannels.get(targetIndex)
+        );
         this.targetChannels.set(targetIndex, targetChannel);
     }
 

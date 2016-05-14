@@ -492,8 +492,13 @@ public class ChannelConversionGraph {
 
         private void createJunctionAux(TreeVertex vertex, Channel channel, Junction junction, boolean isOnAllPaths) {
             channel.setBreakingProhibited(!isOnAllPaths);
-            for (int index = vertex.settledIndices.nextSetBit(0); index >= 0; index = vertex.settledIndices.nextSetBit(index + 1)) {
-                junction.setTargetChannel(index, channel);
+
+            // A bit of a hacky detail: declared settled indices of the channel are only valid if the channel can be
+            // reused or if it is "terminal". Otherwise, the search algorithm will have neglected that settled index.
+            if (channel.isReusable() || vertex.outEdges.isEmpty()) {
+                for (int index = vertex.settledIndices.nextSetBit(0); index >= 0; index = vertex.settledIndices.nextSetBit(index + 1)) {
+                    junction.setTargetChannel(index, channel);
+                }
             }
             isOnAllPaths &= vertex.settledIndices.isEmpty() && vertex.outEdges.size() <= 1;
             for (TreeEdge edge : vertex.outEdges) {
