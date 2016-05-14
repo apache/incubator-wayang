@@ -248,7 +248,7 @@ public class CrossPlatformExecutor implements ExecutionState {
         Executor executor = this.getOrCreateExecutorFor(stage);
 
         // Have the execution done.
-        CrossPlatformExecutor.this.logger.info("Start executing {}:\n{}", stage, stage.getPlanAsString("> "));
+        CrossPlatformExecutor.this.logger.info("Having {} execute {}:\n{}", executor, stage, stage.getPlanAsString("> "));
         long startTime = System.currentTimeMillis();
         executor.execute(stage, this);
         long finishTime = System.currentTimeMillis();
@@ -289,7 +289,11 @@ public class CrossPlatformExecutor implements ExecutionState {
         for (Channel outboundChannel : outboundChannels) {
             if (this.getChannelInstance(outboundChannel) != null) {
                 for (ExecutionTask consumer : outboundChannel.getConsumers()) {
-                    successorStages.add(consumer.getStage());
+                    final ExecutionStage consumerStage = consumer.getStage();
+                    // We must be careful: outbound Channels still can have consumers within the producer's ExecutionStage.
+                    if (consumerStage != processedStage) {
+                        successorStages.add(consumerStage);
+                    }
                 }
             }
         }
