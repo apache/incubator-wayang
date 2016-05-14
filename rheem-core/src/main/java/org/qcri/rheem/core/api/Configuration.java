@@ -227,7 +227,7 @@ public class Configuration {
                 new FunctionalKeyValueProvider<OutputSlot<?>, CardinalityEstimator>(
                         outputSlot -> new FallbackCardinalityEstimator(),
                         configuration
-                ).withSlf4jWarning("Creating fallback estimator for {}.");
+                ).withSlf4jWarning("Creating fallback cardinality estimator for {}.");
 
         // Default option: Implementations define their estimators.
         KeyValueProvider<OutputSlot<?>, CardinalityEstimator> defaultProvider =
@@ -284,7 +284,7 @@ public class Configuration {
                                     DefaultLoadEstimator.createIOLinearEstimator(operator, 1000)
                             ),
                             configuration
-                    ).withSlf4jWarning("Creating fallback selectivity for {}.");
+                    ).withSlf4jWarning("Creating fallback load estimator for {}.");
 
             // Built-in option: let the ExecutionOperators provide the LoadProfileEstimator.
             KeyValueProvider<ExecutionOperator, LoadProfileEstimator> builtInProvider =
@@ -308,7 +308,7 @@ public class Configuration {
                                     DefaultLoadEstimator.createIOLinearEstimator(10000)
                             ),
                             configuration
-                    ).withSlf4jWarning("Creating fallback selectivity for {}.");
+                    ).withSlf4jWarning("Creating fallback load estimator for {}.");
 
             // Built-in layer: let the FunctionDescriptors provide the LoadProfileEstimators themselves.
             KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> builtInProvider =

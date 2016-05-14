@@ -34,16 +34,18 @@ public class ExecutionPlan {
         StringBuilder sb = new StringBuilder();
         Counter<ExecutionStage> stageActivationCounter = new Counter<>();
         Queue<ExecutionStage> activatedStages = new LinkedList<>(this.startingStages);
+        Set<ExecutionStage> seenStages = new HashSet<>();
         while (!activatedStages.isEmpty()) {
             while (!activatedStages.isEmpty()) {
                 final ExecutionStage stage = activatedStages.poll();
-                sb.append(stage.wasExecuted() ? "***" : ">>> ").append(stage).append(":\n");
-                stage.toExtensiveString(sb);
+                if (!seenStages.add(stage)) continue;
+                sb.append(">>> ").append(stage).append(":\n");
+                stage.getPlanAsString(sb, "> ");
                 sb.append("\n");
 
                 for (ExecutionStage successor : stage.getSuccessors()) {
                     final int count = stageActivationCounter.add(successor, 1);
-                    if (count == successor.getPredecessors().size()) {
+                    if (count == successor.getPredecessors().size() || successor.isLoopHead()) {
                         activatedStages.add(successor);
                     }
                 }
@@ -68,21 +70,31 @@ public class ExecutionPlan {
     }
 
     /**
-     * Collects all {@link ExecutionTask}s of this instance.
+     * Collects all {@link ExecutionStage}s in this instance.
      *
-     * @return the {@link ExecutionTask}s
+     * @return the {@link ExecutionStage}s
      */
-    public Set<ExecutionTask> collectAllTasks() {
-        // TODO: Cache? What if we enhance this instance? Then we need to invalidate it.
-        Set<ExecutionTask> allTasks = new HashSet<>();
+    public Set<ExecutionStage> getStages() {
         Set<ExecutionStage> seenStages = new HashSet<>();
         Queue<ExecutionStage> openStages = new LinkedList<>(this.getStartingStages());
         while (!openStages.isEmpty()) {
             final ExecutionStage stage = openStages.poll();
             if (seenStages.add(stage)) {
-                allTasks.addAll(stage.getAllTasks());
                 openStages.addAll(stage.getSuccessors());
             }
+        }
+        return seenStages;
+    }
+
+    /**
+     * Collects all {@link ExecutionTask}s of this instance.
+     *
+     * @return the {@link ExecutionTask}s
+     */
+    public Set<ExecutionTask> collectAllTasks() {
+        Set<ExecutionTask> allTasks = new HashSet<>();
+        for (ExecutionStage stage : this.getStages()) {
+            allTasks.addAll(stage.getAllTasks());
         }
         return allTasks;
     }
@@ -157,14 +169,13 @@ public class ExecutionPlan {
     /**
      * Creates a new instance from the given {@link ExecutionTaskFlow}.
      *
-     * @param executionTaskFlow should be converted into an {@link ExecutionPlan}
-     * @param stageSplittingCriterion  defines where to install {@link ExecutionStage} boundaries
+     * @param executionTaskFlow       should be converted into an {@link ExecutionPlan}
+     * @param stageSplittingCriterion defines where to install {@link ExecutionStage} boundaries
      * @return the new instance
      */
     public static ExecutionPlan createFrom(ExecutionTaskFlow executionTaskFlow,
                                            StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion) {
-        final StageAssignmentTraversal stageAssignmentTraversal =
-                new StageAssignmentTraversal(executionTaskFlow, stageSplittingCriterion);
-        return stageAssignmentTraversal.run();
+        return StageAssignmentTraversal.assignStages(executionTaskFlow, stageSplittingCriterion);
     }
+
 }

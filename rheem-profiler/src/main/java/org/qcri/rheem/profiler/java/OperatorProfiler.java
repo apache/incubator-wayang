@@ -98,7 +98,7 @@ public abstract class OperatorProfiler {
     protected static CollectionChannel.Instance createChannelInstance() {
         final ChannelDescriptor channelDescriptor = CollectionChannel.DESCRIPTOR;
         final Channel channel = channelDescriptor.createChannel(null, new Configuration());
-        return (CollectionChannel.Instance) channel.createInstance();
+        return (CollectionChannel.Instance) channel.createInstance(null);
     }
 
     public JavaExecutionOperator getOperator() {

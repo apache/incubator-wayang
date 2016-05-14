@@ -1,14 +1,14 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.optimizer.SanityChecker;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * A Rheem plan consists of a set of {@link Operator}s.
@@ -83,6 +83,29 @@ public class RheemPlan {
      */
     public Collection<Operator> collectReachableTopLevelSources() {
         return PlanTraversal.upstream().traverse(this.sinks).getTraversedNodesWith(Operator::isSource);
+    }
+
+    /**
+     * Find the {@link Operator}s in this instance by their name.
+     *
+     * @param name the name of the {@link Operator}s
+     * @return the matching {@link Operator}s; only top-level (non-nested) ones are considered
+     */
+    public Collection<Operator> collectTopLevelOperatorsByName(String name) {
+        return PlanTraversal.upstream().traverse(this.sinks).getTraversedNodesWith(
+                operator -> name.equals(operator.getName())
+        );
+    }
+
+    /**
+     * Find the {@link Operator} in this instance by their name.
+     *
+     * @param name the name of the {@link Operator}s
+     * @return the matching {@link Operator} or {@code null} if none
+     * @throws RheemException if there is more than one such {@link Operator}
+     */
+    public Operator collectTopLevelOperatorByName(String name) throws RheemException{
+        return RheemCollections.getSingleOrNull(this.collectTopLevelOperatorsByName(name));
     }
 
     /**

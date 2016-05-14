@@ -285,7 +285,7 @@ public abstract class SparkOperatorProfiler {
     protected static RddChannel.Instance createChannelInstance(SparkExecutor sparkExecutor) {
         final ChannelDescriptor channelDescriptor = RddChannel.CACHED_DESCRIPTOR;
         final RddChannel channel = (RddChannel) channelDescriptor.createChannel(null, sparkExecutor.getConfiguration());
-        return (RddChannel.Instance) channel.createInstance();
+        return (RddChannel.Instance) channel.createInstance(null);
     }
 
     /**

@@ -6,8 +6,10 @@ import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Junction;
@@ -19,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This graph contains a set of {@link ChannelConversion}s.
@@ -85,7 +88,8 @@ public class ChannelConversionGraph {
      * @param optimizationContext describes the above mentioned {@link ExecutionOperator} key figures   @return a {@link Junction} or {@code null} if none could be found
      */
     public Junction findMinimumCostJunction(OutputSlot<?> output,
-                                            Channel existingChannel, List<InputSlot<?>> destInputSlots,
+                                            Channel existingChannel,
+                                            List<InputSlot<?>> destInputSlots,
                                             OptimizationContext optimizationContext) {
         return new ShortestTreeSearcher(output, existingChannel, destInputSlots, optimizationContext, this.configuration).getJunction();
     }
@@ -209,6 +213,7 @@ public class ChannelConversionGraph {
             }
             this.destInputs = destInputs;
             this.destChannelDescriptorSets = RheemCollections.map(destInputs, this::resolveSupportedChannels);
+            assert this.destChannelDescriptorSets.stream().noneMatch(Collection::isEmpty);
             this.optimizationContext = new OptimizationContext(optimizationContext);
             this.configuration = configuration;
         }
@@ -218,9 +223,22 @@ public class ChannelConversionGraph {
             return this.result;
         }
 
+        /**
+         * Find the supported {@link ChannelDescriptor}s for the given {@link InputSlot}. If the latter is a
+         * "loop invariant" {@link InputSlot}, then require to only reusable {@link ChannelDescriptor}.
+         *
+         * @param input for which supported {@link ChannelDescriptor}s are requested
+         * @return all eligible {@link ChannelDescriptor}s
+         */
         private Set<ChannelDescriptor> resolveSupportedChannels(final InputSlot<?> input) {
             final ExecutionOperator owner = (ExecutionOperator) input.getOwner();
-            return RheemCollections.asSet(owner.getSupportedInputChannels(input.getIndex()));
+            final List<ChannelDescriptor> supportedInputChannels = owner.getSupportedInputChannels(input.getIndex());
+            if (input.isLoopInvariant()) {
+                // Loop input is needed in several iterations and must therefore be reusable.
+                return supportedInputChannels.stream().filter(ChannelDescriptor::isReusable).collect(Collectors.toSet());
+            } else {
+                return RheemCollections.asSet(supportedInputChannels);
+            }
         }
 
         @Override
@@ -260,7 +278,7 @@ public class ChannelConversionGraph {
             while (iterator.hasNext()) {
                 final Map.Entry<Set<ChannelDescriptor>, BitSet> entry = iterator.next();
                 final BitSet indices = entry.getValue();
-                if (indices.size() < 2) continue;
+                if (indices.cardinality() < 2) continue;
 
                 Set<ChannelDescriptor> channelDescriptors = entry.getKey();
                 int numReusableChannels = (int) channelDescriptors.stream().filter(ChannelDescriptor::isReusable).count();
@@ -412,20 +430,75 @@ public class ChannelConversionGraph {
         }
 
         private void createJunction(Tree tree) {
+            // Create the a new Junction.
             final Junction junction = new Junction(this.sourceOutput, this.destInputs, this.optimizationContext);
+
+            // Create the Channels and ExecutionTasks.
             Channel sourceChannel = this.sourceChannel == null ?
                     this.startChannelDescriptor.createChannel(this.sourceOutput, this.configuration) :
                     this.sourceChannel;
             junction.setSourceChannel(sourceChannel);
             Channel startChannel = this.startChannel == null ? sourceChannel : this.startChannel;
             this.createJunctionAux(tree.root, startChannel, junction, true);
+
+            // Assign appropriate LoopSubplans to the newly created ExecutionTasks.
+            //
+            // Determine the LoopSubplan from the "source side" of the Junction.
+            final OutputSlot<?> sourceOutput = sourceChannel.getProducerSlot();
+            final ExecutionOperator sourceOperator = (ExecutionOperator) sourceOutput.getOwner();
+            final LoopSubplan sourceLoop =
+                    (!sourceOperator.isLoopHead() || sourceOperator.isFeedforwardOutput(sourceOutput)) ?
+                            sourceOperator.getInnermostLoop() : null;
+
+            if (sourceLoop != null) {
+                // If the source side is determining a LoopSubplan, it should be what the "target sides" request.
+                for (int destIndex = 0; destIndex < this.destInputs.size(); destIndex++) {
+                    assert this.destInputs.get(destIndex).getOwner().getInnermostLoop() == sourceLoop :
+                            String.format(
+                                    "Expected that %s would belong to %s, just as %d.",
+                                    this.destInputs.get(destIndex), sourceLoop, sourceOutput
+                            );
+                    Channel targetChannel = junction.getTargetChannel(destIndex);
+                    while (targetChannel != sourceChannel) {
+                        final ExecutionTask producer = targetChannel.getProducer();
+                        producer.getOperator().setContainer(sourceLoop);
+                        assert producer.getNumInputChannels() == 1 : String.format(
+                                "Glue operator %s was expected to have exactly one input channel.",
+                                producer
+                        );
+                        targetChannel = producer.getInputChannel(0);
+                    }
+                }
+
+            } else {
+                // TODO:
+                // Try to find for each distinct target LoopSubplan a "stallable" Channel, thereby ensuring not to
+                // assign ExecutionTasks twice.
+//                TIntCollection looplessDests = new TIntLinkedList();
+//                Map<LoopSubplan, TIntCollection> loopDests = new HashMap<>();
+//                for (int destIndex = 0; destIndex < this.destInputs.size(); destIndex++) {
+//                    final LoopSubplan targetLoop = this.destInputs.get(destIndex).getOwner().getInnermostLoop();
+//                    Channel targetChannel = junction.getTargetChannel(destIndex);
+//                    if (targetLoop == null) {
+//                        looplessDests.add(destIndex);
+//                    } else {
+//                        loopDests.computeIfAbsent(targetLoop, key -> new TIntLinkedList()).add(destIndex);
+//                    }
+//                }
+            }
+
             this.result = junction;
         }
 
         private void createJunctionAux(TreeVertex vertex, Channel channel, Junction junction, boolean isOnAllPaths) {
             channel.setBreakingProhibited(!isOnAllPaths);
-            for (int index = vertex.settledIndices.nextSetBit(0); index >= 0; index = vertex.settledIndices.nextSetBit(index + 1)) {
-                junction.setTargetChannel(index, channel);
+
+            // A bit of a hacky detail: declared settled indices of the channel are only valid if the channel can be
+            // reused or if it is "terminal". Otherwise, the search algorithm will have neglected that settled index.
+            if (channel.isReusable() || vertex.outEdges.isEmpty()) {
+                for (int index = vertex.settledIndices.nextSetBit(0); index >= 0; index = vertex.settledIndices.nextSetBit(index + 1)) {
+                    junction.setTargetChannel(index, channel);
+                }
             }
             isOnAllPaths &= vertex.settledIndices.isEmpty() && vertex.outEdges.size() <= 1;
             for (TreeEdge edge : vertex.outEdges) {

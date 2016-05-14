@@ -3,36 +3,32 @@ package org.qcri.rheem.core.platform;
 import org.qcri.rheem.core.optimizer.enumeration.ExecutionTaskFlow;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Contains a state of the execution of an {@link ExecutionTaskFlow}.
  */
-public class ExecutionState {
+public interface ExecutionState {
 
     /**
-     * Keeps track of {@link Channel} cardinalities.
+     * Register a {@link ChannelInstance}.
+     *
+     * @param channelInstance that should be registered
      */
-    private final Map<Channel, Long> cardinalities = new HashMap<>();
+    void register(ChannelInstance channelInstance);
 
     /**
-     * Keeps track of {@link ChannelInstance}s so as to reuse them among {@link Executor} runs.
+     * Obtain a previously registered {@link ChannelInstance}.
+     *
+     * @param channel the {@link Channel} of the {@link ChannelInstance}
+     * @return the {@link ChannelInstance} or {@code null} if none
      */
-    private final Map<Channel, ChannelInstance> channelInstances = new HashMap<>();
+    ChannelInstance getChannelInstance(Channel channel);
 
-    public Map<Channel, Long> getCardinalities() {
-        return this.cardinalities;
-    }
-
-    public Map<Channel, ChannelInstance> getChannelInstances() {
-        return this.channelInstances;
-    }
-
-    public void merge(ExecutionState that) {
-        if (that != null) {
-            this.cardinalities.putAll(that.cardinalities);
-            this.channelInstances.putAll(that.channelInstances);
-        }
-    }
+    /**
+     * TODO: What are the cardinalities good for if they cannot be put into context of loops.
+     *
+     * @return
+     */
+    Map<Channel, Long> getCardinalities();
 }

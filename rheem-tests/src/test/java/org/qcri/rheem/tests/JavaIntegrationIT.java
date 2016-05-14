@@ -1,7 +1,6 @@
 package org.qcri.rheem.tests;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.FilterOperator;

@@ -48,8 +48,6 @@ public interface LoopHeadOperator extends Operator {
      */
     int getNumExpectedIterations();
 
-
-
     /**
      * Get the {@link CardinalityPusher} implementation for the intermediate iterations.
      */

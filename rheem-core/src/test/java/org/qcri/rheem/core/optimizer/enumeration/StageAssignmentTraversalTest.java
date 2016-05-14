@@ -71,7 +71,7 @@ public class StageAssignmentTraversalTest {
 
         // Assign platforms.
         ExecutionTaskFlow executionTaskFlow = new ExecutionTaskFlow(Collections.singleton(sinkTaskA));
-        final ExecutionPlan executionPlan = new StageAssignmentTraversal(executionTaskFlow).run();
+        final ExecutionPlan executionPlan = StageAssignmentTraversal.assignStages(executionTaskFlow);
         Assert.assertEquals(1, executionPlan.getStartingStages().size());
 
         ExecutionStage stage1 = executionPlan.getStartingStages().stream().findAny().get();
@@ -132,7 +132,7 @@ public class StageAssignmentTraversalTest {
 
         // Assign platforms.
         ExecutionTaskFlow executionTaskFlow = new ExecutionTaskFlow(Collections.singleton(sinkTaskA));
-        final ExecutionPlan executionPlan = new StageAssignmentTraversal(executionTaskFlow).run();
+        final ExecutionPlan executionPlan = StageAssignmentTraversal.assignStages(executionTaskFlow);
 
         Assert.assertEquals(1, executionPlan.getStartingStages().size());
 

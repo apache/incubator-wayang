@@ -1,5 +1,6 @@
 package org.qcri.rheem.spark.test;
 
+import org.junit.Before;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -10,13 +11,22 @@ import org.qcri.rheem.spark.platform.SparkExecutor;
 
 import java.util.Collection;
 
+import static org.mockito.Mockito.mock;
+
 /**
  * Utility to create {@link Channel}s in tests.
  */
 public class ChannelFactory {
 
+    private static SparkExecutor sparkExecutor;
+
+    @Before
+    public void setUp() {
+        sparkExecutor = mock(SparkExecutor.class);
+    }
+
     public static RddChannel.Instance createRddChannelInstance(ChannelDescriptor rddChannelDescriptor, Configuration configuration) {
-        return (RddChannel.Instance) rddChannelDescriptor.createChannel(null, configuration).createInstance();
+        return (RddChannel.Instance) rddChannelDescriptor.createChannel(null, configuration).createInstance(sparkExecutor);
     }
 
     public static RddChannel.Instance createRddChannelInstance(Configuration configuration) {
@@ -32,7 +42,7 @@ public class ChannelFactory {
     }
 
     public static CollectionChannel.Instance createCollectionChannelInstance(Configuration configuration) {
-        return (CollectionChannel.Instance) CollectionChannel.DESCRIPTOR.createChannel(null, configuration).createInstance();
+        return (CollectionChannel.Instance) CollectionChannel.DESCRIPTOR.createChannel(null, configuration).createInstance(sparkExecutor);
     }
 
     public static CollectionChannel.Instance createCollectionChannelInstance(Collection<?> colleciton, Configuration configuration) {

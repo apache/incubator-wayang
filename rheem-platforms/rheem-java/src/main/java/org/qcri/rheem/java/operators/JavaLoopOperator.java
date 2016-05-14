@@ -138,7 +138,7 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         switch (index) {
             case ITERATION_OUTPUT_INDEX:
             case FINAL_OUTPUT_INDEX:
-                return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
+                return Collections.singletonList(StreamChannel.DESCRIPTOR);
             case INITIAL_CONVERGENCE_INPUT_INDEX:
             case ITERATION_CONVERGENCE_INPUT_INDEX:
                 return Collections.singletonList(CollectionChannel.DESCRIPTOR);

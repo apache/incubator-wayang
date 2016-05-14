@@ -7,9 +7,7 @@ import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.platform.ExecutionState;
-import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.postgres.PostgresPlatform;
@@ -30,7 +28,7 @@ import java.util.Set;
 /**
  * {@link Executor} implementation for the {@link PostgresPlatform}.
  */
-public class PostgresExecutor implements Executor {
+public class PostgresExecutor extends ExecutorTemplate {
 
     private final PostgresPlatform platform;
 
@@ -39,6 +37,7 @@ public class PostgresExecutor implements Executor {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public PostgresExecutor(PostgresPlatform platform, Job job) {
+        super(job == null ? null : job.getCrossPlatformExecutor());
         this.platform = platform;
         this.connection = this.createJdbcConnection(job.getConfiguration());
     }
@@ -57,7 +56,7 @@ public class PostgresExecutor implements Executor {
     }
 
     @Override
-    public ExecutionState execute(ExecutionStage stage, ExecutionState executionState) {
+    public void execute(ExecutionStage stage, ExecutionState executionState) {
         // TODO: Load ChannelInstances from executionState? (as of now there is no input into PostgreSQL).
         ResultSet rs = null;
         FunctionCompiler functionCompiler = new FunctionCompiler();
@@ -122,12 +121,9 @@ public class PostgresExecutor implements Executor {
         try (final PreparedStatement ps = this.connection.prepareStatement(query)) {
             rs = ps.executeQuery();
             final FileChannel.Instance outputFileChannelInstance =
-                    (FileChannel.Instance) termTask.getOutputChannel(0).createInstance();
+                    (FileChannel.Instance) termTask.getOutputChannel(0).createInstance(this);
             this.saveResult(outputFileChannelInstance, rs);
-
-            final ExecutionState newExecutionState = new ExecutionState();
-            newExecutionState.getChannelInstances().put(outputFileChannelInstance.getChannel(), outputFileChannelInstance);
-            return newExecutionState;
+            executionState.register(outputFileChannelInstance);
         } catch (IOException | SQLException e) {
             throw new RheemException("PostgreSQL execution failed.", e);
         }

@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.plan.executionplan;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.*;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
  * {@link PlatformExecution} and invoke a further {@link PlatformExecution} to proceed working with the results
  * of this stage. Also, this allows to consume data with a {@link PlatformExecution} only when it is needed, i.e.,
  * at a deferred stage. However, the level of control that can be imposed by Rheem can vary between {@link Platform}s</p>
+ * <p>Note that this class is immutable, i.e., it does not comprise any execution state.</p>
  */
 public class ExecutionStage {
 
@@ -41,21 +43,25 @@ public class ExecutionStage {
     private final Collection<ExecutionTask> terminalTasks = new LinkedList<>();
 
     /**
+     * The loop that this instance is part of or {@code null} if none.
+     */
+    private final ExecutionStageLoop executionStageLoop;
+
+    /**
      * For printing and debugging purposes only.
      */
     private final int sequenceNumber;
 
     /**
-     * Tells whether this instance has already been put into execution.
-     */
-    private boolean wasExecuted = false;
-
-    /**
      * Create a new instance and register it with the given {@link PlatformExecution}.
      */
-    ExecutionStage(PlatformExecution platformExecution, int sequenceNumber) {
+    ExecutionStage(PlatformExecution platformExecution, ExecutionStageLoop executionStageLoop, int sequenceNumber) {
         this.platformExecution = platformExecution;
         this.sequenceNumber = sequenceNumber;
+        this.executionStageLoop = executionStageLoop;
+        if (this.executionStageLoop != null) {
+            this.executionStageLoop.add(this);
+        }
         this.platformExecution.addStage(this);
     }
 
@@ -84,6 +90,37 @@ public class ExecutionStage {
 
     public void addTask(ExecutionTask task) {
         task.setStage(this);
+        this.updateLoop(task);
+    }
+
+    /**
+     * Notify the {@link #executionStageLoop} that there is a new {@link ExecutionTask} in this instance, which might
+     * comprise the {@link LoopHeadOperator}.
+     *
+     * @param task
+     */
+    private void updateLoop(ExecutionTask task) {
+        if (this.executionStageLoop != null) {
+            this.executionStageLoop.update(task);
+        }
+    }
+
+    /**
+     * Determine if this instance is the loop head of its {@link ExecutionStageLoop}.
+     *
+     * @return {@code true} if the above condition is fulfilled or there is no {@link ExecutionStageLoop}
+     */
+    public boolean isLoopHead() {
+        return this.executionStageLoop != null && this.executionStageLoop.getLoopHead() == this;
+    }
+
+    /**
+     * Retrieve the (innermost) {@link ExecutionStageLoop} that this instance is part of.
+     *
+     * @return the said {@link ExecutionStageLoop} or {@code null} if none
+     */
+    public ExecutionStageLoop getLoop() {
+        return this.executionStageLoop;
     }
 
     public void markAsStartTask(ExecutionTask executionTask) {
@@ -109,6 +146,11 @@ public class ExecutionStage {
 
     @Override
     public String toString() {
+        return String.format("%s%s", this.getClass().getSimpleName(), this.getStartTasks());
+    }
+
+    @SuppressWarnings("unused")
+    public String toNameString() {
         return String.format("%s[%s-%d:%d-%6x]",
                 this.getClass().getSimpleName(),
                 this.platformExecution.getPlatform().getName(),
@@ -148,43 +190,64 @@ public class ExecutionStage {
 
     }
 
-    public String toExtensiveString() {
+    /**
+     * Prints the instance's {@link ExecutionTask}s and {@link Channel}s.
+     *
+     * @return a {@link String} containing the textual representation
+     */
+    public String getPlanAsString() {
+        return this.getPlanAsString("");
+    }
+
+    /**
+     * Prints the instance's {@link ExecutionTask}s and {@link Channel}s.
+     *
+     * @param indent will be used to indent every line of the textual representation
+     * @return a {@link String} containing the textual representation
+     */
+    public String getPlanAsString(String indent) {
         final StringBuilder sb = new StringBuilder();
-        this.toExtensiveString(sb);
+        this.getPlanAsString(sb, indent);
         if (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\n') sb.setLength(sb.length() - 1);
         return sb.toString();
     }
 
     /**
-     * Appends this instance's details to the given {@link StringBuilder}.
+     * Appends this instance's {@link ExecutionTask}s and {@link Channel}s to the given {@link StringBuilder}.
+     *
+     * @param sb     to which the representation should be appended
+     * @param indent will be used to indent every line of the textual representation
      */
-    public void toExtensiveString(StringBuilder sb) {
+    public void getPlanAsString(StringBuilder sb, String indent) {
         Set<ExecutionTask> seenTasks = new HashSet<>();
         for (ExecutionTask startTask : this.startTasks) {
             for (Channel inputChannel : startTask.getInputChannels()) {
-                sb.append(this.prettyPrint(inputChannel))
+                sb.append(indent)
+                        .append(this.prettyPrint(inputChannel))
                         .append(" => ")
                         .append(this.prettyPrint(startTask)).append('\n');
             }
-            this.toExtensiveStringAux(startTask, seenTasks, sb);
+            this.toExtensiveStringAux(startTask, seenTasks, sb, indent);
         }
     }
 
-    private void toExtensiveStringAux(ExecutionTask task, Set<ExecutionTask> seenTasks, StringBuilder sb) {
+    private void toExtensiveStringAux(ExecutionTask task, Set<ExecutionTask> seenTasks, StringBuilder sb, String indent) {
         if (!seenTasks.add(task)) {
             return;
         }
         for (Channel channel : task.getOutputChannels()) {
             for (ExecutionTask consumer : channel.getConsumers()) {
                 if (consumer.getStage() == this) {
-                    sb.append(this.prettyPrint(task))
+                    sb.append(indent)
+                            .append(this.prettyPrint(task))
                             .append(" => ")
                             .append(this.prettyPrint(channel))
                             .append(" => ")
                             .append(this.prettyPrint(consumer)).append('\n');
-                    this.toExtensiveStringAux(consumer, seenTasks, sb);
+                    this.toExtensiveStringAux(consumer, seenTasks, sb, indent);
                 } else {
-                    sb.append(this.prettyPrint(task))
+                    sb.append(indent)
+                            .append(this.prettyPrint(task))
                             .append(" => ")
                             .append(this.prettyPrint(channel)).append('\n');
                 }
@@ -230,11 +293,4 @@ public class ExecutionStage {
         }
     }
 
-    public boolean wasExecuted() {
-        return this.wasExecuted;
-    }
-
-    public void setWasExecuted(boolean wasExecuted) {
-        this.wasExecuted = wasExecuted;
-    }
 }

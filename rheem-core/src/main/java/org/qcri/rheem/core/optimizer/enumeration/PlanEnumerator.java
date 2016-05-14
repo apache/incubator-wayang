@@ -456,6 +456,8 @@ public class PlanEnumerator {
             ));
         }
 
+        this.prune(concatenatedEnumeration);
+
         this.postProcess(concatenatedEnumeration, concatenationActivator.optimizationContext);
     }
 
@@ -632,7 +634,12 @@ public class PlanEnumerator {
      * @param planEnumeration to which the pruning should be applied
      */
     private void prune(final PlanEnumeration planEnumeration) {
+        int numPlanImplementations = planEnumeration.getPlanImplementations().size();
         this.optimizationContext.getPruningStrategies().forEach(strategy -> strategy.prune(planEnumeration));
+        this.logger.info("Pruned plan enumeration from {} to {} implementations.",
+                numPlanImplementations,
+                planEnumeration.getPlanImplementations().size()
+        );
     }
 
     public boolean isTopLevel() {

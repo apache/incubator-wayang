@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Set;
 
 /**
  * {@link Platform} for a single JVM executor based on the {@link java.util.stream} library.
@@ -54,9 +55,10 @@ public class SparkPlatform extends Platform {
     };
 
     /**
-     * <i>Lazy-initialized.</i> Allows to create Spark jobs. Is shared among all executors.
+     * <i>Lazy-initialized.</i> Maintains a reference to a {@link JavaSparkContext}. This instance's reference, however,
+     * does not hold a counted reference, so it might be disposed.
      */
-    private JavaSparkContext sparkContext;
+    private SparkContextReference sparkContextReference;
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -80,26 +82,20 @@ public class SparkPlatform extends Platform {
 
     /**
      * Configures the single maintained {@link JavaSparkContext} according to the {@code job} and returns it.
-     */
-    public JavaSparkContext getSparkContext(Job job) {
-        return this.getSparkContext(job.getConfiguration(), job.getUdfJarPaths());
-    }
-
-    /**
-     * Configures the single maintained {@link JavaSparkContext} according to the {@code job} and returns it.
-     * <p>This method is intended to be used with profiling code.</p>
      *
-     * @see #getSparkContext(Job)
+     * @return a {@link SparkContextReference} wrapping the {@link JavaSparkContext}
      */
-    public JavaSparkContext getSparkContext(Configuration configuration, Collection<String> udfJarPaths) {
+    public SparkContextReference getSparkContext(Job job) {
 
         // NB: There must be only one JavaSparkContext per JVM. Therefore, it is not local to the executor.
         final SparkConf sparkConf;
-        if (this.sparkContext != null) {
+        final Configuration configuration = job.getConfiguration();
+        if (this.sparkContextReference != null && !this.sparkContextReference.isDisposed()) {
+            final JavaSparkContext sparkContext = this.sparkContextReference.get();
             this.logger.warn(
                     "There is already a SparkContext (master: {}): , which will be reused. " +
-                            "Not all settings might be effective.", this.sparkContext.getConf().get("spark.master"));
-            sparkConf = this.sparkContext.getConf();
+                            "Not all settings might be effective.", sparkContext.getConf().get("spark.master"));
+            sparkConf = sparkContext.getConf();
         } else {
             sparkConf = new SparkConf(true);
         }
@@ -113,17 +109,19 @@ public class SparkPlatform extends Platform {
             );
         }
 
-        if (this.sparkContext == null) {
-            this.sparkContext = new JavaSparkContext(sparkConf);
+        if (this.sparkContextReference == null || this.sparkContextReference.isDisposed()) {
+            this.sparkContextReference = new SparkContextReference(job.getCrossPlatformExecutor(), new JavaSparkContext(sparkConf));
         }
+        final JavaSparkContext sparkContext = this.sparkContextReference.get();
 
         // Set up the JAR files.
-        this.sparkContext.clearJars();
-        if (!this.sparkContext.isLocal()) {
+        sparkContext.clearJars();
+        if (!sparkContext.isLocal()) {
             // Add Rheem JAR files.
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // rheem-spark
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasicPlatform.class)); // rheem-basic
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemContext.class)); // rheem-core
+            final Set<String> udfJarPaths = job.getUdfJarPaths();
             if (udfJarPaths.isEmpty()) {
                 this.logger.warn("Non-local SparkContext but not UDF JARs have been declared.");
             } else {
@@ -131,18 +129,11 @@ public class SparkPlatform extends Platform {
             }
         }
 
-        return this.sparkContext;
+        return this.sparkContextReference;
     }
 
     private void registerJarIfNotNull(String path) {
-        if (path != null) this.sparkContext.addJar(path);
-    }
-
-    void closeSparkContext(JavaSparkContext sc) {
-        if (this.sparkContext == sc) {
-            this.sparkContext.close();
-            this.sparkContext = null;
-        }
+        if (path != null) this.sparkContextReference.get().addJar(path);
     }
 
     private void initializeConfiguration() {

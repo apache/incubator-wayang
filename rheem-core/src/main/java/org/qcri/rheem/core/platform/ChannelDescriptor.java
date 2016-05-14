@@ -42,17 +42,26 @@ public class ChannelDescriptor {
         if (this == o) return true;
         if (o == null || this.getClass() != o.getClass()) return false;
         ChannelDescriptor that = (ChannelDescriptor) o;
-        return Objects.equals(this.channelClass, that.channelClass);
+        return this.isReusable == that.isReusable &&
+                this.isInterStageCable == that.isInterStageCable &&
+                this.isInterPlatformCapable == that.isInterPlatformCapable &&
+                Objects.equals(this.channelClass, that.channelClass);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.channelClass);
+        return Objects.hash(this.channelClass, this.isReusable, this.isInterStageCable, this.isInterPlatformCapable);
     }
 
     @Override
     public String toString() {
-        return String.format("%s[%s]", this.getClass().getSimpleName(), this.getChannelClass().getSimpleName());
+        return String.format("%s[%s,%s%s%s]",
+                this.getClass().getSimpleName(),
+                this.getChannelClass().getSimpleName(),
+                this.isReusable() ? "r" : "-",
+                this.isInterStageCapable() ? "s" : "-",
+                this.isInterPlatformCapable() ? "p" : "-"
+        );
     }
 
 

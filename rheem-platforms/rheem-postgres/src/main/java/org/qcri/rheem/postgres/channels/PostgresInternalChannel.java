@@ -1,16 +1,16 @@
 package org.qcri.rheem.postgres.channels;
 
-import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.postgres.execution.PostgresExecutor;
+import org.qcri.rheem.postgres.operators.PostgresExecutionOperator;
 
 /**
- * Dummy channel to connect postgres operators.
+ * Pro forma {@link Channel} to connect {@link PostgresExecutionOperator}s.
  */
 public class PostgresInternalChannel extends Channel {
 
@@ -36,28 +36,22 @@ public class PostgresInternalChannel extends Channel {
     }
 
     @Override
-    public ChannelInstance createInstance() {
-        return new Instance();
+    public ChannelInstance createInstance(Executor executor) {
+        return new Instance((PostgresExecutor) executor);
     }
 
-    public static class Initializer implements ChannelInitializer {
-
-        @Override
-        public Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot,
-                                                   OptimizationContext optimizationContext) {
-            PostgresInternalChannel channel = new PostgresInternalChannel(descriptor, outputSlot);
-            return new Tuple<>(channel, channel);
-
-        }
-
-        @Override
-        public Channel setUpOutput(ChannelDescriptor descriptor, Channel source,
-                                   OptimizationContext optimizationContext) {
-            return source;
-        }
-    }
-
+    /**
+     * {@link ChannelInstance} implementation for {@link PostgresInternalChannel}.
+     */
     public class Instance extends AbstractChannelInstance {
+
+        public Instance(PostgresExecutor executor) {
+            super(executor);
+        }
+
+        @Override
+        protected void doDispose() throws Throwable {
+        }
 
         @Override
         public Channel getChannel() {

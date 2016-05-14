@@ -228,6 +228,7 @@ public abstract class OperatorBase implements Operator {
         return this.original == null ? (ExecutionOperator) this : this.original;
     }
 
+    @Override
     public String getName() {
         return this.name;
     }

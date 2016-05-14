@@ -7,13 +7,12 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -49,16 +48,22 @@ public class FileChannel extends Channel {
 
     @Override
     public String toString() {
-        return String.format("%s%s", this.getClass().getSimpleName(), this.getDescriptor() );
+        return String.format("%s[%s->%s,%s,%s]",
+                this.getClass().getSimpleName(),
+                this.getProducer() == null ? this.getProducerSlot() : this.getProducer(),
+                this.getConsumers(),
+                this.getDescriptor().getLocation(),
+                this.getDescriptor().getSerialization()
+        );
     }
-
     @Override
     public FileChannel.Descriptor getDescriptor() {
         return (FileChannel.Descriptor) super.getDescriptor();
     }
 
     @Override
-    public ChannelInstance createInstance() {
+    public ChannelInstance createInstance(Executor executor) {
+        // NB: File channels are not inherent to a certain Platform, therefore are not tied to the executor.
         return new Instance();
     }
 
@@ -123,6 +128,13 @@ public class FileChannel extends Channel {
 
         private Collection<String> paths = new LinkedList<>();
 
+        /**
+         * Creates a new instance.
+         */
+        protected Instance() {
+            super(null);
+        }
+
         public FileChannel getChannel() {
             return FileChannel.this;
         }
@@ -163,15 +175,17 @@ public class FileChannel extends Channel {
         }
 
         @Override
-        public void tryToRelease() throws RheemException {
-            final String path = this.getSinglePath();
-            final Optional<FileSystem> fileSystemOptional = FileSystems.getFileSystem(path);
-            fileSystemOptional.ifPresent(fs -> {
-                try {
-                    fs.delete(path, true);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
+        public void doDispose() throws RheemException {
+            this.doSafe(() -> {
+                final String path = this.getSinglePath();
+                final Optional<FileSystem> fileSystemOptional = FileSystems.getFileSystem(path);
+                fileSystemOptional.ifPresent(fs -> {
+                    try {
+                        fs.delete(path, true);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
             });
         }
     }

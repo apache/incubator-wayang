@@ -1,6 +1,7 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.commons.lang3.Validate;
+import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
@@ -13,25 +14,22 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Converts a {@link RddChannel} into a {@link CollectionChannel} of the {@link JavaPlatform}.
+ * Converts an uncached {@link RddChannel} into a cached {@link RddChannel}.
  */
-public class SparkCollectOperator<Type>
+public class SparkCacheOperator<Type>
         extends OperatorBase
         implements SparkExecutionOperator {
 
-    public SparkCollectOperator(DataSetType<Type> type) {
+    public SparkCacheOperator(DataSetType<Type> type) {
         super(1, 1, false, null);
         this.inputSlots[0] = new InputSlot<>("input", this, type);
         this.outputSlots[0] = new OutputSlot<>("output", this, type);
@@ -40,21 +38,21 @@ public class SparkCollectOperator<Type>
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
-        CollectionChannel.Instance output = (CollectionChannel.Instance) outputs[0];
+        final JavaRDD<Object> rdd = input.provideRdd();
+        final JavaRDD<Object> cachedRdd = rdd.cache();
 
-        @SuppressWarnings("unchecked")
-        final List<Type> collectedRdd = (List<Type>) input.provideRdd().collect();
-        output.accept(collectedRdd);
+        RddChannel.Instance output = (RddChannel.Instance) outputs[0];
+        output.accept(cachedRdd, sparkExecutor);
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+        return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+        return Collections.singletonList(RddChannel.CACHED_DESCRIPTOR);
     }
 
     @Override

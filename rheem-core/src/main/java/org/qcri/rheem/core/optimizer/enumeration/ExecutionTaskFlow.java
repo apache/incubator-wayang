@@ -15,16 +15,14 @@ public class ExecutionTaskFlow {
 
     private final Collection<ExecutionTask> sinkTasks;
 
-    private final Set<Channel> inputChannels;
-
     public ExecutionTaskFlow(Collection<ExecutionTask> sinkTasks) {
         this(sinkTasks, Collections.emptySet());
     }
 
+    @Deprecated
     public ExecutionTaskFlow(Collection<ExecutionTask> sinkTasks, Set<Channel> inputChannels) {
         assert !sinkTasks.isEmpty() : "Cannot build plan without sinks.";
         this.sinkTasks = sinkTasks;
-        this.inputChannels = inputChannels;
     }
 
     public Set<ExecutionTask> collectAllTasks() {
@@ -66,10 +64,6 @@ public class ExecutionTaskFlow {
 
     public Collection<ExecutionTask> getSinkTasks() {
         return this.sinkTasks;
-    }
-
-    public Set<Channel> getInputChannels() {
-        return this.inputChannels;
     }
 
     public static ExecutionTaskFlow createFrom(PlanImplementation planImplementation) {

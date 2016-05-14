@@ -5,10 +5,12 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
 import java.lang.reflect.InvocationTargetException;
@@ -45,7 +47,9 @@ public abstract class Platform {
     }
 
     /**
-     * Registers supported todo...
+     * Register the {@link ChannelConversion}s provided by this instance to the given {@link ChannelConversionGraph}.
+     *
+     * @param channelConversionGraph to which the {@link ChannelConversion}s should be added
      */
     public abstract void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph);
 
@@ -76,9 +80,20 @@ public abstract class Platform {
         return String.format("Platform[%s]", this.getName());
     }
 
+    /**
+     * Tells whether the given constellation of producing and consuming {@link ExecutionTask}, linked by the
+     * {@link Channel} can be handled within a single {@link PlatformExecution} of this {@link Platform}
+     *
+     * @param producerTask an {@link ExecutionTask} running on this {@link Platform}
+     * @param channel      links the {@code producerTask} and {@code consumerTask}
+     * @param consumerTask an  {@link ExecutionTask} running on this {@link Platform}
+     * @return whether the {@link ExecutionTask}s can be executed in a single {@link PlatformExecution}
+     */
     public boolean isSinglePlatformExecutionPossible(ExecutionTask producerTask, Channel channel, ExecutionTask consumerTask) {
         assert producerTask.getOperator().getPlatform() == this;
         assert consumerTask.getOperator().getPlatform() == this;
+        assert channel.getProducer() == producerTask;
+        assert channel.getConsumers().contains(consumerTask);
 
         // Overwrite as necessary.
         return true;

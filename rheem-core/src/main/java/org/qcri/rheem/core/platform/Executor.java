@@ -7,16 +7,16 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 /**
  * An executor executes {@link ExecutionOperator}s.
  */
-public interface Executor {
+public interface Executor extends CompositeExecutionResource {
 
     /**
      * Executes the given {@code stage}.
      *
-     * @param stage should be executed; must be executable by this instance, though
-     * @param executionState
+     * @param stage          should be executed; must be executable by this instance, though
+     * @param executionState provides and accepts execution-related objects
      * @return collected metadata from instrumentation
      */
-    ExecutionState execute(ExecutionStage stage, ExecutionState executionState);
+    void execute(ExecutionStage stage, ExecutionState executionState);
 
     /**
      * Releases any instances acquired by this instance to execute {@link ExecutionStage}s.
@@ -27,6 +27,13 @@ public interface Executor {
      * @return the {@link Platform} this instance belongs to
      */
     Platform getPlatform();
+
+    /**
+     * If this instance is instrumented by a {@link CrossPlatformExecutor}, this method provides the latter.
+     *
+     * @return the instrumenting {@link CrossPlatformExecutor} or {@code null} if none
+     */
+    CrossPlatformExecutor getCrossPlatformExecutor();
 
     /**
      * Factory for {@link Executor}s.

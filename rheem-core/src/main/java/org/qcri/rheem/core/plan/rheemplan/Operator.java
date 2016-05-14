@@ -557,4 +557,10 @@ public interface Operator {
      */
     <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input);
 
+    /**
+     * Provides an instance's name.
+     * @return the name of this instance or {@code null} if none
+     */
+    String getName();
 }
+
