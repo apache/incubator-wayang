@@ -256,12 +256,6 @@ public class CrossPlatformExecutor implements ExecutionState {
         long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime));
 
-        // Obtain instrumentation results.
-//        throw new RuntimeException("todo");
-//        executionState.getCardinalities().forEach((channel, cardinality) ->
-//                CrossPlatformExecutor.this.logger.debug("Cardinality of {}: actual {}, estimated {}",
-//                  this.executionState.merge(executionState);
-
         // Remember that we have executed the stage.
         this.completedStages.add(stage);
     }
@@ -359,8 +353,23 @@ public class CrossPlatformExecutor implements ExecutionState {
     }
 
     @Override
-    public Map<Channel, Long> getCardinalities() {
-        return this.cardinalities;
+    public void addCardinalityMeasurement(Channel channel, long cardinality) {
+        final Long oldCardinality = this.cardinalities.putIfAbsent(channel, cardinality);
+        assert oldCardinality == null || oldCardinality == cardinality : String.format(
+                "Replacing cardinality measurement of %s with %d (was %d).",
+                channel, cardinality, oldCardinality
+        );
+    }
+
+    @Override
+    public OptionalLong getCardinalityMeasurement(Channel channel) {
+        final Long cardinality = this.cardinalities.get(channel);
+        return cardinality == null ? OptionalLong.empty() : OptionalLong.of(cardinality);
+    }
+
+    @Override
+    public Map<Channel, Long> getCardinalityMeasurements() {
+        return Collections.unmodifiableMap(this.cardinalities);
     }
 
     /**

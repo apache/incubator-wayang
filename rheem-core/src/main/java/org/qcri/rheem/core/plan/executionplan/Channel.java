@@ -190,7 +190,23 @@ public abstract class Channel {
 
     }
 
-    protected Stream<Channel> withSiblings(boolean isWithConcurrentModification) {
+    /**
+     * Creates a {@link Stream} of this instance and its siblings. The sibling relationship must not be altered
+     * while processing the {@link Stream}.
+     *
+     * @return the {@link Stream}
+     */
+    public Stream<Channel> withSiblings() {
+        return this.withSiblings(false);
+    }
+
+    /**
+     * Creates a {@link Stream} of this instance and its siblings.
+     *
+     * @param isWithConcurrentModification whether {@link #siblings} may be modificated while processing the {@link Stream}
+     * @return the {@link Stream}
+     */
+    private Stream<Channel> withSiblings(boolean isWithConcurrentModification) {
         return Stream.concat(
                 Stream.of(this),
                 (isWithConcurrentModification ? new ArrayList<>(this.siblings) : this.siblings).stream()

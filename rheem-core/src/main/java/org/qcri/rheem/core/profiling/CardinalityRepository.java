@@ -54,7 +54,7 @@ public class CardinalityRepository {
      *                            possible accurate data
      */
     public void storeAll(ExecutionState executionState, OptimizationContext optimizationContext) {
-        final Map<Channel, Long> cardinalities = executionState.getCardinalities();
+        final Map<Channel, Long> cardinalities = executionState.getCardinalityMeasurements();
         for (Map.Entry<Channel, Long> entry : cardinalities.entrySet()) {
             final Channel channel = entry.getKey();
             final long cardinality = entry.getValue();

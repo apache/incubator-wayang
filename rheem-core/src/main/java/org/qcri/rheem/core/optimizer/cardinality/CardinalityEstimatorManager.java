@@ -73,7 +73,7 @@ public class CardinalityEstimatorManager {
      * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link RheemPlan}.
      */
     private void injectMeasuredCardinalities(ExecutionState executionState) {
-        executionState.getCardinalities().forEach(this::injectMeasureCardinality);
+        executionState.getCardinalityMeasurements().forEach(this::injectMeasureCardinality);
     }
 
     /**
@@ -91,12 +91,12 @@ public class CardinalityEstimatorManager {
             final Operator owner = correspondingSlot.getOwner();
             final OptimizationContext.OperatorContext operatorCtx = this.optimizationContext.getOperatorContext(owner);
             if (operatorCtx == null) {
-                this.logger.error("Could not inject measured cardinality for {}: Is it inside a loop?", owner);
+                // FIXME: Within loops, we might need to propagate across iterations!
+                this.logger.debug("Could not inject measured cardinality for {}: It is presumably a glue operator or inside of a loop.", owner);
                 continue;
             }
 
             // Update the operatorCtx, then propagate.
-            // FIXME: Within loops, we might need to propagate across iterations!
             // TODO: Do we need to propagate? Revisit once channel.getCorrespondingSlots() is incorporating OptimizationContexts.
             final int slotIndex = correspondingSlot.getIndex();
             if (correspondingSlot instanceof InputSlot<?>) {

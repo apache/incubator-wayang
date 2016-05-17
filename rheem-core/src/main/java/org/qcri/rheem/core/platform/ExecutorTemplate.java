@@ -1,11 +1,14 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionStageLoop;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -62,6 +65,47 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
         if (!this.registeredResources.remove(resource)) {
             this.logger.warn("Could not unregister {}, as it was not registered.", resource);
         }
+    }
+
+    /**
+     * If the given {@link ChannelInstance} has a measured cardinality, then register this cardinality in the
+     * {@link #crossPlatformExecutor} with the corresponding {@link Channel} and all its siblings.
+     *
+     * @param channelInstance the said {@link ChannelInstance}
+     */
+    protected void addCardinalityIfNotInLoop(ChannelInstance channelInstance) {
+        // Check if a cardinality was measured in the first place.
+        final OptionalLong optionalCardinality = channelInstance.getMeasuredCardinality();
+        if (!optionalCardinality.isPresent()) {
+            if (channelInstance.getChannel().isMarkedForInstrumentation()) {
+                this.logger.warn(
+                        "No cardinality available for {}, although it was requested.", channelInstance.getChannel()
+                );
+            }
+            return;
+        }
+        final long cardinality = optionalCardinality.getAsLong();
+
+        // Make sure that the channelInstance is not inside of a loop.
+        final Channel channel = channelInstance.getChannel();
+        channel.withSiblings().forEach(c -> {
+            if (!checkIfIsInLoopChannel(channel)) {
+                this.crossPlatformExecutor.addCardinalityMeasurement(c, cardinality);
+            }
+        });
+    }
+
+    /**
+     * Checks whether the given {@link Channel} is inside of a {@link ExecutionStageLoop}.
+     *
+     * @param channel the said {@link Channel}
+     * @return whether the {@link Channel} is in a {@link ExecutionStageLoop}
+     */
+    private static boolean checkIfIsInLoopChannel(Channel channel) {
+        final ExecutionStageLoop producerLoop = channel.getProducer().getStage().getLoop();
+        return producerLoop != null && channel.getConsumers().stream().anyMatch(
+                consumer -> consumer.getStage().getLoop() == producerLoop
+        );
     }
 
     @Override
