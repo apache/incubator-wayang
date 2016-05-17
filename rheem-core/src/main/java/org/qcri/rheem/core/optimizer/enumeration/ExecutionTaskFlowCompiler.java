@@ -104,9 +104,9 @@ public class ExecutionTaskFlowCompiler
             final PlanImplementation producerPlanImplementation = producerIterationImplementation == null ?
                     this.planImplementation :
                     producerIterationImplementation.getBodyImplementation();
-
             final Junction openJunction = producerPlanImplementation.getJunction(producerOutput);
             assert openJunction != null : String.format("No junction for %s.", producerOutput);
+
             for (int targetIndex = 0; targetIndex < openJunction.getNumTargets(); targetIndex++) {
                 final InputSlot<?> targetInput = openJunction.getTargetInput(targetIndex);
                 final ExecutionOperator consumerOperator = (ExecutionOperator) targetInput.getOwner();
@@ -114,7 +114,10 @@ public class ExecutionTaskFlowCompiler
                 // If the channel was only "partially open", then we need to consider not to re-create existing ExecutionTasks.
                 if (executedOperators.contains(consumerOperator)) continue;
 
-                final ActivatorKey activatorKey = new ActivatorKey(consumerOperator, producerIterationImplementation);
+                final LoopImplementation.IterationImplementation consumerIterationImplementation = this.findIterationImplementation(
+                        (ExecutionOperator) targetInput.getOwner()
+                );
+                final ActivatorKey activatorKey = new ActivatorKey(consumerOperator, consumerIterationImplementation);
                 final Activator consumerActivator = this.activators.computeIfAbsent(activatorKey, Activator::new);
                 final ExecutionTask consumerTask = this.getOrCreateExecutionTask(consumerOperator);
                 consumerActivator.executionTask = consumerTask;
