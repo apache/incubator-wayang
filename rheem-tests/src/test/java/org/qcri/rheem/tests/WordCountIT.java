@@ -28,10 +28,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -352,7 +349,7 @@ public class WordCountIT {
         for (Map.Entry<String, Integer> countEntry : counter) {
             correctResults.add(new Tuple2<>(countEntry.getKey(), countEntry.getValue()));
         }
-        Assert.assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
+        Assert.assertEquals(new HashSet<>(correctResults), new HashSet<>(results));
     }
 
     @Test

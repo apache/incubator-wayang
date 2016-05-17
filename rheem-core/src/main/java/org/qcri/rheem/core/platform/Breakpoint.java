@@ -1,10 +1,8 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Describes when to interrupt the execution of an {@link ExecutionPlan}.
@@ -12,20 +10,21 @@ import java.util.Set;
 @FunctionalInterface
 public interface Breakpoint {
 
-    boolean permitsExecutionOf(ExecutionStage stage);
-
     /**
      * Tests whether the given {@link ExecutionStage} can be executed.
-     * @param stage whose execution is in question
-     * @return whether the {@link ExecutionStage} should <b>not</b> be executed
+     *
+     * @param stage   whose execution is in question
+     * @param state   current {@link ExecutionState}
+     * @param context {@link OptimizationContext} of the last optimization process
+     * @return whether the {@link ExecutionStage} should be executed
      */
-    default boolean requestsBreakBefore(ExecutionStage stage) {
-        return !this.permitsExecutionOf(stage);
-    }
+    boolean permitsExecutionOf(ExecutionStage stage,
+                               ExecutionState state,
+                               OptimizationContext context);
 
     /**
      * {@link Breakpoint} implementation that never breaks.
      */
-    Breakpoint NONE = stage -> true;
+    Breakpoint NONE = (stage, state, optCtx) -> true;
 
 }

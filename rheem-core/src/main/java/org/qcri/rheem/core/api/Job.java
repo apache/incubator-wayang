@@ -363,7 +363,9 @@ public class Job extends OneTimeExecutable {
                     .forEach(immediateBreakpoint::breakAfter);
         }
         this.crossPlatformExecutor.setBreakpoint(new ConjunctiveBreakpoint(
-                immediateBreakpoint, new CardinalityBreakpoint(this.configuration)
+                immediateBreakpoint,
+                new CardinalityBreakpoint(this.configuration),
+                new NoIterationBreakpoint() // Avoid re-optimization inside of loops.
         ));
         breakpointRound.stop();
     }
@@ -485,5 +487,9 @@ public class Job extends OneTimeExecutable {
      */
     public CrossPlatformExecutor getCrossPlatformExecutor() {
         return this.crossPlatformExecutor;
+    }
+
+    public OptimizationContext getOptimizationContext() {
+        return optimizationContext;
     }
 }

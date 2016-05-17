@@ -227,7 +227,7 @@ public class CrossPlatformExecutor implements ExecutionState {
      * @return whether the {@link ExecutionStage} was suspended
      */
     private boolean suspendIfBreakpointRequest(StageActivator stageActivator) {
-        if (this.breakpoint.requestsBreakBefore(stageActivator.getStage())) {
+        if (!this.breakpoint.permitsExecutionOf(stageActivator.getStage(), this, this.job.getOptimizationContext())) {
             this.suspendedStages.add(stageActivator);
             return true;
         }
