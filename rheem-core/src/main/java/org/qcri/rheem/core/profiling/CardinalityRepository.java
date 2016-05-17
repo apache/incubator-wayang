@@ -5,8 +5,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.Map;
 
 /**
  * Stores cardinalities that have been collected by the {@link CrossPlatformExecutor}. Current version uses
@@ -46,7 +45,7 @@ public class CardinalityRepository {
      * Store the input and output cardinalities for all those {@link Operator}s that have a measured output
      * cardinality.
      *
-     * @param executionState    contains the cardinalites of the instrumented {@link Slot}s; those cardinalities should
+     * @param executionState      contains the cardinalites of the instrumented {@link Slot}s; those cardinalities should
      *                            be already injected in the {@code rheemPlan}
      * @param optimizationContext keeps {@link CardinalityEstimate}s for all {@link Slot}s around;
      *                            it is assumed, that any measured cardinalities are already
@@ -54,29 +53,28 @@ public class CardinalityRepository {
      *                            possible accurate data
      */
     public void storeAll(ExecutionState executionState, OptimizationContext optimizationContext) {
-        final Map<Channel, Long> cardinalities = executionState.getCardinalityMeasurements();
-        for (Map.Entry<Channel, Long> entry : cardinalities.entrySet()) {
-            final Channel channel = entry.getKey();
-            final long cardinality = entry.getValue();
-            for (Slot<?> slot : channel.getCorrespondingSlots()) {
-                if (slot instanceof OutputSlot<?>) {
-                    for (OutputSlot<Object> outputSlot : ((OutputSlot<?>) slot).unchecked().collectRelatedSlots()) {
-                        final Operator operator = outputSlot.getOwner();
-                        if (!operator.isElementary() || operator.isSource()) {
-                            continue;
+        executionState.getCardinalityMeasurements().forEach(
+                (channel, cardinality) -> {
+                    for (Slot<?> correspondingSlot : channel.getCorrespondingSlots()) {
+                        for (Slot<?> slot : OptimizationUtils.collectConnectedSlots(correspondingSlot)) {
+                            if (slot instanceof OutputSlot<?>) {
+                                OutputSlot<Object> outputSlot = ((OutputSlot<?>) slot).unchecked();
+                                final Operator operator = outputSlot.getOwner();
+                                if (!operator.isElementary() || operator.isSource()) {
+                                    continue;
+                                }
+                                final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(operator);
+                                if (operatorContext == null) {
+                                    // TODO: Handle cardinalities inside of loops.
+                                    this.logger.debug("Could not inject measured cardinality for {}: " +
+                                            "It is presumably a glue operator or inside of a loop.", operator);
+                                    continue;
+                                }
+                                this.store(outputSlot, cardinality, operatorContext);
+                            }
                         }
-                        // TODO: Find OperatorContext correctly.
-                        final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(operator);
-                        if (operatorContext == null) {
-                            this.logger.error("Could not determine OperatorContext for {}. " +
-                                    "Will not add measured cardinality.", operator);
-                            continue;
-                        }
-                        this.store(outputSlot, cardinality, operatorContext);
                     }
-                }
-            }
-        }
+                });
     }
 
     /**

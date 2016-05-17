@@ -286,9 +286,13 @@ public abstract class Channel {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Collect the {@link OutputSlot} of the producer and the {@link InputSlot}s of the consumers that are implemented
+     * by this instance.
+     * @return a {@link Stream} of said {@link Slot}s
+     */
     private Stream<Slot<?>> getCorrespondingSlotsLocal() {
-        final Stream<? extends OutputSlot<?>> outputSlotStream =
-                streamNullable(this.getProducer().getOutputSlotFor(this));
+        final Stream<? extends OutputSlot<?>> outputSlotStream = streamNullable(this.getProducerSlot());
         final Stream<? extends InputSlot<?>> inputSlotStream
                 = this.consumers.stream().flatMap(consumer -> streamNullable(consumer.getInputSlotFor(this)));
         return Stream.concat(inputSlotStream, outputSlotStream);

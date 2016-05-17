@@ -90,7 +90,7 @@ public class CardinalityEstimatorManager {
             // Identify the corresponding OperatorContext.
             final Operator owner = correspondingSlot.getOwner();
             if (this.optimizationContext.getOperatorContext(owner) == null) {
-                // FIXME: Within loops, we might need to propagate across iterations!
+                // TODO: Handle cardinalities inside of loops.
                 this.logger.debug("Could not inject measured cardinality for {}: It is presumably a glue operator or inside of a loop.", owner);
                 continue;
             }
