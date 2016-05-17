@@ -2,9 +2,15 @@ package org.qcri.rheem.core.platform;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.Slot;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link Breakpoint} implementation that is based on the {@link CardinalityEstimate}s of {@link Channel}s.
@@ -12,6 +18,8 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
  * {@link Channel}s of an {@link ExecutionStage} are to a certain extent accurate within a given probability.</p>
  */
 public class CardinalityBreakpoint implements Breakpoint {
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final double spreadSmoothing;
 
@@ -47,15 +55,56 @@ public class CardinalityBreakpoint implements Breakpoint {
     }
 
     @Override
-    public boolean permitsExecutionOf(ExecutionStage stage) {
-        // todo
-//        return stage.getInboundChannels().stream().map(Channel::getCardinalityEstimate).allMatch(this::approves);
+    public boolean permitsExecutionOf(ExecutionStage stage,
+                                      ExecutionState state,
+                                      OptimizationContext optimizationContext) {
+
+        for (Channel channel : stage.getInboundChannels()) {
+            final CardinalityEstimate cardinalityEstimate = this.getCardinalityEstimate(channel, optimizationContext);
+            if (cardinalityEstimate == null) {
+                // TODO: We might need to look inside of LoopContexts.
+                this.logger.warn("Could not find a cardinality estimate for {}.", channel);
+                // Be conservative here.
+                return false;
+            } else {
+                if (!this.approves(cardinalityEstimate)) {
+                    return false;
+                }
+            }
+        }
         return true;
+    }
+
+    /**
+     * Retrieves a {@link CardinalityEstimate} for the given {@link Channel} by searching at suitable places in
+     * the {@link OptimizationContext}.
+     *
+     * @param channel             whose {@link CardinalityEstimate} is requested
+     * @param optimizationContext contains {@link CardinalityEstimate}s
+     * @return any found {@link CardinalityEstimate} or {@code null} if none could be found
+     */
+    private CardinalityEstimate getCardinalityEstimate(Channel channel, OptimizationContext optimizationContext) {
+        // Try to find a corresponding Slot for that we have a CardinalityEstimate.
+        for (Slot<?> slot : channel.getCorrespondingSlots()) {
+            final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(slot.getOwner());
+            if (operatorContext == null) {
+                logger.warn("No estimates available for {}.", slot.getOwner());
+                continue;
+            }
+            if (slot instanceof InputSlot) {
+                return operatorContext.getInputCardinality(slot.getIndex());
+            } else {
+                assert slot instanceof OutputSlot;
+                return operatorContext.getOutputCardinality(slot.getIndex());
+            }
+        }
+
+        return null;
     }
 
     private boolean approves(CardinalityEstimate cardinalityEstimate) {
         return cardinalityEstimate.getCorrectnessProbability() >= this.minConfidence
-                && calculateSpread(cardinalityEstimate) <= this.maxSpread;
+                && this.calculateSpread(cardinalityEstimate) <= this.maxSpread;
     }
 
     public double calculateSpread(CardinalityEstimate cardinalityEstimate) {

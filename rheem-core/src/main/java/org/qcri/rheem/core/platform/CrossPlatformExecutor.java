@@ -126,6 +126,8 @@ public class CrossPlatformExecutor implements ExecutionState {
 
         // Create StageActivators for all ExecutionStages.
         for (ExecutionStage stage : this.allStages) {
+            // Avoid re-activating already executed ExecutionStages.
+            if (this.completedStages.contains(stage)) continue;
             final StageActivator activator = this.getOrCreateActivator(stage);
             this.tryToActivate(activator);
         }
@@ -227,7 +229,7 @@ public class CrossPlatformExecutor implements ExecutionState {
      * @return whether the {@link ExecutionStage} was suspended
      */
     private boolean suspendIfBreakpointRequest(StageActivator stageActivator) {
-        if (this.breakpoint.requestsBreakBefore(stageActivator.getStage())) {
+        if (!this.breakpoint.permitsExecutionOf(stageActivator.getStage(), this, this.job.getOptimizationContext())) {
             this.suspendedStages.add(stageActivator);
             return true;
         }
@@ -254,13 +256,7 @@ public class CrossPlatformExecutor implements ExecutionState {
         long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime));
 
-        // Obtain instrumentation results.
-//        throw new RuntimeException("todo");
-//        executionState.getCardinalities().forEach((channel, cardinality) ->
-//                CrossPlatformExecutor.this.logger.debug("Cardinality of {}: actual {}, estimated {}",
-//                  this.executionState.merge(executionState);
-
-        // Clean up.
+        // Remember that we have executed the stage.
         this.completedStages.add(stage);
     }
 
@@ -279,8 +275,10 @@ public class CrossPlatformExecutor implements ExecutionState {
     }
 
     /**
-     * Increments the {@link #predecessorCounter} for all successors of the given {@link ExecutionStage} and
-     * activates them if possible by putting them in the given {@link Collection}.
+     * Follows the outbound {@link Channel}s of the given {@link ExecutionStage} and try to activate consuming
+     * {@link ExecutionStage}s, given the according {@link ChannelInstance}s are available.
+     *
+     * @param processedStage should have just been executed
      */
     private void tryToActivateSuccessors(ExecutionStage processedStage) {
         // Gather all successor ExecutionStages for that a new ChannelInstance has been produced.
@@ -343,6 +341,7 @@ public class CrossPlatformExecutor implements ExecutionState {
     /**
      * Register a global {@link ExecutionResource}, that will only be released once this instance has
      * finished executing.
+     *
      * @param resource that should be registered
      */
     public void registerGlobal(ExecutionResource resource) {
@@ -354,8 +353,23 @@ public class CrossPlatformExecutor implements ExecutionState {
     }
 
     @Override
-    public Map<Channel, Long> getCardinalities() {
-        return this.cardinalities;
+    public void addCardinalityMeasurement(Channel channel, long cardinality) {
+        final Long oldCardinality = this.cardinalities.putIfAbsent(channel, cardinality);
+        assert oldCardinality == null || oldCardinality == cardinality : String.format(
+                "Replacing cardinality measurement of %s with %d (was %d).",
+                channel, cardinality, oldCardinality
+        );
+    }
+
+    @Override
+    public OptionalLong getCardinalityMeasurement(Channel channel) {
+        final Long cardinality = this.cardinalities.get(channel);
+        return cardinality == null ? OptionalLong.empty() : OptionalLong.of(cardinality);
+    }
+
+    @Override
+    public Map<Channel, Long> getCardinalityMeasurements() {
+        return Collections.unmodifiableMap(this.cardinalities);
     }
 
     /**

@@ -5,15 +5,9 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
-import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.qcri.rheem.core.plan.rheemplan.*;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Utility methods for the optimization process.
@@ -76,6 +70,7 @@ public class OptimizationUtils {
 
     /**
      * Creates a new {@link PlanEnumerationPruningStrategy} and configures it.
+     *
      * @param strategyClass the {@link Class} of the {@link PlanEnumerationPruningStrategy}; must have a default constructor
      * @param configuration provides any potential configuration values
      * @return the configured {@link PlanEnumerationPruningStrategy} instance
@@ -88,5 +83,66 @@ public class OptimizationUtils {
         } catch (InstantiationException | IllegalAccessException e) {
             throw new RheemException(String.format("Could not create pruning strategy for %s.", strategyClass.getCanonicalName()), e);
         }
+    }
+
+    /**
+     * Collects all {@link Slot}s that are related to the given {@link Slot} either by a {@link SlotMapping} or
+     * by {@link OutputSlot}/{@link InputSlot} occupation.
+     *
+     * @param slot whose related {@link Slot}s are requested
+     * @return the related {@link Slot}s including the given {@link Slot}
+     */
+    public static Set<Slot<?>> collectConnectedSlots(Slot<?> slot) {
+        assert slot != null;
+        if (slot instanceof InputSlot) {
+            return collectConnectedSlots((InputSlot) slot);
+        } else {
+            assert slot instanceof OutputSlot;
+            return collectConnectedSlots((OutputSlot) slot);
+        }
+    }
+
+    /**
+     * Collects all {@link Slot}s that are related to the given {@link InputSlot} either by a {@link SlotMapping} or
+     * by {@link OutputSlot}/{@link InputSlot} occupation.
+     *
+     * @param input whose related {@link Slot}s are requested
+     * @return the related {@link Slot}s including the given {@link InputSlot}
+     */
+    public static Set<Slot<?>> collectConnectedSlots(InputSlot<?> input) {
+        Set<Slot<?>> result = new HashSet<>();
+
+        final InputSlot<?> outerInput = input.getOwner().getOutermostInputSlot(input);
+        Set<InputSlot<Object>> allInputs = outerInput.getOwner().collectMappedInputSlots(outerInput.unchecked());
+        result.addAll(allInputs);
+
+        final OutputSlot<?> outerOutput = outerInput.getOccupant();
+        Set<OutputSlot<Object>> allOutputs = outerOutput == null ?
+                Collections.emptySet() :
+                outerOutput.getOwner().collectMappedOutputSlots(outerOutput.unchecked());
+        result.addAll(allOutputs);
+
+        return result;
+    }
+
+    /**
+     * Collects all {@link Slot}s that are related to the given {@link OutputSlot} either by a {@link SlotMapping} or
+     * by {@link OutputSlot}/{@link InputSlot} occupation.
+     *
+     * @param output whose related {@link Slot}s are requested
+     * @return the related {@link Slot}s including the given {@link OutputSlot}
+     */
+    public static Set<Slot<?>> collectConnectedSlots(OutputSlot<?> output) {
+        Set<Slot<?>> result = new HashSet<>();
+
+        final Collection<OutputSlot<Object>> outerOutputs = output.getOwner().getOutermostOutputSlots(output.unchecked());
+        for (OutputSlot<Object> outerOutput : outerOutputs) {
+            result.addAll(outerOutput.getOwner().collectMappedOutputSlots(outerOutput));
+            for (InputSlot<Object> outerInput : outerOutput.getOccupiedSlots()) {
+                result.addAll(outerInput.getOwner().collectMappedInputSlots(outerInput.unchecked()));
+            }
+        }
+
+        return result;
     }
 }

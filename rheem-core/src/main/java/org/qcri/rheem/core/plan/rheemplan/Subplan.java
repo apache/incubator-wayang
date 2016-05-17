@@ -271,6 +271,15 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     }
 
     @Override
+    public <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input) {
+        final Collection<InputSlot<T>> innerInputs = this.followInput(input);
+        return Stream.concat(
+                Stream.of(input),
+                innerInputs.stream().flatMap(innerInput -> innerInput.getOwner().collectMappedInputSlots(innerInput).stream())
+        ).collect(Collectors.toSet());
+    }
+
+    @Override
     public CardinalityPusher getCardinalityPusher(
             final Configuration configuration) {
         return SubplanCardinalityPusher.createFor(this, configuration);

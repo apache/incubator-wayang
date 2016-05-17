@@ -15,6 +15,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.*;
+import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -363,7 +364,9 @@ public class Job extends OneTimeExecutable {
                     .forEach(immediateBreakpoint::breakAfter);
         }
         this.crossPlatformExecutor.setBreakpoint(new ConjunctiveBreakpoint(
-                immediateBreakpoint, new CardinalityBreakpoint(this.configuration)
+                immediateBreakpoint,
+                new CardinalityBreakpoint(this.configuration),
+                new NoIterationBreakpoint() // Avoid re-optimization inside of loops.
         ));
         breakpointRound.stop();
     }
@@ -403,11 +406,10 @@ public class Job extends OneTimeExecutable {
         round.stopSubround("Update Execution Plan");
 
         // Collect any instrumentation results for the future.
-        // TODO: Fix and re-enable!
-//        round.startSubround("Store Cardinalities");
-//        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
-//        cardinalityRepository.storeAll(state.getProfile(), this.optimizationContext);
-//        round.stopSubround("Update Execution Plan");
+        round.startSubround("Store Cardinalities");
+        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
+        cardinalityRepository.storeAll(this.crossPlatformExecutor, this.optimizationContext);
+        round.stopSubround("Update Execution Plan");
 
         round.stop(true, true);
     }
@@ -485,5 +487,9 @@ public class Job extends OneTimeExecutable {
      */
     public CrossPlatformExecutor getCrossPlatformExecutor() {
         return this.crossPlatformExecutor;
+    }
+
+    public OptimizationContext getOptimizationContext() {
+        return optimizationContext;
     }
 }

@@ -203,8 +203,10 @@ public abstract class OperatorBase implements Operator {
 
     @Override
     public <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input) {
-        throw new RuntimeException("Implement me.");
-    }
+        // Default implementation for elementary instances.
+        assert this.isElementary();
+        assert input.getOwner() == this;
+        return Collections.singleton(input);    }
 
     /**
      * @see ExecutionOperator#copy()

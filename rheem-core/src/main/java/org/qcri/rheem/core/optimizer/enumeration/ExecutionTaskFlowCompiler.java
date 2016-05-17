@@ -23,12 +23,24 @@ import java.util.stream.Stream;
 public class ExecutionTaskFlowCompiler
         extends AbstractTopologicalTraversal<ExecutionTaskFlowCompiler.Activator, ExecutionTaskFlowCompiler.Activation> {
 
+    /**
+     * Maintains {@link Activator}s.
+     */
     private final Map<ActivatorKey, Activator> activators = new HashMap<>();
 
+    /**
+     * Initial {@link Activator}s.
+     */
     private final Collection<Activator> startActivators;
 
+    /**
+     * Initial {@link Activation}s.
+     */
     private final Collection<Activation> startActivations;
 
+    /**
+     * The top-level {@link PlanImplementation} that should be converted into an {@link ExecutionTaskFlow}.
+     */
     private final PlanImplementation planImplementation;
 
     private final Collection<ExecutionTask> terminalTasks = new LinkedList<>();
@@ -84,22 +96,35 @@ public class ExecutionTaskFlowCompiler
         for (Channel channel : openChannels) {
             // Detect the Slot connections that have yet to be fulfilled by this Channel.
             OutputSlot<?> producerOutput = OptimizationUtils.findRheemPlanOutputSlotFor(channel);
+            assert producerOutput != null : String.format("No producing output for %s.", channel);
 
-            final Junction openJunction = this.planImplementation.getJunction(producerOutput);
+            final LoopImplementation.IterationImplementation producerIterationImplementation = this.findIterationImplementation(
+                    (ExecutionOperator) producerOutput.getOwner()
+            );
+            final PlanImplementation producerPlanImplementation = producerIterationImplementation == null ?
+                    this.planImplementation :
+                    producerIterationImplementation.getBodyImplementation();
+            final Junction openJunction = producerPlanImplementation.getJunction(producerOutput);
+            assert openJunction != null : String.format("No junction for %s.", producerOutput);
+
             for (int targetIndex = 0; targetIndex < openJunction.getNumTargets(); targetIndex++) {
                 final InputSlot<?> targetInput = openJunction.getTargetInput(targetIndex);
-                final Channel targetChannel = openJunction.getTargetChannel(targetIndex);
-
                 final ExecutionOperator consumerOperator = (ExecutionOperator) targetInput.getOwner();
-                // TODO: Keep track if the open Channels lead into a loop (or already was inside a loop)
-                final ActivatorKey activatorKey = new ActivatorKey(consumerOperator, null);
+
+                // If the channel was only "partially open", then we need to consider not to re-create existing ExecutionTasks.
+                if (executedOperators.contains(consumerOperator)) continue;
+
+                final LoopImplementation.IterationImplementation consumerIterationImplementation = this.findIterationImplementation(
+                        (ExecutionOperator) targetInput.getOwner()
+                );
+                final ActivatorKey activatorKey = new ActivatorKey(consumerOperator, consumerIterationImplementation);
                 final Activator consumerActivator = this.activators.computeIfAbsent(activatorKey, Activator::new);
                 final ExecutionTask consumerTask = this.getOrCreateExecutionTask(consumerOperator);
                 consumerActivator.executionTask = consumerTask;
+                final Channel targetChannel = openJunction.getTargetChannel(targetIndex);
                 targetChannel.addConsumer(consumerTask, targetInput.getIndex());
                 this.startActivations.add(new Activation(consumerActivator, targetInput.getIndex()));
 
-                // TODO: If the channel was only "partially open", then we need to consider not to re-create existing ExecutionTasks.
             }
 
 //            // Now find all InputSlots that are fed by the OutputSlot and whose Operators have not yet been executed.
@@ -145,6 +170,44 @@ public class ExecutionTaskFlowCompiler
                 .flatMap(outputSlot -> outputSlot.getOccupiedSlots().stream())
                 .flatMap(this::findExecutionOperatorInputs)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Find the {@link LoopImplementation.IterationImplementation} of a given {@link ExecutionOperator}.
+     *
+     * @param operator whose {@link LoopImplementation.IterationImplementation} is requested
+     * @return the {@link LoopImplementation.IterationImplementation} or {@code null} if the {@link ExecutionOperator}
+     * is not inside a {@link LoopSubplan}
+     */
+    private LoopImplementation.IterationImplementation findIterationImplementation(ExecutionOperator operator) {
+        PlanImplementation planImplementation = this.planImplementation;
+        LoopImplementation.IterationImplementation iterationImplementation = null;
+
+        // Descend into the nested PlanImplementations according to the loop stack of the operator.
+        final LinkedList<LoopSubplan> loopStack = operator.getLoopStack();
+        LoopImplementation loopImplementation = null;
+        for (LoopSubplan loop : loopStack) {
+            loopImplementation = planImplementation.getLoopImplementations().get(loop);
+            iterationImplementation = this.getSingleiterationImplementation(loopImplementation);
+            planImplementation = iterationImplementation.getBodyImplementation();
+        }
+
+        return iterationImplementation;
+    }
+
+    /**
+     * Retrieve the only {@link LoopImplementation.IterationImplementation} from the {@link LoopImplementation}.
+     *
+     * @param loopImplementation a {@link LoopImplementation} with a single {@link LoopImplementation.IterationImplementation} or {@code null}
+     * @return the {@link LoopImplementation.IterationImplementation} or {@code null} if {@code loopImplementation == null}
+     */
+    private LoopImplementation.IterationImplementation getSingleiterationImplementation(LoopImplementation loopImplementation) {
+        final List<LoopImplementation.IterationImplementation> iterationImplementations = loopImplementation.getIterationImplementations();
+        assert iterationImplementations.size() == 1 : String.format(
+                "Cannot handle more than one loop implementation during the re-optimization (cf. %s).",
+                loopImplementation
+        );
+        return iterationImplementations.get(0);
     }
 
     private Stream<InputSlot<?>> findExecutionOperatorInputs(InputSlot<?> input) {
@@ -391,8 +454,8 @@ public class ExecutionTaskFlowCompiler
             // Check if the targetOperator's loop has just been entered.
             final LoopSubplan currentLoop = this.operator.getInnermostLoop();
             if (currentLoop == null) { // TODO: Current code supports only non-nested loops.
-                    final LoopImplementation loopImplementation =
-                            ExecutionTaskFlowCompiler.this.planImplementation.getLoopImplementations().get(targetLoop);
+                final LoopImplementation loopImplementation =
+                        ExecutionTaskFlowCompiler.this.planImplementation.getLoopImplementations().get(targetLoop);
                 if (targetOperator.isLoopHead()) {
                     return Collections.singleton(loopImplementation.getIterationImplementations().get(0));
                 } else {

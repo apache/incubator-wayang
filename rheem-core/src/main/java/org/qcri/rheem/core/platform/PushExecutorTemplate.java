@@ -193,24 +193,16 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
          * Put new {@link ChannelInstance}s to the {@link #executionState} and release input {@link ChannelInstance}s.
          */
         private void updateExecutionState() {
-            final Map<Channel, Long> cardinalities = this.executionState.getCardinalities();
             for (final ChannelInstance channelInstance : this.allChannelInstances) {
-
                 // Capture outbound ChannelInstances.
                 if (channelInstance.getChannel().isBetweenStages() || channelInstance.getChannel().isStageExecutionBarrier()) {
                     this.executionState.register(channelInstance);
                 }
 
                 // Try to store cardinalities.
-                final OptionalLong measuredCardinality = channelInstance.getMeasuredCardinality();
-                if (measuredCardinality.isPresent()) {
-                    cardinalities.put(channelInstance.getChannel(), measuredCardinality.getAsLong());
-                } else if (channelInstance.getChannel().isMarkedForInstrumentation()) {
-                    PushExecutorTemplate.this.logger.warn(
-                            "No cardinality available for {}, although it was requested.", channelInstance.getChannel()
-                    );
-                }
+                PushExecutorTemplate.this.addCardinalityIfNotInLoop(channelInstance);
 
+                // Release the ChannelInstance.
                 channelInstance.noteDiscardedReference(true);
             }
             this.allChannelInstances.clear();

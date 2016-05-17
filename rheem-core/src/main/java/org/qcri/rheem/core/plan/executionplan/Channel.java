@@ -190,7 +190,23 @@ public abstract class Channel {
 
     }
 
-    protected Stream<Channel> withSiblings(boolean isWithConcurrentModification) {
+    /**
+     * Creates a {@link Stream} of this instance and its siblings. The sibling relationship must not be altered
+     * while processing the {@link Stream}.
+     *
+     * @return the {@link Stream}
+     */
+    public Stream<Channel> withSiblings() {
+        return this.withSiblings(false);
+    }
+
+    /**
+     * Creates a {@link Stream} of this instance and its siblings.
+     *
+     * @param isWithConcurrentModification whether {@link #siblings} may be modificated while processing the {@link Stream}
+     * @return the {@link Stream}
+     */
+    private Stream<Channel> withSiblings(boolean isWithConcurrentModification) {
         return Stream.concat(
                 Stream.of(this),
                 (isWithConcurrentModification ? new ArrayList<>(this.siblings) : this.siblings).stream()
@@ -270,9 +286,13 @@ public abstract class Channel {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Collect the {@link OutputSlot} of the producer and the {@link InputSlot}s of the consumers that are implemented
+     * by this instance.
+     * @return a {@link Stream} of said {@link Slot}s
+     */
     private Stream<Slot<?>> getCorrespondingSlotsLocal() {
-        final Stream<? extends OutputSlot<?>> outputSlotStream =
-                streamNullable(this.getProducer().getOutputSlotFor(this));
+        final Stream<? extends OutputSlot<?>> outputSlotStream = streamNullable(this.getProducerSlot());
         final Stream<? extends InputSlot<?>> inputSlotStream
                 = this.consumers.stream().flatMap(consumer -> streamNullable(consumer.getInputSlotFor(this)));
         return Stream.concat(inputSlotStream, outputSlotStream);
@@ -338,7 +358,10 @@ public abstract class Channel {
             // We must take care not to copy back channels, that we already have in the original.
             assert this.consumers.stream()
                     .noneMatch(existingConsumer -> existingConsumer.getOperator().equals(consumer.getOperator())) :
-                    String.format("Overlap in existing %s and new %s.", this.consumers, channel.getConsumers());
+                    String.format("Conflict when copying consumers from %s (%s) to %s (%s).",
+                            this, this.consumers,
+                            channel, channel.getConsumers()
+                    );
             consumer.exchangeInputChannel(channel, this);
         }
     }

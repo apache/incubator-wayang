@@ -204,7 +204,10 @@ public class PlanEnumerator {
     }
 
     private Stream<OperatorAlternative.Alternative> streamPickedAlternatives(Operator operator) {
-        final OperatorContainer container = operator.getContainer();
+        OperatorContainer container = operator.getContainer();
+        while (container != null && !(container instanceof OperatorAlternative.Alternative)) {
+            container = container.toOperator().getContainer();
+        }
         if (container == null) return Stream.empty();
         OperatorAlternative.Alternative alternative = (OperatorAlternative.Alternative) container;
         final OperatorAlternative operatorAlternative = alternative.toOperator();
