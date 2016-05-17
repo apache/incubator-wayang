@@ -109,18 +109,19 @@ public class ExecutionTaskFlowCompiler
             assert openJunction != null : String.format("No junction for %s.", producerOutput);
             for (int targetIndex = 0; targetIndex < openJunction.getNumTargets(); targetIndex++) {
                 final InputSlot<?> targetInput = openJunction.getTargetInput(targetIndex);
-                final Channel targetChannel = openJunction.getTargetChannel(targetIndex);
-
                 final ExecutionOperator consumerOperator = (ExecutionOperator) targetInput.getOwner();
-                // TODO: Keep track if the open Channels lead into a loop (or already was inside a loop)
+
+                // If the channel was only "partially open", then we need to consider not to re-create existing ExecutionTasks.
+                if (executedOperators.contains(consumerOperator)) continue;
+
                 final ActivatorKey activatorKey = new ActivatorKey(consumerOperator, producerIterationImplementation);
                 final Activator consumerActivator = this.activators.computeIfAbsent(activatorKey, Activator::new);
                 final ExecutionTask consumerTask = this.getOrCreateExecutionTask(consumerOperator);
                 consumerActivator.executionTask = consumerTask;
+                final Channel targetChannel = openJunction.getTargetChannel(targetIndex);
                 targetChannel.addConsumer(consumerTask, targetInput.getIndex());
                 this.startActivations.add(new Activation(consumerActivator, targetInput.getIndex()));
 
-                // TODO: If the channel was only "partially open", then we need to consider not to re-create existing ExecutionTasks.
             }
 
 //            // Now find all InputSlots that are fed by the OutputSlot and whose Operators have not yet been executed.

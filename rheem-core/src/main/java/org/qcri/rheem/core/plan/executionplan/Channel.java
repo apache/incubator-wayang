@@ -338,7 +338,10 @@ public abstract class Channel {
             // We must take care not to copy back channels, that we already have in the original.
             assert this.consumers.stream()
                     .noneMatch(existingConsumer -> existingConsumer.getOperator().equals(consumer.getOperator())) :
-                    String.format("Overlap in existing %s and new %s.", this.consumers, channel.getConsumers());
+                    String.format("Conflict when copying consumers from %s (%s) to %s (%s).",
+                            this, this.consumers,
+                            channel, channel.getConsumers()
+                    );
             consumer.exchangeInputChannel(channel, this);
         }
     }
