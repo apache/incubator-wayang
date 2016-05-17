@@ -126,6 +126,8 @@ public class CrossPlatformExecutor implements ExecutionState {
 
         // Create StageActivators for all ExecutionStages.
         for (ExecutionStage stage : this.allStages) {
+            // Avoid re-activating already executed ExecutionStages.
+            if (this.completedStages.contains(stage)) continue;
             final StageActivator activator = this.getOrCreateActivator(stage);
             this.tryToActivate(activator);
         }
@@ -260,7 +262,7 @@ public class CrossPlatformExecutor implements ExecutionState {
 //                CrossPlatformExecutor.this.logger.debug("Cardinality of {}: actual {}, estimated {}",
 //                  this.executionState.merge(executionState);
 
-        // Clean up.
+        // Remember that we have executed the stage.
         this.completedStages.add(stage);
     }
 
@@ -279,8 +281,10 @@ public class CrossPlatformExecutor implements ExecutionState {
     }
 
     /**
-     * Increments the {@link #predecessorCounter} for all successors of the given {@link ExecutionStage} and
-     * activates them if possible by putting them in the given {@link Collection}.
+     * Follows the outbound {@link Channel}s of the given {@link ExecutionStage} and try to activate consuming
+     * {@link ExecutionStage}s, given the according {@link ChannelInstance}s are available.
+     *
+     * @param processedStage should have just been executed
      */
     private void tryToActivateSuccessors(ExecutionStage processedStage) {
         // Gather all successor ExecutionStages for that a new ChannelInstance has been produced.
@@ -343,6 +347,7 @@ public class CrossPlatformExecutor implements ExecutionState {
     /**
      * Register a global {@link ExecutionResource}, that will only be released once this instance has
      * finished executing.
+     *
      * @param resource that should be registered
      */
     public void registerGlobal(ExecutionResource resource) {
