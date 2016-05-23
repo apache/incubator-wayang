@@ -2,7 +2,6 @@ package org.qcri.rheem.java;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
@@ -34,7 +33,7 @@ public class JavaPlatform extends Platform {
         }
         return instance;
     }
-    
+
     private JavaPlatform() {
         super(PLATFORM_NAME);
         this.initializeConfiguration();
