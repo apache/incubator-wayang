@@ -235,9 +235,8 @@ public abstract class OperatorBase implements Operator {
         return this.name;
     }
 
-    @SuppressWarnings("unchecked")
-    public <Self extends OperatorBase> Self setName(String name) {
+    @Override
+    public void setName(String name) {
         this.name = name;
-        return (Self) this;
     }
 }

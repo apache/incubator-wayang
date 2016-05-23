@@ -504,6 +504,11 @@ public class ChannelConversionGraph {
             for (TreeEdge edge : vertex.outEdges) {
                 final ChannelConversion channelConversion = edge.channelConversion;
                 final Channel targetChannel = channelConversion.convert(channel, this.configuration);
+                if (targetChannel != channel) {
+                    targetChannel.getProducer().getOperator().setName(String.format(
+                            "convert %s", junction.getSourceOutput()
+                    ));
+                }
                 this.createJunctionAux(edge.destination, targetChannel, junction, isOnAllPaths);
             }
         }
