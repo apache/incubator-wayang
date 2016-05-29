@@ -59,5 +59,11 @@ public class RecordSchema implements Serializable {
         return String.format("Field Types: %s, Field names: %s", Arrays.toString(types), Arrays.toString(names));
     }
 
-
+    public RecordSchema copy() {
+        String[] names_c = new String[this.names.length];
+        System.arraycopy(this.names, 0, names_c, 0, this.names.length);
+        Class[] types_c = new Class[types.length];
+        System.arraycopy(this.types, 0, types_c, 0, this.types.length);
+        return new RecordSchema(names_c, types_c);
+    }
 }
