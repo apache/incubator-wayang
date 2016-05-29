@@ -1,6 +1,8 @@
 package org.qcri.rheem.basic.data;
 
 import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -13,6 +15,10 @@ public class Record implements Serializable {
 
     private RecordSchema schema;
 
+    public RecordSchema getSchema() {
+        return schema;
+    }
+
     public Record(Object... values) {
         String[] names = new String[values.length];
         Class[] types = new Class[values.length];
@@ -22,6 +28,7 @@ public class Record implements Serializable {
             types[i] = values[i].getClass();
         }
         this.schema = new RecordSchema(names, types);
+
     }
 
     public Record(String[] names, Object[] values) {
@@ -40,15 +47,12 @@ public class Record implements Serializable {
         this.schema = schema;
     }
 
-    public RecordSchema getSchema() {
-        return schema;
-    }
-
     public Record copy() {
         Object[] values_c = new Object[values.length];
         System.arraycopy(values, 0, values_c, 0, values.length);
         return new Record(schema.copy(), values_c);
     }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
