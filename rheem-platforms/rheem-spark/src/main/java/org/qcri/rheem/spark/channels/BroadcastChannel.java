@@ -64,7 +64,8 @@ public class BroadcastChannel extends Channel {
 
         @Override
         protected void doDispose() {
-            this.doSafe(() -> this.broadcast.destroy(false));
+         // TODO: We must not dispose broadcasts for now because they can break lazy computation.
+//            this.doSafe(() -> this.broadcast.destroy(false));
         }
 
         @Override

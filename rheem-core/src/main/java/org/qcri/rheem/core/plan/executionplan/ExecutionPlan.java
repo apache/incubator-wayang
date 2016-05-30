@@ -30,7 +30,22 @@ public class ExecutionPlan {
         return this.startingStages;
     }
 
+    /**
+     * Creates a {@link String} representation (not strictly ordered) of this instance.
+     *
+     * @return the {@link String} representation
+     */
     public String toExtensiveString() {
+        return this.toExtensiveString(false);
+    }
+
+    /**
+     * Creates a {@link String} representation of this instance.
+     *
+     * @param isStriclyOrdering whether {@link ExecutionStage}s should be listed only after <i>all</i> their predecessors
+     * @return the {@link String} representation
+     */
+    public String toExtensiveString(boolean isStriclyOrdering) {
         StringBuilder sb = new StringBuilder();
         Counter<ExecutionStage> stageActivationCounter = new Counter<>();
         Queue<ExecutionStage> activatedStages = new LinkedList<>(this.startingStages);
@@ -45,7 +60,7 @@ public class ExecutionPlan {
 
                 for (ExecutionStage successor : stage.getSuccessors()) {
                     final int count = stageActivationCounter.add(successor, 1);
-                    if (count == successor.getPredecessors().size() || successor.isLoopHead()) {
+                    if (!isStriclyOrdering || count == successor.getPredecessors().size() || successor.isLoopHead()) {
                         activatedStages.add(successor);
                     }
                 }

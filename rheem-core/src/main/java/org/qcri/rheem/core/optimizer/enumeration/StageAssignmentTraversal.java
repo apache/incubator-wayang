@@ -334,6 +334,8 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
      * Applies all {@link #splittingCriteria} to the given {@code stage}, thereby refining it.
      */
     private void applySplittingCriteria(InterimStage stage) {
+        // TODO: This splitting mechanism can cause unnecessary fragmentation of stages. Most likely, because "willTaskBeSeparated" depends on the traversal order of the stage DAG.
+
         // Keeps track of ExecutionTasks that should be separated from those that are not in this Set.
         Set<ExecutionTask> tasksToSeparate = new HashSet<>();
 
@@ -523,7 +525,9 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
             // the current requiredStage, which should be true by construction.
             for (Channel channel : task.getOutputChannels()) {
                 for (ExecutionTask consumingTask : channel.getConsumers()) {
-                    this.updateRequiredStages(consumingTask, requiredStages);
+                    if (!consumingTask.isFeedbackInput(channel)) {
+                        this.updateRequiredStages(consumingTask, requiredStages);
+                    }
                 }
             }
         }

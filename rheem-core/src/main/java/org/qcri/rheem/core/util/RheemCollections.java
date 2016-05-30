@@ -48,7 +48,7 @@ public class RheemCollections {
      * Validate that there is only a single element in the {@code collection} and return it.
      */
     public static <T> T getSingle(Collection<T> collection) {
-        Validate.isTrue(collection.size() == 1);
+        Validate.isTrue(collection.size() == 1, "%s is not a singleton.", collection);
         return getAny(collection);
     }
 
