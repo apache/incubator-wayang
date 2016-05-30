@@ -21,11 +21,10 @@ public class Record implements Serializable {
 
     public Record(Object... values) {
         String[] names = new String[values.length];
+        Class[] types = new Class[values.length];
+        this.values = values;
         for (Integer i=0; i <values.length; i++){
             names[i] = String.format("field%s", i);
-        }
-        Class [] types = new Class[values.length];
-        for (Integer i=0; i <values.length; i++){
             types[i] = values[i].getClass();
         }
         this.schema = new RecordSchema(names, types);
@@ -46,6 +45,12 @@ public class Record implements Serializable {
     public Record(RecordSchema schema, Object[] values) {
         this.values = values;
         this.schema = schema;
+    }
+
+    public Record copy() {
+        Object[] values_c = new Object[values.length];
+        System.arraycopy(values, 0, values_c, 0, values.length);
+        return new Record(schema.copy(), values_c);
     }
 
     @Override
