@@ -341,10 +341,12 @@ public class ChannelConversionGraph {
                 ChannelDescriptor channelDescriptor,
                 BitSet settledDestinationIndices) {
 
+            // Mapping from settled indices to the cheapest tree settling them. Will be the return value.
             Map<BitSet, Tree> newSolutions = new HashMap<>();
             Tree newSolution;
 
             // Check if current path is a (new) solution.
+            // TODO: Check whether the channelDescriptor is reusable.
             final BitSet newSettledIndices =
                     (BitSet) this.kernelDestChannelDescriptorsToIndices.getOrDefault(channelDescriptor, EMPTY_BITSET).clone();
             newSettledIndices.andNot(settledDestinationIndices);
@@ -393,8 +395,13 @@ public class ChannelConversionGraph {
             settledDestinationIndices.andNot(newSettledIndices);
 
             // Merge the childSolutionSets into the newSolutions.
+            // Each childSolutionSet corresponds to a traversed outgoint ChannelConversion.
+
+            // At first, consider the childSolutionSet for each outgoing ChannelConversion individually.
             for (Map<BitSet, Tree> childSolutionSet : childSolutionSets) {
+                // Each childSolutionSet its has a mapping from settled indices to trees.
                 for (Map.Entry<BitSet, Tree> bitSetTreeEntry : childSolutionSet.entrySet()) {
+                    // Update newSolutions if the current tree is cheaper or settling new indices.
                     final BitSet childSolutionSettledIndices = bitSetTreeEntry.getKey();
                     final Tree tree = bitSetTreeEntry.getValue();
                     newSolutions.merge(childSolutionSettledIndices, tree, ChannelConversionGraph.this::selectCheaperTree);
