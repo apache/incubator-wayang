@@ -9,6 +9,7 @@ import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperat
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
 import org.qcri.rheem.core.function.{FlatMapDescriptor, PredicateDescriptor, ReduceDescriptor, TransformationDescriptor}
 import org.qcri.rheem.core.plan.rheemplan.{InputSlot, Operator, RheemPlan}
+import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.core.util.{RheemCollections, Tuple => RheemTuple}
 
 import scala.collection.JavaConversions
@@ -378,6 +379,17 @@ class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implic
 
     // Return the collected values.
     collector
+  }
+
+  /**
+    * Restrict the producing [[Operator]] to run on certain [[Platform]]s.
+    *
+    * @param platforms on that the [[Operator]] may be executed
+    * @return this instance
+    */
+  def withTargetPlatforms(platforms: Platform*) = {
+    platforms.foreach(this.operator.addTargetPlatform)
+    this
   }
 
   /**

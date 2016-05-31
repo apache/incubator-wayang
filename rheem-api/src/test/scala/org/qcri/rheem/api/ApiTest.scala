@@ -58,6 +58,30 @@ class ApiTest {
   }
 
   @Test
+  def testWordCountOnSparkAndJava = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    // Generate some test data.
+    val inputValues = Array("Big data is big.", "Is data big data?")
+
+    // Build and execute a word count RheemPlan.
+    val wordCounts = rheem
+      .readCollection(inputValues).withName("Load input values").withTargetPlatforms(JavaPlatform.getInstance)
+      .flatMap(_.split("\\s+")).withName("Split words").withTargetPlatforms(JavaPlatform.getInstance)
+      .map(_.replaceAll("\\W+", "").toLowerCase).withName("To lowercase").withTargetPlatforms(SparkPlatform.getInstance)
+      .map((_, 1)).withName("Attach counter").withTargetPlatforms(SparkPlatform.getInstance)
+      .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)).withName("Sum counters").withTargetPlatforms(SparkPlatform.getInstance)
+      .collect().toSet
+
+    val expectedWordCounts = Set(("big", 3), ("is", 2), ("data", 3))
+
+    Assert.assertEquals(expectedWordCounts, wordCounts)
+  }
+
+  @Test
   def testDoWhile(): Unit = {
     // Set up RheemContext.
     val rheem = new RheemContext()

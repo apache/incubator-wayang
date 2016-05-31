@@ -45,4 +45,13 @@ class ScalaTest {
 
   }
 
+  @Test
+  def testKMeans = {
+    val rheem = new RheemContext
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    // TODO
+  }
+
 }
