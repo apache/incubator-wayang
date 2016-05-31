@@ -109,7 +109,7 @@ class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implic
     * @param udf    aggregation UDF for the [[ReduceByOperator]]
     * @return a new instance representing the [[ReduceByOperator]]'s output
     */
-  def reduceByKey[Key: ClassTag](keyUdf: Out => Iterable[Key], udf: (Out, Out) => Out): DataQuanta[Out] =
+  def reduceByKey[Key: ClassTag](keyUdf: Out => Key, udf: (Out, Out) => Out): DataQuanta[Out] =
     reduceByKeyJava(toSerializableFunction(keyUdf), toSerializableBinaryOperator(udf))
 
   /**

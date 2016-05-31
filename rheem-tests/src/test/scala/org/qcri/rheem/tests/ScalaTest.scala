@@ -25,10 +25,10 @@ class ScalaTest {
     // Wikipedia abstract of Rheem, California ;)
     val text = Seq(
       "Rheem,[1] also known as Rheem Valley[1] and Rheem Center,[2] is an unincorporated community in Contra ",
-        "Costa County, California, United States.[1] It is located 7.5 miles (12 km) north-northwest of ",
-        "Danville,[2] at an elevation of 587 feet.",
-      "The place was named after its developer, Donald Laird Rheem, the son of William Rheem, " +
-        "President of Standard Oil Company.[2]"
+      "Costa County, California, United States.[1] It is located 7.5 miles (12 km) north-northwest of ",
+      "Danville,[2] at an elevation of 587 feet.",
+      "The place was named after its developer, Donald Laird Rheem, the son of William Rheem, ",
+      "President of Standard Oil Company.[2]"
     )
 
 
