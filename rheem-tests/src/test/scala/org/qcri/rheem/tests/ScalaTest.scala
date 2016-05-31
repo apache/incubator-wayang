@@ -1,6 +1,6 @@
 package org.qcri.rheem.tests
 
-import org.junit.{Assert, Test}
+import org.junit.{Assert, Ignore, Test}
 import org.qcri.rheem.api._
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.graphchi.GraphChiPlatform
@@ -45,6 +45,7 @@ class ScalaTest {
 
   }
 
+  @Ignore("TODO")
   @Test
   def testKMeans = {
     val rheem = new RheemContext
