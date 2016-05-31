@@ -40,7 +40,7 @@ public class ProbabilisticIntervalEstimate {
     }
 
     public long getAverageEstimate() {
-        return (this.getUpperEstimate() - this.getLowerEstimate()) / 2;
+        return this.getLowerEstimate() + (this.getUpperEstimate() - this.getLowerEstimate()) / 2;
     }
 
     public double getCorrectnessProbability() {

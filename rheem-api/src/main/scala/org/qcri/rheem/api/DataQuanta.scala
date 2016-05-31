@@ -21,7 +21,6 @@ import scala.reflect._
   * @param operator    a unary [[Operator]] that produces this instance
   * @param ev$1        the data type of the elements in this instance
   * @param planBuilder keeps track of the [[RheemPlan]] being build
-  * @tparam Out
   */
 class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implicit planBuilder: PlanBuilder) {
 

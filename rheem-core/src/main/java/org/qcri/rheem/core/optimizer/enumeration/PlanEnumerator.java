@@ -276,7 +276,6 @@ public class PlanEnumerator {
         if (branchEnumeration == null) {
             return;
         }
-        this.prune(branchEnumeration);
 
         this.postProcess(branchEnumeration, currentOptimizationCtx);
     }
@@ -369,6 +368,7 @@ public class PlanEnumerator {
                         Collections.singletonMap(operator.getInput(0), operatorEnumeration),
                         optimizationContext
                 );
+                this.prune(branchEnumeration);
             }
 
             lastOperator = operator;
@@ -637,6 +637,18 @@ public class PlanEnumerator {
      * @param planEnumeration to which the pruning should be applied
      */
     private void prune(final PlanEnumeration planEnumeration) {
+        if (planEnumeration.getPlanImplementations().size() < 2) {
+            this.logger.trace("Skip pruning: Too few plan implementations.");
+            return;
+        }
+
+        if (this.logger.isDebugEnabled()) {
+            this.logger.debug("{} implementations for scope {}.", planEnumeration.getPlanImplementations().size(), planEnumeration.getScope());
+            for (PlanImplementation planImplementation : planEnumeration.getPlanImplementations()) {
+                this.logger.debug("{}: {}", planImplementation.getTimeEstimate(), planImplementation.getOperators());
+            }
+        }
+
         int numPlanImplementations = planEnumeration.getPlanImplementations().size();
         this.optimizationContext.getPruningStrategies().forEach(strategy -> strategy.prune(planEnumeration));
         this.logger.info("Pruned plan enumeration from {} to {} implementations.",
