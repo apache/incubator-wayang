@@ -1,14 +1,17 @@
 package org.qcri.rheem.api
 
-import _root_.java.util.function.Consumer
+import _root_.java.util.function.{Consumer, Function => JavaFunction}
+import _root_.java.util.{Collection => JavaCollection}
 
 import org.apache.commons.lang3.Validate
 import org.qcri.rheem.basic.operators._
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
 import org.qcri.rheem.core.function.{FlatMapDescriptor, PredicateDescriptor, ReduceDescriptor, TransformationDescriptor}
-import org.qcri.rheem.core.plan.rheemplan.{Operator, RheemPlan}
+import org.qcri.rheem.core.plan.rheemplan.{InputSlot, Operator, RheemPlan}
+import org.qcri.rheem.core.util.{Tuple => RheemTuple}
 
+import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
 import scala.reflect._
 
@@ -20,9 +23,9 @@ import scala.reflect._
   * @param planBuilder keeps track of the [[RheemPlan]] being build
   * @tparam Out
   */
-class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBuilder) {
+class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implicit planBuilder: PlanBuilder) {
 
-  Validate.isTrue(operator.getNumOutputs == 1)
+  Validate.isTrue(operator.getNumOutputs > outputIndex)
 
   /**
     * Feed this instance into a [[MapOperator]].
@@ -42,9 +45,19 @@ class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBu
     val mapOperator = new MapOperator(new TransformationDescriptor(
       udf, basicDataUnitType[Out], basicDataUnitType[NewOut]
     ))
-    this.operator.connectTo(0, mapOperator, 0)
+    this.connectTo(mapOperator, 0)
     mapOperator
   }
+
+  /**
+    * Connects the [[operator]] to a further [[Operator]].
+    *
+    * @param operator   the [[Operator]] to connect to
+    * @param inputIndex the input index of the [[Operator]]s [[InputSlot]]
+    */
+  protected def connectTo(operator: Operator, inputIndex: Int): Unit =
+    this.operator.connectTo(outputIndex, operator, inputIndex)
+
 
   /**
     * Feed this instance into a [[FilterOperator]].
@@ -62,7 +75,7 @@ class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBu
     */
   def filterJava(udf: SerializablePredicate[Out]): DataQuanta[Out] = {
     val filterOperator = new FilterOperator(new PredicateDescriptor(udf, basicDataUnitType[Out]))
-    this.operator.connectTo(0, filterOperator, 0)
+    this.connectTo(filterOperator, 0)
     filterOperator
   }
 
@@ -85,7 +98,7 @@ class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBu
     val flatMapOperator = new FlatMapOperator(new FlatMapDescriptor(
       udf, basicDataUnitType[Out], basicDataUnitType[NewOut]
     ))
-    this.operator.connectTo(0, flatMapOperator, 0)
+    this.connectTo(flatMapOperator, 0)
     flatMapOperator
   }
 
@@ -112,7 +125,7 @@ class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBu
       new TransformationDescriptor(keyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
       new ReduceDescriptor(udf, groupedDataUnitType[Out], basicDataUnitType[Out])
     )
-    this.operator.connectTo(0, reduceByOperator, 0)
+    this.connectTo(reduceByOperator, 0)
     reduceByOperator
   }
 
@@ -135,7 +148,7 @@ class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBu
     val globalReduceOperator = new GlobalReduceOperator(
       new ReduceDescriptor(udf, groupedDataUnitType[Out], basicDataUnitType[Out])
     )
-    this.operator.connectTo(0, globalReduceOperator, 0)
+    this.connectTo(globalReduceOperator, 0)
     globalReduceOperator
   }
 
@@ -147,8 +160,8 @@ class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBu
     */
   def union(that: DataQuanta[Out]): DataQuanta[Out] = {
     val unionAllOperator = new UnionAllOperator(dataSetType[Out])
-    this.operator.connectTo(0, unionAllOperator, 0)
-    that._operator.connectTo(0, unionAllOperator, 1)
+    this.connectTo(unionAllOperator, 0)
+    that.connectTo(unionAllOperator, 1)
     unionAllOperator
   }
 
@@ -184,8 +197,8 @@ class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBu
       new TransformationDescriptor(thisKeyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
       new TransformationDescriptor(thatKeyUdf, basicDataUnitType[ThatOut], basicDataUnitType[Key])
     )
-    this.operator.connectTo(0, joinOperator, 0)
-    that._operator.connectTo(0, joinOperator, 1)
+    this.connectTo(joinOperator, 0)
+    that.connectTo(joinOperator, 1)
     joinOperator
   }
 
@@ -198,9 +211,57 @@ class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBu
   def cartesian[ThatOut: ClassTag](that: DataQuanta[ThatOut])
   : DataQuanta[org.qcri.rheem.basic.data.Tuple2[Out, ThatOut]] = {
     val cartesianOperator = new CartesianOperator(dataSetType[Out], dataSetType[ThatOut])
-    this.operator.connectTo(0, cartesianOperator, 0)
-    that._operator.connectTo(0, cartesianOperator, 1)
+    this.connectTo(cartesianOperator, 0)
+    that.connectTo(cartesianOperator, 1)
     cartesianOperator
+  }
+
+  /**
+    * Feeds this instance into a do-while loop (guarded by a [[DoWhileOperator]].
+    *
+    * @param udf         condition to be evaluated after each iteration
+    * @param bodyBuilder creates the loop body
+    * @return a new instance representing the final output of the [[DoWhileOperator]]
+    */
+  def doWhile[ConvOut: ClassTag](udf: Iterable[ConvOut] => Boolean,
+                                 bodyBuilder: DataQuanta[Out] => (DataQuanta[Out], DataQuanta[ConvOut])) =
+    doWhileJava(
+      toSerializablePredicate((in: JavaCollection[ConvOut]) => udf(JavaConversions.collectionAsScalaIterable(in))),
+      new JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]] {
+        override def apply(t: DataQuanta[Out]) = {
+          val result = bodyBuilder(t)
+          new RheemTuple(result._1, result._2)
+        }
+      }
+    )
+
+  /**
+    * Feeds this instance into a do-while loop (guarded by a [[DoWhileOperator]].
+    *
+    * @param udf         condition to be evaluated after each iteration
+    * @param bodyBuilder creates the loop body
+    * @return a new instance representing the final output of the [[DoWhileOperator]]
+    */
+  def doWhileJava[ConvOut: ClassTag](
+                                      udf: SerializablePredicate[JavaCollection[ConvOut]],
+                                      bodyBuilder: JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]]
+                                    ) = {
+    // Create the DoWhileOperator.
+    val doWhileOperator = new DoWhileOperator(
+      dataSetType[Out],
+      dataSetType[ConvOut],
+      new PredicateDescriptor(udf, basicDataUnitType[java.util.Collection[ConvOut]])
+    )
+    this.connectTo(doWhileOperator, DoWhileOperator.INITIAL_INPUT_INDEX)
+
+    // Create and wire the loop body.
+    val loopDataQuanta = new DataQuanta[Out](doWhileOperator, DoWhileOperator.ITERATION_OUTPUT_INDEX)
+    val iterationResults = bodyBuilder.apply(loopDataQuanta)
+    iterationResults.getField0.connectTo(doWhileOperator, DoWhileOperator.ITERATION_INPUT_INDEX)
+    iterationResults.getField1.connectTo(doWhileOperator, DoWhileOperator.CONVERGENCE_INPUT_INDEX)
+
+    // Return the iteration result.
+    new DataQuanta[Out](doWhileOperator, DoWhileOperator.FINAL_OUTPUT_INDEX)
   }
 
   /**
@@ -217,7 +278,7 @@ class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBu
     */
   def foreachJava(f: Consumer[Out]): Unit = {
     val sink = new LocalCallbackSink(f, dataSetType[Out])
-    this.operator.connectTo(0, sink, 0)
+    this.connectTo(sink, 0)
     this.planBuilder.sinks += sink
     this.planBuilder.buildAndExecute()
     this.planBuilder.sinks.clear()
@@ -232,7 +293,7 @@ class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBu
     // Set up the sink.
     val collector = new java.util.LinkedList[Out]()
     val sink = LocalCallbackSink.createCollectingSink(collector, dataSetType[Out])
-    this.operator.connectTo(0, sink, 0)
+    this.connectTo(sink, 0)
 
     // Do the execution.
     this.planBuilder.sinks += sink
@@ -242,7 +303,5 @@ class DataQuanta[Out: ClassTag](operator: Operator)(implicit planBuilder: PlanBu
     // Return the collected values.
     collector
   }
-
-  private def _operator = operator
 
 }

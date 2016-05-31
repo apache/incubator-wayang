@@ -51,4 +51,28 @@ class ApiTest {
     Assert.assertEquals(expectedWordCounts, wordCounts)
   }
 
+  @Test
+  def testDoWhile(): Unit = {
+    // Set up RheemContext.
+    Rheem.rheemContext.register(JavaPlatform.getInstance)
+    Rheem.rheemContext.register(SparkPlatform.getInstance)
+
+    // Generate some test data.
+    val inputValues = Array(1, 2)
+
+    // Build and execute a word count RheemPlan.
+
+    val values = Rheem.buildNewPlan
+      .readCollection(inputValues)
+      .doWhile[Int](vals => vals.max > 100, {
+      start =>
+        val sum = start.reduce(_ + _)
+        (start.union(sum), sum.map(x => x))
+    })
+      .collect().toSet
+
+    val expectedValues = Set(1, 2, 3, 6, 12, 24, 48, 96, 192)
+    Assert.assertEquals(expectedValues, values)
+  }
+
 }

@@ -30,7 +30,7 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
     }
 
     public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
-                               BasicDataUnitType inputType) {
+                               BasicDataUnitType<Input> inputType) {
         this(javaImplementation, inputType,
                 LoadEstimator.createFallback(1, 1),
                 LoadEstimator.createFallback(1, 1));
