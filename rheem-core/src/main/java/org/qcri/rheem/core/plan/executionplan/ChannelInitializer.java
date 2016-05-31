@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.plan.executionplan;
 
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -12,22 +13,14 @@ import org.qcri.rheem.core.util.Tuple;
  */
 public interface ChannelInitializer {
 
-//    /**
-//     * <i>Optional operation.</i> Implements the {@link Channel} on the {@code index}-th output of the given
-//     * {@link ExecutionTask}, thereby adding potentially further {@link ExecutionTask}s required for using the
-//     * {@link Channel}. However, if it encounters already set-up {@link Channel}s, the implementation is free to
-//     * reuse them if appropriate or even necessary.
-//     *
-//     * @param descriptor    describes the {@link Channel} to be created
-//     * @param executionTask that should output to the new {@link Channel}
-//     * @param index         the output index of the {@code executionTask} that should feed the {@link Channel}
-//     * @return the newly created and set-up or reused {@link Channel}
-//     */
-//    Channel setUpOutput(ChannelDescriptor descriptor, ExecutionTask executionTask, int index);
-
     /**
-     * Todo.
+     * <i>Optional operation.</i>
+     * Creates a new {@link Channel} adjacent* to an {@link ExecutionOperator}'s {@code outputSlot}.
+     * <p>* Note that in general the created {@link Channel} is not necessarily directly adjacent to the {@code outputSlot},
+     * but a chain {@link Channel}s (and {@link ExecutionTask}s) might be in betweeen.</p>
      *
+     * @param descriptor          describes the {@link Channel} to be created
+     * @param outputSlot          whose output the {@link Channel} should accept
      * @param optimizationContext provides estimates and accepts new {@link Operator}s
      * @return {@link Channel} that is directly output by the {@code outputSlot} and the {@link Channel} that was
      * actually requested; both are interlinked.
@@ -35,25 +28,17 @@ public interface ChannelInitializer {
     Tuple<Channel, Channel> setUpOutput(ChannelDescriptor descriptor, OutputSlot<?> outputSlot, OptimizationContext optimizationContext);
 
     /**
-     * Todo.
+     * <i>Optional operation.</i>
+     * Creates a new {@link Channel} incident* to the {@code source}.
+     * <p>* Note that in general the created {@link Channel} is not necessarily directly incident to the {@code source},
+     * but a chain {@link Channel}s (and {@link ExecutionTask}s) might be in betweeen.</p>
      *
+     * @param descriptor          describes the {@link Channel} to be created
+     * @param source              that should be exposed as a new {@link Channel}
      * @param optimizationContext provides estimates and accepts new {@link Operator}s
-     * @return {@link Channel} that is directly output by the {@code outputSlot} and the {@link Channel} that was
-     * actually requested; both are interlinked.
+     * @return the set up {@link Channel}
      */
     Channel setUpOutput(ChannelDescriptor descriptor, Channel source, OptimizationContext optimizationContext);
-
-//    /**
-//     * <i>Optional operation.</i> Implements the {@link Channel} on the {@code index}-th output of the given
-//     * {@link ExecutionTask}, thereby adding potentially further {@link ExecutionTask}s required for using the
-//     * {@link Channel}. It may reuse existing {@link ExecutionTask}s and {@link Channel}s when appropriate or
-//     * necessary.
-//     *
-//     * @param channel       the {@link Channel} to be consumed as input
-//     * @param executionTask that should output to the new {@link Channel}
-//     * @param index         the output index of the {@code executionTask} that should feed the {@link Channel}
-//     */
-//    void setUpInput(Channel channel, ExecutionTask executionTask, int index);
 
     /**
      * Erases the type variable from this instance.

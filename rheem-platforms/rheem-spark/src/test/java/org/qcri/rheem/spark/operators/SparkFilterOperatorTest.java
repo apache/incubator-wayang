@@ -1,14 +1,13 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaRDDLike;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
-import org.qcri.rheem.spark.channels.TestChannelExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -22,7 +21,8 @@ public class SparkFilterOperatorTest extends SparkOperatorTestBase {
     @Test
     public void testExecution() {
         // Prepare test data.
-        JavaRDD<Integer> inputStream = this.getSC().parallelize(Arrays.asList(0, 1, 1, 2, 6));
+        RddChannel.Instance input = this.createRddChannelInstance(Arrays.asList(0, 1, 1, 2, 6));
+        RddChannel.Instance output = this.createRddChannelInstance();
 
         // Build the distinct operator.
         SparkFilterOperator<Integer> filterOperator =
@@ -31,19 +31,15 @@ public class SparkFilterOperatorTest extends SparkOperatorTestBase {
                         new PredicateDescriptor<>(item -> (item > 0), DataUnitType.createBasic(Integer.class))
                 );
 
-        // Set up the ChannelExecutors.
-        final ChannelExecutor[] inputs = new ChannelExecutor[]{
-                new TestChannelExecutor(inputStream)
-        };
-        final ChannelExecutor[] outputs = new ChannelExecutor[]{
-                new TestChannelExecutor()
-        };
+        // Set up the ChannelInstances.
+        ChannelInstance[] inputs = new ChannelInstance[]{input};
+        ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
         filterOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
-        final List<Integer> result = outputs[0].<Integer>provideRdd().collect();
+        final List<Integer> result = output.<Integer>provideRdd().collect();
         Assert.assertEquals(4, result.size());
         Assert.assertEquals(Arrays.asList(1, 1, 2, 6), result);
 

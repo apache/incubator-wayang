@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 
 import java.util.Arrays;
@@ -21,9 +22,11 @@ public class ConjunctiveBreakpoint implements Breakpoint {
     }
 
     @Override
-    public boolean permitsExecutionOf(ExecutionStage stage) {
+    public boolean permitsExecutionOf(ExecutionStage stage,
+                                      ExecutionState state,
+                                      OptimizationContext optimizationContext) {
         return this.conjuncts.isEmpty() ||
-                this.conjuncts.stream().anyMatch(conjunct -> conjunct.permitsExecutionOf(stage));
+                this.conjuncts.stream().anyMatch(conjunct -> conjunct.permitsExecutionOf(stage, state, optimizationContext));
     }
 
     public void addConjunct(Breakpoint breakpoint) {

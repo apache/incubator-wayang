@@ -1,12 +1,14 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
-import org.qcri.rheem.core.plan.executionplan.*;
+import org.qcri.rheem.core.optimizer.OptimizationUtils;
+import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
+import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
@@ -17,14 +19,26 @@ import java.util.stream.Stream;
  * Creates an {@link ExecutionTaskFlow} from a {@link PlanImplementation}.
  */
 public class ExecutionTaskFlowCompiler
-        extends AbstractTopologicalTraversal<Void, ExecutionTaskFlowCompiler.Activator, ExecutionTaskFlowCompiler.Activation> {
+        extends AbstractTopologicalTraversal<ExecutionTaskFlowCompiler.Activator, ExecutionTaskFlowCompiler.Activation> {
 
+    /**
+     * Maintains {@link Activator}s.
+     */
     private final Map<ActivatorKey, Activator> activators = new HashMap<>();
 
+    /**
+     * Initial {@link Activator}s.
+     */
     private final Collection<Activator> startActivators;
 
+    /**
+     * Initial {@link Activation}s.
+     */
     private final Collection<Activation> startActivations;
 
+    /**
+     * The top-level {@link PlanImplementation} that should be converted into an {@link ExecutionTaskFlow}.
+     */
     private final PlanImplementation planImplementation;
 
     private final Collection<ExecutionTask> terminalTasks = new LinkedList<>();
@@ -79,43 +93,73 @@ public class ExecutionTaskFlowCompiler
         this.startActivations = new LinkedList<>();
         for (Channel channel : openChannels) {
             // Detect the Slot connections that have yet to be fulfilled by this Channel.
-            OutputSlot<?> producerOutput = this.findRheemPlanOutputSlotFor(channel);
+            OutputSlot<?> producerOutput = OptimizationUtils.findRheemPlanOutputSlotFor(channel);
+            assert producerOutput != null : String.format("No producing output for %s.", channel);
 
-            // Now find all InputSlots that are fed by the OutputSlot and whose Operators have not yet been executed.
-            Collection<InputSlot<?>> consumerInputs = this.findRheemPlanInputSlotFor(producerOutput);
+            final LoopImplementation.IterationImplementation producerIterationImplementation = this.findIterationImplementation(
+                    (ExecutionOperator) producerOutput.getOwner()
+            );
+            final PlanImplementation producerPlanImplementation = producerIterationImplementation == null ?
+                    this.planImplementation :
+                    producerIterationImplementation.getBodyImplementation();
+            final Junction openJunction = producerPlanImplementation.getJunction(producerOutput);
+            assert openJunction != null : String.format("No junction for %s.", producerOutput);
 
-            // Finally, produce Activations.
-            if (consumerInputs.isEmpty()) {
-                Channel channelCopy = channel.copy();
-                this.inputChannels.add(channelCopy);
+            for (int targetIndex = 0; targetIndex < openJunction.getNumTargets(); targetIndex++) {
+                final InputSlot<?> targetInput = openJunction.getTargetInput(targetIndex);
+                final ExecutionOperator consumerOperator = (ExecutionOperator) targetInput.getOwner();
+
                 // If the channel was only "partially open", then we need to consider not to re-create existing ExecutionTasks.
-                final Set<InputSlot<?>> connectedInputSlots = channel.getConsumers().stream()
-                        .map(consumer -> consumer.getInputSlotFor(channel))
-                        .collect(Collectors.toSet());
-                for (InputSlot<?> consumerInput : consumerInputs) {
-                    if (connectedInputSlots.contains(consumerInput)) {
-                        this.logger.debug("Not creating ExecutionTasks for {}.", consumerInput);
-                        continue;
-                    }
-                    this.logger.debug("Intercepting {}->{}.", producerOutput, consumerInput);
-                    final ExecutionOperator consumerOperator = (ExecutionOperator) consumerInput.getOwner();
-                    final ActivatorKey activatorKey = new ActivatorKey(consumerOperator, null);
-                    final Activator consumerActivator = this.activators.computeIfAbsent(activatorKey, Activator::new);
-                    final ExecutionTask consumerTask = this.getOrCreateExecutionTask(consumerOperator);
-                    consumerActivator.executionTask = consumerTask;
-                    final Platform consumerPlatform = consumerTask.getOperator().getPlatform();
-                    final ChannelInitializer channelInitializer =
-                            consumerPlatform.getChannelManager().getChannelInitializer(channelCopy.getDescriptor());
-                    if (channelInitializer == null) {
-                        throw new AbortException(String.format("Cannot connect %s to %s.", channel, consumerTask));
-                    }
-                    // Is this correct?
-                    channelCopy.addConsumer(consumerTask, consumerInput.getIndex());
-                    // todo: rewrite the whole thing
-//                    channelInitializer.setUpInput(channelCopy, consumerTask, consumerInput.getIndex());
-                    this.startActivations.add(new Activation(consumerActivator, consumerInput.getIndex()));
-                }
+                if (executedOperators.contains(consumerOperator)) continue;
+
+                final LoopImplementation.IterationImplementation consumerIterationImplementation = this.findIterationImplementation(
+                        (ExecutionOperator) targetInput.getOwner()
+                );
+                final ActivatorKey activatorKey = new ActivatorKey(consumerOperator, consumerIterationImplementation);
+                final Activator consumerActivator = this.activators.computeIfAbsent(activatorKey, Activator::new);
+                final ExecutionTask consumerTask = this.getOrCreateExecutionTask(consumerOperator);
+                consumerActivator.executionTask = consumerTask;
+                final Channel targetChannel = openJunction.getTargetChannel(targetIndex);
+                targetChannel.addConsumer(consumerTask, targetInput.getIndex());
+                this.startActivations.add(new Activation(consumerActivator, targetInput.getIndex()));
+
             }
+
+//            // Now find all InputSlots that are fed by the OutputSlot and whose Operators have not yet been executed.
+//            Collection<InputSlot<?>> consumerInputs = this.findRheemPlanInputSlotFor(producerOutput);
+//
+//            // Finally, produce Activations.
+//            if (!consumerInputs.isEmpty()) {
+//                Channel channelCopy = channel.copy();
+//                this.inputChannels.add(channelCopy);
+//                // If the channel was only "partially open", then we need to consider not to re-create existing ExecutionTasks.
+//                final Set<InputSlot<?>> connectedInputSlots = channel.getConsumers().stream()
+//                        .map(consumer -> consumer.getInputSlotFor(channel))
+//                        .collect(Collectors.toSet());
+//                for (InputSlot<?> consumerInput : consumerInputs) {
+//                    if (connectedInputSlots.contains(consumerInput)) {
+//                        this.logger.debug("Not creating ExecutionTasks for {}.", consumerInput);
+//                        continue;
+//                    }
+//                    this.logger.debug("Intercepting {}->{}.", producerOutput, consumerInput);
+//                    final ExecutionOperator consumerOperator = (ExecutionOperator) consumerInput.getOwner();
+//                    final ActivatorKey activatorKey = new ActivatorKey(consumerOperator, null);
+//                    final Activator consumerActivator = this.activators.computeIfAbsent(activatorKey, Activator::new);
+//                    final ExecutionTask consumerTask = this.getOrCreateExecutionTask(consumerOperator);
+//                    consumerActivator.executionTask = consumerTask;
+////                    final Platform consumerPlatform = consumerTask.getOperator().getPlatform();
+////                    final ChannelInitializer channelInitializer =
+////                            consumerPlatform.getChannelManager().getChannelInitializer(channelCopy.getDescriptor());
+////                    if (channelInitializer == null) {
+////                        throw new AbortException(String.format("Cannot connect %s to %s.", channel, consumerTask));
+////                    }
+//                    // Is this correct?
+//                    channelCopy.addConsumer(consumerTask, consumerInput.getIndex());
+//                    // todo: rewrite the whole thing
+////                    channelInitializer.setUpInput(channelCopy, consumerTask, consumerInput.getIndex());
+//                    this.startActivations.add(new Activation(consumerActivator, consumerInput.getIndex()));
+//                }
+//            }
         }
     }
 
@@ -124,6 +168,44 @@ public class ExecutionTaskFlowCompiler
                 .flatMap(outputSlot -> outputSlot.getOccupiedSlots().stream())
                 .flatMap(this::findExecutionOperatorInputs)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Find the {@link LoopImplementation.IterationImplementation} of a given {@link ExecutionOperator}.
+     *
+     * @param operator whose {@link LoopImplementation.IterationImplementation} is requested
+     * @return the {@link LoopImplementation.IterationImplementation} or {@code null} if the {@link ExecutionOperator}
+     * is not inside a {@link LoopSubplan}
+     */
+    private LoopImplementation.IterationImplementation findIterationImplementation(ExecutionOperator operator) {
+        PlanImplementation planImplementation = this.planImplementation;
+        LoopImplementation.IterationImplementation iterationImplementation = null;
+
+        // Descend into the nested PlanImplementations according to the loop stack of the operator.
+        final LinkedList<LoopSubplan> loopStack = operator.getLoopStack();
+        LoopImplementation loopImplementation = null;
+        for (LoopSubplan loop : loopStack) {
+            loopImplementation = planImplementation.getLoopImplementations().get(loop);
+            iterationImplementation = this.getSingleiterationImplementation(loopImplementation);
+            planImplementation = iterationImplementation.getBodyImplementation();
+        }
+
+        return iterationImplementation;
+    }
+
+    /**
+     * Retrieve the only {@link LoopImplementation.IterationImplementation} from the {@link LoopImplementation}.
+     *
+     * @param loopImplementation a {@link LoopImplementation} with a single {@link LoopImplementation.IterationImplementation} or {@code null}
+     * @return the {@link LoopImplementation.IterationImplementation} or {@code null} if {@code loopImplementation == null}
+     */
+    private LoopImplementation.IterationImplementation getSingleiterationImplementation(LoopImplementation loopImplementation) {
+        final List<LoopImplementation.IterationImplementation> iterationImplementations = loopImplementation.getIterationImplementations();
+        assert iterationImplementations.size() == 1 : String.format(
+                "Cannot handle more than one loop implementation during the re-optimization (cf. %s).",
+                loopImplementation
+        );
+        return iterationImplementations.get(0);
     }
 
     private Stream<InputSlot<?>> findExecutionOperatorInputs(InputSlot<?> input) {
@@ -143,26 +225,6 @@ public class ExecutionTaskFlowCompiler
 
 
     /**
-     * Determine the producing {@link OutputSlot} of this {@link Channel} that lies within a {@link RheemPlan}.
-     * We follow non-RheemPlan {@link ExecutionOperator}s because they should merely forward data.
-     */
-    private OutputSlot<?> findRheemPlanOutputSlotFor(Channel openChannel) {
-        OutputSlot<?> producerOutput = null;
-        Channel tracedChannel = openChannel;
-        do {
-            final ExecutionTask producer = tracedChannel.getProducer();
-            final ExecutionOperator producerOperator = producer.getOperator();
-            if (this.checkIfRheemPlanOperator(producerOperator)) {
-                producerOutput = producer.getOutputSlotFor(tracedChannel);
-            } else {
-                assert producer.getNumInputChannels() == 1;
-                tracedChannel = producer.getInputChannel(0);
-            }
-        } while (producerOutput == null);
-        return producerOutput;
-    }
-
-    /**
      * Determine the consuming {@link InputSlot}s of the given {@link Channel} that lie within a {@link RheemPlan} and
      * have not been executed yet.
      * We follow non-RheemPlan {@link ExecutionOperator}s because they should merely forward data.
@@ -171,8 +233,7 @@ public class ExecutionTaskFlowCompiler
         Collection<InputSlot<?>> result = new LinkedList<>();
         for (ExecutionTask consumerTask : channel.getConsumers()) {
             if (executedStages.contains(consumerTask.getStage())) continue;
-            ;
-            if (this.checkIfRheemPlanOperator(consumerTask.getOperator())) {
+            if (OptimizationUtils.checkIfRheemPlanOperator(consumerTask.getOperator())) {
                 result.add(consumerTask.getInputSlotFor(channel));
             } else {
                 for (Channel consumerOutputChannel : consumerTask.getOutputChannels()) {
@@ -181,26 +242,6 @@ public class ExecutionTaskFlowCompiler
             }
         }
         return result;
-    }
-
-    /**
-     * Heuristically determines if an {@link ExecutionOperator} was specified in a {@link RheemPlan} or if
-     * it has been inserted by Rheem in a later stage.
-     *
-     * @param operator should be checked
-     * @return whether the {@code operator} is deemed to be user-specified
-     */
-    private boolean checkIfRheemPlanOperator(ExecutionOperator operator) {
-        // A non-RheemPlan operator is presumed to be "free floating" and completely unconnected. Connections are only
-        // maintained via ExecutionTasks and Channels.
-        return !(operator.getParent() == null
-                && Arrays.stream(operator.getAllInputs())
-                .map(InputSlot::getOccupant)
-                .allMatch(Objects::isNull)
-                && Arrays.stream(operator.getAllOutputs())
-                .flatMap(outputSlot -> outputSlot.getOccupiedSlots().stream())
-                .allMatch(Objects::isNull)
-        );
     }
 
     private ExecutionTask getOrCreateExecutionTask(ExecutionOperator executionOperator) {
@@ -337,14 +378,8 @@ public class ExecutionTaskFlowCompiler
 
         private void connectToSuccessorTasks(int outputIndex, Platform platform, Collection<Activation> collector) {
             final OutputSlot<?> output = this.operator.getOutput(outputIndex);
-            final Collection<Tuple<OutputSlot<?>, PlanImplementation>> executionOperatorOutputsWithContext =
-                    ExecutionTaskFlowCompiler.this.planImplementation.findExecutionOperatorOutputWithContext(output);
             // TODO: Make generic: There might be multiple OutputSlots for final loop outputs (one for each iteration).
-            final Tuple<OutputSlot<?>, PlanImplementation> execOpOutputWithContext =
-                    RheemCollections.getSingle(executionOperatorOutputsWithContext);
-            final OutputSlot<?> execOpOutput = execOpOutputWithContext.getField0();
-            final PlanImplementation planImpl = execOpOutputWithContext.getField1();
-            final Junction junction = this.getJunction(output); //planImpl.getJunction(execOpOutput);
+            final Junction junction = this.getJunction(output);
             LoggerFactory.getLogger(this.getClass()).info("Connecting {} -> {}.", output, junction);
             assert junction != null : String.format("No junction found for %s.", output);
             this.executionTask.setOutputChannel(outputIndex, junction.getSourceChannel());
@@ -362,10 +397,10 @@ public class ExecutionTaskFlowCompiler
 
         private Junction getJunction(OutputSlot<?> output) {
             if (this.iterationImplementation != null) {
-                return this.iterationImplementation.getBodyImplementation().getJunction(output);
-            } else {
-                return ExecutionTaskFlowCompiler.this.planImplementation.getJunction(output);
+                final Junction junction = this.iterationImplementation.getBodyImplementation().getJunction(output);
+                if (junction != null) return junction;
             }
+            return ExecutionTaskFlowCompiler.this.planImplementation.getJunction(output);
         }
 
         /**
@@ -411,15 +446,13 @@ public class ExecutionTaskFlowCompiler
             // Check if the targetOperator's loop has just been entered.
             final LoopSubplan currentLoop = this.operator.getInnermostLoop();
             if (currentLoop == null) { // TODO: Current code supports only non-nested loops.
-                    final LoopImplementation loopImplementation =
-                            ExecutionTaskFlowCompiler.this.planImplementation.getLoopImplementations().get(targetLoop);
+                final LoopImplementation loopImplementation =
+                        ExecutionTaskFlowCompiler.this.planImplementation.getLoopImplementations().get(targetLoop);
                 if (targetOperator.isLoopHead()) {
                     return Collections.singleton(loopImplementation.getIterationImplementations().get(0));
                 } else {
                     return loopImplementation.getIterationImplementations().stream()
-                            .filter(iterImpl -> {
-                                return true;
-                            })
+                            .filter(iterImpl -> true)
                             .collect(Collectors.toList());
                 }
             }

@@ -217,17 +217,13 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
 
     @Override
     public <T> InputSlot<T> traceInput(InputSlot<T> inputSlot) {
-        if (inputSlot.getOwner() != this) {
-            throw new IllegalArgumentException("InputSlot does not belong to this Operator.");
-        }
+        assert inputSlot.getOwner().getContainer() == this : String.format("%s is not encapsulated in %s.", inputSlot, this);
         return this.slotMapping.resolveUpstream(inputSlot);
     }
 
     @Override
     public <T> Collection<OutputSlot<T>> followOutput(OutputSlot<T> outputSlot) {
-        if (outputSlot.getOwner().getContainer() != this) {
-            throw new IllegalArgumentException("OutputSlot does not belong to this Operator.");
-        }
+        assert outputSlot.getOwner().getContainer() == this : String.format("%s does not belong to %s.", outputSlot, this);
         return this.slotMapping.resolveDownstream(outputSlot);
     }
 
@@ -271,6 +267,15 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
                 innerOutput == null ?
                         Stream.empty() :
                         innerOutput.getOwner().collectMappedOutputSlots(innerOutput).stream()
+        ).collect(Collectors.toSet());
+    }
+
+    @Override
+    public <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input) {
+        final Collection<InputSlot<T>> innerInputs = this.followInput(input);
+        return Stream.concat(
+                Stream.of(input),
+                innerInputs.stream().flatMap(innerInput -> innerInput.getOwner().collectMappedInputSlots(innerInput).stream())
         ).collect(Collectors.toSet());
     }
 

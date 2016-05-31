@@ -1,7 +1,9 @@
 package org.qcri.rheem.tests.platform;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.platform.ChannelManager;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 
@@ -39,12 +41,16 @@ public class MyMadeUpPlatform extends Platform {
     }
 
     @Override
+    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
+    }
+
+    @Override
     public boolean isExecutable() {
         return true;
     }
 
     @Override
-    protected ChannelManager createChannelManager() {
-        return null;
+    public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
+        throw new RuntimeException("Not yet implemented.");
     }
 }

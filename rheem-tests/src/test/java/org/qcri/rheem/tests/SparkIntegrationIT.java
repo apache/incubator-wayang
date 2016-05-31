@@ -189,6 +189,18 @@ public class SparkIntegrationIT {
     }
 
     @Test
+    public void testDiverseScenario3() throws URISyntaxException {
+        // Build the RheemPlan.
+        RheemPlan rheemPlan = RheemPlans.diverseScenario3(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+
+        // Instantiate Rheem and activate the Spark backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(SparkPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+    }
+
+    @Test
     public void testDiverseScenario4() throws URISyntaxException {
         // Build the RheemPlan.
         RheemPlan rheemPlan = RheemPlans.diverseScenario4(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
@@ -205,6 +217,20 @@ public class SparkIntegrationIT {
         // Build the RheemPlan.
         final List<Integer> collector = new LinkedList<>();
         RheemPlan rheemPlan = RheemPlans.simpleLoop(3, collector, 0, 1, 2);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(SparkPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+        System.out.println(collector);
+    }
+
+    @Test
+    public void testSample() throws URISyntaxException {
+        // Build the RheemPlan.
+        final List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.simpleSample(collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext();

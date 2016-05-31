@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Optional;
@@ -59,7 +58,7 @@ public class TextFileSource extends UnarySource {
     /**
      * Custom {@link org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator} for {@link FlatMapOperator}s.
      */
-    private class CardinalityEstimator implements org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator {
+    protected class CardinalityEstimator implements org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator {
 
         public final CardinalityEstimate FALLBACK_ESTIMATE = new CardinalityEstimate(1000L, 100000000L, 0.7);
 
@@ -74,7 +73,7 @@ public class TextFileSource extends UnarySource {
         public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
             Validate.isTrue(TextFileSource.this.getNumInputs() == inputEstimates.length);
 
-            OptionalLong fileSize = this.determineFileSize(TextFileSource.this.inputUrl);
+            OptionalLong fileSize = FileSystems.getFileSize(TextFileSource.this.inputUrl);
             if (!fileSize.isPresent()) {
                 TextFileSource.this.logger.warn("Could not determine size of {}... deliver fallback estimate.",
                         TextFileSource.this.inputUrl);
@@ -98,25 +97,6 @@ public class TextFileSource extends UnarySource {
                     (long) (numEstimatedLines + expectedDeviation),
                     CORRECTNESS_PROBABILITY
             );
-        }
-
-        /**
-         * Determine the number of bytes of a given file.
-         *
-         * @param inputUrl the URL of the file
-         * @return the number of bytes of the file if it could be determined
-         */
-        private OptionalLong determineFileSize(String inputUrl) {
-            final Optional<FileSystem> fileSystem = FileSystems.getFileSystem(inputUrl);
-            if (fileSystem.isPresent()) {
-                try {
-                    return OptionalLong.of(fileSystem.get().getFileSize(inputUrl));
-                } catch (FileNotFoundException e) {
-                    TextFileSource.this.logger.warn("Could not determine file size.", e);
-                }
-            }
-
-            return OptionalLong.empty();
         }
 
         /**

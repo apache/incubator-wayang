@@ -1,13 +1,12 @@
 package org.qcri.rheem.core.util.fs;
 
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.util.LruCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
+import java.io.FileNotFoundException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -17,15 +16,49 @@ public class FileSystems {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileSystems.class);
 
-    private static Collection<FileSystem> registeredFileSystems = Arrays.asList(new LocalFileSystem());
+    /**
+     * We need file sizes several times during the optimization process, so we cache them.
+     */
+    private static final LruCache<String, Long> fileSizeCache = new LruCache<>(20);
+
+    private static Collection<FileSystem> registeredFileSystems = Arrays.asList(
+            new LocalFileSystem(),
+            new HadoopFileSystem()
+    );
 
     private FileSystems() {
     }
+
 
     public static Optional<FileSystem> getFileSystem(String fileUrl) {
         return registeredFileSystems.stream()
                 .filter(fileSystem -> fileSystem.canHandle(fileUrl))
                 .findAny();
+    }
+
+    /**
+     * Determine the number of bytes of a given file. This method is not only a short-cut to
+     * {@link FileSystem#getFileSize(String)} but also caches file sizes for performance reasons.
+     *
+     * @param fileUrl the URL of the file
+     * @return the number of bytes of the file if it could be determined
+     */
+    public static OptionalLong getFileSize(String fileUrl) {
+        if (fileSizeCache.containsKey(fileUrl)) {
+            return OptionalLong.of(fileSizeCache.get(fileUrl));
+        }
+        final Optional<FileSystem> fileSystem = FileSystems.getFileSystem(fileUrl);
+        if (fileSystem.isPresent()) {
+            try {
+                final long fileSize = fileSystem.get().getFileSize(fileUrl);
+                fileSizeCache.put(fileUrl, fileSize);
+                return OptionalLong.of(fileSize);
+            } catch (FileNotFoundException e) {
+                LOGGER.warn("Could not determine file size.", e);
+            }
+        }
+
+        return OptionalLong.empty();
     }
 
     /**

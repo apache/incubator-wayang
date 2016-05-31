@@ -240,7 +240,7 @@ public class StopWatch {
             }
 
             if (stopSubrounds) {
-                this.subrounds.values().forEach(subround -> subround.stop(true));
+                this.subrounds.values().forEach(subround -> subround.stop(true, suppressWarnings));
             }
 
             return this.stopTime - this.startTime;

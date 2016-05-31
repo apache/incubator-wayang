@@ -203,8 +203,10 @@ public abstract class OperatorBase implements Operator {
 
     @Override
     public <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input) {
-        throw new RuntimeException("Implement me.");
-    }
+        // Default implementation for elementary instances.
+        assert this.isElementary();
+        assert input.getOwner() == this;
+        return Collections.singleton(input);    }
 
     /**
      * @see ExecutionOperator#copy()
@@ -228,13 +230,13 @@ public abstract class OperatorBase implements Operator {
         return this.original == null ? (ExecutionOperator) this : this.original;
     }
 
+    @Override
     public String getName() {
         return this.name;
     }
 
-    @SuppressWarnings("unchecked")
-    public <Self extends OperatorBase> Self setName(String name) {
+    @Override
+    public void setName(String name) {
         this.name = name;
-        return (Self) this;
     }
 }

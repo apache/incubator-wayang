@@ -9,15 +9,15 @@ import edu.cmu.graphchi.preprocessing.VertexIdTranslate;
 import edu.cmu.graphchi.vertexdata.VertexAggregator;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.operators.PageRankOperator;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
-import org.qcri.rheem.graphchi.channels.GraphChiChannelManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,28 +41,32 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
     }
 
     @Override
-    public void execute(Channel[] inputChannels, Channel[] outputChannels) {
-        assert inputChannels.length == this.getNumInputs();
-        assert outputChannels.length == this.getNumOutputs();
+    public void execute(ChannelInstance[] inputChannelInstances, ChannelInstance[] outputChannelInstances,
+                        Configuration configuration) {
+        assert inputChannelInstances.length == this.getNumInputs();
+        assert outputChannelInstances.length == this.getNumOutputs();
 
-        final FileChannel inputFileChannel = (FileChannel) inputChannels[0];
-        final FileChannel outputFileChannel = (FileChannel) outputChannels[0];
+        final FileChannel.Instance inputFileChannelInstance = (FileChannel.Instance) inputChannelInstances[0];
+        final FileChannel.Instance outputFileChannelInstance = (FileChannel.Instance) outputChannelInstances[0];
         try {
-            this.runGraphChi(inputFileChannel, outputFileChannel);
+            this.runGraphChi(inputFileChannelInstance, outputFileChannelInstance, configuration);
         } catch (IOException e) {
             throw new RheemException(String.format("Running %s failed.", this), e);
         }
     }
 
-    private void runGraphChi(FileChannel inputFileChannel, FileChannel outputFileChannel) throws IOException {
+    private void runGraphChi(FileChannel.Instance inputFileChannelInstance, FileChannel.Instance outputFileChannelInstance,
+                             Configuration configuration)
+            throws IOException {
 
-        final String inputPath = inputFileChannel.getSinglePath();
+        final String inputPath = inputFileChannelInstance.getSinglePath();
         final String actualInputPath = FileSystems.findActualSingleInputPath(inputPath);
         final FileSystem inputFs = FileSystems.getFileSystem(inputPath).get();
 
         // Create shards.
-        String graphName = File.createTempFile("rheem-graphchi", "graph").toString();
-//        String graphName = String.format("rheem-graphchi-%06x", new Random().nextInt(0xFFFFFF));
+        final File tempFile = File.createTempFile("rheem-graphchi", "graph");
+        tempFile.deleteOnExit();
+        String graphName = tempFile.toString();
         // As suggested by GraphChi, we propose to use approximately 1 shard per 1,000,000 edges.
         final int numShards = 2 + (int) inputFs.getFileSize(actualInputPath) / (10 * 1000000);
         if (!new File(ChiFilenames.getFilenameIntervals(graphName, numShards)).exists()) {
@@ -81,8 +85,9 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
         engine.run(new Pagerank(), this.numIterations);
 
         // Output results.
-        final FileSystem outFs = FileSystems.getFileSystem(outputFileChannel.getSinglePath()).get();
-        try (final OutputStreamWriter writer = new OutputStreamWriter(outFs.create(outputFileChannel.getSinglePath()))) {
+        final String path = outputFileChannelInstance.addGivenOrTempPath(null, configuration);
+        final FileSystem outFs = FileSystems.getFileSystem(path).get();
+        try (final OutputStreamWriter writer = new OutputStreamWriter(outFs.create(outputFileChannelInstance.getSinglePath()))) {
             VertexIdTranslate trans = engine.getVertexIdTranslate();
             VertexAggregator.foreach(engine.numVertices(), graphName, new FloatConverter(),
                     (vertexId, vertexValue) -> {
@@ -129,12 +134,12 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        return Collections.singletonList(GraphChiChannelManager.HDFS_TSV_DESCRIPTOR);
+        return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        return Collections.singletonList(GraphChiChannelManager.HDFS_TSV_DESCRIPTOR);
+        return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
     }
 
 }

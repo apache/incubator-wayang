@@ -42,7 +42,11 @@ public abstract class LoadProfileToTimeConverter {
                 TimeEstimate networkTime = this.sumWithSubprofiles(
                         loadProfile, LoadProfile::getNetworkUsage, this.networkConverter);
 
-                return aggregator.aggregate(cpuTime, diskTime, networkTime);
+                TimeEstimate aggregate = aggregator.aggregate(cpuTime, diskTime, networkTime);
+                if (!Double.isNaN(loadProfile.getRatioCores()) && loadProfile.getRatioCores() < 1d) {
+                    aggregate = aggregate.times(loadProfile.getRatioCores());
+                }
+                return aggregate;
             }
 
             private TimeEstimate sumWithSubprofiles(LoadProfile profile,
@@ -52,8 +56,7 @@ public abstract class LoadProfileToTimeConverter {
                         .map(property::apply)
                         .filter(Objects::nonNull)
                         .map(converter::convert)
-                        .reduce(TimeEstimate::plus)
-                        .get();
+                        .reduce(new TimeEstimate(profile.getOverheadMillis()), TimeEstimate::plus);
             }
 
         };

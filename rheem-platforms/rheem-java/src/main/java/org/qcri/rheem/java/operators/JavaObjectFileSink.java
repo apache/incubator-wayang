@@ -6,21 +6,31 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
-import org.mortbay.io.RuntimeIOException;
+import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.HdfsFileInitializer;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.UncheckedIOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -31,21 +41,25 @@ import java.util.stream.Stream;
  */
 public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecutionOperator {
 
-    private HdfsFileInitializer.Executor outputChannelExecutor;
-
     private final String targetPath;
 
-    public JavaObjectFileSink(String targetPath, DataSetType type) {
+    public JavaObjectFileSink(DataSetType<T> type) {
+        this(null, type);
+    }
+    public JavaObjectFileSink(String targetPath, DataSetType<T> type) {
         super(type, null);
         this.targetPath = targetPath;
     }
 
     @Override
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
 
         // Prepare Hadoop's SequenceFile.Writer.
-        final SequenceFile.Writer.Option fileOption = SequenceFile.Writer.file(new Path(this.targetPath));
+        FileChannel.Instance output = (FileChannel.Instance) outputs[0];
+        final String path = output.addGivenOrTempPath(this.targetPath, compiler.getConfiguration());
+
+        final SequenceFile.Writer.Option fileOption = SequenceFile.Writer.file(new Path(path));
         final SequenceFile.Writer.Option keyClassOption = SequenceFile.Writer.keyClass(NullWritable.class);
         final SequenceFile.Writer.Option valueClassOption = SequenceFile.Writer.valueClass(BytesWritable.class);
         try (SequenceFile.Writer writer = SequenceFile.createWriter(new Configuration(true), fileOption, keyClassOption, valueClassOption)) {
@@ -62,18 +76,28 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
                     BytesWritable bytesWritable = new BytesWritable(bos.toByteArray());
                     writer.append(NullWritable.get(), bytesWritable);
                 } catch (IOException e) {
-                    throw new RuntimeIOException("Writing or serialization failed.", e);
+                    throw new UncheckedIOException("Writing or serialization failed.", e);
                 }
             });
-            inputs[0].provideStream().forEach(streamChunker::push);
+            ((JavaChannelInstance) inputs[0]).provideStream().forEach(streamChunker::push);
             streamChunker.fire();
-            if (this.outputChannelExecutor != null) {
-                this.outputChannelExecutor.setCardinality(streamChunker.numPushedObjects);
-            }
-            LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", this.targetPath);
-        } catch (IOException | RuntimeIOException e) {
+            LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", path);
+        } catch (IOException | UncheckedIOException e) {
             throw new RheemException("Could not write stream to sequence file.", e);
         }
+    }
+
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+        // NB: Not actually measured.
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 0, .8d, (inputCards, outputCards) -> 2000 * inputCards[0] + 810000),
+                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> inputCards[0] * 256),
+                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> 0)
+        );
+        return Optional.of(mainEstimator);
     }
 
     @Override
@@ -82,12 +106,15 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
     }
 
     @Override
-    public void instrumentSink(ChannelExecutor channelExecutor) {
-        this.outputChannelExecutor = (HdfsFileInitializer.Executor) channelExecutor;
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
     }
 
-    public String getTargetPath() {
-        return this.targetPath;
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        return Collections.singletonList(FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR);
     }
 
     /**

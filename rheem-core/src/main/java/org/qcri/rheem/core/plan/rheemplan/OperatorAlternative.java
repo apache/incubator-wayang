@@ -140,6 +140,24 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     }
 
     @Override
+    public <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input) {
+        return Stream.concat(
+                Stream.of(input),
+                this.alternatives.stream().flatMap(alternative -> this.streamMappedInputSlots(alternative, input))
+        ).collect(Collectors.toSet());
+    }
+
+    private <T> Stream<InputSlot<T>> streamMappedInputSlots(
+            OperatorAlternative.Alternative alternative,
+            InputSlot<T> input) {
+        final Collection<InputSlot<T>> innerInputs = alternative.followInput(input);
+        return Stream.concat(
+                Stream.of(input),
+                innerInputs.stream().flatMap(innerInput -> innerInput.getOwner().collectMappedInputSlots(innerInput).stream())
+        );
+    }
+
+    @Override
     public String toString() {
         return String.format("%s[%dx ~%s, %x]",
                 this.getSimpleClassName(),

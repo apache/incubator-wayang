@@ -30,20 +30,37 @@ public class ExecutionPlan {
         return this.startingStages;
     }
 
+    /**
+     * Creates a {@link String} representation (not strictly ordered) of this instance.
+     *
+     * @return the {@link String} representation
+     */
     public String toExtensiveString() {
+        return this.toExtensiveString(false);
+    }
+
+    /**
+     * Creates a {@link String} representation of this instance.
+     *
+     * @param isStriclyOrdering whether {@link ExecutionStage}s should be listed only after <i>all</i> their predecessors
+     * @return the {@link String} representation
+     */
+    public String toExtensiveString(boolean isStriclyOrdering) {
         StringBuilder sb = new StringBuilder();
         Counter<ExecutionStage> stageActivationCounter = new Counter<>();
         Queue<ExecutionStage> activatedStages = new LinkedList<>(this.startingStages);
+        Set<ExecutionStage> seenStages = new HashSet<>();
         while (!activatedStages.isEmpty()) {
             while (!activatedStages.isEmpty()) {
                 final ExecutionStage stage = activatedStages.poll();
-                sb.append(stage.wasExecuted() ? "***" : ">>> ").append(stage).append(":\n");
-                stage.toExtensiveString(sb);
+                if (!seenStages.add(stage)) continue;
+                sb.append(">>> ").append(stage).append(":\n");
+                stage.getPlanAsString(sb, "> ");
                 sb.append("\n");
 
                 for (ExecutionStage successor : stage.getSuccessors()) {
                     final int count = stageActivationCounter.add(successor, 1);
-                    if (count == successor.getPredecessors().size()) {
+                    if (!isStriclyOrdering || count == successor.getPredecessors().size() || successor.isLoopHead()) {
                         activatedStages.add(successor);
                     }
                 }
@@ -68,21 +85,31 @@ public class ExecutionPlan {
     }
 
     /**
-     * Collects all {@link ExecutionTask}s of this instance.
+     * Collects all {@link ExecutionStage}s in this instance.
      *
-     * @return the {@link ExecutionTask}s
+     * @return the {@link ExecutionStage}s
      */
-    public Set<ExecutionTask> collectAllTasks() {
-        // TODO: Cache? What if we enhance this instance? Then we need to invalidate it.
-        Set<ExecutionTask> allTasks = new HashSet<>();
+    public Set<ExecutionStage> getStages() {
         Set<ExecutionStage> seenStages = new HashSet<>();
         Queue<ExecutionStage> openStages = new LinkedList<>(this.getStartingStages());
         while (!openStages.isEmpty()) {
             final ExecutionStage stage = openStages.poll();
             if (seenStages.add(stage)) {
-                allTasks.addAll(stage.getAllTasks());
                 openStages.addAll(stage.getSuccessors());
             }
+        }
+        return seenStages;
+    }
+
+    /**
+     * Collects all {@link ExecutionTask}s of this instance.
+     *
+     * @return the {@link ExecutionTask}s
+     */
+    public Set<ExecutionTask> collectAllTasks() {
+        Set<ExecutionTask> allTasks = new HashSet<>();
+        for (ExecutionStage stage : this.getStages()) {
+            allTasks.addAll(stage.getAllTasks());
         }
         return allTasks;
     }
@@ -98,9 +125,9 @@ public class ExecutionPlan {
             openChannel.mergeIntoOriginal();
             final Channel original = openChannel.getOriginal();
             final ExecutionStage producerStage = original.getProducer().getStage();
+            assert producerStage != null : String.format("No stage found for %s.", original.getProducer());
             for (ExecutionTask consumer : original.getConsumers()) {
                 final ExecutionStage consumerStage = consumer.getStage();
-                assert producerStage != null : String.format("No stage found for %s.", original.getProducer());
                 assert consumerStage != null : String.format("No stage found for %s.", consumer);
                 // Equal stages possible on "partially open" Channels.
                 if (producerStage != consumerStage) {
@@ -141,10 +168,14 @@ public class ExecutionPlan {
             this.logger.error("There are channels that are copies.");
         }
 
-        boolean isAllSiblingsConsistent = allChannels.stream()
-                .allMatch(channel -> channel.withSiblings(false).allMatch(allChannels::contains));
-        if (!isAllSiblingsConsistent) {
-            this.logger.error("There are siblings that are not part of the plan.");
+        boolean isAllSiblingsConsistent = true;
+        for (Channel channel : allChannels) {
+            for (Channel sibling : channel.getSiblings()) {
+                if (!allChannels.contains(sibling)) {
+                    this.logger.error("A sibling of {}, namely {}, seems to be invalid.", channel, sibling);
+                    isAllSiblingsConsistent = false;
+                }
+            }
         }
 
         return isAllTasksAssigned && isAllChannelsOriginal && isAllSiblingsConsistent;
@@ -153,14 +184,13 @@ public class ExecutionPlan {
     /**
      * Creates a new instance from the given {@link ExecutionTaskFlow}.
      *
-     * @param executionTaskFlow should be converted into an {@link ExecutionPlan}
-     * @param stageSplittingCriterion  defines where to install {@link ExecutionStage} boundaries
+     * @param executionTaskFlow       should be converted into an {@link ExecutionPlan}
+     * @param stageSplittingCriterion defines where to install {@link ExecutionStage} boundaries
      * @return the new instance
      */
     public static ExecutionPlan createFrom(ExecutionTaskFlow executionTaskFlow,
                                            StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion) {
-        final StageAssignmentTraversal stageAssignmentTraversal =
-                new StageAssignmentTraversal(executionTaskFlow, stageSplittingCriterion);
-        return stageAssignmentTraversal.run();
+        return StageAssignmentTraversal.assignStages(executionTaskFlow, stageSplittingCriterion);
     }
+
 }

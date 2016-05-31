@@ -15,16 +15,14 @@ public class ExecutionTaskFlow {
 
     private final Collection<ExecutionTask> sinkTasks;
 
-    private final Set<Channel> inputChannels;
-
     public ExecutionTaskFlow(Collection<ExecutionTask> sinkTasks) {
         this(sinkTasks, Collections.emptySet());
     }
 
+    @Deprecated
     public ExecutionTaskFlow(Collection<ExecutionTask> sinkTasks, Set<Channel> inputChannels) {
         assert !sinkTasks.isEmpty() : "Cannot build plan without sinks.";
         this.sinkTasks = sinkTasks;
-        this.inputChannels = inputChannels;
     }
 
     public Set<ExecutionTask> collectAllTasks() {
@@ -68,10 +66,6 @@ public class ExecutionTaskFlow {
         return this.sinkTasks;
     }
 
-    public Set<Channel> getInputChannels() {
-        return this.inputChannels;
-    }
-
     public static ExecutionTaskFlow createFrom(PlanImplementation planImplementation) {
         final List<ExecutionOperator> startOperators = planImplementation.getStartOperators();
         assert !startOperators.isEmpty() :
@@ -94,10 +88,11 @@ public class ExecutionTaskFlow {
         try {
             final ExecutionTaskFlowCompiler compiler = new ExecutionTaskFlowCompiler(
                     startOperators, planImplementation, oldExecutionPlan, openChannels, completedStages);
-            if (compiler.traverse((Void[]) null)) {
+            if (compiler.traverse()) {
                 return new ExecutionTaskFlow(compiler.getTerminalTasks(), compiler.getInputChannels());
             }
         } catch (AbstractTopologicalTraversal.AbortException e) {
+            throw new RuntimeException(e);
         }
         return null;
 

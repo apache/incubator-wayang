@@ -4,7 +4,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.platform.CrossPlatformExecutor;
+import org.qcri.rheem.core.platform.ExecutionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,19 +61,19 @@ public class CardinalityEstimatorManager {
     }
 
     /**
-     * Injects the cardinalities of a current {@link CrossPlatformExecutor.State} into its associated {@link RheemPlan}
+     * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link RheemPlan}
      * (or its {@link OptimizationContext}, respectively) and then reperforms the cardinality estimation.
      */
-    public void pushCardinalityUpdates(CrossPlatformExecutor.State executionState) {
+    public void pushCardinalityUpdates(ExecutionState executionState) {
         this.injectMeasuredCardinalities(executionState);
         this.pushCardinalities();
     }
 
     /**
-     * Injects the cardinalities of a current {@link CrossPlatformExecutor.State} into its associated {@link RheemPlan}.
+     * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link RheemPlan}.
      */
-    private void injectMeasuredCardinalities(CrossPlatformExecutor.State executionState) {
-        executionState.getProfile().getCardinalities().forEach(this::injectMeasureCardinality);
+    private void injectMeasuredCardinalities(ExecutionState executionState) {
+        executionState.getCardinalityMeasurements().forEach(this::injectMeasureCardinality);
     }
 
     /**
@@ -89,23 +89,33 @@ public class CardinalityEstimatorManager {
 
             // Identify the corresponding OperatorContext.
             final Operator owner = correspondingSlot.getOwner();
-            final OptimizationContext.OperatorContext operatorCtx = this.optimizationContext.getOperatorContext(owner);
-            if (operatorCtx == null) {
-                this.logger.error("Could not inject measured cardinality for {}: Is it inside a loop?", owner);
+            if (this.optimizationContext.getOperatorContext(owner) == null) {
+                // TODO: Handle cardinalities inside of loops.
+                this.logger.debug("Could not inject measured cardinality for {}: It is presumably a glue operator or inside of a loop.", owner);
                 continue;
             }
 
             // Update the operatorCtx, then propagate.
-            // FIXME: Within loops, we might need to propagate across iterations!
-            // TODO: Do we need to propagate? Revisit once channel.getCorrespondingSlots() is incorporating OptimizationContexts.
-            final int slotIndex = correspondingSlot.getIndex();
             if (correspondingSlot instanceof InputSlot<?>) {
-                operatorCtx.setInputCardinality(slotIndex, newEstimate);
-                owner.propagateInputCardinality(slotIndex, operatorCtx);
+                // Find the outermost InputSlot and propagate.
+                final InputSlot<?> outerInput = owner.getOutermostInputSlot((InputSlot<?>) correspondingSlot);
+                final Operator outerOperator = outerInput.getOwner();
+                final OptimizationContext.OperatorContext operatorCtx = this.optimizationContext.getOperatorContext(outerOperator);
+                operatorCtx.setInputCardinality(outerInput.getIndex(), newEstimate);
+                outerOperator.propagateInputCardinality(outerInput.getIndex(), operatorCtx);
+
             } else {
+                // Find the outermost OutputSlot and propagate.
                 assert correspondingSlot instanceof OutputSlot<?>;
-                operatorCtx.setOutputCardinality(slotIndex, newEstimate);
-                owner.propagateOutputCardinality(slotIndex, operatorCtx);
+                @SuppressWarnings("unchecked")
+                final Collection<OutputSlot<?>> outerOutputs = owner.getOutermostOutputSlots((OutputSlot) correspondingSlot);
+                for (OutputSlot<?> outerOutput : outerOutputs) {
+                    final Operator outerOperator = outerOutput.getOwner();
+                    final OptimizationContext.OperatorContext operatorCtx =
+                            this.optimizationContext.getOperatorContext(outerOperator);
+                    operatorCtx.setOutputCardinality(outerOutput.getIndex(), newEstimate);
+                    outerOperator.propagateOutputCardinality(outerOutput.getIndex(), operatorCtx);
+                }
             }
         }
     }

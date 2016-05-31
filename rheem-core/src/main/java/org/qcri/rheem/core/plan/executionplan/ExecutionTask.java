@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.plan.executionplan;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -135,9 +136,16 @@ public class ExecutionTask {
         throw new IllegalArgumentException(String.format("%s is not an input of %s.", inputChannel, this));
     }
 
+    public Channel initializeOutputChannel(int index, Configuration configuration) {
+        final ChannelDescriptor channelDescriptor = this.operator.getOutputChannelDescriptor(index);
+        final OutputSlot<?> output = this.operator.getNumOutputs() == 0 ? null : this.operator.getOutput(index);
+        final Channel channel = channelDescriptor.createChannel(output, configuration);
+        this.setOutputChannel(index, channel);
+        return channel;
+    }
+
     /**
-     * Sets an output {@link Channel} for this instance. Consider using
-     * {@link Channel#Channel(ChannelDescriptor, ExecutionTask, int)} and derivatives instead.
+     * Sets an output {@link Channel} for this instance.
      */
     public void setOutputChannel(int index, Channel channel) {
         assert this.getOutputChannel(index) == null : String.format("Output channel %d of %s is already set to %s.",
@@ -191,6 +199,27 @@ public class ExecutionTask {
             }
         }
         throw new IllegalArgumentException(String.format("%s does not belong to %s.", channel, this));
+    }
+
+    /**
+     * Determines whether the given input {@link Channel} implements a feedback {@link InputSlot} of the enclosed
+     * {@link ExecutionOperator}.
+     *
+     * @param inputChannel the {@link Channel}
+     * @return whether it implements a feedback {@link InputSlot}
+     * @see InputSlot#isFeedback()
+     */
+    public boolean isFeedbackInput(Channel inputChannel) {
+        // Check if we have a LoopHeadOperator in this instance.
+        final ExecutionOperator operator = this.getOperator();
+        if (!operator.isLoopHead()) return false;
+
+        // Check whether and to which InputSlot the inputChannel corresponds.
+        final InputSlot<?> input = this.getInputSlotFor(inputChannel);
+        if (input == null) return false;
+
+        // Determine if that InputSlot is a feedback InputSlot.
+        return input.isFeedback();
     }
 
     /**

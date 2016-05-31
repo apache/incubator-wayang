@@ -9,6 +9,8 @@ import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
@@ -26,10 +28,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -45,26 +44,33 @@ public class WordCountIT {
         // Instantiate Rheem and activate the backend.
         RheemContext rheemContext = new RheemContext();
         rheemContext.register(JavaPlatform.getInstance());
-
         TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
+                new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(String.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefault(String.class)
         );
+        flatMapOperator.getFunctionDescriptor().setLoadEstimators(
+                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 670),
+                LoadEstimator.createFallback(1, 1)
+        );
 
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
-                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(Tuple2.class)
+                new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
+                        DataUnitType.<String>createBasic(String.class),
+                        DataUnitType.<Tuple2<String, Integer>>createBasicUnchecked(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class)
+        );
+        mapOperator.getFunctionDescriptor().setLoadEstimators(
+                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 245),
+                LoadEstimator.createFallback(1, 1)
         );
 
 
@@ -73,12 +79,20 @@ public class WordCountIT {
                 new TransformationDescriptor<>(pair -> pair.field0,
                         DataUnitType.createBasic(Tuple2.class),
                         DataUnitType.createBasic(String.class)), new ReduceDescriptor<>(
-                                ((a, b) -> {
-                                    a.field1 += b.field1;
-                                    return a;
-                                }), DataUnitType.createGroupedUnchecked(Tuple2.class),
-                                DataUnitType.createBasicUnchecked(Tuple2.class)
-                        ), DataSetType.createDefaultUnchecked(Tuple2.class)
+                ((a, b) -> {
+                    a.field1 += b.field1;
+                    return a;
+                }), DataUnitType.createGroupedUnchecked(Tuple2.class),
+                DataUnitType.createBasicUnchecked(Tuple2.class)
+        ), DataSetType.createDefaultUnchecked(Tuple2.class)
+        );
+        reduceByOperator.getKeyDescriptor().setLoadEstimators(
+                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 50),
+                LoadEstimator.createFallback(1, 1)
+        );
+        reduceByOperator.getReduceDescriptor().setLoadEstimators(
+                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 350 + 500000),
+                LoadEstimator.createFallback(1, 1)
         );
 
 
@@ -118,7 +132,7 @@ public class WordCountIT {
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
+                new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(String.class)
                 ), DataSetType.createDefault(String.class),
@@ -128,7 +142,7 @@ public class WordCountIT {
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
-                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
+                new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
@@ -141,12 +155,12 @@ public class WordCountIT {
                 new TransformationDescriptor<>(pair -> pair.field0,
                         DataUnitType.createBasic(Tuple2.class),
                         DataUnitType.createBasic(String.class)), new ReduceDescriptor<>(
-                                ((a, b) -> {
-                                    a.field1 += b.field1;
-                                    return a;
-                                }), DataUnitType.createGroupedUnchecked(Tuple2.class),
-                                DataUnitType.createBasicUnchecked(Tuple2.class)
-                        ), DataSetType.createDefaultUnchecked(Tuple2.class)
+                ((a, b) -> {
+                    a.field1 += b.field1;
+                    return a;
+                }), DataUnitType.createGroupedUnchecked(Tuple2.class),
+                DataUnitType.createBasicUnchecked(Tuple2.class)
+        ), DataSetType.createDefaultUnchecked(Tuple2.class)
         );
 
 
@@ -267,13 +281,14 @@ public class WordCountIT {
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
+                new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(String.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefault(String.class)
         );
         flatMapOperator.addTargetPlatform(JavaPlatform.getInstance());
+        flatMapOperator.setName("Split words");
 
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
@@ -285,6 +300,7 @@ public class WordCountIT {
                 DataSetType.createDefaultUnchecked(Tuple2.class)
         );
         mapOperator.addTargetPlatform(SparkPlatform.getInstance());
+        mapOperator.setName("Create counters");
 
 
         // groupby the key (word) and add up the values (frequency)
@@ -292,14 +308,15 @@ public class WordCountIT {
                 new TransformationDescriptor<>(pair -> pair.field0,
                         DataUnitType.createBasic(Tuple2.class),
                         DataUnitType.createBasic(String.class)), new ReduceDescriptor<>(
-                                ((a, b) -> {
-                                    a.field1 += b.field1;
-                                    return a;
-                                }), DataUnitType.createGroupedUnchecked(Tuple2.class),
-                                DataUnitType.createBasicUnchecked(Tuple2.class)
-                        ), DataSetType.createDefaultUnchecked(Tuple2.class)
+                ((a, b) -> {
+                    a.field1 += b.field1;
+                    return a;
+                }), DataUnitType.createGroupedUnchecked(Tuple2.class),
+                DataUnitType.createBasicUnchecked(Tuple2.class)
+        ), DataSetType.createDefaultUnchecked(Tuple2.class)
         );
         reduceByOperator.addTargetPlatform(SparkPlatform.getInstance());
+        reduceByOperator.setName("Add counters");
 
 
         // write results to a sink
@@ -332,7 +349,7 @@ public class WordCountIT {
         for (Map.Entry<String, Integer> countEntry : counter) {
             correctResults.add(new Tuple2<>(countEntry.getKey(), countEntry.getValue()));
         }
-        Assert.assertTrue(results.size() == correctResults.size() && results.containsAll(correctResults) && correctResults.containsAll(results));
+        Assert.assertEquals(new HashSet<>(correctResults), new HashSet<>(results));
     }
 
     @Test
@@ -345,7 +362,7 @@ public class WordCountIT {
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
+                new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(String.class)
                 ), DataSetType.createDefault(String.class),
@@ -355,7 +372,7 @@ public class WordCountIT {
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
-                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
+                new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
@@ -368,12 +385,12 @@ public class WordCountIT {
                 new TransformationDescriptor<>(pair -> pair.field0,
                         DataUnitType.createBasic(Tuple2.class),
                         DataUnitType.createBasic(String.class)), new ReduceDescriptor<>(
-                                ((a, b) -> {
-                                    a.field1 += b.field1;
-                                    return a;
-                                }), DataUnitType.createGroupedUnchecked(Tuple2.class),
-                                DataUnitType.createBasicUnchecked(Tuple2.class)
-                        ), DataSetType.createDefaultUnchecked(Tuple2.class)
+                ((a, b) -> {
+                    a.field1 += b.field1;
+                    return a;
+                }), DataUnitType.createGroupedUnchecked(Tuple2.class),
+                DataUnitType.createBasicUnchecked(Tuple2.class)
+        ), DataSetType.createDefaultUnchecked(Tuple2.class)
         );
 
 

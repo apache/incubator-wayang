@@ -17,10 +17,15 @@ import java.util.stream.Collectors;
  */
 public class LocalFileSystem implements FileSystem {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final Logger logger = LoggerFactory.getLogger(LocalFileSystem.class);
 
     private static File toFile(String fileUrl) throws URISyntaxException, MalformedURLException {
-        return new File(new URL(fileUrl).toURI());
+        if (fileUrl.startsWith("file:")) {
+            return new File(new URL(fileUrl).toURI());
+        } else {
+            logger.warn("Expect URLs, but got {}. Converting it to file:{}...", fileUrl, fileUrl);
+            return toFile("file:" + fileUrl);
+        }
     }
 
     @Override
@@ -29,7 +34,7 @@ public class LocalFileSystem implements FileSystem {
             File file = toFile(fileUrl);
             return file.length();
         } catch (MalformedURLException | URISyntaxException e) {
-            this.logger.error("Illegal URL: \"{}\"", fileUrl);
+            logger.error("Illegal URL: \"{}\"", fileUrl);
             throw new FileNotFoundException("File not found, because the URL is not correct.");
         }
     }
@@ -41,7 +46,7 @@ public class LocalFileSystem implements FileSystem {
             return url.getProtocol().equals("file") &&
                     (url.getHost().equals("") || url.getHost().equals("localhost"));
         } catch (MalformedURLException e) {
-            this.logger.error("Illegal URL: \"{}\"", urlAsString);
+            logger.error(String.format("Illegal URL: \"%s\"", urlAsString), e);
             return false;
         }
     }
@@ -77,7 +82,7 @@ public class LocalFileSystem implements FileSystem {
         try {
             return toFile(url).isDirectory();
         } catch (URISyntaxException | MalformedURLException e) {
-            this.logger.warn("Could not inspect directory.", e);
+            logger.warn("Could not inspect directory.", e);
             return false;
         }
     }
@@ -91,8 +96,26 @@ public class LocalFileSystem implements FileSystem {
             }
             return Arrays.stream(files).map(File::toURI).map(Object::toString).collect(Collectors.toList());
         } catch (URISyntaxException | MalformedURLException e) {
-            this.logger.warn("Could not inspect directory.", e);
+            logger.warn("Could not inspect directory.", e);
             return Collections.emptyList();
         }
     }
+
+    @Override
+    public boolean delete(String url, boolean isRecursiveDelete) throws IOException {
+        try {
+            final File file = toFile(url);
+            if (!isRecursiveDelete && file.isDirectory()) return false;
+            return this.delete(file);
+        } catch (URISyntaxException e) {
+            throw new IOException("Cannot access file.", e);
+        }
+    }
+
+    private boolean delete(File file) {
+        boolean canDelete = !file.isDirectory() || Arrays.stream(file.listFiles()).allMatch(this::delete);
+        return canDelete && file.delete();
+
+    }
+
 }

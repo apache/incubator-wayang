@@ -33,7 +33,7 @@ public class JavaGlobalReduceOperatorMapping implements Mapping {
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<JavaGlobalReduceOperator>(
+        return new ReplacementSubplanFactory.OfSingleOperators<GlobalReduceOperator>(
                 (matchedOperator, epoch) -> new JavaGlobalReduceOperator<>(
                         matchedOperator.getType(),
                         matchedOperator.getReduceDescriptor()

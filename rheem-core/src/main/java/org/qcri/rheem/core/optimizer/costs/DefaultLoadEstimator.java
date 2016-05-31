@@ -5,6 +5,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
 import java.util.Arrays;
+import java.util.function.ToDoubleBiFunction;
 import java.util.function.ToLongBiFunction;
 import java.util.stream.LongStream;
 
@@ -42,6 +43,13 @@ public class DefaultLoadEstimator extends LoadEstimator {
     }
 
     /**
+     * Utility to create new instances: Rounds the results of a given estimation function.
+     */
+    public static ToLongBiFunction<long[], long[]> rounded(ToDoubleBiFunction<long[], long[]> f) {
+        return (inputCards, outputCards) -> Math.round(f.applyAsDouble(inputCards, outputCards));
+    }
+
+    /**
      * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element. Missing
      * {@link CardinalityEstimate}s are interpreted as a cardinality of {@code 0}.
      */
@@ -74,7 +82,7 @@ public class DefaultLoadEstimator extends LoadEstimator {
 
     @Override
     public LoadEstimate calculate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
-        Validate.isTrue(inputEstimates.length == this.numInputs || this.numInputs == UNSPECIFIED_NUM_SLOTS,
+        Validate.isTrue(inputEstimates.length >= this.numInputs || this.numInputs == UNSPECIFIED_NUM_SLOTS,
                 "Received %d input estimates, require %d.", inputEstimates.length, this.numInputs);
         Validate.isTrue(outputEstimates.length == this.numOutputs || this.numOutputs == UNSPECIFIED_NUM_SLOTS,
                 "Received %d output estimates, require %d.", outputEstimates.length, this.numOutputs);

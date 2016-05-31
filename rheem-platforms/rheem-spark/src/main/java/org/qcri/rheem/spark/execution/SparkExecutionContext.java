@@ -4,7 +4,8 @@ import org.apache.spark.broadcast.Broadcast;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
+import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -24,14 +25,15 @@ public class SparkExecutionContext implements ExecutionContext, Serializable {
      * Creates a new instance.
      *
      * @param operator {@link SparkExecutionOperator} for that the instance should be created
-     * @param inputs   {@link ChannelExecutor} inputs for the {@code operator}
+     * @param inputs   {@link ChannelInstance} inputs for the {@code operator}
      */
-    public SparkExecutionContext(SparkExecutionOperator operator, ChannelExecutor[] inputs) {
+    public SparkExecutionContext(SparkExecutionOperator operator, ChannelInstance[] inputs) {
         this.broadcasts = new HashMap<>();
         for (int inputIndex = 0; inputIndex < operator.getNumInputs(); inputIndex++) {
             InputSlot<?> inputSlot = operator.getInput(inputIndex);
             if (inputSlot.isBroadcast()) {
-                this.broadcasts.put(inputSlot.getName(), inputs[inputIndex].provideBroadcast());
+                final BroadcastChannel.Instance broadcastChannelInstance = (BroadcastChannel.Instance) inputs[inputIndex];
+                this.broadcasts.put(inputSlot.getName(), broadcastChannelInstance.provideBroadcast());
             }
         }
     }

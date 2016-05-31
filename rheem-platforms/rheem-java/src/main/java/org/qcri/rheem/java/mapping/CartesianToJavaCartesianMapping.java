@@ -28,7 +28,7 @@ public class CartesianToJavaCartesianMapping implements Mapping {
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<JavaCartesianOperator>(
+        return new ReplacementSubplanFactory.OfSingleOperators<CartesianOperator>(
                 (matchedOperator, epoch) -> new JavaCartesianOperator<>(
                         matchedOperator.getInputType0(),
                         matchedOperator.getInputType1()

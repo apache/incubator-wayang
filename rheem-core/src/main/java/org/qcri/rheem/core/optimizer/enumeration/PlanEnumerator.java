@@ -3,6 +3,8 @@ package org.qcri.rheem.core.optimizer.enumeration;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.OptimizationUtils;
+import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
@@ -61,11 +63,6 @@ public class PlanEnumerator {
     private final Collection<PlanEnumeration> completedEnumerations = new LinkedList<>();
 
     /**
-     * {@link PlanEnumerationPruningStrategy}s to be applied while enumerating.
-     */
-    private final Collection<PlanEnumerationPruningStrategy> pruningStrategies;
-
-    /**
      * Once this instance has been executed (via {@link #run()}, the result will be stored in this field. Prior to that,
      * it is {@code null}.
      */
@@ -82,6 +79,11 @@ public class PlanEnumerator {
     private final Map<ExecutionOperator, ExecutionTask> executedTasks;
 
     /**
+     * {@link Channel}s that are existing and must be reused when re-optimizing.
+     */
+    private final Map<OutputSlot<?>, Channel> existingChannels;
+
+    /**
      * {@link OptimizationContext} that holds all relevant task data.
      */
     private final OptimizationContext optimizationContext;
@@ -95,8 +97,8 @@ public class PlanEnumerator {
                           OptimizationContext optimizationContext) {
         this(rheemPlan.collectReachableTopLevelSources(),
                 optimizationContext,
-                new LinkedList<>(),
                 null,
+                Collections.emptyMap(),
                 Collections.emptyMap(),
                 Collections.emptyMap());
     }
@@ -109,21 +111,40 @@ public class PlanEnumerator {
      */
     public PlanEnumerator(RheemPlan rheemPlan,
                           OptimizationContext optimizationContext,
-                          ExecutionPlan baseplan) {
+                          ExecutionPlan baseplan,
+                          Set<Channel> openChannels) {
 
         this(rheemPlan.collectReachableTopLevelSources(),
                 optimizationContext,
-                new LinkedList<>(),
                 null,
+                new HashMap<>(),
                 new HashMap<>(),
                 new HashMap<>());
 
+        // Register all the tasks that have been executed already.
         final Set<ExecutionTask> executedTasks = baseplan.collectAllTasks();
         executedTasks.forEach(task -> this.executedTasks.put(task.getOperator(), task));
+
+        // Find out which alternatives have been settled already.
         executedTasks.stream()
                 .map(ExecutionTask::getOperator)
                 .flatMap(this::streamPickedAlternatives)
                 .forEach(alternative -> this.presettledAlternatives.put(alternative.toOperator(), alternative));
+
+        // Index the existing Channels by their user-specified Operator's OutputSlot.
+        // Note that we must always take the outermost OutputSlots because only those will be connected if the RheemPlan is sane.
+        for (Channel openChannel : openChannels) {
+            final OutputSlot<?> outputSlot = OptimizationUtils.findRheemPlanOutputSlotFor(openChannel);
+            if (outputSlot != null) {
+                for (OutputSlot<?> outputOutput : outputSlot.getOwner().getOutermostOutputSlots(outputSlot)) {
+                    final Channel otherExistingChannel = this.existingChannels.put(outputOutput, openChannel);
+                    assert otherExistingChannel == null :
+                            String.format("The two existing channels %s and %s represent the same output slot.",
+                                    openChannel, otherExistingChannel);
+                }
+            }
+        }
+
     }
 
     /**
@@ -131,19 +152,17 @@ public class PlanEnumerator {
      */
     private PlanEnumerator(Collection<Operator> startOperators,
                            OptimizationContext optimizationContext,
-                           Collection<PlanEnumerationPruningStrategy> pruningStrategies,
                            OperatorAlternative.Alternative enumeratedAlternative,
                            Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
-                           Map<ExecutionOperator, ExecutionTask> executedTasks) {
+                           Map<ExecutionOperator, ExecutionTask> executedTasks,
+                           Map<OutputSlot<?>, Channel> existingChannels) {
 
         this.optimizationContext = optimizationContext;
-        this.pruningStrategies = pruningStrategies;
         this.enumeratedAlternative = enumeratedAlternative;
         this.presettledAlternatives = presettledAlternatives;
         this.executedTasks = executedTasks;
+        this.existingChannels = existingChannels;
 
-        // Initialize pruning strategies.
-        this.getConfiguration().getPruningStrategiesProvider().forEach(this::addPruningStrategy);
 
         // Set up start Operators.
         for (Operator startOperator : startOperators) {
@@ -185,7 +204,10 @@ public class PlanEnumerator {
     }
 
     private Stream<OperatorAlternative.Alternative> streamPickedAlternatives(Operator operator) {
-        final OperatorContainer container = operator.getContainer();
+        OperatorContainer container = operator.getContainer();
+        while (container != null && !(container instanceof OperatorAlternative.Alternative)) {
+            container = container.toOperator().getContainer();
+        }
         if (container == null) return Stream.empty();
         OperatorAlternative.Alternative alternative = (OperatorAlternative.Alternative) container;
         final OperatorAlternative operatorAlternative = alternative.toOperator();
@@ -330,8 +352,6 @@ public class PlanEnumerator {
             PlanEnumeration operatorEnumeration;
             if (operator.isAlternative()) {
                 operatorEnumeration = this.enumerateAlternative((OperatorAlternative) operator, optimizationContext);
-//            } else if (operator.isLoopHead()) {
-//                operatorEnumeration = PlanEnumeration.createSingleton((LoopHeadOperator) operator, this.optimizationContext);
             } else if (operator.isLoopSubplan()) {
                 operatorEnumeration = this.enumerateLoop((LoopSubplan) operator, optimizationContext);
             } else {
@@ -342,9 +362,13 @@ public class PlanEnumerator {
             if (branchEnumeration == null) {
                 branchEnumeration = operatorEnumeration;
             } else {
-                branchEnumeration = branchEnumeration.concatenate(lastOperator.getOutput(0),
+                final OutputSlot<?> output = lastOperator.getOutput(0);
+                branchEnumeration = branchEnumeration.concatenate(
+                        output,
+                        this.existingChannels.get(output),
                         Collections.singletonMap(operator.getInput(0), operatorEnumeration),
-                        optimizationContext);
+                        optimizationContext
+                );
             }
 
             lastOperator = operator;
@@ -391,10 +415,10 @@ public class PlanEnumerator {
     private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative, OptimizationContext optimizationContext) {
         return new PlanEnumerator(Operators.collectStartOperators(alternative),
                 optimizationContext,
-                this.pruningStrategies,
                 alternative,
                 this.presettledAlternatives,
-                this.executedTasks);
+                this.executedTasks,
+                this.existingChannels);
     }
 
     /**
@@ -403,10 +427,10 @@ public class PlanEnumerator {
     PlanEnumerator forkFor(LoopHeadOperator loopHeadOperator, OptimizationContext optimizationContext) {
         return new PlanEnumerator(Operators.collectStartOperators(loopHeadOperator.getContainer()),
                 optimizationContext,
-                this.pruningStrategies,
                 null,
                 this.presettledAlternatives,
-                this.executedTasks);
+                this.executedTasks,
+                this.existingChannels);
     }
 
     /**
@@ -423,13 +447,19 @@ public class PlanEnumerator {
 
         final PlanEnumeration concatenatedEnumeration = concatenationActivator.baseEnumeration.concatenate(
                 concatenationActivator.outputSlot,
+                this.existingChannels.get(concatenationActivator.outputSlot),
                 concatenationActivator.getAdjacentEnumerations(),
                 concatenationActivator.getOptimizationContext()
         );
 
         if (concatenatedEnumeration.getPlanImplementations().isEmpty() && this.isTopLevel()) {
-            throw new RheemException(String.format("No implementations found for %s.", concatenatedEnumeration));
+            throw new RheemException(String.format("No implementations that concatenate %s with %s.",
+                    concatenationActivator.outputSlot,
+                    concatenationActivator.outputSlot.getOccupiedSlots()
+            ));
         }
+
+        this.prune(concatenatedEnumeration);
 
         this.postProcess(concatenatedEnumeration, concatenationActivator.optimizationContext);
     }
@@ -601,12 +631,18 @@ public class PlanEnumerator {
         this.resultReference = new AtomicReference<>(resultEnumeration);
     }
 
-    public void addPruningStrategy(PlanEnumerationPruningStrategy strategy) {
-        this.pruningStrategies.add(strategy);
-    }
-
+    /**
+     * Apply all the {@link PlanEnumerationPruningStrategy}s as defined by the {@link #optimizationContext}.
+     *
+     * @param planEnumeration to which the pruning should be applied
+     */
     private void prune(final PlanEnumeration planEnumeration) {
-        this.pruningStrategies.forEach(strategy -> strategy.prune(planEnumeration, this.getConfiguration()));
+        int numPlanImplementations = planEnumeration.getPlanImplementations().size();
+        this.optimizationContext.getPruningStrategies().forEach(strategy -> strategy.prune(planEnumeration));
+        this.logger.info("Pruned plan enumeration from {} to {} implementations.",
+                numPlanImplementations,
+                planEnumeration.getPlanImplementations().size()
+        );
     }
 
     public boolean isTopLevel() {

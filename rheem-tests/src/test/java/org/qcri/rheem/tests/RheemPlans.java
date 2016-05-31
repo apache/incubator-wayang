@@ -1,17 +1,20 @@
 package org.qcri.rheem.tests;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.function.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.RheemArrays;
+import org.qcri.rheem.postgres.PostgresPlatform;
+import org.qcri.rheem.postgres.compiler.FunctionCompiler;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +25,8 @@ public class RheemPlans {
     public static final URI FILE_SOME_LINES_TXT = createUri("/some-lines.txt");
 
     public static final URI FILE_OTHER_LINES_TXT = createUri("/other-lines.txt");
+
+    public static final URI ULYSSES_TXT = createUri("/ulysses.txt");
 
     public static URI createUri(String resourcePath) {
         try {
@@ -67,21 +72,27 @@ public class RheemPlans {
     public static RheemPlan multiSourceMultiSink(List<String> inputList1, List<String> inputList2,
                                                  List<String> collector1, List<String> collector2) {
         CollectionSource<String> source1 = new CollectionSource<>(inputList1, String.class);
+        source1.setName("source1");
         CollectionSource<String> source2 = new CollectionSource<>(inputList2, String.class);
+        source2.setName("source2");
 
         UnionAllOperator<String> coalesceOperator = new UnionAllOperator<>(String.class);
+        coalesceOperator.setName("source1+2");
         source1.connectTo(0, coalesceOperator, 0);
         source2.connectTo(0, coalesceOperator, 1);
 
         MapOperator<String, String> uppercaseOperator = new MapOperator<>(
                 String::toUpperCase, String.class, String.class
         );
+        uppercaseOperator.setName("uppercase");
         coalesceOperator.connectTo(0, uppercaseOperator, 0);
 
         LocalCallbackSink<String> sink1 = LocalCallbackSink.createCollectingSink(collector1, String.class);
+        sink1.setName("sink1");
         uppercaseOperator.connectTo(0, sink1, 0);
 
         LocalCallbackSink<String> sink2 = LocalCallbackSink.createCollectingSink(collector2, String.class);
+        sink2.setName("sink2");
         coalesceOperator.connectTo(0, sink2, 0);
 
         return new RheemPlan(sink1, sink2);
@@ -142,13 +153,19 @@ public class RheemPlans {
 
         // Build a Rheem plan.
         TextFileSource textFileSource = new TextFileSource(inputFileUri.toString());
+        textFileSource.setName("Load input file");
         SortOperator<String> sortOperator = new SortOperator<>(String.class);
+        sortOperator.setName("Sort lines");
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
                 String::toUpperCase, String.class, String.class
         );
+        upperCaseOperator.setName("To uppercase");
         DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(String.class);
+        distinctLinesOperator.setName("Make lines distinct");
         CountOperator<String> countLinesOperator = new CountOperator<>(String.class);
+        countLinesOperator.setName("Count lines");
         LocalCallbackSink<Long> stdoutSink = LocalCallbackSink.createStdoutSink(Long.class);
+        stdoutSink.setName("Print count");
 
         textFileSource.connectTo(0, sortOperator, 0);
         sortOperator.connectTo(0, upperCaseOperator, 0);
@@ -200,7 +217,7 @@ public class RheemPlans {
         source.setName("source");
 
         CollectionSource<Integer> convergenceSource = new CollectionSource<>(RheemArrays.asList(0), Integer.class);
-        source.setName("convergenceSource");
+        convergenceSource.setName("convergenceSource");
 
 
         LoopOperator<Integer, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(Integer.class),
@@ -228,6 +245,32 @@ public class RheemPlans {
         LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(collector, Integer.class);
         sink.setName("sink");
         loopOperator.outputConnectTo(sink);
+
+        // Create the RheemPlan.
+        return new RheemPlan(sink);
+    }
+
+    /**
+     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link SampleOperator}. It will
+     * then map each value to its double and output the results in the {@code collector}.
+     */
+    public static RheemPlan simpleSample(Collection<Integer> collector, final int... values)
+            throws URISyntaxException {
+        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        source.setName("source");
+
+        SampleOperator<Integer> sampleOperator = new SampleOperator<>(3, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM);
+        sampleOperator.setName("sample");
+
+        MapOperator<Integer, Integer> mapOperator = new MapOperator<>(n -> 2*n, Integer.class, Integer.class);
+        mapOperator.setName("map");
+
+        LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(collector, Integer.class);
+        sink.setName("sink");
+
+        source.connectTo(0, sampleOperator, 0);
+        sampleOperator.connectTo(0, mapOperator,0);
+        mapOperator.connectTo(0, sink, 0);
 
         // Create the RheemPlan.
         return new RheemPlan(sink);
@@ -393,30 +436,43 @@ public class RheemPlans {
     public static RheemPlan diverseScenario3(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
         // Build a Rheem plan.
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
+        textFileSource1.setName("Source 1");
         TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
+        textFileSource2.setName("Source 2");
         FilterOperator<String> noCommaOperator = new FilterOperator<>(s -> !s.contains(","), String.class);
+        noCommaOperator.setName("Filter comma");
+        UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
+        unionOperator.setName("Union");
+        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
+        stdoutSink.setName("Print");
+        SortOperator<String> sortOperator = new SortOperator<>(String.class);
+        sortOperator.setName("Sort");
+        CountOperator<String> countLines = new CountOperator<>(String.class);
+        countLines.setName("Count");
+        DoWhileOperator<String, Long> loopOperator = new DoWhileOperator<>(
+                DataSetType.createDefault(String.class),
+                DataSetType.createDefault(Long.class),
+                integers -> integers.iterator().next() > 100
+        );
+        loopOperator.setName("Do while");
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
                 new TransformationDescriptor<>(String::toUpperCase, String.class, String.class)
         );
-        UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
-        LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
-        DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(String.class);
-        SortOperator<String> sortOperator = new SortOperator<>(String.class);
+        upperCaseOperator.setName("To uppercase");
+        FilterOperator<String> dummyFilter = new FilterOperator<>(str -> true, String.class);
+        dummyFilter.setName("Dummy filter");
 
-        LoopOperator<String, Integer> loopOperator = null;
-        Operator converge = null;
         // Read from file 1, remove commas, union with file 2, sort, upper case, then remove duplicates and output.
-        loopOperator.initialize(textFileSource1, null); // TODO: Fix this test.
-        loopOperator.beginIteration(noCommaOperator, converge);
+        loopOperator.initialize(textFileSource1, 0);
+        loopOperator.beginIteration(noCommaOperator, 0);
         textFileSource2.connectTo(0, unionOperator, 0);
         noCommaOperator.connectTo(0, unionOperator, 1);
         unionOperator.connectTo(0, sortOperator, 0);
-        sortOperator.connectTo(0, upperCaseOperator, 0);
-
-        loopOperator.endIteration(sortOperator, converge);
+        sortOperator.connectTo(0, countLines, 0);
+        sortOperator.connectTo(0, dummyFilter, 0);
+        loopOperator.endIteration(dummyFilter, 0, countLines, 0);
         loopOperator.outputConnectTo(upperCaseOperator, 0);
-        upperCaseOperator.connectTo(0, distinctLinesOperator, 0);
-        distinctLinesOperator.connectTo(0, stdoutSink, 0);
+        upperCaseOperator.connectTo(0, stdoutSink, 0);
 
         // Create the RheemPlan.
         return new RheemPlan(stdoutSink);
@@ -468,6 +524,88 @@ public class RheemPlans {
 
         // Create the RheemPlan.
         return new RheemPlan(stdoutSink);
+    }
+
+    public static RheemPlan postgresReadStdout() {
+        //Tuple2.class
+        LocalCallbackSink<Tuple2> stdoutSink = LocalCallbackSink.createStdoutSink(Tuple2.class);
+        TableSource table = new TableSource("employee", Tuple2.class);
+        table.connectTo(0, stdoutSink, 0);
+        return new RheemPlan(stdoutSink);
+
+    }
+
+    public static RheemPlan postgresScenario2() {
+        //Tuple2.class
+        LocalCallbackSink<Tuple2> stdoutSink = LocalCallbackSink.createStdoutSink(Tuple2.class);
+        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Tuple2.class, "id", "salary");
+        FilterOperator<Tuple2> filterOp = new FilterOperator<Tuple2>(
+                new PredicateDescriptor.SerializablePredicate<Tuple2>() {
+                    @Override
+                    @FunctionCompiler.SQL("salary>1000")
+                    public boolean test(Tuple2 s) {
+                        return (Float)s.getField1()>1000;
+                    }
+                }, Tuple2.class);
+
+        TableSource table = new TableSource("employee", Tuple2.class);
+        table.connectTo(0, projectionOperator, 0);
+        projectionOperator.connectTo(0, filterOp, 0);
+        filterOp.connectTo(0, stdoutSink, 0);
+        //filterOp.addTargetPlatform(JavaPlatform.getInstance());
+        return new RheemPlan(stdoutSink);
+
+    }
+
+    public static RheemPlan postgresScenario3() {
+
+        LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
+        // Select second field.
+        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Float.class, 1);
+
+        FilterOperator<Float> filterOp = new FilterOperator<Float>(
+                new PredicateDescriptor.SerializablePredicate<Float>() {
+                    @Override
+                    @FunctionCompiler.SQL("salary>1000")
+                    public boolean test(Float s) {
+                        return s>1000;
+                    }
+                }, Float.class);
+
+        TableSource table = new TableSource("employee", Tuple2.class);
+        table.connectTo(0, projectionOperator, 0);
+        projectionOperator.connectTo(0, filterOp, 0);
+        filterOp.connectTo(0, stdoutSink, 0);
+        //filterOp.addTargetPlatform(JavaPlatform.getInstance());
+        return new RheemPlan(stdoutSink);
+
+    }
+
+    public static RheemPlan postgresMixedScenario4() {
+
+        LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
+        // Select second field.
+        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Float.class, 1);
+        DistinctOperator<Float> distinctLinesOperator = new DistinctOperator<>(Float.class);
+
+        FilterOperator<Float> filterOp = new FilterOperator<Float>(
+                new PredicateDescriptor.SerializablePredicate<Float>() {
+                    @Override
+                    @FunctionCompiler.SQL("salary>1000")
+                    public boolean test(Float salary) {
+                        return salary>1000;
+                    }
+                }, Float.class);
+
+        //FilterOperator<Float> filterOp = new FilterOperator<Float>(salary-> salary>1000, Float.class);
+
+        TableSource table = new TableSource("employee", Tuple2.class);
+        table.connectTo(0, projectionOperator, 0);
+        projectionOperator.connectTo(0, filterOp, 0);
+        filterOp.connectTo(0, distinctLinesOperator, 0);
+        distinctLinesOperator.connectTo(0, stdoutSink, 0);
+        return new RheemPlan(stdoutSink);
+
     }
 }
 

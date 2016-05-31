@@ -1,60 +1,68 @@
 package org.qcri.rheem.spark.platform;
 
 import org.apache.spark.api.java.JavaSparkContext;
-import org.qcri.rheem.basic.operators.LoopOperator;
-import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.platform.ExecutionProfile;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
-import org.qcri.rheem.spark.channels.SparkChannelManager;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
-import org.qcri.rheem.spark.operators.SparkLoopOperator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * {@link Executor} implementation for the {@link SparkPlatform}.
  */
-public class SparkExecutor extends PushExecutorTemplate<ChannelExecutor> {
+public class SparkExecutor extends PushExecutorTemplate {
 
+    /**
+     * Reference to a {@link JavaSparkContext} to be used by this instance.
+     */
+    private final SparkContextReference sparkContextReference;
+
+    /**
+     * The {@link JavaSparkContext} to be used by this instance.
+     *
+     * @see #sparkContextReference
+     */
     public final JavaSparkContext sc;
 
     public FunctionCompiler compiler = new FunctionCompiler();
 
     private final SparkPlatform platform;
 
-    public SparkExecutor(SparkPlatform platform) {
+    public SparkExecutor(SparkPlatform platform, Job job) {
+        super(job);
         this.platform = platform;
-        this.sc = this.platform.getSparkContext();
+        this.sparkContextReference = this.platform.getSparkContext(job);
+        this.sparkContextReference.noteObtainedReference();
+        this.sc = this.sparkContextReference.get();
     }
+
     @Override
-    protected void open(ExecutionTask task, List<ChannelExecutor> inputChannelInstances) {
+    protected void open(ExecutionTask task, List<ChannelInstance> inputChannelInstances) {
         // Nothing to do. Opening is handled in #execute(...).
     }
 
     @Override
-    protected List<ChannelExecutor> execute(ExecutionTask task, List<ChannelExecutor> inputChannelInstances, boolean isForceExecution) {
-        // Provide the ChannelExecutors for the output of the task.
-        final ChannelExecutor[] outputChannelExecutors = this.createOutputChannelExecutors(task);
+    protected List<ChannelInstance> execute(ExecutionTask task, List<ChannelInstance> inputChannelInstances, boolean isForceExecution) {
+        // Provide the ChannelInstances for the output of the task.
+        final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(task);
 
         // Execute.
-        cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelExecutors, this.compiler, this);
+        cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this.compiler, this);
 
         // Force execution if necessary.
         if (isForceExecution) {
-            for (ChannelExecutor outputChannelExecutor : outputChannelExecutors) {
-                if (outputChannelExecutor == null || !outputChannelExecutor.ensureExecution()) {
+            for (ChannelInstance outputChannelInstance : outputChannelInstances) {
+                if (outputChannelInstance == null || !outputChannelInstance.getChannel().isReusable()) {
                     this.logger.warn("Execution of {} might not have been enforced properly. " +
                                     "This might break the execution or cause side-effects with the re-optimization.",
                             task);
@@ -62,29 +70,28 @@ public class SparkExecutor extends PushExecutorTemplate<ChannelExecutor> {
             }
         }
 
-        return Arrays.asList(outputChannelExecutors);
+        return Arrays.asList(outputChannelInstances);
     }
 
-    private ChannelExecutor[] createOutputChannelExecutors(ExecutionTask task) {
-        final SparkChannelManager channelManager = this.getPlatform().getChannelManager();
-        ChannelExecutor[] channelExecutors = new ChannelExecutor[task.getNumOuputChannels()];
-        for (int outputIndex = 0; outputIndex < channelExecutors.length; outputIndex++) {
+    private ChannelInstance[] createOutputChannelInstances(ExecutionTask task) {
+        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
+        for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
             final Channel outputChannel = task.getOutputChannel(outputIndex);
-            channelExecutors[outputIndex] = channelManager.createChannelExecutor(outputChannel, this);
+            channelInstances[outputIndex] = outputChannel.createInstance(this);
         }
-        return channelExecutors;
+        return channelInstances;
     }
 
     private static SparkExecutionOperator cast(ExecutionOperator executionOperator) {
         return (SparkExecutionOperator) executionOperator;
     }
 
-    private static ChannelExecutor[] toArray(List<ChannelExecutor> channelExecutors) {
-        final ChannelExecutor[] array = new ChannelExecutor[channelExecutors.size()];
-        return channelExecutors.toArray(array);
+    private static ChannelInstance[] toArray(List<ChannelInstance> channelInstances) {
+        final ChannelInstance[] array = new ChannelInstance[channelInstances.size()];
+        return channelInstances.toArray(array);
     }
 
-    public static void openFunction(SparkExecutionOperator operator, Object function, ChannelExecutor[] inputs) {
+    public static void openFunction(SparkExecutionOperator operator, Object function, ChannelInstance[] inputs) {
         if (function instanceof ExtendedFunction) {
             ExtendedFunction extendedFunction = (ExtendedFunction) function;
             extendedFunction.open(new SparkExecutionContext(operator, inputs));
@@ -94,5 +101,15 @@ public class SparkExecutor extends PushExecutorTemplate<ChannelExecutor> {
     @Override
     public SparkPlatform getPlatform() {
         return this.platform;
+    }
+
+    public Configuration getConfiguration() {
+        return this.job.getConfiguration();
+    }
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        this.sparkContextReference.noteDiscardedReference(true);
     }
 }

@@ -1,15 +1,14 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
-import org.qcri.rheem.spark.channels.ChannelExecutor;
-import org.qcri.rheem.spark.channels.TestChannelExecutor;
+import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -29,7 +28,9 @@ public class SparkReduceByOperatorTest extends SparkOperatorTestBase {
         List<Tuple2<String, Integer>> inputList = Arrays.stream("aaabbccccdeefff".split(""))
                 .map(string -> new Tuple2<>(string, 1))
                 .collect(Collectors.toList());
-        final JavaRDD<Tuple2<String, Integer>> inputRdd = this.getSC().parallelize(inputList);
+        RddChannel.Instance input = this.createRddChannelInstance(inputList);
+        RddChannel.Instance output = this.createRddChannelInstance();
+
 
         // Build the reduce operator.
         SparkReduceByOperator<Tuple2<String, Integer>, String> reduceByOperator =
@@ -47,19 +48,15 @@ public class SparkReduceByOperatorTest extends SparkOperatorTestBase {
                                 DataUnitType.createBasicUnchecked(Tuple2.class)
                         ));
 
-        // Set up the ChannelExecutors.
-        final ChannelExecutor[] inputs = new ChannelExecutor[]{
-                new TestChannelExecutor(inputRdd)
-        };
-        final ChannelExecutor[] outputs = new ChannelExecutor[]{
-                new TestChannelExecutor()
-        };
+        // Set up the ChannelInstances.
+        final ChannelInstance[] inputs = new ChannelInstance[]{input};
+        final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
         reduceByOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
 
         // Verify the outcome.
-        final Iterable<Tuple2<String, Integer>> result = outputs[0].<Tuple2<String, Integer>>provideRdd().collect();
+        final Iterable<Tuple2<String, Integer>> result = output.<Tuple2<String, Integer>>provideRdd().collect();
         final Set<Tuple2<String, Integer>> resultSet = new HashSet<>();
         result.forEach(resultSet::add);
         final Tuple2[] expectedResults = {

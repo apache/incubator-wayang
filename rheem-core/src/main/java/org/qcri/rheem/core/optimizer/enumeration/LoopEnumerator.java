@@ -120,8 +120,13 @@ public class LoopEnumerator extends OneTimeExecutable {
             assert loopImpl.getJunction(execOutput) == null
                     : String.format("There already is %s for %s. Need to implement merging logic.",
                     loopImpl.getJunction(execOutput), execOutput);
-            final Junction junction = Junction.create(execOutput, execLoopBodyInputs, optimizationContext);
-            loopImpl.putJunction(execOutput, junction);
+            final Junction junction = optimizationContext.getChannelConversionGraph().findMinimumCostJunction(
+                    execOutput, execLoopBodyInputs, optimizationContext
+            );
+            //Junction.create(execOutput, execLoopBodyInputs, optimizationContext);
+            if (junction != null) {
+                loopImpl.putJunction(execOutput, junction);
+            }
         }
     }
 

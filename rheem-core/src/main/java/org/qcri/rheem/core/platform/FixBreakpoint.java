@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 
@@ -16,7 +17,7 @@ public class FixBreakpoint implements Breakpoint {
     /**
      * {@link ExecutionStage}s that should not yet be executed.
      */
-    private final Set<ExecutionStage> targetStages = new HashSet<>();
+    private final Set<ExecutionStage> stagesToSuspend = new HashSet<>();
 
     public FixBreakpoint breakAfter(ExecutionStage stage) {
         return this.breakBefore(stage.getSuccessors());
@@ -28,7 +29,7 @@ public class FixBreakpoint implements Breakpoint {
 
     public FixBreakpoint breakBefore(Collection<ExecutionStage> stages) {
         for (ExecutionStage stage : stages) {
-            if (this.targetStages.add(stage)) {
+            if (this.stagesToSuspend.add(stage)) {
                 this.breakBefore(stage.getSuccessors());
             }
         }
@@ -36,8 +37,10 @@ public class FixBreakpoint implements Breakpoint {
     }
 
     @Override
-    public boolean permitsExecutionOf(ExecutionStage stage) {
-        return !this.targetStages.contains(stage);
+    public boolean permitsExecutionOf(ExecutionStage stage,
+                                      ExecutionState state,
+                                      OptimizationContext optimizationContext) {
+        return !this.stagesToSuspend.contains(stage);
     }
 
 }

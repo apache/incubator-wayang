@@ -2,12 +2,8 @@ package org.qcri.rheem.core.plan.executionplan;
 
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
-import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.core.plan.rheemplan.Slot;
-import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +18,7 @@ import java.util.stream.Stream;
  */
 public abstract class Channel {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * Was used to set up this instance.
@@ -37,12 +33,12 @@ public abstract class Channel {
     /**
      * Produces the data flowing through this instance.
      */
-    protected ExecutionTask producer;
+    private ExecutionTask producer;
 
     /**
      * Consuming {@link ExecutionTask}s of this instance.
      */
-    protected final List<ExecutionTask> consumers = new LinkedList<>();
+    private final List<ExecutionTask> consumers = new LinkedList<>();
 
     /**
      * Mimed instance. Nullable.
@@ -59,6 +55,17 @@ public abstract class Channel {
      * {@link RheemPlan} and share properties such as {@link #getCardinalityEstimate(OptimizationContext)} and {@link #getDataSetType()}.
      */
     private Set<Channel> siblings = new HashSet<>(2);
+
+    /**
+     * This flag indicates whether this instance must not be used to halt at a {@link Breakpoint}.
+     */
+    private boolean isBreakingProhibited = false;
+
+    /**
+     * This flag indicates whether the {@link #producer} and the {@link #consumers} of this instance should never be
+     * executed in the same {@link ExecutionStage} instance.
+     */
+    private boolean isStageExecutionBarrier = false;
 
 
     /**
@@ -183,7 +190,23 @@ public abstract class Channel {
 
     }
 
-    protected Stream<Channel> withSiblings(boolean isWithConcurrentModification) {
+    /**
+     * Creates a {@link Stream} of this instance and its siblings. The sibling relationship must not be altered
+     * while processing the {@link Stream}.
+     *
+     * @return the {@link Stream}
+     */
+    public Stream<Channel> withSiblings() {
+        return this.withSiblings(false);
+    }
+
+    /**
+     * Creates a {@link Stream} of this instance and its siblings.
+     *
+     * @param isWithConcurrentModification whether {@link #siblings} may be modificated while processing the {@link Stream}
+     * @return the {@link Stream}
+     */
+    private Stream<Channel> withSiblings(boolean isWithConcurrentModification) {
         return Stream.concat(
                 Stream.of(this),
                 (isWithConcurrentModification ? new ArrayList<>(this.siblings) : this.siblings).stream()
@@ -263,9 +286,13 @@ public abstract class Channel {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Collect the {@link OutputSlot} of the producer and the {@link InputSlot}s of the consumers that are implemented
+     * by this instance.
+     * @return a {@link Stream} of said {@link Slot}s
+     */
     private Stream<Slot<?>> getCorrespondingSlotsLocal() {
-        final Stream<? extends OutputSlot<?>> outputSlotStream =
-                streamNullable(this.getProducer().getOutputSlotFor(this));
+        final Stream<? extends OutputSlot<?>> outputSlotStream = streamNullable(this.getProducerSlot());
         final Stream<? extends InputSlot<?>> inputSlotStream
                 = this.consumers.stream().flatMap(consumer -> streamNullable(consumer.getInputSlotFor(this)));
         return Stream.concat(inputSlotStream, outputSlotStream);
@@ -331,7 +358,10 @@ public abstract class Channel {
             // We must take care not to copy back channels, that we already have in the original.
             assert this.consumers.stream()
                     .noneMatch(existingConsumer -> existingConsumer.getOperator().equals(consumer.getOperator())) :
-                    String.format("Overlap in existing %s and new %s.", this.consumers, channel.getConsumers());
+                    String.format("Conflict when copying consumers from %s (%s) to %s (%s).",
+                            this, this.consumers,
+                            channel, channel.getConsumers()
+                    );
             consumer.exchangeInputChannel(channel, this);
         }
     }
@@ -349,14 +379,17 @@ public abstract class Channel {
     }
 
     /**
-     * Copies the consumers of the given {@code channel} into this instance.
+     * Copies the siblings of the given {@code channel} into this instance.
      */
     private void adoptSiblings(Channel channel) {
-        this.addSibling(channel);
-        this.removeSiblingsWhere(sibling -> sibling == channel);
+        for (Channel newSibling : channel.siblings) {
+            this.addSibling(newSibling);
+        }
+        channel.removeSiblings();
     }
 
     void setProducer(ExecutionTask producer) {
+        assert this.producerSlot == null || producer.getOperator() == this.producerSlot.getOwner();
         this.producer = producer;
     }
 
@@ -366,5 +399,90 @@ public abstract class Channel {
 
     public OutputSlot<?> getProducerSlot() {
         return this.producerSlot;
+    }
+
+    /**
+     * Try to obtain the {@link ExecutionOperator} producing this instance, either from a given {@link OutputSlot} or
+     * a {@link ExecutionTask} that was specified as producer.
+     *
+     * @return the {@link ExecutionOperator} or {@code null} if none is set up
+     */
+    public ExecutionOperator getProducerOperator() {
+        if (this.producerSlot != null) {
+            return (ExecutionOperator) this.producerSlot.getOwner();
+        } else if (this.producer != null) {
+            return this.producer.getOperator();
+        }
+        return null;
+    }
+
+    public Set<Channel> getSiblings() {
+        return this.siblings;
+    }
+
+    /**
+     * Create a {@link ChannelInstance} for this instance.
+     *
+     * @param executor that manages the resource or {@code null} if none
+     */
+    public abstract ChannelInstance createInstance(Executor executor);
+
+    /**
+     * Tests for inter-stage instances.
+     *
+     * @return whether this instance connects {@link ExecutionTask}s of different {@link ExecutionStage}s.
+     */
+    public boolean isBetweenStages() {
+        if (this.producer == null || this.consumers.isEmpty()) {
+            return false;
+        }
+        final ExecutionStage producerStage = this.producer.getStage();
+        if (producerStage == null) {
+            return false;
+        }
+        for (ExecutionTask consumer : this.consumers) {
+            if (consumer.getStage() != null && !producerStage.equals(consumer.getStage())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * We use this flag to indicate that we cannot re-optimize starting from this instance for various reasons.
+     *
+     * @return whether halting execution at this instance is prohibited
+     */
+    public boolean isBreakingProhibited() {
+        return this.isBreakingProhibited;
+    }
+
+    /**
+     * We use this flag to indicate that we cannot re-optimize starting from this instance for various reasons.
+     *
+     * @param breakingProhibited whether halting execution at this instance is prohibited
+     */
+    public void setBreakingProhibited(boolean breakingProhibited) {
+        this.isBreakingProhibited = breakingProhibited;
+    }
+
+    /**
+     * This flag indicates whether the {@link #producer} and the {@link #consumers} of this instance should never be
+     * executed in the same {@link ExecutionStage} instance.
+     *
+     * @return the flag value
+     */
+    public boolean isStageExecutionBarrier() {
+        return this.isStageExecutionBarrier;
+    }
+
+    /**
+     * This flag indicates whether the {@link #producer} and the {@link #consumers} of this instance should never be
+     * executed in the same {@link ExecutionStage} instance.
+     *
+     * @param stageExecutionBarrier the new flag value
+     */
+    public void setStageExecutionBarrier(boolean stageExecutionBarrier) {
+        this.isStageExecutionBarrier = stageExecutionBarrier;
     }
 }

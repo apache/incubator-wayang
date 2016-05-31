@@ -148,7 +148,7 @@ public interface Operator {
         final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputIndex);
         final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputIndex);
         if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
-            throw new IllegalArgumentException("Cannot connect slots: mismatching types");
+            throw new IllegalArgumentException(String.format("Cannot connect %s slot to %s slot.", outputSlot.getType(), inputSlot.getType()));
         }
         outputSlot.connectTo(inputSlot);
     }
@@ -557,4 +557,16 @@ public interface Operator {
      */
     <T> Set<InputSlot<T>> collectMappedInputSlots(InputSlot<T> input);
 
+    /**
+     * Provides an instance's name.
+     * @return the name of this instance or {@code null} if none
+     */
+    String getName();
+
+    /**
+     * Provide a name for this instance.
+     * @param name the name
+     */
+    void setName(String name);
 }
+

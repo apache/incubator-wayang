@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.api.configuration;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Configuration;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,8 +13,43 @@ public class MapBasedKeyValueProvider<Key, Value> extends KeyValueProvider<Key, 
 
     private final Map<Key, Value> storedValues = new HashMap<>();
 
+    private final boolean isCaching;
+
+    /**
+     * Creates a new caching instance.
+     */
     public MapBasedKeyValueProvider(KeyValueProvider<Key, Value> parent) {
+        this(parent, true);
+    }
+
+
+    /**
+     * Creates a new instance.
+     *
+     * @param isCaching if, when a value is provided by the {@code parent}, that value should be cached in the new instance
+     */
+    public MapBasedKeyValueProvider(KeyValueProvider<Key, Value> parent, boolean isCaching) {
         super(parent);
+        this.isCaching = isCaching;
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param isCaching if, when a value is provided by the {@code parent}, that value should be cached in the new instance
+     */
+    public MapBasedKeyValueProvider(Configuration configuration, boolean isCaching) {
+        super(null, configuration);
+        this.isCaching = isCaching;
+    }
+
+    @Override
+    public Value provideFor(Key key) {
+        final Value value = super.provideFor(key);
+        if (this.isCaching && value != null) {
+            this.storedValues.putIfAbsent(key, value);
+        }
+        return value;
     }
 
     @Override

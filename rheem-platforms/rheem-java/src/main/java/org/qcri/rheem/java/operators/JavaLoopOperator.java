@@ -1,16 +1,24 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.LoopOperator;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.Collection;
+import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Java implementation of the {@link LoopOperator}.
@@ -34,14 +42,14 @@ public class JavaLoopOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public void open(ChannelExecutor[] inputs, FunctionCompiler compiler) {
+    public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
         final Predicate<Collection<ConvergenceType>> udf = compiler.compile(this.criterionDescriptor);
         JavaExecutor.openFunction(this, udf, inputs);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelExecutor[] inputs, ChannelExecutor[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -49,22 +57,22 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         boolean endloop = false;
 
         final Collection<ConvergenceType> convergenceCollection;
-        final ChannelExecutor input;
+        final JavaChannelInstance input;
         switch (this.getState()) {
             case NOT_STARTED:
                 assert inputs[INITIAL_INPUT_INDEX] != null;
                 assert inputs[INITIAL_CONVERGENCE_INPUT_INDEX] != null;
 
-                input = inputs[INITIAL_INPUT_INDEX];
-                convergenceCollection = getAsCollection(inputs[INITIAL_CONVERGENCE_INPUT_INDEX]);
+                input = (JavaChannelInstance) inputs[INITIAL_INPUT_INDEX];
+                convergenceCollection = ((CollectionChannel.Instance) inputs[INITIAL_CONVERGENCE_INPUT_INDEX]).provideCollection();
                 break;
             case RUNNING:
                 assert inputs[ITERATION_INPUT_INDEX] != null;
                 assert inputs[ITERATION_CONVERGENCE_INPUT_INDEX] != null;
 
-                convergenceCollection = getAsCollection(inputs[ITERATION_CONVERGENCE_INPUT_INDEX]);
+                convergenceCollection = ((CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX]).provideCollection();
                 endloop = stoppingCondition.test(convergenceCollection);
-                input = inputs[ITERATION_INPUT_INDEX];
+                input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -73,41 +81,69 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            forward(input, outputs[FINAL_OUTPUT_INDEX]);
+            forward(input, (JavaChannelInstance) outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            forward(input, outputs[ITERATION_OUTPUT_INDEX]);
-            // We do not use forward(...) because we might not be able to consume the input ChannelExecutor twice.
-            outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX].acceptCollection(convergenceCollection);
+            forward(input, (JavaChannelInstance) outputs[ITERATION_OUTPUT_INDEX]);
+            // We do not use forward(...) because we might not be able to consume the input JavaChannelInstance twice.
+            ((CollectionChannel.Instance) outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]).accept(convergenceCollection);
             this.setState(State.RUNNING);
         }
     }
 
-    /**
-     * Provides the content of the {@code channelExecutor} as a {@link Collection}.
-     */
-    private static <T> Collection<T> getAsCollection(ChannelExecutor channelExecutor) {
-        if (channelExecutor.canProvideCollection()) {
-            return channelExecutor.provideCollection();
-        } else {
-            return channelExecutor.<T>provideStream().collect(Collectors.toList());
-        }
+
+    private void forward(JavaChannelInstance input, JavaChannelInstance output) {
+        ((StreamChannel.Instance) output).accept(input.provideStream());
     }
 
-    private static void forward(ChannelExecutor source, ChannelExecutor target) {
-        if (source.canProvideCollection()) {
-            target.acceptCollection(source.provideCollection());
-        } else {
-            target.acceptStream(source.provideStream());
-        }
+
+    @Override
+    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+        // NB: Not actually measured.
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(4, 3, .8d, CardinalityEstimate.EMPTY_ESTIMATE,
+                        (inputCards, outputCards) -> 500 * inputCards[ITERATION_CONVERGENCE_INPUT_INDEX] + 810000),
+                new DefaultLoadEstimator(4, 3, 0, CardinalityEstimate.EMPTY_ESTIMATE, (inputCards, outputCards) -> 0)
+        );
+        return Optional.of(mainEstimator);
     }
 
     @Override
     protected ExecutionOperator createCopy() {
         return new JavaLoopOperator<>(this.getInputType(), this.getConvergenceType(),
                 this.getCriterionDescriptor().getJavaImplementation());
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        switch (index) {
+            case INITIAL_INPUT_INDEX:
+            case ITERATION_INPUT_INDEX:
+                return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
+            case INITIAL_CONVERGENCE_INPUT_INDEX:
+            case ITERATION_CONVERGENCE_INPUT_INDEX:
+                return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+            default:
+                throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
+        }
+    }
+
+    @Override
+    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
+        switch (index) {
+            case ITERATION_OUTPUT_INDEX:
+            case FINAL_OUTPUT_INDEX:
+                return Collections.singletonList(StreamChannel.DESCRIPTOR);
+            case INITIAL_CONVERGENCE_INPUT_INDEX:
+            case ITERATION_CONVERGENCE_INPUT_INDEX:
+                return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+            default:
+                throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
+        }        // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
     }
 }

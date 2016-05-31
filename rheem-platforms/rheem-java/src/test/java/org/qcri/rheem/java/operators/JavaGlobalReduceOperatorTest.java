@@ -6,8 +6,7 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
-import org.qcri.rheem.java.channels.ChannelExecutor;
-import org.qcri.rheem.java.channels.TestChannelExecutor;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
@@ -18,7 +17,7 @@ import java.util.stream.Stream;
 /**
  * Test suite for {@link JavaGlobalReduceOperator}.
  */
-public class JavaGlobalReduceOperatorTest {
+public class JavaGlobalReduceOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
     public void testExecution() {
@@ -36,9 +35,9 @@ public class JavaGlobalReduceOperatorTest {
                 );
 
         // Execute.
-        ChannelExecutor[] inputs = new ChannelExecutor[]{new TestChannelExecutor(inputStream)};
-        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
-        globalReduce.evaluate(inputs, outputs, new FunctionCompiler());
+        JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
+        JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
+        globalReduce.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());
@@ -63,9 +62,9 @@ public class JavaGlobalReduceOperatorTest {
                 );
 
         // Execute the reduce operator.
-        ChannelExecutor[] inputs = new ChannelExecutor[]{new TestChannelExecutor(inputStream)};
-        ChannelExecutor[] outputs = new ChannelExecutor[]{new TestChannelExecutor()};
-        globalReduce.evaluate(inputs, outputs, new FunctionCompiler());
+        JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
+        JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
+        globalReduce.evaluate(inputs, outputs, new FunctionCompiler(configuration));
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());
