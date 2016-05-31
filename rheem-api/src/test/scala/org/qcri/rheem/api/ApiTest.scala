@@ -1,6 +1,8 @@
 package org.qcri.rheem.api
 
 import org.junit.{Assert, Test}
+import org.qcri.rheem.core.function.ExecutionContext
+import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
 import org.qcri.rheem.java.JavaPlatform
 import org.qcri.rheem.spark.platform.SparkPlatform
 
@@ -93,6 +95,42 @@ class ApiTest {
 
     // initial: 1,2 -> 1st: 2,3 -> 2nd: 6,7 => 3rd: 42,43
     val expectedValues = Set(42, 43)
+    Assert.assertEquals(expectedValues, values)
+  }
+
+  @Test
+  def testBroadcast() = {
+    // Set up RheemContext.
+    // Set up RheemContext.
+    Rheem.rheemContext.register(JavaPlatform.getInstance)
+    Rheem.rheemContext.register(SparkPlatform.getInstance)
+
+    // Generate some test data.
+    val inputStrings = Array("Hello", "World", "Hi", "Mars")
+    val selectors = Array('o', 'l')
+
+    val builder = Rheem.buildNewPlan
+    val selectorsDataSet = builder.readCollection(selectors)
+
+    // Build and execute a word count RheemPlan.
+    val values = builder
+      .readCollection(inputStrings)
+      .filterJava(new ExtendedSerializablePredicate[String] {
+
+        var selectors: Iterable[Char] = _
+
+        override def open(ctx: ExecutionContext): Unit = {
+          import scala.collection.JavaConversions._
+          selectors = collectionAsScalaIterable(ctx.getBroadcast[Char]("selectors"))
+        }
+
+        override def test(t: String): Boolean = selectors.forall(selector => t.contains(selector))
+
+      })
+      .withBroadcast(selectorsDataSet, "selectors")
+      .collect().toSet
+
+    val expectedValues = Set("Hello", "World")
     Assert.assertEquals(expectedValues, values)
   }
 

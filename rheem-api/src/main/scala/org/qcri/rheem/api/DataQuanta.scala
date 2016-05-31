@@ -308,6 +308,37 @@ class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implic
   }
 
   /**
+    * Use a broadcast in the [[Operator]] that creates this instance.
+    *
+    * @param sender        provides the broadcast data quanta
+    * @param broadcastName the name with that the broadcast will be registered
+    */
+  def withBroadcast(sender: DataQuanta[_], broadcastName: String) = {
+    sender.broadcast(this, broadcastName)
+    this
+  }
+
+  /**
+    * Broadcasts the data quanta in this instance to a further instance.
+    *
+    * @param receiver      the instance that receives the broadcast
+    * @param broadcastName the name with that the broadcast will be registered
+    */
+  private def broadcast(receiver: DataQuanta[_], broadcastName: String) =
+    receiver.registerBroadcast(this.operator, this.outputIndex, broadcastName)
+
+  /**
+    * Register a further instance as broadcast.
+    *
+    * @param sender        provides the broadcast data quanta
+    * @param outputIndex   identifies the output index of the sender
+    * @param broadcastName the name with that the broadcast will be registered
+    */
+  private def registerBroadcast(sender: Operator, outputIndex: Int, broadcastName: String) =
+    sender.broadcastTo(outputIndex, this.operator, broadcastName)
+
+
+  /**
     * Perform a local action on each data quantum in this instance. Triggers execution.
     *
     * @param f the action to perform
