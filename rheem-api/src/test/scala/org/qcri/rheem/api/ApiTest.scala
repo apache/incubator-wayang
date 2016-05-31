@@ -2,9 +2,10 @@ package org.qcri.rheem.api
 
 import org.junit.{Assert, Test}
 import org.qcri.rheem.core.api.RheemContext
-import org.qcri.rheem.core.function.ExecutionContext
 import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
+import org.qcri.rheem.core.function.{ExecutionContext, TransformationDescriptor}
 import org.qcri.rheem.java.JavaPlatform
+import org.qcri.rheem.java.operators.JavaMapOperator
 import org.qcri.rheem.spark.platform.SparkPlatform
 
 /**
@@ -26,6 +27,66 @@ class ApiTest {
     val outputValues = rheem
       .readCollection(inputValues).withName("Load input values")
       .map(_ + 2).withName("Add 2")
+      .collect()
+
+    // Check the outcome.
+    val expectedOutputValues = inputValues.map(_ + 2)
+    Assert.assertArrayEquals(expectedOutputValues, outputValues.toArray)
+  }
+
+  @Test
+  def testCustomOperator(): Unit = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    // Generate some test data.
+    val inputValues = (for (i <- 1 to 10) yield i).toArray
+
+    // Build and execute a Rheem plan.
+    val inputDataSet = rheem.readCollection(inputValues).withName("Load input values")
+
+    // Add the custom operator.
+    val IndexedSeq(addedValues) = rheem.customOperator(new JavaMapOperator(
+      dataSetType[Int],
+      dataSetType[Int],
+      new TransformationDescriptor(
+        toSerializableFunction[Int, Int](_ + 2),
+        basicDataUnitType[Int], basicDataUnitType[Int]
+      )
+    ), inputDataSet)
+    addedValues.withName("Add 2")
+
+    // Collect the result.
+    val outputValues = addedValues.asInstanceOf[DataQuanta[Int]].collect()
+
+    // Check the outcome.
+    val expectedOutputValues = inputValues.map(_ + 2)
+    Assert.assertArrayEquals(expectedOutputValues, outputValues.toArray)
+  }
+
+  @Test
+  def testCustomOperatorShortCut(): Unit = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    // Generate some test data.
+    val inputValues = (for (i <- 1 to 10) yield i).toArray
+
+    // Build and execute a Rheem plan.
+    val outputValues = rheem
+      .readCollection(inputValues).withName("Load input values")
+      .customOperator[Int](new JavaMapOperator(
+        dataSetType[Int],
+        dataSetType[Int],
+        new TransformationDescriptor(
+          toSerializableFunction[Int, Int](_ + 2),
+          basicDataUnitType[Int], basicDataUnitType[Int]
+        )
+      )).withName("Add 2")
       .collect()
 
     // Check the outcome.

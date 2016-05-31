@@ -8,7 +8,7 @@ import org.qcri.rheem.basic.operators._
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
 import org.qcri.rheem.core.function.{FlatMapDescriptor, PredicateDescriptor, ReduceDescriptor, TransformationDescriptor}
-import org.qcri.rheem.core.plan.rheemplan.{InputSlot, Operator, RheemPlan}
+import org.qcri.rheem.core.plan.rheemplan.{InputSlot, Operator, OutputSlot, RheemPlan}
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.core.util.{RheemCollections, Tuple => RheemTuple}
 
@@ -55,7 +55,7 @@ class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implic
     * @param operator   the [[Operator]] to connect to
     * @param inputIndex the input index of the [[Operator]]s [[InputSlot]]
     */
-  protected def connectTo(operator: Operator, inputIndex: Int): Unit =
+  private[api] def connectTo(operator: Operator, inputIndex: Int): Unit =
     this.operator.connectTo(outputIndex, operator, inputIndex)
 
 
@@ -308,6 +308,22 @@ class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implic
   }
 
   /**
+    * Use a custom [[Operator]]. Note that only [[Operator]]s with a single [[InputSlot]] and [[OutputSlot]] are allowed.
+    * Otherwise, use [[PlanBuilder.customOperator()]].
+    *
+    * @param operator the custom [[Operator]]
+    * @tparam T the output type of the `operator`
+    * @return a new instance representing the output of the custom [[Operator]]
+    */
+  def customOperator[T](operator: Operator): DataQuanta[T] = {
+    Validate.isTrue(
+      operator.getNumInputs == 1 && operator.getNumOutputs == 1,
+      "customOperator() accepts only operators with a single input and output. Use PlanBuilder.customOperator(...)."
+    )
+    planBuilder.customOperator(operator, this)(0).asInstanceOf[DataQuanta[T]]
+  }
+
+  /**
     * Use a broadcast in the [[Operator]] that creates this instance.
     *
     * @param sender        provides the broadcast data quanta
@@ -402,5 +418,12 @@ class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implic
     this.operator.setName(name)
     this
   }
+
+}
+
+object DataQuanta {
+
+  def create[T](output: OutputSlot[T])(implicit planBuilder: PlanBuilder): DataQuanta[_] =
+    new DataQuanta(output.getOwner, output.getIndex)(ClassTag(output.getType.getDataUnitType.getTypeClass), planBuilder)
 
 }
