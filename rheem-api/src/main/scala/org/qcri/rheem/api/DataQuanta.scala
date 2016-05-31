@@ -9,7 +9,7 @@ import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperat
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
 import org.qcri.rheem.core.function.{FlatMapDescriptor, PredicateDescriptor, ReduceDescriptor, TransformationDescriptor}
 import org.qcri.rheem.core.plan.rheemplan.{InputSlot, Operator, RheemPlan}
-import org.qcri.rheem.core.util.{Tuple => RheemTuple}
+import org.qcri.rheem.core.util.{RheemCollections, Tuple => RheemTuple}
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
@@ -262,6 +262,49 @@ class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implic
 
     // Return the iteration result.
     new DataQuanta[Out](doWhileOperator, DoWhileOperator.FINAL_OUTPUT_INDEX)
+  }
+
+  /**
+    * Feeds this instance into a for-loop (guarded by a [[LoopOperator]].
+    *
+    * @param n           number of iterations
+    * @param bodyBuilder creates the loop body
+    * @return a new instance representing the final output of the [[LoopOperator]]
+    */
+  def repeat(n: Int, bodyBuilder: DataQuanta[Out] => DataQuanta[Out]) =
+    repeatJava(n,
+      new JavaFunction[DataQuanta[Out], DataQuanta[Out]] {
+        override def apply(t: DataQuanta[Out]) = bodyBuilder(t)
+      }
+    )
+
+  /**
+    * Feeds this instance into a for-loop (guarded by a [[LoopOperator]].
+    *
+    * @param n           number of iterations
+    * @param bodyBuilder creates the loop body
+    * @return a new instance representing the final output of the [[LoopOperator]]
+    */
+  def repeatJava(n: Int, bodyBuilder: JavaFunction[DataQuanta[Out], DataQuanta[Out]]) = {
+    // Create the DoWhileOperator.
+    val loopOperator = new LoopOperator(
+      dataSetType[Out], dataSetType[Int], new PredicateDescriptor(
+        toSerializablePredicate[JavaCollection[Int]](i => RheemCollections.getSingle(i) >= n), basicDataUnitType[JavaCollection[Int]])
+    )
+    this.connectTo(loopOperator, LoopOperator.INITIAL_INPUT_INDEX)
+    new DataQuanta(CollectionSource.singleton[Int](0, classOf[Int])).connectTo(loopOperator, LoopOperator.INITIAL_CONVERGENCE_INPUT_INDEX)
+
+    // Create and wire the main loop body.
+    val loopDataQuanta = new DataQuanta[Out](loopOperator, LoopOperator.ITERATION_OUTPUT_INDEX)
+    val iterationResult = bodyBuilder.apply(loopDataQuanta)
+    iterationResult.connectTo(loopOperator, LoopOperator.ITERATION_INPUT_INDEX)
+
+    // Create and wire the convergence loop body.
+    val convergenceResult = new DataQuanta[Int](loopOperator, LoopOperator.ITERATION_CONVERGENCE_OUTPUT_INDEX).map(_ + 1)
+    convergenceResult.connectTo(loopOperator, LoopOperator.ITERATION_CONVERGENCE_INPUT_INDEX)
+
+    // Return the iteration result.
+    new DataQuanta[Out](loopOperator, LoopOperator.FINAL_OUTPUT_INDEX)
   }
 
   /**

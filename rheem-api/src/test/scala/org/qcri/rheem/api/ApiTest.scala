@@ -75,4 +75,25 @@ class ApiTest {
     Assert.assertEquals(expectedValues, values)
   }
 
+  @Test
+  def testRepeat(): Unit = {
+    // Set up RheemContext.
+    Rheem.rheemContext.register(JavaPlatform.getInstance)
+    Rheem.rheemContext.register(SparkPlatform.getInstance)
+
+    // Generate some test data.
+    val inputValues = Array(1, 2)
+
+    // Build and execute a word count RheemPlan.
+
+    val values = Rheem.buildNewPlan
+      .readCollection(inputValues)
+      .repeat(3, _.reduce(_ * _).flatMap(v => Seq(v, v + 1)))
+      .collect().toSet
+
+    // initial: 1,2 -> 1st: 2,3 -> 2nd: 6,7 => 3rd: 42,43
+    val expectedValues = Set(42, 43)
+    Assert.assertEquals(expectedValues, values)
+  }
+
 }
