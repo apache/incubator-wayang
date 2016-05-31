@@ -312,6 +312,7 @@ class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implic
     *
     * @param sender        provides the broadcast data quanta
     * @param broadcastName the name with that the broadcast will be registered
+    * @return this instance
     */
   def withBroadcast(sender: DataQuanta[_], broadcastName: String) = {
     sender.broadcast(this, broadcastName)
@@ -352,6 +353,7 @@ class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implic
     */
   def foreachJava(f: Consumer[Out]): Unit = {
     val sink = new LocalCallbackSink(f, dataSetType[Out])
+    sink.setName("foreach()")
     this.connectTo(sink, 0)
     this.planBuilder.sinks += sink
     this.planBuilder.buildAndExecute()
@@ -367,6 +369,7 @@ class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implic
     // Set up the sink.
     val collector = new java.util.LinkedList[Out]()
     val sink = LocalCallbackSink.createCollectingSink(collector, dataSetType[Out])
+    sink.setName("collect()")
     this.connectTo(sink, 0)
 
     // Do the execution.
@@ -376,6 +379,17 @@ class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implic
 
     // Return the collected values.
     collector
+  }
+
+  /**
+    * Set a name for the [[Operator]] that creates this instance.
+    *
+    * @param name the name
+    * @return this instance
+    */
+  def withName(name: String) = {
+    this.operator.setName(name)
+    this
   }
 
 }

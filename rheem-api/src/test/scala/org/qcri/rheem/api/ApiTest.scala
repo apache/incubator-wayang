@@ -21,8 +21,8 @@ class ApiTest {
 
     // Build and execute a Rheem plan.
     val outputValues = Rheem.buildNewPlan
-      .readCollection(inputValues)
-      .map(_ + 2)
+      .readCollection(inputValues).withName("Load input values")
+      .map(_ + 2).withName("Add 2")
       .collect()
 
     // Check the outcome.
@@ -41,11 +41,11 @@ class ApiTest {
 
     // Build and execute a word count RheemPlan.
     val wordCounts = Rheem.buildNewPlan
-      .readCollection(inputValues)
-      .flatMap(_.split("\\s+"))
-      .map(_.replaceAll("\\W+", "").toLowerCase)
-      .map((_, 1))
-      .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2))
+      .readCollection(inputValues).withName("Load input values")
+      .flatMap(_.split("\\s+")).withName("Split words")
+      .map(_.replaceAll("\\W+", "").toLowerCase).withName("To lowercase")
+      .map((_, 1)).withName("Attach counter")
+      .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)).withName("Sum counters")
       .collect().toSet
 
     val expectedWordCounts = Set(("big", 3), ("is", 2), ("data", 3))
@@ -65,12 +65,12 @@ class ApiTest {
     // Build and execute a word count RheemPlan.
 
     val values = Rheem.buildNewPlan
-      .readCollection(inputValues)
+      .readCollection(inputValues).withName("Load input values")
       .doWhile[Int](vals => vals.max > 100, {
       start =>
-        val sum = start.reduce(_ + _)
-        (start.union(sum), sum.map(x => x))
-    })
+        val sum = start.reduce(_ + _).withName("Sum")
+        (start.union(sum).withName("Old+new"), sum.map(x => x).withName("Identity (hotfix)"))
+    }).withName("While <= 100")
       .collect().toSet
 
     val expectedValues = Set(1, 2, 3, 6, 12, 24, 48, 96, 192)
@@ -89,8 +89,11 @@ class ApiTest {
     // Build and execute a word count RheemPlan.
 
     val values = Rheem.buildNewPlan
-      .readCollection(inputValues)
-      .repeat(3, _.reduce(_ * _).flatMap(v => Seq(v, v + 1)))
+      .readCollection(inputValues).withName("Load input values")
+      .repeat(3,
+        _.reduce(_ * _).withName("Multiply")
+          .flatMap(v => Seq(v, v + 1)).withName("Duplicate")
+      ).withName("Repeat 3x")
       .collect().toSet
 
     // initial: 1,2 -> 1st: 2,3 -> 2nd: 6,7 => 3rd: 42,43
@@ -101,7 +104,6 @@ class ApiTest {
   @Test
   def testBroadcast() = {
     // Set up RheemContext.
-    // Set up RheemContext.
     Rheem.rheemContext.register(JavaPlatform.getInstance)
     Rheem.rheemContext.register(SparkPlatform.getInstance)
 
@@ -110,11 +112,11 @@ class ApiTest {
     val selectors = Array('o', 'l')
 
     val builder = Rheem.buildNewPlan
-    val selectorsDataSet = builder.readCollection(selectors)
+    val selectorsDataSet = builder.readCollection(selectors).withName("Load selectors")
 
     // Build and execute a word count RheemPlan.
     val values = builder
-      .readCollection(inputStrings)
+      .readCollection(inputStrings).withName("Load input values")
       .filterJava(new ExtendedSerializablePredicate[String] {
 
         var selectors: Iterable[Char] = _
@@ -126,7 +128,7 @@ class ApiTest {
 
         override def test(t: String): Boolean = selectors.forall(selector => t.contains(selector))
 
-      })
+      }).withName("Filter words")
       .withBroadcast(selectorsDataSet, "selectors")
       .collect().toSet
 
