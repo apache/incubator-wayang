@@ -1,7 +1,8 @@
 package org.qcri.rheem.tests
 
-import org.junit.{Assert, Before, Test}
-import org.qcri.rheem.api.Rheem
+import org.junit.{Assert, Test}
+import org.qcri.rheem.api._
+import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.graphchi.GraphChiPlatform
 import org.qcri.rheem.java.JavaPlatform
 import org.qcri.rheem.postgres.PostgresPlatform
@@ -12,16 +13,14 @@ import org.qcri.rheem.spark.platform.SparkPlatform
   */
 class ScalaTest {
 
-  @Before
-  def setUp = {
-    Rheem.rheemContext.register(JavaPlatform.getInstance)
-    Rheem.rheemContext.register(SparkPlatform.getInstance)
-    Rheem.rheemContext.register(GraphChiPlatform.getInstance)
-    Rheem.rheemContext.register(PostgresPlatform.getInstance)
-  }
-
   @Test
   def testWordCount = {
+    val rheem = new RheemContext
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+    rheem.register(GraphChiPlatform.getInstance)
+    rheem.register(PostgresPlatform.getInstance)
+
     // Wikipedia abstract of Rheem, California ;)
     val text = Seq(
       "Rheem,[1] also known as Rheem Valley[1] and Rheem Center,[2] is an unincorporated community in Contra ",
@@ -32,8 +31,7 @@ class ScalaTest {
     )
 
 
-    val builder = Rheem.buildNewPlan
-    val wordCounts = builder
+    val wordCounts = rheem
       .readCollection(text).withName("Load input values")
       .map(_.replaceAll("[^\\w\\s]+", " ").toLowerCase).withName("Scrub")
       .flatMap(_.split("\\s+")).withName("Split")

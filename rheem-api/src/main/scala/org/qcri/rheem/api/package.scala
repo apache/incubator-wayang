@@ -3,6 +3,7 @@ package org.qcri.rheem
 import _root_.java.lang.{Class => JavaClass, Iterable => JavaIterable}
 import _root_.java.util.function.Consumer
 
+import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
 import org.qcri.rheem.core.plan.rheemplan.Operator
@@ -56,6 +57,8 @@ package object api {
       def accept(t: T) = scalaFunc.apply(t)
     }
   }
+
+  implicit def createPlanBuilder(rheemContext: RheemContext): PlanBuilder = new PlanBuilder(rheemContext)
 
   implicit private[api] def wrap[Out: ClassTag](op: Operator)(implicit planBuilder: PlanBuilder): DataQuanta[Out] =
     new DataQuanta[Out](op)

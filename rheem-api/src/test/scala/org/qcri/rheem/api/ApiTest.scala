@@ -1,6 +1,7 @@
 package org.qcri.rheem.api
 
 import org.junit.{Assert, Test}
+import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.function.ExecutionContext
 import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
 import org.qcri.rheem.java.JavaPlatform
@@ -13,14 +14,16 @@ class ApiTest {
 
   @Test
   def testReadMapCollect(): Unit = {
-    // Set up Java platform.
-    Rheem.rheemContext.register(JavaPlatform.getInstance)
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
 
     // Generate some test data.
     val inputValues = (for (i <- 1 to 10) yield i).toArray
 
     // Build and execute a Rheem plan.
-    val outputValues = Rheem.buildNewPlan
+    val outputValues = rheem
       .readCollection(inputValues).withName("Load input values")
       .map(_ + 2).withName("Add 2")
       .collect()
@@ -33,14 +36,15 @@ class ApiTest {
   @Test
   def testWordCount(): Unit = {
     // Set up RheemContext.
-    Rheem.rheemContext.register(JavaPlatform.getInstance)
-    Rheem.rheemContext.register(SparkPlatform.getInstance)
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
 
     // Generate some test data.
     val inputValues = Array("Big data is big.", "Is data big data?")
 
     // Build and execute a word count RheemPlan.
-    val wordCounts = Rheem.buildNewPlan
+    val wordCounts = rheem
       .readCollection(inputValues).withName("Load input values")
       .flatMap(_.split("\\s+")).withName("Split words")
       .map(_.replaceAll("\\W+", "").toLowerCase).withName("To lowercase")
@@ -56,15 +60,16 @@ class ApiTest {
   @Test
   def testDoWhile(): Unit = {
     // Set up RheemContext.
-    Rheem.rheemContext.register(JavaPlatform.getInstance)
-    Rheem.rheemContext.register(SparkPlatform.getInstance)
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
 
     // Generate some test data.
     val inputValues = Array(1, 2)
 
     // Build and execute a word count RheemPlan.
 
-    val values = Rheem.buildNewPlan
+    val values = rheem
       .readCollection(inputValues).withName("Load input values")
       .doWhile[Int](vals => vals.max > 100, {
       start =>
@@ -80,15 +85,16 @@ class ApiTest {
   @Test
   def testRepeat(): Unit = {
     // Set up RheemContext.
-    Rheem.rheemContext.register(JavaPlatform.getInstance)
-    Rheem.rheemContext.register(SparkPlatform.getInstance)
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
 
     // Generate some test data.
     val inputValues = Array(1, 2)
 
     // Build and execute a word count RheemPlan.
 
-    val values = Rheem.buildNewPlan
+    val values = rheem
       .readCollection(inputValues).withName("Load input values")
       .repeat(3,
         _.reduce(_ * _).withName("Multiply")
@@ -104,18 +110,18 @@ class ApiTest {
   @Test
   def testBroadcast() = {
     // Set up RheemContext.
-    Rheem.rheemContext.register(JavaPlatform.getInstance)
-    Rheem.rheemContext.register(SparkPlatform.getInstance)
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
 
     // Generate some test data.
     val inputStrings = Array("Hello", "World", "Hi", "Mars")
     val selectors = Array('o', 'l')
 
-    val builder = Rheem.buildNewPlan
-    val selectorsDataSet = builder.readCollection(selectors).withName("Load selectors")
+    val selectorsDataSet = rheem.readCollection(selectors).withName("Load selectors")
 
     // Build and execute a word count RheemPlan.
-    val values = builder
+    val values = rheem
       .readCollection(inputStrings).withName("Load input values")
       .filterJava(new ExtendedSerializablePredicate[String] {
 
