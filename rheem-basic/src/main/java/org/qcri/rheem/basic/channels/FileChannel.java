@@ -8,6 +8,7 @@ import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.util.Actions;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 
@@ -176,7 +177,7 @@ public class FileChannel extends Channel {
 
         @Override
         public void doDispose() throws RheemException {
-            this.doSafe(() -> {
+            Actions.doSafe(() -> {
                 final String path = this.getSinglePath();
                 final Optional<FileSystem> fileSystemOptional = FileSystems.getFileSystem(path);
                 fileSystemOptional.ifPresent(fs -> {
