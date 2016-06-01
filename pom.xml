@@ -8,7 +8,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>2.10.4</scala.version>
+        <scala.version>2.10.5</scala.version>
         <scala.compat.version>2.10</scala.compat.version>
         <spark.version>1.6.0</spark.version>
         <!-- This Hadoop version is enforced by Spark in the version that is deployed in the Maven repository via code signing. -->
@@ -53,6 +53,37 @@
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>2.6</version>
                 </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>2.19.1</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <plugin>
+                    <groupId>net.alchim31.maven</groupId>
+                    <artifactId>scala-maven-plugin</artifactId>
+                    <version>3.2.2</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>compile</goal>
+                                <goal>testCompile</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <scalaVersion>${scala.version}</scalaVersion>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -84,7 +115,7 @@
         <dependencies>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-core_2.10</artifactId>
+                <artifactId>spark-core_${scala.compat.version}</artifactId>
                 <version>${spark.version}</version>
                 <exclusions>
                     <exclusion>
@@ -96,7 +127,7 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-graphx_2.10</artifactId>
+                <artifactId>spark-graphx_${scala.compat.version}</artifactId>
                 <version>${spark.version}</version>
                 <exclusions>
                     <exclusion>
@@ -265,7 +296,7 @@
             <!-- GraphChi: Note might be necessary to build it manually. -->
             <dependency>
                 <groupId>org.graphchi</groupId>
-                <artifactId>graphchi-java_2.10</artifactId>
+                <artifactId>graphchi-java_${scala.compat.version}</artifactId>
                 <version>${graphchi.version}</version>
                 <scope>${external.platforms.scope}</scope>
                 <exclusions>
