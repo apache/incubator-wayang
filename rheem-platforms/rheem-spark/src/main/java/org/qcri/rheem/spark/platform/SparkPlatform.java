@@ -29,7 +29,7 @@ public class SparkPlatform extends Platform {
 
     private static final String PLATFORM_NAME = "Apache Spark";
 
-    private static final String DEFAULT_CONFIG_FILE = "/rheem-spark-defaults.properties";
+    private static final String DEFAULT_CONFIG_FILE = "rheem-spark-defaults.properties";
 
     private final Collection<Mapping> mappings = new LinkedList<>();
 
@@ -137,7 +137,7 @@ public class SparkPlatform extends Platform {
     }
 
     private void initializeConfiguration() {
-        Configuration.getDefaultConfiguration().load(this.getClass().getResourceAsStream(DEFAULT_CONFIG_FILE));
+        Configuration.getDefaultConfiguration().load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
     }
 
     private void initializeMappings() {
