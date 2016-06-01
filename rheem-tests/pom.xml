@@ -50,9 +50,11 @@
         <!-- Spark is a provided dependency and thus not transitively injected via rheem-spark. -->
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.10</artifactId>
+            <artifactId>spark-core_${scala.compat.version}</artifactId>
         </dependency>
     </dependencies>
+
+
     <build>
         <plugins>
             <plugin>
@@ -72,15 +74,6 @@
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
-                <version>3.2.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
 
             <!--<plugin>-->
