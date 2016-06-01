@@ -39,12 +39,16 @@ public class Configuration {
     private static final Configuration defaultConfiguration = new Configuration((Configuration) null);
 
     static {
-        bootstrapCardinalityEstimationProvider(defaultConfiguration);
-        bootstrapSelectivityProviders(defaultConfiguration);
-        bootstrapLoadAndTimeEstimatorProviders(defaultConfiguration);
-        bootstrapPruningProviders(defaultConfiguration);
-        bootstrapProperties(defaultConfiguration);
-        bootstrapPlatforms(defaultConfiguration);
+        try {
+            bootstrapCardinalityEstimationProvider(defaultConfiguration);
+            bootstrapSelectivityProviders(defaultConfiguration);
+            bootstrapLoadAndTimeEstimatorProviders(defaultConfiguration);
+            bootstrapPruningProviders(defaultConfiguration);
+            bootstrapProperties(defaultConfiguration);
+            bootstrapPlatforms(defaultConfiguration);
+        } catch (Exception e) {
+            logger.error("Could not bootstrap the default configuration properly.", e);
+        }
     }
 
     private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
