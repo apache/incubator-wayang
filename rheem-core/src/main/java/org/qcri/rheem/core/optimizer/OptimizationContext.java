@@ -409,6 +409,11 @@ public class OptimizationContext {
         public void setInputCardinality(int inputIndex, CardinalityEstimate cardinality) {
             this.inputCardinalityMarkers[inputIndex] |= !Objects.equals(this.inputCardinalities[inputIndex], cardinality);
             this.inputCardinalities[inputIndex] = cardinality;
+            if (OptimizationContext.this.logger.isInfoEnabled()) {
+                OptimizationContext.this.logger.info(
+                        "Setting cardinality of {} to {}.", this.operator.getInput(inputIndex), cardinality
+                );
+            }
         }
 
         /**
@@ -418,6 +423,11 @@ public class OptimizationContext {
         public void setOutputCardinality(int outputIndex, CardinalityEstimate cardinality) {
             this.outputCardinalityMarkers[outputIndex] |= !Objects.equals(this.outputCardinalities[outputIndex], cardinality);
             this.outputCardinalities[outputIndex] = cardinality;
+            if (OptimizationContext.this.logger.isInfoEnabled()) {
+                OptimizationContext.this.logger.info(
+                        "Setting cardinality of {} to {}.", this.operator.getOutput(outputIndex), cardinality
+                );
+            }
         }
 
         /**
@@ -476,6 +486,11 @@ public class OptimizationContext {
             final Platform platform = executionOperator.getPlatform();
             final LoadProfileToTimeConverter timeConverter = configuration.getLoadProfileToTimeConverterProvider().provideFor(platform);
             this.timeEstimate = TimeEstimate.MINIMUM.plus(timeConverter.convert(this.loadProfile));
+            if (OptimizationContext.this.logger.isInfoEnabled()) {
+                OptimizationContext.this.logger.info(
+                        "Setting time estimate of {} to {}.", this.operator, this.timeEstimate
+                );
+            }
         }
 
         public void increaseBy(OperatorContext that) {

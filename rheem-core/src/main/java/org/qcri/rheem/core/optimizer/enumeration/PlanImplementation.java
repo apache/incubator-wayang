@@ -60,7 +60,7 @@ public class PlanImplementation {
     /**
      * The {@link TimeEstimate} to execute this instance.
      */
-    private TimeEstimate timeEstimate;
+    private TimeEstimate timeEstimateCache;
 
     /**
      * Create a new instance.
@@ -89,7 +89,6 @@ public class PlanImplementation {
         this.planEnumeration = original.planEnumeration;
         this.junctions = new HashMap<>(original.junctions);
         this.operators = new Canonicalizer<>(original.getOperators());
-        this.timeEstimate = original.timeEstimate;
         this.settledAlternatives.putAll(original.settledAlternatives);
         this.loopImplementations.putAll(original.loopImplementations);
         this.optimizationContext = original.optimizationContext;
@@ -320,7 +319,6 @@ public class PlanImplementation {
         concatenation.operators.addAll(this.operators);
         concatenation.junctions.putAll(this.junctions);
         concatenation.settledAlternatives.putAll(this.settledAlternatives);
-        concatenation.addToTimeEstimate(this.getTimeEstimate()); // FIXME: Is when concatenating overlapping instances?
 
         // Find the appropriate PlanImplementation for the junction and copy the loop implementations.
         PlanImplementation junctionPlanImplementation;
@@ -337,7 +335,6 @@ public class PlanImplementation {
             );
         }
         junctionPlanImplementation.junctions.put(junction.getSourceOutput(), junction);
-        concatenation.addToTimeEstimate(junction.getTimeEstimate());
 
         for (PlanImplementation targetPlan : targetPlans) {
             // NB: Join semantics at this point weaved in.
@@ -348,7 +345,6 @@ public class PlanImplementation {
             concatenation.loopImplementations.putAll(targetPlan.loopImplementations);
             concatenation.junctions.putAll(targetPlan.junctions);
             concatenation.settledAlternatives.putAll(targetPlan.settledAlternatives);
-            concatenation.addToTimeEstimate(targetPlan.getTimeEstimate());
         }
 
         return concatenation;
@@ -441,7 +437,6 @@ public class PlanImplementation {
         escapedPlanImplementation.settledAlternatives.putAll(this.settledAlternatives);
         assert !escapedPlanImplementation.settledAlternatives.containsKey(alternative.getOperatorAlternative());
         escapedPlanImplementation.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
-        escapedPlanImplementation.addToTimeEstimate(this.getTimeEstimate());
         return escapedPlanImplementation;
     }
 
@@ -522,13 +517,20 @@ public class PlanImplementation {
         return this.settledAlternatives.get(operatorAlternative);
     }
 
-    public void addToTimeEstimate(TimeEstimate delta) {
-        assert delta != null;
-        this.timeEstimate = this.timeEstimate == null ? delta : this.timeEstimate.plus(delta);
-    }
-
     public TimeEstimate getTimeEstimate() {
-        return this.timeEstimate;
+        if (this.timeEstimateCache == null) {
+            final TimeEstimate operatorTimeEstimate = this.operators.stream()
+                    .map(op -> this.optimizationContext.getOperatorContext(op).getTimeEstimate())
+                    .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+            final TimeEstimate junctionTimeEstimate = this.junctions.values().stream()
+                    .map(Junction::getTimeEstimate)
+                    .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+            final TimeEstimate loopTimeEstimate = this.loopImplementations.values().stream()
+                    .map(LoopImplementation::getTimeEstimate)
+                    .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+            this.timeEstimateCache = operatorTimeEstimate.plus(junctionTimeEstimate).plus(loopTimeEstimate);
+        }
+        return this.timeEstimateCache;
     }
 
     public Junction getJunction(OutputSlot<?> output) {
