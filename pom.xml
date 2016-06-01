@@ -267,6 +267,7 @@
                 <groupId>org.graphchi</groupId>
                 <artifactId>graphchi-java_2.10</artifactId>
                 <version>${graphchi.version}</version>
+                <scope>${external.platforms.scope}</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
