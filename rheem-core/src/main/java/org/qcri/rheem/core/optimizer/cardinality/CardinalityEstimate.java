@@ -16,6 +16,10 @@ public class CardinalityEstimate extends ProbabilisticIntervalEstimate {
         super(lowerEstimate, upperEstimate, correctnessProb);
     }
 
+    public CardinalityEstimate(long lowerEstimate, long upperEstimate, double correctnessProb, boolean isOverride) {
+        super(lowerEstimate, upperEstimate, correctnessProb, isOverride);
+    }
+
     public CardinalityEstimate plus(CardinalityEstimate that) {
         return new CardinalityEstimate(
                 addSafe(this.getLowerEstimate(), that.getLowerEstimate()),

@@ -2,7 +2,9 @@ package org.qcri.rheem.tests
 
 import org.junit.{Assert, Ignore, Test}
 import org.qcri.rheem.api._
-import org.qcri.rheem.core.api.RheemContext
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.core.optimizer.cardinality.{CardinalityEstimator, FixedSizeCardinalityEstimator}
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot
 import org.qcri.rheem.graphchi.GraphChiPlatform
 import org.qcri.rheem.java.JavaPlatform
 import org.qcri.rheem.postgres.PostgresPlatform
@@ -13,9 +15,22 @@ import org.qcri.rheem.spark.platform.SparkPlatform
   */
 class ScalaTest {
 
+  /**
+    * Places a [[CardinalityEstimator]] for the given [[OutputSlot]] that always returns the given cardinality.
+    *
+    * @param dataQuanta   whose cardinality should be overridden
+    * @param cardinality  the override cardinality
+    * @param rheemContext provides a [[Configuration]] with will be used for the overriding
+    */
+  def overrideCardinalityEstimate(dataQuanta: DataQuanta[_], cardinality: Long)(implicit rheemContext: RheemContext) = {
+    val cardinalityProvider = rheemContext.getConfiguration.getCardinalityEstimatorProvider
+    cardinalityProvider.set(dataQuanta.output, new FixedSizeCardinalityEstimator(cardinality, true))
+  }
+
+
   @Test
   def testWordCount = {
-    val rheem = new RheemContext
+    implicit val rheem = new RheemContext
     rheem.register(JavaPlatform.getInstance)
     rheem.register(SparkPlatform.getInstance)
     rheem.register(GraphChiPlatform.getInstance)
@@ -31,8 +46,10 @@ class ScalaTest {
     )
 
 
-    val wordCounts = rheem
-      .readCollection(text).withName("Load input values")
+    val textDQ = rheem.readCollection(text).withName("Load input values")
+    overrideCardinalityEstimate(textDQ, 1000000000)
+
+    val wordCounts = textDQ
       .map(_.replaceAll("[^\\w\\s]+", " ").toLowerCase).withName("Scrub")
       .flatMap(_.split("\\s+")).withName("Split")
       .map((_, 1)).withName("Attach counter")
