@@ -181,7 +181,7 @@ public class PlanEnumeration {
                 sb.append("x").append(targetEnumeration.getPlanImplementations().size());
             }
             sb.append(" plan implementations.");
-            logger.info(sb.toString());
+            logger.debug(sb.toString());
         }
 
         // Prepare the result instance from this instance.
@@ -212,7 +212,7 @@ public class PlanEnumeration {
                 this.concatenatePartialPlans(openOutputSlot, existingChannel, targetEnumerations, optimizationContext, result)
         );
 
-        logger.info("Created {} plan implementations.", result.getPlanImplementations().size());
+        logger.debug("Created {} plan implementations.", result.getPlanImplementations().size());
         return result;
     }
 

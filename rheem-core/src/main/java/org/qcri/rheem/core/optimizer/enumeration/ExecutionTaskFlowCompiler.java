@@ -380,7 +380,7 @@ public class ExecutionTaskFlowCompiler
             final OutputSlot<?> output = this.operator.getOutput(outputIndex);
             // TODO: Make generic: There might be multiple OutputSlots for final loop outputs (one for each iteration).
             final Junction junction = this.getJunction(output);
-            LoggerFactory.getLogger(this.getClass()).info("Connecting {} -> {}.", output, junction);
+            LoggerFactory.getLogger(this.getClass()).debug("Connecting {} -> {}.", output, junction);
             assert junction != null : String.format("No junction found for %s.", output);
             this.executionTask.setOutputChannel(outputIndex, junction.getSourceChannel());
 

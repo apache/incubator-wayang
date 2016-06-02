@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.plan.executionplan;
 
 import org.qcri.rheem.core.optimizer.enumeration.ExecutionTaskFlow;
+import org.qcri.rheem.core.optimizer.enumeration.PlanImplementation;
 import org.qcri.rheem.core.optimizer.enumeration.StageAssignmentTraversal;
 import org.qcri.rheem.core.util.Counter;
 import org.slf4j.Logger;
