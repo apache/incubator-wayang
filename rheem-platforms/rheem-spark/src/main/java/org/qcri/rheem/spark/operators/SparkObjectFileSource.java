@@ -69,36 +69,18 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         // NB: Not measured, instead adapted from SparkTextFileSource.
-        final OptionalLong optionalFileSize;
-        if (this.sourcePath == null) {
-            optionalFileSize = OptionalLong.empty();
-        } else {
-            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
-            if (!optionalFileSize.isPresent()) {
-                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
-            }
-        }
+//        final OptionalLong optionalFileSize;
+//        if (this.sourcePath == null) {
+//            optionalFileSize = OptionalLong.empty();
+//        } else {
+//            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
+//            if (!optionalFileSize.isPresent()) {
+//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
+//            }
+//        }
 
-        final NestableLoadProfileEstimator mainEstimator;
-        if (optionalFileSize.isPresent()) {
-            mainEstimator = new NestableLoadProfileEstimator(
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> 700 * outputCards[0] + 5000000000L),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> optionalFileSize.getAsLong()),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> outputCards[0] / 10),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> outputCards[0] * 10 + 5000000),
-                    0.19d,
-                    1000
-            );
-        } else {
-            mainEstimator = new NestableLoadProfileEstimator(
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> 500 * outputCards[0] + 5000000000L),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> 10 * outputCards[0]),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> outputCards[0] / 10),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> outputCards[0] * 10 + 5000000),
-                    0.19d,
-                    1000
-            );
-        }
+        final String specification = configuration.getStringProperty("rheem.spark.objectfilesource.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 

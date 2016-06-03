@@ -54,16 +54,8 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        // NB: This operator was not measured. The figures are based on SparkCollectionSource and SparkLocalCallbackSink.
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 5500 * outputCards[0] + 6272516800L),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 100 * outputCards[0] + 12000),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> Math.round(9.5d * inputCards[0] + 45000)),
-                0.3d,
-                3000
-        );
-
+        final String specification = configuration.getStringProperty("rheem.spark.broadcast.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 

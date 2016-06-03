@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer.costs;
 
 import org.json.JSONObject;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.util.JuelUtils;
@@ -51,50 +52,54 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
      * @return the new instance
      */
     public static NestableLoadProfileEstimator parseSpecification(String jsonJuelSpec) {
-        final JSONObject spec = new JSONObject(jsonJuelSpec);
-        int numInputs = spec.getInt("in");
-        int numOutputs = spec.getInt("out");
-        double correctnessProb = spec.getDouble("p");
+        try {
+            final JSONObject spec = new JSONObject(jsonJuelSpec);
+            int numInputs = spec.getInt("in");
+            int numOutputs = spec.getInt("out");
+            double correctnessProb = spec.getDouble("p");
 
-        LoadEstimator cpuEstimator = new DefaultLoadEstimator(
-                numInputs,
-                numOutputs,
-                correctnessProb,
-                CardinalityEstimate.EMPTY_ESTIMATE,
-                parseJuel(spec.getString("cpu"), numInputs, numOutputs)
-        );
-        LoadEstimator ramEstimator = new DefaultLoadEstimator(
-                numInputs,
-                numOutputs,
-                correctnessProb,
-                CardinalityEstimate.EMPTY_ESTIMATE,
-                parseJuel(spec.getString("ram"), numInputs, numOutputs)
-        );
-        LoadEstimator diskEstimator = !spec.has("disk") ? null : new DefaultLoadEstimator(
-                numInputs,
-                numOutputs,
-                correctnessProb,
-                CardinalityEstimate.EMPTY_ESTIMATE,
-                parseJuel(spec.getString("disk"), numInputs, numOutputs)
-        );
-        LoadEstimator networkEstimator = !spec.has("network") ? null : new DefaultLoadEstimator(
-                numInputs,
-                numOutputs,
-                correctnessProb,
-                CardinalityEstimate.EMPTY_ESTIMATE,
-                parseJuel(spec.getString("network"), numInputs, numOutputs)
-        );
+            LoadEstimator cpuEstimator = new DefaultLoadEstimator(
+                    numInputs,
+                    numOutputs,
+                    correctnessProb,
+                    CardinalityEstimate.EMPTY_ESTIMATE,
+                    parseJuel(spec.getString("cpu"), numInputs, numOutputs)
+            );
+            LoadEstimator ramEstimator = new DefaultLoadEstimator(
+                    numInputs,
+                    numOutputs,
+                    correctnessProb,
+                    CardinalityEstimate.EMPTY_ESTIMATE,
+                    parseJuel(spec.getString("ram"), numInputs, numOutputs)
+            );
+            LoadEstimator diskEstimator = !spec.has("disk") ? null : new DefaultLoadEstimator(
+                    numInputs,
+                    numOutputs,
+                    correctnessProb,
+                    CardinalityEstimate.EMPTY_ESTIMATE,
+                    parseJuel(spec.getString("disk"), numInputs, numOutputs)
+            );
+            LoadEstimator networkEstimator = !spec.has("network") ? null : new DefaultLoadEstimator(
+                    numInputs,
+                    numOutputs,
+                    correctnessProb,
+                    CardinalityEstimate.EMPTY_ESTIMATE,
+                    parseJuel(spec.getString("network"), numInputs, numOutputs)
+            );
 
-        long overhead = spec.has("overhead") ? spec.getLong("overhead") : 0L;
-        double resourceUtilization = spec.has("ru") ? spec.getDouble("ru") : 1d;
-        return new NestableLoadProfileEstimator(
-                cpuEstimator,
-                ramEstimator,
-                diskEstimator,
-                networkEstimator,
-                resourceUtilization,
-                overhead
-        );
+            long overhead = spec.has("overhead") ? spec.getLong("overhead") : 0L;
+            double resourceUtilization = spec.has("ru") ? spec.getDouble("ru") : 1d;
+            return new NestableLoadProfileEstimator(
+                    cpuEstimator,
+                    ramEstimator,
+                    diskEstimator,
+                    networkEstimator,
+                    resourceUtilization,
+                    overhead
+            );
+        } catch (Exception e) {
+            throw new RheemException(String.format("Could not initialize from specification \"%s\".", jsonJuelSpec));
+        }
     }
 
     private static ToLongBiFunction<long[], long[]> parseJuel(String juel, int numInputs, int numOutputs) {

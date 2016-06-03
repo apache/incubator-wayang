@@ -64,15 +64,8 @@ public class SparkGlobalReduceOperator<Type>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 300 * inputCards[0] + 3000000000L),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 200000),
-                0.2d,
-                1000
-        );
-
+        final String specification = configuration.getStringProperty("rheem.spark.globalreduce.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 
