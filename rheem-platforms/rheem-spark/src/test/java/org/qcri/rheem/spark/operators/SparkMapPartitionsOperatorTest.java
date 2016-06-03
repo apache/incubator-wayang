@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
@@ -30,12 +31,7 @@ public class SparkMapPartitionsOperatorTest extends SparkOperatorTestBase {
         // Create the mapPartitions operator.
         SparkMapPartitionsOperator<Integer, Integer> mapPartitionsOperator =
                 new SparkMapPartitionsOperator<>(
-                         new FlatMapDescriptor<>(items -> {
-                             List<Integer> list = new ArrayList<>();
-                             while (items.hasNext())
-                                 list.add(items.next() + 1);
-                             return list;
-                         }, (Class<Iterator<Integer>>) (Class) Iterator.class, Integer.class)
+                         new TransformationDescriptor<>(item -> item + 1, Integer.class, Integer.class)
                         );
 
         // Set up the ChannelInstances.

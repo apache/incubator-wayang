@@ -46,7 +46,7 @@ public class FunctionCompiler {
 
 
     /**
-     * Create an appropriate {@link Function} for deploying the given {@link TransformationDescriptor}
+     * Create an appropriate {@link FlatMapFunction} for deploying the given {@link FlatMapDescriptor}
      * on Apache Spark.
      */
     public <I, O> FlatMapFunction<I, O> compile(FlatMapDescriptor<I, O> descriptor,
