@@ -5,7 +5,6 @@ import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -19,7 +18,6 @@ import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -158,24 +156,20 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final OptionalLong optionalFileSize;
-        if (this.sourcePath == null) {
-            optionalFileSize = OptionalLong.empty();
-        } else {
-            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
-            if (!optionalFileSize.isPresent()) {
-                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
-            }
-        }
+//        final OptionalLong optionalFileSize;
+//        if (this.sourcePath == null) {
+//            optionalFileSize = OptionalLong.empty();
+//        } else {
+//            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
+//            if (!optionalFileSize.isPresent()) {
+//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
+//            }
+//        }
 
-        // NB: Not actually measured!
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(0, 1, .99d, (inputCards, outputCards) -> 1500 * outputCards[0] + 1400000),
-                optionalFileSize.isPresent() ?
-                        new DefaultLoadEstimator(0, 1, 1d, (inputCards, outputCards) -> optionalFileSize.getAsLong()) :
-                        new DefaultLoadEstimator(0, 1, .5d, (inputCards, outputCards) -> outputCards[0] * 100L)
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.tsvfilesource.load")
         );
-        return Optional.of(mainEstimator);
+        return Optional.of(estimator);
     }
 
     @Override

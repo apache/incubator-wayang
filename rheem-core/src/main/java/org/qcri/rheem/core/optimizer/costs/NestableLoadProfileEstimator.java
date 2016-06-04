@@ -98,7 +98,7 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                     overhead
             );
         } catch (Exception e) {
-            throw new RheemException(String.format("Could not initialize from specification \"%s\".", jsonJuelSpec));
+            throw new RheemException(String.format("Could not initialize from specification \"%s\".", jsonJuelSpec), e);
         }
     }
 
