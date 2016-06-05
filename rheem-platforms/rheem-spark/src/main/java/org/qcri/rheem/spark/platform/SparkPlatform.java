@@ -150,6 +150,7 @@ public class SparkPlatform extends Platform {
         this.mappings.add(new LocalCallbackSinkMapping());
         this.mappings.add(new FlatMapToSparkFlatMapMapping());
         this.mappings.add(new MapOperatorToSparkMapOperatorMapping());
+        this.mappings.add(new MapOperatorToSparkMapPartitionsOperatorMapping());
         this.mappings.add(new MtrlGroupByToSparkMtrlGroupByMapping());
         this.mappings.add(new ReduceByToSparkReduceByMapping());
         this.mappings.add(new SortToSparkSortMapping());
