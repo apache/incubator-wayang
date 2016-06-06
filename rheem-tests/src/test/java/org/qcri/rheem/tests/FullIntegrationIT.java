@@ -2,10 +2,17 @@ package org.qcri.rheem.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.basic.operators.CollectionSource;
+import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.basic.operators.MapOperator;
+import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.JavaPlatform;
@@ -19,6 +26,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Test the Java integration with Rheem.
@@ -267,6 +275,38 @@ public class FullIntegrationIT {
         rheemContext.register(JavaPlatform.getInstance());
 
         rheemContext.execute(rheemPlan);
+        System.out.println(collector);
+    }
+
+    @Test
+    public void testGroupByOperator() {
+        final CollectionSource<String> source = new CollectionSource<>(
+                Arrays.asList("a", "b", "a", "ab", "aa", "bb"),
+                String.class
+        );
+        final MaterializedGroupByOperator<String, Integer> materializedGroupByOperator =
+                new MaterializedGroupByOperator<>(String::length, String.class, Integer.class);
+        final MapOperator<Iterable<String>, Integer> mapOperator = new MapOperator<>(
+                new TransformationDescriptor<>(
+                        strings -> (int) StreamSupport.stream(strings.spliterator(), false).count(),
+                        DataUnitType.createBasicUnchecked(Iterable.class),
+                        DataUnitType.createBasic(Integer.class)
+                ),
+                DataSetType.createGrouped(String.class),
+                DataSetType.createDefault(Integer.class)
+        );
+        final Collection<Integer> collector = new LinkedList<>();
+        final LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(collector, Integer.class);
+
+        source.connectTo(0, materializedGroupByOperator, 0);
+        materializedGroupByOperator.connectTo(0, mapOperator, 0);
+        mapOperator.connectTo(0, sink, 0);
+
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(SparkPlatform.getInstance());
+        rheemContext.register(JavaPlatform.getInstance());
+
+        rheemContext.execute(new RheemPlan(sink));
         System.out.println(collector);
     }
 }

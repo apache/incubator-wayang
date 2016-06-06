@@ -65,20 +65,18 @@ public class JavaReduceByOperator<Type, KeyType>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator operatorEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 1040 * outputCards[0] + 1100000),
-                new DefaultLoadEstimator(1, 1, 0, (inputCards, outputCards) -> 0)
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.reduceby.load")
         );
-
         final LoadProfileEstimator keyEstimator =
                 configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getKeyDescriptor());
-        operatorEstimator.nest(keyEstimator);
+        estimator.nest(keyEstimator);
 
         final LoadProfileEstimator reduceDescriptor =
                 configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getReduceDescriptor());
-        operatorEstimator.nest(reduceDescriptor);
+        estimator.nest(reduceDescriptor);
 
-        return Optional.of(operatorEstimator);
+        return Optional.of(estimator);
     }
 
     @Override

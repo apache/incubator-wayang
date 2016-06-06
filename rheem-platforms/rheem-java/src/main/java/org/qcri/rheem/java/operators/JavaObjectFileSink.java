@@ -8,7 +8,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -90,14 +89,10 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        // NB: Not actually measured.
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 0, .8d, (inputCards, outputCards) -> 2000 * inputCards[0] + 810000),
-                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> inputCards[0] * 256),
-                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> 0)
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.objectfilesink.load")
         );
-        return Optional.of(mainEstimator);
+        return Optional.of(estimator);
     }
 
     @Override

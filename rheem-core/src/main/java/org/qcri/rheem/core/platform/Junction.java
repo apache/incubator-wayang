@@ -29,9 +29,7 @@ public class Junction {
 
     private final List<Channel> targetChannels;
 
-    private final OptimizationContext localOptimizationContext;
-
-    private TimeEstimate timeEstimateCache;
+    private TimeEstimate timeEstimateCache = TimeEstimate.ZERO;
 
     public Junction(OutputSlot<?> sourceOutput, List<InputSlot<?>> targetInputs, OptimizationContext baseOptimizationCtx) {
         // Copy parameters.
@@ -39,7 +37,6 @@ public class Junction {
         this.sourceOutput = sourceOutput;
         assert targetInputs.stream().allMatch(input -> input.getOwner().isExecutionOperator());
         this.targetInputs = targetInputs;
-        this.localOptimizationContext = new OptimizationContext(baseOptimizationCtx);
 
         // Fill with nulls.
         this.targetChannels = RheemCollections.map(this.targetInputs, input -> null);
@@ -99,20 +96,16 @@ public class Junction {
     }
 
     public TimeEstimate getTimeEstimate() {
-        if (this.timeEstimateCache == null) {
-            this.timeEstimateCache = this.createTimeEstimate();
-        }
         return this.timeEstimateCache;
     }
 
-    private TimeEstimate createTimeEstimate() {
-        return this.localOptimizationContext.getLocalOperatorContexts().values().stream()
-                .map(OptimizationContext.OperatorContext::getTimeEstimate)
-                .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
-    }
 
     @Override
     public String toString() {
         return String.format("%s[%s->%s]", this.getClass().getSimpleName(), this.getSourceOutput(), this.getTargetInputs());
+    }
+
+    public void register(ExecutionOperator conversionOperator, TimeEstimate costs) {
+        this.timeEstimateCache = this.timeEstimateCache.plus(costs);
     }
 }

@@ -61,15 +61,8 @@ public class SparkMapOperator<InputType, OutputType>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> Math.round(0.2 * outputCards[0] + 2000)),
-                0.16d,
-                420
-        );
-
+        final String specification = configuration.getStringProperty("rheem.spark.map.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 

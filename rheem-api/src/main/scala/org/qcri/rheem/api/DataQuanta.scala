@@ -23,9 +23,16 @@ import scala.reflect._
   * @param ev$1        the data type of the elements in this instance
   * @param planBuilder keeps track of the [[RheemPlan]] being build
   */
-class DataQuanta[Out: ClassTag](operator: Operator, outputIndex: Int = 0)(implicit planBuilder: PlanBuilder) {
+class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(implicit planBuilder: PlanBuilder) {
 
   Validate.isTrue(operator.getNumOutputs > outputIndex)
+
+  /**
+    * This instance corresponds to an [[OutputSlot]] of a wrapped [[Operator]].
+    *
+    * @return the said [[OutputSlot]]
+    */
+  implicit def output = operator.getOutput(outputIndex)
 
   /**
     * Feed this instance into a [[MapOperator]].

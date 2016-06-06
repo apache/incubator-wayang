@@ -512,9 +512,11 @@ public class ChannelConversionGraph {
                 final ChannelConversion channelConversion = edge.channelConversion;
                 final Channel targetChannel = channelConversion.convert(channel, this.configuration);
                 if (targetChannel != channel) {
-                    targetChannel.getProducer().getOperator().setName(String.format(
+                    final ExecutionOperator conversionOperator = targetChannel.getProducer().getOperator();
+                    conversionOperator.setName(String.format(
                             "convert %s", junction.getSourceOutput()
                     ));
+                    junction.register(conversionOperator, this.getTimeEstimate(channelConversion));
                 }
                 this.createJunctionAux(edge.destination, targetChannel, junction, isOnAllPaths);
             }

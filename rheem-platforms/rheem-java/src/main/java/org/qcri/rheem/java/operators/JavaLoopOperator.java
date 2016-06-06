@@ -3,8 +3,6 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -102,13 +100,10 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        // NB: Not actually measured.
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(4, 3, .8d, CardinalityEstimate.EMPTY_ESTIMATE,
-                        (inputCards, outputCards) -> 500 * inputCards[ITERATION_CONVERGENCE_INPUT_INDEX] + 810000),
-                new DefaultLoadEstimator(4, 3, 0, CardinalityEstimate.EMPTY_ESTIMATE, (inputCards, outputCards) -> 0)
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.loop.load")
         );
-        return Optional.of(mainEstimator);
+        return Optional.of(estimator);
     }
 
     @Override

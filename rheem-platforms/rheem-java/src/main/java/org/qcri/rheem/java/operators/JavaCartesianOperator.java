@@ -74,10 +74,10 @@ public class JavaCartesianOperator<InputType0, InputType1>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        return Optional.of(new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(2, 1, 0.9d, (inCards, outCards) -> outCards[0] * 21 + 900000),
-                LoadEstimator.createFallback(2, 1)
-        ));
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.cartesian.load")
+        );
+        return Optional.of(estimator);
     }
 
     @Override

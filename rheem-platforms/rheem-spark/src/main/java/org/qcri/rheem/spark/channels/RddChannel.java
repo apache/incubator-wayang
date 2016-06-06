@@ -9,6 +9,7 @@ import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.util.Actions;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
 import java.util.OptionalLong;
@@ -90,7 +91,7 @@ public class RddChannel extends Channel {
                 this.accumulator = null;
             }
             if (this.isRddCached() && this.rdd != null) {
-                this.doSafe(this.rdd::unpersist);
+                Actions.doSafe(this.rdd::unpersist);
                 this.rdd = null;
             }
         }

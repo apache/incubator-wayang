@@ -181,7 +181,7 @@ public class PlanEnumeration {
                 sb.append("x").append(targetEnumeration.getPlanImplementations().size());
             }
             sb.append(" plan implementations.");
-            logger.info(sb.toString());
+            logger.debug(sb.toString());
         }
 
         // Prepare the result instance from this instance.
@@ -212,7 +212,7 @@ public class PlanEnumeration {
                 this.concatenatePartialPlans(openOutputSlot, existingChannel, targetEnumerations, optimizationContext, result)
         );
 
-        logger.info("Created {} plan implementations.", result.getPlanImplementations().size());
+        logger.debug("Created {} plan implementations.", result.getPlanImplementations().size());
         return result;
     }
 
@@ -452,12 +452,9 @@ public class PlanEnumeration {
      * @return the new instance
      */
     private PlanImplementation createSingletonPartialPlan(ExecutionOperator executionOperator, OptimizationContext optimizationContext) {
-        final PlanImplementation planImplementation = new PlanImplementation(
+        return new PlanImplementation(
                 this, new HashMap<>(0), Collections.singletonList(executionOperator), optimizationContext
         );
-        final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(executionOperator);
-        planImplementation.addToTimeEstimate(operatorContext.getTimeEstimate());
-        return planImplementation;
     }
 
     /**

@@ -17,6 +17,7 @@ import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
+import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.StopWatch;
@@ -75,6 +76,16 @@ public class Job extends OneTimeExecutable {
     private final StopWatch stopWatch = new StopWatch();
 
     /**
+     * Accumulates the elapsed time of all partial executions.
+     */
+    private long executionMillis = 0L;
+
+    /**
+     * Collects the {@link TimeEstimate}s of all (partially) executed {@link PlanImplementation}s.
+     */
+    private List<TimeEstimate> timeEstimates = new LinkedList<>();
+
+    /**
      * JAR files that are needed to execute the UDFs.
      */
     private final Set<String> udfJarPaths = new HashSet<>();
@@ -111,6 +122,7 @@ public class Job extends OneTimeExecutable {
 
     /**
      * Run this instance. Must only be called once.
+     *
      * @throws RheemException in case the execution fails for any reason
      */
     @Override
@@ -146,6 +158,12 @@ public class Job extends OneTimeExecutable {
             while (!this.execute(executionPlan, executionId)) {
                 this.postProcess(executionPlan, executionId);
                 executionId++;
+            }
+
+            this.logger.info("Accumulated execution time: {}", Formats.formatDuration(this.executionMillis));
+            int i = 1;
+            for (TimeEstimate timeEstimate : timeEstimates) {
+                this.logger.info("Time estimate of execution plan {}: {}", i++, timeEstimate);
             }
         } catch (RheemException e) {
             throw e;
@@ -237,7 +255,7 @@ public class Job extends OneTimeExecutable {
         this.stopWatch.stop("Create Initial Execution Plan", "Enumerate");
 
         final Collection<PlanImplementation> executionPlans = comprehensiveEnumeration.getPlanImplementations();
-        this.logger.info("Enumerated {} plans.", executionPlans.size());
+        this.logger.debug("Enumerated {} plans.", executionPlans.size());
         for (PlanImplementation planImplementation : executionPlans) {
             this.logger.debug("Plan with operators: {}", planImplementation.getOperators());
         }
@@ -246,6 +264,7 @@ public class Job extends OneTimeExecutable {
         // Make sure that an execution plan can be created.
         this.stopWatch.start("Create Initial Execution Plan", "Pick Best Plan");
         final PlanImplementation planImplementation = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
+        this.timeEstimates.add(planImplementation.getTimeEstimate());
         this.stopWatch.stop("Create Initial Execution Plan", "Pick Best Plan");
 
         this.stopWatch.start("Create Initial Execution Plan", "Split Stages");
@@ -337,7 +356,7 @@ public class Job extends OneTimeExecutable {
         final StopWatch.Round executeRound = round.startSubround("Execute");
         boolean isExecutionComplete = this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
         executeRound.stop();
-        round.stop(true, true);
+        this.executionMillis += round.stop(true, true);
 
         // Return.
         return isExecutionComplete;
@@ -441,7 +460,7 @@ public class Job extends OneTimeExecutable {
         final PlanEnumerator planEnumerator = this.createPlanEnumerator(executionPlan, openChannels);
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
         final Collection<PlanImplementation> executionPlans = comprehensiveEnumeration.getPlanImplementations();
-        this.logger.info("Enumerated {} plans.", executionPlans.size());
+        this.logger.debug("Enumerated {} plans.", executionPlans.size());
         for (PlanImplementation planImplementation : executionPlans) {
             this.logger.debug("Plan with operators: {}", planImplementation.getOperators());
         }

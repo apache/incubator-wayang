@@ -651,7 +651,7 @@ public class PlanEnumerator {
 
         int numPlanImplementations = planEnumeration.getPlanImplementations().size();
         this.optimizationContext.getPruningStrategies().forEach(strategy -> strategy.prune(planEnumeration));
-        this.logger.info("Pruned plan enumeration from {} to {} implementations.",
+        this.logger.debug("Pruned plan enumeration from {} to {} implementations.",
                 numPlanImplementations,
                 planEnumeration.getPlanImplementations().size()
         );

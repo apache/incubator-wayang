@@ -47,7 +47,7 @@ public class SparkSortOperator<Type>
 
         // TODO: Better sort function!
         final JavaRDD<Type> outputRdd = inputRdd
-                .<Type, Boolean>mapToPair(x -> new scala.Tuple2<Type, Boolean>(x, true))
+                .mapToPair(x -> new scala.Tuple2<>(x, true))
                 .sortByKey()
                 .map(y -> y._1);
 
@@ -61,15 +61,8 @@ public class SparkSortOperator<Type>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 17000 * inputCards[0] + 6272516800L),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> Math.round(0.3 * inputCards[0] + 430000)),
-                0.09d,
-                0
-        );
-
+        final String specification = configuration.getStringProperty("rheem.spark.sort.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 

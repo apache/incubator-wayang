@@ -38,10 +38,10 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        return Optional.of(new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(0, 1, 0.9d, (inCards, outCards) -> 4 * outCards[0] + 1000000),
-                LoadEstimator.createFallback(0, 1)
-        ));
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.collectionsource.load")
+        );
+        return Optional.of(estimator);
     }
 
     @Override

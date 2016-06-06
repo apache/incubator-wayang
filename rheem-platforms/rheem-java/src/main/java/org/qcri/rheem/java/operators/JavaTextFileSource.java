@@ -64,23 +64,19 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        final OptionalLong optionalFileSize;
-        if (this.getInputUrl() == null) {
-            optionalFileSize = OptionalLong.empty();
-        } else {
-            optionalFileSize = FileSystems.getFileSize(this.getInputUrl());
-            if (!optionalFileSize.isPresent()) {
-                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.getInputUrl());
-            }
-        }
-
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(0, 1, .99d, (inputCards, outputCards) -> 425 * outputCards[0] + 1400000),
-                optionalFileSize.isPresent() ?
-                        new DefaultLoadEstimator(0, 1, 1d, (inputCards, outputCards) -> optionalFileSize.getAsLong()) :
-                        new DefaultLoadEstimator(0, 1, .5d, (inputCards, outputCards) -> outputCards[0] * 100L)
+//        final OptionalLong optionalFileSize;
+//        if (this.getInputUrl() == null) {
+//            optionalFileSize = OptionalLong.empty();
+//        } else {
+//            optionalFileSize = FileSystems.getFileSize(this.getInputUrl());
+//            if (!optionalFileSize.isPresent()) {
+//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.getInputUrl());
+//            }
+//        }
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.textfilesource.load")
         );
-        return Optional.of(mainEstimator);
+        return Optional.of(estimator);
     }
 
     @Override

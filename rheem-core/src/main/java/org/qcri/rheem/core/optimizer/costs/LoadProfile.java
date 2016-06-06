@@ -113,6 +113,10 @@ public class LoadProfile {
         return this.ratioCores;
     }
 
+    public double getRatioMachines() {
+        return ratioMachines;
+    }
+
     public Collection<LoadProfile> getSubprofiles() {
         return this.subprofiles;
     }

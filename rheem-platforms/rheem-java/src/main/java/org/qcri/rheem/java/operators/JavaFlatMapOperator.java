@@ -70,12 +70,11 @@ public class JavaFlatMapOperator<InputType, OutputType>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(this.getNumInputs(), 1, .8d, (inputCards, outputCards) -> 563 * inputCards[0] + 100511687),
-                new DefaultLoadEstimator(this.getNumInputs(), 1, 0, (inputCards, outputCards) -> 0)
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.flatmap.load")
         );
-        mainEstimator.nest(configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getFunctionDescriptor()));
-        return Optional.of(mainEstimator);
+        estimator.nest(configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getFunctionDescriptor()));
+        return Optional.of(estimator);
     }
 
     @Override
