@@ -154,6 +154,6 @@ public class Main {
             }
         }
 
-        rheemContext.execute(rheemPlan, ReflectionUtils.getDeclaringJar(Main.class));
+        rheemContext.execute(rheemPlan, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
     }
 }
