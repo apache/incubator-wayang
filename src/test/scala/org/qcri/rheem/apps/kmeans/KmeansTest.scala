@@ -1,5 +1,6 @@
 package org.qcri.rheem.apps.kmeans
 
+import org.junit.Assert._
 import org.junit.Test
 import org.qcri.rheem.java.JavaPlatform
 import org.qcri.rheem.spark.platform.SparkPlatform
@@ -14,36 +15,50 @@ class KmeansTest {
 
 
   @Test
-  def shouldWorkWithJava = {
-    val points = Kmeans.run(
-      file = getTestFileUrl("points-k4.csv"),
+  def shouldWorkWithJava() = {
+    val centroids = Kmeans.run(
+      file = getTestFileUrl("kmeans-k4-10000.csv"),
       k = 4,
       numIterations = 50,
       JavaPlatform.getInstance
     )
-    println(points)
+
+    assertEquals(4, centroids.size)
+    List(Point(-10, -10), Point(10, -10), Point(-10, 10), Point(10, 10)).foreach { expectedCentroid =>
+      assertTrue(
+        s"None of $centroids matches the expected centroid $expectedCentroid.",
+        centroids.exists(centroid => centroid.distanceTo(expectedCentroid) < 3))
+    }
   }
 
   @Test
-  def shouldWorkWithSpark = {
-    val points = Kmeans.run(
-      file = getTestFileUrl("points-k4.csv"),
+  def shouldWorkWithSpark() = {
+    val centroids = Kmeans.run(
+      file = getTestFileUrl("kmeans-k4-10000.csv"),
       k = 4,
       numIterations = 50,
       SparkPlatform.getInstance
     )
-    println(points)
+
+    assertEquals(4, centroids.size)
+    List(Point(-10, -10), Point(10, -10), Point(-10, 10), Point(10, 10)).foreach { expectedCentroid =>
+      assertTrue(centroids.exists(centroid => centroid.distanceTo(expectedCentroid) < 3))
+    }
   }
 
   @Test
-  def shouldWorkWithJavaAndSpark = {
-    val points = Kmeans.run(
-      file = getTestFileUrl("points-k4.csv"),
+  def shouldWorkWithJavaAndSpark() = {
+    val centroids = Kmeans.run(
+      file = getTestFileUrl("kmeans-k4-10000.csv"),
       k = 4,
       numIterations = 50,
       SparkPlatform.getInstance, JavaPlatform.getInstance
     )
-    println(points)
+
+    assertEquals(4, centroids.size)
+    List(Point(-10, -10), Point(10, -10), Point(-10, 10), Point(10, 10)).foreach { expectedCentroid =>
+      assertTrue(centroids.exists(centroid => centroid.distanceTo(expectedCentroid) < 3))
+    }
   }
 
 }
