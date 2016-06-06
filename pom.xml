@@ -43,13 +43,6 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <artifactId>maven-failsafe-plugin</artifactId>
-                    <configuration>
-                        <trimStackTrace>false</trimStackTrace>
-                        <enableAssertions>true</enableAssertions>
-                    </configuration>
-                </plugin>
-                <plugin>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>2.6</version>
                 </plugin>
@@ -66,6 +59,10 @@
                             </goals>
                         </execution>
                     </executions>
+                    <configuration>
+                        <trimStackTrace>false</trimStackTrace>
+                        <enableAssertions>true</enableAssertions>
+                    </configuration>
                 </plugin>
 
                 <plugin>
