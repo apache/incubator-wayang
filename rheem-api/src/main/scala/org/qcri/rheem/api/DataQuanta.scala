@@ -10,7 +10,7 @@ import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
 import org.qcri.rheem.core.function.{FlatMapDescriptor, PredicateDescriptor, ReduceDescriptor, TransformationDescriptor}
 import org.qcri.rheem.core.plan.rheemplan.{InputSlot, Operator, OutputSlot, RheemPlan}
 import org.qcri.rheem.core.platform.Platform
-import org.qcri.rheem.core.util.{RheemCollections, Tuple => RheemTuple}
+import org.qcri.rheem.core.util.{ReflectionUtils, RheemCollections, Tuple => RheemTuple}
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
@@ -425,6 +425,27 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     this.operator.setName(name)
     this
   }
+
+  /**
+    * Defines user-code JAR files that might be needed to transfer to execution platforms.
+    *
+    * @param paths paths to JAR files that should be transferred
+    * @return this instance
+    */
+  def withUdfJars(paths: String*) = {
+    this.planBuilder.udfJars ++= paths
+    this
+  }
+
+  /**
+    * Defines user-code JAR files that might be needed to transfer to execution platforms.
+    *
+    * @param classes whose JAR files should be transferred
+    * @return this instance
+    */
+  def withUdfJarsOf(classes: Class[_]*)=
+    withUdfJars(classes.map(ReflectionUtils.getDeclaringJar).filterNot(_ == null): _*)
+
 
 }
 

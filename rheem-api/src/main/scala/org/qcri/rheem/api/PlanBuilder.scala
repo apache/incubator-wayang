@@ -18,8 +18,11 @@ class PlanBuilder(rheemContext: RheemContext) {
 
   private[api] val sinks = ListBuffer[Operator]()
 
+  private[api] val udfJars = scala.collection.mutable.Set[String]()
+
   def buildAndExecute(): Unit = {
-    this.rheemContext.execute(new RheemPlan(this.sinks.toArray: _*))
+    val plan: RheemPlan = new RheemPlan(this.sinks.toArray: _*)
+    this.rheemContext.execute(plan, this.udfJars.toArray:_*)
   }
 
   def readTextFile(url: String): DataQuanta[String] =
