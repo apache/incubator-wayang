@@ -7,7 +7,7 @@ import org.qcri.rheem.core.types.DataUnitType;
 import java.util.function.Function;
 
 /**
- * This descriptor pertains to functions that consume a single data unit and output a single data unit.
+ * This descriptor pertains to functions that consume a single data unit and output a group of data units.
  *
  * @param <Input>  input type of the transformation function
  * @param <Output> output type of the transformation function
