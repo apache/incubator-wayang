@@ -104,7 +104,8 @@ object Kmeans {
     * @return the centroids
     */
   def createRandomCentroids(n: Int, random: Random = new Random()) =
-    for (i <- 1 to n) yield TaggedPoint(random.nextGaussian(), random.nextGaussian(), i)
+  // TODO: The random cluster ID makes collisions during resurrection less likely but in general permits ID collisions.
+    for (i <- 1 to n) yield TaggedPoint(random.nextGaussian(), random.nextGaussian(), random.nextInt())
 
 }
 
