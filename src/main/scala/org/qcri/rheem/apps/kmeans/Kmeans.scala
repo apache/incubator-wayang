@@ -70,7 +70,7 @@ class Kmeans(k: Int, inputFile: String, iterations: Int = 20) {
 object Kmeans {
 
   def main(args: Array[String]): Unit = {
-    if (args.length != 3) {
+    if (args.length == 0) {
       println("Usage: scala <main class> <platform(,platform)*> <point file> <k> <#iterations>")
       sys.exit(1)
     }
