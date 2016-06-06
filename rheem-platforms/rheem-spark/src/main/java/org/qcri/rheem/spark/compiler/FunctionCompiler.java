@@ -1,5 +1,6 @@
 package org.qcri.rheem.spark.compiler;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
@@ -9,6 +10,7 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 
+import java.util.Iterator;
 import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 
@@ -26,12 +28,30 @@ public class FunctionCompiler {
                                          ChannelInstance[] inputs) {
         final java.util.function.Function<I, O> javaImplementation = descriptor.getJavaImplementation();
         if (javaImplementation instanceof FunctionDescriptor.ExtendedSerializableFunction) {
-            return new ExtendedFunctionAdapter<>(
+            return new ExtendedMapFunctionAdapter<>(
                     (FunctionDescriptor.ExtendedSerializableFunction<I, O>) javaImplementation,
                     new SparkExecutionContext(operator, inputs)
             );
         } else {
-            return new FunctionAdapter<>(javaImplementation);
+            return new MapFunctionAdapter<>(javaImplementation);
+        }
+    }
+    /**
+     *
+     * Create an appropriate {@link Function} for deploying the given {@link TransformationDescriptor}
+     * on Apache Spark's {@link JavaRDD#mapPartitions(FlatMapFunction)}.
+     */
+    public <I, O> FlatMapFunction<Iterator<I>, O> compileForMapPartitions(TransformationDescriptor<I, O> descriptor,
+                                                                          SparkExecutionOperator operator,
+                                                                          ChannelInstance[] inputs) {
+        final java.util.function.Function<I, O> javaImplementation = descriptor.getJavaImplementation();
+        if (javaImplementation instanceof FunctionDescriptor.ExtendedSerializableFunction) {
+            return new ExtendedMapFunctionToMapPartitionFunctionAdapter<>(
+                    (FunctionDescriptor.ExtendedSerializableFunction<I, O>) javaImplementation,
+                    new SparkExecutionContext(operator, inputs)
+            );
+        } else {
+            return new MapFunctionToMapPartitionFunctionAdapter<>(javaImplementation);
         }
     }
 
@@ -54,12 +74,12 @@ public class FunctionCompiler {
                                                 ChannelInstance[] inputs) {
         final java.util.function.Function<I, Iterable<O>> javaImplementation = descriptor.getJavaImplementation();
         if (javaImplementation instanceof FunctionDescriptor.ExtendedSerializableFunction) {
-            return new ExtendedFunctionAdapter2<>(
+            return new ExtendedFlatMapFunctionAdapter<>(
                     (FunctionDescriptor.ExtendedSerializableFunction<I, Iterable<O>>) javaImplementation,
                     new SparkExecutionContext(operator, inputs)
             );
         } else {
-            return new FunctionAdapter2<>(javaImplementation);
+            return new FlatMapFunctionAdapter<>(javaImplementation);
         }
     }
 

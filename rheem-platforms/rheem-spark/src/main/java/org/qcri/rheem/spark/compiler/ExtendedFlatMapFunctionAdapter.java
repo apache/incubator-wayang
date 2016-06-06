@@ -10,7 +10,7 @@ import org.qcri.rheem.spark.execution.SparkExecutionContext;
  * Implements a {@link FlatMapFunction} that calls {@link org.qcri.rheem.core.function.ExtendedFunction#open(ExecutionContext)}
  * of its implementation before delegating the very first {@link Function#call(Object)}.
  */
-public class ExtendedFunctionAdapter2<InputType, OutputType> implements FlatMapFunction<InputType, OutputType> {
+public class ExtendedFlatMapFunctionAdapter<InputType, OutputType> implements FlatMapFunction<InputType, OutputType> {
 
     private final FunctionDescriptor.ExtendedSerializableFunction<InputType, Iterable<OutputType>> impl;
 
@@ -18,8 +18,8 @@ public class ExtendedFunctionAdapter2<InputType, OutputType> implements FlatMapF
 
     private boolean isFirstRun = true;
 
-    public ExtendedFunctionAdapter2(FunctionDescriptor.ExtendedSerializableFunction extendedFunction,
-                                    SparkExecutionContext sparkExecutionContext) {
+    public ExtendedFlatMapFunctionAdapter(FunctionDescriptor.ExtendedSerializableFunction extendedFunction,
+                                          SparkExecutionContext sparkExecutionContext) {
         this.impl = extendedFunction;
         this.executionContext = sparkExecutionContext;
     }

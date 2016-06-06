@@ -2,11 +2,7 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.Function;
-import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.basic.operators.MapOperator;
-import org.qcri.rheem.core.function.FlatMapDescriptor;
-import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -17,7 +13,6 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionAdapter3;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 
@@ -58,11 +53,11 @@ public class SparkMapPartitionsOperator<InputType, OutputType>
         final RddChannel.Instance input = (RddChannel.Instance) inputs[0];
         final RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
-        final Function<InputType, OutputType> mapFunction =
-                compiler.compile(this.functionDescriptor, this, inputs);
+        final FlatMapFunction<Iterator<InputType>, OutputType> mapFunction =
+                compiler.compileForMapPartitions(this.functionDescriptor, this, inputs);
 
         final JavaRDD<InputType> inputRdd = input.provideRdd();
-        final JavaRDD<OutputType> outputRdd = inputRdd.mapPartitions(new FunctionAdapter3<>(mapFunction));
+        final JavaRDD<OutputType> outputRdd = inputRdd.mapPartitions(mapFunction);
         output.accept(outputRdd, sparkExecutor);
     }
 
