@@ -56,7 +56,17 @@
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-graphchi</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-profiler</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-api</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>

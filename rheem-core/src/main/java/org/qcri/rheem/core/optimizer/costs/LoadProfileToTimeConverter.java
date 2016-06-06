@@ -53,7 +53,7 @@ public abstract class LoadProfileToTimeConverter {
                                                     Function<LoadProfile, LoadEstimate> property,
                                                     LoadToTimeConverter converter) {
                 return Stream.concat(Stream.of(profile), profile.getSubprofiles().stream())
-                        .map(property::apply)
+                        .map(property)
                         .filter(Objects::nonNull)
                         .map(converter::convert)
                         .reduce(new TimeEstimate(profile.getOverheadMillis()), TimeEstimate::plus);

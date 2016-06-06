@@ -7,6 +7,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.postgres.execution.PostgresExecutor;
 import org.qcri.rheem.postgres.mapping.PostgresFilterMapping;
 import org.qcri.rheem.postgres.mapping.PostgresProjectionMapping;
@@ -34,7 +35,7 @@ public class PostgresPlatform extends Platform {
 
     public static final String PASSWORD_PROPERTY = "rheem.postgres.password";
 
-    private static final String DEFAULT_CONFIG_FILE = "/rheem-postgres-defaults.properties";
+    private static final String DEFAULT_CONFIG_FILE = "rheem-postgres-defaults.properties";
 
     private static final String PLATFORM_NAME = "postgres";
 
@@ -64,7 +65,7 @@ public class PostgresPlatform extends Platform {
 
     private void initializeConfiguration() {
         final Configuration defaultConfiguration = Configuration.getDefaultConfiguration();
-        defaultConfiguration.load(this.getClass().getResourceAsStream(DEFAULT_CONFIG_FILE));
+        defaultConfiguration.load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
     }
 
     private void initializeMappings() {

@@ -97,11 +97,10 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        return Optional.of(new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(2, 1, 0.9,
-                        (inCards, outCards) -> 1000 * inCards[0] + 1000 * inCards[1] + 200 * outCards[0] + 1000000
-                ), LoadEstimator.createFallback(2, 1)
-        ));
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.join.load")
+        );
+        return Optional.of(estimator);
     }
 
     @Override

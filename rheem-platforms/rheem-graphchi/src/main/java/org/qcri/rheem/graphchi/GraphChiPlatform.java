@@ -8,6 +8,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.graphchi.execution.GraphChiExecutor;
 import org.qcri.rheem.graphchi.mappings.PageRankMapping;
 
@@ -25,7 +26,7 @@ public class GraphChiPlatform extends Platform {
 
     public static final String HDFS_MS_PER_MB_PROPERTY = "rheem.graphchi.hdfs.ms-per-mb";
 
-    private static final String DEFAULT_CONFIG_FILE = "/rheem-graphchi-defaults.properties";
+    private static final String DEFAULT_CONFIG_FILE = "rheem-graphchi-defaults.properties";
 
     private static Platform instance;
 
@@ -50,7 +51,7 @@ public class GraphChiPlatform extends Platform {
     }
 
     private void initializeConfiguration() {
-        Configuration.getDefaultConfiguration().load(this.getClass().getResourceAsStream(DEFAULT_CONFIG_FILE));
+        Configuration.getDefaultConfiguration().load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
     }
 
     public static Platform getInstance() {

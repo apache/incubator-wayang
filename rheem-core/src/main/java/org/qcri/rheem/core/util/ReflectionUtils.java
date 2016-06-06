@@ -4,7 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 
@@ -42,6 +42,26 @@ public class ReflectionUtils {
             logger.error(String.format("Could not determine JAR file declaring %s.", cls), e);
         }
         return null;
+    }
+
+    /**
+     * Provides a resource as an {@link InputStream}.
+     *
+     * @param resourceName the name or path of the resource
+     * @return an {@link InputStream} with the contents of the resource or {@code null} if the resource could not be found
+     */
+    public static InputStream loadResource(String resourceName) {
+        return Thread.currentThread().getContextClassLoader().getResourceAsStream(resourceName);
+    }
+
+    /**
+     * Provides a resource as {@link URL}.
+     *
+     * @param resourceName the name or path of the resource
+     * @return a {@link URL} describing the path to the resource or {@code null} if the resource could not be found
+     */
+    public static URL getResourceURL(String resourceName) {
+        return Thread.currentThread().getContextClassLoader().getResource(resourceName);
     }
 
 }

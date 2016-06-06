@@ -60,7 +60,7 @@ public class PlanImplementation {
     /**
      * The {@link TimeEstimate} to execute this instance.
      */
-    private TimeEstimate timeEstimate;
+    private TimeEstimate timeEstimateCache;
 
     /**
      * Create a new instance.
@@ -89,7 +89,6 @@ public class PlanImplementation {
         this.planEnumeration = original.planEnumeration;
         this.junctions = new HashMap<>(original.junctions);
         this.operators = new Canonicalizer<>(original.getOperators());
-        this.timeEstimate = original.timeEstimate;
         this.settledAlternatives.putAll(original.settledAlternatives);
         this.loopImplementations.putAll(original.loopImplementations);
         this.optimizationContext = original.optimizationContext;
@@ -263,14 +262,15 @@ public class PlanImplementation {
      * the {@link PlanImplementation}s.
      *
      * @param existingChannel an existing {@link Channel} from that all {@code inputs} must be served or {@code null} otherwise
-     * @return
+     * @return the concatenated {@link PlanImplementation} or {@code null} if the inputs do not fit
+     * @deprecated {@link Junction}s should be created at {@link PlanEnumeration} level to reduce overhead
      */
-    public PlanImplementation concatenate(OutputSlot<?> output,
-                                          Channel existingChannel,
-                                          List<PlanImplementation> targets,
-                                          List<InputSlot<?>> inputs,
-                                          PlanEnumeration concatenationEnumeration,
-                                          OptimizationContext optimizationContext) {
+    PlanImplementation concatenate(OutputSlot<?> output,
+                                   Channel existingChannel,
+                                   List<PlanImplementation> targets,
+                                   List<InputSlot<?>> inputs,
+                                   PlanEnumeration concatenationEnumeration,
+                                   OptimizationContext optimizationContext) {
 
         // Construct the Junction between the PlanImplementations.
         final Tuple<OutputSlot<?>, PlanImplementation> execOutputWithContext =
@@ -285,7 +285,6 @@ public class PlanImplementation {
         final Junction junction = optimizationContext.getChannelConversionGraph().findMinimumCostJunction(
                 execOutputWithContext.getField0(), existingChannel, execInputs, this.optimizationContext // What about the given optimazationContext?
         );
-        //Junction.create(execOutputWithContext.getField0(), execInputs, this.optimizationContext);
         if (junction == null) {
             return null;
         }
@@ -298,10 +297,16 @@ public class PlanImplementation {
     /**
      * Creates a new instance that forms the concatenation of this instance with the {@code targetPlans} via the
      * {@code junction}.
+     *
+     * @param targetPlans              instances to connect to
+     * @param junction                 connects this instance with the {@code targetPlans}
+     * @param outputPlanImplementation nested instance of this instance that hosts the {@code junction}
+     * @param concatenationEnumeration that will host the concatenated instance
+     * @return the concatenated instance or {@code null} if the inputs are contradicting each other
      */
     PlanImplementation concatenate(List<PlanImplementation> targetPlans,
                                    Junction junction,
-                                   PlanImplementation outputPlanImplemtation,
+                                   PlanImplementation outputPlanImplementation,
                                    PlanEnumeration concatenationEnumeration) {
 
         final PlanImplementation concatenation = new PlanImplementation(
@@ -314,21 +319,22 @@ public class PlanImplementation {
         concatenation.operators.addAll(this.operators);
         concatenation.junctions.putAll(this.junctions);
         concatenation.settledAlternatives.putAll(this.settledAlternatives);
-        concatenation.addToTimeEstimate(this.getTimeEstimate()); // FIXME: Is when concatenating overlapping instances?
 
-        // Find the appropriate PlanImplementation for the junction.
+        // Find the appropriate PlanImplementation for the junction and copy the loop implementations.
         PlanImplementation junctionPlanImplementation;
-        if (outputPlanImplemtation == this) {
+        if (outputPlanImplementation == this) {
+            // Special case: The junction resides inside the top-level PlanImplementation.
             concatenation.loopImplementations.putAll(this.loopImplementations);
             junctionPlanImplementation = concatenation;
         } else {
-            // Exhaustively, yet focussed, search for the PlanImplementation.
-            junctionPlanImplementation = concatenation.copyLoopImplementations(this,
-                    outputPlanImplemtation,
-                    junction.getSourceOutput().getOwner().getLoopStack());
+            // Exhaustively, yet focused, search for the PlanImplementation.
+            junctionPlanImplementation = concatenation.copyLoopImplementations(
+                    this,
+                    outputPlanImplementation,
+                    junction.getSourceOutput().getOwner().getLoopStack()
+            );
         }
         junctionPlanImplementation.junctions.put(junction.getSourceOutput(), junction);
-        concatenation.addToTimeEstimate(junction.getTimeEstimate());
 
         for (PlanImplementation targetPlan : targetPlans) {
             // NB: Join semantics at this point weaved in.
@@ -339,17 +345,19 @@ public class PlanImplementation {
             concatenation.loopImplementations.putAll(targetPlan.loopImplementations);
             concatenation.junctions.putAll(targetPlan.junctions);
             concatenation.settledAlternatives.putAll(targetPlan.settledAlternatives);
-            concatenation.addToTimeEstimate(targetPlan.getTimeEstimate());
         }
 
         return concatenation;
     }
 
     /**
-     * todo
+     * Find the a given nested {@link PlanImplementation} in a further {@link PlanImplementation} and copy it to
+     * this instance.
      *
-     * @param originalPlanImplementation
-     * @return
+     * @param originalPlanImplementation the (top-level) {@link PlanImplementation} to copy from
+     * @param targetPlanImplementation   the (nested) {@link PlanImplementation} that should be copied
+     * @param loopStack                  of an {@link ExecutionOperator} inside of the {@code targetPlanImplementation}
+     * @return the copied {@link PlanImplementation} inside of this instance
      */
     private PlanImplementation copyLoopImplementations(PlanImplementation originalPlanImplementation,
                                                        PlanImplementation targetPlanImplementation,
@@ -357,14 +365,18 @@ public class PlanImplementation {
         // Descend into the loopStack.
         assert !loopStack.isEmpty();
         final LoopSubplan visitedLoop = loopStack.pop();
+
+        // Copy the LoopImplementations of the originalPlanImplementation.
         this.loopImplementations.putAll(originalPlanImplementation.getLoopImplementations());
+        // This one will be altered, so make an instance copy.
         final LoopImplementation loopImplCopy =
                 this.loopImplementations.compute(visitedLoop, (key, value) -> new LoopImplementation(value));
+
+        // Find the original counterpart to loopImplCopy.
         final LoopImplementation originalLoopImpl = originalPlanImplementation.loopImplementations.get(visitedLoop);
 
 
-        // If we cannot descend further, seek to replace the PlanImplementation.
-        // Traverse the original and copied LoopImplementations in parallel.
+        // Go over the iterations of the LoopImplementations in parallel to process their PlanImplementations.
         PlanImplementation targetPlanImplementationCopy = null;
         Iterator<LoopImplementation.IterationImplementation>
                 originalIterator = originalLoopImpl.getIterationImplementations().iterator(),
@@ -372,15 +384,17 @@ public class PlanImplementation {
         while (originalIterator.hasNext()) {
             final LoopImplementation.IterationImplementation nextCopy = copyIterator.next();
             final LoopImplementation.IterationImplementation nextOriginal = originalIterator.next();
-            // If the original PlanImplementation equals the targetPlanImplementation, then return the corresponding
-            // copy.
+            // If we need to descend further, invoke a recursive call.
             if (!loopStack.isEmpty()) {
                 targetPlanImplementationCopy = nextCopy.getBodyImplementation().copyLoopImplementations(
                         nextOriginal.getBodyImplementation(),
                         targetPlanImplementation,
                         loopStack);
+
+                // Once, we have found the iteration that contains the targetPlanImplementation, we can stop.
                 if (targetPlanImplementationCopy != null) break;
             } else {
+                // If we cannot descend futher, we basically need to find the correct iteration only.
                 if (nextOriginal.getBodyImplementation() == targetPlanImplementation) {
                     targetPlanImplementationCopy = nextCopy.getBodyImplementation();
                     break;
@@ -423,7 +437,6 @@ public class PlanImplementation {
         escapedPlanImplementation.settledAlternatives.putAll(this.settledAlternatives);
         assert !escapedPlanImplementation.settledAlternatives.containsKey(alternative.getOperatorAlternative());
         escapedPlanImplementation.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
-        escapedPlanImplementation.addToTimeEstimate(this.getTimeEstimate());
         return escapedPlanImplementation;
     }
 
@@ -504,13 +517,20 @@ public class PlanImplementation {
         return this.settledAlternatives.get(operatorAlternative);
     }
 
-    public void addToTimeEstimate(TimeEstimate delta) {
-        assert delta != null;
-        this.timeEstimate = this.timeEstimate == null ? delta : this.timeEstimate.plus(delta);
-    }
-
     public TimeEstimate getTimeEstimate() {
-        return this.timeEstimate;
+        if (this.timeEstimateCache == null) {
+            final TimeEstimate operatorTimeEstimate = this.operators.stream()
+                    .map(op -> this.optimizationContext.getOperatorContext(op).getTimeEstimate())
+                    .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+            final TimeEstimate junctionTimeEstimate = this.junctions.values().stream()
+                    .map(Junction::getTimeEstimate)
+                    .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+            final TimeEstimate loopTimeEstimate = this.loopImplementations.values().stream()
+                    .map(LoopImplementation::getTimeEstimate)
+                    .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+            this.timeEstimateCache = operatorTimeEstimate.plus(junctionTimeEstimate).plus(loopTimeEstimate);
+        }
+        return this.timeEstimateCache;
     }
 
     public Junction getJunction(OutputSlot<?> output) {
@@ -520,5 +540,9 @@ public class PlanImplementation {
     public void putJunction(OutputSlot<?> output, Junction junction) {
         final Junction oldValue = this.junctions.put(output, junction);
         assert oldValue == null : String.format("Replaced %s with %s.", oldValue, junction);
+    }
+
+    public OptimizationContext getOptimizationContext() {
+        return this.optimizationContext;
     }
 }

@@ -355,10 +355,22 @@ public class CrossPlatformExecutor implements ExecutionState {
     @Override
     public void addCardinalityMeasurement(Channel channel, long cardinality) {
         final Long oldCardinality = this.cardinalities.putIfAbsent(channel, cardinality);
-        assert oldCardinality == null || oldCardinality == cardinality : String.format(
-                "Replacing cardinality measurement of %s with %d (was %d).",
-                channel, cardinality, oldCardinality
-        );
+        // TODO: The cardinality measurements are not very reliable (due to lazy execution mechanisms).
+        // For now, we just take the most "credible" cardinality measurement.
+        if (oldCardinality != null && !oldCardinality.equals(cardinality)) {
+            if (oldCardinality == 0 || cardinality < oldCardinality) {
+                // We take the new cardinality.
+            } else {
+                this.cardinalities.put(channel, oldCardinality);
+            }
+            this.logger.warn("Conflicting cardinality measurements ({} and {}) for {}. Using {}.",
+                    oldCardinality, cardinality, channel, this.cardinalities.get(channel)
+            );
+        }
+//        assert oldCardinality == null || oldCardinality == cardinality : String.format(
+//                "Replacing cardinality measurement of %s with %d (was %d).",
+//                channel, cardinality, oldCardinality
+//        );
     }
 
     @Override

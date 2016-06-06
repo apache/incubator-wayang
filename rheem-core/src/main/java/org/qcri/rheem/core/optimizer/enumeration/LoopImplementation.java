@@ -23,6 +23,11 @@ public class LoopImplementation {
         this.enumeratedLoop = enumeratedLoop;
     }
 
+    /**
+     * Copy constructor. Creates instance copies of the {@link IterationImplementation}.
+     *
+     * @param original instance to be copied
+     */
     public LoopImplementation(LoopImplementation original) {
         this.enumeratedLoop = original.enumeratedLoop;
         for (IterationImplementation originalIteration : original.getIterationImplementations()) {

@@ -95,13 +95,10 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        // NB: Not actually measured.
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(3, 2, .8d, CardinalityEstimate.EMPTY_ESTIMATE,
-                        (inputCards, outputCards) -> 500 * inputCards[CONVERGENCE_INPUT_INDEX] + 810000),
-                new DefaultLoadEstimator(3, 2, 0, CardinalityEstimate.EMPTY_ESTIMATE, (inputCards, outputCards) -> 0)
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.while.load")
         );
-        return Optional.of(mainEstimator);
+        return Optional.of(estimator);
     }
 
     @Override

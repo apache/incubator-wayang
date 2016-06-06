@@ -81,7 +81,7 @@ public class CardinalityEstimatorManager {
      */
     private void injectMeasureCardinality(Channel channel, long cardinality) {
         // Build the new CardinalityEstimate.
-        final CardinalityEstimate newEstimate = new CardinalityEstimate(cardinality, cardinality, 1d);
+        final CardinalityEstimate newEstimate = new CardinalityEstimate(cardinality, cardinality, 1d, true);
 
         // Identify the Slots that correspond to the channel.
         final Collection<Slot<?>> correspondingSlots = channel.getCorrespondingSlots();

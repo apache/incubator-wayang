@@ -49,15 +49,8 @@ public class SparkLocalCallbackSink<T> extends LocalCallbackSink<T> implements S
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 0, .9d, (inputCards, outputCards) -> 4000 * inputCards[0] + 6272516800L),
-                new DefaultLoadEstimator(1, 0, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator(1, 0, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 0, .9d, (inputCards, outputCards) -> Math.round(4.5d * inputCards[0] + 43000)),
-                0.08d,
-                1000
-        );
-
+        final String specification = configuration.getStringProperty("rheem.spark.localcallbacksink.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 

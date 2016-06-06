@@ -30,7 +30,16 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
         );
     }
 
-    public static final Comparator<TimeEstimate> expectationValueComparator() {
+    /**
+     * Provides a {@link Comparator} for {@link TimeEstimate}s. For two {@link TimeEstimate}s {@code t1} and {@code t2},
+     * it works as follows:
+     * <ol>
+     *     <li>If a either of the {@link TimeEstimate}s has a correctness probability of 0, we consider it to be greater.</li>
+     *     <li>Otherwise, we compare the two {@link TimeEstimate}s by their average estimation value.</li>
+     * </ol>
+     * @return
+     */
+    public static Comparator<TimeEstimate> expectationValueComparator() {
         return (t1, t2) -> {
             if (t1.getCorrectnessProbability() == 0d) {
                 if (t2.getCorrectnessProbability() != 0d) {

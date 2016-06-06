@@ -49,11 +49,10 @@ public class JavaLocalCallbackSink<T> extends LocalCallbackSink<T> implements Ja
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 0, .8d, (inputCards, outputCards) -> 28 * inputCards[0] + 810000),
-                new DefaultLoadEstimator(1, 0, 0, (inputCards, outputCards) -> 0)
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.localcallbacksink.load")
         );
-        return Optional.of(mainEstimator);
+        return Optional.of(estimator);
     }
 
     @Override

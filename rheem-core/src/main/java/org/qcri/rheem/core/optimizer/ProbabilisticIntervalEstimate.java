@@ -22,13 +22,23 @@ public class ProbabilisticIntervalEstimate {
      */
     private final long lowerEstimate, upperEstimate;
 
+    /**
+     * When merging instances somehow, overriding instance should be chosen over the others.
+     */
+    private final boolean isOverride;
+
     public ProbabilisticIntervalEstimate(long lowerEstimate, long upperEstimate, double correctnessProb) {
+        this(lowerEstimate, upperEstimate, correctnessProb, false);
+    }
+
+    public ProbabilisticIntervalEstimate(long lowerEstimate, long upperEstimate, double correctnessProb, boolean isOverride) {
         assert lowerEstimate <= upperEstimate : String.format("%d > %d, which is illegal.", lowerEstimate, upperEstimate);
         assert correctnessProb >= 0 && correctnessProb <= 1 : String.format("Illegal probability %f.", correctnessProb);
 
         this.correctnessProb = correctnessProb;
         this.lowerEstimate = lowerEstimate;
         this.upperEstimate = upperEstimate;
+        this.isOverride = isOverride;
     }
 
     public long getLowerEstimate() {
@@ -40,7 +50,7 @@ public class ProbabilisticIntervalEstimate {
     }
 
     public long getAverageEstimate() {
-        return (this.getUpperEstimate() - this.getLowerEstimate()) / 2;
+        return this.getLowerEstimate() + (this.getUpperEstimate() - this.getLowerEstimate()) / 2;
     }
 
     public double getCorrectnessProbability() {
@@ -77,6 +87,10 @@ public class ProbabilisticIntervalEstimate {
         return Math.abs(that.correctnessProb - this.correctnessProb) <= probDelta &&
                 Math.abs(this.lowerEstimate - that.lowerEstimate) <= lowerEstimateDelta &&
                 Math.abs(this.upperEstimate - that.upperEstimate) <= upperEstimateDelta;
+    }
+
+    public boolean isOverride() {
+        return this.isOverride;
     }
 
     @Override

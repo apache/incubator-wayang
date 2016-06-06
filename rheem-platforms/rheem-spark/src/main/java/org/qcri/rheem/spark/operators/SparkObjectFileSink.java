@@ -60,15 +60,8 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        // NB: Not measured, instead adapted from SparkTextFileSource.
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 0, .9d, (inputCards, outputCards) -> 500 * inputCards[0] + 5000000000L),
-                new DefaultLoadEstimator(1, 0, .9d, (inputCards, outputCards) -> 10 * inputCards[0]),
-                new DefaultLoadEstimator(1, 0, .9d, (inputCards, outputCards) -> inputCards[0] / 10),
-                new DefaultLoadEstimator(1, 0, .9d, (inputCards, outputCards) -> inputCards[0] * 10 + 5000000),
-                0.19d,
-                1000
-        );
+        final String specification = configuration.getStringProperty("rheem.spark.objectfilesink.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 

@@ -3,6 +3,8 @@ package org.qcri.rheem.core.optimizer.enumeration;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -15,6 +17,8 @@ import java.util.stream.Collectors;
  * operators with still-to-be-connected {@link Slot}s.
  */
 public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStrategy {
+
+    private static final Logger logger = LoggerFactory.getLogger(LatentOperatorPruningStrategy.class);
 
     private Comparator<TimeEstimate> timeEstimateComparator;
 
@@ -49,7 +53,19 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
                                                     Comparator<TimeEstimate> timeEstimateComparator) {
         final TimeEstimate t1 = p1.getTimeEstimate();
         final TimeEstimate t2 = p2.getTimeEstimate();
-        return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
+        final boolean isPickP1 = timeEstimateComparator.compare(t1, t2) <= 0;
+        if (logger.isDebugEnabled()) {
+            if (isPickP1) {
+                LoggerFactory.getLogger(LatentOperatorPruningStrategy.class).debug(
+                        "{} < {}: Choosing {} over {}.", p1.getTimeEstimate(), p2.getTimeEstimate(), p1.getOperators(), p2.getOperators()
+                );
+            } else {
+                LoggerFactory.getLogger(LatentOperatorPruningStrategy.class).debug(
+                        "{} < {}: Choosing {} over {}.", p2.getTimeEstimate(), p1.getTimeEstimate(), p2.getOperators(), p1.getOperators()
+                );
+            }
+        }
+        return isPickP1 ? p1 : p2;
     }
 
 }

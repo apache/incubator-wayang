@@ -89,7 +89,7 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
         // Make sure that the channelInstance is not inside of a loop.
         final Channel channel = channelInstance.getChannel();
         channel.withSiblings().forEach(c -> {
-            if (!checkIfIsInLoopChannel(channel)) {
+            if (!checkIfIsInLoopChannel(c)) {
                 this.crossPlatformExecutor.addCardinalityMeasurement(c, cardinality);
             }
         });

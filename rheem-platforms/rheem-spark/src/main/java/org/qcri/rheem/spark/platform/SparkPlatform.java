@@ -29,7 +29,7 @@ public class SparkPlatform extends Platform {
 
     private static final String PLATFORM_NAME = "Apache Spark";
 
-    private static final String DEFAULT_CONFIG_FILE = "/rheem-spark-defaults.properties";
+    private static final String DEFAULT_CONFIG_FILE = "rheem-spark-defaults.properties";
 
     private final Collection<Mapping> mappings = new LinkedList<>();
 
@@ -137,7 +137,7 @@ public class SparkPlatform extends Platform {
     }
 
     private void initializeConfiguration() {
-        Configuration.getDefaultConfiguration().load(this.getClass().getResourceAsStream(DEFAULT_CONFIG_FILE));
+        Configuration.getDefaultConfiguration().load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
     }
 
     private void initializeMappings() {
@@ -169,9 +169,9 @@ public class SparkPlatform extends Platform {
         double hdfsMsPerMb = configuration.getDoubleProperty("rheem.spark.hdfs.ms-per-mb");
         double networkMsPerMb = configuration.getDoubleProperty("rheem.spark.network.ms-per-mb");
         return LoadProfileToTimeConverter.createDefault(
-                LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000)),
-                LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000),
-                LoadToTimeConverter.createLinearCoverter(networkMsPerMb / 1000000),
+                LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000d)),
+                LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000d),
+                LoadToTimeConverter.createLinearCoverter(networkMsPerMb / 1000000d),
                 (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
         );
     }
