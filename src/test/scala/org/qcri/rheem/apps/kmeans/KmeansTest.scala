@@ -19,7 +19,7 @@ class KmeansTest {
     val centroids = Kmeans.run(
       file = getTestFileUrl("kmeans-k4-10000.csv"),
       k = 4,
-      numIterations = 50,
+      numIterations = 100,
       JavaPlatform.getInstance
     )
 
@@ -27,7 +27,7 @@ class KmeansTest {
     List(Point(-10, -10), Point(10, -10), Point(-10, 10), Point(10, 10)).foreach { expectedCentroid =>
       assertTrue(
         s"None of $centroids matches the expected centroid $expectedCentroid.",
-        centroids.exists(centroid => centroid.distanceTo(expectedCentroid) < 3))
+        centroids.exists(centroid => centroid.distanceTo(expectedCentroid) < 6))
     }
   }
 
@@ -36,13 +36,15 @@ class KmeansTest {
     val centroids = Kmeans.run(
       file = getTestFileUrl("kmeans-k4-10000.csv"),
       k = 4,
-      numIterations = 50,
+      numIterations = 100,
       SparkPlatform.getInstance
     )
 
     assertEquals(4, centroids.size)
     List(Point(-10, -10), Point(10, -10), Point(-10, 10), Point(10, 10)).foreach { expectedCentroid =>
-      assertTrue(centroids.exists(centroid => centroid.distanceTo(expectedCentroid) < 3))
+      assertTrue(
+        s"None of $centroids matches the expected centroid $expectedCentroid.",
+        centroids.exists(centroid => centroid.distanceTo(expectedCentroid) < 6))
     }
   }
 
@@ -51,14 +53,16 @@ class KmeansTest {
     val centroids = Kmeans.run(
       file = getTestFileUrl("kmeans-k4-10000.csv"),
       k = 4,
-      numIterations = 50,
+      numIterations = 100,
       SparkPlatform.getInstance, JavaPlatform.getInstance
     )
 
     assertEquals(4, centroids.size)
     List(Point(-10, -10), Point(10, -10), Point(-10, 10), Point(10, 10)).foreach { expectedCentroid =>
-      assertTrue(centroids.exists(centroid => centroid.distanceTo(expectedCentroid) < 3))
+      assertTrue(
+        s"None of $centroids matches the expected centroid $expectedCentroid.",
+        centroids.exists(centroid => centroid.distanceTo(expectedCentroid) < 6))
     }
   }
-
 }
+

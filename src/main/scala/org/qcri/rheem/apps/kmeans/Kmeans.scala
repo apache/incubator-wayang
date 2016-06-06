@@ -9,8 +9,8 @@ import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunct
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.java.JavaPlatform
 import org.qcri.rheem.spark.platform.SparkPlatform
-import scala.collection.JavaConversions._
 
+import scala.collection.JavaConversions._
 import scala.util.Random
 
 /**
@@ -33,7 +33,7 @@ class Kmeans(k: Int, inputFile: String, iterations: Int = 20) {
 
     // Create initial centroids.
     val initialCentroids = rheemCtx
-      .readCollection(createRandomCentroids(k)).withName("Load random centroids")
+      .readCollection(Kmeans.createRandomCentroids(k)).withName("Load random centroids")
 
     // Do the k-means loop.
     val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
@@ -42,7 +42,17 @@ class Kmeans(k: Int, inputFile: String, iterations: Int = 20) {
         .reduceByKey(_.centroidId, _ + _).withName("Add up points")
         .map(_.average).withName("Average points")
 
-      newCentroids
+
+      // Resurrect "lost" centroids (that have not been nearest to ANY point).
+      val _k = k
+      val resurrectedCentroids = newCentroids
+        .map(centroid => 1).withName("Count centroids (a)")
+        .reduce(_ + _).withName("Count centroids (b)")
+        .flatMap(num => {
+          if (num < _k) println(s"Resurrecting ${_k - num} point(s).")
+          Kmeans.createRandomCentroids(_k - num)
+        }).withName("Resurrect centroids")
+      newCentroids.union(resurrectedCentroids).withName("New+resurrected centroids")
     }).withName("Loop")
 
     // Collect the result.
@@ -51,16 +61,6 @@ class Kmeans(k: Int, inputFile: String, iterations: Int = 20) {
       .collect()
   }
 
-
-  /**
-    * Creates random centroids.
-    *
-    * @param n      the number of centroids to create
-    * @param random used to draw random coordinates
-    * @return the centroids
-    */
-  def createRandomCentroids(n: Int, random: Random = new Random()) =
-    for (i <- 1 to n) yield TaggedPoint(random.nextDouble(), random.nextDouble(), i)
 
 }
 
@@ -78,7 +78,7 @@ object Kmeans {
     val platforms = args(0).split(",").map {
       case "spark" => SparkPlatform.getInstance
       case "java" => JavaPlatform.getInstance
-      case other: String => throw new IllegalArgumentException(s"Unsupported platform: ${other}.")
+      case other: String => throw new IllegalArgumentException(s"Unsupported platform: $other.")
       case _ => throw new IllegalArgumentException
     }
     val file = args(1)
@@ -95,6 +95,16 @@ object Kmeans {
   def run(file: String, k: Int, numIterations: Int, platforms: Platform*) = {
     new Kmeans(k, file, numIterations).run(platforms: _*)
   }
+
+  /**
+    * Creates random centroids.
+    *
+    * @param n      the number of centroids to create
+    * @param random used to draw random coordinates
+    * @return the centroids
+    */
+  def createRandomCentroids(n: Int, random: Random = new Random()) =
+    for (i <- 1 to n) yield TaggedPoint(random.nextGaussian(), random.nextGaussian(), i)
 
 }
 
