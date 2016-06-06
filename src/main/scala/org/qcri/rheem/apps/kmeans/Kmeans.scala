@@ -58,6 +58,7 @@ class Kmeans(k: Int, inputFile: String, iterations: Int = 20) {
     // Collect the result.
     finalCentroids
       .map(_.toPoint).withName("Strip centroid names")
+      .withUdfJarsOf(classOf[Kmeans])
       .collect()
   }
 
