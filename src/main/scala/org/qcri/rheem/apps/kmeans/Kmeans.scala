@@ -78,7 +78,8 @@ object Kmeans {
     val platforms = args(0).split(",").map {
       case "spark" => SparkPlatform.getInstance
       case "java" => JavaPlatform.getInstance
-      case unknown => throw new IllegalArgumentException() //s = s"Unsupported platform: \"$unknown\".")
+      case other: String => throw new IllegalArgumentException(s"Unsupported platform: ${other}.")
+      case _ => throw new IllegalArgumentException
     }
     val file = args(1)
     val k = args(2).toInt
