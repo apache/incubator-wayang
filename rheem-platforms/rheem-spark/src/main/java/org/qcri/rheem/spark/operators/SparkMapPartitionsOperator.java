@@ -4,7 +4,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -31,7 +30,7 @@ public class SparkMapPartitionsOperator<InputType, OutputType>
      *
      */
     public SparkMapPartitionsOperator(TransformationDescriptor<InputType, OutputType> functionDescriptor,
-                                      DataSetType inputType, DataSetType outputType) {
+                                      DataSetType<InputType> inputType, DataSetType<OutputType> outputType) {
         super(functionDescriptor, inputType, outputType);
     }
 
@@ -68,15 +67,9 @@ public class SparkMapPartitionsOperator<InputType, OutputType>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 600 * inputCards[0] + 600 * outputCards[0] + 1000000000L),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> Math.round(0.2d * inputCards[0] + 2000)),
-                0.07d,
-                420
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.spark.mappartitions.load")
         );
-
         return Optional.of(mainEstimator);
     }
 
