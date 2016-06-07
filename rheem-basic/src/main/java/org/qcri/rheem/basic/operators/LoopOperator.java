@@ -32,6 +32,8 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
      */
     protected final PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor;
 
+    private int numExpectedIterations;
+
     private State state;
 
     @Override
@@ -47,16 +49,22 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     // TODO: Add convenience constructors as in the other operators.
 
     public LoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                        PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate) {
-        this(inputType, convergenceType,
-                new PredicateDescriptor<>(criterionPredicate, (BasicDataUnitType) convergenceType.getDataUnitType()));
+                        PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
+                        int numExpectedIterations) {
+        this(inputType,
+                convergenceType,
+                new PredicateDescriptor<>(criterionPredicate, (BasicDataUnitType) convergenceType.getDataUnitType()),
+                numExpectedIterations
+        );
     }
 
     /**
      * Creates a new instance.
      */
-    public LoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                        PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
+    public LoopOperator(DataSetType<InputType> inputType,
+                        DataSetType<ConvergenceType> convergenceType,
+                        PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
+                        int numExpectedIterations) {
         super(4, 3, true, null);
         this.criterionDescriptor = criterionDescriptor;
         this.inputSlots[INITIAL_INPUT_INDEX] = new InputSlot<>("initialInput", this, inputType);
@@ -68,6 +76,8 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
         this.outputSlots[ITERATION_CONVERGENCE_OUTPUT_INDEX] = new OutputSlot<>("convergenceOutput", this, convergenceType);
         this.outputSlots[FINAL_OUTPUT_INDEX] = new OutputSlot<>("output", this, inputType);
         this.state = State.NOT_STARTED;
+
+        this.numExpectedIterations = numExpectedIterations;
     }
 
 
@@ -188,9 +198,13 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
         );
     }
 
+    public void setNumExpectedIterations(int numExpectedIterations) {
+        this.numExpectedIterations = numExpectedIterations;
+    }
+
     @Override
     public int getNumExpectedIterations() {
-        return 100;
+        return this.numExpectedIterations;
     }
 
 }

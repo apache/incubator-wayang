@@ -29,14 +29,18 @@ public class JavaLoopOperator<InputType, ConvergenceType>
     /**
      * Creates a new instance.
      */
-    public JavaLoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                            PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate) {
-        super(inputType, convergenceType, criterionPredicate);
+    public JavaLoopOperator(DataSetType<InputType> inputType,
+                            DataSetType<ConvergenceType> convergenceType,
+                            PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
+                            int numExpectedIterations) {
+        super(inputType, convergenceType, criterionPredicate, numExpectedIterations);
     }
 
-    public JavaLoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                            PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
-        super(inputType, convergenceType, criterionDescriptor);
+    public JavaLoopOperator(DataSetType<InputType> inputType,
+                            DataSetType<ConvergenceType> convergenceType,
+                            PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
+                            int numExpectedIterations) {
+        super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 
     @Override
@@ -108,8 +112,12 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaLoopOperator<>(this.getInputType(), this.getConvergenceType(),
-                this.getCriterionDescriptor().getJavaImplementation());
+        return new JavaLoopOperator<>(
+                this.getInputType(),
+                this.getConvergenceType(),
+                this.getCriterionDescriptor().getJavaImplementation(),
+                this.getNumExpectedIterations()
+        );
     }
 
     @Override

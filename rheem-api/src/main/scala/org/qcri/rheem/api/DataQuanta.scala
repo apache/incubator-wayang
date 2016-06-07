@@ -231,7 +231,8 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @return a new instance representing the final output of the [[DoWhileOperator]]
     */
   def doWhile[ConvOut: ClassTag](udf: Iterable[ConvOut] => Boolean,
-                                 bodyBuilder: DataQuanta[Out] => (DataQuanta[Out], DataQuanta[ConvOut])) =
+                                 bodyBuilder: DataQuanta[Out] => (DataQuanta[Out], DataQuanta[ConvOut]),
+                                 numExpectedIterations: Int = 20) =
     doWhileJava(
       toSerializablePredicate((in: JavaCollection[ConvOut]) => udf(JavaConversions.collectionAsScalaIterable(in))),
       new JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]] {
@@ -239,7 +240,8 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
           val result = bodyBuilder(t)
           new RheemTuple(result._1, result._2)
         }
-      }
+      },
+      numExpectedIterations
     )
 
   /**
@@ -251,13 +253,15 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     */
   def doWhileJava[ConvOut: ClassTag](
                                       udf: SerializablePredicate[JavaCollection[ConvOut]],
-                                      bodyBuilder: JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]]
+                                      bodyBuilder: JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]],
+                                      numExpectedIterations: Int = 20
                                     ) = {
     // Create the DoWhileOperator.
     val doWhileOperator = new DoWhileOperator(
       dataSetType[Out],
       dataSetType[ConvOut],
-      new PredicateDescriptor(udf, basicDataUnitType[java.util.Collection[ConvOut]])
+      new PredicateDescriptor(udf, basicDataUnitType[java.util.Collection[ConvOut]]),
+      numExpectedIterations
     )
     this.connectTo(doWhileOperator, DoWhileOperator.INITIAL_INPUT_INDEX)
 
@@ -295,8 +299,12 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   def repeatJava(n: Int, bodyBuilder: JavaFunction[DataQuanta[Out], DataQuanta[Out]]) = {
     // Create the DoWhileOperator.
     val loopOperator = new LoopOperator(
-      dataSetType[Out], dataSetType[Int], new PredicateDescriptor(
-        toSerializablePredicate[JavaCollection[Int]](i => RheemCollections.getSingle(i) >= n), basicDataUnitType[JavaCollection[Int]])
+      dataSetType[Out],
+      dataSetType[Int],
+      new PredicateDescriptor(
+        toSerializablePredicate[JavaCollection[Int]](i => RheemCollections.getSingle(i) >= n), basicDataUnitType[JavaCollection[Int]]
+      ),
+      n
     )
     this.connectTo(loopOperator, LoopOperator.INITIAL_INPUT_INDEX)
     new DataQuanta(CollectionSource.singleton[Int](0, classOf[Int])).connectTo(loopOperator, LoopOperator.INITIAL_CONVERGENCE_INPUT_INDEX)
@@ -443,7 +451,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @param classes whose JAR files should be transferred
     * @return this instance
     */
-  def withUdfJarsOf(classes: Class[_]*)=
+  def withUdfJarsOf(classes: Class[_]*) =
     withUdfJars(classes.map(ReflectionUtils.getDeclaringJar).filterNot(_ == null): _*)
 
 

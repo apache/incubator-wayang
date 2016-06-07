@@ -30,7 +30,7 @@ public class DoWhileMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "loop", new DoWhileOperator<>(null, null, (PredicateDescriptor) null), false);
+                "loop", new DoWhileOperator<>(null, null, (PredicateDescriptor) null, 1), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -39,7 +39,8 @@ public class DoWhileMapping implements Mapping {
                 (matchedOperator, epoch) -> new SparkDoWhileOperator<>(
                         matchedOperator.getInputType(),
                         matchedOperator.getConvergenceType(),
-                        matchedOperator.getCriterionDescriptor()
+                        matchedOperator.getCriterionDescriptor(),
+                        matchedOperator.getNumExpectedIterations()
                 ).at(epoch)
         );
     }

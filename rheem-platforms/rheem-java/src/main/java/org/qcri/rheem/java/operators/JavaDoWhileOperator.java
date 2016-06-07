@@ -3,8 +3,6 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.DoWhileOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -31,14 +29,18 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
     /**
      * Creates a new instance.
      */
-    public JavaDoWhileOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                               PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate) {
-        super(inputType, convergenceType, criterionPredicate);
+    public JavaDoWhileOperator(DataSetType<InputType> inputType,
+                               DataSetType<ConvergenceType> convergenceType,
+                               PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
+                               int numExpectedIterations) {
+        super(inputType, convergenceType, criterionPredicate, numExpectedIterations);
     }
 
-    public JavaDoWhileOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                               PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
-        super(inputType, convergenceType, criterionDescriptor);
+    public JavaDoWhileOperator(DataSetType<InputType> inputType,
+                               DataSetType<ConvergenceType> convergenceType,
+                               PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
+                               int numExpectedIterations) {
+        super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 
     @Override
@@ -103,8 +105,11 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaDoWhileOperator<>(this.getInputType(), this.getConvergenceType(),
-                this.getCriterionDescriptor().getJavaImplementation());
+        return new JavaDoWhileOperator<>(this.getInputType(),
+                this.getConvergenceType(),
+                this.getCriterionDescriptor().getJavaImplementation(),
+                this.getNumExpectedIterations()
+        );
     }
 
 

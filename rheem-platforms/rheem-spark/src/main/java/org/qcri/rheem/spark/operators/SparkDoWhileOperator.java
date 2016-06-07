@@ -6,8 +6,6 @@ import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -32,14 +30,18 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
     /**
      * Creates a new instance.
      */
-    public SparkDoWhileOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                                PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate) {
-        super(inputType, convergenceType, criterionPredicate);
+    public SparkDoWhileOperator(DataSetType<InputType> inputType,
+                                DataSetType<ConvergenceType> convergenceType,
+                                PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
+                                int numExpectedIterations) {
+        super(inputType, convergenceType, criterionPredicate, numExpectedIterations);
     }
 
-    public SparkDoWhileOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                                PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
-        super(inputType, convergenceType, criterionDescriptor);
+    public SparkDoWhileOperator(DataSetType<InputType> inputType,
+                                DataSetType<ConvergenceType> convergenceType,
+                                PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
+                                int numExpectedIterations) {
+        super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 
     @Override
@@ -92,8 +94,12 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkDoWhileOperator<>(this.getInputType(), this.getConvergenceType(),
-                this.getCriterionDescriptor().getJavaImplementation());
+        return new SparkDoWhileOperator<>(
+                this.getInputType(),
+                this.getConvergenceType(),
+                this.getCriterionDescriptor().getJavaImplementation(),
+                this.getNumExpectedIterations()
+        );
     }
 
     @Override

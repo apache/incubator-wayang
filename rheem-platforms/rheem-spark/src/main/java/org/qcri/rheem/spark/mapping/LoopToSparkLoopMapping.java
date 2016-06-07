@@ -28,7 +28,7 @@ public class LoopToSparkLoopMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "loop", new LoopOperator<>(null, null, (PredicateDescriptor) null), false);
+                "loop", new LoopOperator<>(null, null, (PredicateDescriptor) null, 1), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -37,7 +37,8 @@ public class LoopToSparkLoopMapping implements Mapping {
                 (matchedOperator, epoch) -> new SparkLoopOperator<>(
                         matchedOperator.getInputType(),
                         matchedOperator.getConvergenceType(),
-                        matchedOperator.getCriterionDescriptor()
+                        matchedOperator.getCriterionDescriptor(),
+                        matchedOperator.getNumExpectedIterations()
                 ).at(epoch)
         );
     }

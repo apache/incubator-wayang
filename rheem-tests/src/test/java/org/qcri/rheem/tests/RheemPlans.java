@@ -223,7 +223,8 @@ public class RheemPlans {
         LoopOperator<Integer, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(Integer.class),
                 DataSetType.createDefault(Integer.class),
                 (PredicateDescriptor.SerializablePredicate<Collection<Integer>>) collection ->
-                        collection.iterator().next() >= numIterations
+                        collection.iterator().next() >= numIterations,
+                numIterations
         );
         loopOperator.setName("loop");
         loopOperator.initialize(source, convergenceSource);
@@ -452,7 +453,8 @@ public class RheemPlans {
         DoWhileOperator<String, Long> loopOperator = new DoWhileOperator<>(
                 DataSetType.createDefault(String.class),
                 DataSetType.createDefault(Long.class),
-                integers -> integers.iterator().next() > 100
+                integers -> integers.iterator().next() > 100,
+                100
         );
         loopOperator.setName("Do while");
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
@@ -511,7 +513,8 @@ public class RheemPlans {
         LoopOperator<String, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(String.class),
                 DataSetType.createDefault(Integer.class),
                 (PredicateDescriptor.SerializablePredicate<Collection<Integer>>) collection ->
-                        collection.iterator().next() >= 10
+                        collection.iterator().next() >= 10,
+                10
         );
         loopOperator.setName("loop");
 
@@ -529,7 +532,7 @@ public class RheemPlans {
     public static RheemPlan postgresReadStdout() {
         //Tuple2.class
         LocalCallbackSink<Tuple2> stdoutSink = LocalCallbackSink.createStdoutSink(Tuple2.class);
-        TableSource table = new TableSource("employee", Tuple2.class);
+        TableSource table = new TableSource<>("employee", Tuple2.class);
         table.connectTo(0, stdoutSink, 0);
         return new RheemPlan(stdoutSink);
 
@@ -538,7 +541,7 @@ public class RheemPlans {
     public static RheemPlan postgresScenario2() {
         //Tuple2.class
         LocalCallbackSink<Tuple2> stdoutSink = LocalCallbackSink.createStdoutSink(Tuple2.class);
-        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Tuple2.class, "id", "salary");
+        ProjectionOperator projectionOperator = new ProjectionOperator<>(Tuple2.class, Tuple2.class, "id", "salary");
         FilterOperator<Tuple2> filterOp = new FilterOperator<Tuple2>(
                 new PredicateDescriptor.SerializablePredicate<Tuple2>() {
                     @Override
@@ -548,7 +551,7 @@ public class RheemPlans {
                     }
                 }, Tuple2.class);
 
-        TableSource table = new TableSource("employee", Tuple2.class);
+        TableSource table = new TableSource<>("employee", Tuple2.class);
         table.connectTo(0, projectionOperator, 0);
         projectionOperator.connectTo(0, filterOp, 0);
         filterOp.connectTo(0, stdoutSink, 0);
@@ -561,7 +564,7 @@ public class RheemPlans {
 
         LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
         // Select second field.
-        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Float.class, 1);
+        ProjectionOperator projectionOperator = new ProjectionOperator<>(Tuple2.class, Float.class, 1);
 
         FilterOperator<Float> filterOp = new FilterOperator<Float>(
                 new PredicateDescriptor.SerializablePredicate<Float>() {
@@ -572,7 +575,7 @@ public class RheemPlans {
                     }
                 }, Float.class);
 
-        TableSource table = new TableSource("employee", Tuple2.class);
+        TableSource table = new TableSource<>("employee", Tuple2.class);
         table.connectTo(0, projectionOperator, 0);
         projectionOperator.connectTo(0, filterOp, 0);
         filterOp.connectTo(0, stdoutSink, 0);
@@ -585,7 +588,7 @@ public class RheemPlans {
 
         LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
         // Select second field.
-        ProjectionOperator projectionOperator = new ProjectionOperator(Tuple2.class, Float.class, 1);
+        ProjectionOperator projectionOperator = new ProjectionOperator<>(Tuple2.class, Float.class, 1);
         DistinctOperator<Float> distinctLinesOperator = new DistinctOperator<>(Float.class);
 
         FilterOperator<Float> filterOp = new FilterOperator<Float>(
@@ -599,7 +602,7 @@ public class RheemPlans {
 
         //FilterOperator<Float> filterOp = new FilterOperator<Float>(salary-> salary>1000, Float.class);
 
-        TableSource table = new TableSource("employee", Tuple2.class);
+        TableSource table = new TableSource<>("employee", Tuple2.class);
         table.connectTo(0, projectionOperator, 0);
         projectionOperator.connectTo(0, filterOp, 0);
         filterOp.connectTo(0, distinctLinesOperator, 0);
