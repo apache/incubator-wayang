@@ -178,14 +178,39 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
 
     @Override
     public LoadProfile estimate(OptimizationContext.OperatorContext operatorContext) {
-        return this.estimate(operatorContext.getInputCardinalities(), operatorContext.getOutputCardinalities());
+        return this.estimate(
+                operatorContext.getInputCardinalities(),
+                operatorContext.getOutputCardinalities(),
+                operatorContext.getNumExecutions()
+        );
     }
 
     @Override
-    public LoadProfile estimate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
-        final LoadProfile mainLoadProfile = this.performLocalEstimation(inputEstimates, outputEstimates);
-        this.performNestedEstimations(inputEstimates, outputEstimates, mainLoadProfile);
-        return mainLoadProfile;
+    public LoadProfile estimate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates, int numExecutions) {
+        CardinalityEstimate[] normalizedInputEstimates = normalize(inputEstimates, numExecutions);
+        CardinalityEstimate[] normalizedOutputEstimates = normalize(outputEstimates, numExecutions);
+        final LoadProfile mainLoadProfile = this.performLocalEstimation(normalizedInputEstimates, normalizedOutputEstimates);
+        this.performNestedEstimations(normalizedInputEstimates, normalizedOutputEstimates, mainLoadProfile);
+        return mainLoadProfile.timesSequential(numExecutions);
+    }
+
+    /**
+     * Normalize the given estimates by dividing them by a number of executions.
+     *
+     * @param estimates     that should be normalized
+     * @param numExecutions the number execution
+     * @return the normalized estimates (and {@code estimates} if {@code numExecution == 1}
+     */
+    private static CardinalityEstimate[] normalize(CardinalityEstimate[] estimates, int numExecutions) {
+        if (numExecutions == 1 || estimates.length == 0) return estimates;
+
+        CardinalityEstimate[] normalizedEstimates = new CardinalityEstimate[estimates.length];
+        for (int i = 0; i < estimates.length; i++) {
+            final CardinalityEstimate estimate = estimates[i];
+            if (estimate != null) normalizedEstimates[i] = estimate.divideBy(numExecutions);
+        }
+
+        return normalizedEstimates;
     }
 
     private LoadProfile performLocalEstimation(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
@@ -205,9 +230,11 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
         return loadProfile;
     }
 
-    private void performNestedEstimations(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates, LoadProfile mainLoadProfile) {
+    private void performNestedEstimations(CardinalityEstimate[] normalizedInputEstimates,
+                                          CardinalityEstimate[] normalizedOutputEstimates,
+                                          LoadProfile mainLoadProfile) {
         for (LoadProfileEstimator nestedLoadEstimator : this.nestedLoadEstimators) {
-            final LoadProfile subprofile = nestedLoadEstimator.estimate(inputEstimates, outputEstimates);
+            final LoadProfile subprofile = nestedLoadEstimator.estimate(normalizedInputEstimates, normalizedOutputEstimates, 1);
             mainLoadProfile.nest(subprofile);
         }
     }

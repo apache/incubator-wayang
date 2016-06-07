@@ -132,4 +132,30 @@ public class LoadProfile {
     public void setOverheadMillis(long overheadMillis) {
         this.overheadMillis = overheadMillis;
     }
+
+    /**
+     * Multiplies the values of this instance and nested instances except for the RAM usage, which will not be altered.
+     * This is to represent this instance occurring sequentially (not simultaneously) {@code n} times.
+     * @param n the factor to multiply with
+     * @return the product
+     */
+    public LoadProfile timesSequential(int n) {
+        if (n == 1) return this;
+
+        LoadProfile product = new LoadProfile(
+                this.cpuUsage.times(n),
+                this.ramUsage,
+                this.networkUsage != null ? this.networkUsage.times(n) : null,
+                this.diskUsage != null ? this.diskUsage.times(n) : null
+        );
+        if (this.maxCores != -1) product.maxCores = this.maxCores;
+        if (this.maxMachines != -1) product.maxMachines = this.maxMachines;
+        if (!Double.isNaN(this.ratioCores)) product.ratioCores = this.ratioCores;
+        if (!Double.isNaN(this.ratioMachines)) product.ratioMachines = this.ratioMachines;
+        product.overheadMillis = n * this.overheadMillis;
+        for (LoadProfile subprofile : this.getSubprofiles()) {
+            product.nest(subprofile.timesSequential(n));
+        }
+        return product;
+    }
 }

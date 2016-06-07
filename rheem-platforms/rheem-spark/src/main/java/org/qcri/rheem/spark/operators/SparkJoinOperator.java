@@ -7,7 +7,6 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;

@@ -15,4 +15,14 @@ public class LoadEstimate extends ProbabilisticIntervalEstimate {
         super(lowerEstimate, upperEstimate, correctnessProb);
     }
 
+    /**
+     * Multiplies the estimated load. The correctness probability is not altered.
+     *
+     * @param n scalar to multiply with
+     * @return the product
+     */
+    public LoadEstimate times(int n) {
+        return new LoadEstimate(this.getLowerEstimate() * n, this.getUpperEstimate() * n, this.getCorrectnessProbability());
+    }
+
 }

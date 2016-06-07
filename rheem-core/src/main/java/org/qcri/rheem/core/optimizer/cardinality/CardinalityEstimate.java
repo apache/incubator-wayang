@@ -3,8 +3,6 @@ package org.qcri.rheem.core.optimizer.cardinality;
 import org.qcri.rheem.core.optimizer.ProbabilisticIntervalEstimate;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 
-import java.util.concurrent.atomic.LongAdder;
-
 /**
  * An estimate of cardinality within a {@link RheemPlan} expressed as a {@link ProbabilisticIntervalEstimate}.
  */
@@ -36,5 +34,19 @@ public class CardinalityEstimate extends ProbabilisticIntervalEstimate {
         long sum = a + b;
         if (sum < a || sum < b) sum = Long.MAX_VALUE;
         return sum;
+    }
+
+    /**
+     * Divides the estimate values, not the probability.
+     *
+     * @param denominator by which this instance should be divided
+     * @return the quotient
+     */
+    public CardinalityEstimate divideBy(double denominator) {
+        return new CardinalityEstimate(
+                Math.round(this.getLowerEstimate() / denominator),
+                Math.round(this.getUpperEstimate() / denominator),
+                this.getCorrectnessProbability()
+        );
     }
 }
