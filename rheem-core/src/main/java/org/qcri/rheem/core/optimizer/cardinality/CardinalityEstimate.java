@@ -44,8 +44,8 @@ public class CardinalityEstimate extends ProbabilisticIntervalEstimate {
      */
     public CardinalityEstimate divideBy(double denominator) {
         return new CardinalityEstimate(
-                Math.round(this.getLowerEstimate() / denominator),
-                Math.round(this.getUpperEstimate() / denominator),
+                (long) Math.ceil(this.getLowerEstimate() / denominator),
+                (long) Math.ceil(this.getUpperEstimate() / denominator),
                 this.getCorrectnessProbability()
         );
     }

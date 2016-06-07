@@ -541,6 +541,10 @@ public class OptimizationContext {
             return String.format("%s[%s]", this.getClass().getSimpleName(), this.getOperator());
         }
 
+        public void setNumExecutions(int numExecutions) {
+            this.numExecutions = numExecutions;
+        }
+
         public int getNumExecutions() {
             return this.numExecutions;
         }
@@ -634,7 +638,7 @@ public class OptimizationContext {
             OperatorContext aggregateOperatorCtx = aggregateCtx.getOperatorContext(operator);
             if (aggregateOperatorCtx == null) {
                 aggregateOperatorCtx = aggregateCtx.addOneTimeOperator(operator);
-                aggregateOperatorCtx.numExecutions = 0;
+                aggregateOperatorCtx.setNumExecutions(0);
             }
             aggregateOperatorCtx.increaseBy(operatorCtx);
         }

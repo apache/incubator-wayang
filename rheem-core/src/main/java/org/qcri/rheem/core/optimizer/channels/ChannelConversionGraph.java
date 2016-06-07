@@ -163,6 +163,8 @@ public class ChannelConversionGraph {
 
         private final CardinalityEstimate cardinality;
 
+        private final int numExecutions;
+
         private final ChannelDescriptor startChannelDescriptor;
 
         private final Channel sourceChannel, startChannel;
@@ -195,6 +197,7 @@ public class ChannelConversionGraph {
             final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(outputOperator);
             assert operatorContext != null : String.format("Optimization info for %s missing.", outputOperator);
             this.cardinality = operatorContext.getOutputCardinality(this.sourceOutput.getIndex());
+            this.numExecutions = operatorContext.getNumExecutions();
             if (existingChannel != null) {
                 Channel allegedSourceChannel = existingChannel;
                 this.previsitedChannels = new ArrayList<>(4);
@@ -432,7 +435,7 @@ public class ChannelConversionGraph {
         private TimeEstimate getTimeEstimate(ChannelConversion channelConversion) {
             return this.conversionTimeCache.computeIfAbsent(
                     channelConversion,
-                    key -> key.estimateConversionTime(this.cardinality, this.configuration)
+                    key -> key.estimateConversionTime(this.cardinality, this.numExecutions, this.configuration)
             );
         }
 

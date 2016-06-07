@@ -51,13 +51,14 @@ public class DefaultChannelConversion extends ChannelConversion {
     }
 
     @Override
-    public TimeEstimate estimateConversionTime(CardinalityEstimate cardinality, Configuration configuration) {
+    public TimeEstimate estimateConversionTime(CardinalityEstimate cardinality, int numExecutions, Configuration configuration) {
         // Create OperatorContext.
         final ExecutionOperator executionOperator = this.executionOperatorFactory.apply(null, configuration);
         final OptimizationContext optimizationContext = new OptimizationContext(configuration);
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(executionOperator);
 
-        // Initialize cardinality.
+        // Initialize cardinality and number of executions.
+        operatorContext.setNumExecutions(numExecutions);
         this.setCardinality(operatorContext, cardinality);
 
         // Estimate time.
