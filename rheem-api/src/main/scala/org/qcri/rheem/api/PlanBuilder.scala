@@ -5,6 +5,7 @@ import org.qcri.rheem.api
 import org.qcri.rheem.basic.operators.{CollectionSource, TextFileSource}
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.plan.rheemplan.{Operator, RheemPlan}
+import org.qcri.rheem.core.util.ReflectionUtils
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
@@ -19,6 +20,12 @@ class PlanBuilder(rheemContext: RheemContext) {
   private[api] val sinks = ListBuffer[Operator]()
 
   private[api] val udfJars = scala.collection.mutable.Set[String]()
+
+  // We need to ensure that this module is shipped to Spark etc. in particular because of the Scala-to-Java function wrappers.
+  ReflectionUtils.getDeclaringJar(this) match {
+    case path: String => udfJars += path
+    case _ =>
+  }
 
   def buildAndExecute(): Unit = {
     val plan: RheemPlan = new RheemPlan(this.sinks.toArray: _*)
