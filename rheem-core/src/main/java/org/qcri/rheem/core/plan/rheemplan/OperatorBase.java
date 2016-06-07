@@ -171,21 +171,26 @@ public abstract class OperatorBase implements Operator {
         assert operatorContext.getOperator() == this;
 
         // Identify the cardinality.
-        final OutputSlot<?> output = this.getOutput(outputIndex);
         final CardinalityEstimate cardinality = operatorContext.getOutputCardinality(outputIndex);
+        final OutputSlot<?> localOutput = this.getOutput(outputIndex);
 
-        // Propagate to the InputSlots.
-        for (InputSlot<?> inputSlot : output.getOccupiedSlots()) {
-            // Find the adjacent OperatorContext corresponding to the inputSlot.
-            final int inputIndex = inputSlot.getIndex();
-            final Operator adjacentOperator = inputSlot.getOwner();
-            final OptimizationContext.OperatorContext adjacentOperatorCtx = targetContext.getOperatorContext(adjacentOperator);
-            assert adjacentOperatorCtx != null : String.format("Missing OperatorContext for %s.", adjacentOperator);
+        // Propagate to InputSlots.
+        for (final OutputSlot<?> outerOutput : this.getOutermostOutputSlots(localOutput)) {
+            // Propagate to the InputSlots.
+            for (InputSlot<?> inputSlot : outerOutput.getOccupiedSlots()) {
+                // Find the adjacent OperatorContext corresponding to the inputSlot.
+                final int inputIndex = inputSlot.getIndex();
+                final Operator adjacentOperator = inputSlot.getOwner();
+                final OptimizationContext.OperatorContext adjacentOperatorCtx = targetContext.getOperatorContext(adjacentOperator);
+                assert adjacentOperatorCtx != null : String.format("Missing OperatorContext for %s.", adjacentOperator);
 
-            // Update the adjacent OperatorContext.
-            adjacentOperatorCtx.setInputCardinality(inputIndex, cardinality);
-            adjacentOperator.propagateInputCardinality(inputIndex, adjacentOperatorCtx);
+                // Update the adjacent OperatorContext.
+                adjacentOperatorCtx.setInputCardinality(inputIndex, cardinality);
+                adjacentOperator.propagateInputCardinality(inputIndex, adjacentOperatorCtx);
+            }
         }
+
+
     }
 
     @Override
@@ -206,7 +211,8 @@ public abstract class OperatorBase implements Operator {
         // Default implementation for elementary instances.
         assert this.isElementary();
         assert input.getOwner() == this;
-        return Collections.singleton(input);    }
+        return Collections.singleton(input);
+    }
 
     /**
      * @see ExecutionOperator#copy()
@@ -235,9 +241,8 @@ public abstract class OperatorBase implements Operator {
         return this.name;
     }
 
-    @SuppressWarnings("unchecked")
-    public <Self extends OperatorBase> Self setName(String name) {
+    @Override
+    public void setName(String name) {
         this.name = name;
-        return (Self) this;
     }
 }

@@ -16,6 +16,8 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy;
+import org.qcri.rheem.core.util.Actions;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.slf4j.Logger;
@@ -33,17 +35,17 @@ public class Configuration {
 
     private static final Logger logger = LoggerFactory.getLogger(Configuration.class);
 
-    private static final String DEFAULT_CONFIGURATION_FILE = "/rheem-core-defaults.properties";
+    private static final String DEFAULT_CONFIGURATION_FILE = "rheem-core-defaults.properties";
 
     private static final Configuration defaultConfiguration = new Configuration((Configuration) null);
 
     static {
-        bootstrapCardinalityEstimationProvider(defaultConfiguration);
-        bootstrapSelectivityProviders(defaultConfiguration);
-        bootstrapLoadAndTimeEstimatorProviders(defaultConfiguration);
-        bootstrapPruningProviders(defaultConfiguration);
-        bootstrapProperties(defaultConfiguration);
-        bootstrapPlatforms(defaultConfiguration);
+        Actions.doSafe(() -> bootstrapCardinalityEstimationProvider(defaultConfiguration));
+        Actions.doSafe(() -> bootstrapSelectivityProviders(defaultConfiguration));
+        Actions.doSafe(() -> bootstrapLoadAndTimeEstimatorProviders(defaultConfiguration));
+        Actions.doSafe(() -> bootstrapPruningProviders(defaultConfiguration));
+        Actions.doSafe(() -> bootstrapProperties(defaultConfiguration));
+        Actions.doSafe(() -> bootstrapPlatforms(defaultConfiguration));
     }
 
     private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
@@ -144,7 +146,7 @@ public class Configuration {
             return systemProperty;
         }
 
-        final URL classPathResource = Thread.currentThread().getContextClassLoader().getResource("rheem.properties");
+        final URL classPathResource = ReflectionUtils.getResourceURL("rheem.properties");
         if (classPathResource != null) {
             return classPathResource.toString();
         }
@@ -415,7 +417,7 @@ public class Configuration {
 
         configuration.setProperties(customizableProperties);
 
-        configuration.load(configuration.getClass().getResourceAsStream(DEFAULT_CONFIGURATION_FILE));
+        configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIGURATION_FILE));
     }
 
     /**

@@ -5,11 +5,11 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 /**
  * Wraps a {@link java.util.function.Function} as a {@link FlatMapFunction}.
  */
-public class FunctionAdapter2<InputType, OutputType> implements FlatMapFunction<InputType, OutputType> {
+public class FlatMapFunctionAdapter<InputType, OutputType> implements FlatMapFunction<InputType, OutputType> {
 
     private java.util.function.Function<InputType, Iterable<OutputType>> function;
 
-    public FunctionAdapter2(java.util.function.Function<InputType, Iterable<OutputType>> function) {
+    public FlatMapFunctionAdapter(java.util.function.Function<InputType, Iterable<OutputType>> function) {
         this.function = function;
     }
 

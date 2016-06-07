@@ -82,15 +82,8 @@ public class SparkReduceByOperator<Type, KeyType>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 17000 * inputCards[0] + 6272516800L),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> inputCards[0]),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> Math.round(0.3d * inputCards[0] + 43000)),
-                0.07d,
-                420
-        );
-
+        final String specification = configuration.getStringProperty("rheem.spark.reduceby.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 

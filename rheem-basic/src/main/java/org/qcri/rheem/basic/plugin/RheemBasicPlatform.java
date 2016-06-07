@@ -10,6 +10,7 @@ import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -25,7 +26,7 @@ public class RheemBasicPlatform extends Platform {
 
     public static final String TEMP_DIR_PROPERTY = "rheem.basic.tempdir";
 
-    private static final String RHEEM_BASIC_DEFAULTS_PROPERTIES = "/rheem-basic-defaults.properties";
+    private static final String RHEEM_BASIC_DEFAULTS_PROPERTIES = "rheem-basic-defaults.properties";
 
     private final Collection<Mapping> mappings = new LinkedList<>();
 
@@ -46,7 +47,7 @@ public class RheemBasicPlatform extends Platform {
 
     private void initConfiguration() {
         final Configuration defaultConfiguration = Configuration.getDefaultConfiguration();
-        defaultConfiguration.load(RheemBasicPlatform.class.getResourceAsStream(RHEEM_BASIC_DEFAULTS_PROPERTIES));
+        defaultConfiguration.load(ReflectionUtils.loadResource(RHEEM_BASIC_DEFAULTS_PROPERTIES));
         final String localTempDir = findLocalTempDir();
         if (localTempDir != null) {
             defaultConfiguration.setProperty(TEMP_DIR_PROPERTY, localTempDir);

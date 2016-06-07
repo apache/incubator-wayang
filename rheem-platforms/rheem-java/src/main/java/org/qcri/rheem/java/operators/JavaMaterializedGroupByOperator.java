@@ -50,10 +50,10 @@ public class JavaMaterializedGroupByOperator<Type, KeyType>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        return Optional.of(new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> 1200 * inCards[0] + 330000),
-                LoadEstimator.createFallback(1, 1)
-        ));
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.groupby.load")
+        );
+        return Optional.of(estimator);
     }
 
     @Override

@@ -10,7 +10,7 @@ import org.qcri.rheem.spark.execution.SparkExecutionContext;
  * Implements a {@link Function} that calls {@link org.qcri.rheem.core.function.ExtendedFunction#open(ExecutionContext)}
  * of its implementation before delegating the very first {@link Function#call(Object)}.
  */
-public class ExtendedFunctionAdapter<InputType, OutputType> implements Function<InputType, OutputType> {
+public class ExtendedMapFunctionAdapter<InputType, OutputType> implements Function<InputType, OutputType> {
 
     private final FunctionDescriptor.ExtendedSerializableFunction<InputType, OutputType> impl;
 
@@ -18,8 +18,8 @@ public class ExtendedFunctionAdapter<InputType, OutputType> implements Function<
 
     private boolean isFirstRun = true;
 
-    public ExtendedFunctionAdapter(FunctionDescriptor.ExtendedSerializableFunction<InputType, OutputType> extendedFunction,
-                                   SparkExecutionContext sparkExecutionContext) {
+    public ExtendedMapFunctionAdapter(FunctionDescriptor.ExtendedSerializableFunction<InputType, OutputType> extendedFunction,
+                                      SparkExecutionContext sparkExecutionContext) {
         this.impl = extendedFunction;
         this.executionContext = sparkExecutionContext;
     }

@@ -108,19 +108,8 @@ public class SparkLoopOperator<InputType, ConvergenceType>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        // NB: Not actually measured, adapted from the SparkCollectionSource.
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(4, 3, .8d, CardinalityEstimate.EMPTY_ESTIMATE,
-                        (inputCards, outputCards) -> 5000 * inputCards[0] + 6272516800L),
-                new DefaultLoadEstimator(4, 3, .9d, CardinalityEstimate.EMPTY_ESTIMATE,
-                        (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator(4, 3, .9d, CardinalityEstimate.EMPTY_ESTIMATE,
-                        (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(4, 3, .9d, CardinalityEstimate.EMPTY_ESTIMATE,
-                        (inputCards, outputCards) -> Math.round(4.5d * inputCards[0] + 43000)),
-                0.08d,
-                1500
-        );
+        final String specification = configuration.getStringProperty("rheem.spark.loop.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 

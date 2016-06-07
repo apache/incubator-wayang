@@ -59,14 +59,6 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
         output.accept(rdd, sparkExecutor);
     }
 
-    private List<Type> getCollectionAsList() {
-        final Collection<Type> collection = this.getCollection();
-        if (this.collection instanceof List) {
-            return (List<Type>) this.collection;
-        }
-        return new ArrayList<>(collection);
-    }
-
     @Override
     protected ExecutionOperator createCopy() {
         return new SparkCollectionSource<>(this.getCollection(), this.getType());
@@ -74,15 +66,8 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> 1500 * outputCards[0] + 2000L),
-                new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> 100 * outputCards[0] + 2000),
-                new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> 5 * outputCards[0] + 2000),
-                new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> 0),
-                0.75d,
-                2000
-        );
-
+        final String specification = configuration.getStringProperty("rheem.spark.collectionsource.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 

@@ -2,6 +2,7 @@ package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
+import org.qcri.rheem.core.util.Action;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -53,33 +54,5 @@ public abstract class ExecutionResourceTemplate extends AbstractReferenceCountab
      * @throws Throwable in case anything goes wrong
      */
     abstract protected void doDispose() throws Throwable;
-
-    /**
-     * Perform the given {@link Action}. If it fails, just log the error.
-     *
-     * @param action should be performed
-     */
-    protected void doSafe(Action action) {
-        try {
-            action.execute();
-        } catch (Throwable t) {
-            LoggerFactory.getLogger(this.getClass()).error("Action failed.", t);
-        }
-    }
-
-    /**
-     * This interface represents any piece of code that takes no input and produces no output but may fail.
-     */
-    @FunctionalInterface
-    protected interface Action {
-
-        /**
-         * Perform this action.
-         *
-         * @throws Throwable in case anything goes wrong
-         */
-        void execute() throws Throwable;
-
-    }
 
 }

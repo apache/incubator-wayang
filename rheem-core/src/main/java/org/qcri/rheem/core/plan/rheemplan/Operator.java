@@ -562,5 +562,11 @@ public interface Operator {
      * @return the name of this instance or {@code null} if none
      */
     String getName();
+
+    /**
+     * Provide a name for this instance.
+     * @param name the name
+     */
+    void setName(String name);
 }
 

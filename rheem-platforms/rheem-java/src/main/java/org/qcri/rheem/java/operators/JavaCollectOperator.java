@@ -65,10 +65,9 @@ public class JavaCollectOperator<Type> extends OperatorBase implements JavaExecu
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        // NB: Not measured but adapted from JavaGlobalReduceOperator.
-        return Optional.of(new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
-                LoadEstimator.createFallback(1, 1)
-        ));
+        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty("rheem.java.collect.load")
+        );
+        return Optional.of(estimator);
     }
 }

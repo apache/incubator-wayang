@@ -88,15 +88,8 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 170000 * (inputCards[0] + inputCards[1] + outputCards[0]) + 22725168000L),
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 20 * inputCards[0]),
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 20 * (inputCards[0] + inputCards[1] + outputCards[0]) + 430000),
-                0.3d,
-                1000
-        );
-
+        final String specification = configuration.getStringProperty("rheem.spark.join.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 

@@ -9,8 +9,6 @@ import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
@@ -380,15 +378,9 @@ public class ExecutionTaskFlowCompiler
 
         private void connectToSuccessorTasks(int outputIndex, Platform platform, Collection<Activation> collector) {
             final OutputSlot<?> output = this.operator.getOutput(outputIndex);
-            final Collection<Tuple<OutputSlot<?>, PlanImplementation>> executionOperatorOutputsWithContext =
-                    ExecutionTaskFlowCompiler.this.planImplementation.findExecutionOperatorOutputWithContext(output);
             // TODO: Make generic: There might be multiple OutputSlots for final loop outputs (one for each iteration).
-            final Tuple<OutputSlot<?>, PlanImplementation> execOpOutputWithContext =
-                    RheemCollections.getSingle(executionOperatorOutputsWithContext);
-            final OutputSlot<?> execOpOutput = execOpOutputWithContext.getField0();
-            final PlanImplementation planImpl = execOpOutputWithContext.getField1();
-            final Junction junction = this.getJunction(output); //planImpl.getJunction(execOpOutput);
-            LoggerFactory.getLogger(this.getClass()).info("Connecting {} -> {}.", output, junction);
+            final Junction junction = this.getJunction(output);
+            LoggerFactory.getLogger(this.getClass()).debug("Connecting {} -> {}.", output, junction);
             assert junction != null : String.format("No junction found for %s.", output);
             this.executionTask.setOutputChannel(outputIndex, junction.getSourceChannel());
 
@@ -405,10 +397,10 @@ public class ExecutionTaskFlowCompiler
 
         private Junction getJunction(OutputSlot<?> output) {
             if (this.iterationImplementation != null) {
-                return this.iterationImplementation.getBodyImplementation().getJunction(output);
-            } else {
-                return ExecutionTaskFlowCompiler.this.planImplementation.getJunction(output);
+                final Junction junction = this.iterationImplementation.getBodyImplementation().getJunction(output);
+                if (junction != null) return junction;
             }
+            return ExecutionTaskFlowCompiler.this.planImplementation.getJunction(output);
         }
 
         /**

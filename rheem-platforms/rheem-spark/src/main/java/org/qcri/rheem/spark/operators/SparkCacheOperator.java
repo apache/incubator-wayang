@@ -5,7 +5,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
@@ -66,16 +65,8 @@ public class SparkCacheOperator<Type>
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        // NB: Not measured but adapted from SparkLocalCallbackSink.
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 4000 * inputCards[0] + 6272516800L),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> Math.round(4.5d * inputCards[0] + 43000)),
-                0.08d,
-                1000
-        );
-
+        final String specification = configuration.getStringProperty("rheem.spark.cache.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 }

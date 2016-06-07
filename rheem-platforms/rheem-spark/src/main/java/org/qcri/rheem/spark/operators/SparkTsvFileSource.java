@@ -3,7 +3,6 @@ package org.qcri.rheem.spark.operators;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -17,12 +16,10 @@ import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a sequence file. Consistent with Spark's object files.
@@ -76,36 +73,18 @@ public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecut
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         // NB: Not measured, instead adapted from SparkTextFileSource.
-        final OptionalLong optionalFileSize;
-        if (this.sourcePath == null) {
-            optionalFileSize = OptionalLong.empty();
-        } else {
-            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
-            if (!optionalFileSize.isPresent()) {
-                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
-            }
-        }
+//        final OptionalLong optionalFileSize;
+//        if (this.sourcePath == null) {
+//            optionalFileSize = OptionalLong.empty();
+//        } else {
+//            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
+//            if (!optionalFileSize.isPresent()) {
+//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
+//            }
+//        }
 
-        final NestableLoadProfileEstimator mainEstimator;
-        if (optionalFileSize.isPresent()) {
-            mainEstimator = new NestableLoadProfileEstimator(
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> 700 * outputCards[0] + 5000000000L),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> optionalFileSize.getAsLong()),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> outputCards[0] / 10),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> outputCards[0] * 10 + 5000000),
-                    0.19d,
-                    1000
-            );
-        } else {
-            mainEstimator = new NestableLoadProfileEstimator(
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> 500 * outputCards[0] + 5000000000L),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> 10 * outputCards[0]),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> outputCards[0] / 10),
-                    new DefaultLoadEstimator(0, 1, .9d, (inputCards, outputCards) -> outputCards[0] * 10 + 5000000),
-                    0.19d,
-                    1000
-            );
-        }
+        final String specification = configuration.getStringProperty("rheem.spark.tsvfilesource.load");
+        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
 

@@ -118,6 +118,7 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
         assert estimates1.length == estimates2.length;
         CardinalityEstimate[] mergedEstimates = Arrays.copyOf(estimates1, estimates1.length);
 
+        // TODO: Push cardinalities down.
         for (int i = 0; i < estimates1.length; i++) {
             CardinalityEstimate estimate1 = estimates1[i];
             CardinalityEstimate estimate2 = estimates2[i];
@@ -125,7 +126,8 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
                 assert estimate2 == null;
                 continue;
             }
-            if (estimate2.getCorrectnessProbability() > estimate1.getCorrectnessProbability()) {
+            if (estimate1.isOverride()) continue;
+            if (estimate2.getCorrectnessProbability() > estimate1.getCorrectnessProbability() || estimate2.isOverride()) {
                 mergedEstimates[i] = estimate2;
             }
         }
