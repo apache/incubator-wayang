@@ -112,8 +112,7 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaLoopOperator<>(
-                this.getInputType(),
+        return new JavaLoopOperator<>(this.getInputType(),
                 this.getConvergenceType(),
                 this.getCriterionDescriptor().getJavaImplementation(),
                 this.getNumExpectedIterations()

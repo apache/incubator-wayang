@@ -265,6 +265,16 @@ public class ChannelConversionGraph {
          * @see #kernelDestChannelDescriptorsToIndices
          */
         private void kernelizeChannelRequests() {
+            // Check if the Junction enters a look.
+            final LoopSubplan outputLoop = this.sourceOutput.getOwner().getInnermostLoop();
+            final int outputLoopDepth = this.sourceOutput.getOwner().getLoopStack().size();
+            boolean isSideEnterLoop = this.destInputs.stream().anyMatch(input ->
+                    !input.getOwner().isLoopHead() &&
+                            (input.getOwner().getLoopStack().size() > outputLoopDepth ||
+                                    (input.getOwner().getLoopStack().size() == outputLoopDepth && input.getOwner().getInnermostLoop() != outputLoop)
+                            )
+            );
+
             // Merge equal Channel requests.
             this.kernelDestChannelDescriptorSetsToIndices = new HashMap<>(this.destChannelDescriptorSets.size());
             int index = 0;
@@ -281,7 +291,7 @@ public class ChannelConversionGraph {
             while (iterator.hasNext()) {
                 final Map.Entry<Set<ChannelDescriptor>, BitSet> entry = iterator.next();
                 final BitSet indices = entry.getValue();
-                if (indices.cardinality() < 2) continue;
+                if (indices.cardinality() < 2 && !isSideEnterLoop) continue;
 
                 Set<ChannelDescriptor> channelDescriptors = entry.getKey();
                 int numReusableChannels = (int) channelDescriptors.stream().filter(ChannelDescriptor::isReusable).count();
