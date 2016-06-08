@@ -46,11 +46,11 @@ class SimWords(platforms: Platform*) {
       }.withName("Normalize word vectors")
 
     // Sample initial centroids.
-    val _numCentroids = numClusters
     val initialCentroids = wordVectors
-//      .customOperator[(Int, SparseVector)](
-//      new SampleOperator[(Int, SparseVector)](numClusters, dataSetType[(Int, SparseVector)], SampleOperator.Methods.RESERVOIR)
-//    ).withName("Sample centroids")
+      .customOperator[(Int, SparseVector)](
+      new SampleOperator[(Int, SparseVector)](numClusters, dataSetType[(Int, SparseVector)], SampleOperator.Methods.RANDOM)
+    ).withName("Sample centroids")
+      .map(x => x).withName("Identity (wa1)")
 
     // Run k-means on the vectors.
     val finalCentroids = initialCentroids.repeat(numIterations, { centroids: DataQuanta[(Int, SparseVector)] =>
@@ -61,7 +61,7 @@ class SimWords(platforms: Platform*) {
         .map { centroid: (Int, SparseVector) => centroid._2.normalize(); centroid }
 
       newCentroids
-    }).withName("K-means iteration").map(x => x).withName("Identity (wa)")
+    }).withName("K-means iteration").map(x => x).withName("Identity (wa2)")
 
     // Apply the centroids to the points and resolve the word IDs.
     val clusters = wordVectors
@@ -84,13 +84,24 @@ class SimWords(platforms: Platform*) {
 object SimWords {
 
   def main(args: Array[String]): Unit = {
-    val simWords = new SimWords(JavaPlatform.getInstance, SparkPlatform.getInstance)
-    simWords(
-      inputFile = "file:///Users/basti/Work/Data/text/odyssey-squeezed.txt",
-      minWordOccurrences = 2,
-      neighborhoodReach = 2,
-      numClusters = 200,
-      numIterations = 10)
-  }
+    if (args.isEmpty) {
+      println("Usage: <main class> <platform(,platform)*> <input file> <min word occurrences> <neighborhood reach> <#clusters> <#iterations>")
+      sys.exit(1)
+    }
 
+    val platforms = args(0).split(",").map {
+      case "spark" => SparkPlatform.getInstance
+      case "java" => JavaPlatform.getInstance
+      case misc => sys.error(s"Unknown platform: $misc")
+    }.toSeq
+
+    val inputFile = args(1)
+    val minWordOccurrences = args(2).toInt
+    val neighborhoodRead = args(3).toInt
+    val numClusters = args(4).toInt
+    val numIterations = args(5).toInt
+
+    val simWords = new SimWords(platforms:_*)
+    simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations)
+  }
 }
