@@ -14,7 +14,7 @@ Rheem is an efficient and scalable distributed data processing framework develop
 - This version v0.1 provides the platform independence feature (looping and cross-platform optimization features are coming very soon, keep tuned!)
 
 ### Source Code
-- The source code will be released on June 9th, 2016. Stay tuned!
+- The source code can be found [here](https://github.com/daqcri/rheem)
 
 ### Prerequisites
 To be able to run a Rheem application, the following software is needed:
