@@ -150,7 +150,7 @@ object SparseVector {
 
     // Generate the components.
     val builder = new Builder
-    for (i <- 0 until indices.size) {
+    for (i <- indices.indices) {
       if (probPickElement >= this.random.nextDouble()) {
         builder.add(indices(i), this.random.nextDouble() * (if (withNegative && this.random.nextBoolean()) -1 else 1))
       }

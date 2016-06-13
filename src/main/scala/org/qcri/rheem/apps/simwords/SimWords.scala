@@ -1,7 +1,6 @@
 package org.qcri.rheem.apps.simwords
 
 import org.qcri.rheem.api._
-import org.qcri.rheem.basic.operators.SampleOperator
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.java.JavaPlatform
@@ -20,6 +19,7 @@ class SimWords(platforms: Platform*) {
 
     // Initialize.
     val rheemCtx = new RheemContext
+    rheemCtx.getConfiguration.setProperty("rheem.core.optimizer.reoptimize", "false")
     platforms.foreach(rheemCtx.register)
     val planBuilder = new PlanBuilder(rheemCtx)
 
@@ -46,11 +46,20 @@ class SimWords(platforms: Platform*) {
       }.withName("Normalize word vectors")
 
     // Sample initial centroids.
-    val initialCentroids = wordVectors
-      .customOperator[(Int, SparseVector)](
-      new SampleOperator[(Int, SparseVector)](numClusters, dataSetType[(Int, SparseVector)], SampleOperator.Methods.RANDOM)
-    ).withName("Sample centroids")
-      .map(x => x).withName("Identity (wa1)")
+//    val initialCentroids = wordVectors
+//      .customOperator[(Int, SparseVector)](
+//      new SampleOperator[(Int, SparseVector)](numClusters, dataSetType[(Int, SparseVector)], SampleOperator.Methods.RANDOM)
+//    ).withName("Sample centroids")
+//      .map(x => x).withName("Identity (wa1)")
+    val _numClusters = numClusters
+    val initialCentroids = wordIds
+      .map(_._2).withName("Strip words")
+      .group().withName("Group IDs")
+      .flatMap { ids =>
+        import scala.collection.JavaConversions._
+        val idArray = ids.toArray
+        for (i <- 0 to _numClusters) yield (i, SparseVector.createRandom(idArray, .99, _numClusters))
+      }.withName("Generate centroids")
 
     // Run k-means on the vectors.
     val finalCentroids = initialCentroids.repeat(numIterations, { centroids: DataQuanta[(Int, SparseVector)] =>
