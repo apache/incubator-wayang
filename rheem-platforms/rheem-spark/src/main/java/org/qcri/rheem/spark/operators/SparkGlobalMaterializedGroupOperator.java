@@ -1,17 +1,13 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function2;
 import org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator;
-import org.qcri.rheem.basic.operators.GlobalReduceOperator;
-import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
@@ -80,6 +76,6 @@ public class SparkGlobalMaterializedGroupOperator<Type>
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+        return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 }

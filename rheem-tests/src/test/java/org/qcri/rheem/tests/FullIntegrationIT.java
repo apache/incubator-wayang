@@ -165,6 +165,23 @@ public class FullIntegrationIT {
     }
 
     @Test
+    public void testGlobalMaterializedGroup() throws URISyntaxException {
+        // Build the RheemPlan.
+        List<Iterable<Integer>> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.globalMaterializedGroup(collector, 1, 2, 3);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+
+        Assert.assertEquals(1, collector.size());
+        Assert.assertEquals(RheemCollections.asSet(1, 2, 3), RheemCollections.asCollection(collector.get(0), HashSet::new));
+    }
+
+    @Test
     public void testDiverseScenario1() throws URISyntaxException {
         // Build the RheemPlan.
         RheemPlan rheemPlan = RheemPlans.diverseScenario1(RheemPlans.FILE_SOME_LINES_TXT);

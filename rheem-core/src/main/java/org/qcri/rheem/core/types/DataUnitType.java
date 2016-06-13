@@ -29,9 +29,17 @@ public abstract class DataUnitType<T> {
         return new DataUnitGroupType<>(createBasicUnchecked(cls));
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> BasicDataUnitType<T> createBasicUnchecked(Class<?> cls) {
         return new BasicDataUnitType<>((Class<T>) cls);
     }
+
+    /**
+     * Converts this instance into a {@link BasicDataUnitType}.
+     *
+     * @return the {@link BasicDataUnitType}
+     */
+    public abstract BasicDataUnitType<T> toBasicDataUnitType();
 
     public abstract Class getTypeClass();
 }

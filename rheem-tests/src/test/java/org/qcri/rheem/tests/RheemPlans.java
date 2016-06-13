@@ -278,6 +278,31 @@ public class RheemPlans {
     }
 
     /**
+     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link GlobalMaterializedGroupOperator}.
+     * It will then push the results in the {@code collector}.
+     */
+    public static RheemPlan globalMaterializedGroup(Collection<Iterable<Integer>> collector, final int... values)
+            throws URISyntaxException {
+        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        source.setName("source");
+
+        GlobalMaterializedGroupOperator<Integer> globalMaterializedGroupOperator =
+                new GlobalMaterializedGroupOperator<>(Integer.class);
+
+        LocalCallbackSink<Iterable<Integer>> sink = LocalCallbackSink.createCollectingSink(
+                collector,
+                DataSetType.createGrouped(Integer.class)
+        );
+        sink.setName("sink");
+
+        source.connectTo(0, globalMaterializedGroupOperator, 0);
+        globalMaterializedGroupOperator.connectTo(0, sink,0);
+
+        // Create the RheemPlan.
+        return new RheemPlan(sink);
+    }
+
+    /**
      * Creates a cross-community PageRank Rheem plan, that incorporates the {@link PageRankOperator}.
      */
     public static RheemPlan createCrossCommunityPageRank() {

@@ -5,6 +5,9 @@ import org.apache.commons.lang3.Validate;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
+import java.util.stream.StreamSupport;
 
 /**
  * Utilities to operate {@link java.util.Collection}s.
@@ -35,6 +38,17 @@ public class RheemCollections {
     }
 
     /**
+     * Provides the given {@code values} as {@link Set}.
+     */
+    public static <T> Set<T> asSet(T... values) {
+        Set<T> set = new HashSet<>(values.length);
+        for (T value : values) {
+            set.add(value);
+        }
+        return set;
+    }
+
+    /**
      * Provides the given {@code collection} as {@link List}, thereby checking if it is already a {@link List}.
      */
     public static <T> List<T> asList(Collection<T> collection) {
@@ -42,6 +56,15 @@ public class RheemCollections {
             return (List<T>) collection;
         }
         return new ArrayList<>(collection);
+    }
+
+    /**
+     * Provides the given {@code iterable} as {@link Collection}.
+     */
+    public static <T, C extends Collection<T>> C asCollection(Iterable<T> iterable, Supplier<C> collectionFactory) {
+        final C collection = collectionFactory.get();
+        iterable.forEach(collection::add);
+        return collection;
     }
 
     /**

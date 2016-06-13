@@ -12,6 +12,8 @@ import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
@@ -162,6 +164,22 @@ public class SparkIntegrationIT {
         Collections.sort(collector2);
         Assert.assertEquals(expectedOutcome, collector1);
         Assert.assertEquals(expectedOutcome, collector2);
+    }
+
+    @Test
+    public void testGlobalMaterializedGroup() throws URISyntaxException {
+        // Build the RheemPlan.
+        List<Iterable<Integer>> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.globalMaterializedGroup(collector, 1, 2, 3);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(SparkPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+
+        Assert.assertEquals(1, collector.size());
+        Assert.assertEquals(RheemCollections.asSet(1, 2, 3), RheemCollections.asCollection(collector.get(0), HashSet::new));
     }
 
     @Test
