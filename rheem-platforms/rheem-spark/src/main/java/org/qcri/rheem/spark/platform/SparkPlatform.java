@@ -147,6 +147,7 @@ public class SparkPlatform extends Platform {
         this.mappings.add(new DistinctToSparkDistinctMapping());
         this.mappings.add(new FilterToSparkFilterMapping());
         this.mappings.add(new GlobalReduceMapping());
+        this.mappings.add(new GlobalMaterializedGroupToSparkGlobalMaterializedGroupMapping());
         this.mappings.add(new LocalCallbackSinkMapping());
         this.mappings.add(new FlatMapToSparkFlatMapMapping());
         this.mappings.add(new MapOperatorToSparkMapOperatorMapping());

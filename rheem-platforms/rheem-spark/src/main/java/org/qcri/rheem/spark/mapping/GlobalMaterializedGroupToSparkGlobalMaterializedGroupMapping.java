@@ -1,29 +1,29 @@
-package org.qcri.rheem.java.mapping;
+package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator;
+import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.operators.JavaGlobalMaterializedGroupOperator;
+import org.qcri.rheem.spark.operators.SparkGlobalMaterializedGroupOperator;
+import org.qcri.rheem.spark.operators.SparkGlobalReduceOperator;
+import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link GlobalMaterializedGroupOperator} to {@link JavaGlobalMaterializedGroupOperator}.
+ * Mapping from {@link GlobalMaterializedGroupOperator} to {@link SparkGlobalMaterializedGroupOperator}.
  */
 @SuppressWarnings("unchecked")
-public class GlobalMaterializedGroupToJavaGlobalMaterializedGroupMapping implements Mapping {
+public class GlobalMaterializedGroupToSparkGlobalMaterializedGroupMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(
-                new PlanTransformation(
-                        this.createSubplanPattern(),
-                        this.createReplacementSubplanFactory(),
-                        JavaPlatform.getInstance()
-                )
-        );
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                SparkPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -34,10 +34,11 @@ public class GlobalMaterializedGroupToJavaGlobalMaterializedGroupMapping impleme
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<GlobalMaterializedGroupOperator>(
-                (matchedOperator, epoch) -> new JavaGlobalMaterializedGroupOperator<>(
+                (matchedOperator, epoch) -> new SparkGlobalMaterializedGroupOperator<>(
                         matchedOperator.getInputType(),
                         matchedOperator.getOutputType()
                 ).at(epoch)
         );
     }
+
 }
