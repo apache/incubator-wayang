@@ -309,14 +309,14 @@ public class ChannelConversionGraph {
                 ).or(channelsToIndicesChange.getField1());
             }
 
-            // Index the requested
+            // Index the single ChannelDescriptors.
             this.kernelDestChannelDescriptorsToIndices = new HashMap<>();
             for (Map.Entry<Set<ChannelDescriptor>, BitSet> entry : this.kernelDestChannelDescriptorSetsToIndices.entrySet()) {
                 final Set<ChannelDescriptor> channelDescriptorSet = entry.getKey();
                 final BitSet indices = entry.getValue();
 
                 for (ChannelDescriptor channelDescriptor : channelDescriptorSet) {
-                    this.kernelDestChannelDescriptorsToIndices.merge(channelDescriptor, indices, this::union);
+                    this.kernelDestChannelDescriptorsToIndices.merge(channelDescriptor, copy(indices), this::union);
                 }
             }
         }
