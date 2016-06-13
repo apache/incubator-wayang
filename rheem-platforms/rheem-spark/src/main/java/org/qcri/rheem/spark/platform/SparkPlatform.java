@@ -42,6 +42,9 @@ public class SparkPlatform extends Platform {
 
     private static final String[] OPTIONAL_SPARK_PROPERTIES = {
             "spark.executor.memory",
+            "spark.executor.cores",
+            "spark.executor.instances",
+            "spark.dynamicAllocation.enabled",
             "spark.executor.extraJavaOptions",
             "spark.eventLog.enabled",
             "spark.eventLog.dir",
