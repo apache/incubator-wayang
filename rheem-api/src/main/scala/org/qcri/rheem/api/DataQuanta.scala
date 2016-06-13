@@ -137,6 +137,22 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   }
 
   /**
+    * Feed this instance into a [[MaterializedGroupByOperator]].
+    *
+    * @param keyUdf UDF to extract the grouping key from the data quanta
+    * @return a new instance representing the [[MaterializedGroupByOperator]]'s output
+    */
+  def groupByKey[Key: ClassTag](keyUdf: Out => Key): DataQuanta[java.lang.Iterable[Out]] = {
+    val groupByOperator = new MaterializedGroupByOperator(
+      new TransformationDescriptor(toSerializableFunction(keyUdf), basicDataUnitType[Out], basicDataUnitType[Key]),
+      dataSetType[Out],
+      groupedDataSetType[Out]
+    )
+    this.connectTo(groupByOperator, 0)
+    groupByOperator
+  }
+
+  /**
     * Feed this instance into a [[GlobalReduceOperator]].
     *
     * @param udf aggregation UDF for the [[GlobalReduceOperator]]
@@ -157,6 +173,17 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     )
     this.connectTo(globalReduceOperator, 0)
     globalReduceOperator
+  }
+
+  /**
+    * Feed this instance into a [[GlobalMaterializedGroupOperator]].
+    *
+    * @return a new instance representing the [[GlobalMaterializedGroupOperator]]'s output
+    */
+  def group(): DataQuanta[java.lang.Iterable[Out]] = {
+    val groupOperator = new GlobalMaterializedGroupOperator(dataSetType[Out], groupedDataSetType[Out])
+    this.connectTo(groupOperator, 0)
+    groupOperator
   }
 
   /**

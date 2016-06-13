@@ -80,13 +80,13 @@ class ApiTest {
     val outputValues = rheem
       .readCollection(inputValues).withName("Load input values")
       .customOperator[Int](new JavaMapOperator(
-        dataSetType[Int],
-        dataSetType[Int],
-        new TransformationDescriptor(
-          toSerializableFunction[Int, Int](_ + 2),
-          basicDataUnitType[Int], basicDataUnitType[Int]
-        )
-      )).withName("Add 2")
+      dataSetType[Int],
+      dataSetType[Int],
+      new TransformationDescriptor(
+        toSerializableFunction[Int, Int](_ + 2),
+        basicDataUnitType[Int], basicDataUnitType[Int]
+      )
+    )).withName("Add 2")
       .collect()
 
     // Check the outcome.
@@ -227,4 +227,55 @@ class ApiTest {
     Assert.assertEquals(expectedValues, values)
   }
 
+  @Test
+  def testGroupBy() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
+
+    val result = rheem
+      .readCollection(inputValues)
+      .groupByKey(_ % 2)
+      .map {
+        group =>
+          import scala.collection.JavaConversions._
+          val buffer = group.toBuffer
+          buffer.sortBy(identity)
+          if (buffer.size % 2 == 0) (buffer(buffer.size / 2 - 1) + buffer(buffer.size / 2)) / 2
+          else buffer(buffer.size / 2)
+      }
+      .collect()
+
+    val expectedValues = Set(5, 6)
+    Assert.assertEquals(expectedValues, result.toSet)
+  }
+
+  @Test
+  def testGroup() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
+
+    val result = rheem
+      .readCollection(inputValues)
+      .group()
+      .map {
+        group =>
+          import scala.collection.JavaConversions._
+          val buffer = group.toBuffer
+          buffer.sortBy(int => int)
+          if (buffer.size % 2 == 0) (buffer(buffer.size / 2) + buffer(buffer.size / 2 + 1)) / 2
+          else buffer(buffer.size / 2)
+      }
+      .collect()
+
+    val expectedValues = Set(5)
+    Assert.assertEquals(expectedValues, result.toSet)
+  }
 }
