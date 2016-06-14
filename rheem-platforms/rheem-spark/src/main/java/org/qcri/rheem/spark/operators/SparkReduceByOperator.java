@@ -1,5 +1,6 @@
 package org.qcri.rheem.spark.operators;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
@@ -7,7 +8,6 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -55,9 +55,12 @@ public class SparkReduceByOperator<Type, KeyType>
         final JavaRDD<Type> inputStream = input.provideRdd();
         final PairFunction<Type, KeyType, Type> keyExtractor = compiler.compileToKeyExtractor(this.keyDescriptor);
         Function2<Type, Type, Type> reduceFunc = compiler.compile(this.reduceDescriptor, this, inputs);
-        final JavaRDD<Type> outputRdd = inputStream.mapToPair(keyExtractor)
-                .reduceByKey(reduceFunc)
-                .map(new TupleConverter<>());
+        final JavaPairRDD<KeyType, Type> pairRdd = inputStream.mapToPair(keyExtractor);
+        this.name(pairRdd);
+        final JavaPairRDD<KeyType, Type> reducedPairRdd = pairRdd.reduceByKey(reduceFunc);
+        this.name(reducedPairRdd);
+        final JavaRDD<Type> outputRdd = reducedPairRdd.map(new TupleConverter<>());
+        this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
     }

@@ -4,7 +4,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -46,6 +45,7 @@ public class SparkFilterOperator<Type>
 
         final JavaRDD<Type> inputRdd = ((RddChannel.Instance) inputs[0]).provideRdd();
         final JavaRDD<Type> outputRdd = inputRdd.filter(filterFunction);
+        this.name(outputRdd);
         ((RddChannel.Instance) outputs[0]).accept(outputRdd, sparkExecutor);
     }
 

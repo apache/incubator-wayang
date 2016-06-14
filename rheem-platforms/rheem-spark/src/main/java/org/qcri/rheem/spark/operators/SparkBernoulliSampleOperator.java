@@ -62,6 +62,7 @@ public class SparkBernoulliSampleOperator<Type>
         else
             sampleFraction = ((double) sampleSize) / inputRdd.cache().count();
         final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction);
+        this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
     }

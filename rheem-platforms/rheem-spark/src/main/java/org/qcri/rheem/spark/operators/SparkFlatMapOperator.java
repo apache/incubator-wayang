@@ -4,7 +4,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -52,6 +51,7 @@ public class SparkFlatMapOperator<InputType, OutputType>
 
         final JavaRDD<InputType> inputRdd = input.provideRdd();
         final JavaRDD<OutputType> outputRdd = inputRdd.flatMap(flatMapFunction);
+        this.name(outputRdd);
         output.accept(outputRdd, sparkExecutor);
     }
 

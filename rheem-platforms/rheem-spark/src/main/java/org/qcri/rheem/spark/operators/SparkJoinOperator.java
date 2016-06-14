@@ -58,10 +58,12 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
 
         final JavaPairRDD<KeyType, scala.Tuple2<InputType0, InputType1>> outputPair =
                 pairStream0.<InputType1>join(pairStream1);
+        this.name(outputPair);
 
         // convert from scala tuple to rheem tuple
         final JavaRDD<Tuple2<InputType0, InputType1>> outputRdd = outputPair
                 .map(new TupleConverter<>());
+        this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
     }

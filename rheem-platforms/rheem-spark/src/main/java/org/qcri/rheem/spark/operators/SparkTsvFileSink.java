@@ -3,7 +3,6 @@ package org.qcri.rheem.spark.operators;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -12,7 +11,6 @@ import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.platform.SparkExecutor;
@@ -53,14 +51,15 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
 
         final RddChannel.Instance input = (RddChannel.Instance) inputs[0];
         final JavaRDD<Object> rdd = input.provideRdd();
-        rdd
+        final JavaRDD<String> serializedRdd = rdd
                 .map(dataQuantum -> {
                     // TODO: Once there are more tuple types, make this generic.
                     @SuppressWarnings("unchecked")
                     Tuple2<Object, Object> tuple2 = (Tuple2<Object, Object>) dataQuantum;
                     return String.valueOf(tuple2.field0) + '\t' + String.valueOf(tuple2.field1);
-                })
-                .saveAsTextFile(targetPath);
+                });
+        this.name(serializedRdd);
+        serializedRdd.saveAsTextFile(targetPath);
 
 
     }

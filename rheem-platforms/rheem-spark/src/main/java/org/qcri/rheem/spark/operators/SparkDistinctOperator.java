@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.DistinctOperator;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -46,6 +45,7 @@ public class SparkDistinctOperator<Type>
 
         final JavaRDD<Type> inputRdd = input.provideRdd();
         final JavaRDD<Type> outputRdd = inputRdd.distinct();
+        this.name(outputRdd);
         output.accept(outputRdd, sparkExecutor);
     }
 

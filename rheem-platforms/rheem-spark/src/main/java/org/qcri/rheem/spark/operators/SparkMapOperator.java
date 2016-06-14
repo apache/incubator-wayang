@@ -50,6 +50,7 @@ public class SparkMapOperator<InputType, OutputType>
         final JavaRDD<InputType> inputRdd = input.provideRdd();
         final Function<InputType, OutputType> mapFunctions = compiler.compile(this.functionDescriptor, this, inputs);
         final JavaRDD<OutputType> outputRdd = inputRdd.map(mapFunctions);
+        this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
     }

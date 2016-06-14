@@ -40,8 +40,9 @@ public class SparkGlobalMaterializedGroupOperator<Type>
         final RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
         final JavaRDD<Type> inputRdd = input.provideRdd();
-        final JavaRDD<Iterable<Type>> outputRdd = inputRdd
-                .coalesce(1)
+        final JavaRDD<Type> coalescedRdd = inputRdd.coalesce(1);
+        this.name(coalescedRdd);
+        final JavaRDD<Iterable<Type>> outputRdd = coalescedRdd
                 .mapPartitions(partitionIterator -> {
                     Collection<Type> dataUnitGroup = new ArrayList<>();
                     while (partitionIterator.hasNext()) {
@@ -49,6 +50,7 @@ public class SparkGlobalMaterializedGroupOperator<Type>
                     }
                     return Collections.singleton(dataUnitGroup);
                 });
+        this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
     }

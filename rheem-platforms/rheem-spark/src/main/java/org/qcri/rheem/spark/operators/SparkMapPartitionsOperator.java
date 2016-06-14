@@ -57,6 +57,7 @@ public class SparkMapPartitionsOperator<InputType, OutputType>
 
         final JavaRDD<InputType> inputRdd = input.provideRdd();
         final JavaRDD<OutputType> outputRdd = inputRdd.mapPartitions(mapFunction);
+        this.name(outputRdd);
         output.accept(outputRdd, sparkExecutor);
     }
 

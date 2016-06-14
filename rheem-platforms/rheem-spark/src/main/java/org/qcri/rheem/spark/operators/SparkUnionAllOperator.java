@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.UnionAllOperator;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -44,6 +43,7 @@ public class SparkUnionAllOperator<Type>
         final JavaRDD<Type> inputRdd0 = input0.provideRdd();
         final JavaRDD<Type> inputRdd1 = input1.provideRdd();
         final JavaRDD<Type> outputRdd = inputRdd0.union(inputRdd1);
+        this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
     }
