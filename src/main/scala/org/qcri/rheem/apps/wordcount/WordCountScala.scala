@@ -28,6 +28,7 @@ class WordCountScala(platforms: Platform*) {
       .filter(_.nonEmpty).withName("Filter empty words")
       .map(word => (word.toLowerCase, 1)).withName("To lower case, add counter")
       .reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 + c2._2)).withName("Add counters")
+      .withUdfJarsOf(classOf[WordCountScala])
       .collect()
   }
 
