@@ -16,6 +16,9 @@ import org.qcri.rheem.spark.platform.SparkPlatform;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Example Rheem App that does a word count -- the Hello World of Map/Reduce-like systems.
@@ -27,29 +30,35 @@ public class Main {
      *
      * @param inputFileUrl the file whose words should be counted
      */
-    public static RheemPlan createRheemPlan(String inputFileUrl) throws URISyntaxException, IOException {
+    public static RheemPlan createRheemPlan(String inputFileUrl, Collection<Tuple2<String, Integer>> collector) throws URISyntaxException, IOException {
         // Assignment mode: none.
 
         TextFileSource textFileSource = new TextFileSource(inputFileUrl);
+        textFileSource.setName("Load file");
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
+                new FlatMapDescriptor<>(line -> Arrays.asList(line.split("\\W+")),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(String.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefault(String.class)
         );
+        flatMapOperator.setName("Split words");
+
+        FilterOperator<String> filterOperator = new FilterOperator<>(str -> !str.isEmpty(), String.class);
+        filterOperator.setName("Filter empty words");
 
 
         // for each word transform it to lowercase and output a key-value pair (word, 1)
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
-                new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
+                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
                         DataUnitType.createBasic(String.class),
                         DataUnitType.createBasic(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class)
         );
+        mapOperator.setName("To lower case, add counter");
 
 
         // groupby the key (word) and add up the values (frequency)
@@ -64,14 +73,20 @@ public class Main {
                 DataUnitType.createBasicUnchecked(Tuple2.class)
         ), DataSetType.createDefaultUnchecked(Tuple2.class)
         );
+        reduceByOperator.setName("Add counters");
 
 
         // write results to a sink
-        LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createStdoutSink(DataSetType.createDefault(Tuple2.class));
+        LocalCallbackSink<Tuple2<String, Integer>> sink = LocalCallbackSink.createCollectingSink(
+                collector,
+                DataSetType.createDefaultUnchecked(Tuple2.class)
+        );
+        sink.setName("Collect result");
 
         // Build Rheem plan by connecting operators
         textFileSource.connectTo(0, flatMapOperator, 0);
-        flatMapOperator.connectTo(0, mapOperator, 0);
+        flatMapOperator.connectTo(0, filterOperator, 0);
+        filterOperator.connectTo(0, mapOperator, 0);
         mapOperator.connectTo(0, reduceByOperator, 0);
         reduceByOperator.connectTo(0, sink, 0);
 
@@ -85,7 +100,8 @@ public class Main {
                 System.exit(1);
             }
 
-            RheemPlan rheemPlan = createRheemPlan(args[1]);
+            List<Tuple2<String, Integer>> collector = new LinkedList<>();
+            RheemPlan rheemPlan = createRheemPlan(args[1], collector);
 
             RheemContext rheemContext = new RheemContext();
             for (String platform : args[0].split(",")) {
@@ -104,6 +120,10 @@ public class Main {
             }
 
             rheemContext.execute(rheemPlan, ReflectionUtils.getDeclaringJar(Main.class), ReflectionUtils.getDeclaringJar(JavaPlatform.class));
+
+            collector.sort((t1, t2) -> Integer.compare(t2.field1, t1.field1));
+            System.out.printf("Found %d words:\n", collector.size());
+            collector.forEach(wc -> System.out.printf("%dx %s\n", wc.field1, wc.field0));
         } catch (Exception e) {
             System.err.println("App failed.");
             e.printStackTrace();
