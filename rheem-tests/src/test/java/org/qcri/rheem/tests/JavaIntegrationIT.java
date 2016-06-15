@@ -186,6 +186,22 @@ public class JavaIntegrationIT {
     }
 
     @Test
+    public void testZipWithId() throws URISyntaxException {
+        // Build the RheemPlan.
+        List<Long> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.zipWithId(collector, 0, 10, 20, 30, 30);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+
+        Assert.assertEquals(1, collector.size());
+        Assert.assertEquals(Long.valueOf(5L), collector.get(0));
+    }
+
+    @Test
     public void testDiverseScenario1() throws URISyntaxException {
         // Build the RheemPlan.
         RheemPlan rheemPlan = RheemPlans.diverseScenario1(RheemPlans.FILE_SOME_LINES_TXT);

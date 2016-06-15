@@ -7,7 +7,9 @@ import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.postgres.PostgresPlatform;
 import org.qcri.rheem.postgres.compiler.FunctionCompiler;
 
@@ -288,6 +290,7 @@ public class RheemPlans {
 
         GlobalMaterializedGroupOperator<Integer> globalMaterializedGroupOperator =
                 new GlobalMaterializedGroupOperator<>(Integer.class);
+        globalMaterializedGroupOperator.setName("group");
 
         LocalCallbackSink<Iterable<Integer>> sink = LocalCallbackSink.createCollectingSink(
                 collector,
@@ -297,6 +300,45 @@ public class RheemPlans {
 
         source.connectTo(0, globalMaterializedGroupOperator, 0);
         globalMaterializedGroupOperator.connectTo(0, sink,0);
+
+        // Create the RheemPlan.
+        return new RheemPlan(sink);
+    }
+
+    /**
+     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link ZipWithIdOperator}.
+     * It will then push the results in the {@code collector}.
+     */
+    public static RheemPlan zipWithId(Collection<Long> collector, final int... values)
+            throws URISyntaxException {
+        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        source.setName("source");
+
+        ZipWithIdOperator<Integer> zipWithId = new ZipWithIdOperator<>(Integer.class);
+        zipWithId.setName("zipWithId");
+
+        MapOperator<Tuple2<Long, Integer>, Long> stripValue = new MapOperator<>(
+                tuple -> tuple.field0, ReflectionUtils.specify(Tuple2.class), Long.class
+        );
+        stripValue.setName("stripValue");
+
+        DistinctOperator<Long> distinctIds = new DistinctOperator<>(Long.class);
+        distinctIds.setName("distinctIds");
+
+        CountOperator<Long> count = new CountOperator<>(Long.class);
+        count.setName("count");
+
+        LocalCallbackSink<Long> sink = LocalCallbackSink.createCollectingSink(
+                collector,
+                DataSetType.createDefault(Long.class)
+        );
+        sink.setName("sink");
+
+        source.connectTo(0, zipWithId, 0);
+        zipWithId.connectTo(0, stripValue,0);
+        stripValue.connectTo(0, distinctIds,0);
+        distinctIds.connectTo(0, count,0);
+        count.connectTo(0, sink,0);
 
         // Create the RheemPlan.
         return new RheemPlan(sink);

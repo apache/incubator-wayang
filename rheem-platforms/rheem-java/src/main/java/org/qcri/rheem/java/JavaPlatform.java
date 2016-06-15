@@ -64,6 +64,7 @@ public class JavaPlatform extends Platform {
         this.mappings.add(new LoopToJavaLoopMapping());
         this.mappings.add(new DoWhileMapping());
         this.mappings.add(new SampleToJavaSampleMapping());
+        this.mappings.add(new ZipWithIdMapping());
     }
 
     @Override

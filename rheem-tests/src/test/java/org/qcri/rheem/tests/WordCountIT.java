@@ -77,7 +77,7 @@ public class WordCountIT {
         // groupby the key (word) and add up the values (frequency)
         ReduceByOperator<Tuple2<String, Integer>, String> reduceByOperator = new ReduceByOperator<>(
                 new TransformationDescriptor<>(pair -> pair.field0,
-                        DataUnitType.createBasic(Tuple2.class),
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
                         DataUnitType.createBasic(String.class)), new ReduceDescriptor<>(
                 ((a, b) -> {
                     a.field1 += b.field1;
@@ -144,7 +144,7 @@ public class WordCountIT {
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
                 new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
                         DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(Tuple2.class)
+                        DataUnitType.createBasicUnchecked(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class)
         );
@@ -153,7 +153,7 @@ public class WordCountIT {
         // groupby the key (word) and add up the values (frequency)
         ReduceByOperator<Tuple2<String, Integer>, String> reduceByOperator = new ReduceByOperator<>(
                 new TransformationDescriptor<>(pair -> pair.field0,
-                        DataUnitType.createBasic(Tuple2.class),
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
                         DataUnitType.createBasic(String.class)), new ReduceDescriptor<>(
                 ((a, b) -> {
                     a.field1 += b.field1;
@@ -223,7 +223,7 @@ public class WordCountIT {
                 DataSetType.createDefaultUnchecked(Tuple2.class),
                 new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
                         DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(Tuple2.class)
+                        DataUnitType.createBasicUnchecked(Tuple2.class)
                 ));
 
 
@@ -231,7 +231,7 @@ public class WordCountIT {
         ReduceByOperator<Tuple2<String, Integer>, String> reduceByOperator = new JavaReduceByOperator<>(
                 DataSetType.createDefaultUnchecked(Tuple2.class),
                 new TransformationDescriptor<>(pair -> pair.field0,
-                        DataUnitType.createBasic(Tuple2.class),
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
                         DataUnitType.createBasic(String.class)),
                 new ReduceDescriptor<>(
                         ((a, b) -> {
@@ -295,7 +295,7 @@ public class WordCountIT {
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
                 new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
                         DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(Tuple2.class)
+                        DataUnitType.createBasicUnchecked(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class)
         );
@@ -306,7 +306,7 @@ public class WordCountIT {
         // groupby the key (word) and add up the values (frequency)
         ReduceByOperator<Tuple2<String, Integer>, String> reduceByOperator = new ReduceByOperator<>(
                 new TransformationDescriptor<>(pair -> pair.field0,
-                        DataUnitType.createBasic(Tuple2.class),
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
                         DataUnitType.createBasic(String.class)), new ReduceDescriptor<>(
                 ((a, b) -> {
                     a.field1 += b.field1;
@@ -374,7 +374,7 @@ public class WordCountIT {
         MapOperator<String, Tuple2<String, Integer>> mapOperator = new MapOperator<>(
                 new TransformationDescriptor<>(word -> new Tuple2<String, Integer>(word.toLowerCase(), 1),
                         DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(Tuple2.class)
+                        DataUnitType.createBasicUnchecked(Tuple2.class)
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class)
         );
@@ -383,7 +383,7 @@ public class WordCountIT {
         // groupby the key (word) and add up the values (frequency)
         ReduceByOperator<Tuple2<String, Integer>, String> reduceByOperator = new ReduceByOperator<>(
                 new TransformationDescriptor<>(pair -> pair.field0,
-                        DataUnitType.createBasic(Tuple2.class),
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
                         DataUnitType.createBasic(String.class)), new ReduceDescriptor<>(
                 ((a, b) -> {
                     a.field1 += b.field1;
