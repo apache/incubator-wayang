@@ -251,6 +251,17 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   }
 
   /**
+    * Feeds this instance into a [[ZipWithIdOperator]].
+    *
+    * @return a new instance representing the [[ZipWithIdOperator]]'s output
+    */
+  def zipWithId: DataQuanta[org.qcri.rheem.basic.data.Tuple2[Long, Out]] = {
+    val zipWithIdOperator = new ZipWithIdOperator(dataSetType[Out])
+    this.connectTo(zipWithIdOperator, 0)
+    zipWithIdOperator
+  }
+
+  /**
     * Feeds this instance into a do-while loop (guarded by a [[DoWhileOperator]].
     *
     * @param udf         condition to be evaluated after each iteration
