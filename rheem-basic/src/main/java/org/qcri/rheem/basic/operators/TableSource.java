@@ -23,4 +23,6 @@ public class TableSource<T> extends UnarySource<T> {
         super(type, null);
         this.tableName = tableName;
     }
+
+    // TODO: Provide a cardinality estimator.
 }

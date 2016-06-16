@@ -1,9 +1,15 @@
 package org.qcri.rheem.basic.operators;
 
+import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.BinaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
+
+import java.util.Optional;
 
 
 /**
@@ -47,5 +53,19 @@ public class JoinOperator<InputType0, InputType1, Key>
 
     public TransformationDescriptor<InputType1, Key> getKeyDescriptor1() {
         return this.keyDescriptor1;
+    }
+
+
+    @Override
+    public Optional<CardinalityEstimator> getCardinalityEstimator(
+            final int outputIndex,
+            final Configuration configuration) {
+        Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
+        // The current idea: We assume, we have a foreign-key like join
+        // TODO: Find a better estimator.
+        return Optional.of(new DefaultCardinalityEstimator(
+                .5d, 2, this.isSupportingBroadcastInputs(),
+                inputCards -> 3 * Math.max(inputCards[0], inputCards[1])
+        ));
     }
 }

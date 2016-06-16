@@ -1,8 +1,14 @@
 package org.qcri.rheem.basic.operators;
 
+import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.BinaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
+
+import java.util.Optional;
 
 
 /**
@@ -18,7 +24,18 @@ public class CartesianOperator<InputType0, InputType1>
                 true);
     }
 
-    public CartesianOperator(DataSetType<InputType0> inputType0, DataSetType inputType1) {
+    public CartesianOperator(DataSetType<InputType0> inputType0, DataSetType<InputType1> inputType1) {
         super(inputType0, inputType1, DataSetType.createDefaultUnchecked(Tuple2.class), true);
+    }
+
+    @Override
+    public Optional<CardinalityEstimator> getCardinalityEstimator(
+            final int outputIndex,
+            final Configuration configuration) {
+        Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
+        return Optional.of(new DefaultCardinalityEstimator(
+                1d, 2, this.isSupportingBroadcastInputs(),
+                inputCards -> inputCards[0] * inputCards[1]
+        ));
     }
 }

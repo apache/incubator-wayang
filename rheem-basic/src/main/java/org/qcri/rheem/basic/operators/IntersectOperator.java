@@ -1,7 +1,13 @@
 package org.qcri.rheem.basic.operators;
 
+import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.BinaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
+
+import java.util.Optional;
 
 
 /**
@@ -17,4 +23,25 @@ public class IntersectOperator<Type> extends BinaryToUnaryOperator<Type, Type, T
         super(dataSetType, dataSetType, dataSetType, false);
     }
 
+    /**
+     * Provides the type of input and output datasets.
+     *
+     * @return the {@link DataSetType}
+     */
+    public DataSetType<Type> getType() {
+        return this.getInputType0();
+    }
+
+    @Override
+    public Optional<CardinalityEstimator> getCardinalityEstimator(
+            final int outputIndex,
+            final Configuration configuration) {
+        Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
+        // The current idea: We assume that one side is duplicate-free and included in the other.
+        // TODO: Find a better estimator.
+        return Optional.of(new DefaultCardinalityEstimator(
+                .5d, 2, this.isSupportingBroadcastInputs(),
+                inputCards -> Math.min(inputCards[0], inputCards[1])
+        ));
+    }
 }
