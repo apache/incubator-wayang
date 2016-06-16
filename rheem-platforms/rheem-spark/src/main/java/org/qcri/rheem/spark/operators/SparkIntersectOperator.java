@@ -47,7 +47,7 @@ public class SparkIntersectOperator<Type> extends IntersectOperator<Type> implem
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkIntersectOperator<>(this.getInputType0());
+        return new SparkIntersectOperator<>(this.getType());
     }
 
     @Override
