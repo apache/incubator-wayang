@@ -84,10 +84,10 @@ public class RheemCollections {
     }
 
     /**
-     * Return any element from the {@code collection}.
+     * Return any element from the {@code iterable}.
      */
-    public static <T> T getAny(Collection<T> collection) {
-        return collection.iterator().next();
+    public static <T> T getAny(Iterable<T> iterable) {
+        return iterable.iterator().next();
     }
 
     /**
