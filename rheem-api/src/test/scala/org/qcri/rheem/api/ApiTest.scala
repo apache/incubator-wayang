@@ -278,4 +278,49 @@ class ApiTest {
     val expectedValues = Set(5)
     Assert.assertEquals(expectedValues, result.toSet)
   }
+
+  @Test
+  def testIntersect() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    val inputValues1 = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
+    val inputValues2 = Array(0, 2, 3, 3, 4, 5, 7, 8, 9, 11)
+
+    val builder = new PlanBuilder(rheem)
+    val dataQuanta1 = builder.readCollection(inputValues1)
+    val dataQuanta2 = builder.readCollection(inputValues2)
+    val result = dataQuanta1
+      .intersect(dataQuanta2)
+      .collect()
+
+    val expectedValues = Set(2, 3, 4, 5, 7, 8, 9)
+    Assert.assertEquals(expectedValues, result.toSet)
+  }
+
+  @Test
+  def testZipWithId() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    val inputValues = for (i <- 0 until 100; j <- 0 until 42) yield i
+
+    val result = rheem
+      .readCollection(inputValues)
+      .zipWithId
+      .groupByKey(_.field1)
+      .map { group =>
+        import scala.collection.JavaConversions._
+        (group.map(_.field0).toSet.size, 1)
+      }
+      .reduceByKey(_._1, (t1, t2) => (t1._1, t1._2 + t2._2))
+      .collect()
+
+    val expectedValues = Set((42, 100))
+    Assert.assertEquals(expectedValues, result.toSet)
+  }
 }

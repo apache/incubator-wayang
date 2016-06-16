@@ -200,6 +200,19 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   }
 
   /**
+    * Feed this instance and a further instance into a [[IntersectOperator]].
+    *
+    * @param that the other instance to intersect with
+    * @return a new instance representing the [[IntersectOperator]]'s output
+    */
+  def intersect(that: DataQuanta[Out]): DataQuanta[Out] = {
+    val intersectOperator = new IntersectOperator(dataSetType[Out])
+    this.connectTo(intersectOperator, 0)
+    that.connectTo(intersectOperator, 1)
+    intersectOperator
+  }
+
+  /**
     * Feeds this and a further instance into a [[JoinOperator]].
     *
     * @param thisKeyUdf UDF to extract keys from data quanta in this instance
