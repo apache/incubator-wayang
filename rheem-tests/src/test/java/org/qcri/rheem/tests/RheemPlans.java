@@ -1,6 +1,5 @@
 package org.qcri.rheem.tests;
 
-import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.function.*;
@@ -9,14 +8,11 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
-import org.qcri.rheem.core.util.Tuple;
-import org.qcri.rheem.postgres.PostgresPlatform;
 import org.qcri.rheem.postgres.compiler.FunctionCompiler;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -339,6 +335,51 @@ public class RheemPlans {
         stripValue.connectTo(0, distinctIds,0);
         distinctIds.connectTo(0, count,0);
         count.connectTo(0, sink,0);
+
+        // Create the RheemPlan.
+        return new RheemPlan(sink);
+    }
+
+
+
+    /**
+     * Creates a {@link RheemPlan} with a {@link CollectionSource}. The data quanta are separated into negative and
+     * non-negative. Then, their squares are intersected using the {@link IntersectOperator}. The result is
+     * pushed to the {@code collector}.
+     */
+    public static RheemPlan intersectSquares(Collection<Integer> collector, final int... values)
+            throws URISyntaxException {
+
+        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        source.setName("source");
+
+        FilterOperator<Integer> filterNegative = new FilterOperator<>(i -> i < 0, Integer.class);
+        filterNegative.setName("filterNegative");
+        source.connectTo(0, filterNegative, 0);
+
+        MapOperator<Integer, Integer> squareNegative = new MapOperator<>(i -> i * i, Integer.class, Integer.class);
+        squareNegative.setName("squareNegative");
+        filterNegative.connectTo(0, squareNegative, 0);
+
+        FilterOperator<Integer> filterPositive = new FilterOperator<>(i -> i >= 0, Integer.class);
+        filterPositive.setName("filterPositive");
+        source.connectTo(0, filterPositive, 0);
+
+        MapOperator<Integer, Integer> squarePositive = new MapOperator<>(i -> i * i, Integer.class, Integer.class);
+        squarePositive.setName("squarePositive");
+        filterPositive.connectTo(0, squarePositive, 0);
+
+        IntersectOperator<Integer> intersect = new IntersectOperator<>(Integer.class);
+        intersect.setName("intersect");
+        squarePositive.connectTo(0, intersect, 1);
+        squareNegative.connectTo(0, intersect, 0);
+
+        LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(
+                collector,
+                Integer.class
+        );
+        sink.setName("sink");
+        intersect.connectTo(0, sink, 0);
 
         // Create the RheemPlan.
         return new RheemPlan(sink);

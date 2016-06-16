@@ -182,6 +182,22 @@ public class FullIntegrationIT {
     }
 
     @Test
+    public void testIntersect() throws URISyntaxException {
+        // Build the RheemPlan.
+        List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+
+        Assert.assertEquals(RheemCollections.asSet(1, 4, 9), RheemCollections.asSet(collector));
+    }
+
+    @Test
     public void testZipWithId() throws URISyntaxException {
         // Build the RheemPlan.
         List<Long> collector = new LinkedList<>();
