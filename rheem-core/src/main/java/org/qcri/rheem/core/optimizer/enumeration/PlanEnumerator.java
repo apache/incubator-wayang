@@ -666,8 +666,12 @@ public class PlanEnumerator {
         );
     }
 
+    /**
+     * Checks whether this instance is enumerating a top-level plan and is not a recursively invoked enumeration.
+     * @return
+     */
     public boolean isTopLevel() {
-        return this.enumeratedAlternative == null;
+        return this.optimizationContext.getParent() == null && this.enumeratedAlternative == null;
     }
 
     public Configuration getConfiguration() {
