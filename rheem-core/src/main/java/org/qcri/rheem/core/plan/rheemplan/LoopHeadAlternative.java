@@ -21,7 +21,7 @@ public class LoopHeadAlternative extends OperatorAlternative implements LoopHead
     private Collection<InputSlot<?>> loopBodyInputs, initializationInputs;
 
     /**
-     * Creates a new instance..
+     * Creates a new instance.
      *
      * @param loopHead original {@link LoopHeadOperator} to be wrapped
      */

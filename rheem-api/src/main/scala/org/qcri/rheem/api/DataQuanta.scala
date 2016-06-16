@@ -137,6 +137,22 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   }
 
   /**
+    * Feed this instance into a [[MaterializedGroupByOperator]].
+    *
+    * @param keyUdf UDF to extract the grouping key from the data quanta
+    * @return a new instance representing the [[MaterializedGroupByOperator]]'s output
+    */
+  def groupByKey[Key: ClassTag](keyUdf: Out => Key): DataQuanta[java.lang.Iterable[Out]] = {
+    val groupByOperator = new MaterializedGroupByOperator(
+      new TransformationDescriptor(toSerializableFunction(keyUdf), basicDataUnitType[Out], basicDataUnitType[Key]),
+      dataSetType[Out],
+      groupedDataSetType[Out]
+    )
+    this.connectTo(groupByOperator, 0)
+    groupByOperator
+  }
+
+  /**
     * Feed this instance into a [[GlobalReduceOperator]].
     *
     * @param udf aggregation UDF for the [[GlobalReduceOperator]]
@@ -160,6 +176,17 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   }
 
   /**
+    * Feed this instance into a [[GlobalMaterializedGroupOperator]].
+    *
+    * @return a new instance representing the [[GlobalMaterializedGroupOperator]]'s output
+    */
+  def group(): DataQuanta[java.lang.Iterable[Out]] = {
+    val groupOperator = new GlobalMaterializedGroupOperator(dataSetType[Out], groupedDataSetType[Out])
+    this.connectTo(groupOperator, 0)
+    groupOperator
+  }
+
+  /**
     * Feed this instance and a further instance into a [[UnionAllOperator]].
     *
     * @param that the other instance to union with
@@ -170,6 +197,19 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     this.connectTo(unionAllOperator, 0)
     that.connectTo(unionAllOperator, 1)
     unionAllOperator
+  }
+
+  /**
+    * Feed this instance and a further instance into a [[IntersectOperator]].
+    *
+    * @param that the other instance to intersect with
+    * @return a new instance representing the [[IntersectOperator]]'s output
+    */
+  def intersect(that: DataQuanta[Out]): DataQuanta[Out] = {
+    val intersectOperator = new IntersectOperator(dataSetType[Out])
+    this.connectTo(intersectOperator, 0)
+    that.connectTo(intersectOperator, 1)
+    intersectOperator
   }
 
   /**
@@ -224,6 +264,41 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   }
 
   /**
+    * Feeds this instance into a [[ZipWithIdOperator]].
+    *
+    * @return a new instance representing the [[ZipWithIdOperator]]'s output
+    */
+  def zipWithId: DataQuanta[org.qcri.rheem.basic.data.Tuple2[Long, Out]] = {
+    val zipWithIdOperator = new ZipWithIdOperator(dataSetType[Out])
+    this.connectTo(zipWithIdOperator, 0)
+    zipWithIdOperator
+  }
+
+  /**
+    * Feeds this instance into a [[DistinctOperator]].
+    *
+    * @return a new instance representing the [[DistinctOperator]]'s output
+    */
+  def distinct: DataQuanta[Out] = {
+    val distinctOperator = new DistinctOperator(dataSetType[Out])
+    this.connectTo(distinctOperator, 0)
+    distinctOperator
+  }
+
+  /**
+    * Feeds this instance into a [[CountOperator]].
+    *
+    * @return a new instance representing the [[CountOperator]]'s output
+    */
+  def count: DataQuanta[Long] = {
+    val countOperator = new CountOperator(dataSetType[Out])
+    this.connectTo(countOperator, 0)
+    countOperator
+  }
+
+
+
+  /**
     * Feeds this instance into a do-while loop (guarded by a [[DoWhileOperator]].
     *
     * @param udf         condition to be evaluated after each iteration
@@ -231,7 +306,8 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @return a new instance representing the final output of the [[DoWhileOperator]]
     */
   def doWhile[ConvOut: ClassTag](udf: Iterable[ConvOut] => Boolean,
-                                 bodyBuilder: DataQuanta[Out] => (DataQuanta[Out], DataQuanta[ConvOut])) =
+                                 bodyBuilder: DataQuanta[Out] => (DataQuanta[Out], DataQuanta[ConvOut]),
+                                 numExpectedIterations: Int = 20) =
     doWhileJava(
       toSerializablePredicate((in: JavaCollection[ConvOut]) => udf(JavaConversions.collectionAsScalaIterable(in))),
       new JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]] {
@@ -239,7 +315,8 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
           val result = bodyBuilder(t)
           new RheemTuple(result._1, result._2)
         }
-      }
+      },
+      numExpectedIterations
     )
 
   /**
@@ -251,13 +328,15 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     */
   def doWhileJava[ConvOut: ClassTag](
                                       udf: SerializablePredicate[JavaCollection[ConvOut]],
-                                      bodyBuilder: JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]]
+                                      bodyBuilder: JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]],
+                                      numExpectedIterations: Int = 20
                                     ) = {
     // Create the DoWhileOperator.
     val doWhileOperator = new DoWhileOperator(
       dataSetType[Out],
       dataSetType[ConvOut],
-      new PredicateDescriptor(udf, basicDataUnitType[java.util.Collection[ConvOut]])
+      new PredicateDescriptor(udf, basicDataUnitType[java.util.Collection[ConvOut]]),
+      numExpectedIterations
     )
     this.connectTo(doWhileOperator, DoWhileOperator.INITIAL_INPUT_INDEX)
 
@@ -295,8 +374,12 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   def repeatJava(n: Int, bodyBuilder: JavaFunction[DataQuanta[Out], DataQuanta[Out]]) = {
     // Create the DoWhileOperator.
     val loopOperator = new LoopOperator(
-      dataSetType[Out], dataSetType[Int], new PredicateDescriptor(
-        toSerializablePredicate[JavaCollection[Int]](i => RheemCollections.getSingle(i) >= n), basicDataUnitType[JavaCollection[Int]])
+      dataSetType[Out],
+      dataSetType[Int],
+      new PredicateDescriptor(
+        toSerializablePredicate[JavaCollection[Int]](i => RheemCollections.getSingle(i) >= n), basicDataUnitType[JavaCollection[Int]]
+      ),
+      n
     )
     this.connectTo(loopOperator, LoopOperator.INITIAL_INPUT_INDEX)
     new DataQuanta(CollectionSource.singleton[Int](0, classOf[Int])).connectTo(loopOperator, LoopOperator.INITIAL_CONVERGENCE_INPUT_INDEX)
@@ -443,7 +526,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @param classes whose JAR files should be transferred
     * @return this instance
     */
-  def withUdfJarsOf(classes: Class[_]*)=
+  def withUdfJarsOf(classes: Class[_]*) =
     withUdfJars(classes.map(ReflectionUtils.getDeclaringJar).filterNot(_ == null): _*)
 
 

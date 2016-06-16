@@ -1,10 +1,10 @@
 package org.qcri.rheem.spark.operators;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -47,9 +47,10 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
         final JavaRDD<Type> inputRdd = input.provideRdd();
         final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor, this, inputs);
         final Function<scala.Tuple2<KeyType, Iterable<Type>>, Iterable<Type>> projector = new GroupProjector<>();
-        final JavaRDD<Iterable<Type>> outputRdd = inputRdd
-                .groupBy(keyExtractor)
-                .map(projector);
+        final JavaPairRDD<KeyType, Iterable<Type>> groupedKeyRdd = inputRdd.groupBy(keyExtractor);
+        this.name(groupedKeyRdd);
+        final JavaRDD<Iterable<Type>> outputRdd = groupedKeyRdd.map(projector);
+        this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
     }

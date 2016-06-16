@@ -28,9 +28,12 @@ package object api {
     DataUnitType.createGrouped(cls)
   }
 
-  implicit def dataSetType[T](implicit classTag: ClassTag[T]): DataSetType[T] = {
+  implicit def dataSetType[T](implicit classTag: ClassTag[T]): DataSetType[T] =
     DataSetType.createDefault(basicDataUnitType[T])
-  }
+
+  implicit def groupedDataSetType[T](implicit classTag: ClassTag[T]): DataSetType[java.lang.Iterable[T]] =
+    DataSetType.createGrouped(basicDataUnitType[T])
+
 
   implicit def toSerializableFunction[In, Out](scalaFunc: In => Out): SerializableFunction[In, Out] =
     new SerializableFunction[In, Out] {

@@ -165,6 +165,56 @@ public class FullIntegrationIT {
     }
 
     @Test
+    public void testGlobalMaterializedGroup() throws URISyntaxException {
+        // Build the RheemPlan.
+        List<Iterable<Integer>> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.globalMaterializedGroup(collector, 1, 2, 3);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+
+        Assert.assertEquals(1, collector.size());
+        Assert.assertEquals(RheemCollections.asSet(1, 2, 3), RheemCollections.asCollection(collector.get(0), HashSet::new));
+    }
+
+    @Test
+    public void testIntersect() throws URISyntaxException {
+        // Build the RheemPlan.
+        List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(SparkPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+
+        Assert.assertEquals(RheemCollections.asSet(1, 4, 9), RheemCollections.asSet(collector));
+    }
+
+    @Test
+    public void testZipWithId() throws URISyntaxException {
+        // Build the RheemPlan.
+        List<Long> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.zipWithId(collector, 0, 10, 20, 30, 30);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext();
+        rheemContext.register(SparkPlatform.getInstance());
+        rheemContext.register(JavaPlatform.getInstance());
+
+        rheemContext.execute(rheemPlan);
+
+        Assert.assertEquals(1, collector.size());
+        Assert.assertEquals(Long.valueOf(5L), collector.get(0));
+    }
+
+    @Test
     public void testDiverseScenario1() throws URISyntaxException {
         // Build the RheemPlan.
         RheemPlan rheemPlan = RheemPlans.diverseScenario1(RheemPlans.FILE_SOME_LINES_TXT);

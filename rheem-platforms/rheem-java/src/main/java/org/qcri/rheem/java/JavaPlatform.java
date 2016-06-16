@@ -53,16 +53,20 @@ public class JavaPlatform extends Platform {
         this.mappings.add(new JavaLocalCallbackSinkMapping());
         this.mappings.add(new JavaGlobalReduceOperatorMapping());
         this.mappings.add(new JavaCollocateByOperatorMapping());
+        this.mappings.add(new GlobalMaterializedGroupToJavaGlobalMaterializedGroupMapping());
         this.mappings.add(new FlatMapToJavaFlatMapMapping());
         this.mappings.add(new CountToJavaCountMapping());
         this.mappings.add(new DistinctToJavaDistinctMapping());
         this.mappings.add(new SortToJavaSortMapping());
         this.mappings.add(new FilterToJavaFilterMapping());
         this.mappings.add(new UnionAllToJavaUnionAllMapping());
+        this.mappings.add(new IntersectToJavaIntersectMapping());
         this.mappings.add(new CartesianToJavaCartesianMapping());
+        this.mappings.add(new JoinToJavaJoinMapping());
         this.mappings.add(new LoopToJavaLoopMapping());
         this.mappings.add(new DoWhileMapping());
         this.mappings.add(new SampleToJavaSampleMapping());
+        this.mappings.add(new ZipWithIdMapping());
     }
 
     @Override

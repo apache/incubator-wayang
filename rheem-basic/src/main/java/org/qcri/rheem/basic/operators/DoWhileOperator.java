@@ -30,6 +30,8 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
      */
     protected final PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor;
 
+    private int numExpectedIterations;
+
     private State state;
 
     @Override
@@ -44,17 +46,24 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
 
     // TODO: Add convenience constructors as in the other operators.
 
-    public DoWhileOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                           PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate) {
-        this(inputType, convergenceType,
-                new PredicateDescriptor<>(criterionPredicate, (BasicDataUnitType) convergenceType.getDataUnitType()));
+    public DoWhileOperator(DataSetType<InputType> inputType,
+                           DataSetType<ConvergenceType> convergenceType,
+                           PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
+                           int numExpectedIterations) {
+        this(inputType,
+                convergenceType,
+                new PredicateDescriptor<>(criterionPredicate, (BasicDataUnitType) convergenceType.getDataUnitType()),
+                numExpectedIterations
+        );
     }
 
     /**
      * Creates a new instance.
      */
-    public DoWhileOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
-                           PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor) {
+    public DoWhileOperator(DataSetType<InputType> inputType,
+                           DataSetType<ConvergenceType> convergenceType,
+                           PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
+                           int numExpectedIterations) {
         super(3, 2, true, null);
         this.criterionDescriptor = criterionDescriptor;
         this.inputSlots[INITIAL_INPUT_INDEX] = new InputSlot<>("initialInput", this, inputType);
@@ -64,6 +73,8 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
         this.outputSlots[ITERATION_OUTPUT_INDEX] = new OutputSlot<>("iterationOutput", this, inputType);
         this.outputSlots[FINAL_OUTPUT_INDEX] = new OutputSlot<>("output", this, inputType);
         this.state = State.NOT_STARTED;
+
+        this.numExpectedIterations = numExpectedIterations;
     }
 
 
@@ -153,9 +164,13 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
         return Collections.singletonList(this.getInput(INITIAL_INPUT_INDEX));
     }
 
+    public void setNumExpectedIterations(int numExpectedIterations) {
+        this.numExpectedIterations = numExpectedIterations;
+    }
+
     @Override
     public int getNumExpectedIterations() {
-        return 100;
+        return this.numExpectedIterations;
     }
 
 }

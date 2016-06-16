@@ -64,4 +64,8 @@ public class ReflectionUtils {
         return Thread.currentThread().getContextClassLoader().getResource(resourceName);
     }
 
+    public static <T> Class<T> specify(Class<? super T> baseClass) {
+        return (Class<T>) baseClass;
+    }
+
 }

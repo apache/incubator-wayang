@@ -42,6 +42,9 @@ public class SparkPlatform extends Platform {
 
     private static final String[] OPTIONAL_SPARK_PROPERTIES = {
             "spark.executor.memory",
+            "spark.executor.cores",
+            "spark.executor.instances",
+            "spark.dynamicAllocation.enabled",
             "spark.executor.extraJavaOptions",
             "spark.eventLog.enabled",
             "spark.eventLog.dir",
@@ -147,6 +150,7 @@ public class SparkPlatform extends Platform {
         this.mappings.add(new DistinctToSparkDistinctMapping());
         this.mappings.add(new FilterToSparkFilterMapping());
         this.mappings.add(new GlobalReduceMapping());
+        this.mappings.add(new GlobalMaterializedGroupToSparkGlobalMaterializedGroupMapping());
         this.mappings.add(new LocalCallbackSinkMapping());
         this.mappings.add(new FlatMapToSparkFlatMapMapping());
         this.mappings.add(new MapOperatorToSparkMapOperatorMapping());
@@ -156,8 +160,11 @@ public class SparkPlatform extends Platform {
         this.mappings.add(new SortToSparkSortMapping());
         this.mappings.add(new TextFileSourceMapping());
         this.mappings.add(new UnionAllToSparkUnionAllMapping());
+        this.mappings.add(new IntersectToSparkIntersectMapping());
+        this.mappings.add(new JoinToSparkJoinMapping());
         this.mappings.add(new LoopToSparkLoopMapping());
         this.mappings.add(new DoWhileMapping());
+        this.mappings.add(new ZipWithIdToSparkZipWithIdMapping());
         this.mappings.add(new SampleToSparkSampleMapping());
     }
 

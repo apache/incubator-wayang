@@ -351,6 +351,9 @@ public class PlanEnumerator {
             PlanEnumeration operatorEnumeration;
             if (operator.isAlternative()) {
                 operatorEnumeration = this.enumerateAlternative((OperatorAlternative) operator, optimizationContext);
+                if (operatorEnumeration.getPlanImplementations().isEmpty()) {
+                    this.logger.warn("No implementations enumerated for {}.", operator);
+                }
             } else if (operator.isLoopSubplan()) {
                 operatorEnumeration = this.enumerateLoop((LoopSubplan) operator, optimizationContext);
             } else {
@@ -368,6 +371,9 @@ public class PlanEnumerator {
                         Collections.singletonMap(operator.getInput(0), operatorEnumeration),
                         optimizationContext
                 );
+                if (branchEnumeration.getPlanImplementations().isEmpty()) {
+                    this.logger.warn("No implementations enumerated after concatenating {}.", output);
+                }
                 this.prune(branchEnumeration);
             }
 
@@ -452,11 +458,14 @@ public class PlanEnumerator {
                 concatenationActivator.getOptimizationContext()
         );
 
-        if (concatenatedEnumeration.getPlanImplementations().isEmpty() && this.isTopLevel()) {
-            throw new RheemException(String.format("No implementations that concatenate %s with %s.",
-                    concatenationActivator.outputSlot,
-                    concatenationActivator.outputSlot.getOccupiedSlots()
-            ));
+        if (concatenatedEnumeration.getPlanImplementations().isEmpty()) {
+            this.logger.warn("No implementations enumerated after concatenating {}.", concatenationActivator.outputSlot);
+            if (this.isTopLevel()) {
+                throw new RheemException(String.format("No implementations that concatenate %s with %s.",
+                        concatenationActivator.outputSlot,
+                        concatenationActivator.outputSlot.getOccupiedSlots()
+                ));
+            }
         }
 
         this.prune(concatenatedEnumeration);
@@ -657,8 +666,12 @@ public class PlanEnumerator {
         );
     }
 
+    /**
+     * Checks whether this instance is enumerating a top-level plan and is not a recursively invoked enumeration.
+     * @return
+     */
     public boolean isTopLevel() {
-        return this.enumeratedAlternative == null;
+        return this.optimizationContext.getParent() == null && this.enumeratedAlternative == null;
     }
 
     public Configuration getConfiguration() {

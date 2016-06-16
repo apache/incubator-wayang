@@ -283,7 +283,7 @@ public class PlanImplementation {
                 }
         );
         final Junction junction = optimizationContext.getChannelConversionGraph().findMinimumCostJunction(
-                execOutputWithContext.getField0(), existingChannel, execInputs, this.optimizationContext // What about the given optimazationContext?
+                execOutputWithContext.getField0(), existingChannel, execInputs, execOutputWithContext.getField1().getOptimizationContext()
         );
         if (junction == null) {
             return null;

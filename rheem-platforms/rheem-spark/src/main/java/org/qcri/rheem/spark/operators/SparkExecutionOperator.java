@@ -1,5 +1,7 @@
 package org.qcri.rheem.spark.operators;
 
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
@@ -27,5 +29,33 @@ public interface SparkExecutionOperator extends ExecutionOperator {
      * @param sparkExecutor {@link SparkExecutor} that executes this instance
      */
     void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor);
+
+    /**
+     * Utility method to name an RDD according to this instance's name.
+     *
+     * @param rdd that should be renamed
+     * @see #getName()
+     */
+    default void name(JavaRDD<?> rdd) {
+        if (this.getName() != null) {
+            rdd.setName(this.getName());
+        } else {
+            rdd.setName(this.toString());
+        }
+    }
+
+    /**
+     * Utility method to name an RDD according to this instance's name.
+     *
+     * @param rdd that should be renamed
+     * @see #getName()
+     */
+    default void name(JavaPairRDD<?, ?> rdd) {
+        if (this.getName() != null) {
+            rdd.setName(this.getName());
+        } else {
+            rdd.setName(this.toString());
+        }
+    }
 
 }

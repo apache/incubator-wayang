@@ -92,7 +92,7 @@ public class DataSetType<T> {
     }
 
     public boolean isCompatibleTo(DataSetType otherDataSetType) {
-        return this.dataUnitType.equals(otherDataSetType.dataUnitType);
+        return this.dataUnitType.toBasicDataUnitType().equals(otherDataSetType.dataUnitType.toBasicDataUnitType());
     }
 
     @Override

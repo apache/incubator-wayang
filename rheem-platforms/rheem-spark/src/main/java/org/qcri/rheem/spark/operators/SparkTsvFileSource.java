@@ -52,7 +52,9 @@ public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecut
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
         final String actualInputPath = FileSystems.findActualSingleInputPath(sourcePath);
-        final JavaRDD<T> dataQuantaRdd = sparkExecutor.sc.textFile(actualInputPath)
+        final JavaRDD<String> linesRdd = sparkExecutor.sc.textFile(actualInputPath);
+        this.name(linesRdd);
+        final JavaRDD<T> dataQuantaRdd = linesRdd
                 .map(line -> {
                     // TODO: Important. Enrich type informations to create the correct parser!
                     int tabPos = line.indexOf('\t');
@@ -60,6 +62,7 @@ public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecut
                             Integer.valueOf(line.substring(0, tabPos)),
                             Float.valueOf(line.substring(tabPos + 1)));
                 });
+        this.name(dataQuantaRdd);
 
         output.accept(dataQuantaRdd, sparkExecutor);
     }

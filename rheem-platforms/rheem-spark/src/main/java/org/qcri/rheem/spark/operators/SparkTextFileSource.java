@@ -1,5 +1,6 @@
 package org.qcri.rheem.spark.operators;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
@@ -34,7 +35,9 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
         assert outputs.length == this.getNumOutputs();
 
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
-        output.accept(sparkExecutor.sc.textFile(this.getInputUrl()), sparkExecutor);
+        final JavaRDD<String> rdd = sparkExecutor.sc.textFile(this.getInputUrl());
+        this.name(rdd);
+        output.accept(rdd, sparkExecutor);
     }
 
     @Override

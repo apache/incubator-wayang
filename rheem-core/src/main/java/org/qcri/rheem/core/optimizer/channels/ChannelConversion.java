@@ -41,10 +41,11 @@ public abstract class ChannelConversion {
      * Estimate the required time to carry out the conversion for a given {@code cardinality}.
      *
      * @param cardinality   the {@link CardinalityEstimate} of data to be converted
+     * @param numExecutions expected number of executions of this instance
      * @param configuration provides estimators
      * @return the {@link TimeEstimate}
      */
-    public abstract TimeEstimate estimateConversionTime(CardinalityEstimate cardinality, Configuration configuration);
+    public abstract TimeEstimate estimateConversionTime(CardinalityEstimate cardinality, int numExecutions, Configuration configuration);
 
     @Override
     public String toString() {

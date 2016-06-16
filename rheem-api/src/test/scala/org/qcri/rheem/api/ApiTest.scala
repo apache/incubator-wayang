@@ -80,13 +80,13 @@ class ApiTest {
     val outputValues = rheem
       .readCollection(inputValues).withName("Load input values")
       .customOperator[Int](new JavaMapOperator(
-        dataSetType[Int],
-        dataSetType[Int],
-        new TransformationDescriptor(
-          toSerializableFunction[Int, Int](_ + 2),
-          basicDataUnitType[Int], basicDataUnitType[Int]
-        )
-      )).withName("Add 2")
+      dataSetType[Int],
+      dataSetType[Int],
+      new TransformationDescriptor(
+        toSerializableFunction[Int, Int](_ + 2),
+        basicDataUnitType[Int], basicDataUnitType[Int]
+      )
+    )).withName("Add 2")
       .collect()
 
     // Check the outcome.
@@ -227,4 +227,122 @@ class ApiTest {
     Assert.assertEquals(expectedValues, values)
   }
 
+  @Test
+  def testGroupBy() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
+
+    val result = rheem
+      .readCollection(inputValues)
+      .groupByKey(_ % 2)
+      .map {
+        group =>
+          import scala.collection.JavaConversions._
+          val buffer = group.toBuffer
+          buffer.sortBy(identity)
+          if (buffer.size % 2 == 0) (buffer(buffer.size / 2 - 1) + buffer(buffer.size / 2)) / 2
+          else buffer(buffer.size / 2)
+      }
+      .collect()
+
+    val expectedValues = Set(5, 6)
+    Assert.assertEquals(expectedValues, result.toSet)
+  }
+
+  @Test
+  def testGroup() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
+
+    val result = rheem
+      .readCollection(inputValues)
+      .group()
+      .map {
+        group =>
+          import scala.collection.JavaConversions._
+          val buffer = group.toBuffer
+          buffer.sortBy(int => int)
+          if (buffer.size % 2 == 0) (buffer(buffer.size / 2) + buffer(buffer.size / 2 + 1)) / 2
+          else buffer(buffer.size / 2)
+      }
+      .collect()
+
+    val expectedValues = Set(5)
+    Assert.assertEquals(expectedValues, result.toSet)
+  }
+
+  @Test
+  def testJoin() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    val inputValues1 = Array(("Water", 0), ("Tonic", 5), ("Juice", 10))
+    val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
+
+    val builder = new PlanBuilder(rheem)
+    val dataQuanta1 = builder.readCollection(inputValues1)
+    val dataQuanta2 = builder.readCollection(inputValues2)
+    val result = dataQuanta1
+      .join[(String, String), String](_._1, dataQuanta2, _._2)
+      .map(joinTuple => (joinTuple.field1._1, joinTuple.field0._2))
+      .collect()
+
+    val expectedValues = Set(("Apple juice", 10), ("Tap water", 0), ("Orange juice", 10))
+    Assert.assertEquals(expectedValues, result.toSet)
+  }
+
+  @Test
+  def testIntersect() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    val inputValues1 = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
+    val inputValues2 = Array(0, 2, 3, 3, 4, 5, 7, 8, 9, 11)
+
+    val builder = new PlanBuilder(rheem)
+    val dataQuanta1 = builder.readCollection(inputValues1)
+    val dataQuanta2 = builder.readCollection(inputValues2)
+    val result = dataQuanta1
+      .intersect(dataQuanta2)
+      .collect()
+
+    val expectedValues = Set(2, 3, 4, 5, 7, 8, 9)
+    Assert.assertEquals(expectedValues, result.toSet)
+  }
+
+  @Test
+  def testZipWithId() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    val inputValues = for (i <- 0 until 100; j <- 0 until 42) yield i
+
+    val result = rheem
+      .readCollection(inputValues)
+      .zipWithId
+      .groupByKey(_.field1)
+      .map { group =>
+        import scala.collection.JavaConversions._
+        (group.map(_.field0).toSet.size, 1)
+      }
+      .reduceByKey(_._1, (t1, t2) => (t1._1, t1._2 + t2._2))
+      .collect()
+
+    val expectedValues = Set((42, 100))
+    Assert.assertEquals(expectedValues, result.toSet)
+  }
 }

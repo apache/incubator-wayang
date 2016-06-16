@@ -356,6 +356,11 @@ public class OptimizationContext {
         private TimeEstimate timeEstimate;
 
         /**
+         * Reflects the number of executions of the {@link #operator}. This, e.g., relevant in {@link LoopContext}s.
+         */
+        private int numExecutions = 1;
+
+        /**
          * Creates a new instance.
          */
         private OperatorContext(Operator operator) {
@@ -504,6 +509,7 @@ public class OptimizationContext {
                     that.timeEstimate == null ?
                             this.timeEstimate :
                             this.timeEstimate.plus(that.timeEstimate);
+            this.numExecutions++;
         }
 
         private void addTo(CardinalityEstimate[] aggregate, CardinalityEstimate[] delta) {
@@ -533,6 +539,14 @@ public class OptimizationContext {
         @Override
         public String toString() {
             return String.format("%s[%s]", this.getClass().getSimpleName(), this.getOperator());
+        }
+
+        public void setNumExecutions(int numExecutions) {
+            this.numExecutions = numExecutions;
+        }
+
+        public int getNumExecutions() {
+            return this.numExecutions;
         }
     }
 
@@ -624,6 +638,7 @@ public class OptimizationContext {
             OperatorContext aggregateOperatorCtx = aggregateCtx.getOperatorContext(operator);
             if (aggregateOperatorCtx == null) {
                 aggregateOperatorCtx = aggregateCtx.addOneTimeOperator(operator);
+                aggregateOperatorCtx.setNumExecutions(0);
             }
             aggregateOperatorCtx.increaseBy(operatorCtx);
         }

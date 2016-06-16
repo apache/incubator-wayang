@@ -20,6 +20,11 @@ public class BasicDataUnitType<T> extends DataUnitType<T> {
     }
 
     @Override
+    public BasicDataUnitType<T> toBasicDataUnitType() {
+        return this;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || this.getClass() != o.getClass()) return false;

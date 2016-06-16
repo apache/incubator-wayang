@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.channels.FileChannel;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -22,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.OptionalLong;
 
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a sequence file.
@@ -58,6 +56,7 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
 
         final String actualInputPath = FileSystems.findActualSingleInputPath(sourcePath);
         final JavaRDD<Object> rdd = sparkExecutor.sc.objectFile(actualInputPath);
+        this.name(rdd);
         output.accept(rdd, sparkExecutor);
     }
 

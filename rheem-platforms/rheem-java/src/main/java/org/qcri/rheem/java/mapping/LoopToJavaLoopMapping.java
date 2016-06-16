@@ -3,8 +3,8 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.java.operators.JavaLoopOperator;
 import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.operators.JavaLoopOperator;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,7 +28,7 @@ public class LoopToJavaLoopMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "loop", new LoopOperator<>(null, null, (PredicateDescriptor)null), false);
+                "loop", new LoopOperator<>(null, null, (PredicateDescriptor) null, 1), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -37,7 +37,8 @@ public class LoopToJavaLoopMapping implements Mapping {
                 (matchedOperator, epoch) -> new JavaLoopOperator<>(
                         matchedOperator.getInputType(),
                         matchedOperator.getConvergenceType(),
-                        matchedOperator.getCriterionDescriptor()
+                        matchedOperator.getCriterionDescriptor(),
+                        matchedOperator.getNumExpectedIterations()
                 ).at(epoch)
         );
     }

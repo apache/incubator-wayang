@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.execution;
 
 import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -46,7 +47,11 @@ public class JavaExecutor extends PushExecutorTemplate {
         final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(task);
 
         // Execute.
-        cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this.compiler);
+        try {
+            cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this.compiler);
+        } catch (Exception e) {
+            throw new RheemException(String.format("Executing %s failed.", task), e);
+        }
 
         // Force execution if necessary.
         if (isForceExecution) {

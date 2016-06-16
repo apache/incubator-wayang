@@ -7,7 +7,6 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -33,7 +32,8 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
     /**
      * Creates a new instance.
      */
-    public SparkJoinOperator(DataSetType<InputType0> inputType0, DataSetType<InputType1> inputType1,
+    public SparkJoinOperator(DataSetType<InputType0> inputType0,
+                             DataSetType<InputType1> inputType1,
                              TransformationDescriptor<InputType0, KeyType> keyDescriptor0,
                              TransformationDescriptor<InputType1, KeyType> keyDescriptor1) {
 
@@ -59,10 +59,12 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
 
         final JavaPairRDD<KeyType, scala.Tuple2<InputType0, InputType1>> outputPair =
                 pairStream0.<InputType1>join(pairStream1);
+        this.name(outputPair);
 
         // convert from scala tuple to rheem tuple
         final JavaRDD<Tuple2<InputType0, InputType1>> outputRdd = outputPair
                 .map(new TupleConverter<>());
+        this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
     }

@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.CollectionSource;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -56,6 +55,7 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
 
         final RddChannel.Instance output = (RddChannel.Instance) outputs[0];
         final JavaRDD<Type> rdd = sparkExecutor.sc.parallelize(list);
+        this.name(rdd);
         output.accept(rdd, sparkExecutor);
     }
 
