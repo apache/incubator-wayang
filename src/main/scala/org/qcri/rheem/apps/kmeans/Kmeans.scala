@@ -16,9 +16,9 @@ import scala.util.Random
 /**
   * K-Means app for Rheem.
   */
-class Kmeans(k: Int, inputFile: String, iterations: Int = 20) {
+class Kmeans(platforms: Platform*) {
 
-  def run(platforms: Platform*): Iterable[Point] = {
+  def apply(k: Int, inputFile: String, iterations: Int = 20, isResurrect: Boolean = true): Iterable[Point] = {
     // Set up the RheemContext.
     implicit val rheemCtx = new RheemContext
     platforms.foreach(rheemCtx.register)
@@ -43,16 +43,18 @@ class Kmeans(k: Int, inputFile: String, iterations: Int = 20) {
         .map(_.average).withName("Average points")
 
 
-      // Resurrect "lost" centroids (that have not been nearest to ANY point).
-      val _k = k
-      val resurrectedCentroids = newCentroids
-        .map(centroid => 1).withName("Count centroids (a)")
-        .reduce(_ + _).withName("Count centroids (b)")
-        .flatMap(num => {
-          if (num < _k) println(s"Resurrecting ${_k - num} point(s).")
-          Kmeans.createRandomCentroids(_k - num)
-        }).withName("Resurrect centroids")
-      newCentroids.union(resurrectedCentroids).withName("New+resurrected centroids")
+      if (isResurrect) {
+        // Resurrect "lost" centroids (that have not been nearest to ANY point).
+        val _k = k
+        val resurrectedCentroids = newCentroids
+          .map(centroid => 1).withName("Count centroids (a)")
+          .reduce(_ + _).withName("Count centroids (b)")
+          .flatMap(num => {
+            if (num < _k) println(s"Resurrecting ${_k - num} point(s).")
+            Kmeans.createRandomCentroids(_k - num)
+          }).withName("Resurrect centroids")
+        newCentroids.union(resurrectedCentroids).withName("New+resurrected centroids")
+      } else newCentroids
     }).withName("Loop")
 
     // Collect the result.
@@ -71,6 +73,7 @@ class Kmeans(k: Int, inputFile: String, iterations: Int = 20) {
 object Kmeans {
 
   def main(args: Array[String]): Unit = {
+    // Parse args.
     if (args.length == 0) {
       println("Usage: scala <main class> <platform(,platform)*> <point file> <k> <#iterations>")
       sys.exit(1)
@@ -86,15 +89,15 @@ object Kmeans {
     val k = args(2).toInt
     val numIterations = args(3).toInt
 
-    val centroids = run(file, k, numIterations, platforms: _*)
+    // Initialize k-means.
+    val kmeans = new Kmeans(platforms: _*)
+
+    // Run k-means.
+    val centroids = kmeans(k, file, numIterations)
 
     // Print the result.
     println(s"Found ${centroids.size} centroids:")
 
-  }
-
-  def run(file: String, k: Int, numIterations: Int, platforms: Platform*) = {
-    new Kmeans(k, file, numIterations).run(platforms: _*)
   }
 
   /**

@@ -16,11 +16,12 @@ class KmeansTest {
 
   @Test
   def shouldWorkWithJava() = {
-    val centroids = Kmeans.run(
-      file = getTestFileUrl("kmeans-k4-10000.csv"),
+    val kmeans = new Kmeans(JavaPlatform.getInstance)
+    val centroids = kmeans(
       k = 4,
-      numIterations = 100,
-      JavaPlatform.getInstance
+      inputFile = getTestFileUrl("kmeans-k4-10000.csv"),
+      iterations = 100,
+      isResurrect = true
     )
 
     assertEquals(4, centroids.size)
@@ -33,11 +34,12 @@ class KmeansTest {
 
   @Test
   def shouldWorkWithSpark() = {
-    val centroids = Kmeans.run(
-      file = getTestFileUrl("kmeans-k4-10000.csv"),
+    val kmeans = new Kmeans(SparkPlatform.getInstance)
+    val centroids = kmeans(
       k = 4,
-      numIterations = 100,
-      SparkPlatform.getInstance
+      inputFile = getTestFileUrl("kmeans-k4-10000.csv"),
+      iterations = 100,
+      isResurrect = true
     )
 
     assertEquals(4, centroids.size)
@@ -50,11 +52,12 @@ class KmeansTest {
 
   @Test
   def shouldWorkWithJavaAndSpark() = {
-    val centroids = Kmeans.run(
-      file = getTestFileUrl("kmeans-k4-10000.csv"),
+    val kmeans = new Kmeans(JavaPlatform.getInstance, SparkPlatform.getInstance)
+    val centroids = kmeans(
       k = 4,
-      numIterations = 100,
-      SparkPlatform.getInstance, JavaPlatform.getInstance
+      inputFile = getTestFileUrl("kmeans-k4-10000.csv"),
+      iterations = 100,
+      isResurrect = true
     )
 
     assertEquals(4, centroids.size)
