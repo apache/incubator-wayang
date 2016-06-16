@@ -275,6 +275,30 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   }
 
   /**
+    * Feeds this instance into a [[DistinctOperator]].
+    *
+    * @return a new instance representing the [[DistinctOperator]]'s output
+    */
+  def distinct: DataQuanta[Out] = {
+    val distinctOperator = new DistinctOperator(dataSetType[Out])
+    this.connectTo(distinctOperator, 0)
+    distinctOperator
+  }
+
+  /**
+    * Feeds this instance into a [[CountOperator]].
+    *
+    * @return a new instance representing the [[CountOperator]]'s output
+    */
+  def count: DataQuanta[Long] = {
+    val countOperator = new CountOperator(dataSetType[Out])
+    this.connectTo(countOperator, 0)
+    countOperator
+  }
+
+
+
+  /**
     * Feeds this instance into a do-while loop (guarded by a [[DoWhileOperator]].
     *
     * @param udf         condition to be evaluated after each iteration
