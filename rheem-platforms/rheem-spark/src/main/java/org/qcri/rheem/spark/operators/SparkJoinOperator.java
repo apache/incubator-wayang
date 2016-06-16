@@ -32,7 +32,8 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
     /**
      * Creates a new instance.
      */
-    public SparkJoinOperator(DataSetType<InputType0> inputType0, DataSetType<InputType1> inputType1,
+    public SparkJoinOperator(DataSetType<InputType0> inputType0,
+                             DataSetType<InputType1> inputType1,
                              TransformationDescriptor<InputType0, KeyType> keyDescriptor0,
                              TransformationDescriptor<InputType1, KeyType> keyDescriptor1) {
 

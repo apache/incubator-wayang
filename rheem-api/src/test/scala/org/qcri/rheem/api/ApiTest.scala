@@ -280,6 +280,28 @@ class ApiTest {
   }
 
   @Test
+  def testJoin() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(SparkPlatform.getInstance)
+
+    val inputValues1 = Array(("Water", 0), ("Tonic", 5), ("Juice", 10))
+    val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
+
+    val builder = new PlanBuilder(rheem)
+    val dataQuanta1 = builder.readCollection(inputValues1)
+    val dataQuanta2 = builder.readCollection(inputValues2)
+    val result = dataQuanta1
+      .join[(String, String), String](_._1, dataQuanta2, _._2)
+      .map(joinTuple => (joinTuple.field1._1, joinTuple.field0._2))
+      .collect()
+
+    val expectedValues = Set(("Apple juice", 10), ("Tap water", 0), ("Orange juice", 10))
+    Assert.assertEquals(expectedValues, result.toSet)
+  }
+
+  @Test
   def testIntersect() = {
     // Set up RheemContext.
     val rheem = new RheemContext()
