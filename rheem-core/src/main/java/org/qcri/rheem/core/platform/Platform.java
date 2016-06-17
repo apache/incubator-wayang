@@ -104,4 +104,13 @@ public abstract class Platform {
      */
     public abstract LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration);
 
+    /**
+     * Warm up this instance.
+     *
+     * @param configuration used to warm up
+     */
+    public void warmUp(Configuration configuration) {
+        // Do nothing by default.
+    }
+
 }
