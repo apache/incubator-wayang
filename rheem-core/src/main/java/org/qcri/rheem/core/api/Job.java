@@ -160,7 +160,7 @@ public class Job extends OneTimeExecutable {
                 executionId++;
             }
 
-            this.logger.info("Accumulated execution time: {}", Formats.formatDuration(this.executionMillis));
+            this.logger.info("Accumulated execution time: {}", Formats.formatDuration(this.executionMillis, true));
             int i = 1;
             for (TimeEstimate timeEstimate : timeEstimates) {
                 this.logger.info("Time estimate of execution plan {}: {}", i++, timeEstimate);

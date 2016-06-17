@@ -222,7 +222,7 @@ public class SparkPlatform extends Platform {
         source.connectTo(0, sink, 0);
         rheemCtx.execute(new RheemPlan(sink));
         long stopTime = System.currentTimeMillis();
-        this.logger.info("Spark warm-up finished in {}.", Formats.formatDuration(stopTime - startTime));
+        this.logger.info("Spark warm-up finished in {}.", Formats.formatDuration(stopTime - startTime, true));
 
     }
 }

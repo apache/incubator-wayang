@@ -30,6 +30,7 @@ public class DiskProfiler {
 
     /**
      * Writes and reads a file and measures the elapsed time.
+     *
      * @param sizeInMB the number of MB to write/read
      * @return a CSV line like {@code MB,write nanos,read nanos}
      */
@@ -69,7 +70,7 @@ public class DiskProfiler {
         System.out.printf("done.");
 
         System.out.printf("Writing %d MB to %s completed in %s.\n",
-                sizeInMB, this.testFileURl, Formats.formatDuration((endWriteTime - startWriteTime) / 1000 / 1000)
+                sizeInMB, this.testFileURl, Formats.formatDuration((endWriteTime - startWriteTime) / 1000 / 1000, true)
         );
 
         return endWriteTime - startWriteTime;
@@ -103,7 +104,7 @@ public class DiskProfiler {
         }
 
         System.out.printf("Reading %d MB from %s completed in %s.\n",
-                sizeInMB, this.testFileURl, Formats.formatDuration((endReadTime - startReadTime) / 1000 / 1000)
+                sizeInMB, this.testFileURl, Formats.formatDuration((endReadTime - startReadTime) / 1000 / 1000, true)
         );
 
         return endReadTime - startReadTime;
