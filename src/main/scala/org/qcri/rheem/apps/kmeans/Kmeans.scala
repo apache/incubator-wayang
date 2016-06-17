@@ -3,7 +3,7 @@ package org.qcri.rheem.apps.kmeans
 import java.util
 
 import org.qcri.rheem.api._
-import org.qcri.rheem.core.api.RheemContext
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.ExecutionContext
 import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
 import org.qcri.rheem.core.platform.Platform
@@ -81,9 +81,13 @@ object Kmeans {
 
     val platforms = args(0).split(",").map {
       case "spark" => SparkPlatform.getInstance
+      case "+spark" => {
+        val sparkPlatform = SparkPlatform.getInstance
+        sparkPlatform.warmUp(new Configuration)
+        sparkPlatform
+      }
       case "java" => JavaPlatform.getInstance
-      case other: String => throw new IllegalArgumentException(s"Unsupported platform: $other.")
-      case _ => throw new IllegalArgumentException
+      case misc => sys.error(s"Unknown platform: $misc")
     }
     val file = args(1)
     val k = args(2).toInt

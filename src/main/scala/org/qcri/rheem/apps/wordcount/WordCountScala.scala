@@ -1,6 +1,6 @@
 package org.qcri.rheem.apps.wordcount
 
-import org.qcri.rheem.core.api.RheemContext
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.api._
 import org.qcri.rheem.java.JavaPlatform
@@ -47,6 +47,11 @@ object WordCountScala {
 
     val platforms = args(0).split(",").map {
       case "spark" => SparkPlatform.getInstance
+      case "+spark" => {
+        val sparkPlatform = SparkPlatform.getInstance
+        sparkPlatform.warmUp(new Configuration)
+        sparkPlatform
+      }
       case "java" => JavaPlatform.getInstance
       case misc => sys.error(s"Unknown platform: $misc")
     }.toSeq

@@ -1,7 +1,7 @@
 package org.qcri.rheem.apps.crocopr
 
 import org.qcri.rheem.api.{DataQuanta, PlanBuilder}
-import org.qcri.rheem.core.api.RheemContext
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.api.exception.RheemException
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.core.util.RheemCollections
@@ -124,9 +124,13 @@ object CrocoPR {
     }
     val platforms = args(0).split(",").map {
       case "spark" => SparkPlatform.getInstance
+      case "+spark" => {
+        val sparkPlatform = SparkPlatform.getInstance
+        sparkPlatform.warmUp(new Configuration)
+        sparkPlatform
+      }
       case "java" => JavaPlatform.getInstance
-      case other: String => throw new IllegalArgumentException(s"Unsupported platform: $other.")
-      case _ => throw new IllegalArgumentException
+      case misc => sys.error(s"Unknown platform: $misc")
     }
     val inputUrl1 = args(1)
     val inputUrl2 = args(2)
