@@ -1,7 +1,5 @@
 package org.qcri.rheem.core.util;
 
-import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
-
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
