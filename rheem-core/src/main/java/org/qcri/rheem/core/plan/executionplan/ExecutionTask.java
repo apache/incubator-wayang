@@ -164,7 +164,8 @@ public class ExecutionTask {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + this.operator + ']';
+        return "T[" + this.operator + ']';
+//        return this.getClass().getSimpleName() + "[" + this.operator + ']';
     }
 
     /**

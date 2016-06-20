@@ -223,6 +223,7 @@ public class ExecutionStage {
         for (ExecutionTask startTask : this.startTasks) {
             for (Channel inputChannel : startTask.getInputChannels()) {
                 sb.append(indent)
+                        .append("In  ")
                         .append(this.prettyPrint(inputChannel))
                         .append(" => ")
                         .append(this.prettyPrint(startTask)).append('\n');
@@ -239,6 +240,7 @@ public class ExecutionStage {
             for (ExecutionTask consumer : channel.getConsumers()) {
                 if (consumer.getStage() == this) {
                     sb.append(indent)
+                            .append("    ")
                             .append(this.prettyPrint(task))
                             .append(" => ")
                             .append(this.prettyPrint(channel))
@@ -247,6 +249,7 @@ public class ExecutionStage {
                     this.toExtensiveStringAux(consumer, seenTasks, sb, indent);
                 } else {
                     sb.append(indent)
+                            .append("Out ")
                             .append(this.prettyPrint(task))
                             .append(" => ")
                             .append(this.prettyPrint(channel)).append('\n');

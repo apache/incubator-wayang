@@ -10,15 +10,21 @@ import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.spark.channels.ChannelConversions;
 import org.qcri.rheem.spark.mapping.*;
+import org.qcri.rheem.spark.operators.SparkCollectionSource;
+import org.qcri.rheem.spark.operators.SparkLocalCallbackSink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -198,4 +204,25 @@ public class SparkPlatform extends Platform {
         return job -> new SparkExecutor(this, job);
     }
 
+    @Override
+    public void warmUp(Configuration configuration) {
+        super.warmUp(configuration);
+
+        // Run a most simple Spark job.
+        this.logger.info("Running warm-up Spark job...");
+        long startTime = System.currentTimeMillis();
+        final RheemContext rheemCtx = new RheemContext(configuration);
+        SparkCollectionSource<Integer> source = new SparkCollectionSource<>(
+                Collections.singleton(0), DataSetType.createDefault(Integer.class)
+        );
+        SparkLocalCallbackSink<Integer> sink = new SparkLocalCallbackSink<>(
+                dq -> {},
+                DataSetType.createDefault(Integer.class)
+        );
+        source.connectTo(0, sink, 0);
+        rheemCtx.execute(new RheemPlan(sink));
+        long stopTime = System.currentTimeMillis();
+        this.logger.info("Spark warm-up finished in {}.", Formats.formatDuration(stopTime - startTime, true));
+
+    }
 }
