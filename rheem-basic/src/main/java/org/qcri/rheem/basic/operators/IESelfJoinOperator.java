@@ -4,17 +4,20 @@ import org.qcri.rheem.basic.data.JoinCondition;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.data.Tuple5;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
 /**
  * This operator applies inequality self join on elements of input datasets.
  */
-public class IESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 extends Comparable<Type1>>
-        extends UnaryToUnaryOperator<Record, Tuple2<Record, Record>> {
-    protected final int get0Pivot;
+public class IESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 extends Comparable<Type1>,Input>
+        extends UnaryToUnaryOperator<Input, Tuple2<Input, Input>> {
+    //protected final int get0Pivot;
+    protected final TransformationDescriptor<Input,Type0>  get0Pivot;
     protected final JoinCondition cond0;
-    protected final int get0Ref;
+    //protected final int get0Ref;
+    protected final TransformationDescriptor<Input,Type1>  get0Ref;
     protected final JoinCondition cond1;
     protected boolean list1ASC;
     protected boolean list1ASCSec;
@@ -22,9 +25,9 @@ public class IESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
     protected boolean list2ASCSec;
     protected boolean equalReverse;
 
-    public IESelfJoinOperator(Class<Record> inputTypeClass,
-                              int get0Pivot, JoinCondition cond0,
-                              int get0Ref, JoinCondition cond1) {
+    public IESelfJoinOperator(Class<Input> inputTypeClass,
+                              TransformationDescriptor<Input,Type0> get0Pivot, JoinCondition cond0,
+                              TransformationDescriptor<Input,Type1> get0Ref, JoinCondition cond1) {
         super(DataSetType.createDefault(inputTypeClass),
                 DataSetType.createDefaultUnchecked(Tuple2.class),
                 false, null);
@@ -35,9 +38,9 @@ public class IESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
         assignSortOrders();
     }
 
-    public IESelfJoinOperator(DataSetType<Record> inputType,
-                              int get0Pivot, JoinCondition cond0,
-                              int get0Ref, JoinCondition cond1) {
+    public IESelfJoinOperator(DataSetType<Input> inputType,
+                              TransformationDescriptor<Input,Type0> get0Pivot, JoinCondition cond0,
+                              TransformationDescriptor<Input,Type1> get0Ref, JoinCondition cond1) {
         super(inputType, DataSetType.createDefaultUnchecked(Tuple2.class), false, null);
         this.get0Pivot = get0Pivot;
         this.cond0 = cond0;

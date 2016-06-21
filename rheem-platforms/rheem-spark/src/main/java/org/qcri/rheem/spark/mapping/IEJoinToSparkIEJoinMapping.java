@@ -25,7 +25,7 @@ public class IEJoinToSparkIEJoinMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "iejoin", new IEJoinOperator<>(DataSetType.none(), DataSetType.none(), 0, 0, JoinCondition.GreaterThan, 0, 0, JoinCondition.GreaterThan), false);
+                "iejoin", new IEJoinOperator<>(DataSetType.none(), DataSetType.none(), null, null, JoinCondition.GreaterThan, null, null, JoinCondition.GreaterThan), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -34,9 +34,9 @@ public class IEJoinToSparkIEJoinMapping implements Mapping {
 
         @Override
         protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final IEJoinOperator<?, ?> originalOperator = (IEJoinOperator<?, ?>) subplanMatch.getMatch("iejoin").getOperator();
-            return new SparkIEJoinOperator<>(originalOperator.getInputType0(),
-                    originalOperator.getInputType1(), 0, 0, JoinCondition.GreaterThan, 0, 0, JoinCondition.GreaterThan).at(epoch);
+            final IEJoinOperator<?, ?, ?> originalOperator = (IEJoinOperator<?, ?, ?>) subplanMatch.getMatch("iejoin").getOperator();
+            return new SparkIEJoinOperator(originalOperator.getInputType0(),
+                    originalOperator.getInputType1(), null, null, JoinCondition.GreaterThan, null, null, JoinCondition.GreaterThan).at(epoch);
         }
     }
 }

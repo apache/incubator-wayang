@@ -5,6 +5,7 @@ import org.qcri.rheem.basic.data.JoinCondition;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.IESelfJoinOperator;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -23,22 +24,23 @@ import org.qcri.rheem.java.operators.subOperator.extractData;
 import scala.Tuple2;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Java implementation of the {@link IEJoinOperator}.
+ * Java implementation of the {@link IESelfJoinOperator}.
  */
-public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 extends Comparable<Type1>>
-        extends IESelfJoinOperator<Type0, Type1>
+public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 extends Comparable<Type1>,Input>
+        extends IESelfJoinOperator<Type0, Type1,Input>
         implements JavaExecutionOperator {
 
     /**
      * Creates a new instance.
      */
-    public JavaIESelfJoinOperator(DataSetType<Record> inputType0,
-                                  int get0Pivot, JoinCondition cond0,
-                                  int get0Ref, JoinCondition cond1) {
+    public JavaIESelfJoinOperator(DataSetType<Input> inputType0,
+                                  TransformationDescriptor<Input,Type0> get0Pivot, JoinCondition cond0,
+                                  TransformationDescriptor<Input,Type1> get0Ref, JoinCondition cond1) {
         super(inputType0, get0Pivot, cond0, get0Ref, cond1);
     }
 
@@ -46,25 +48,28 @@ public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exten
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         StreamChannel.Instance outputChannel = (StreamChannel.Instance) outputs[0];
 
-        Stream<Record> stream0;
+        Stream<Input> stream0;
         if (inputs[0] instanceof CollectionChannel.Instance) {
-            final Collection<Record> collection = ((CollectionChannel.Instance) inputs[0]).provideCollection();
+            final Collection<Input> collection = ((CollectionChannel.Instance) inputs[0]).provideCollection();
             stream0 = collection.stream();
         } else {
             // Fallback: Materialize one side.
-            final Collection<Record> collection = ((JavaChannelInstance) inputs[0]).<Record>provideStream().collect(Collectors.toList());
+            final Collection<Input> collection = ((JavaChannelInstance) inputs[0]).<Input>provideStream().collect(Collectors.toList());
             stream0 = collection.stream();
         }
 
         Object[] stream0R = stream0.toArray();
 
-        ArrayList<Tuple2<Data<Type0, Type1>, Record>> list0 = new ArrayList<Tuple2<Data<Type0, Type1>, Record>>();
+        ArrayList<Tuple2<Data<Type0, Type1>, Input>> list0 = new ArrayList<Tuple2<Data<Type0, Type1>, Input>>();
+
+        final Function<Input, Type0> get0Pivot_ = compiler.compile(this.get0Pivot);
+        final Function<Input, Type1> get0Ref_ = compiler.compile(this.get0Ref);
 
         for (int i = 0; i < stream0R.length; i++) {
-            list0.add(new Tuple2<Data<Type0, Type1>, Record>(new extractData<Type0, Type1>(get0Pivot, get0Ref).call((Record) stream0R[i]), (Record) stream0R[i]));
+            list0.add(new Tuple2<Data<Type0, Type1>, Input>(new extractData<Type0, Type1,Input>(get0Pivot_, get0Ref_).call((Input) stream0R[i]), (Input) stream0R[i]));
         }
 
-        Collections.sort(list0, new DataComparator<Type0, Type1>(list1ASC, list1ASCSec));
+        Collections.sort(list0, new DataComparator<Type0, Type1, Input>(list1ASC, list1ASCSec));
 
         long partCount = list0.size();
 
@@ -73,10 +78,10 @@ public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exten
             list0.get(i)._1().setRowID(i);
         }
 
-        ArrayList<Tuple2<Record, Record>> result = new BitSetJoin<Type0, Type1>(list1ASC, list2ASC,
+        ArrayList<Tuple2<Input, Input>> result = new BitSetJoin<Type0, Type1,Input>(list1ASC, list2ASC,
                 list1ASCSec, list2ASCSec, equalReverse, true, cond0).call(list0, list0);
 
-        outputChannel.<Tuple2<Record, Record>>accept(result.stream());
+        outputChannel.<Tuple2<Input, Input>>accept(result.stream());
     }
 
     @Override
@@ -89,7 +94,7 @@ public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exten
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaIESelfJoinOperator<Type0, Type1>(this.getInputType(),
+        return new JavaIESelfJoinOperator<Type0, Type1,Input>(this.getInputType(),
                 get0Pivot, cond0, get0Ref, cond1);
     }
 

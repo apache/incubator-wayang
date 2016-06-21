@@ -5,8 +5,11 @@ import org.junit.Test;
 import org.qcri.rheem.basic.data.JoinCondition;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.basic.function.ProjectionDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
@@ -30,26 +33,20 @@ public class SparkIESelfJoinOperatorTest extends SparkOperatorTestBase {
         RddChannel.Instance output = this.createRddChannelInstance();
 
         // Build the Cartesian operator.
-        SparkIESelfJoinOperator<Integer, Integer> IESelfJoinOperator =
-                new SparkIESelfJoinOperator<Integer, Integer>(
+        SparkIESelfJoinOperator<Integer, Integer,Record> IESelfJoinOperator =
+                new SparkIESelfJoinOperator<Integer, Integer,Record>(
                         DataSetType.createDefaultUnchecked(Record.class),
-                        0, JoinCondition.GreaterThan, 1, JoinCondition.LessThan
-                        /*new ProjectionDescriptor<Record, Integer>(
-                                DataUnitType.createBasicUnchecked(Record.class),
-                                DataUnitType.createBasic(Integer.class),
-                                "field0"),
-                        new ProjectionDescriptor<Record, Integer>(
-                                DataUnitType.createBasicUnchecked(Record.class),
-                                DataUnitType.createBasic(Integer.class),
-                                "field0"),
-                        new ProjectionDescriptor<Record, Integer>(
-                                DataUnitType.createBasicUnchecked(Record.class),
-                                DataUnitType.createBasic(Integer.class),
-                                "field1"),
-                        new ProjectionDescriptor<Record, Integer>(
-                                DataUnitType.createBasicUnchecked(Record.class),
-                                DataUnitType.createBasic(Integer.class),
-                                "field1")*/
+                        //0, JoinCondition.GreaterThan, 1, JoinCondition.LessThan
+                        new TransformationDescriptor<Record,Integer>(word -> (Integer)word.getField(0),
+                                DataUnitType.<Record>createBasic(Record.class),
+                                DataUnitType.<Integer>createBasicUnchecked(Integer.class)
+                        ),
+                        JoinCondition.GreaterThan,
+                        new TransformationDescriptor<Record,Integer>(word -> (Integer)word.getField(1),
+                                DataUnitType.<Record>createBasic(Record.class),
+                                DataUnitType.<Integer>createBasicUnchecked(Integer.class)
+                        ),
+                        JoinCondition.LessThan
                 );
 
         // Set up the ChannelInstances.

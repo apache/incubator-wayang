@@ -7,7 +7,7 @@ import java.util.Objects;
 /**
  * A Type that represents a record with a schema, might be replaced with something standard like JPA entity.
  */
-public class Record implements Serializable {
+public class Record extends copyable implements Serializable {
 
     private Object[] values;
 

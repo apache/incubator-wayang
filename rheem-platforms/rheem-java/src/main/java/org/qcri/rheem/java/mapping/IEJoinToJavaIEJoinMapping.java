@@ -24,7 +24,7 @@ public class IEJoinToJavaIEJoinMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "iejoin", new IEJoinOperator<>(DataSetType.none(), DataSetType.none(), 0, 0, JoinCondition.GreaterThan, 0, 0, JoinCondition.GreaterThan), false);
+                "iejoin", new IEJoinOperator<>(DataSetType.none(), DataSetType.none(), null, null, JoinCondition.GreaterThan, null, null, JoinCondition.GreaterThan), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -32,7 +32,7 @@ public class IEJoinToJavaIEJoinMapping implements Mapping {
         return new ReplacementSubplanFactory.OfSingleOperators<IEJoinOperator>(
                 (matchedOperator, epoch) -> new JavaIEJoinOperator<>(
                         matchedOperator.getInputType0(),
-                        matchedOperator.getInputType1(),0, 0, JoinCondition.GreaterThan, 0, 0, JoinCondition.GreaterThan
+                        matchedOperator.getInputType1(),null, null, JoinCondition.GreaterThan, null, null, JoinCondition.GreaterThan
                 ).at(epoch)
         );
     }

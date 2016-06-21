@@ -5,6 +5,7 @@ import org.qcri.rheem.basic.data.JoinCondition;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.IEJoinOperator;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -23,22 +24,23 @@ import org.qcri.rheem.java.operators.subOperator.extractData;
 import scala.Tuple2;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * Java implementation of the {@link IEJoinOperator}.
  */
-public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends Comparable<Type1>>
-        extends IEJoinOperator<Type0, Type1>
+public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends Comparable<Type1>,Input>
+        extends IEJoinOperator<Type0, Type1,Input>
         implements JavaExecutionOperator {
 
     /**
      * Creates a new instance.
      */
-    public JavaIEJoinOperator(DataSetType<Record> inputType0, DataSetType<Record> inputType1,
-                              int get0Pivot, int get1Pivot, JoinCondition cond0,
-                              int get0Ref, int get1Ref, JoinCondition cond1) {
+    public JavaIEJoinOperator(DataSetType<Input> inputType0, DataSetType<Input> inputType1,
+                              TransformationDescriptor<Input,Type0> get0Pivot, TransformationDescriptor<Input,Type0> get1Pivot, JoinCondition cond0,
+                              TransformationDescriptor<Input,Type1> get0Ref,  TransformationDescriptor<Input,Type1> get1Ref, JoinCondition cond1) {
         super(inputType0, inputType1, get0Pivot, get1Pivot, cond0, get0Ref, get1Ref, cond1);
     }
 
@@ -46,38 +48,43 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         StreamChannel.Instance outputChannel = (StreamChannel.Instance) outputs[0];
 
-        Stream<Record> stream0;
-        Stream<Record> stream1;
+        Stream<Input> stream0;
+        Stream<Input> stream1;
         if (inputs[0] instanceof CollectionChannel.Instance) {
-            final Collection<Record> collection = ((CollectionChannel.Instance) inputs[0]).provideCollection();
+            final Collection<Input> collection = ((CollectionChannel.Instance) inputs[0]).provideCollection();
             stream0 = collection.stream();
             stream1 = ((JavaChannelInstance) inputs[1]).provideStream();
         } else if (inputs[1] instanceof CollectionChannel.Instance) {
             stream0 = ((JavaChannelInstance) inputs[0]).provideStream();
-            final Collection<Record> collection = ((CollectionChannel.Instance) inputs[1]).provideCollection();
+            final Collection<Input> collection = ((CollectionChannel.Instance) inputs[1]).provideCollection();
             stream1 = collection.stream();
         } else {
             // Fallback: Materialize one side.
-            final Collection<Record> collection = ((JavaChannelInstance) inputs[0]).<Record>provideStream().collect(Collectors.toList());
+            final Collection<Input> collection = ((JavaChannelInstance) inputs[0]).<Input>provideStream().collect(Collectors.toList());
             stream0 = collection.stream();
             stream1 = ((JavaChannelInstance) inputs[1]).provideStream();
         }
 
+        final Function<Input, Type0> get0Pivot_ = compiler.compile(this.get0Pivot);
+        final Function<Input, Type0> get1Pivot_ = compiler.compile(this.get1Pivot);
+        final Function<Input, Type1> get0Ref_ = compiler.compile(this.get0Ref);
+        final Function<Input, Type1> get1Ref_ = compiler.compile(this.get1Ref);
+
         Object[] stream0R = stream0.toArray();
         Object[] stream1R = stream1.toArray();
 
-        ArrayList<Tuple2<Data<Type0, Type1>, Record>> list0 = new ArrayList<Tuple2<Data<Type0, Type1>, Record>>();
-        ArrayList<Tuple2<Data<Type0, Type1>, Record>> list1 = new ArrayList<Tuple2<Data<Type0, Type1>, Record>>();
+        ArrayList<Tuple2<Data<Type0, Type1>, Input>> list0 = new ArrayList<Tuple2<Data<Type0, Type1>, Input>>();
+        ArrayList<Tuple2<Data<Type0, Type1>, Input>> list1 = new ArrayList<Tuple2<Data<Type0, Type1>, Input>>();
 
         for (int i = 0; i < stream0R.length; i++) {
-            list0.add(new Tuple2<Data<Type0, Type1>, Record>(new extractData<Type0, Type1>(get0Pivot, get0Ref).call((Record) stream0R[i]), (Record) stream0R[i]));
+            list0.add(new Tuple2<Data<Type0, Type1>, Input>(new extractData<Type0, Type1,Input>(get0Pivot_, get0Ref_).call((Input) stream0R[i]), (Input) stream0R[i]));
         }
         for (int i = 0; i < stream1R.length; i++) {
-            list1.add(new Tuple2<Data<Type0, Type1>, Record>(new extractData<Type0, Type1>(get0Pivot, get0Ref).call((Record) stream1R[i]), (Record) stream1R[i]));
+            list1.add(new Tuple2<Data<Type0, Type1>, Input>(new extractData<Type0, Type1,Input>(get1Pivot_, get1Ref_).call((Input) stream1R[i]), (Input) stream1R[i]));
         }
 
-        Collections.sort(list0, new DataComparator<Type0, Type1>(list1ASC, list1ASCSec));
-        Collections.sort(list1, new DataComparator<Type0, Type1>(list2ASC, list2ASCSec));
+        Collections.sort(list0, new DataComparator<Type0, Type1, Input>(list1ASC, list1ASCSec));
+        Collections.sort(list1, new DataComparator<Type0, Type1, Input>(list2ASC, list2ASCSec));
 
         long partCount = list0.size();
         long partCount2 = list1.size();
@@ -93,10 +100,10 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
             list1.get(i)._1().setRowID(i + cnt2);
         }
 
-        ArrayList<Tuple2<Record, Record>> result = new BitSetJoin<Type0, Type1>(list1ASC, list2ASC,
+        ArrayList<Tuple2<Input, Input>> result = new BitSetJoin<Type0, Type1,Input>(list1ASC, list2ASC,
                 list1ASCSec, list2ASCSec, equalReverse, false, cond0).call(list0, list1);
 
-        outputChannel.<Tuple2<Record, Record>>accept(result.stream());
+        outputChannel.<Tuple2<Input, Input>>accept(result.stream());
     }
 
     @Override
@@ -109,7 +116,7 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaIEJoinOperator<Type0, Type1>(this.getInputType0(), this.getInputType1(),
+        return new JavaIEJoinOperator<Type0, Type1,Input>(this.getInputType0(), this.getInputType1(),
                 get0Pivot, get1Pivot, cond0, get0Ref, get1Ref, cond1);
     }
 

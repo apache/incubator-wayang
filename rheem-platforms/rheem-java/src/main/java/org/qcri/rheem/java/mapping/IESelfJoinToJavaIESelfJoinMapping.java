@@ -24,14 +24,14 @@ public class IESelfJoinToJavaIESelfJoinMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "ieselfjoin", new IESelfJoinOperator<>(DataSetType.none(), 0, JoinCondition.GreaterThan,0, JoinCondition.GreaterThan), false);
+                "ieselfjoin", new IESelfJoinOperator<>(DataSetType.none(), null, JoinCondition.GreaterThan,null, JoinCondition.GreaterThan), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<IESelfJoinOperator>(
                 (matchedOperator, epoch) -> new JavaIESelfJoinOperator<>(
-                        matchedOperator.getInputType(), 0, JoinCondition.GreaterThan, 0,JoinCondition.GreaterThan).at(epoch)
+                        matchedOperator.getInputType(), null, JoinCondition.GreaterThan, null,JoinCondition.GreaterThan).at(epoch)
         );
     }
 }
