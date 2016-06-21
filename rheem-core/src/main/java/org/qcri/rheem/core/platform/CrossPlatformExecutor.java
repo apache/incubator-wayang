@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Executes a (cross-platform) {@link ExecutionPlan}.
@@ -133,7 +134,7 @@ public class CrossPlatformExecutor implements ExecutionState {
             if (this.completedStages.contains(stage)) continue;
             final StageActivator activator = this.getOrCreateActivator(
                     stage,
-                    this.determineInitialOptimizationContext(stage, optimizationContext)
+                    () -> this.determineInitialOptimizationContext(stage, optimizationContext)
             );
             this.tryToActivate(activator);
         }
@@ -155,12 +156,15 @@ public class CrossPlatformExecutor implements ExecutionState {
     /**
      * Returns an existing {@link StageActivator} for the {@link ExecutionStage} or creates and registers a new one.
      *
-     * @param stage               for which the {@link StageActivator} is requested
-     * @param optimizationContext
+     * @param stage                       for which the {@link StageActivator} is requested
+     * @param optimizationContextSupplier supplies an {@link OptimizationContext} for the {@code stage}
      * @return the {@link StageActivator}
      */
-    private StageActivator getOrCreateActivator(ExecutionStage stage, final OptimizationContext optimizationContext) {
-        return this.pendingStageActivators.computeIfAbsent(stage, s -> new StageActivator(s, optimizationContext));
+    private StageActivator getOrCreateActivator(
+            ExecutionStage stage,
+            final Supplier<OptimizationContext> optimizationContextSupplier
+    ) {
+        return this.pendingStageActivators.computeIfAbsent(stage, s -> new StageActivator(s, optimizationContextSupplier.get()));
     }
 
     /**
@@ -324,7 +328,7 @@ public class CrossPlatformExecutor implements ExecutionState {
         for (ExecutionStage successorStage : successorStages) {
             final StageActivator activator = this.getOrCreateActivator(
                     successorStage,
-                    this.determineNextOptimizationContext(processedStageActivator, successorStage)
+                    () -> this.determineNextOptimizationContext(processedStageActivator, successorStage)
             );
             this.tryToActivate(activator);
         }
