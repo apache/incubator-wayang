@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -30,10 +31,10 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
     }
 
     @Override
-    public void execute(ExecutionStage stage, ExecutionState executionState) {
+    public void execute(ExecutionStage stage, OptimizationContext optimizationContext, ExecutionState executionState) {
         assert !this.isDisposed() : String.format("%s has been disposed.", this);
 
-        final StageExecution stageExecution = new StageExecution(stage, executionState);
+        final StageExecution stageExecution = new StageExecution(stage, optimizationContext, executionState);
         stageExecution.executeStage();
     }
 
@@ -76,9 +77,9 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
     protected abstract List<ChannelInstance> execute(ExecutionTask task, List<ChannelInstance> inputChannelInstances, boolean isForceExecution);
 
     /**
-     * Keeps track of state that is required within the execution of a single {@link ExecutionStage}. SpechannelInstancefically,
+     * Keeps track of state that is required within the execution of a single {@link ExecutionStage}. Specifically,
      * it issues to the {@link PushExecutorTemplate}, which {@link ExecutionTask}s should be executed in which
-     * order with which input dependenchannelInstancees.
+     * order with which input dependencies.
      */
     protected class StageExecution extends OneTimeExecutable {
 
@@ -95,8 +96,14 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
          */
         private final ExecutionState executionState;
 
-        private StageExecution(ExecutionStage stage, ExecutionState executionState) {
+        /**
+         * Contains additional information of {@link ExecutionOperator}s in the {@link ExecutionStage}.
+         */
+        private final OptimizationContext optimizationContext;
+
+        private StageExecution(ExecutionStage stage, OptimizationContext optimizationContext, ExecutionState executionState) {
             this.executionState = executionState;
+            this.optimizationContext = optimizationContext;
 
             // Initialize the readyActivators.
             assert !stage.getStartTasks().isEmpty() : String.format("No start tasks for {}.", stage);
@@ -107,9 +114,22 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
         }
 
         private void scheduleStartTask(ExecutionTask startTask) {
-            TaskActivator activator = new TaskActivator(startTask, this.executionState);
+            TaskActivator activator = new TaskActivator(startTask, this.fetchOperatorContext(startTask), this.executionState);
             assert activator.isReady() : String.format("Stage starter %s is not immediately ready.", startTask);
             this.readyActivators.add(activator);
+        }
+
+        /**
+         * Fetches the {@link OptimizationContext.OperatorContext} for the given {@link ExecutionTask}.
+         * @param task the {@link ExecutionTask}
+         * @return the {@link OptimizationContext.OperatorContext}
+         */
+        private OptimizationContext.OperatorContext fetchOperatorContext(ExecutionTask task) {
+            final OptimizationContext.OperatorContext opCtx = this.optimizationContext.getOperatorContext(task.getOperator());
+            if (opCtx == null) {
+                logger.warn("No OperatorContext for {} available.", task);
+            }
+            return opCtx;
         }
 
         /**
@@ -146,6 +166,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
          */
         private Collection<ChannelInstance> execute(TaskActivator readyActivator, ExecutionTask task) {
             final boolean isForceExecution = this.terminalTasks.contains(task);
+            OptimizationContext.OperatorContext operatorCtx = this.optimizationContext.getOperatorContext(task.getOperator());
             return this.executor().execute(readyActivator, isForceExecution);
         }
 
@@ -170,7 +191,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
                     // Get or create the TaskActivator.
                     final TaskActivator consumerActivator = this.stagedActivators.computeIfAbsent(
-                            consumer, (task1) -> new TaskActivator(task1, this.executionState)
+                            consumer, (key) -> new TaskActivator(key, this.fetchOperatorContext(key), this.executionState)
                     );
 
                     // Register the outputChannelInstance.
@@ -219,8 +240,14 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
         private final ArrayList<ChannelInstance> inputChannelInstances;
 
-        TaskActivator(ExecutionTask task, ExecutionState executionState) {
+        private final OptimizationContext.OperatorContext operatorContext;
+
+        TaskActivator(ExecutionTask task, OptimizationContext.OperatorContext operatorContext, ExecutionState executionState) {
+            assert operatorContext == null || task.getOperator() == operatorContext.getOperator() :
+                    String.format("Mismatch between %s and %s.", task, operatorContext);
+
             this.task = task;
+            this.operatorContext = operatorContext;
             this.inputChannelInstances = RheemCollections.createNullFilledArrayList(this.getOperator().getNumInputs());
             this.acceptFrom(executionState);
         }
@@ -276,6 +303,10 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
         protected ExecutionOperator getOperator() {
             return this.task.getOperator();
+        }
+
+        public OptimizationContext.OperatorContext getOperatorContext() {
+            return operatorContext;
         }
 
         protected List<ChannelInstance> getInputChannelInstances() {

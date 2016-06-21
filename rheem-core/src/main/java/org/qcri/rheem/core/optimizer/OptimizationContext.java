@@ -258,7 +258,7 @@ public class OptimizationContext {
     }
 
     public OptimizationContext getNextIterationContext() {
-        assert this.hostLoopContext != null;
+        assert this.hostLoopContext != null : String.format("%s is the last iteration.", this);
         assert !this.isFinalIteration();
         return this.hostLoopContext.getIterationContexts().get(this.iterationNumber + 1);
     }
@@ -321,6 +321,20 @@ public class OptimizationContext {
 
     public List<PlanEnumerationPruningStrategy> getPruningStrategies() {
         return this.pruningStrategies;
+    }
+
+    /**
+     * Get the top-level parent containing this instance.
+     *
+     * @return the top-level parent, which can also be this instance
+     */
+    public OptimizationContext getRootParent() {
+        OptimizationContext optimizationContext = this;
+        while (true) {
+            final OptimizationContext parent = optimizationContext.getParent();
+            if (parent == null) return optimizationContext;
+            optimizationContext = parent;
+        }
     }
 
     /**

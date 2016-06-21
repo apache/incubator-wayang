@@ -2,6 +2,7 @@ package org.qcri.rheem.graphchi.execution;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.*;
@@ -26,7 +27,7 @@ public class GraphChiExecutor extends ExecutorTemplate {
     }
 
     @Override
-    public void execute(final ExecutionStage stage, ExecutionState executionState) {
+    public void execute(final ExecutionStage stage, OptimizationContext optimizationContext, ExecutionState executionState) {
         Queue<ExecutionTask> scheduledTasks = new LinkedList<>(stage.getStartTasks());
         Set<ExecutionTask> executedTasks = new HashSet<>();
 

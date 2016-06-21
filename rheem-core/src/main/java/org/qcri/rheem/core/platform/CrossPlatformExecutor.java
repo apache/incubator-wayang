@@ -1,9 +1,11 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.*;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
+import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
 import org.qcri.rheem.core.util.Formats;
@@ -98,9 +100,9 @@ public class CrossPlatformExecutor implements ExecutionState {
      * @param executionPlan that should be executed or continued
      * @return whether the {@link ExecutionPlan} was completed (i.e., not suspended due to the {@link Breakpoint})
      */
-    public boolean executeUntilBreakpoint(ExecutionPlan executionPlan) {
+    public boolean executeUntilBreakpoint(ExecutionPlan executionPlan, OptimizationContext optimizationContext) {
         // Initialize this instance from the executionPlan.
-        this.prepare(executionPlan);
+        this.prepare(executionPlan, optimizationContext);
 
         // Run until the #breakpoint inhibits or no ExecutionStages are left.
         this.runToBreakpoint();
@@ -111,9 +113,10 @@ public class CrossPlatformExecutor implements ExecutionState {
     /**
      * Clean up {@link ExecutionStage}-related state and re-create {@link StageActivator}s etc. from the {@link ExecutionPlan}/
      *
-     * @param executionPlan whose {@link ExecutionStage}s will be executed
+     * @param executionPlan       whose {@link ExecutionStage}s will be executed
+     * @param optimizationContext contains additional optimization info for the {@code executionPlan}
      */
-    public void prepare(ExecutionPlan executionPlan) {
+    public void prepare(ExecutionPlan executionPlan, OptimizationContext optimizationContext) {
         this.allStages.clear();
         this.activatedStageActivators.clear();
         this.suspendedStages.clear();
@@ -128,19 +131,36 @@ public class CrossPlatformExecutor implements ExecutionState {
         for (ExecutionStage stage : this.allStages) {
             // Avoid re-activating already executed ExecutionStages.
             if (this.completedStages.contains(stage)) continue;
-            final StageActivator activator = this.getOrCreateActivator(stage);
+            final StageActivator activator = this.getOrCreateActivator(
+                    stage,
+                    this.determineInitialOptimizationContext(stage, optimizationContext)
+            );
             this.tryToActivate(activator);
         }
     }
 
     /**
+     * Find the initial {@link OptimizationContext} for a {@link StageActivator}.
+     *
+     * @param stage the {@link ExecutionStage} whose {@link OptimizationContext} is to be determined
+     * @return the {@link OptimizationContext}
+     */
+    private OptimizationContext determineInitialOptimizationContext(ExecutionStage stage, OptimizationContext rootOptimizationContext) {
+        if (stage.getLoop() == null) return rootOptimizationContext;
+
+        // TODO: Assumes non-nested loops.
+        return rootOptimizationContext.getNestedLoopContext(stage.getLoop().getLoopSubplan()).getInitialIterationContext();
+    }
+
+    /**
      * Returns an existing {@link StageActivator} for the {@link ExecutionStage} or creates and registers a new one.
      *
-     * @param stage for which the {@link StageActivator} is requested
+     * @param stage               for which the {@link StageActivator} is requested
+     * @param optimizationContext
      * @return the {@link StageActivator}
      */
-    private StageActivator getOrCreateActivator(ExecutionStage stage) {
-        return this.pendingStageActivators.computeIfAbsent(stage, StageActivator::new);
+    private StageActivator getOrCreateActivator(ExecutionStage stage, final OptimizationContext optimizationContext) {
+        return this.pendingStageActivators.computeIfAbsent(stage, s -> new StageActivator(s, optimizationContext));
     }
 
     /**
@@ -178,12 +198,11 @@ public class CrossPlatformExecutor implements ExecutionState {
                 }
 
                 // Otherwise, execute the stage.
-                final ExecutionStage stage = stageActivator.getStage();
-                this.execute(stage);
+                this.execute(stageActivator);
                 numExecutedStages++;
 
                 // Try to activate the successor stages.
-                this.tryToActivateSuccessors(stage);
+                this.tryToActivateSuccessors(stageActivator);
 
                 // We can now dispose the stageActivator that collected the input ChannelInstances.
                 stageActivator.dispose();
@@ -239,10 +258,13 @@ public class CrossPlatformExecutor implements ExecutionState {
     /**
      * Tries to execute the given {@link ExecutionStage}.
      *
-     * @param stage that should be executed
+     * @param stageActivator that should be executed
      * @return whether the {@link ExecutionStage} was really executed
      */
-    private void execute(ExecutionStage stage) {
+    private void execute(StageActivator stageActivator) {
+        final ExecutionStage stage = stageActivator.getStage();
+        final OptimizationContext optimizationContext = stageActivator.getOptimizationContext();
+
         // Find parts of the stage to instrument.
         this.instrumentationStrategy.applyTo(stage);
 
@@ -252,7 +274,7 @@ public class CrossPlatformExecutor implements ExecutionState {
         // Have the execution done.
         CrossPlatformExecutor.this.logger.info("Having {} execute {}:\n{}", executor, stage, stage.getPlanAsString("> "));
         long startTime = System.currentTimeMillis();
-        executor.execute(stage, this);
+        executor.execute(stage, optimizationContext, this);
         long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime, true));
 
@@ -278,9 +300,11 @@ public class CrossPlatformExecutor implements ExecutionState {
      * Follows the outbound {@link Channel}s of the given {@link ExecutionStage} and try to activate consuming
      * {@link ExecutionStage}s, given the according {@link ChannelInstance}s are available.
      *
-     * @param processedStage should have just been executed
+     * @param processedStageActivator should have just been executed
      */
-    private void tryToActivateSuccessors(ExecutionStage processedStage) {
+    private void tryToActivateSuccessors(StageActivator processedStageActivator) {
+        final ExecutionStage processedStage = processedStageActivator.getStage();
+
         // Gather all successor ExecutionStages for that a new ChannelInstance has been produced.
         final Collection<Channel> outboundChannels = processedStage.getOutboundChannels();
         Set<ExecutionStage> successorStages = new HashSet<>(outboundChannels.size());
@@ -298,9 +322,50 @@ public class CrossPlatformExecutor implements ExecutionState {
 
         // Try to activate follow-up stages.
         for (ExecutionStage successorStage : successorStages) {
-            final StageActivator activator = this.getOrCreateActivator(successorStage);
+            final StageActivator activator = this.getOrCreateActivator(
+                    successorStage,
+                    this.determineNextOptimizationContext(processedStageActivator, successorStage)
+            );
             this.tryToActivate(activator);
         }
+    }
+
+    /**
+     * Find the {@link OptimizationContext} for a {@link StageActivator} that is activated from a preceeding
+     * {@link StageActivator}.
+     *
+     * @param processedStageActivator the preceeding {@link StageActivator}
+     * @param successorStage          the {@link StageActivator} whose {@link OptimizationContext} is to be determined
+     * @return the {@link OptimizationContext}
+     */
+    private OptimizationContext determineNextOptimizationContext(
+            StageActivator processedStageActivator,
+            ExecutionStage successorStage
+    ) {
+        final OptimizationContext prevOptimizationContext = processedStageActivator.getOptimizationContext();
+
+        // Check if the next stage is in a loop.
+        if (successorStage.getLoop() == null) {
+            return prevOptimizationContext.getRootParent();
+        }
+
+        // Check if we stay within the same loop.
+        final ExecutionStage processedStage = processedStageActivator.getStage();
+        if (processedStage.getLoop() == successorStage.getLoop()) {
+            if (successorStage.isLoopHead()) {
+                prevOptimizationContext.getNextIterationContext(); // TODO: Make up new contexts if needed.
+            } else {
+                return prevOptimizationContext;
+            }
+        }
+
+        // Otherwise, we enter a loop.
+        // TODO: This code assumes non-nested loops.
+        final LoopSubplan loopSubplan = successorStage.getLoop().getLoopSubplan();
+        return prevOptimizationContext
+                .getRootParent()
+                .getNestedLoopContext(loopSubplan)
+                .getInitialIterationContext();
     }
 
 
@@ -421,6 +486,11 @@ public class CrossPlatformExecutor implements ExecutionState {
         private final ExecutionStage stage;
 
         /**
+         * The {@link OptimizationContext} for the {@link #stage}.
+         */
+        private final OptimizationContext optimizationContext;
+
+        /**
          * Regular inbound {@link Channel}s to the {@link #stage}.
          */
         private final Collection<Channel> miscInboundChannels = new LinkedList<>();
@@ -459,10 +529,12 @@ public class CrossPlatformExecutor implements ExecutionState {
         /**
          * Creates a new instance.
          *
-         * @param stage that should be activated
+         * @param stage               that should be activated
+         * @param optimizationContext
          */
-        private StageActivator(ExecutionStage stage) {
+        private StageActivator(ExecutionStage stage, OptimizationContext optimizationContext) {
             this.stage = stage;
+            this.optimizationContext = optimizationContext;
 
             if (this.stage.getLoop() != null) {
                 this.loopContext = CrossPlatformExecutor.this.getOrCreateLoopContext(this.stage.getLoop());
@@ -579,6 +651,10 @@ public class CrossPlatformExecutor implements ExecutionState {
          */
         public ExecutionStage getStage() {
             return this.stage;
+        }
+
+        public OptimizationContext getOptimizationContext() {
+            return optimizationContext;
         }
 
         /**

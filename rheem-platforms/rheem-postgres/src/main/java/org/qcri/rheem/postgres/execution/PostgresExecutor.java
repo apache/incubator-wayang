@@ -5,6 +5,7 @@ import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.*;
@@ -56,7 +57,7 @@ public class PostgresExecutor extends ExecutorTemplate {
     }
 
     @Override
-    public void execute(ExecutionStage stage, ExecutionState executionState) {
+    public void execute(ExecutionStage stage, OptimizationContext optimizationContext, ExecutionState executionState) {
         // TODO: Load ChannelInstances from executionState? (as of now there is no input into PostgreSQL).
         ResultSet rs = null;
         FunctionCompiler functionCompiler = new FunctionCompiler();

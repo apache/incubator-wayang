@@ -354,7 +354,9 @@ public class Job extends OneTimeExecutable {
 
         // Trigger the execution.
         final StopWatch.Round executeRound = round.startSubround("Execute");
-        boolean isExecutionComplete = this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
+        boolean isExecutionComplete = this.crossPlatformExecutor.executeUntilBreakpoint(
+                executionPlan, this.optimizationContext
+        );
         executeRound.stop();
         this.executionMillis += round.stop(true, true);
 
