@@ -43,9 +43,7 @@ public abstract class LoadProfileToTimeConverter {
                         loadProfile, LoadProfile::getNetworkUsage, this.networkConverter);
 
                 TimeEstimate aggregate = aggregator.aggregate(cpuTime, diskTime, networkTime);
-                if (!Double.isNaN(loadProfile.getRatioCores()) && loadProfile.getRatioCores() < 1d) {
-                    aggregate = aggregate.times(loadProfile.getRatioCores());
-                }
+                aggregate = aggregate.times(loadProfile.getResourceUtilization());
                 return aggregate;
             }
 

@@ -62,7 +62,7 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
     }
 
     public TimeEstimate times(double scalar) {
-        return new TimeEstimate(
+        return scalar == 1d ? this : new TimeEstimate(
                 Math.round(this.getLowerEstimate() * scalar),
                 Math.round(this.getUpperEstimate() * scalar),
                 this.getCorrectnessProbability()
