@@ -287,23 +287,24 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
      * @return the estimated resource utilization
      */
     private double estimateResourceUtilization(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
-        long[] avgInputEstimates = extractAverages(inputEstimates);
-        long[] avgOutputEstimates = extractAverages(outputEstimates);
+        long[] avgInputEstimates = extractMeanValues(inputEstimates);
+        long[] avgOutputEstimates = extractMeanValues(outputEstimates);
         return this.resourceUtilizationEstimator.applyAsDouble(avgInputEstimates, avgOutputEstimates);
     }
 
     /**
-     * Extracts the average values of the given {@link CardinalityEstimate}s.
+     * Extracts the geometric mean values of the given {@link CardinalityEstimate}s.
      *
      * @param estimates the input {@link CardinalityEstimate}s
      * @return an array containing the average estimates
-     * @see CardinalityEstimate#getAverageEstimate()
+     * @see CardinalityEstimate#getGeometricMeanEstimate()
      */
-    private static long[] extractAverages(CardinalityEstimate[] estimates) {
+    private static long[] extractMeanValues(CardinalityEstimate[] estimates) {
         long[] averages = new long[estimates.length];
         for (int i = 0; i < estimates.length; i++) {
             CardinalityEstimate inputEstimate = estimates[i];
-            averages[i] = inputEstimate.getAverageEstimate();
+            if (inputEstimate == null) inputEstimate = CardinalityEstimate.EMPTY_ESTIMATE;
+            averages[i] = inputEstimate.getGeometricMeanEstimate();
         }
         return averages;
     }

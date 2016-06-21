@@ -119,7 +119,7 @@ public class SparkShufflePartitionSampleOperator<Type>
                 new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
                 new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
                 new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                0.23d,
+                (in, out) -> 0.23d,
                 550
         );
 

@@ -2,6 +2,7 @@ package org.qcri.rheem.core.optimizer.costs;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 
 /**
@@ -18,7 +19,7 @@ public class NestableLoadProfileEstimatorTest {
                 "\"cpu\":\"${3*in0 + 2*in1 + 7*out0}\"," +
                 "\"ram\":\"${6*in0 + 4*in1 + 14*out0}\"," +
                 "\"overhead\":143," +
-                "\"ru\":\"${1 - 1/(in0 + in1)}\"" +
+                "\"ru\":\"${rheem:logGrowth(0.1, 0.1, 10000, in0+in1)}\"" +
                 "}";
         final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(specification);
         final LoadProfile estimate = estimator.estimate(
@@ -28,9 +29,13 @@ public class NestableLoadProfileEstimatorTest {
                 new CardinalityEstimate[]{new CardinalityEstimate(200, 300, 1d)}
         );
 
-        Assert.assertEquals(estimate.getCpuUsage().getLowerEstimate(), 3*10 + 2*100 + 7*200, 0.01);
-        Assert.assertEquals(estimate.getCpuUsage().getUpperEstimate(), 3*10 + 2*100 + 7*300, 0.01);
-        Assert.assertEquals(estimate.getResourceUtilization(), 1d - 1d/(10+100), 0.000000001);
-        Assert.assertEquals(estimate.getOverheadMillis(), 143);
+        Assert.assertEquals(3*10 + 2*100 + 7*200, estimate.getCpuUsage().getLowerEstimate(), 0.01);
+        Assert.assertEquals(3*10 + 2*100 + 7*300, estimate.getCpuUsage().getUpperEstimate(), 0.01);
+        Assert.assertEquals(
+                OptimizationUtils.logisticGrowth(0.1, 0.1, 10000, 100 + 10),
+                estimate.getResourceUtilization(),
+                0.000000001
+        );
+        Assert.assertEquals(143, estimate.getOverheadMillis());
     }
 }
