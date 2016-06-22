@@ -169,7 +169,7 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
         for (int i = 0; i < outputCardinalities.length; i++) {
             parameters.put("out" + i, outputCardinalities[i]);
         }
-        return juelFunction.apply(parameters);
+        return juelFunction.apply(parameters, true);
     }
 
     /**

@@ -63,18 +63,25 @@ public class JuelUtils {
 
         @SuppressWarnings("unchecked")
         public T apply(Map<String, Object> values) {
+            return this.apply(values, false);
+        }
+
+        @SuppressWarnings("unchecked")
+        public T apply(Map<String, Object> values, boolean isExpectTooManyArguments) {
             values.forEach((key, value) -> {
                 final Argument argument = this.arguments.get(key);
                 if (argument == null) {
-                    LoggerFactory.getLogger(this.getClass()).warn("Unknown field \"{}\".", key);
+                    if (isExpectTooManyArguments) {
+                        LoggerFactory.getLogger(this.getClass()).debug("Unknown field \"{}\" (available: {}).", key, this.arguments.keySet());
+                    } else {
+                        LoggerFactory.getLogger(this.getClass()).warn("Unknown field \"{}\" (available: {}).", key, this.arguments.keySet());
+                    }
                 } else {
                     argument.expression.setValue(this.context, value);
-//                    this.context.setVariable(key, this.expressionFactory.createValueExpression(value, argument.typeClass));
                 }
             });
             return (T) this.expression.getValue(this.context);
         }
-
     }
 
     /**
