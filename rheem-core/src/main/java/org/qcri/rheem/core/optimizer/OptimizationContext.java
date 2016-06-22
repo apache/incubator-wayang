@@ -319,6 +319,12 @@ public class OptimizationContext {
         return this.base;
     }
 
+    public void mergeToBase() {
+        if (this.base == null) return;
+        assert this.loopContexts.isEmpty() : "Merging loop contexts is not supported yet.";
+        this.base.operatorContexts.putAll(this.operatorContexts);
+    }
+
     public List<PlanEnumerationPruningStrategy> getPruningStrategies() {
         return this.pruningStrategies;
     }

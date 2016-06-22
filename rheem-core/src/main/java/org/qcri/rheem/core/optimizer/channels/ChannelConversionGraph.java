@@ -7,10 +7,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.platform.Platform;
@@ -28,8 +25,6 @@ import java.util.stream.Collectors;
  */
 public class ChannelConversionGraph {
 
-    private final Configuration configuration;
-
     private final Map<ChannelDescriptor, List<ChannelConversion>> conversions = new HashMap<>();
 
     private final Comparator<TimeEstimate> timeEstimateComparator;
@@ -39,7 +34,6 @@ public class ChannelConversionGraph {
     private static final Logger logger = LoggerFactory.getLogger(ChannelConversionGraph.class);
 
     public ChannelConversionGraph(Configuration configuration) {
-        this.configuration = configuration;
         this.timeEstimateComparator = configuration.getTimeEstimateComparatorProvider().provide();
         for (final Platform platform : configuration.getPlatformProvider()) {
             platform.addChannelConversionsTo(this);
@@ -70,7 +64,8 @@ public class ChannelConversionGraph {
      *
      * @param output              {@link OutputSlot} of an {@link ExecutionOperator} that should be consumed
      * @param destInputSlots      {@link InputSlot}s of {@link ExecutionOperator}s that should receive data from the {@code output}
-     * @param optimizationContext describes the above mentioned {@link ExecutionOperator} key figures   @return a {@link Junction} or {@code null} if none could be found
+     * @param optimizationContext describes the above mentioned {@link ExecutionOperator} key figures
+     * @return a {@link Junction} or {@code null} if none could be found
      */
     public Junction findMinimumCostJunction(OutputSlot<?> output,
                                             List<InputSlot<?>> destInputSlots,
@@ -85,13 +80,14 @@ public class ChannelConversionGraph {
      * @param output              {@link OutputSlot} of an {@link ExecutionOperator} that should be consumed
      * @param existingChannel     an existing {@link Channel} that must be part of the tree or {@code null}
      * @param destInputSlots      {@link InputSlot}s of {@link ExecutionOperator}s that should receive data from the {@code output}
-     * @param optimizationContext describes the above mentioned {@link ExecutionOperator} key figures   @return a {@link Junction} or {@code null} if none could be found
+     * @param optimizationContext describes the above mentioned {@link ExecutionOperator} key figures
+     * @return a {@link Junction} or {@code null} if none could be found
      */
     public Junction findMinimumCostJunction(OutputSlot<?> output,
                                             Channel existingChannel,
                                             List<InputSlot<?>> destInputSlots,
                                             OptimizationContext optimizationContext) {
-        return new ShortestTreeSearcher(output, existingChannel, destInputSlots, optimizationContext, this.configuration).getJunction();
+        return new ShortestTreeSearcher(output, existingChannel, destInputSlots, optimizationContext).getJunction();
     }
 
     /**
@@ -175,9 +171,10 @@ public class ChannelConversionGraph {
 
         private final List<Set<ChannelDescriptor>> destChannelDescriptorSets;
 
-        private final OptimizationContext optimizationContext;
-
-        private final Configuration configuration;
+        /**
+         * Keeps around {@link OptimizationContext.OperatorContext}s for considered conversion {@link ExecutionOperator}s.
+         */
+        private final OptimizationContext localOptimizationContext;
 
         private Map<Set<ChannelDescriptor>, BitSet> kernelDestChannelDescriptorSetsToIndices;
 
@@ -190,8 +187,7 @@ public class ChannelConversionGraph {
         private ShortestTreeSearcher(OutputSlot<?> sourceOutput,
                                      Channel existingChannel,
                                      List<InputSlot<?>> destInputs,
-                                     OptimizationContext optimizationContext,
-                                     Configuration configuration) {
+                                     OptimizationContext optimizationContext) {
             this.sourceOutput = sourceOutput;
             final ExecutionOperator outputOperator = (ExecutionOperator) this.sourceOutput.getOwner();
             final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(outputOperator);
@@ -217,8 +213,29 @@ public class ChannelConversionGraph {
             this.destInputs = destInputs;
             this.destChannelDescriptorSets = RheemCollections.map(destInputs, this::resolveSupportedChannels);
             assert this.destChannelDescriptorSets.stream().noneMatch(Collection::isEmpty);
-            this.optimizationContext = new OptimizationContext(optimizationContext);
-            this.configuration = configuration;
+
+            this.localOptimizationContext = this.createLocalOptimizationContext(optimizationContext);
+        }
+
+        /**
+         * Creates a new {@link OptimizationContext} that forks
+         * <ul>
+         * <li>the given {@code optimizationContext}'s parent if the {@link #sourceOutput} is the final
+         * {@link OutputSlot} of a {@link LoopHeadOperator}</li>
+         * <li>or else the given {@code optimizationContext}.</li>
+         * </ul>
+         * We have to do this because in the former case the {@link Junction} {@link ExecutionOperator}s should not
+         * reside in a loop {@link OptimizationContext}.
+         *
+         * @param optimizationContext the {@link OptimizationContext} of the {@link #sourceOutput}
+         * @return the forked {@link OptimizationContext}
+         */
+        // TODO: Refactor this.
+        private OptimizationContext createLocalOptimizationContext(OptimizationContext optimizationContext) {
+            if (this.sourceOutput.getOwner().isLoopHead() && !this.sourceOutput.isFeedforward()) {
+                return new OptimizationContext(optimizationContext.getParent());
+            }
+            return new OptimizationContext(optimizationContext);
         }
 
         public Junction getJunction() {
@@ -265,7 +282,7 @@ public class ChannelConversionGraph {
          * @see #kernelDestChannelDescriptorsToIndices
          */
         private void kernelizeChannelRequests() {
-            // Check if the Junction enters a look.
+            // Check if the Junction enters a loop.
             final LoopSubplan outputLoop = this.sourceOutput.getOwner().getInnermostLoop();
             final int outputLoopDepth = this.sourceOutput.getOwner().getLoopStack().size();
             boolean isSideEnterLoop = this.destInputs.stream().anyMatch(input ->
@@ -321,9 +338,16 @@ public class ChannelConversionGraph {
             }
         }
 
-        private BitSet union(BitSet i1, BitSet i2) {
-            i1.or(i2);
-            return i1;
+        /**
+         * Unions two {@link BitSet}s in place.
+         *
+         * @param accu  accumulates the sum and is the first operand
+         * @param delta the second operand
+         * @return {@code accu}
+         */
+        private BitSet union(BitSet accu, BitSet delta) {
+            accu.or(delta);
+            return accu;
         }
 
         /**
@@ -445,17 +469,17 @@ public class ChannelConversionGraph {
         private TimeEstimate getTimeEstimate(ChannelConversion channelConversion) {
             return this.conversionTimeCache.computeIfAbsent(
                     channelConversion,
-                    key -> key.estimateConversionTime(this.cardinality, this.numExecutions, this.configuration)
+                    key -> key.estimateConversionTime(this.cardinality, this.numExecutions, this.localOptimizationContext)
             );
         }
 
         private void createJunction(Tree tree) {
             // Create the a new Junction.
-            final Junction junction = new Junction(this.sourceOutput, this.destInputs, this.optimizationContext);
+            final Junction junction = new Junction(this.sourceOutput, this.destInputs, this.localOptimizationContext);
 
             // Create the Channels and ExecutionTasks.
             Channel sourceChannel = this.sourceChannel == null ?
-                    this.startChannelDescriptor.createChannel(this.sourceOutput, this.configuration) :
+                    this.startChannelDescriptor.createChannel(this.sourceOutput, this.localOptimizationContext.getConfiguration()) :
                     this.sourceChannel;
             junction.setSourceChannel(sourceChannel);
             Channel startChannel = this.startChannel == null ? sourceChannel : this.startChannel;
@@ -523,7 +547,7 @@ public class ChannelConversionGraph {
             isOnAllPaths &= vertex.settledIndices.isEmpty() && vertex.outEdges.size() <= 1;
             for (TreeEdge edge : vertex.outEdges) {
                 final ChannelConversion channelConversion = edge.channelConversion;
-                final Channel targetChannel = channelConversion.convert(channel, this.configuration);
+                final Channel targetChannel = channelConversion.convert(channel, this.localOptimizationContext.getConfiguration());
                 if (targetChannel != channel) {
                     final ExecutionOperator conversionOperator = targetChannel.getProducer().getOperator();
                     conversionOperator.setName(String.format(

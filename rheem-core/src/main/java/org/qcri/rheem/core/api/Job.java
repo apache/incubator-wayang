@@ -272,6 +272,8 @@ public class Job extends OneTimeExecutable {
         final ExecutionPlan executionPlan = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         this.stopWatch.stop("Create Initial Execution Plan", "Split Stages");
 
+        planImplementation.mergeJunctionOptimizationContexts();
+
         //assert executionPlan.isSane();
 
 

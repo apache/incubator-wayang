@@ -545,4 +545,21 @@ public class PlanImplementation {
     public OptimizationContext getOptimizationContext() {
         return this.optimizationContext;
     }
+
+    /**
+     * Merges the {@link OptimizationContext}s of the {@link Junction}s in this instance into its main
+     * {@link OptimizationContext}/
+     */
+    public void mergeJunctionOptimizationContexts() {
+        // Merge the top-level Junctions.
+        for (Junction junction : this.junctions.values()) {
+            junction.geOptimizationContext().mergeToBase();
+        }
+
+        // Descend into loops.
+        this.loopImplementations.values().stream()
+                .flatMap(loopImplementation -> loopImplementation.getIterationImplementations().stream())
+                .map(LoopImplementation.IterationImplementation::getBodyImplementation)
+                .forEach(PlanImplementation::mergeJunctionOptimizationContexts);
+    }
 }
