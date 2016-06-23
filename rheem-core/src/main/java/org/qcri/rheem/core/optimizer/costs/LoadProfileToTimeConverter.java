@@ -43,7 +43,9 @@ public abstract class LoadProfileToTimeConverter {
                         loadProfile, LoadProfile::getNetworkUsage, this.networkConverter);
 
                 TimeEstimate aggregate = aggregator.aggregate(cpuTime, diskTime, networkTime);
-                aggregate = aggregate.times(loadProfile.getResourceUtilization());
+                aggregate = aggregate
+                        .times(1 / loadProfile.getResourceUtilization())
+                        .plus(new TimeEstimate(loadProfile.getOverheadMillis()));
                 return aggregate;
             }
 
@@ -54,7 +56,7 @@ public abstract class LoadProfileToTimeConverter {
                         .map(property)
                         .filter(Objects::nonNull)
                         .map(converter::convert)
-                        .reduce(new TimeEstimate(profile.getOverheadMillis()), TimeEstimate::plus);
+                        .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
             }
 
         };
