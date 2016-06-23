@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.configuration.FunctionalKeyValueProvider;
 import org.qcri.rheem.core.api.configuration.KeyValueProvider;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ElementaryOperator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -53,7 +54,7 @@ public class SubplanCardinalityPusherTest {
         op1.connectTo(0, op2, 0);
 
         Subplan subplan = (Subplan) Subplan.wrap(op1, op2);
-        OptimizationContext optimizationContext = new OptimizationContext(subplan, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(subplan, this.configuration);
         final OptimizationContext.OperatorContext subplanCtx = optimizationContext.getOperatorContext(subplan);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(123, 321, 0.123d);
         subplanCtx.setInputCardinality(0, inputCardinality);
@@ -79,7 +80,7 @@ public class SubplanCardinalityPusherTest {
         source.connectTo(0, op, 0);
 
         Subplan subplan = (Subplan) Subplan.wrap(source, op);
-        OptimizationContext optimizationContext = new OptimizationContext(subplan, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(subplan, this.configuration);
         final OptimizationContext.OperatorContext subplanCtx = optimizationContext.getOperatorContext(subplan);
 
         final CardinalityPusher pusher = SubplanCardinalityPusher.createFor(subplan, this.configuration);
@@ -112,7 +113,7 @@ public class SubplanCardinalityPusherTest {
         join1.connectTo(0, map4, 0);
 
         Subplan subplan = (Subplan) Subplan.wrap(map1, map4);
-        OptimizationContext optimizationContext = new OptimizationContext(subplan, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(subplan, this.configuration);
         final OptimizationContext.OperatorContext subplanCtx = optimizationContext.getOperatorContext(subplan);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(10, 100, 0.9d);
         subplanCtx.setInputCardinality(0, inputCardinality);

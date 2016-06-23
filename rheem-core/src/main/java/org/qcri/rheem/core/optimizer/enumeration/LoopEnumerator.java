@@ -39,7 +39,7 @@ public class LoopEnumerator extends OneTimeExecutable {
     protected void doExecute() {
         // Create aggregate iteration contexts.
         OptimizationContext aggregateContext =
-                this.loopContext.createAggregateContext(0, this.loopContext.getIterationContexts().size());
+                this.loopContext.createAggregateContext();
         LoopSubplan loop = this.loopContext.getLoop();
 
         // Create the end result.

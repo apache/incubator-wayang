@@ -29,11 +29,11 @@ public class Junction {
 
     private final List<Channel> targetChannels;
 
-    private final OptimizationContext optimizationCtx;
+    private final Collection<OptimizationContext> optimizationContexts;
 
     private TimeEstimate timeEstimateCache = TimeEstimate.ZERO;
 
-    public Junction(OutputSlot<?> sourceOutput, List<InputSlot<?>> targetInputs, OptimizationContext optimizationCtx) {
+    public Junction(OutputSlot<?> sourceOutput, List<InputSlot<?>> targetInputs, Collection<OptimizationContext> optimizationContexts) {
         // Copy parameters.
         assert sourceOutput.getOwner().isExecutionOperator();
         this.sourceOutput = sourceOutput;
@@ -44,7 +44,7 @@ public class Junction {
         this.targetChannels = RheemCollections.map(this.targetInputs, input -> null);
 
         // Get hold of an OptimizationContext.
-        this.optimizationCtx = optimizationCtx;
+        this.optimizationContexts = optimizationContexts;
     }
 
     public ExecutionOperator getSourceOperator() {
@@ -115,12 +115,12 @@ public class Junction {
     }
 
     /**
-     * Retrieve the {@link OptimizationContext} that holds optimization information on the {@link ExecutionOperator}s
+     * Retrieve the {@link OptimizationContext}s that hold optimization information on the {@link ExecutionOperator}s
      * in this instance.
      *
-     * @return the {@link OptimizationContext}
+     * @return the {@link OptimizationContext}s
      */
-    public OptimizationContext geOptimizationContext() {
-        return this.optimizationCtx;
+    public Collection<OptimizationContext> getOptimizationContexts() {
+        return this.optimizationContexts;
     }
 }

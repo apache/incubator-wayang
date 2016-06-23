@@ -553,7 +553,7 @@ public class PlanImplementation {
     public void mergeJunctionOptimizationContexts() {
         // Merge the top-level Junctions.
         for (Junction junction : this.junctions.values()) {
-            junction.geOptimizationContext().mergeToBase();
+            junction.getOptimizationContexts().forEach(OptimizationContext::mergeToBase);
         }
 
         // Descend into loops.

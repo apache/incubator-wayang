@@ -2,6 +2,7 @@ package org.qcri.rheem.core.api;
 
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
@@ -221,7 +222,7 @@ public class Job extends OneTimeExecutable {
         this.stopWatch.start("Cardinality&Load Estimation");
         if (this.cardinalityEstimatorManager == null) {
             this.stopWatch.start("Cardinality&Load Estimation", "Create OptimizationContext");
-            this.optimizationContext = new OptimizationContext(this.rheemPlan, this.configuration);
+            this.optimizationContext = new DefaultOptimizationContext(this.rheemPlan, this.configuration);
             this.stopWatch.stop("Cardinality&Load Estimation", "Create OptimizationContext");
 
             this.stopWatch.start("Cardinality&Load Estimation", "Create CardinalityEstimationManager");

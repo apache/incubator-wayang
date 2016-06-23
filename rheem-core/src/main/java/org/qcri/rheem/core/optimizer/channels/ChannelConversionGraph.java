@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer.channels;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
@@ -172,9 +173,9 @@ public class ChannelConversionGraph {
         private final List<Set<ChannelDescriptor>> destChannelDescriptorSets;
 
         /**
-         * Keeps around {@link OptimizationContext.OperatorContext}s for considered conversion {@link ExecutionOperator}s.
+         * The input {@link OptimizationContext}.
          */
-        private final OptimizationContext localOptimizationContext;
+        private final OptimizationContext optimizationContext;
 
         private Map<Set<ChannelDescriptor>, BitSet> kernelDestChannelDescriptorSetsToIndices;
 
@@ -189,6 +190,7 @@ public class ChannelConversionGraph {
                                      List<InputSlot<?>> destInputs,
                                      OptimizationContext optimizationContext) {
             this.sourceOutput = sourceOutput;
+            this.optimizationContext = optimizationContext;
             final ExecutionOperator outputOperator = (ExecutionOperator) this.sourceOutput.getOwner();
             final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(outputOperator);
             assert operatorContext != null : String.format("Optimization info for %s missing.", outputOperator);
@@ -213,29 +215,6 @@ public class ChannelConversionGraph {
             this.destInputs = destInputs;
             this.destChannelDescriptorSets = RheemCollections.map(destInputs, this::resolveSupportedChannels);
             assert this.destChannelDescriptorSets.stream().noneMatch(Collection::isEmpty);
-
-            this.localOptimizationContext = this.createLocalOptimizationContext(optimizationContext);
-        }
-
-        /**
-         * Creates a new {@link OptimizationContext} that forks
-         * <ul>
-         * <li>the given {@code optimizationContext}'s parent if the {@link #sourceOutput} is the final
-         * {@link OutputSlot} of a {@link LoopHeadOperator}</li>
-         * <li>or else the given {@code optimizationContext}.</li>
-         * </ul>
-         * We have to do this because in the former case the {@link Junction} {@link ExecutionOperator}s should not
-         * reside in a loop {@link OptimizationContext}.
-         *
-         * @param optimizationContext the {@link OptimizationContext} of the {@link #sourceOutput}
-         * @return the forked {@link OptimizationContext}
-         */
-        // TODO: Refactor this.
-        private OptimizationContext createLocalOptimizationContext(OptimizationContext optimizationContext) {
-            if (this.sourceOutput.getOwner().isLoopHead() && !this.sourceOutput.isFeedforward()) {
-                return new OptimizationContext(optimizationContext.getParent());
-            }
-            return new OptimizationContext(optimizationContext);
         }
 
         public Junction getJunction() {
@@ -469,17 +448,19 @@ public class ChannelConversionGraph {
         private TimeEstimate getTimeEstimate(ChannelConversion channelConversion) {
             return this.conversionTimeCache.computeIfAbsent(
                     channelConversion,
-                    key -> key.estimateConversionTime(this.cardinality, this.numExecutions, this.localOptimizationContext)
+                    key -> key.estimateConversionTime(this.cardinality, this.numExecutions, this.optimizationContext.getConfiguration())
             );
         }
 
         private void createJunction(Tree tree) {
+            Collection<OptimizationContext> localOptimizationContexts = this.forkLocalOptimizationContext();
+
             // Create the a new Junction.
-            final Junction junction = new Junction(this.sourceOutput, this.destInputs, this.localOptimizationContext);
+            final Junction junction = new Junction(this.sourceOutput, this.destInputs, localOptimizationContexts);
 
             // Create the Channels and ExecutionTasks.
             Channel sourceChannel = this.sourceChannel == null ?
-                    this.startChannelDescriptor.createChannel(this.sourceOutput, this.localOptimizationContext.getConfiguration()) :
+                    this.startChannelDescriptor.createChannel(this.sourceOutput, this.optimizationContext.getConfiguration()) :
                     this.sourceChannel;
             junction.setSourceChannel(sourceChannel);
             Channel startChannel = this.startChannel == null ? sourceChannel : this.startChannel;
@@ -499,7 +480,7 @@ public class ChannelConversionGraph {
                 for (int destIndex = 0; destIndex < this.destInputs.size(); destIndex++) {
                     assert this.destInputs.get(destIndex).getOwner().getInnermostLoop() == sourceLoop :
                             String.format(
-                                    "Expected that %s would belong to %s, just as %d.",
+                                    "Expected that %s would belong to %s, just as %s does.",
                                     this.destInputs.get(destIndex), sourceLoop, sourceOutput
                             );
                     Channel targetChannel = junction.getTargetChannel(destIndex);
@@ -547,7 +528,13 @@ public class ChannelConversionGraph {
             isOnAllPaths &= vertex.settledIndices.isEmpty() && vertex.outEdges.size() <= 1;
             for (TreeEdge edge : vertex.outEdges) {
                 final ChannelConversion channelConversion = edge.channelConversion;
-                final Channel targetChannel = channelConversion.convert(channel, this.localOptimizationContext.getConfiguration());
+                final Channel targetChannel = channelConversion.convert(
+                        channel,
+                        this.optimizationContext.getConfiguration(),
+                        junction.getOptimizationContexts(),
+                        // Hacky: Inject cardinality for cases where we convert a LoopHeadOperator output.
+                        junction.getOptimizationContexts().size() == 1 ? this.cardinality : null
+                );
                 if (targetChannel != channel) {
                     final ExecutionOperator conversionOperator = targetChannel.getProducer().getOperator();
                     conversionOperator.setName(String.format(
@@ -557,6 +544,30 @@ public class ChannelConversionGraph {
                 }
                 this.createJunctionAux(edge.destination, targetChannel, junction, isOnAllPaths);
             }
+
+        }
+
+        /**
+         * Creates a new {@link OptimizationContext} that forks
+         * <ul>
+         * <li>the given {@code optimizationContext}'s parent if the {@link #sourceOutput} is the final
+         * {@link OutputSlot} of a {@link LoopHeadOperator}</li>
+         * <li>or else the given {@code optimizationContext}.</li>
+         * </ul>
+         * We have to do this because in the former case the {@link Junction} {@link ExecutionOperator}s should not
+         * reside in a loop {@link OptimizationContext}.
+         *
+         * @return the forked {@link OptimizationContext}
+         */
+        // TODO: Refactor this.
+        private Collection<OptimizationContext> forkLocalOptimizationContext() {
+            OptimizationContext baseOptimizationContext =
+                    this.sourceOutput.getOwner().isLoopHead() && !this.sourceOutput.isFeedforward() ?
+                            this.optimizationContext.getParent() :
+                            this.optimizationContext;
+            return baseOptimizationContext.getDefaultOptimizationContexts().stream()
+                    .map(DefaultOptimizationContext::new)
+                    .collect(Collectors.toList());
         }
 
 
