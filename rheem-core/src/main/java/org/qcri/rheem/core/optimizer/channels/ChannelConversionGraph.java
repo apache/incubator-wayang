@@ -536,11 +536,12 @@ public class ChannelConversionGraph {
                         junction.getOptimizationContexts().size() == 1 ? this.cardinality : null
                 );
                 if (targetChannel != channel) {
-                    final ExecutionOperator conversionOperator = targetChannel.getProducer().getOperator();
+                    final ExecutionTask producer = targetChannel.getProducer();
+                    final ExecutionOperator conversionOperator = producer.getOperator();
                     conversionOperator.setName(String.format(
                             "convert %s", junction.getSourceOutput()
                     ));
-                    junction.register(conversionOperator, this.getTimeEstimate(channelConversion));
+                    junction.register(producer);
                 }
                 this.createJunctionAux(edge.destination, targetChannel, junction, isOnAllPaths);
             }

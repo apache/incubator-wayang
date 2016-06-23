@@ -242,8 +242,6 @@ public class PlanEnumeration {
                     concatenationEnumeration
             );
         }
-
-
     }
 
     /**

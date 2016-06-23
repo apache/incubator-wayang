@@ -449,6 +449,16 @@ public class PlanImplementation {
     }
 
     /**
+     * Adds a new {@link LoopImplementation} for a given {@link LoopSubplan}.
+     *
+     * @param loop               the {@link LoopSubplan}
+     * @param loopImplementation the {@link LoopImplementation}
+     */
+    public void addLoopImplementation(LoopSubplan loop, LoopImplementation loopImplementation) {
+        this.loopImplementations.put(loop, loopImplementation);
+    }
+
+    /**
      * @return those contained {@link ExecutionOperator}s that have a {@link Slot} that is yet to be connected
      * to a further {@link ExecutionOperator} in the further plan enumeration process
      */
@@ -522,8 +532,8 @@ public class PlanImplementation {
             final TimeEstimate operatorTimeEstimate = this.operators.stream()
                     .map(op -> this.optimizationContext.getOperatorContext(op).getTimeEstimate())
                     .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
-            final TimeEstimate junctionTimeEstimate = this.junctions.values().stream()
-                    .map(Junction::getTimeEstimate)
+            final TimeEstimate junctionTimeEstimate = this.optimizationContext.getDefaultOptimizationContexts().stream()
+                    .flatMap(optCtx -> this.junctions.values().stream().map(jct -> jct.getTimeEstimate(optCtx)))
                     .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
             final TimeEstimate loopTimeEstimate = this.loopImplementations.values().stream()
                     .map(LoopImplementation::getTimeEstimate)
