@@ -91,6 +91,17 @@ public class RheemCollections {
     }
 
     /**
+     * Adds an element to a {@link Collection} and returns the {@link Collection}.
+     * @param collection to which the element should be added
+     * @param element that should be added to the {@code collection}
+     * @return the {@code collection}
+     */
+    public static <C extends Collection<T>, T> C add(C collection, T element) {
+        collection.add(element);
+        return collection;
+    }
+
+    /**
      * Return a new {@link List} with mapped values.
      */
     public static <S, T> List<T> map(List<S> list, Function<S, T> mapFunction) {

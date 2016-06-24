@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.api;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.qcri.rheem.core.api.configuration.*;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
@@ -23,6 +24,7 @@ import org.qcri.rheem.core.util.fs.FileSystems;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -411,13 +413,24 @@ public class Configuration {
     private static void bootstrapProperties(Configuration configuration) {
         // Here, we could put some default values.
         final KeyValueProvider<String, String> defaultProperties = new MapBasedKeyValueProvider<>(configuration, false);
+        configuration.setProperties(defaultProperties);
+        configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIGURATION_FILE));
+
+        // Set some dynamic properties.
+        configuration.setProperty("rheem.core.log.cardinalities", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "cardinalities.json"),
+                File.separator
+        ));
+        configuration.setProperty("rheem.core.log.executions", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".rheem", "executions.json"),
+                File.separator
+        ));
 
         // Supplement with a customizable layer.
         final KeyValueProvider<String, String> customizableProperties = new MapBasedKeyValueProvider<>(defaultProperties);
-
         configuration.setProperties(customizableProperties);
 
-        configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIGURATION_FILE));
+
     }
 
     /**

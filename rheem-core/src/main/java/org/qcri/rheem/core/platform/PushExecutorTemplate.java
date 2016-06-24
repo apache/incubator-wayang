@@ -2,14 +2,12 @@ package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
-import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
@@ -49,7 +47,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
      * @param isForceExecution whether execution is forced, i.e., lazy execution of {@link ExecutionTask} is prohibited
      * @return the output {@link ChannelInstance}s of the {@link ExecutionTask}
      */
-    private Collection<ChannelInstance> execute(TaskActivator taskActivator, boolean isForceExecution) {
+    private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator taskActivator, boolean isForceExecution) {
         // Execute the ExecutionTask.
         this.open(taskActivator.getTask(), taskActivator.getInputChannelInstances());
 
@@ -103,49 +101,51 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
      * @param producerOperatorContext
      * @param isForceExecution        forbids lazy execution  @return the {@link ChannelInstance}s created as output of {@code task}
      */
-    protected abstract List<ChannelInstance> execute(ExecutionTask task,
-                                                     List<ChannelInstance> inputChannelInstances,
-                                                     OptimizationContext.OperatorContext producerOperatorContext,
-                                                     boolean isForceExecution);
+    protected abstract Tuple<List<ChannelInstance>, PartialExecution> execute(ExecutionTask task,
+                                                                              List<ChannelInstance> inputChannelInstances,
+                                                                              OptimizationContext.OperatorContext producerOperatorContext,
+                                                                              boolean isForceExecution);
 
-    protected void handleLazyChannelLineage(ExecutionTask task,
-                                            List<ChannelInstance> inputChannelInstances,
-                                            OptimizationContext.OperatorContext producerOperatorContext,
-                                            ChannelInstance[] outputChannelInstances,
-                                            long executionDuration) {
-        if (!task.getOperator().isExecutedLazily()) {
+    /**
+     * If the {@link ExecutionTask} is not executed lazily, then gather all pending executions in a
+     * {@link PartialExecution}.
+     *
+     * @param task                    that was just executed
+     * @param inputChannelInstances   that feed the {@code task}
+     * @param producerOperatorContext that contains estimates for the {@code task}'s {@link ExecutionOperator}
+     * @param outputChannelInstances  that were produces by the {@code task}
+     * @param executionDuration       that was measured for the {@link PartialExecution}
+     * @return the {@link PartialExecution} or {@code null} if nothing has been executed
+     */
+    protected PartialExecution handleLazyChannelLineage(ExecutionTask task,
+                                                        List<ChannelInstance> inputChannelInstances,
+                                                        OptimizationContext.OperatorContext producerOperatorContext,
+                                                        ChannelInstance[] outputChannelInstances,
+                                                        long executionDuration) {
 
-            TimeEstimate timeEstimate;
-            Collection<ExecutionTask> tasks = new LinkedList<>();
-            ChannelInstance[] channelInstances;
-            if (outputChannelInstances.length > 0) {
-                channelInstances = outputChannelInstances;
-                timeEstimate = TimeEstimate.ZERO;
-            } else {
-                channelInstances = inputChannelInstances.toArray(new ChannelInstance[inputChannelInstances.size()]);
-                timeEstimate = producerOperatorContext.getTimeEstimate();
-            }
-            for (ChannelInstance channelInstance : channelInstances) {
-                final Tuple<TimeEstimate, Collection<ExecutionTask>> traversalResult = channelInstance
-                        .getLazyChannelLineage()
-                        .traverseAndMark(
-                                new Tuple<>(TimeEstimate.ZERO, new LinkedList<>()),
-                                (accu, node) -> {
-                                    accu.field0 = accu.field0.plus(node.getProducerOperatorContext().getTimeEstimate());
-                                    accu.field1.add(node.getChannelInstance().getChannel().getProducer());
-                                    return accu;
-                                }
-                        );
-                timeEstimate = timeEstimate.plus(traversalResult.getField0());
-                tasks.addAll(traversalResult.getField1());
-            }
-
-            this.logger.info("Estimated {} and measured {} fo the execution of {}.",
-                    timeEstimate,
-                    Formats.formatDuration(executionDuration, true),
-                    tasks
-            );
+        if (task.getOperator().isExecutedLazily()) {
+            return null;
         }
+
+        Collection<OptimizationContext.OperatorContext> operatorContexts = new LinkedList<>();
+        ChannelInstance[] channelInstances;
+        if (outputChannelInstances.length > 0) {
+            channelInstances = outputChannelInstances;
+        } else {
+            channelInstances = inputChannelInstances.toArray(new ChannelInstance[inputChannelInstances.size()]);
+            operatorContexts.add(producerOperatorContext);
+        }
+        for (ChannelInstance channelInstance : channelInstances) {
+            operatorContexts.addAll(
+                    channelInstance
+                            .getLazyChannelLineage()
+                            .traverseAndMark(
+                                    new LinkedList<>(),
+                                    (accu, node) -> RheemCollections.add(accu, node.getProducerOperatorContext())
+                            ));
+        }
+
+        return new PartialExecution(executionDuration, operatorContexts);
     }
 
     /**
@@ -219,11 +219,18 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
             while ((readyActivator = this.readyActivators.poll()) != null) {
                 // Execute the ExecutionTask.
                 final ExecutionTask task = readyActivator.getTask();
-                final Collection<ChannelInstance> outputChannelInstances = this.execute(readyActivator, task);
+                final Tuple<List<ChannelInstance>, PartialExecution> executionResult = this.execute(readyActivator, task);
                 readyActivator.dispose();
 
                 // Register the outputChannelInstances (to obtain cardinality measurements and for furhter stages).
+                final List<ChannelInstance> outputChannelInstances = executionResult.getField0();
                 outputChannelInstances.stream().filter(Objects::nonNull).forEach(this::store);
+
+                // Log executions.
+                final PartialExecution partialExecution = executionResult.getField1();
+                if (partialExecution != null) {
+                    this.executionState.add(partialExecution);
+                }
 
                 // Activate successor ExecutionTasks.
                 this.activateSuccessorTasks(task, outputChannelInstances);
@@ -235,11 +242,11 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
          *
          * @param readyActivator activated the {@code task}
          * @param task           should be executed
-         * @return the {@link ChannelInstance}s created by the {@code task}
+         * @return the {@link ChannelInstance}s created by the {@code task} and a {@link PartialExecution} or
+         * {@code null} if something has been actually executed
          */
-        private Collection<ChannelInstance> execute(TaskActivator readyActivator, ExecutionTask task) {
+        private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator readyActivator, ExecutionTask task) {
             final boolean isForceExecution = this.terminalTasks.contains(task);
-            OptimizationContext.OperatorContext operatorCtx = this.optimizationContext.getOperatorContext(task.getOperator());
             return this.executor().execute(readyActivator, isForceExecution);
         }
 

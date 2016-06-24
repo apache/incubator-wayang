@@ -90,6 +90,11 @@ public class CrossPlatformExecutor implements ExecutionState {
      */
     private final Map<Channel, ChannelInstance> channelInstances = new HashMap<>();
 
+    /**
+     * Gathers {@link PartialExecution}s created during the execution.
+     */
+    private final Collection<PartialExecution> partialExecutions = new LinkedList<>();
+
     public CrossPlatformExecutor(Job job, InstrumentationStrategy instrumentationStrategy) {
         this.job = job;
         this.instrumentationStrategy = instrumentationStrategy;
@@ -451,6 +456,16 @@ public class CrossPlatformExecutor implements ExecutionState {
     @Override
     public Map<Channel, Long> getCardinalityMeasurements() {
         return Collections.unmodifiableMap(this.cardinalities);
+    }
+
+    @Override
+    public void add(PartialExecution partialExecution) {
+        this.partialExecutions.add(partialExecution);
+    }
+
+    @Override
+    public Collection<PartialExecution> getPartialExecutions() {
+        return this.partialExecutions;
     }
 
     /**

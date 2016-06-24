@@ -8,7 +8,9 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
@@ -42,10 +44,12 @@ public class JavaExecutor extends PushExecutorTemplate {
     }
 
     @Override
-    protected List<ChannelInstance> execute(ExecutionTask task,
-                                            List<ChannelInstance> inputChannelInstances,
-                                            OptimizationContext.OperatorContext producerOperatorContext,
-                                            boolean isForceExecution) {
+    protected Tuple<List<ChannelInstance>, PartialExecution> execute(
+            ExecutionTask task,
+            List<ChannelInstance> inputChannelInstances,
+            OptimizationContext.OperatorContext producerOperatorContext,
+            boolean isForceExecution
+    ) {
         // Provide the ChannelInstances for the output of the task.
         final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(
                 task, producerOperatorContext, inputChannelInstances
@@ -62,7 +66,7 @@ public class JavaExecutor extends PushExecutorTemplate {
         long executionDuration = endTime - startTime;
 
         // Check how much we executed.
-        this.handleLazyChannelLineage(
+        PartialExecution partialExecution = this.handleLazyChannelLineage(
                 task, inputChannelInstances, producerOperatorContext, outputChannelInstances, executionDuration
         );
 
@@ -77,7 +81,7 @@ public class JavaExecutor extends PushExecutorTemplate {
             }
         }
 
-        return Arrays.asList(outputChannelInstances);
+        return new Tuple<>(Arrays.asList(outputChannelInstances), partialExecution);
     }
 
 

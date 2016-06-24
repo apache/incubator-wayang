@@ -17,6 +17,7 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
+import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
@@ -25,6 +26,7 @@ import org.qcri.rheem.core.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -161,11 +163,7 @@ public class Job extends OneTimeExecutable {
                 executionId++;
             }
 
-            this.logger.info("Accumulated execution time: {}", Formats.formatDuration(this.executionMillis, true));
-            int i = 1;
-            for (TimeEstimate timeEstimate : timeEstimates) {
-                this.logger.info("Time estimate of execution plan {}: {}", i++, timeEstimate);
-            }
+            this.logExecution();
         } catch (RheemException e) {
             throw e;
         } catch (Throwable t) {
@@ -495,6 +493,22 @@ public class Job extends OneTimeExecutable {
     private void releaseResources() {
         this.rheemContext.getCardinalityRepository().sleep();
         if (this.crossPlatformExecutor != null) this.crossPlatformExecutor.shutdown();
+    }
+
+    private void logExecution() {
+        // Log the execution time.
+        this.logger.info("Accumulated execution time: {}", Formats.formatDuration(this.executionMillis, true));
+        int i = 1;
+        for (TimeEstimate timeEstimate : timeEstimates) {
+            this.logger.info("Time estimate of execution plan {}: {}", i++, timeEstimate);
+        }
+
+        // Feed the execution log.
+        try (ExecutionLog executionLog = ExecutionLog.open(this.configuration)) {
+            executionLog.storeAll(this.crossPlatformExecutor.getPartialExecutions());
+        } catch (Exception e) {
+            this.logger.error("Storing partial executions failed.", e);
+        }
     }
 
     /**

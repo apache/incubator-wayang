@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.optimizer;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
@@ -12,6 +14,10 @@ import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.JsonSerializable;
+import org.qcri.rheem.core.util.ReflectionUtils;
+import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -253,11 +259,50 @@ public abstract class OptimizationContext {
      */
     public abstract Collection<DefaultOptimizationContext> getDefaultOptimizationContexts();
 
+    @SuppressWarnings("unchecked")
+    public OperatorContext addOperatorContextFromJson(JSONObject json) {
+        Operator operator;
+        try {
+            String operatorClassName = json.getString("operator");
+            Class<Operator> operatorClass = (Class<Operator>) Class.forName(operatorClassName);
+            operator = ReflectionUtils.instantiateSomehow(
+                    operatorClass,
+                    new Tuple<>(DataSetType.class, DataSetType::none)
+            );
+        } catch (Throwable t) {
+            throw new RheemException(String.format("Could not instantiate %s.", json.getString("operator")), t);
+        }
+
+        final JSONArray input = json.getJSONArray("input");
+        for (int inputIndex = 0; inputIndex < input.length(); inputIndex++) {
+            final JSONObject jsonInput = input.getJSONObject(inputIndex);
+            if (jsonInput.getBoolean("isBroadcast")) {
+                operator.addBroadcastInput(new InputSlot<>(
+                        jsonInput.getString("name"), operator, true, DataSetType.none()
+                ));
+            }
+        }
+
+        final OperatorContext operatorContext = new OperatorContext(operator);
+        for (int inputIndex = 0; inputIndex < input.length(); inputIndex++) {
+            final JSONObject jsonInput = input.getJSONObject(inputIndex);
+            operatorContext.setInputCardinality(inputIndex, CardinalityEstimate.fromJson(jsonInput));
+        }
+
+        JSONArray output = json.getJSONArray("output");
+        for (int outputIndex = 0; outputIndex < output.length(); outputIndex++) {
+            final JSONObject jsonOutput = output.getJSONObject(outputIndex);
+            operatorContext.setOutputCardinality(outputIndex, CardinalityEstimate.fromJson(jsonOutput));
+        }
+
+        return operatorContext;
+    }
+
     /**
      * Represents a single optimization context of an {@link Operator}. This can be thought of as a single, virtual
      * execution of the {@link Operator}.
      */
-    public class OperatorContext {
+    public class OperatorContext implements JsonSerializable {
 
         /**
          * The {@link Operator} that is being decorated with this instance.
@@ -462,6 +507,14 @@ public abstract class OptimizationContext {
             }
         }
 
+        public void setNumExecutions(int numExecutions) {
+            this.numExecutions = numExecutions;
+        }
+
+        public int getNumExecutions() {
+            return this.numExecutions;
+        }
+
         public TimeEstimate getTimeEstimate() {
             return this.timeEstimate;
         }
@@ -471,12 +524,44 @@ public abstract class OptimizationContext {
             return String.format("%s[%s]", this.getClass().getSimpleName(), this.getOperator());
         }
 
-        public void setNumExecutions(int numExecutions) {
-            this.numExecutions = numExecutions;
+        @Override
+        public JSONObject toJson() {
+            JSONObject jsonThis = new JSONObject();
+            jsonThis.put("operator", this.operator.getClass().getSimpleName());
+            jsonThis.put("executions", this.numExecutions);
+            JSONArray jsonInputCardinalities = new JSONArray();
+            for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
+                InputSlot<?> input = this.operator.getInput(inputIndex);
+                CardinalityEstimate inputCardinality = inputCardinalities[inputIndex];
+                if (inputCardinality != null) {
+                    jsonInputCardinalities.put(this.convertToJson(input, inputCardinality));
+                }
+            }
+            jsonThis.put("input", inputCardinalities);
+            JSONArray jsonOutputCardinalities = new JSONArray();
+            for (int outputIndex = 0; outputIndex < outputCardinalities.length; outputIndex++) {
+                OutputSlot<?> output = this.operator.getOutput(outputIndex);
+                CardinalityEstimate outputCardinality = outputCardinalities[outputIndex];
+                if (outputCardinality != null) {
+                    jsonOutputCardinalities.put(this.convertToJson(output, outputCardinality));
+                }
+            }
+            jsonThis.put("output", inputCardinalities);
+
+            return jsonThis;
         }
 
-        public int getNumExecutions() {
-            return this.numExecutions;
+        private JSONObject convertToJson(Slot<?> slot, CardinalityEstimate cardinality) {
+            JSONObject json = new JSONObject();
+            json.put("name", slot.getName());
+            json.put("index", slot.getIndex());
+            if (slot instanceof InputSlot<?>) {
+                json.put("isBroadcast", ((InputSlot<?>) slot).isBroadcast());
+            }
+            json.put("lowerBound", cardinality.getLowerEstimate());
+            json.put("upperBound", cardinality.getUpperEstimate());
+            json.put("confidence", cardinality.getCorrectnessProbability());
+            return json;
         }
     }
 
