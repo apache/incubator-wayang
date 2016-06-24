@@ -1,5 +1,6 @@
-import random
+#!/usr/bin/python
 
+import random
 
 class Distribution:
     """Represents a normal distribution"""
