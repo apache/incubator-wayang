@@ -35,7 +35,7 @@ public class JavaObjectFileSinkTest extends JavaExecutionOperatorTestBase {
         ChannelInstance[] inputs = new ChannelInstance[]{createStreamChannelInstance(integerStream)};
         final ChannelInstance outputChannel = FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR
                 .createChannel(null, configuration)
-                .createInstance(null);
+                .createInstance(null, null, -1);
         ChannelInstance[] outputs = new ChannelInstance[]{outputChannel};
         sink.evaluate(inputs, outputs, new FunctionCompiler(configuration));
     }

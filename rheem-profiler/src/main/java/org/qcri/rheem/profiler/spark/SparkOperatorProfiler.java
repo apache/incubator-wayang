@@ -65,7 +65,7 @@ public abstract class SparkOperatorProfiler {
         this.numPartitions = (int) configuration.getLongProperty("rheem.spark.partitions", -1);
 
         this.gangliaRrdsDir = configuration.getStringProperty("rheem.ganglia.rrds", "/var/lib/ganglia/rrds");
-        this.gangliaClusterName = configuration.getStringProperty("rheem.ganglia.cluster");
+        this.gangliaClusterName = configuration.getStringProperty("rheem.ganglia.cluster", "cluster");
 
         this.dataQuantumGeneratorBatchSize = (int) configuration.getLongProperty("rheem.profiler.datagen.batchsize", 5000000);
         this.dataQuantumGeneratorLocation = configuration.getStringProperty("rheem.profiler.datagen.location", "worker");
@@ -285,7 +285,7 @@ public abstract class SparkOperatorProfiler {
     protected static RddChannel.Instance createChannelInstance(SparkExecutor sparkExecutor) {
         final ChannelDescriptor channelDescriptor = RddChannel.CACHED_DESCRIPTOR;
         final RddChannel channel = (RddChannel) channelDescriptor.createChannel(null, sparkExecutor.getConfiguration());
-        return (RddChannel.Instance) channel.createInstance(null);
+        return (RddChannel.Instance) channel.createInstance(null, null, -1);
     }
 
     /**

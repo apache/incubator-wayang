@@ -3,7 +3,7 @@ package org.qcri.rheem.java.execution;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExtendedFunction;
-import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -42,16 +42,29 @@ public class JavaExecutor extends PushExecutorTemplate {
     }
 
     @Override
-    protected List<ChannelInstance> execute(ExecutionTask task, List<ChannelInstance> inputChannelInstances, boolean isForceExecution) {
+    protected List<ChannelInstance> execute(ExecutionTask task,
+                                            List<ChannelInstance> inputChannelInstances,
+                                            OptimizationContext.OperatorContext producerOperatorContext,
+                                            boolean isForceExecution) {
         // Provide the ChannelInstances for the output of the task.
-        final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(task);
+        final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(
+                task, producerOperatorContext, inputChannelInstances
+        );
 
         // Execute.
+        long startTime = System.currentTimeMillis();
         try {
             cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this.compiler);
         } catch (Exception e) {
             throw new RheemException(String.format("Executing %s failed.", task), e);
         }
+        long endTime = System.currentTimeMillis();
+        long executionDuration = endTime - startTime;
+
+        // Check how much we executed.
+        this.handleLazyChannelLineage(
+                task, inputChannelInstances, producerOperatorContext, outputChannelInstances, executionDuration
+        );
 
         // Force execution if necessary.
         if (isForceExecution) {
@@ -67,15 +80,6 @@ public class JavaExecutor extends PushExecutorTemplate {
         return Arrays.asList(outputChannelInstances);
     }
 
-
-    private ChannelInstance[] createOutputChannelInstances(ExecutionTask task) {
-        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
-        for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
-            final Channel outputChannel = task.getOutputChannel(outputIndex);
-            channelInstances[outputIndex] = outputChannel.createInstance(this);
-        }
-        return channelInstances;
-    }
 
     private static JavaExecutionOperator cast(ExecutionOperator executionOperator) {
         return (JavaExecutionOperator) executionOperator;

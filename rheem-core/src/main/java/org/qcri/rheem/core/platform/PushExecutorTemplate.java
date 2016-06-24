@@ -2,14 +2,17 @@ package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
+import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,8 +56,34 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
         return this.execute(
                 taskActivator.getTask(),
                 taskActivator.getInputChannelInstances(),
+                taskActivator.getOperatorContext(),
                 isForceExecution
         );
+    }
+
+    /**
+     * Utility method to create the output {@link ChannelInstance}s for a certain {@link ExecutionTask}.
+     *
+     * @param task                    the {@link ExecutionTask}
+     * @param producerOperatorContext the {@link OptimizationContext.OperatorContext} for the {@link ExecutionTask}
+     * @param inputChannelInstances   the input {@link ChannelInstance}s for the {@code task}
+     * @return
+     */
+    protected ChannelInstance[] createOutputChannelInstances(ExecutionTask task,
+                                                             OptimizationContext.OperatorContext producerOperatorContext,
+                                                             List<ChannelInstance> inputChannelInstances) {
+        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
+        for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
+            final Channel outputChannel = task.getOutputChannel(outputIndex);
+            final ChannelInstance outputChannelInstance = outputChannel.createInstance(this, producerOperatorContext, outputIndex);
+            channelInstances[outputIndex] = outputChannelInstance;
+            for (ChannelInstance inputChannelInstance : inputChannelInstances) {
+                if (inputChannelInstance != null) {
+                    outputChannelInstance.addPredecessor(inputChannelInstance);
+                }
+            }
+        }
+        return channelInstances;
     }
 
     /**
@@ -69,12 +98,55 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
     /**
      * Executes the given {@code task} and return the output {@link ChannelInstance}s.
      *
-     * @param task                  that should be executed
-     * @param inputChannelInstances inputs into the {@code task}
-     * @param isForceExecution      forbids lazy execution
-     * @return the {@link ChannelInstance}s created as output of {@code task}
+     * @param task                    that should be executed
+     * @param inputChannelInstances   inputs into the {@code task}
+     * @param producerOperatorContext
+     * @param isForceExecution        forbids lazy execution  @return the {@link ChannelInstance}s created as output of {@code task}
      */
-    protected abstract List<ChannelInstance> execute(ExecutionTask task, List<ChannelInstance> inputChannelInstances, boolean isForceExecution);
+    protected abstract List<ChannelInstance> execute(ExecutionTask task,
+                                                     List<ChannelInstance> inputChannelInstances,
+                                                     OptimizationContext.OperatorContext producerOperatorContext,
+                                                     boolean isForceExecution);
+
+    protected void handleLazyChannelLineage(ExecutionTask task,
+                                            List<ChannelInstance> inputChannelInstances,
+                                            OptimizationContext.OperatorContext producerOperatorContext,
+                                            ChannelInstance[] outputChannelInstances,
+                                            long executionDuration) {
+        if (!task.getOperator().isExecutedLazily()) {
+
+            TimeEstimate timeEstimate;
+            Collection<ExecutionTask> tasks = new LinkedList<>();
+            ChannelInstance[] channelInstances;
+            if (outputChannelInstances.length > 0) {
+                channelInstances = outputChannelInstances;
+                timeEstimate = TimeEstimate.ZERO;
+            } else {
+                channelInstances = inputChannelInstances.toArray(new ChannelInstance[inputChannelInstances.size()]);
+                timeEstimate = producerOperatorContext.getTimeEstimate();
+            }
+            for (ChannelInstance channelInstance : channelInstances) {
+                final Tuple<TimeEstimate, Collection<ExecutionTask>> traversalResult = channelInstance
+                        .getLazyChannelLineage()
+                        .traverseAndMark(
+                                new Tuple<>(TimeEstimate.ZERO, new LinkedList<>()),
+                                (accu, node) -> {
+                                    accu.field0 = accu.field0.plus(node.getProducerOperatorContext().getTimeEstimate());
+                                    accu.field1.add(node.getChannelInstance().getChannel().getProducer());
+                                    return accu;
+                                }
+                        );
+                timeEstimate = timeEstimate.plus(traversalResult.getField0());
+                tasks.addAll(traversalResult.getField1());
+            }
+
+            this.logger.info("Estimated {} and measured {} fo the execution of {}.",
+                    timeEstimate,
+                    Formats.formatDuration(executionDuration, true),
+                    tasks
+            );
+        }
+    }
 
     /**
      * Keeps track of state that is required within the execution of a single {@link ExecutionStage}. Specifically,
@@ -121,6 +193,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
         /**
          * Fetches the {@link OptimizationContext.OperatorContext} for the given {@link ExecutionTask}.
+         *
          * @param task the {@link ExecutionTask}
          * @return the {@link OptimizationContext.OperatorContext}
          */

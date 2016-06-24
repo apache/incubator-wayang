@@ -4,6 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.util.Canonicalizer;
@@ -571,5 +572,31 @@ public class PlanImplementation {
                 .flatMap(loopImplementation -> loopImplementation.getIterationImplementations().stream())
                 .map(LoopImplementation.IterationImplementation::getBodyImplementation)
                 .forEach(PlanImplementation::mergeJunctionOptimizationContexts);
+    }
+
+    public void logTimeEstimates() {
+        if (!this.logger.isDebugEnabled()) return;
+
+        this.logger.debug(">>> Regular operators");
+        for (ExecutionOperator operator : this.operators) {
+            this.logger.debug("Estimated execution time of {}: {}",
+                    operator, this.optimizationContext.getOperatorContext(operator).getTimeEstimate()
+            );
+        }
+        this.logger.debug(">>> Glue operators");
+        for (Junction junction : junctions.values()) {
+            for (ExecutionTask task : junction.getConversionTasks()) {
+                final ExecutionOperator operator = task.getOperator();
+                this.logger.debug("Estimated execution time of {}: {}",
+                        operator, this.optimizationContext.getOperatorContext(operator).getTimeEstimate()
+                );
+            }
+        }
+        this.logger.debug(">>> Loops");
+        for (LoopImplementation loopImplementation : this.loopImplementations.values()) {
+            for (LoopImplementation.IterationImplementation iterationImplementation : loopImplementation.getIterationImplementations()) {
+                iterationImplementation.getBodyImplementation().logTimeEstimates();
+            }
+        }
     }
 }

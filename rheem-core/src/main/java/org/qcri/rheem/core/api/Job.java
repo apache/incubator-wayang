@@ -275,6 +275,8 @@ public class Job extends OneTimeExecutable {
 
         planImplementation.mergeJunctionOptimizationContexts();
 
+        planImplementation.logTimeEstimates();
+
         //assert executionPlan.isSane();
 
 

@@ -53,7 +53,7 @@ public class GraphChiExecutor extends ExecutorTemplate {
         }
         ChannelInstance[] outputChannelInstances = new ChannelInstance[task.getNumOuputChannels()];
         for (int i = 0; i < outputChannelInstances.length; i++) {
-            outputChannelInstances[i] = task.getOutputChannel(i).createInstance(this);
+            outputChannelInstances[i] = task.getOutputChannel(i).createInstance(this, null, -1);
         }
         final GraphChiOperator graphChiOperator = (GraphChiOperator) task.getOperator();
         graphChiOperator.execute(inputChannelInstances, outputChannelInstances, this.configuration);
