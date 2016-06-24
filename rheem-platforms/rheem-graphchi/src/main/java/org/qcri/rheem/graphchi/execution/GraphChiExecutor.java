@@ -34,7 +34,7 @@ public class GraphChiExecutor extends ExecutorTemplate {
         while (!scheduledTasks.isEmpty()) {
             final ExecutionTask task = scheduledTasks.poll();
             if (executedTasks.contains(task)) continue;
-            this.execute(task, executionState);
+            this.execute(task, optimizationContext, executionState);
             executedTasks.add(task);
             Arrays.stream(task.getOutputChannels())
                     .flatMap(channel -> channel.getConsumers().stream())
@@ -46,16 +46,19 @@ public class GraphChiExecutor extends ExecutorTemplate {
     /**
      * Brings the given {@code task} into execution.
      */
-    private void execute(ExecutionTask task, ExecutionState executionState) {
+    private void execute(ExecutionTask task, OptimizationContext optimizationContext, ExecutionState executionState) {
+        final GraphChiOperator graphChiOperator = (GraphChiOperator) task.getOperator();
+
         ChannelInstance[] inputChannelInstances = new ChannelInstance[task.getNumInputChannels()];
         for (int i = 0; i < inputChannelInstances.length; i++) {
             inputChannelInstances[i] = executionState.getChannelInstance(task.getInputChannel(i));
         }
         ChannelInstance[] outputChannelInstances = new ChannelInstance[task.getNumOuputChannels()];
         for (int i = 0; i < outputChannelInstances.length; i++) {
-            outputChannelInstances[i] = task.getOutputChannel(i).createInstance(this, null, -1);
+            outputChannelInstances[i] = task
+                    .getOutputChannel(i)
+                    .createInstance(this, optimizationContext.getOperatorContext(graphChiOperator), i);
         }
-        final GraphChiOperator graphChiOperator = (GraphChiOperator) task.getOperator();
         graphChiOperator.execute(inputChannelInstances, outputChannelInstances, this.configuration);
         for (ChannelInstance outputChannelInstance : outputChannelInstances) {
             if (outputChannelInstance != null) {
