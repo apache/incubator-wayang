@@ -483,6 +483,8 @@ public class Job extends OneTimeExecutable {
         final ExecutionPlan executionPlanExpansion = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);
 
+        planImplementation.mergeJunctionOptimizationContexts();
+
         assert executionPlan.isSane();
     }
 
