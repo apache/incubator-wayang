@@ -4,6 +4,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
@@ -267,7 +268,24 @@ public abstract class OptimizationContext {
             Class<Operator> operatorClass = (Class<Operator>) Class.forName(operatorClassName);
             operator = ReflectionUtils.instantiateSomehow(
                     operatorClass,
-                    new Tuple<>(DataSetType.class, DataSetType::none)
+                    new Tuple<>(DataSetType.class, DataSetType::none),
+                    new Tuple<>(Class.class, () -> Object.class),
+                    new Tuple<>(TransformationDescriptor.class, () -> new TransformationDescriptor<>(
+                            o -> o, Object.class, Object.class
+                    )),
+                    new Tuple<>(FlatMapDescriptor.class, () -> new FlatMapDescriptor<>(
+                            o -> Collections.emptyList(), Object.class, Object.class
+                    )),
+                    new Tuple<>(PredicateDescriptor.class, () -> new PredicateDescriptor<>(
+                            o -> true, Object.class
+                    )),
+                    new Tuple<>(ReduceDescriptor.class, () -> new ReduceDescriptor<>(
+                            (a, b) -> a, Object.class
+                    )),
+                    new Tuple<>(FunctionDescriptor.SerializableFunction.class,
+                            () -> (FunctionDescriptor.SerializableFunction) o -> o),
+                    new Tuple<>(FunctionDescriptor.SerializableBinaryOperator.class,
+                            () -> (FunctionDescriptor.SerializableBinaryOperator) (a, b) -> a)
             );
         } catch (Throwable t) {
             throw new RheemException(String.format("Could not instantiate %s.", json.getString("operator")), t);
@@ -516,6 +534,9 @@ public abstract class OptimizationContext {
         }
 
         public TimeEstimate getTimeEstimate() {
+            if (this.timeEstimate == null) {
+                this.updateTimeEstimate();
+            }
             return this.timeEstimate;
         }
 
@@ -527,40 +548,41 @@ public abstract class OptimizationContext {
         @Override
         public JSONObject toJson() {
             JSONObject jsonThis = new JSONObject();
-            jsonThis.put("operator", this.operator.getClass().getSimpleName());
+            jsonThis.put("operator", this.operator.getClass().getCanonicalName());
             jsonThis.put("executions", this.numExecutions);
             JSONArray jsonInputCardinalities = new JSONArray();
             for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
                 InputSlot<?> input = this.operator.getInput(inputIndex);
                 CardinalityEstimate inputCardinality = inputCardinalities[inputIndex];
                 if (inputCardinality != null) {
-                    jsonInputCardinalities.put(this.convertToJson(input, inputCardinality));
+                    final JSONObject jsonInputCardinality = this.convertToJson(input);
+                    inputCardinality.toJson(jsonInputCardinality);
+                    jsonInputCardinalities.put(jsonInputCardinality);
                 }
             }
-            jsonThis.put("input", inputCardinalities);
+            jsonThis.put("input", jsonInputCardinalities);
             JSONArray jsonOutputCardinalities = new JSONArray();
             for (int outputIndex = 0; outputIndex < outputCardinalities.length; outputIndex++) {
                 OutputSlot<?> output = this.operator.getOutput(outputIndex);
                 CardinalityEstimate outputCardinality = outputCardinalities[outputIndex];
                 if (outputCardinality != null) {
-                    jsonOutputCardinalities.put(this.convertToJson(output, outputCardinality));
+                    final JSONObject jsonOutputCardinality = this.convertToJson(output);
+                    outputCardinality.toJson(jsonOutputCardinality);
+                    jsonOutputCardinalities.put(jsonOutputCardinality);
                 }
             }
-            jsonThis.put("output", inputCardinalities);
+            jsonThis.put("output", jsonOutputCardinalities);
 
             return jsonThis;
         }
 
-        private JSONObject convertToJson(Slot<?> slot, CardinalityEstimate cardinality) {
+        private JSONObject convertToJson(Slot<?> slot) {
             JSONObject json = new JSONObject();
             json.put("name", slot.getName());
             json.put("index", slot.getIndex());
             if (slot instanceof InputSlot<?>) {
                 json.put("isBroadcast", ((InputSlot<?>) slot).isBroadcast());
             }
-            json.put("lowerBound", cardinality.getLowerEstimate());
-            json.put("upperBound", cardinality.getUpperEstimate());
-            json.put("confidence", cardinality.getCorrectnessProbability());
             return json;
         }
     }
