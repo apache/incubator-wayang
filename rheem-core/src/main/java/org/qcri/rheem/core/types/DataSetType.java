@@ -60,7 +60,7 @@ public class DataSetType<T> {
      * Returns a null type.
      */
     public static <T> DataSetType<T> none() {
-        return null;
+        return DataSetType.createDefaultUnchecked(Void.class);
     }
 
     protected DataSetType(DataUnitType dataUnitType) {
