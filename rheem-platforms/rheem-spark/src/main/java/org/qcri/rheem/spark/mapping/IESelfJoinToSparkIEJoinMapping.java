@@ -35,7 +35,7 @@ public class IESelfJoinToSparkIEJoinMapping implements Mapping {
         @Override
         protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final IESelfJoinOperator<?, ?, ?> originalOperator = (IESelfJoinOperator<?, ?, ?>) subplanMatch.getMatch("ieselfjoin").getOperator();
-            return new SparkIESelfJoinOperator(originalOperator.getInputType(), null, JoinCondition.GreaterThan, null,JoinCondition.GreaterThan).at(epoch);
+            return new SparkIESelfJoinOperator(originalOperator.getInputType(), originalOperator.getGet0Pivot(), originalOperator.getCond0(), originalOperator.getGet0Ref(),originalOperator.getCond1()).at(epoch);
         }
     }
 }

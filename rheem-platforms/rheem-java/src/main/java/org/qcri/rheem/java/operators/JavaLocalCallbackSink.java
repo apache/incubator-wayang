@@ -15,6 +15,7 @@ import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +24,7 @@ import java.util.function.Consumer;
 /**
  * Implementation of the {@link LocalCallbackSink} operator for the Java platform.
  */
-public class JavaLocalCallbackSink<T> extends LocalCallbackSink<T> implements JavaExecutionOperator {
+public class JavaLocalCallbackSink<T extends Serializable> extends LocalCallbackSink<T> implements JavaExecutionOperator {
     /**
      * Creates a new instance.
      *

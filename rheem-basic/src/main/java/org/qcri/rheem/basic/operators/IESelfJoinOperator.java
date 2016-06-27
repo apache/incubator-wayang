@@ -57,4 +57,17 @@ public class IESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
         list2ASCSec = sortOrders.getField3();
         equalReverse = sortOrders.getField4();
     }
+
+    public TransformationDescriptor<Input,Type0> getGet0Pivot(){
+        return this.get0Pivot;
+    }
+    public TransformationDescriptor<Input,Type1> getGet0Ref(){
+        return this.get0Ref;
+    }
+    public JoinCondition getCond0(){
+        return this.cond0;
+    }
+    public JoinCondition getCond1(){
+        return this.cond1;
+    }
 }

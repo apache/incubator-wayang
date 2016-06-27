@@ -36,7 +36,7 @@ public class IEJoinToSparkIEJoinMapping implements Mapping {
         protected Operator translate(SubplanMatch subplanMatch, int epoch) {
             final IEJoinOperator<?, ?, ?> originalOperator = (IEJoinOperator<?, ?, ?>) subplanMatch.getMatch("iejoin").getOperator();
             return new SparkIEJoinOperator(originalOperator.getInputType0(),
-                    originalOperator.getInputType1(), null, null, JoinCondition.GreaterThan, null, null, JoinCondition.GreaterThan).at(epoch);
+                    originalOperator.getInputType1(), originalOperator.getGet0Pivot(), originalOperator.getGet1Pivot(), originalOperator.getCond0(), originalOperator.getGet0Ref(), originalOperator.getGet1Ref(), originalOperator.getCond1()).at(epoch);
         }
     }
 }

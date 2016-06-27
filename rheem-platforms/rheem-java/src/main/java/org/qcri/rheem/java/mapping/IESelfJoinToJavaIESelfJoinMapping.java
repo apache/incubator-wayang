@@ -31,7 +31,7 @@ public class IESelfJoinToJavaIESelfJoinMapping implements Mapping {
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<IESelfJoinOperator>(
                 (matchedOperator, epoch) -> new JavaIESelfJoinOperator<>(
-                        matchedOperator.getInputType(), null, JoinCondition.GreaterThan, null,JoinCondition.GreaterThan).at(epoch)
+                        matchedOperator.getInputType(), matchedOperator.getGet0Pivot(), matchedOperator.getCond0(), matchedOperator.getGet0Ref(),matchedOperator.getCond1()).at(epoch)
         );
     }
 }

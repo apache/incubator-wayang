@@ -32,7 +32,7 @@ public class IEJoinToJavaIEJoinMapping implements Mapping {
         return new ReplacementSubplanFactory.OfSingleOperators<IEJoinOperator>(
                 (matchedOperator, epoch) -> new JavaIEJoinOperator<>(
                         matchedOperator.getInputType0(),
-                        matchedOperator.getInputType1(),null, null, JoinCondition.GreaterThan, null, null, JoinCondition.GreaterThan
+                        matchedOperator.getInputType1(),matchedOperator.getGet0Pivot(), matchedOperator.getGet1Pivot(), matchedOperator.getCond0(), matchedOperator.getGet1Pivot(), matchedOperator.getGet1Ref(), matchedOperator.getCond1()
                 ).at(epoch)
         );
     }

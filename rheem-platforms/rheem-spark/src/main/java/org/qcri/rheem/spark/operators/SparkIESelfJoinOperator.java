@@ -148,10 +148,10 @@ public class SparkIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exte
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 20000000 * inputCards[0] + 10000000 * inputCards[1] + 100 * outputCards[0] + 5500000000L),
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 20000 * (inputCards[0] + inputCards[1]) + 1700000),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 20000000 * inputCards[0] + 100 * outputCards[0] + 5500000000L),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 20000 * (inputCards[0]) + 1700000),
                 0.1d,
                 1000
         );

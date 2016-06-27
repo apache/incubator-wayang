@@ -81,14 +81,19 @@ public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exten
         ArrayList<Tuple2<Input, Input>> result = new BitSetJoin<Type0, Type1,Input>(list1ASC, list2ASC,
                 list1ASCSec, list2ASCSec, equalReverse, true, cond0).call(list0, list0);
 
-        outputChannel.<Tuple2<Input, Input>>accept(result.stream());
+        ArrayList<org.qcri.rheem.basic.data.Tuple2<Input,Input>> result2 = new ArrayList<>();
+        for(Tuple2<Input, Input> t:result){
+            result2.add(new org.qcri.rheem.basic.data.Tuple2<Input, Input>(t._1(),t._2()));
+        }
+
+        outputChannel.<org.qcri.rheem.basic.data.Tuple2<Input, Input>>accept(result2.stream());
     }
 
     @Override
     public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
         return Optional.of(new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(2, 1, 0.9d, (inCards, outCards) -> outCards[0] * 21 + 900000),
-                LoadEstimator.createFallback(2, 1)
+                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> outCards[0] * 21 + 900000),
+                LoadEstimator.createFallback(1, 1)
         ));
     }
 

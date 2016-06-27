@@ -103,7 +103,12 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
         ArrayList<Tuple2<Input, Input>> result = new BitSetJoin<Type0, Type1,Input>(list1ASC, list2ASC,
                 list1ASCSec, list2ASCSec, equalReverse, false, cond0).call(list0, list1);
 
-        outputChannel.<Tuple2<Input, Input>>accept(result.stream());
+        ArrayList<org.qcri.rheem.basic.data.Tuple2<Input,Input>> result2 = new ArrayList<>();
+        for(Tuple2<Input, Input> t:result){
+            result2.add(new org.qcri.rheem.basic.data.Tuple2<Input, Input>(t._1(),t._2()));
+        }
+
+        outputChannel.<org.qcri.rheem.basic.data.Tuple2<Input, Input>>accept(result2.stream());
     }
 
     @Override

@@ -67,4 +67,23 @@ public class IEJoinOperator<Type0, Type1, Input>
         list2ASCSec = sortOrders.getField3();
         equalReverse = sortOrders.getField4();
     }
+    public TransformationDescriptor<Input,Type0> getGet0Pivot(){
+        return this.get0Pivot;
+    }
+    public TransformationDescriptor<Input,Type1> getGet0Ref(){
+        return this.get0Ref;
+    }
+    public TransformationDescriptor<Input,Type0> getGet1Pivot(){
+        return this.get1Pivot;
+    }
+    public TransformationDescriptor<Input,Type1> getGet1Ref(){
+        return this.get1Ref;
+    }
+
+    public JoinCondition getCond0(){
+        return this.cond0;
+    }
+    public JoinCondition getCond1(){
+        return this.cond1;
+    }
 }
