@@ -32,7 +32,7 @@ public class JavaRandomSampleOperator<Type>
      *
      * @param sampleSize size of sample
      */
-    public JavaRandomSampleOperator(int sampleSize, DataSetType type) {
+    public JavaRandomSampleOperator(Integer sampleSize, DataSetType type) {
         super(sampleSize, type, Methods.RANDOM);
         rand = new Random();
     }
@@ -43,7 +43,7 @@ public class JavaRandomSampleOperator<Type>
      * @param sampleSize  size of sample
      * @param datasetSize size of data
      */
-    public JavaRandomSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
+    public JavaRandomSampleOperator(Integer sampleSize, Long datasetSize, DataSetType type) {
         super(sampleSize, datasetSize, type, Methods.RANDOM);
         rand = new Random();
     }

@@ -40,7 +40,7 @@ public class SparkRandomPartitionSampleOperator<Type>
      *
      * @param sampleSize
      */
-    public SparkRandomPartitionSampleOperator(int sampleSize, DataSetType type) {
+    public SparkRandomPartitionSampleOperator(Integer sampleSize, DataSetType type) {
         super(sampleSize, type, Methods.RANDOM);
         rand = new Random();
     }
@@ -51,7 +51,7 @@ public class SparkRandomPartitionSampleOperator<Type>
      * @param sampleSize
      * @param datasetSize
      */
-    public SparkRandomPartitionSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
+    public SparkRandomPartitionSampleOperator(Integer sampleSize, Long datasetSize, DataSetType type) {
         super(sampleSize, datasetSize, type, Methods.RANDOM);
         rand = new Random();
     }

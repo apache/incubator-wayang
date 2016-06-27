@@ -32,14 +32,14 @@ public class SparkLoopOperator<InputType, ConvergenceType>
     public SparkLoopOperator(DataSetType<InputType> inputType,
                              DataSetType<ConvergenceType> convergenceType,
                              PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
-                             int numExpectedIterations) {
+                             Integer numExpectedIterations) {
         super(inputType, convergenceType, criterionPredicate, numExpectedIterations);
     }
 
     public SparkLoopOperator(DataSetType<InputType> inputType,
                              DataSetType<ConvergenceType> convergenceType,
                              PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
-                             int numExpectedIterations) {
+                             Integer numExpectedIterations) {
         super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 

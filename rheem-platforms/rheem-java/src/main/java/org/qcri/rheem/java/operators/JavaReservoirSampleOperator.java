@@ -31,7 +31,7 @@ public class JavaReservoirSampleOperator<Type>
      *
      * @param sampleSize
      */
-    public JavaReservoirSampleOperator(int sampleSize, DataSetType type) {
+    public JavaReservoirSampleOperator(Integer sampleSize, DataSetType type) {
         super(sampleSize, type, Methods.RESERVOIR);
         rand = new Random();
     }
@@ -42,7 +42,7 @@ public class JavaReservoirSampleOperator<Type>
      * @param sampleSize
      * @param datasetSize
      */
-    public JavaReservoirSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
+    public JavaReservoirSampleOperator(Integer sampleSize, Long datasetSize, DataSetType type) {
         super(sampleSize, datasetSize, type, Methods.RESERVOIR);
         rand = new Random();
     }
