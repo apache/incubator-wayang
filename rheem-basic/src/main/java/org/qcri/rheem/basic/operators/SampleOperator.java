@@ -21,15 +21,15 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         RESERVOIR //reservoir sampling
     }
 
-    protected int sampleSize;
-    protected long datasetSize;
+    protected Integer sampleSize = 0;
+    protected Long datasetSize = 0L;
 
     protected Methods sampleMethod;
 
     /**
      * Creates a new instance given the sample size.
      */
-    public SampleOperator(int sampleSize, DataSetType<Type> type, Methods sampleMethod) {
+    public SampleOperator(Integer sampleSize, DataSetType<Type> type, Methods sampleMethod) {
         super(type, type,
                 true,
                 null);
@@ -40,7 +40,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     /**
      *  Creates a new instance given the sample size and total dataset size.
      */
-    public SampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type, Methods sampleMethod) {
+    public SampleOperator(Integer sampleSize, Long datasetSize, DataSetType<Type> type, Methods sampleMethod) {
         this(sampleSize, type, sampleMethod);
         this.datasetSize = datasetSize;
     }

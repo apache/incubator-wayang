@@ -10,13 +10,13 @@ import org.qcri.rheem.core.types.DataSetType;
  */
 public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Integer, Integer>, Tuple2<Integer, Float>> {
 
-    protected final int numIterations;
+    protected final Integer numIterations;
 
     /**
      * Creates a new instance.
 
      */
-    public PageRankOperator(int numIterations) {
+    public PageRankOperator(Integer numIterations) {
         super(DataSetType.createDefaultUnchecked(Tuple2.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class),
                 false, null);

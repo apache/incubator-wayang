@@ -14,7 +14,7 @@
         <!-- This Hadoop version is enforced by Spark in the version that is deployed in the Maven repository via code signing. -->
         <hadoop.version>2.2.0</hadoop.version>
         <graphchi.version>0.2.2</graphchi.version>
-        <external.platforms.scope>provided</external.platforms.scope>
+        <external.platforms.scope>compile</external.platforms.scope>
     </properties>
 
     <groupId>org.qcri.rheem</groupId>

@@ -67,9 +67,9 @@ public class JavaRandomSampleOperator<Type>
         final int[] sampleIndices = new int[sampleSize];
         final BitSet data = new BitSet();
         for (int i = 0; i < sampleSize; i++) {
-            sampleIndices[i] = rand.nextInt((int) datasetSize);
+            sampleIndices[i] = rand.nextInt(datasetSize.intValue());
             while (data.get(sampleIndices[i])) //without replacement
-                sampleIndices[i] = rand.nextInt((int) datasetSize);
+                sampleIndices[i] = rand.nextInt(datasetSize.intValue());
             data.set(sampleIndices[i]);
         }
         Arrays.sort(sampleIndices);
