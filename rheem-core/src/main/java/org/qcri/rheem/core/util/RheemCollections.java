@@ -191,4 +191,13 @@ public class RheemCollections {
             }
         }
     }
+
+    public static <K, V> Map<K, V> createMap(Tuple<K, V>... keyValuePairs) {
+        Map<K, V> result = new HashMap<>(keyValuePairs.length);
+        for (Tuple<K, V> keyValuePair : keyValuePairs) {
+            result.put(keyValuePair.getField0(), keyValuePair.getField1());
+        }
+        return result;
+    }
+
 }

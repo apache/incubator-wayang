@@ -50,15 +50,8 @@ public class LogEvaluator {
         this.partialExecutions = loadLog(configuration);
 
         // Print some general statistics.
-        final TimeEstimate overallTimeEstimate = this.partialExecutions.stream()
-                .map(PartialExecution::getOverallTimeEstimate)
-                .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
-        final long overallMeasuredTime = this.partialExecutions.stream()
-                .map(PartialExecution::getMeasuredExecutionTime)
-                .reduce(0L, (a, b) -> a + b);
-        System.out.printf("Loaded %d partial executions.\n", this.partialExecutions.size());
-        System.out.printf("> Measured execution time: %s\n", Formats.formatDuration(overallMeasuredTime));
-        System.out.printf("> Estimated execution time: %s\n", overallTimeEstimate);
+        this.modifySorting("sort rel desc".split(" "));
+        this.printStatistics();
     }
 
     private static Collection<PartialExecution> loadLog(Configuration configuration) {
@@ -78,6 +71,9 @@ public class LogEvaluator {
                 case "print":
                     this.printPartialExecutions(tokens);
                     break;
+                case "stats":
+                    this.printStatistics();
+                    break;
                 case "filter":
                     this.modifyFilters(tokens);
                     break;
@@ -93,15 +89,7 @@ public class LogEvaluator {
     }
 
     private void printPartialExecutions(String[] commandLine) {
-        Stream<PartialExecution> stream = this.partialExecutions.stream();
-        for (Predicate<PartialExecution> filter : this.filters) {
-            stream = stream.filter(filter);
-        }
-        if (this.sortCriterion != null) {
-            stream = stream.sorted(this.isSortAscending ?
-                    this.sortCriterion :
-                    (a, b) -> -this.sortCriterion.compare(a, b));
-        }
+        Stream<PartialExecution> stream = createPartialExecutionStream();
         if (commandLine.length >= 2) {
             stream = stream.limit(Long.parseLong(commandLine[1]));
         }
@@ -116,6 +104,20 @@ public class LogEvaluator {
         for (OptimizationContext.OperatorContext operatorContext : pe.getOperatorContexts()) {
             System.out.printf("--> %s: %s\n", operatorContext.getOperator(), operatorContext.getTimeEstimate());
         }
+        System.out.println();
+    }
+
+    private void printStatistics() {
+        // Print some general statistics.
+        final TimeEstimate overallTimeEstimate = this.createPartialExecutionStream()
+                .map(PartialExecution::getOverallTimeEstimate)
+                .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+        final long overallMeasuredTime = this.createPartialExecutionStream()
+                .map(PartialExecution::getMeasuredExecutionTime)
+                .reduce(0L, (a, b) -> a + b);
+        System.out.printf("Found %d partial executions.\n", this.createPartialExecutionStream().count());
+        System.out.printf("> Measured execution time: %s\n", Formats.formatDuration(overallMeasuredTime, true));
+        System.out.printf("> Estimated execution time: %s\n", overallTimeEstimate);
         System.out.println();
     }
 
@@ -170,10 +172,16 @@ public class LogEvaluator {
             case "run":
                 this.sortCriterion = (a, b) -> Long.compare(a.getMeasuredExecutionTime(), b.getMeasuredExecutionTime());
                 break;
-            case "delta":
+            case "abs":
                 this.sortCriterion = (a, b) -> timeEstimateComparator.compare(
                         a.getOverallTimeEstimate().plus(-a.getMeasuredExecutionTime()),
                         b.getOverallTimeEstimate().plus(-a.getMeasuredExecutionTime())
+                );
+                break;
+            case "rel":
+                this.sortCriterion = (a, b) -> timeEstimateComparator.compare(
+                        a.getOverallTimeEstimate().times(1d / a.getMeasuredExecutionTime()),
+                        b.getOverallTimeEstimate().times(1d / -a.getMeasuredExecutionTime())
                 );
                 break;
             default:
@@ -186,6 +194,21 @@ public class LogEvaluator {
     private static boolean matchSubstring(String inputString, String regex) {
         return inputString.toLowerCase().matches(".*" + regex + ".*");
     }
+
+    private Stream<PartialExecution> createPartialExecutionStream() {
+        Stream<PartialExecution> stream = this.partialExecutions.stream();
+        for (Predicate<PartialExecution> filter : this.filters) {
+            stream = stream.filter(filter);
+        }
+        if (this.sortCriterion != null) {
+            stream = stream.sorted(this.isSortAscending ?
+                    this.sortCriterion :
+                    (a, b) -> -this.sortCriterion.compare(a, b));
+        }
+        return stream;
+    }
+
+
 
     public static void main(String[] args) throws IOException {
         LogEvaluator logEvaluator = new LogEvaluator(new Configuration());

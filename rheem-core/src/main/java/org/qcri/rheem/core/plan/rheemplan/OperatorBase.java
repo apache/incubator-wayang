@@ -1,20 +1,32 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Helper class for the implementation of the {@link Operator} interface.
  */
 public abstract class OperatorBase implements Operator {
+
+    public static final List<Tuple<Class<?>, Supplier<?>>> STANDARD_OPERATOR_ARGS = Arrays.asList(
+            new Tuple<>(DataSetType.class, DataSetType::none),
+            new Tuple<>(Class.class, () -> Object.class),
+            new Tuple<>(TransformationDescriptor.class, () -> new TransformationDescriptor<>(o -> o, Object.class, Object.class)),
+            new Tuple<>(FlatMapDescriptor.class, () -> new FlatMapDescriptor<>(o -> Collections.emptyList(), Object.class, Object.class)),
+            new Tuple<>(PredicateDescriptor.class, () -> new PredicateDescriptor<>(o -> true, Object.class)),
+            new Tuple<>(ReduceDescriptor.class, () -> new ReduceDescriptor<>((a, b) -> a, Object.class)),
+            new Tuple<>(FunctionDescriptor.SerializableFunction.class, () -> (FunctionDescriptor.SerializableFunction) o -> o),
+            new Tuple<>(FunctionDescriptor.SerializableBinaryOperator.class, () -> (FunctionDescriptor.SerializableBinaryOperator) (a, b) -> a)
+    );
 
     private final boolean isSupportingBroadcastInputs;
 

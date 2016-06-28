@@ -4,7 +4,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
@@ -18,7 +17,6 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.JsonSerializable;
 import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -268,24 +266,7 @@ public abstract class OptimizationContext {
             Class<Operator> operatorClass = (Class<Operator>) Class.forName(operatorClassName);
             operator = ReflectionUtils.instantiateSomehow(
                     operatorClass,
-                    new Tuple<>(DataSetType.class, DataSetType::none),
-                    new Tuple<>(Class.class, () -> Object.class),
-                    new Tuple<>(TransformationDescriptor.class, () -> new TransformationDescriptor<>(
-                            o -> o, Object.class, Object.class
-                    )),
-                    new Tuple<>(FlatMapDescriptor.class, () -> new FlatMapDescriptor<>(
-                            o -> Collections.emptyList(), Object.class, Object.class
-                    )),
-                    new Tuple<>(PredicateDescriptor.class, () -> new PredicateDescriptor<>(
-                            o -> true, Object.class
-                    )),
-                    new Tuple<>(ReduceDescriptor.class, () -> new ReduceDescriptor<>(
-                            (a, b) -> a, Object.class
-                    )),
-                    new Tuple<>(FunctionDescriptor.SerializableFunction.class,
-                            () -> (FunctionDescriptor.SerializableFunction) o -> o),
-                    new Tuple<>(FunctionDescriptor.SerializableBinaryOperator.class,
-                            () -> (FunctionDescriptor.SerializableBinaryOperator) (a, b) -> a)
+                    OperatorBase.STANDARD_OPERATOR_ARGS
             );
         } catch (Throwable t) {
             throw new RheemException(String.format("Could not instantiate %s.", json.getString("operator")), t);

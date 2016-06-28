@@ -97,7 +97,18 @@ public class ReflectionUtils {
      */
     @SuppressWarnings("unchecked")
     public static <T> T instantiateSomehow(Class<T> cls, Tuple<Class<?>, Supplier<?>>... defaultParameters) {
-        final List<Tuple<Class<?>, Supplier<?>>> defaultParametersAsList = Arrays.asList(defaultParameters);
+        return instantiateSomehow(cls, Arrays.asList(defaultParameters));
+    }
+
+    /**
+     * Tries to instantiate an arbitrary instance of the given {@link Class}.
+     *
+     * @param cls               that should be instantiated
+     * @param defaultParameters designate specific default parameter values for parameter {@link Class}es
+     * @return the instance
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T instantiateSomehow(Class<T> cls, List<Tuple<Class<?>, Supplier<?>>> defaultParameters) {
         try {
             for (Constructor<?> constructor : cls.getConstructors()) {
                 try {
@@ -105,7 +116,7 @@ public class ReflectionUtils {
                     Object[] parameters = new Object[parameterTypes.length];
                     for (int i = 0; i < parameterTypes.length; i++) {
                         Class<?> parameterType = parameterTypes[i];
-                        Object parameter = getDefaultParameter(parameterType, defaultParametersAsList);
+                        Object parameter = getDefaultParameter(parameterType, defaultParameters);
                         if (parameter == null) {
                             parameter = getDefaultParameter(parameterType, defaultParameterSuppliers);
                         }
