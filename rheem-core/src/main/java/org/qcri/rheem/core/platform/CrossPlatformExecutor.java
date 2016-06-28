@@ -216,7 +216,7 @@ public class CrossPlatformExecutor implements ExecutionState {
 
         final long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} stages in {}.",
-                numExecutedStages, Formats.formatDuration(finishTime - startTime));
+                numExecutedStages, Formats.formatDuration(finishTime - startTime, true));
 
         assert numExecutedStages > 0 : "Did not execute a single stage.";
     }
@@ -254,7 +254,7 @@ public class CrossPlatformExecutor implements ExecutionState {
         long startTime = System.currentTimeMillis();
         executor.execute(stage, this);
         long finishTime = System.currentTimeMillis();
-        CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime));
+        CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime, true));
 
         // Remember that we have executed the stage.
         this.completedStages.add(stage);

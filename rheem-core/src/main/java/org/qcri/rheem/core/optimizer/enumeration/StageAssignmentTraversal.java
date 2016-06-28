@@ -208,6 +208,12 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
             this.createStageFor(task, null);
         }
 
+        if (logger.isDebugEnabled()) {
+            this.assignedInterimStages.values().stream().distinct().forEach(
+                    stage -> logger.debug("Established initial stage with {}.", stage.getTasks())
+            );
+        }
+
         // Make sure that we didn't blunder.
         assert relevantTasks.stream().allMatch(this.assignedInterimStages::containsKey);
     }
@@ -275,7 +281,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         assert task.getOperator().getPlatform().equals(newStage.getPlatform());
         newStage.addTask(task);
         final InterimStage oldStage = this.assignedInterimStages.put(task, newStage);
-        logger.debug("Reassigned %s from %s to %s.", task, oldStage, newStage);
+        logger.trace("Reassigned {} from {} to {}.", task, oldStage, newStage);
     }
 
     /**
@@ -472,7 +478,9 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
                     // Propagate these stages to all follow-up tasks.
                     for (Channel channel : outboundTask.getOutputChannels()) {
                         for (ExecutionTask consumer : channel.getConsumers()) {
-                            this.updateRequiredStages(consumer, requiredStages);
+                            if (!consumer.isFeedbackInput(channel)) {
+                                this.updateRequiredStages(consumer, requiredStages);
+                            }
                         }
                     }
                 }
@@ -512,7 +520,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         final InterimStage currentStage = this.assignedInterimStages.get(task);
 
         // Update the requiredStages by the InterimStage of the task.
-        requiredStages.add(currentStage);
+        boolean isCurrentStageAdded = requiredStages.add(currentStage);
 
         // Try to update the #requiredStages of our task.
         final Set<InterimStage> currentlyRequiredStages = this.requiredStages.get(task);
@@ -531,6 +539,10 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
                 }
             }
         }
+
+        if (isCurrentStageAdded) {
+            requiredStages.remove(currentStage);
+        }
     }
 
 
@@ -547,22 +559,38 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         }
         int minRequiredStages = -1;
         final Collection<ExecutionTask> initialTasks = new LinkedList<>();
-        final Set<ExecutionTask> separableTasks = new HashSet<>();
+        final Set<ExecutionTask> tasksToSeparate = new HashSet<>();
         for (ExecutionTask task : stage.getTasks()) {
             final Set<InterimStage> requiredStages = this.requiredStages.get(task);
             if (minRequiredStages == -1 || requiredStages.size() < minRequiredStages) {
-                separableTasks.addAll(initialTasks);
+                tasksToSeparate.addAll(initialTasks);
                 initialTasks.clear();
                 minRequiredStages = requiredStages.size();
             }
-            (minRequiredStages == requiredStages.size() ? initialTasks : separableTasks).add(task);
+            (minRequiredStages == requiredStages.size() ? initialTasks : tasksToSeparate).add(task);
         }
 
-        if (separableTasks.isEmpty()) {
+        if (tasksToSeparate.isEmpty()) {
             logger.debug("No separable tasks found in marked stage {}.", stage);
             return false;
         } else {
-            this.splitStage(stage, separableTasks);
+            // Prepare to split the ExecutionTasks that are not separated.
+            final HashSet<ExecutionTask> tasksToKeep = new HashSet<>(stage.getTasks());
+            tasksToKeep.removeAll(tasksToSeparate);
+
+            // Separate the ExecutionTasks and create stages for each connected component.
+            do {
+                Set<ExecutionTask> component = this.separateConnectedComponent(tasksToSeparate);
+                this.splitStage(stage, component);
+            } while (!tasksToSeparate.isEmpty());
+
+            // Also split the remainder into connected components.
+            while (true) {
+                Set<ExecutionTask> component = this.separateConnectedComponent(tasksToKeep);
+                // Avoid "splitting" if the tasksToKeep are already a connected component.
+                if (tasksToKeep.isEmpty()) break;
+                this.splitStage(stage, component);
+            }
             return true;
         }
     }
@@ -574,7 +602,12 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
      * @return the new {@link InterimStage}
      */
     private InterimStage splitStage(InterimStage stage, Set<ExecutionTask> separableTasks) {
-        logger.debug("Separating " + separableTasks + " from " + stage + "...");
+        if (logger.isDebugEnabled()) {
+            Set<ExecutionTask> residualTasks = new HashSet<>(stage.getTasks());
+            residualTasks.removeAll(separableTasks);
+            logger.debug("Separating " + separableTasks + " from " + residualTasks + "...");
+
+        }
         InterimStage newStage = stage.separate(separableTasks);
         this.addStage(newStage);
         for (ExecutionTask separatedTask : newStage.getTasks()) {

@@ -56,8 +56,8 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
     public String toString() {
         return String.format("%s[%s .. %s, conf=%s]",
                 this.getClass().getSimpleName(),
-                Formats.formatDuration(this.getLowerEstimate()),
-                Formats.formatDuration(this.getUpperEstimate()),
+                Formats.formatDuration(this.getLowerEstimate(), true),
+                Formats.formatDuration(this.getUpperEstimate(), true),
                 Formats.formatPercentage(this.getCorrectnessProbability()));
     }
 
