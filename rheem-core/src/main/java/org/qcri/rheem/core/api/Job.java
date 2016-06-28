@@ -136,6 +136,15 @@ public class Job extends OneTimeExecutable {
         }
     }
 
+    public ExecutionPlan buildInitialExecutionPlan() throws RheemException {
+        this.prepareRheemPlan();
+        this.estimateKeyFigures();
+
+        // Get initial execution plan.
+        ExecutionPlan executionPlan = this.createInitialExecutionPlan();
+        return  executionPlan;
+    }
+
     @Override
     protected void doExecute() {
         // Make sure that each job is only executed once.

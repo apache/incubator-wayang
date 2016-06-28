@@ -3,6 +3,7 @@ package org.qcri.rheem.core.api;
 import org.apache.commons.lang3.StringUtils;
 import org.qcri.rheem.core.api.configuration.ExplicitCollectionProvider;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
@@ -54,6 +55,17 @@ public class RheemContext {
      */
     public void execute(RheemPlan rheemPlan, String... udfJars) {
         this.createJob(rheemPlan, udfJars).execute();
+    }
+
+    /**
+     * Build an execution plan.
+     *
+     * @param rheemPlan the plan to translate
+     * @param udfJars   JARs that declare the code for the UDFs
+     * @see ReflectionUtils#getDeclaringJar(Class)
+     */
+    public ExecutionPlan buildInitialExecutionPlan(RheemPlan rheemPlan, String... udfJars) {
+        return this.createJob(rheemPlan, udfJars).buildInitialExecutionPlan();
     }
 
     /**
