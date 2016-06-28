@@ -327,7 +327,7 @@ public abstract class OptimizationContext {
         /**
          * {@link TimeEstimate} for the {@link ExecutionState}.
          */
-        private TimeEstimate timeEstimate;
+        protected TimeEstimate timeEstimate;
 
         /**
          * Reflects the number of executions of the {@link #operator}. This, e.g., relevant in {@link LoopContext}s.

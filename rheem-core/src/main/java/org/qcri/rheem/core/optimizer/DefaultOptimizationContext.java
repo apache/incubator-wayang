@@ -152,7 +152,7 @@ public class DefaultOptimizationContext extends OptimizationContext {
         boolean isComplete = true;
         for (OperatorContext operatorContext : operatorContexts.values()) {
             if (operatorContext.getOperator().isExecutionOperator()
-                    && operatorContext.getTimeEstimate() == null
+                    && operatorContext.timeEstimate == null
                     && RheemArrays.anyMatch(operatorContext.getOutputCardinalities(), Objects::nonNull)) {
                 this.logger.warn("No TimeEstimate for {}.", operatorContext);
                 isComplete = false;
