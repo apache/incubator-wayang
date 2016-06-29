@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.api;
 
+import org.json.JSONObject;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -17,13 +18,17 @@ import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
-import org.qcri.rheem.core.util.Formats;
-import org.qcri.rheem.core.util.OneTimeExecutable;
-import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.core.util.StopWatch;
+import org.qcri.rheem.core.util.*;
+import org.qcri.rheem.core.util.fs.FileSystem;
+import org.qcri.rheem.core.util.fs.FileSystems;
+import org.qcri.rheem.core.util.fs.LocalFileSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -90,6 +95,7 @@ public class Job extends OneTimeExecutable {
      */
     private final Set<String> udfJarPaths = new HashSet<>();
 
+    private Monitor monitor = new Monitor();
 
     /**
      * <i>Currently not used.</i>
@@ -161,6 +167,15 @@ public class Job extends OneTimeExecutable {
 
             // Get an execution plan.
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
+
+            // TODO: generate run ID. For now we fix this because we can't handle multiple jobs, neither in montoring nor execution.
+            String runId = "1";
+            try {
+                monitor.initialize(this.configuration, runId, executionPlan.toJsonList());
+            }catch (Exception e) {
+                this.logger.warn("Failed to initalize monitor: {}", e);
+            }
+
 
             // Take care of the execution.
             int executionId = 0;
