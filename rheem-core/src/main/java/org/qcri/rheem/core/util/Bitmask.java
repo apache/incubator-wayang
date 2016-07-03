@@ -22,7 +22,7 @@ public class Bitmask implements Cloneable {
     /**
      * Caches the cardinality or is {@code -1} if no values is cached.
      */
-    private int cardinalityCache = -1;
+    private int cardinalityCache;
 
     /**
      * Creates a new instance.
@@ -224,6 +224,7 @@ public class Bitmask implements Cloneable {
                 long flipMask = createAllSetBits(untilOffset) ^ createAllSetBits(fromOffset);
                 this.bits[longPos] ^= flipMask;
             }
+            this.cardinalityCache = -1;
         }
         return this;
     }

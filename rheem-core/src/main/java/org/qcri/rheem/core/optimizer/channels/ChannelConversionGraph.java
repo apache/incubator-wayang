@@ -12,6 +12,7 @@ import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.Bitmask;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
@@ -26,14 +27,23 @@ import java.util.stream.Collectors;
  */
 public class ChannelConversionGraph {
 
+    /**
+     * Keeps track of the {@link ChannelConversion}s.
+     */
     private final Map<ChannelDescriptor, List<ChannelConversion>> conversions = new HashMap<>();
 
+    /**
+     * Caches the {@link Comparator} for {@link TimeEstimate}s.
+     */
     private final Comparator<TimeEstimate> timeEstimateComparator;
-
-    private static final BitSet EMPTY_BITSET = new BitSet(0);
 
     private static final Logger logger = LoggerFactory.getLogger(ChannelConversionGraph.class);
 
+    /**
+     * Creates a new instance.
+     *
+     * @param configuration describes how to configure the new instance
+     */
     public ChannelConversionGraph(Configuration configuration) {
         this.timeEstimateComparator = configuration.getTimeEstimateComparatorProvider().provide();
         for (final Platform platform : configuration.getPlatformProvider()) {
@@ -110,7 +120,7 @@ public class ChannelConversionGraph {
         // TODO: This might be a little bit too strict.
         final Iterator<Tree> iterator = trees.iterator();
         final Tree firstTree = iterator.next();
-        BitSet combinationSettledIndices = copy(firstTree.settledDestinationIndices);
+        Bitmask combinationSettledIndices = new Bitmask(firstTree.settledDestinationIndices);
         int maxSettledIndices = combinationSettledIndices.cardinality();
         final HashSet<ChannelDescriptor> employedChannelDescriptors = new HashSet<>(firstTree.employedChannelDescriptors);
         int maxVisitedChannelDescriptors = employedChannelDescriptors.size();
@@ -121,7 +131,7 @@ public class ChannelConversionGraph {
         while (iterator.hasNext()) {
             final Tree ithTree = iterator.next();
 
-            combinationSettledIndices.or(ithTree.settledDestinationIndices);
+            combinationSettledIndices.orInPlace(ithTree.settledDestinationIndices);
             maxSettledIndices += ithTree.settledDestinationIndices.cardinality();
             if (maxSettledIndices > combinationSettledIndices.cardinality()) {
                 return null;
@@ -144,32 +154,53 @@ public class ChannelConversionGraph {
     }
 
     /**
-     * Creates a copy of the given {@code bitSet}.
-     */
-    private static BitSet copy(BitSet bitSet) {
-        return (BitSet) bitSet.clone();
-    }
-
-
-    /**
      * Finds the shortest tree between the {@link #startChannelDescriptor} and the {@link #destChannelDescriptorSets}.
      */
     private class ShortestTreeSearcher extends OneTimeExecutable {
 
+        /**
+         * The {@link OutputSlot} that should be converted.
+         */
         private final OutputSlot<?> sourceOutput;
 
+        /**
+         * Produced by the {@link #sourceOutput}.
+         */
+        private final Channel sourceChannel;
+
+        /**
+         * Describes the number of data quanta that are presumably converted.
+         */
         private final CardinalityEstimate cardinality;
 
+        /**
+         * How often the conversion is presumably performed.
+         */
         private final int numExecutions;
 
+        /**
+         * The type of {@link Channel} from that the conversion should be started or continued.
+         */
         private final ChannelDescriptor startChannelDescriptor;
 
-        private final Channel sourceChannel, startChannel;
+        /**
+         * According to the {@link #startChannelDescriptor}.
+         */
+        private final Channel startChannel;
 
+        /**
+         * {@link ChannelDescriptor}s that should not be used in the search, as they are already visited.
+         */
         private final Collection<ChannelDescriptor> previsitedChannels;
 
+        /**
+         * {@link InputSlot}s that should be served by the {@link #sourceOutput}.
+         */
         private final List<InputSlot<?>> destInputs;
 
+        /**
+         * Supported {@link ChannelDescriptor}s for each of the {@link #destInputs}.
+         */
         private final List<Set<ChannelDescriptor>> destChannelDescriptorSets;
 
         /**
@@ -177,25 +208,54 @@ public class ChannelConversionGraph {
          */
         private final OptimizationContext optimizationContext;
 
-        private Map<Set<ChannelDescriptor>, BitSet> kernelDestChannelDescriptorSetsToIndices;
+        /**
+         * Maps kernelized {@link Set}s of possible input {@link ChannelDescriptor}s to destination {@link InputSlot}s via
+         * their respective indices in {@link #destInputs}.
+         */
+        private Map<Set<ChannelDescriptor>, Bitmask> kernelDestChannelDescriptorSetsToIndices;
 
-        private Map<ChannelDescriptor, BitSet> kernelDestChannelDescriptorsToIndices;
+        /**
+         * Maps specific input {@link ChannelDescriptor}s to applicable destination {@link InputSlot}s via
+         * their respective indices in {@link #destInputs}.
+         */
+        private Map<ChannelDescriptor, Bitmask> kernelDestChannelDescriptorsToIndices;
 
+        /**
+         * Caches {@link TimeEstimate}s for {@link ChannelConversion}s.
+         */
         private Map<ChannelConversion, TimeEstimate> conversionTimeCache = new HashMap<>();
 
+        /**
+         * Caches the result of {@link #getJunction()}.
+         */
         private Junction result = null;
 
+        /**
+         * Create a new instance.
+         *
+         * @param sourceOutput        provides a {@link Channel} that should be converted
+         * @param existingChannel     existing {@link Channel} derived from {@code sourceOutput} and where we must take up
+         *                            the search; or {@code null}
+         * @param destInputs          that consume the converted {@link Channel}(s)
+         * @param optimizationContext provides optimization info
+         */
         private ShortestTreeSearcher(OutputSlot<?> sourceOutput,
                                      Channel existingChannel,
                                      List<InputSlot<?>> destInputs,
                                      OptimizationContext optimizationContext) {
-            this.sourceOutput = sourceOutput;
+            // Safe relevant variable.
             this.optimizationContext = optimizationContext;
+            this.sourceOutput = sourceOutput;
+            this.destInputs = destInputs;
+
+            // Figure out the optimization info via the sourceOutput.
             final ExecutionOperator outputOperator = (ExecutionOperator) this.sourceOutput.getOwner();
             final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(outputOperator);
             assert operatorContext != null : String.format("Optimization info for %s missing.", outputOperator);
             this.cardinality = operatorContext.getOutputCardinality(this.sourceOutput.getIndex());
             this.numExecutions = operatorContext.getNumExecutions();
+
+            // Figure out, if a part of the conversion is already in place and initialize accordingly.
             if (existingChannel != null) {
                 Channel allegedSourceChannel = existingChannel;
                 this.previsitedChannels = new ArrayList<>(4);
@@ -212,11 +272,17 @@ public class ChannelConversionGraph {
                 this.previsitedChannels = Collections.emptyList();
                 this.startChannel = null;
             }
-            this.destInputs = destInputs;
+
+            // Set up the destinations.
             this.destChannelDescriptorSets = RheemCollections.map(destInputs, this::resolveSupportedChannels);
             assert this.destChannelDescriptorSets.stream().noneMatch(Collection::isEmpty);
         }
 
+        /**
+         * Creates and caches a {@link Junction} according to the initialization parameters.
+         *
+         * @return the {@link Junction} or {@code null} if none could be found
+         */
         public Junction getJunction() {
             this.tryExecute();
             return this.result;
@@ -261,7 +327,8 @@ public class ChannelConversionGraph {
          * @see #kernelDestChannelDescriptorsToIndices
          */
         private void kernelizeChannelRequests() {
-            // Check if the Junction enters a loop.
+            // Check if the Junction enters a loop "from the side", i.e., across multiple iterations.
+            // CHECK: Since we rule out non-reusable Channels in #resolveSupportedChannels, do we really need this?
             final LoopSubplan outputLoop = this.sourceOutput.getOwner().getInnermostLoop();
             final int outputLoopDepth = this.sourceOutput.getOwner().getLoopStack().size();
             boolean isSideEnterLoop = this.destInputs.stream().anyMatch(input ->
@@ -271,22 +338,23 @@ public class ChannelConversionGraph {
                             )
             );
 
-            // Merge equal Channel requests.
+            // Index the Channel requests by their InputSlots, thereby merging equal ones.
             this.kernelDestChannelDescriptorSetsToIndices = new HashMap<>(this.destChannelDescriptorSets.size());
             int index = 0;
             for (Set<ChannelDescriptor> destChannelDescriptorSet : this.destChannelDescriptorSets) {
-                final BitSet indices = this.kernelDestChannelDescriptorSetsToIndices.computeIfAbsent(
-                        destChannelDescriptorSet, key -> new BitSet(this.destChannelDescriptorSets.size())
+                final Bitmask indices = this.kernelDestChannelDescriptorSetsToIndices.computeIfAbsent(
+                        destChannelDescriptorSet, key -> new Bitmask(this.destChannelDescriptorSets.size())
                 );
                 indices.set(index++);
             }
 
-            // Strip off the non-reusable, superfluous ChannelDescriptors.
-            Collection<Tuple<Set<ChannelDescriptor>, BitSet>> channelsToIndicesChanges = new LinkedList<>();
-            final Iterator<Map.Entry<Set<ChannelDescriptor>, BitSet>> iterator = this.kernelDestChannelDescriptorSetsToIndices.entrySet().iterator();
+            // Strip off the non-reusable, superfluous ChannelDescriptors where applicable.
+            Collection<Tuple<Set<ChannelDescriptor>, Bitmask>> channelsToIndicesChanges = new LinkedList<>();
+            final Iterator<Map.Entry<Set<ChannelDescriptor>, Bitmask>> iterator =
+                    this.kernelDestChannelDescriptorSetsToIndices.entrySet().iterator();
             while (iterator.hasNext()) {
-                final Map.Entry<Set<ChannelDescriptor>, BitSet> entry = iterator.next();
-                final BitSet indices = entry.getValue();
+                final Map.Entry<Set<ChannelDescriptor>, Bitmask> entry = iterator.next();
+                final Bitmask indices = entry.getValue();
                 if (indices.cardinality() < 2 && !isSideEnterLoop) continue;
 
                 Set<ChannelDescriptor> channelDescriptors = entry.getKey();
@@ -298,45 +366,38 @@ public class ChannelConversionGraph {
                 channelDescriptors.removeIf(channelDescriptor -> !channelDescriptor.isReusable());
                 channelsToIndicesChanges.add(new Tuple<>(channelDescriptors, indices));
             }
-            for (Tuple<Set<ChannelDescriptor>, BitSet> channelsToIndicesChange : channelsToIndicesChanges) {
+            for (Tuple<Set<ChannelDescriptor>, Bitmask> channelsToIndicesChange : channelsToIndicesChanges) {
                 this.kernelDestChannelDescriptorSetsToIndices.computeIfAbsent(
                         channelsToIndicesChange.getField0(),
-                        key -> new BitSet(this.destChannelDescriptorSets.size())
-                ).or(channelsToIndicesChange.getField1());
+                        key -> new Bitmask(this.destChannelDescriptorSets.size())
+                ).orInPlace(channelsToIndicesChange.getField1());
             }
 
             // Index the single ChannelDescriptors.
             this.kernelDestChannelDescriptorsToIndices = new HashMap<>();
-            for (Map.Entry<Set<ChannelDescriptor>, BitSet> entry : this.kernelDestChannelDescriptorSetsToIndices.entrySet()) {
+            for (Map.Entry<Set<ChannelDescriptor>, Bitmask> entry : this.kernelDestChannelDescriptorSetsToIndices.entrySet()) {
                 final Set<ChannelDescriptor> channelDescriptorSet = entry.getKey();
-                final BitSet indices = entry.getValue();
+                final Bitmask indices = entry.getValue();
 
                 for (ChannelDescriptor channelDescriptor : channelDescriptorSet) {
-                    this.kernelDestChannelDescriptorsToIndices.merge(channelDescriptor, copy(indices), this::union);
+                    this.kernelDestChannelDescriptorsToIndices.merge(channelDescriptor, new Bitmask(indices), Bitmask::or);
                 }
             }
-        }
-
-        /**
-         * Unions two {@link BitSet}s in place.
-         *
-         * @param accu  accumulates the sum and is the first operand
-         * @param delta the second operand
-         * @return {@code accu}
-         */
-        private BitSet union(BitSet accu, BitSet delta) {
-            accu.or(delta);
-            return accu;
         }
 
         /**
          * Starts the actual search.
          */
         private Tree searchTree() {
+            // Prepare the recursive traversal.
             final HashSet<ChannelDescriptor> visitedChannelDescriptors = new HashSet<>(this.previsitedChannels);
             visitedChannelDescriptors.add(this.startChannelDescriptor);
-            final Map<BitSet, Tree> solutions = this.enumerate(visitedChannelDescriptors, this.startChannelDescriptor, EMPTY_BITSET);
-            BitSet requestedIndices = new BitSet(this.destChannelDescriptorSets.size());
+
+            // Perform the traversal.
+            final Map<Bitmask, Tree> solutions = this.enumerate(visitedChannelDescriptors, this.startChannelDescriptor, Bitmask.EMPTY_BITMASK);
+
+            // Get hold of a comprehensive solution (if it exists).
+            Bitmask requestedIndices = new Bitmask(this.destChannelDescriptorSets.size());
             requestedIndices.flip(0, this.destChannelDescriptorSets.size());
             return solutions.get(requestedIndices);
         }
@@ -352,28 +413,26 @@ public class ChannelConversionGraph {
          *                                  can be altered but must be in original state before leaving the method
          * @return solutions to the search problem reachable from this node; {@link Tree}s must still be rerooted
          */
-        public Map<BitSet, Tree> enumerate(
+        public Map<Bitmask, Tree> enumerate(
                 Set<ChannelDescriptor> visitedChannelDescriptors,
                 ChannelDescriptor channelDescriptor,
-                BitSet settledDestinationIndices) {
+                Bitmask settledDestinationIndices) {
 
             // Mapping from settled indices to the cheapest tree settling them. Will be the return value.
-            Map<BitSet, Tree> newSolutions = new HashMap<>();
+            Map<Bitmask, Tree> newSolutions = new HashMap<>();
             Tree newSolution;
 
             // Check if current path is a (new) solution.
-            // TODO: Check whether the channelDescriptor is reusable.
-            final BitSet newSettledIndices =
-                    (BitSet) this.kernelDestChannelDescriptorsToIndices.getOrDefault(channelDescriptor, EMPTY_BITSET).clone();
-            newSettledIndices.andNot(settledDestinationIndices);
-            if (!newSettledIndices.isEmpty()) {
+            final Bitmask newSettledIndices = this.kernelDestChannelDescriptorsToIndices
+                            .getOrDefault(channelDescriptor, Bitmask.EMPTY_BITMASK)
+                            .andNot(settledDestinationIndices);
+            if (!newSettledIndices.isEmpty() && (newSettledIndices.cardinality() < 2 || channelDescriptor.isReusable())) {
                 // Create a new solution.
-                settledDestinationIndices.or(newSettledIndices);
-                newSolution = new Tree(new TreeVertex(channelDescriptor, newSettledIndices), copy(settledDestinationIndices));
-                settledDestinationIndices.andNot(newSettledIndices);
+                newSolution = Tree.singleton(channelDescriptor, newSettledIndices);
                 newSolutions.put(newSolution.settledDestinationIndices, newSolution);
 
                 // Check if all destinations are settled.
+                // In that case, we can stop the recursion.
                 if (newSolution.settledDestinationIndices.cardinality() == this.destChannelDescriptorSets.size()) {
                     return newSolutions;
                 }
@@ -382,15 +441,15 @@ public class ChannelConversionGraph {
             // For each outgoing edge, explore all combinations of reachable target indices.
             if (channelDescriptor.isReusable()) {
                 // When descending, "pick" the newly settled destinations only for reusable ChannelDescriptors.
-                settledDestinationIndices.or(newSettledIndices);
+                settledDestinationIndices.orInPlace(newSettledIndices);
             }
             final List<ChannelConversion> channelConversions =
                     ChannelConversionGraph.this.conversions.getOrDefault(channelDescriptor, Collections.emptyList());
-            final List<Map<BitSet, Tree>> childSolutionSets = new ArrayList<>(channelConversions.size());
+            final List<Collection<Tree>> childSolutionSets = new ArrayList<>(channelConversions.size());
             for (ChannelConversion channelConversion : channelConversions) {
                 final ChannelDescriptor targetChannelDescriptor = channelConversion.getTargetChannelDescriptor();
                 if (visitedChannelDescriptors.add(targetChannelDescriptor)) {
-                    final Map<BitSet, Tree> childSolutions = this.enumerate(
+                    final Map<Bitmask, Tree> childSolutions = this.enumerate(
                             visitedChannelDescriptors,
                             targetChannelDescriptor,
                             settledDestinationIndices
@@ -398,42 +457,51 @@ public class ChannelConversionGraph {
                     childSolutions.values().forEach(
                             tree -> tree.reroot(
                                     channelDescriptor,
-                                    newSettledIndices,
+                                    channelDescriptor.isReusable() ? newSettledIndices : Bitmask.EMPTY_BITMASK,
                                     channelConversion,
                                     this.getTimeEstimate(channelConversion)
                             )
                     );
-                    childSolutionSets.add(childSolutions);
+                    childSolutionSets.add(childSolutions.values());
 
                     visitedChannelDescriptors.remove(targetChannelDescriptor);
                 }
             }
-            settledDestinationIndices.andNot(newSettledIndices);
+            settledDestinationIndices.andNotInPlace(newSettledIndices);
 
             // Merge the childSolutionSets into the newSolutions.
-            // Each childSolutionSet corresponds to a traversed outgoint ChannelConversion.
+            // Each childSolutionSet corresponds to a traversed outgoing ChannelConversion.
 
             // At first, consider the childSolutionSet for each outgoing ChannelConversion individually.
-            for (Map<BitSet, Tree> childSolutionSet : childSolutionSets) {
+            for (Collection<Tree> childSolutionSet : childSolutionSets) {
                 // Each childSolutionSet its has a mapping from settled indices to trees.
-                for (Map.Entry<BitSet, Tree> bitSetTreeEntry : childSolutionSet.entrySet()) {
+                for (Tree tree : childSolutionSet) {
                     // Update newSolutions if the current tree is cheaper or settling new indices.
-                    final BitSet childSolutionSettledIndices = bitSetTreeEntry.getKey();
-                    final Tree tree = bitSetTreeEntry.getValue();
-                    newSolutions.merge(childSolutionSettledIndices, tree, ChannelConversionGraph.this::selectCheaperTree);
+                    newSolutions.merge(tree.settledDestinationIndices, tree, ChannelConversionGraph.this::selectCheaperTree);
                 }
             }
 
 
             // If the current Channel/vertex is reusable, also detect valid combinations.
             // Check if the combinations yield new solutions.
-            if (channelDescriptor.isReusable() && childSolutionSets.size() > 1) {
-                // TODO: We could do a better job here if we would consider the "kernelized" destinations.
-                int numUnreachedDestionations = this.destChannelDescriptorSets.size() - newSettledIndices.cardinality() - settledDestinationIndices.cardinality();
-                if (numUnreachedDestionations >= 2) {
-                    final Collection<List<Map<BitSet, Tree>>> childSolutionSetCombinations = RheemCollections.createPowerList(childSolutionSets, numUnreachedDestionations);
+            if (channelDescriptor.isReusable()
+                    && this.kernelDestChannelDescriptorSetsToIndices.size() > 1
+                    && childSolutionSets.size() > 1
+                    && this.destInputs.size() > newSettledIndices.cardinality() + settledDestinationIndices.cardinality() + 1) {
+
+                // Determine the number of "unreached" destChannelDescriptorSets.
+                int numUnreachedDestinationSets = 0;
+                for (Bitmask settlableDestinationIndices : this.kernelDestChannelDescriptorSetsToIndices.values()) {
+                    if (!settlableDestinationIndices.isSubmaskOf(settledDestinationIndices)) {
+                        numUnreachedDestinationSets++;
+                    }
+                }
+
+                if (numUnreachedDestinationSets >= 2) {
+                    final Collection<List<Collection<Tree>>> childSolutionSetCombinations =
+                            RheemCollections.createPowerList(childSolutionSets, numUnreachedDestinationSets);
                     childSolutionSetCombinations.removeIf(e -> e.size() < 2);
-                    for (List<Tree> solutionCombination : RheemCollections.streamedCrossProduct(RheemCollections.map(childSolutionSets, Map::values))) {
+                    for (List<Tree> solutionCombination : RheemCollections.streamedCrossProduct(childSolutionSets)) {
                         final Tree tree = ChannelConversionGraph.this.mergeTrees(solutionCombination);
                         if (tree != null) {
                             newSolutions.merge(tree.settledDestinationIndices, tree, ChannelConversionGraph.this::selectCheaperTree);
@@ -445,6 +513,13 @@ public class ChannelConversionGraph {
             return newSolutions;
         }
 
+        /**
+         * Retrieve a cached or calculate and cache the {@link TimeEstimate} for a given {@link ChannelConversion}
+         * w.r.t. the {@link #cardinality}.
+         *
+         * @param channelConversion whose {@link TimeEstimate} is requested
+         * @return the {@link TimeEstimate}
+         */
         private TimeEstimate getTimeEstimate(ChannelConversion channelConversion) {
             return this.conversionTimeCache.computeIfAbsent(
                     channelConversion,
@@ -467,7 +542,6 @@ public class ChannelConversionGraph {
             this.createJunctionAux(tree.root, startChannel, junction, true);
 
             // Assign appropriate LoopSubplans to the newly created ExecutionTasks.
-            //
             // Determine the LoopSubplan from the "source side" of the Junction.
             final OutputSlot<?> sourceOutput = sourceChannel.getProducerSlot();
             final ExecutionOperator sourceOperator = (ExecutionOperator) sourceOutput.getOwner();
@@ -577,46 +651,100 @@ public class ChannelConversionGraph {
     /**
      * A tree consisting of {@link TreeVertex}es connected by {@link TreeEdge}s.
      */
-    private class Tree {
+    private static class Tree {
 
+        /**
+         * The root node of this instance.
+         */
         private TreeVertex root;
 
-        private final BitSet settledDestinationIndices;
+        /**
+         * The union of all settled indices of the contained {@link TreeVertex}es in this instance.
+         *
+         * @see TreeVertex#settledIndices
+         */
+        private final Bitmask settledDestinationIndices;
 
+        /**
+         * The {@link Set} of {@link ChannelDescriptor}s in all {@link TreeVertex}es of this instance.
+         *
+         * @see TreeVertex#channelDescriptor
+         */
         private final Set<ChannelDescriptor> employedChannelDescriptors = new HashSet<>();
 
+        /**
+         * The sum of {@link TimeEstimate}s of all {@link TreeEdge}s of this instance.
+         */
         private TimeEstimate costs = TimeEstimate.ZERO;
 
-        Tree(TreeVertex root, BitSet settledDestinationIndices) {
+        /**
+         * Creates a new instance with a single {@link TreeVertex}.
+         *
+         * @param channelDescriptor represented by the {@link TreeVertex}
+         * @param settledIndices    indices to destinations settled by the {@code channelDescriptor}
+         * @return the new instance
+         */
+        static Tree singleton(ChannelDescriptor channelDescriptor, Bitmask settledIndices) {
+            return new Tree(new TreeVertex(channelDescriptor, settledIndices), new Bitmask(settledIndices));
+        }
+
+        Tree(TreeVertex root, Bitmask settledDestinationIndices) {
             this.root = root;
             this.settledDestinationIndices = settledDestinationIndices;
             this.employedChannelDescriptors.add(root.channelDescriptor);
         }
 
+        /**
+         * Push down the {@link #root} of this instance by adding a new {@link TreeVertex} as root and put the old
+         * root as its child node.
+         *
+         * @param newRootChannelDescriptor    will be wrapped in the new {@link #root}
+         * @param newRootSettledIndices       destination indices settled by the {@code newRootChannelDescriptor}
+         * @param newToObsoleteRootConversion used to establish the {@link TreeEdge} between the old and new {@link #root}
+         * @param costs                       of the {@code newToObsoleteRootConversion}
+         */
         void reroot(ChannelDescriptor newRootChannelDescriptor,
-                    BitSet settledIndices,
+                    Bitmask newRootSettledIndices,
                     ChannelConversion newToObsoleteRootConversion,
                     TimeEstimate costs) {
-            this.employedChannelDescriptors.add(newRootChannelDescriptor);
-            final TreeVertex newRoot = new TreeVertex(newRootChannelDescriptor, settledIndices);
+            // Exchange the root.
+            final TreeVertex newRoot = new TreeVertex(newRootChannelDescriptor, newRootSettledIndices);
             newRoot.linkTo(newToObsoleteRootConversion, this.root);
             this.root = newRoot;
+            // Update metadata.
+            this.employedChannelDescriptors.add(newRootChannelDescriptor);
+            this.settledDestinationIndices.orInPlace(newRootSettledIndices);
             this.costs = this.costs.plus(costs);
         }
     }
 
     /**
-     * Vertex in a {@link Tree}.
+     * Vertex in a {@link Tree}. Corresponds to a {@link ChannelDescriptor}.
      */
     private static class TreeVertex {
 
+        /**
+         * The {@link ChannelDescriptor} represented by this instance.
+         */
         private final ChannelDescriptor channelDescriptor;
 
+        /**
+         * {@link TreeEdge}s to child {@link TreeVertex}es.
+         */
         private final List<TreeEdge> outEdges;
 
-        private final BitSet settledIndices;
+        /**
+         * Indices to settled {@link ShortestTreeSearcher#destInputs}.
+         */
+        private final Bitmask settledIndices;
 
-        private TreeVertex(ChannelDescriptor channelDescriptor, BitSet settledIndices) {
+        /**
+         * Creates a new instance.
+         *
+         * @param channelDescriptor to be represented by this instance
+         * @param settledIndices    indices to settled destinations
+         */
+        private TreeVertex(ChannelDescriptor channelDescriptor, Bitmask settledIndices) {
             this.channelDescriptor = channelDescriptor;
             this.settledIndices = settledIndices;
             this.outEdges = new ArrayList<>(4);
