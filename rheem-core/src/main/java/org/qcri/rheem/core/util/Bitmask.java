@@ -228,6 +228,12 @@ public class Bitmask implements Cloneable {
         return this;
     }
 
+    /**
+     * Creates a {@code long} that has the lowest {@code n} bits set.
+     *
+     * @param n the number of bits to be set
+     * @return the {@code long}
+     */
     private static long createAllSetBits(int n) {
         return n == BITS_PER_WORD ? -1L : (1L << n) - 1L;
     }
@@ -259,20 +265,22 @@ public class Bitmask implements Cloneable {
         int longPos = getLongPos(from);
         int offset = getOffset(from);
         while (longPos < this.bits.length) {
-            long bits = this.bits[offset];
-            int nextPos = Long.numberOfTrailingZeros((bits >>> offset) << offset);
-            if (offset < BITS_PER_WORD) {
-                return longPos << WORD_ADDRESS_BITS | nextPos;
+            long bits = this.bits[longPos];
+            int nextOffset = Long.numberOfTrailingZeros(bits & ~createAllSetBits(offset));
+            if (nextOffset < BITS_PER_WORD) {
+                return longPos << WORD_ADDRESS_BITS | nextOffset;
             }
+            longPos++;
         }
         return -1;
     }
 
     @Override
     public String toString() {
-        return this.toBinString();
+        return this.toIndexString();
     }
 
+    @SuppressWarnings("unused")
     private String toHexString() {
         StringBuilder sb = new StringBuilder(2 + this.bits.length * 8);
         sb.append("0x");
@@ -282,14 +290,29 @@ public class Bitmask implements Cloneable {
         return sb.toString();
     }
 
+    @SuppressWarnings("unused")
     private String toBinString() {
         StringBuilder sb = new StringBuilder(2 + this.bits.length * 64);
-        sb.append("0b");
+        sb.append("[");
         for (long bits : this.bits) {
             for (int i = 0; i < Long.BYTES * 8; i++) {
                 sb.append(((bits >> i) & 1L) == 0 ? "0" : "1");
             }
         }
+        return sb.append(']').toString();
+    }
+
+    private String toIndexString() {
+        StringBuilder sb = new StringBuilder(2 + this.cardinality() * 8);
+        sb.append("{");
+        String separator = "";
+        int nextIndex = this.nextSetBit(0);
+        while (nextIndex != -1) {
+            sb.append(separator).append(nextIndex);
+            separator = ", ";
+            nextIndex = this.nextSetBit(nextIndex + 1);
+        }
+        sb.append("}");
         return sb.toString();
     }
 

@@ -92,4 +92,27 @@ public class BitmaskTest {
         Assert.assertEquals(createBitmask(0, 65), createBitmask(0, 1, 65, 128).andNot(createBitmask(0, 1, 128)));
     }
 
+    @Test
+    public void testNextSetBit() {
+        testSetBits();
+        testSetBits(0);
+        testSetBits(1);
+        testSetBits(0, 1);
+        testSetBits(420);
+        testSetBits(1, 420);
+        testSetBits(1, 420, 421, 500);
+    }
+
+    private void testSetBits(int... setBits) {
+        Bitmask bitmask = createBitmask(0, setBits);
+        int i = 0;
+        int nextBit = bitmask.nextSetBit(0);
+        while (i < setBits.length) {
+            Assert.assertEquals(setBits[i], nextBit);
+            i++;
+            nextBit = bitmask.nextSetBit(nextBit + 1);
+        }
+        Assert.assertEquals(-1, nextBit);
+    }
+
 }
