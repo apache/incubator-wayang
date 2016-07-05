@@ -34,13 +34,15 @@ public class GraphChiPageRankOperatorTest {
         final ExecutionOperator outputOperator = mock(ExecutionOperator.class);
         when(outputOperator.getNumOutputs()).thenReturn(1);
         FileChannel.Instance inputChannelInstance =
-                (FileChannel.Instance) new FileChannel(FileChannel.HDFS_TSV_DESCRIPTOR).createInstance(graphChiExecutor);
+                (FileChannel.Instance) new FileChannel(FileChannel.HDFS_TSV_DESCRIPTOR)
+                        .createInstance(graphChiExecutor, null, -1);
         inputChannelInstance.addPath(this.getClass().getResource("/test.edgelist").toString());
 
         final ExecutionOperator inputOperator = mock(ExecutionOperator.class);
         when(inputOperator.getNumOutputs()).thenReturn(1);
         FileChannel.Instance outputFileChannelInstance =
-                (FileChannel.Instance) new FileChannel(FileChannel.HDFS_TSV_DESCRIPTOR).createInstance(graphChiExecutor);
+                (FileChannel.Instance) new FileChannel(FileChannel.HDFS_TSV_DESCRIPTOR)
+                        .createInstance(graphChiExecutor, null, -1);
 
         final GraphChiPageRankOperator graphChiPageRankOperator = new GraphChiPageRankOperator(20);
         graphChiPageRankOperator.execute(

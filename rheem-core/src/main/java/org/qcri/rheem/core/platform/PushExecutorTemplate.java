@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -9,6 +10,7 @@ import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,10 +32,10 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
     }
 
     @Override
-    public void execute(ExecutionStage stage, ExecutionState executionState) {
+    public void execute(ExecutionStage stage, OptimizationContext optimizationContext, ExecutionState executionState) {
         assert !this.isDisposed() : String.format("%s has been disposed.", this);
 
-        final StageExecution stageExecution = new StageExecution(stage, executionState);
+        final StageExecution stageExecution = new StageExecution(stage, optimizationContext, executionState);
         stageExecution.executeStage();
     }
 
@@ -45,15 +47,41 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
      * @param isForceExecution whether execution is forced, i.e., lazy execution of {@link ExecutionTask} is prohibited
      * @return the output {@link ChannelInstance}s of the {@link ExecutionTask}
      */
-    private Collection<ChannelInstance> execute(TaskActivator taskActivator, boolean isForceExecution) {
+    private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator taskActivator, boolean isForceExecution) {
         // Execute the ExecutionTask.
         this.open(taskActivator.getTask(), taskActivator.getInputChannelInstances());
 
         return this.execute(
                 taskActivator.getTask(),
                 taskActivator.getInputChannelInstances(),
+                taskActivator.getOperatorContext(),
                 isForceExecution
         );
+    }
+
+    /**
+     * Utility method to create the output {@link ChannelInstance}s for a certain {@link ExecutionTask}.
+     *
+     * @param task                    the {@link ExecutionTask}
+     * @param producerOperatorContext the {@link OptimizationContext.OperatorContext} for the {@link ExecutionTask}
+     * @param inputChannelInstances   the input {@link ChannelInstance}s for the {@code task}
+     * @return
+     */
+    protected ChannelInstance[] createOutputChannelInstances(ExecutionTask task,
+                                                             OptimizationContext.OperatorContext producerOperatorContext,
+                                                             List<ChannelInstance> inputChannelInstances) {
+        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
+        for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
+            final Channel outputChannel = task.getOutputChannel(outputIndex);
+            final ChannelInstance outputChannelInstance = outputChannel.createInstance(this, producerOperatorContext, outputIndex);
+            channelInstances[outputIndex] = outputChannelInstance;
+            for (ChannelInstance inputChannelInstance : inputChannelInstances) {
+                if (inputChannelInstance != null) {
+                    outputChannelInstance.addPredecessor(inputChannelInstance);
+                }
+            }
+        }
+        return channelInstances;
     }
 
     /**
@@ -68,17 +96,62 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
     /**
      * Executes the given {@code task} and return the output {@link ChannelInstance}s.
      *
-     * @param task                  that should be executed
-     * @param inputChannelInstances inputs into the {@code task}
-     * @param isForceExecution      forbids lazy execution
-     * @return the {@link ChannelInstance}s created as output of {@code task}
+     * @param task                    that should be executed
+     * @param inputChannelInstances   inputs into the {@code task}
+     * @param producerOperatorContext
+     * @param isForceExecution        forbids lazy execution  @return the {@link ChannelInstance}s created as output of {@code task}
      */
-    protected abstract List<ChannelInstance> execute(ExecutionTask task, List<ChannelInstance> inputChannelInstances, boolean isForceExecution);
+    protected abstract Tuple<List<ChannelInstance>, PartialExecution> execute(ExecutionTask task,
+                                                                              List<ChannelInstance> inputChannelInstances,
+                                                                              OptimizationContext.OperatorContext producerOperatorContext,
+                                                                              boolean isForceExecution);
 
     /**
-     * Keeps track of state that is required within the execution of a single {@link ExecutionStage}. SpechannelInstancefically,
+     * If the {@link ExecutionTask} is not executed lazily, then gather all pending executions in a
+     * {@link PartialExecution}.
+     *
+     * @param task                    that was just executed
+     * @param inputChannelInstances   that feed the {@code task}
+     * @param producerOperatorContext that contains estimates for the {@code task}'s {@link ExecutionOperator}
+     * @param outputChannelInstances  that were produces by the {@code task}
+     * @param executionDuration       that was measured for the {@link PartialExecution}
+     * @return the {@link PartialExecution} or {@code null} if nothing has been executed
+     */
+    protected PartialExecution handleLazyChannelLineage(ExecutionTask task,
+                                                        List<ChannelInstance> inputChannelInstances,
+                                                        OptimizationContext.OperatorContext producerOperatorContext,
+                                                        ChannelInstance[] outputChannelInstances,
+                                                        long executionDuration) {
+
+        if (task.getOperator().isExecutedLazily()) {
+            return null;
+        }
+
+        Collection<OptimizationContext.OperatorContext> operatorContexts = new LinkedList<>();
+        ChannelInstance[] channelInstances;
+        if (outputChannelInstances.length > 0) {
+            channelInstances = outputChannelInstances;
+        } else {
+            channelInstances = inputChannelInstances.toArray(new ChannelInstance[inputChannelInstances.size()]);
+            operatorContexts.add(producerOperatorContext);
+        }
+        for (ChannelInstance channelInstance : channelInstances) {
+            operatorContexts.addAll(
+                    channelInstance
+                            .getLazyChannelLineage()
+                            .traverseAndMark(
+                                    new LinkedList<>(),
+                                    (accu, node) -> RheemCollections.add(accu, node.getProducerOperatorContext())
+                            ));
+        }
+
+        return new PartialExecution(executionDuration, operatorContexts);
+    }
+
+    /**
+     * Keeps track of state that is required within the execution of a single {@link ExecutionStage}. Specifically,
      * it issues to the {@link PushExecutorTemplate}, which {@link ExecutionTask}s should be executed in which
-     * order with which input dependenchannelInstancees.
+     * order with which input dependencies.
      */
     protected class StageExecution extends OneTimeExecutable {
 
@@ -95,8 +168,14 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
          */
         private final ExecutionState executionState;
 
-        private StageExecution(ExecutionStage stage, ExecutionState executionState) {
+        /**
+         * Contains additional information of {@link ExecutionOperator}s in the {@link ExecutionStage}.
+         */
+        private final OptimizationContext optimizationContext;
+
+        private StageExecution(ExecutionStage stage, OptimizationContext optimizationContext, ExecutionState executionState) {
             this.executionState = executionState;
+            this.optimizationContext = optimizationContext;
 
             // Initialize the readyActivators.
             assert !stage.getStartTasks().isEmpty() : String.format("No start tasks for {}.", stage);
@@ -107,9 +186,23 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
         }
 
         private void scheduleStartTask(ExecutionTask startTask) {
-            TaskActivator activator = new TaskActivator(startTask, this.executionState);
+            TaskActivator activator = new TaskActivator(startTask, this.fetchOperatorContext(startTask), this.executionState);
             assert activator.isReady() : String.format("Stage starter %s is not immediately ready.", startTask);
             this.readyActivators.add(activator);
+        }
+
+        /**
+         * Fetches the {@link OptimizationContext.OperatorContext} for the given {@link ExecutionTask}.
+         *
+         * @param task the {@link ExecutionTask}
+         * @return the {@link OptimizationContext.OperatorContext}
+         */
+        private OptimizationContext.OperatorContext fetchOperatorContext(ExecutionTask task) {
+            final OptimizationContext.OperatorContext opCtx = this.optimizationContext.getOperatorContext(task.getOperator());
+            if (opCtx == null) {
+                logger.warn("No OperatorContext for {} available.", task);
+            }
+            return opCtx;
         }
 
         /**
@@ -126,11 +219,18 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
             while ((readyActivator = this.readyActivators.poll()) != null) {
                 // Execute the ExecutionTask.
                 final ExecutionTask task = readyActivator.getTask();
-                final Collection<ChannelInstance> outputChannelInstances = this.execute(readyActivator, task);
+                final Tuple<List<ChannelInstance>, PartialExecution> executionResult = this.execute(readyActivator, task);
                 readyActivator.dispose();
 
                 // Register the outputChannelInstances (to obtain cardinality measurements and for furhter stages).
+                final List<ChannelInstance> outputChannelInstances = executionResult.getField0();
                 outputChannelInstances.stream().filter(Objects::nonNull).forEach(this::store);
+
+                // Log executions.
+                final PartialExecution partialExecution = executionResult.getField1();
+                if (partialExecution != null) {
+                    this.executionState.add(partialExecution);
+                }
 
                 // Activate successor ExecutionTasks.
                 this.activateSuccessorTasks(task, outputChannelInstances);
@@ -142,9 +242,10 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
          *
          * @param readyActivator activated the {@code task}
          * @param task           should be executed
-         * @return the {@link ChannelInstance}s created by the {@code task}
+         * @return the {@link ChannelInstance}s created by the {@code task} and a {@link PartialExecution} or
+         * {@code null} if something has been actually executed
          */
-        private Collection<ChannelInstance> execute(TaskActivator readyActivator, ExecutionTask task) {
+        private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator readyActivator, ExecutionTask task) {
             final boolean isForceExecution = this.terminalTasks.contains(task);
             return this.executor().execute(readyActivator, isForceExecution);
         }
@@ -170,7 +271,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
                     // Get or create the TaskActivator.
                     final TaskActivator consumerActivator = this.stagedActivators.computeIfAbsent(
-                            consumer, (task1) -> new TaskActivator(task1, this.executionState)
+                            consumer, (key) -> new TaskActivator(key, this.fetchOperatorContext(key), this.executionState)
                     );
 
                     // Register the outputChannelInstance.
@@ -219,8 +320,14 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
         private final ArrayList<ChannelInstance> inputChannelInstances;
 
-        TaskActivator(ExecutionTask task, ExecutionState executionState) {
+        private final OptimizationContext.OperatorContext operatorContext;
+
+        TaskActivator(ExecutionTask task, OptimizationContext.OperatorContext operatorContext, ExecutionState executionState) {
+            assert operatorContext == null || task.getOperator() == operatorContext.getOperator() :
+                    String.format("Mismatch between %s and %s.", task, operatorContext);
+
             this.task = task;
+            this.operatorContext = operatorContext;
             this.inputChannelInstances = RheemCollections.createNullFilledArrayList(this.getOperator().getNumInputs());
             this.acceptFrom(executionState);
         }
@@ -276,6 +383,10 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
         protected ExecutionOperator getOperator() {
             return this.task.getOperator();
+        }
+
+        public OptimizationContext.OperatorContext getOperatorContext() {
+            return operatorContext;
         }
 
         protected List<ChannelInstance> getInputChannelInstances() {

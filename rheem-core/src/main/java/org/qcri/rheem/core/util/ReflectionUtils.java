@@ -1,12 +1,17 @@
 package org.qcri.rheem.core.util;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Utilities for reflection code.
@@ -14,6 +19,13 @@ import java.net.URL;
 public class ReflectionUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(ReflectionUtils.class);
+
+    private static final List<Tuple<Class<?>, Supplier<?>>> defaultParameterSuppliers = Arrays.asList(
+            new Tuple<>(int.class, () -> 0),
+            new Tuple<>(Integer.class, () -> 0),
+            new Tuple<>(long.class, () -> 0L),
+            new Tuple<>(Long.class, () -> 0L)
+    );
 
     /**
      * Identifies and returns the JAR file declaring the {@link Class} of the given {@code object} or {@code null} if
@@ -64,8 +76,78 @@ public class ReflectionUtils {
         return Thread.currentThread().getContextClassLoader().getResource(resourceName);
     }
 
+    /**
+     * Casts the given {@link Class} to a more specific one.
+     *
+     * @param baseClass that should be casted
+     * @param <T>       the specific type parameter for the {@code baseClass}
+     * @return the {@code baseClass}, casted
+     */
+    @SuppressWarnings("unchecked")
     public static <T> Class<T> specify(Class<? super T> baseClass) {
         return (Class<T>) baseClass;
     }
 
+    /**
+     * Tries to instantiate an arbitrary instance of the given {@link Class}.
+     *
+     * @param cls               that should be instantiated
+     * @param defaultParameters designate specific default parameter values for parameter {@link Class}es
+     * @return the instance
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T instantiateSomehow(Class<T> cls, Tuple<Class<?>, Supplier<?>>... defaultParameters) {
+        return instantiateSomehow(cls, Arrays.asList(defaultParameters));
+    }
+
+    /**
+     * Tries to instantiate an arbitrary instance of the given {@link Class}.
+     *
+     * @param cls               that should be instantiated
+     * @param defaultParameters designate specific default parameter values for parameter {@link Class}es
+     * @return the instance
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T instantiateSomehow(Class<T> cls, List<Tuple<Class<?>, Supplier<?>>> defaultParameters) {
+        try {
+            for (Constructor<?> constructor : cls.getConstructors()) {
+                try {
+                    final Class<?>[] parameterTypes = constructor.getParameterTypes();
+                    Object[] parameters = new Object[parameterTypes.length];
+                    for (int i = 0; i < parameterTypes.length; i++) {
+                        Class<?> parameterType = parameterTypes[i];
+                        Object parameter = getDefaultParameter(parameterType, defaultParameters);
+                        if (parameter == null) {
+                            parameter = getDefaultParameter(parameterType, defaultParameterSuppliers);
+                        }
+                        parameters[i] = parameter;
+                    }
+                    return (T) constructor.newInstance(parameters);
+                } catch (Throwable t) {
+                    logger.error("Could not instantiate {}.", cls.getSimpleName(), t);
+                }
+            }
+        } catch (Throwable t) {
+            throw new RheemException(String.format("Could not get constructors for %s.", cls.getSimpleName()));
+        }
+
+        throw new RheemException(String.format("Could not instantiate %s.", cls.getSimpleName()));
+    }
+
+    /**
+     * Searches for a compatible {@link Class} in the given {@link List} (subclass or equal) for the given parameter
+     * {@link Class}. If a match is found, the corresponding {@link Supplier} is used to create a default parameter.
+     *
+     * @param parameterClass            {@link Class} of a parameter
+     * @param defaultParameterSuppliers supply default values for various parameter {@link Class}es
+     * @return the first match's {@link Supplier} value or {@code null} if no match was found
+     */
+    private static Object getDefaultParameter(Class<?> parameterClass, List<Tuple<Class<?>, Supplier<?>>> defaultParameterSuppliers) {
+        for (Tuple<Class<?>, Supplier<?>> defaultParameterSupplier : defaultParameterSuppliers) {
+            if (parameterClass.isAssignableFrom(defaultParameterSupplier.getField0())) {
+                return defaultParameterSupplier.getField1().get();
+            }
+        }
+        return null;
+    }
 }

@@ -2,6 +2,7 @@ package org.qcri.rheem.basic.channels;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
@@ -63,9 +64,9 @@ public class FileChannel extends Channel {
     }
 
     @Override
-    public ChannelInstance createInstance(Executor executor) {
+    public ChannelInstance createInstance(Executor executor, OptimizationContext.OperatorContext producerOperatorContext, int producerOutputIndex) {
         // NB: File channels are not inherent to a certain Platform, therefore are not tied to the executor.
-        return new Instance();
+        return new Instance(producerOperatorContext, producerOutputIndex);
     }
 
     /**
@@ -131,9 +132,11 @@ public class FileChannel extends Channel {
 
         /**
          * Creates a new instance.
+         * @param producerOperatorContext
+         * @param producerOutputIndex
          */
-        protected Instance() {
-            super(null);
+        protected Instance(OptimizationContext.OperatorContext producerOperatorContext, int producerOutputIndex) {
+            super(null, producerOperatorContext, producerOutputIndex);
         }
 
         public FileChannel getChannel() {

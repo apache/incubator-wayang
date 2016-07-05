@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.function.ToDoubleBiFunction;
 import java.util.function.ToLongBiFunction;
 
 /**
@@ -17,12 +18,14 @@ import java.util.function.ToLongBiFunction;
  */
 public class NestableLoadProfileEstimator implements LoadProfileEstimator {
 
+    private static final ToDoubleBiFunction<long[], long[]> DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR = (in, out) -> 1d;
+
     private final LoadEstimator cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator;
 
     /**
      * The degree to which the load profile can utilize available resources.
      */
-    private final double resourceUtilization;
+    private final ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator;
 
     /**
      * Milliseconds overhead that this load profile incurs.
@@ -42,7 +45,7 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
      *      "out":&lt;#outputs&gt;,
      *      "p":&lt;correctness probability&gt;,
      *      "overhead":&lt;overhead in milliseconds&gt;,
-     *      "ru":&lt;resource utilization&gt;
+     *      "ru":&lt;resource utilization JUEL expression&gt;
      *      }
      * </pre>
      * The JUEL expressions accept as parameters {@code in0}, {@code in1} a.s.o. for the input cardinalities and
@@ -63,38 +66,40 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                     numOutputs,
                     correctnessProb,
                     CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseJuel(spec.getString("cpu"), numInputs, numOutputs)
+                    parseLoadJuel(spec.getString("cpu"), numInputs, numOutputs)
             );
             LoadEstimator ramEstimator = new DefaultLoadEstimator(
                     numInputs,
                     numOutputs,
                     correctnessProb,
                     CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseJuel(spec.getString("ram"), numInputs, numOutputs)
+                    parseLoadJuel(spec.getString("ram"), numInputs, numOutputs)
             );
             LoadEstimator diskEstimator = !spec.has("disk") ? null : new DefaultLoadEstimator(
                     numInputs,
                     numOutputs,
                     correctnessProb,
                     CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseJuel(spec.getString("disk"), numInputs, numOutputs)
+                    parseLoadJuel(spec.getString("disk"), numInputs, numOutputs)
             );
             LoadEstimator networkEstimator = !spec.has("network") ? null : new DefaultLoadEstimator(
                     numInputs,
                     numOutputs,
                     correctnessProb,
                     CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseJuel(spec.getString("network"), numInputs, numOutputs)
+                    parseLoadJuel(spec.getString("network"), numInputs, numOutputs)
             );
 
             long overhead = spec.has("overhead") ? spec.getLong("overhead") : 0L;
-            double resourceUtilization = spec.has("ru") ? spec.getDouble("ru") : 1d;
+            ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator = spec.has("ru") ?
+                    parseResourceUsageJuel(spec.getString("ru"), numInputs, numOutputs) :
+                    DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR;
             return new NestableLoadProfileEstimator(
                     cpuEstimator,
                     ramEstimator,
                     diskEstimator,
                     networkEstimator,
-                    resourceUtilization,
+                    resourceUtilizationEstimator,
                     overhead
             );
         } catch (Exception e) {
@@ -102,7 +107,42 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
         }
     }
 
-    private static ToLongBiFunction<long[], long[]> parseJuel(String juel, int numInputs, int numOutputs) {
+    /**
+     * Parses a JUEL expression and provides it as a {@link ToLongBiFunction}.
+     *
+     * @param juel       a JUEL expression
+     * @param numInputs  the number of inputs of the estimated operator, reflected as JUEL variables {@code in0}, {@code in1}, ...
+     * @param numOutputs the number of outputs of the estimated operator, reflected as JUEL variables {@code out0}, {@code out1}, ...
+     * @return a {@link ToLongBiFunction} wrapping the JUEL expression
+     */
+    private static ToLongBiFunction<long[], long[]> parseLoadJuel(String juel, int numInputs, int numOutputs) {
+        final Map<String, Class<?>> parameterClasses = createJuelParameterClasses(numInputs, numOutputs);
+        final JuelUtils.JuelFunction<Long> juelFunction = new JuelUtils.JuelFunction<>(juel, Long.class, parameterClasses);
+        return (inCards, outCards) -> applyJuelFunction(juelFunction, inCards, outCards);
+    }
+
+    /**
+     * Parses a JUEL expression and provides it as a {@link ToLongBiFunction}.
+     *
+     * @param juel       a JUEL expression
+     * @param numInputs  the number of inputs of the estimated operator, reflected as JUEL variables {@code in0}, {@code in1}, ...
+     * @param numOutputs the number of outputs of the estimated operator, reflected as JUEL variables {@code out0}, {@code out1}, ...
+     * @return a {@link ToLongBiFunction} wrapping the JUEL expression
+     */
+    private static ToDoubleBiFunction<long[], long[]> parseResourceUsageJuel(String juel, int numInputs, int numOutputs) {
+        final Map<String, Class<?>> parameterClasses = createJuelParameterClasses(numInputs, numOutputs);
+        final JuelUtils.JuelFunction<Double> juelFunction = new JuelUtils.JuelFunction<>(juel, Double.class, parameterClasses);
+        return (inCards, outCards) -> applyJuelFunction(juelFunction, inCards, outCards);
+    }
+
+    /**
+     * Creates parameters classes for JUEL expressions based on input and output cardinalities.
+     *
+     * @param numInputs  the number of inputs
+     * @param numOutputs the number of ouputs
+     * @return the parameter names mapped to their parameter classes
+     */
+    private static Map<String, Class<?>> createJuelParameterClasses(int numInputs, int numOutputs) {
         final Map<String, Class<?>> parameterClasses = new HashMap<>(numOutputs + numOutputs);
         for (int i = 0; i < numInputs; i++) {
             parameterClasses.put("in" + i, Long.class);
@@ -110,17 +150,26 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
         for (int i = 0; i < numOutputs; i++) {
             parameterClasses.put("out" + i, Long.class);
         }
-        final JuelUtils.JuelFunction<Long> juelFunction = new JuelUtils.JuelFunction<>(juel, Long.class, parameterClasses);
-        return (inCards, outCards) -> {
-            final Map<String, Object> parameters = new HashMap<>(numOutputs + numOutputs);
-            for (int i = 0; i < numInputs; i++) {
-                parameters.put("in" + i, inCards[i]);
-            }
-            for (int i = 0; i < numOutputs; i++) {
-                parameters.put("out" + i, outCards[i]);
-            }
-            return juelFunction.apply(parameters);
-        };
+        return parameterClasses;
+    }
+
+    /**
+     * Evaluates a {@link JuelUtils.JuelFunction} with the given {@code inputCardinalities} and {@code outputCardinalities} as parameters.
+     *
+     * @param juelFunction        the JUEL function to be executed
+     * @param inputCardinalities  the input cardinalities
+     * @param outputCardinalities the output cardinalities
+     * @return the JUEL function result
+     */
+    private static <T> T applyJuelFunction(JuelUtils.JuelFunction<T> juelFunction, long[] inputCardinalities, long[] outputCardinalities) {
+        final Map<String, Object> parameters = new HashMap<>(inputCardinalities.length + outputCardinalities.length);
+        for (int i = 0; i < inputCardinalities.length; i++) {
+            parameters.put("in" + i, inputCardinalities[i]);
+        }
+        for (int i = 0; i < outputCardinalities.length; i++) {
+            parameters.put("out" + i, outputCardinalities[i]);
+        }
+        return juelFunction.apply(parameters, true);
     }
 
     /**
@@ -145,30 +194,30 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                                         LoadEstimator ramLoadEstimator,
                                         LoadEstimator diskLoadEstimator,
                                         LoadEstimator networkLoadEstimator) {
-        this(cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator, 1d, 0L);
+        this(cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator, (in, out) -> 1d, 0L);
     }
 
     /**
      * Creates an new instance.
      *
-     * @param cpuLoadEstimator     estimates CPU load in terms of cycles
-     * @param ramLoadEstimator     estimates RAM load in terms of bytes
-     * @param diskLoadEstimator    estimates disk accesses in terms of bytes
-     * @param networkLoadEstimator estimates network in terms of bytes
-     * @param resourceUtilization  degree to which the load profile can utilize available resources
-     * @param overheadMillis       overhead that this load profile incurs
+     * @param cpuLoadEstimator             estimates CPU load in terms of cycles
+     * @param ramLoadEstimator             estimates RAM load in terms of bytes
+     * @param diskLoadEstimator            estimates disk accesses in terms of bytes
+     * @param networkLoadEstimator         estimates network in terms of bytes
+     * @param resourceUtilizationEstimator degree to which the load profile can utilize available resources
+     * @param overheadMillis               overhead that this load profile incurs
      */
     public NestableLoadProfileEstimator(LoadEstimator cpuLoadEstimator,
                                         LoadEstimator ramLoadEstimator,
                                         LoadEstimator diskLoadEstimator,
                                         LoadEstimator networkLoadEstimator,
-                                        double resourceUtilization,
+                                        ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator,
                                         long overheadMillis) {
         this.cpuLoadEstimator = cpuLoadEstimator;
         this.ramLoadEstimator = ramLoadEstimator;
         this.diskLoadEstimator = diskLoadEstimator;
         this.networkLoadEstimator = networkLoadEstimator;
-        this.resourceUtilization = resourceUtilization;
+        this.resourceUtilizationEstimator = resourceUtilizationEstimator;
         this.overheadMillis = overheadMillis;
     }
 
@@ -220,14 +269,44 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                 this.diskLoadEstimator.calculate(inputEstimates, outputEstimates);
         final LoadEstimate networkLoadEstimate = this.networkLoadEstimator == null ? null :
                 this.networkLoadEstimator.calculate(inputEstimates, outputEstimates);
-        final LoadProfile loadProfile = new LoadProfile(cpuLoadEstimate, ramLoadEstimate, networkLoadEstimate, diskLoadEstimate);
-        if (this.getOverheadMillis() > 0) {
-            loadProfile.setOverheadMillis(this.getOverheadMillis());
+        final double resourceUtilization = this.estimateResourceUtilization(inputEstimates, outputEstimates);
+        return new LoadProfile(
+                cpuLoadEstimate,
+                ramLoadEstimate,
+                networkLoadEstimate,
+                diskLoadEstimate,
+                resourceUtilization,
+                this.getOverheadMillis());
+    }
+
+    /**
+     * Estimates the resource utilization.
+     *
+     * @param inputEstimates  input {@link CardinalityEstimate}s
+     * @param outputEstimates output {@link CardinalityEstimate}s
+     * @return the estimated resource utilization
+     */
+    private double estimateResourceUtilization(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
+        long[] avgInputEstimates = extractMeanValues(inputEstimates);
+        long[] avgOutputEstimates = extractMeanValues(outputEstimates);
+        return this.resourceUtilizationEstimator.applyAsDouble(avgInputEstimates, avgOutputEstimates);
+    }
+
+    /**
+     * Extracts the geometric mean values of the given {@link CardinalityEstimate}s.
+     *
+     * @param estimates the input {@link CardinalityEstimate}s
+     * @return an array containing the average estimates
+     * @see CardinalityEstimate#getGeometricMeanEstimate()
+     */
+    private static long[] extractMeanValues(CardinalityEstimate[] estimates) {
+        long[] averages = new long[estimates.length];
+        for (int i = 0; i < estimates.length; i++) {
+            CardinalityEstimate inputEstimate = estimates[i];
+            if (inputEstimate == null) inputEstimate = CardinalityEstimate.EMPTY_ESTIMATE;
+            averages[i] = inputEstimate.getGeometricMeanEstimate();
         }
-        if (this.getResourceUtilization() < 1d) {
-            loadProfile.setRatioMachines(this.getResourceUtilization());
-        }
-        return loadProfile;
+        return averages;
     }
 
     private void performNestedEstimations(CardinalityEstimate[] normalizedInputEstimates,
@@ -243,7 +322,4 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
         return this.overheadMillis;
     }
 
-    public double getResourceUtilization() {
-        return this.resourceUtilization;
-    }
 }

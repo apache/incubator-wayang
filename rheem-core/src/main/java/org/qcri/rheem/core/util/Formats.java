@@ -12,7 +12,7 @@ public class Formats {
      * @return the formatted milliseconds
      */
     public static String formatDuration(long millis) {
-        if (millis < 0) return "-:--:--.---";
+        if (millis < 0) return "-" + formatDuration(-millis);
         long ms = millis % 1000;
         millis /= 1000;
         long s = millis % 60;

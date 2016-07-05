@@ -5,6 +5,7 @@ import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.*;
@@ -56,7 +57,7 @@ public class PostgresExecutor extends ExecutorTemplate {
     }
 
     @Override
-    public void execute(ExecutionStage stage, ExecutionState executionState) {
+    public void execute(ExecutionStage stage, OptimizationContext optimizationContext, ExecutionState executionState) {
         // TODO: Load ChannelInstances from executionState? (as of now there is no input into PostgreSQL).
         ResultSet rs = null;
         FunctionCompiler functionCompiler = new FunctionCompiler();
@@ -73,9 +74,15 @@ public class PostgresExecutor extends ExecutorTemplate {
         Validate.isTrue(startTask.getOperator() instanceof PostgresTableSource,
                 "Invalid postgres stage: Start task has to be a PostgresTableSource");
 
+        ChannelInstance tipChannelInstance = null;
         PostgresTableSource tableOp = (PostgresTableSource) startTask.getOperator();
-        PostgresFilterOperator filterOp = null;
-        PostgresProjectionOperator projectionOperator = null;
+        tipChannelInstance = startTask.getOutputChannel(0).createInstance(
+                this,
+                optimizationContext.getOperatorContext(tableOp),
+                0
+        );
+        ExecutionTask filterTask = null;
+        ExecutionTask projectionTask = null;
 
         Set<ExecutionTask> allTasks = stage.getAllTasks();
         assert allTasks.size() <= 3;
@@ -83,11 +90,11 @@ public class PostgresExecutor extends ExecutorTemplate {
             if (t == startTask)
                 continue;
             if (t.getOperator() instanceof PostgresFilterOperator) {
-                assert filterOp == null; // Allow one filter operator per stage for now.
-                filterOp = (PostgresFilterOperator) t.getOperator();
+                assert filterTask == null; // Allow one filter operator per stage for now.
+                filterTask = t;
             } else if (t.getOperator() instanceof PostgresProjectionOperator) {
-                assert projectionOperator == null; //Allow one projection operator per stage for now.
-                projectionOperator = (PostgresProjectionOperator) t.getOperator();
+                assert projectionTask == null; //Allow one projection operator per stage for now.
+                projectionTask = t;
 
             } else {
                 throw new RheemException(String.format("Invalid postgres execution task %s", t.toString()));
@@ -99,7 +106,8 @@ public class PostgresExecutor extends ExecutorTemplate {
         String where_clause = "";
         query = tableOp.evaluate(null, null, functionCompiler);
 
-        if (projectionOperator != null) {
+        if (projectionTask != null) {
+            PostgresProjectionOperator<?, ?> projectionOperator = (PostgresProjectionOperator<?, ?>) projectionTask.getOperator();
             if (projectionOperator.isProjectByIndexes()) {
                 try {
                     select_columns = projectionOperator.evaluateByIndexes(null, null,
@@ -108,20 +116,42 @@ public class PostgresExecutor extends ExecutorTemplate {
                     e.printStackTrace();
                     throw new RheemException(e);
                 }
-            } else
+            } else {
                 select_columns = projectionOperator.evaluate(null, null, functionCompiler);
+            }
+
+            // Create a ChannelInstance for the lineage.
+            final ChannelInstance instance = projectionTask.getOutputChannel(0).createInstance(
+                    this,
+                    optimizationContext.getOperatorContext(projectionOperator),
+                    0
+            );
+            instance.addPredecessor(tipChannelInstance);
+            tipChannelInstance = instance;
+
         }
         query = String.format(query, select_columns);
 
-        if (filterOp != null) {
+        if (filterTask != null) {
+            PostgresFilterOperator<?> filterOp = (PostgresFilterOperator<?>) filterTask.getOperator();
             where_clause = filterOp.evaluate(null, null, functionCompiler);
             query = query + " where " + where_clause;
+
+            // Create a ChannelInstance for the lineage.
+            final ChannelInstance instance = filterTask.getOutputChannel(0).createInstance(
+                    this,
+                    optimizationContext.getOperatorContext(filterOp),
+                    0
+            );
+            instance.addPredecessor(tipChannelInstance);
+            tipChannelInstance = instance;
         }
 
         try (final PreparedStatement ps = this.connection.prepareStatement(query)) {
             rs = ps.executeQuery();
             final FileChannel.Instance outputFileChannelInstance =
-                    (FileChannel.Instance) termTask.getOutputChannel(0).createInstance(this);
+                    (FileChannel.Instance) termTask.getOutputChannel(0).createInstance(this, null, 0);
+            outputFileChannelInstance.addPredecessor(tipChannelInstance);
             this.saveResult(outputFileChannelInstance, rs);
             executionState.register(outputFileChannelInstance);
         } catch (IOException | SQLException e) {

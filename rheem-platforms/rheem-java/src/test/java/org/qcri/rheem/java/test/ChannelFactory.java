@@ -25,7 +25,9 @@ public class ChannelFactory {
     }
 
     public static StreamChannel.Instance createStreamChannelInstance(Configuration configuration) {
-        return (StreamChannel.Instance) StreamChannel.DESCRIPTOR.createChannel(null, configuration).createInstance(executor);
+        return (StreamChannel.Instance) StreamChannel.DESCRIPTOR
+                .createChannel(null, configuration)
+                .createInstance(executor, null, -1);
     }
 
     public static StreamChannel.Instance createStreamChannelInstance(Stream<?> stream, Configuration configuration) {
@@ -35,7 +37,9 @@ public class ChannelFactory {
     }
 
     public static CollectionChannel.Instance createCollectionChannelInstance(Configuration configuration) {
-        return (CollectionChannel.Instance) CollectionChannel.DESCRIPTOR.createChannel(null, configuration).createInstance(executor);
+        return (CollectionChannel.Instance) CollectionChannel.DESCRIPTOR
+                .createChannel(null, configuration)
+                .createInstance(executor, null, -1);
     }
 
     public static CollectionChannel.Instance createCollectionChannelInstance(Collection<?> collection, Configuration configuration) {

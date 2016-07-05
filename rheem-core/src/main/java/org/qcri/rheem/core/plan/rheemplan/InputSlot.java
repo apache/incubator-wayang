@@ -184,7 +184,7 @@ public class InputSlot<T> extends Slot<T> {
                         || ((LoopHeadOperator) owner).getLoopInitializationInputs().contains(this)
         )) return false;
 
-            // Find the loop this instance is in.
+        // Find the loop this instance is in.
         final LoopSubplan innermostLoop = owner.getInnermostLoop();
         if (innermostLoop == null) return false;
 

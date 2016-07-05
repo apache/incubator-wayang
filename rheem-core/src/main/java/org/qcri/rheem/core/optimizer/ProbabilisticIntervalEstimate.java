@@ -50,7 +50,11 @@ public class ProbabilisticIntervalEstimate {
     }
 
     public long getAverageEstimate() {
-        return this.getLowerEstimate() + (this.getUpperEstimate() - this.getLowerEstimate()) / 2;
+        return (this.getUpperEstimate() + this.getLowerEstimate()) / 2;
+    }
+
+    public long getGeometricMeanEstimate() {
+        return Math.round(Math.pow((double) this.getLowerEstimate() * (double) this.getUpperEstimate(), 0.5));
     }
 
     public double getCorrectnessProbability() {

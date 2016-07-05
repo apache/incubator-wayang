@@ -2,6 +2,7 @@ package org.qcri.rheem.core.api;
 
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
@@ -16,6 +17,7 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
+import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
@@ -24,6 +26,7 @@ import org.qcri.rheem.core.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -160,11 +163,7 @@ public class Job extends OneTimeExecutable {
                 executionId++;
             }
 
-            this.logger.info("Accumulated execution time: {}", Formats.formatDuration(this.executionMillis, true));
-            int i = 1;
-            for (TimeEstimate timeEstimate : timeEstimates) {
-                this.logger.info("Time estimate of execution plan {}: {}", i++, timeEstimate);
-            }
+            this.logExecution();
         } catch (RheemException e) {
             throw e;
         } catch (Throwable t) {
@@ -221,7 +220,7 @@ public class Job extends OneTimeExecutable {
         this.stopWatch.start("Cardinality&Load Estimation");
         if (this.cardinalityEstimatorManager == null) {
             this.stopWatch.start("Cardinality&Load Estimation", "Create OptimizationContext");
-            this.optimizationContext = new OptimizationContext(this.rheemPlan, this.configuration);
+            this.optimizationContext = new DefaultOptimizationContext(this.rheemPlan, this.configuration);
             this.stopWatch.stop("Cardinality&Load Estimation", "Create OptimizationContext");
 
             this.stopWatch.start("Cardinality&Load Estimation", "Create CardinalityEstimationManager");
@@ -271,6 +270,10 @@ public class Job extends OneTimeExecutable {
         final ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.createFrom(planImplementation);
         final ExecutionPlan executionPlan = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         this.stopWatch.stop("Create Initial Execution Plan", "Split Stages");
+
+        planImplementation.mergeJunctionOptimizationContexts();
+
+        planImplementation.logTimeEstimates();
 
         //assert executionPlan.isSane();
 
@@ -354,7 +357,9 @@ public class Job extends OneTimeExecutable {
 
         // Trigger the execution.
         final StopWatch.Round executeRound = round.startSubround("Execute");
-        boolean isExecutionComplete = this.crossPlatformExecutor.executeUntilBreakpoint(executionPlan);
+        boolean isExecutionComplete = this.crossPlatformExecutor.executeUntilBreakpoint(
+                executionPlan, this.optimizationContext
+        );
         executeRound.stop();
         this.executionMillis += round.stop(true, true);
 
@@ -476,6 +481,8 @@ public class Job extends OneTimeExecutable {
         final ExecutionPlan executionPlanExpansion = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);
 
+        planImplementation.mergeJunctionOptimizationContexts();
+
         assert executionPlan.isSane();
     }
 
@@ -486,6 +493,22 @@ public class Job extends OneTimeExecutable {
     private void releaseResources() {
         this.rheemContext.getCardinalityRepository().sleep();
         if (this.crossPlatformExecutor != null) this.crossPlatformExecutor.shutdown();
+    }
+
+    private void logExecution() {
+        // Log the execution time.
+        this.logger.info("Accumulated execution time: {}", Formats.formatDuration(this.executionMillis, true));
+        int i = 1;
+        for (TimeEstimate timeEstimate : timeEstimates) {
+            this.logger.info("Time estimate of execution plan {}: {}", i++, timeEstimate);
+        }
+
+        // Feed the execution log.
+        try (ExecutionLog executionLog = ExecutionLog.open(this.configuration)) {
+            executionLog.storeAll(this.crossPlatformExecutor.getPartialExecutions());
+        } catch (Exception e) {
+            this.logger.error("Storing partial executions failed.", e);
+        }
     }
 
     /**

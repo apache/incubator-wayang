@@ -289,6 +289,7 @@ public abstract class Channel {
     /**
      * Collect the {@link OutputSlot} of the producer and the {@link InputSlot}s of the consumers that are implemented
      * by this instance.
+     *
      * @return a {@link Stream} of said {@link Slot}s
      */
     private Stream<Slot<?>> getCorrespondingSlotsLocal() {
@@ -425,7 +426,9 @@ public abstract class Channel {
      *
      * @param executor that manages the resource or {@code null} if none
      */
-    public abstract ChannelInstance createInstance(Executor executor);
+    public abstract ChannelInstance createInstance(Executor executor,
+                                                   OptimizationContext.OperatorContext producerOperatorContext,
+                                                   int producerOutputIndex);
 
     /**
      * Tests for inter-stage instances.

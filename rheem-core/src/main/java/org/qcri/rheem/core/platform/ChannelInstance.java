@@ -35,4 +35,35 @@ public interface ChannelInstance extends ExecutionResource {
         return this.getChannel().isMarkedForInstrumentation();
     }
 
+    /**
+     * Provides a {@link LazyChannelLineage} that keeps around (at least) all non-executed predecessor
+     * {@link ChannelInstance}s.
+     *
+     * @return the {@link LazyChannelLineage}
+     */
+    LazyChannelLineage getLazyChannelLineage();
+
+    /**
+     * Adds a {@link ChannelInstance} as a predecessor in the {@link LazyChannelLineage}.
+     *
+     * @param channelInstance the {@link ChannelInstance}
+     */
+    default void addPredecessor(ChannelInstance channelInstance) {
+        if (!channelInstance.wasExecuted()) {
+            this.getLazyChannelLineage().addPredecessor(channelInstance.getLazyChannelLineage());
+        }
+    }
+
+    /**
+     * Tells whether this instance was already executed.
+     *
+     * @returnwhether this instance was already executed
+     */
+    boolean wasExecuted();
+
+    /**
+     * Mark this instance as executed.
+     */
+    void markExecuted();
+
 }

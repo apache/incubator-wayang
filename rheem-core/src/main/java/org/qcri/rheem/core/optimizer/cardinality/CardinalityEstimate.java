@@ -1,12 +1,14 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
+import org.json.JSONObject;
 import org.qcri.rheem.core.optimizer.ProbabilisticIntervalEstimate;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.util.JsonSerializable;
 
 /**
  * An estimate of cardinality within a {@link RheemPlan} expressed as a {@link ProbabilisticIntervalEstimate}.
  */
-public class CardinalityEstimate extends ProbabilisticIntervalEstimate {
+public class CardinalityEstimate extends ProbabilisticIntervalEstimate implements JsonSerializable {
 
     public static final CardinalityEstimate EMPTY_ESTIMATE = new CardinalityEstimate(0, 0, 1d);
 
@@ -48,5 +50,33 @@ public class CardinalityEstimate extends ProbabilisticIntervalEstimate {
                 (long) Math.ceil(this.getUpperEstimate() / denominator),
                 this.getCorrectnessProbability()
         );
+    }
+
+    /**
+     * Parses the given {@link JSONObject} to create a new instance.
+     *
+     * @param json that should be parsed
+     * @return the new instance
+     */
+    public static CardinalityEstimate fromJson(JSONObject json) {
+        return new CardinalityEstimate(json.getLong("lowerBound"), json.getLong("upperBound"), json.getDouble("confidence"));
+    }
+
+    @Override
+    public JSONObject toJson() {
+        return this.toJson(new JSONObject());
+    }
+
+    /**
+     * Serializes this instance to the given {@link JSONObject}.
+     *
+     * @param json to which this instance should be serialized
+     * @return {@code json}
+     */
+    public JSONObject toJson(JSONObject json) {
+        json.put("lowerBound", this.getLowerEstimate());
+        json.put("upperBound", this.getUpperEstimate());
+        json.put("confidence", this.getCorrectnessProbability());
+        return json;
     }
 }

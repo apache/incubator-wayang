@@ -119,7 +119,7 @@ class ApiTest {
   }
 
   @Test
-  def testWordCountOnSparkAndJava = {
+  def testWordCountOnSparkAndJava(): Unit = {
     // Set up RheemContext.
     val rheem = new RheemContext()
     rheem.register(JavaPlatform.getInstance)

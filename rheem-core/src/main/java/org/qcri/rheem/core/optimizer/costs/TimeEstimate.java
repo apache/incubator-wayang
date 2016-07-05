@@ -30,6 +30,14 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
         );
     }
 
+    public TimeEstimate plus(long millis) {
+        return new TimeEstimate(
+                this.getLowerEstimate() + millis,
+                this.getUpperEstimate() + millis,
+                this.getCorrectnessProbability()
+        );
+    }
+
     /**
      * Provides a {@link Comparator} for {@link TimeEstimate}s. For two {@link TimeEstimate}s {@code t1} and {@code t2},
      * it works as follows:
@@ -54,15 +62,14 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
 
     @Override
     public String toString() {
-        return String.format("%s[%s .. %s, conf=%s]",
-                this.getClass().getSimpleName(),
+        return String.format("(%s .. %s, p=%s)",
                 Formats.formatDuration(this.getLowerEstimate(), true),
                 Formats.formatDuration(this.getUpperEstimate(), true),
                 Formats.formatPercentage(this.getCorrectnessProbability()));
     }
 
     public TimeEstimate times(double scalar) {
-        return new TimeEstimate(
+        return scalar == 1d ? this : new TimeEstimate(
                 Math.round(this.getLowerEstimate() * scalar),
                 Math.round(this.getUpperEstimate() * scalar),
                 this.getCorrectnessProbability()

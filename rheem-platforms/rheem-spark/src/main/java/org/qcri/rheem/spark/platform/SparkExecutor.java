@@ -3,13 +3,16 @@ package org.qcri.rheem.spark.platform;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExtendedFunction;
-import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
@@ -52,12 +55,29 @@ public class SparkExecutor extends PushExecutorTemplate {
     }
 
     @Override
-    protected List<ChannelInstance> execute(ExecutionTask task, List<ChannelInstance> inputChannelInstances, boolean isForceExecution) {
+    protected Tuple<List<ChannelInstance>, PartialExecution> execute(ExecutionTask task,
+                                                                     List<ChannelInstance> inputChannelInstances,
+                                                                     OptimizationContext.OperatorContext producerOperatorContext,
+                                                                     boolean isForceExecution) {
         // Provide the ChannelInstances for the output of the task.
-        final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(task);
+        final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(
+                task, producerOperatorContext, inputChannelInstances
+        );
 
         // Execute.
-        cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this.compiler, this);
+        long startTime = System.currentTimeMillis();
+        try {
+            cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this.compiler, this);
+        } catch (Exception e) {
+            throw new RheemException(String.format("Executing %s failed.", task), e);
+        }
+        long endTime = System.currentTimeMillis();
+        long executionDuration = endTime - startTime;
+
+        // Check how much we executed.
+        PartialExecution partialExecution = this.handleLazyChannelLineage(
+                task, inputChannelInstances, producerOperatorContext, outputChannelInstances, executionDuration
+        );
 
         // Force execution if necessary.
         if (isForceExecution) {
@@ -70,16 +90,7 @@ public class SparkExecutor extends PushExecutorTemplate {
             }
         }
 
-        return Arrays.asList(outputChannelInstances);
-    }
-
-    private ChannelInstance[] createOutputChannelInstances(ExecutionTask task) {
-        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
-        for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
-            final Channel outputChannel = task.getOutputChannel(outputIndex);
-            channelInstances[outputIndex] = outputChannel.createInstance(this);
-        }
-        return channelInstances;
+        return new Tuple<>(Arrays.asList(outputChannelInstances), partialExecution);
     }
 
     private static SparkExecutionOperator cast(ExecutionOperator executionOperator) {

@@ -78,4 +78,13 @@ public interface ExecutionOperator extends ElementaryOperator {
         return supportedOutputChannels.get(0);
     }
 
+    /**
+     * Tells whether this instance will not be executed instantaneously.
+     *
+     * @return whether this instance is executed lazily
+     */
+    default boolean isExecutedLazily() {
+        // Heuristic that hopefully holds.
+        return this.getNumOutputs() > 0 && !this.getOutputChannelDescriptor(0).isReusable();
+    }
 }

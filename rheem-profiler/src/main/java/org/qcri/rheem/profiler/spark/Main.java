@@ -5,6 +5,7 @@ import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.StopWatch;
 import org.qcri.rheem.profiler.data.DataGenerators;
+import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -172,6 +173,7 @@ public class Main {
         try {
             System.out.println("Prepare...");
             final StopWatch.Round preparation = stopWatch.start("Preparation");
+            SparkPlatform.getInstance().warmUp(new Configuration());
             opProfiler.prepare(cardinalities);
             preparation.stop();
 

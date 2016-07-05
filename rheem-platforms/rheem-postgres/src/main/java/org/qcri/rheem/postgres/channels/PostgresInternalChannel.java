@@ -1,5 +1,6 @@
 package org.qcri.rheem.postgres.channels;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
@@ -36,8 +37,8 @@ public class PostgresInternalChannel extends Channel {
     }
 
     @Override
-    public ChannelInstance createInstance(Executor executor) {
-        return new Instance((PostgresExecutor) executor);
+    public Instance createInstance(Executor executor, OptimizationContext.OperatorContext producerOperatorContext, int producerOutputIndex) {
+        return new Instance((PostgresExecutor) executor, producerOperatorContext, producerOutputIndex);
     }
 
     /**
@@ -45,8 +46,8 @@ public class PostgresInternalChannel extends Channel {
      */
     public class Instance extends AbstractChannelInstance {
 
-        public Instance(PostgresExecutor executor) {
-            super(executor);
+        public Instance(PostgresExecutor executor, OptimizationContext.OperatorContext producerOperatorContext, int producerOutputIndex) {
+            super(executor, producerOperatorContext, producerOutputIndex);
         }
 
         @Override

@@ -4,6 +4,7 @@ import de.odysseus.el.ExpressionFactoryImpl;
 import de.odysseus.el.TreeValueExpression;
 import de.odysseus.el.util.SimpleContext;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.el.ValueExpression;
@@ -52,6 +53,9 @@ public class JuelUtils {
         private void initializeContext(SimpleContext ctx) {
             try {
                 ctx.setFunction("math", "sqrt", Math.class.getMethod("sqrt", double.class));
+                ctx.setFunction("rheem", "logGrowth", OptimizationUtils.class.getMethod(
+                        "logisticGrowth", double.class, double.class, double.class, double.class)
+                );
             } catch (NoSuchMethodException e) {
                 throw new RheemException("Could not initialize JUEL context.", e);
             }
@@ -59,18 +63,25 @@ public class JuelUtils {
 
         @SuppressWarnings("unchecked")
         public T apply(Map<String, Object> values) {
+            return this.apply(values, false);
+        }
+
+        @SuppressWarnings("unchecked")
+        public T apply(Map<String, Object> values, boolean isExpectTooManyArguments) {
             values.forEach((key, value) -> {
                 final Argument argument = this.arguments.get(key);
                 if (argument == null) {
-                    LoggerFactory.getLogger(this.getClass()).warn("Unknown field \"{}\".", key);
+                    if (isExpectTooManyArguments) {
+                        LoggerFactory.getLogger(this.getClass()).debug("Unknown field \"{}\" (available: {}).", key, this.arguments.keySet());
+                    } else {
+                        LoggerFactory.getLogger(this.getClass()).warn("Unknown field \"{}\" (available: {}).", key, this.arguments.keySet());
+                    }
                 } else {
                     argument.expression.setValue(this.context, value);
-//                    this.context.setVariable(key, this.expressionFactory.createValueExpression(value, argument.typeClass));
                 }
             });
             return (T) this.expression.getValue(this.context);
         }
-
     }
 
     /**

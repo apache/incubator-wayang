@@ -72,4 +72,13 @@ public class ExecutionStageLoop {
 
         return this.headStageCache;
     }
+
+    /**
+     * Retrieve the {@link LoopSubplan} encapsulated by this instance.
+     *
+     * @return the {@link LoopSubplan}
+     */
+    public LoopSubplan getLoopSubplan() {
+        return loopSubplan;
+    }
 }

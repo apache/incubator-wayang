@@ -91,6 +91,17 @@ public class RheemCollections {
     }
 
     /**
+     * Adds an element to a {@link Collection} and returns the {@link Collection}.
+     * @param collection to which the element should be added
+     * @param element that should be added to the {@code collection}
+     * @return the {@code collection}
+     */
+    public static <C extends Collection<T>, T> C add(C collection, T element) {
+        collection.add(element);
+        return collection;
+    }
+
+    /**
      * Return a new {@link List} with mapped values.
      */
     public static <S, T> List<T> map(List<S> list, Function<S, T> mapFunction) {
@@ -180,4 +191,13 @@ public class RheemCollections {
             }
         }
     }
+
+    public static <K, V> Map<K, V> createMap(Tuple<K, V>... keyValuePairs) {
+        Map<K, V> result = new HashMap<>(keyValuePairs.length);
+        for (Tuple<K, V> keyValuePair : keyValuePairs) {
+            result.put(keyValuePair.getField0(), keyValuePair.getField1());
+        }
+        return result;
+    }
+
 }
