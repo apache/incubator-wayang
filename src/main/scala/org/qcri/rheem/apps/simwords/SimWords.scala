@@ -1,6 +1,7 @@
 package org.qcri.rheem.apps.simwords
 
 import org.qcri.rheem.api._
+import org.qcri.rheem.apps.util.Parameters
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.java.JavaPlatform
@@ -98,17 +99,7 @@ object SimWords {
       sys.exit(1)
     }
 
-    val platforms = args(0).split(",").map {
-      case "spark" => SparkPlatform.getInstance
-      case "+spark" => {
-        val sparkPlatform = SparkPlatform.getInstance
-        sparkPlatform.warmUp(new Configuration)
-        sparkPlatform
-      }
-      case "java" => JavaPlatform.getInstance
-      case misc => sys.error(s"Unknown platform: $misc")
-    }.toSeq
-
+    val platforms = Parameters.loadPlatforms(args(0))
     val inputFile = args(1)
     val minWordOccurrences = args(2).toInt
     val neighborhoodRead = args(3).toInt

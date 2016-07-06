@@ -85,6 +85,16 @@
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-graphchi</artifactId>
+            <version>${rheem.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-postgres</artifactId>
+            <version>${rheem.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-api</artifactId>
             <version>${rheem.version}</version>
         </dependency>

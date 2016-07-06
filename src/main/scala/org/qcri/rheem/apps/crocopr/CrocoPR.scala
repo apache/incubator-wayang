@@ -1,6 +1,7 @@
 package org.qcri.rheem.apps.crocopr
 
 import org.qcri.rheem.api.{DataQuanta, PlanBuilder}
+import org.qcri.rheem.apps.util.Parameters
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.api.exception.RheemException
 import org.qcri.rheem.core.platform.Platform
@@ -122,16 +123,7 @@ object CrocoPR {
       sys.error("Usage: <main class> <platform>(,<platform>)* <input URL1> <input URL2> <#iterations>")
       sys.exit(1)
     }
-    val platforms = args(0).split(",").map {
-      case "spark" => SparkPlatform.getInstance
-      case "+spark" => {
-        val sparkPlatform = SparkPlatform.getInstance
-        sparkPlatform.warmUp(new Configuration)
-        sparkPlatform
-      }
-      case "java" => JavaPlatform.getInstance
-      case misc => sys.error(s"Unknown platform: $misc")
-    }
+    val platforms = Parameters.loadPlatforms(args(0))
     val inputUrl1 = args(1)
     val inputUrl2 = args(2)
     val numIterations = args(3).toInt
