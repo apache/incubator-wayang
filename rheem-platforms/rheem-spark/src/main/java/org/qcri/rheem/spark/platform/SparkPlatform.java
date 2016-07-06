@@ -60,7 +60,8 @@ public class SparkPlatform extends Platform {
             "spark.local.dir",
             "spark.logConf",
             "spark.driver.host",
-            "spark.driver.port"
+            "spark.driver.port",
+            "spark.driver.maxResultSize"
     };
 
     /**
