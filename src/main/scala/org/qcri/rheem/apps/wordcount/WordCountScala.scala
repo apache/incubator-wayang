@@ -46,7 +46,7 @@ object WordCountScala {
       sys.exit(1)
     }
 
-    val platforms = Parameters.loadPlatforms(args(0))
+    val platforms = Parameters.loadPlatforms(args(0), () => new Configuration)
 
     val inputFile = args(1)
 

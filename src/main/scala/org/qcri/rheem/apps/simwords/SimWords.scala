@@ -99,7 +99,7 @@ object SimWords {
       sys.exit(1)
     }
 
-    val platforms = Parameters.loadPlatforms(args(0))
+    val platforms = Parameters.loadPlatforms(args(0), () => new Configuration)
     val inputFile = args(1)
     val minWordOccurrences = args(2).toInt
     val neighborhoodRead = args(3).toInt

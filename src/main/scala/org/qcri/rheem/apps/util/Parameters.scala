@@ -53,7 +53,7 @@ object Parameters {
     * @param configFactory creates a [[Configuration]] to warm up platforms
     * @return the loaded, and possibly warmed-up [[Platform]]s
     */
-  def loadPlatforms(platformIds: String, configFactory: () => Configuration = () => new Configuration): Seq[Platform] =
+  def loadPlatforms(platformIds: String, configFactory: () => Configuration): Seq[Platform] =
     loadPlatforms(platformIds.split(","), configFactory)
 
   /**
@@ -63,7 +63,7 @@ object Parameters {
     * @param configFactory creates a [[Configuration]] to warm up platforms
     * @return the loaded, and possibly warmed-up [[Platform]]s
     */
-  def loadPlatforms(platformIds: Seq[String], configFactory: () => Configuration = () => new Configuration): Seq[Platform] = {
+  def loadPlatforms(platformIds: Seq[String], configFactory: () => Configuration): Seq[Platform] = {
     val configuration = configFactory()
     platformIds.map(loadPlatform(_, () => configuration))
   }

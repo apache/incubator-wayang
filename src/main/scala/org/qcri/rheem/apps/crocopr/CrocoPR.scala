@@ -123,7 +123,7 @@ object CrocoPR {
       sys.error("Usage: <main class> <platform>(,<platform>)* <input URL1> <input URL2> <#iterations>")
       sys.exit(1)
     }
-    val platforms = Parameters.loadPlatforms(args(0))
+    val platforms = Parameters.loadPlatforms(args(0), () => new Configuration)
     val inputUrl1 = args(1)
     val inputUrl2 = args(2)
     val numIterations = args(3).toInt

@@ -4,7 +4,7 @@ import java.util
 
 import org.qcri.rheem.api._
 import org.qcri.rheem.apps.util.Parameters
-import org.qcri.rheem.core.api.RheemContext
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.ExecutionContext
 import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
 import org.qcri.rheem.core.platform.Platform
@@ -78,7 +78,7 @@ object Kmeans {
       sys.exit(1)
     }
 
-    val platforms = Parameters.loadPlatforms(args(0))
+    val platforms = Parameters.loadPlatforms(args(0), () => new Configuration)
     val file = args(1)
     val k = args(2).toInt
     val numIterations = args(3).toInt
