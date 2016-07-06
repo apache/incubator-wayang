@@ -221,7 +221,10 @@ public class SparkPlatform extends Platform {
                 DataSetType.createDefault(Integer.class)
         );
         source.connectTo(0, sink, 0);
-        rheemCtx.execute(new RheemPlan(sink));
+        final Job job = rheemCtx.createJob(new RheemPlan(sink));
+        // Make sure not to have the warm-up jobs bloat the execution logs.
+        job.getConfiguration().setProperty("rheem.core.log.enabled", "false");
+        job.execute();
         long stopTime = System.currentTimeMillis();
         this.logger.info("Spark warm-up finished in {}.", Formats.formatDuration(stopTime - startTime, true));
 

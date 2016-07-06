@@ -93,7 +93,6 @@ public class Job extends OneTimeExecutable {
      */
     private final Set<String> udfJarPaths = new HashSet<>();
 
-
     /**
      * <i>Currently not used.</i>
      */
@@ -163,7 +162,9 @@ public class Job extends OneTimeExecutable {
                 executionId++;
             }
 
-            this.logExecution();
+            if (this.configuration.getBooleanProperty("rheem.core.log.enabled")) {
+                this.logExecution();
+            }
         } catch (RheemException e) {
             throw e;
         } catch (Throwable t) {
@@ -430,10 +431,12 @@ public class Job extends OneTimeExecutable {
         round.stopSubround("Update Execution Plan");
 
         // Collect any instrumentation results for the future.
-        round.startSubround("Store Cardinalities");
-        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
-        cardinalityRepository.storeAll(this.crossPlatformExecutor, this.optimizationContext);
-        round.stopSubround("Update Execution Plan");
+        if (this.getConfiguration().getBooleanProperty("rheem.core.log.enabled")) {
+            round.startSubround("Store Cardinalities");
+            final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
+            cardinalityRepository.storeAll(this.crossPlatformExecutor, this.optimizationContext);
+            round.stopSubround("Store Cardinalities");
+        }
 
         round.stop(true, true);
     }
@@ -534,4 +537,5 @@ public class Job extends OneTimeExecutable {
     public OptimizationContext getOptimizationContext() {
         return optimizationContext;
     }
+
 }
