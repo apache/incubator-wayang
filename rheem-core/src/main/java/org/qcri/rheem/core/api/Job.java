@@ -26,7 +26,6 @@ import org.qcri.rheem.core.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -94,6 +93,11 @@ public class Job extends OneTimeExecutable {
     private final Set<String> udfJarPaths = new HashSet<>();
 
     /**
+     * Name for this instance.
+     */
+    private final String name;
+
+    /**
      * <i>Currently not used.</i>
      */
     private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
@@ -102,10 +106,12 @@ public class Job extends OneTimeExecutable {
     /**
      * Creates a new instance.
      *
+     * @param name    name for this instance or {@code null} if a default name should be picked
      * @param udfJars paths to JAR files needed to run the UDFs (see {@link ReflectionUtils#getDeclaringJar(Class)})
      */
-    Job(RheemContext rheemContext, RheemPlan rheemPlan, String... udfJars) {
+    Job(RheemContext rheemContext, String name, RheemPlan rheemPlan, String... udfJars) {
         this.rheemContext = rheemContext;
+        this.name = name == null ? "Rheem app" : name;
         this.configuration = this.rheemContext.getConfiguration().fork();
         this.rheemPlan = rheemPlan;
         for (String udfJar : udfJars) {
@@ -538,4 +544,17 @@ public class Job extends OneTimeExecutable {
         return optimizationContext;
     }
 
+    /**
+     * Retrieves the name of this instance.
+     *
+     * @return the name
+     */
+    public String getName() {
+        return this.name;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s]", this.getClass().getSimpleName(), this.name);
+    }
 }

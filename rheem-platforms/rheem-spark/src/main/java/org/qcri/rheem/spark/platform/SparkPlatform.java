@@ -221,7 +221,7 @@ public class SparkPlatform extends Platform {
                 DataSetType.createDefault(Integer.class)
         );
         source.connectTo(0, sink, 0);
-        final Job job = rheemCtx.createJob(new RheemPlan(sink));
+        final Job job = rheemCtx.createJob("Warm up", new RheemPlan(sink));
         // Make sure not to have the warm-up jobs bloat the execution logs.
         job.getConfiguration().setProperty("rheem.core.log.enabled", "false");
         job.execute();

@@ -101,7 +101,7 @@ public class SparkIntegrationIT {
         rheemContext.register(SparkPlatform.getInstance());
 
         // Have Rheem execute the plan.
-        final Job job = rheemContext.createJob(rheemPlan);
+        final Job job = rheemContext.createJob(null, rheemPlan);
         // ILLEGAL: We blacklist the Spark platform, although we need it.
         job.getConfiguration().getPlatformProvider().addToBlacklist(SparkPlatform.getInstance());
         job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());

@@ -177,7 +177,7 @@ public class WordCountIT {
 
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
-        final Job job = rheemContext.createJob(rheemPlan);
+        final Job job = rheemContext.createJob(null, rheemPlan);
         job.getConfiguration().getPlatformProvider().addToWhitelist(SparkPlatform.getInstance());
         job.execute();
 
