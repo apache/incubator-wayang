@@ -22,8 +22,8 @@ public class TestSink<T> extends UnarySink<T> {
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
-                                                                  Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex,
+                                                                     Configuration configuration) {
         throw new RuntimeException();
     }
 }

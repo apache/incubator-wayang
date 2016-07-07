@@ -160,7 +160,7 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex, Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex, Configuration configuration) {
         switch (outputIndex) {
             case ITERATION_CONVERGENCE_OUTPUT_INDEX:
                 return Optional.of(new SwitchForwardCardinalityEstimator(

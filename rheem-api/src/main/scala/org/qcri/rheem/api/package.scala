@@ -7,7 +7,7 @@ import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
-import org.qcri.rheem.core.plan.rheemplan.Operator
+import org.qcri.rheem.core.plan.rheemplan.{ElementaryOperator, Operator}
 import org.qcri.rheem.core.types.{BasicDataUnitType, DataSetType, DataUnitGroupType, DataUnitType}
 
 import scala.collection.JavaConversions
@@ -66,7 +66,7 @@ package object api {
 
   implicit def createPlanBuilder(rheemContext: RheemContext): PlanBuilder = new PlanBuilder(rheemContext)
 
-  implicit private[api] def wrap[Out: ClassTag](op: Operator)(implicit planBuilder: PlanBuilder): DataQuanta[Out] =
+  implicit private[api] def wrap[Out: ClassTag](op: ElementaryOperator)(implicit planBuilder: PlanBuilder): DataQuanta[Out] =
     new DataQuanta[Out](op)
 
 }

@@ -44,7 +44,7 @@ public class TextFileSource extends UnarySource {
     }
 
     @Override
-    public Optional<org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator> getCardinalityEstimator(
+    public Optional<org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

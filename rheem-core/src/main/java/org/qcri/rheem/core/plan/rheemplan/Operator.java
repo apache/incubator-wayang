@@ -496,8 +496,7 @@ public interface Operator {
      * @param configuration if the {@link CardinalityPusher} depends on further ones, use this to obtain the latter
      * @return the {@link CardinalityPusher}
      */
-    default CardinalityPusher getCardinalityPusher(
-            final Configuration configuration) {
+    default CardinalityPusher getCardinalityPusher(final Configuration configuration) {
         return new DefaultCardinalityPusher(this, configuration.getCardinalityEstimatorProvider());
     }
 

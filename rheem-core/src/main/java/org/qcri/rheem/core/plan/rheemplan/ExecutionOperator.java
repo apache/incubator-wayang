@@ -87,4 +87,5 @@ public interface ExecutionOperator extends ElementaryOperator {
         // Heuristic that hopefully holds.
         return this.getNumOutputs() > 0 && !this.getOutputChannelDescriptor(0).isReusable();
     }
+
 }

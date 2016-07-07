@@ -57,7 +57,7 @@ public class TestLoopHead<T> extends OperatorBase implements LoopHeadOperator, E
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex, Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex, Configuration configuration) {
         switch (outputIndex) {
             case 0:
             case 1:

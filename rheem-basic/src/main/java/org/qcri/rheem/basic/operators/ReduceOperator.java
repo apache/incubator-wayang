@@ -45,8 +45,8 @@ public class ReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
-                                                                  Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex,
+                                                                     Configuration configuration) {
         return Optional.of(new FixedSizeCardinalityEstimator(1L));
     }
 }

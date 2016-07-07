@@ -33,7 +33,7 @@ public class CollectionSource<T> extends UnarySource<T> implements ElementaryOpe
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

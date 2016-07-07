@@ -134,7 +134,7 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex, Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex, Configuration configuration) {
         switch (outputIndex) {
             case ITERATION_OUTPUT_INDEX:
             case FINAL_OUTPUT_INDEX:

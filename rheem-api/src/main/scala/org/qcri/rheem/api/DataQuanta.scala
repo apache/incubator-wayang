@@ -9,7 +9,8 @@ import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperat
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
 import org.qcri.rheem.core.function.{FlatMapDescriptor, PredicateDescriptor, ReduceDescriptor, TransformationDescriptor}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
-import org.qcri.rheem.core.plan.rheemplan.{InputSlot, Operator, OutputSlot, RheemPlan}
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator
+import org.qcri.rheem.core.plan.rheemplan._
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.core.util.{ReflectionUtils, RheemCollections, Tuple => RheemTuple}
 
@@ -24,7 +25,7 @@ import scala.reflect._
   * @param ev$1        the data type of the elements in this instance
   * @param planBuilder keeps track of the [[RheemPlan]] being build
   */
-class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(implicit planBuilder: PlanBuilder) {
+class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: Int = 0)(implicit planBuilder: PlanBuilder) {
 
   Validate.isTrue(operator.getNumOutputs > outputIndex)
 
@@ -520,6 +521,17 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   }
 
   /**
+    * Sets a [[CardinalityEstimator]] for the [[Operator]] that creates this instance.
+    *
+    * @param estimator that should be set
+    * @return this instance
+    */
+  def withCardinalityEstimator(estimator: CardinalityEstimator) = {
+    this.operator.setCardinalityEstimator(outputIndex, estimator)
+    this
+  }
+
+  /**
     * Defines user-code JAR files that might be needed to transfer to execution platforms.
     *
     * @param paths paths to JAR files that should be transferred
@@ -545,6 +557,6 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
 object DataQuanta {
 
   def create[T](output: OutputSlot[T])(implicit planBuilder: PlanBuilder): DataQuanta[_] =
-    new DataQuanta(output.getOwner, output.getIndex)(ClassTag(output.getType.getDataUnitType.getTypeClass), planBuilder)
+    new DataQuanta(output.getOwner.asInstanceOf[ElementaryOperator], output.getIndex)(ClassTag(output.getType.getDataUnitType.getTypeClass), planBuilder)
 
 }

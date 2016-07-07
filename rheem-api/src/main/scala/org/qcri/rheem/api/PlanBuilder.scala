@@ -4,7 +4,7 @@ import org.apache.commons.lang3.Validate
 import org.qcri.rheem.api
 import org.qcri.rheem.basic.operators.{CollectionSource, TextFileSource}
 import org.qcri.rheem.core.api.RheemContext
-import org.qcri.rheem.core.plan.rheemplan.{Operator, RheemPlan}
+import org.qcri.rheem.core.plan.rheemplan.{ElementaryOperator, Operator, RheemPlan}
 import org.qcri.rheem.core.util.ReflectionUtils
 
 import scala.collection.JavaConversions
@@ -51,14 +51,14 @@ class PlanBuilder(rheemContext: RheemContext) {
     for (outputIndex <- 0 until operator.getNumOutputs) yield DataQuanta.create(operator.getOutput(outputIndex))(this)
   }
 
-  implicit private[api] def wrap[T : ClassTag](operator: Operator): DataQuanta[T] =
+  implicit private[api] def wrap[T : ClassTag](operator: ElementaryOperator): DataQuanta[T] =
     PlanBuilder.wrap[T](operator)(classTag[T], this)
 
 }
 
 object PlanBuilder {
 
-  implicit private[api] def wrap[T : ClassTag](operator: Operator)(implicit planBuilder: PlanBuilder): DataQuanta[T] =
+  implicit private[api] def wrap[T : ClassTag](operator: ElementaryOperator)(implicit planBuilder: PlanBuilder): DataQuanta[T] =
     api.wrap[T](operator)
 
 }

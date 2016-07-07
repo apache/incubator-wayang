@@ -32,7 +32,7 @@ public class SubplanCardinalityPusherTest {
                             assert outputSlot.getOwner().isElementary()
                                     : String.format("Cannot provide estimator for composite %s.", outputSlot.getOwner());
                             return ((ElementaryOperator) outputSlot.getOwner())
-                                    .getCardinalityEstimator(outputSlot.getIndex(), this.configuration)
+                                    .createCardinalityEstimator(outputSlot.getIndex(), this.configuration)
                                     .orElse(null);
                         },
                         this.configuration);
@@ -70,7 +70,7 @@ public class SubplanCardinalityPusherTest {
     public void testSourceSubplan() {
         TestSource<String> source = new TestSource<>(DataSetType.createDefault(String.class));
         final CardinalityEstimate sourceCardinality = new CardinalityEstimate(123, 321, 0.123d);
-        source.setCardinalityEstimator((configuration1, inputEstimates) -> sourceCardinality);
+        source.setCardinalityEstimators((configuration1, inputEstimates) -> sourceCardinality);
 
         TestMapOperator<String, String> op = new TestMapOperator<>(
                 DataSetType.createDefault(String.class),

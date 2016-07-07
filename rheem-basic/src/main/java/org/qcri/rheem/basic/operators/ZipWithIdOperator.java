@@ -32,7 +32,7 @@ public class ZipWithIdOperator<InputType> extends UnaryToUnaryOperator<InputType
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

@@ -8,7 +8,6 @@ import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import org.qcri.rheem.core.optimizer.ProbabilisticIntervalEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.*;
@@ -31,7 +30,6 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 import java.util.Optional;
-import java.util.function.Function;
 
 /**
  * Describes both the configuration of a {@link RheemContext} and {@link Job}s.
@@ -241,8 +239,14 @@ public class Configuration {
                 new FunctionalKeyValueProvider<>(fallbackProvider, (outputSlot, requestee) -> {
                     assert outputSlot.getOwner().isElementary()
                             : String.format("Cannot provide estimator for composite %s.", outputSlot.getOwner());
-                    return ((ElementaryOperator) outputSlot.getOwner())
-                            .getCardinalityEstimator(outputSlot.getIndex(), configuration)
+                    final ElementaryOperator operator = (ElementaryOperator) outputSlot.getOwner();
+                    // Instance-level estimator?
+                    if (operator.getCardinalityEstimator(outputSlot.getIndex()) != null) {
+                        return operator.getCardinalityEstimator(outputSlot.getIndex());
+                    }
+                    // Type-level estimator?
+                    return operator
+                            .createCardinalityEstimator(outputSlot.getIndex(), configuration)
                             .orElse(null);
                 });
 

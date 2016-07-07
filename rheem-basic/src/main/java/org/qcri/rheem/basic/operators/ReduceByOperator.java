@@ -72,7 +72,7 @@ public class ReduceByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Type
 
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

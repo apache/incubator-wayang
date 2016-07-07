@@ -20,12 +20,27 @@ public interface ElementaryOperator extends ActualOperator {
      * @param configuration if the {@link CardinalityEstimator} depends on further ones, use this to obtain the latter
      * @return an {@link Optional} that might provide the requested instance
      */
-    default Optional<CardinalityEstimator> getCardinalityEstimator(
+    default Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        LoggerFactory.getLogger(this.getClass()).warn("Use fallback cardinality estimator for {}.", this);
-        return Optional.of(new FallbackCardinalityEstimator());
+        return Optional.empty();
     }
+
+    /**
+     * Retrieve a {@link CardinalityEstimator} tied specifically to this instance.
+     *
+     * @param outputIndex for the output described by the {@code cardinalityEstimator}
+     * @return the {@link CardinalityEstimator} or {@code null} if none exists
+     */
+    CardinalityEstimator getCardinalityEstimator(int outputIndex);
+
+    /**
+     * Tie a specific {@link CardinalityEstimator} to this instance.
+     *
+     * @param outputIndex          for the output described by the {@code cardinalityEstimator}
+     * @param cardinalityEstimator the {@link CardinalityEstimator}
+     */
+    void setCardinalityEstimator(int outputIndex, CardinalityEstimator cardinalityEstimator);
 
 }

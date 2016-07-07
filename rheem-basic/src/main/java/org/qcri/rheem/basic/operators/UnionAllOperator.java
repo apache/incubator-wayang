@@ -37,7 +37,7 @@ public class UnionAllOperator<Type>
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
