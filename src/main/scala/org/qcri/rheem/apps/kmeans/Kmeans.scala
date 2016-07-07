@@ -60,7 +60,7 @@ class Kmeans(platforms: Platform*) {
     finalCentroids
       .map(_.toPoint).withName("Strip centroid names")
       .withUdfJarsOf(classOf[Kmeans])
-      .collect()
+      .collect(jobName = s"k-means ($inputFile, k=$k, $iterations iterations)")
   }
 
 

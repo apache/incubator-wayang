@@ -1,11 +1,9 @@
 package org.qcri.rheem.apps.wordcount
 
-import org.qcri.rheem.core.api.{Configuration, RheemContext}
-import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.api._
 import org.qcri.rheem.apps.util.Parameters
-import org.qcri.rheem.java.JavaPlatform
-import org.qcri.rheem.spark.platform.SparkPlatform
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.core.platform.Platform
 
 /**
   * This is app counts words in a file.
@@ -16,6 +14,7 @@ class WordCountScala(platforms: Platform*) {
 
   /**
     * Run the word count over a given file.
+    *
     * @param inputUrl URL to the file
     * @return the counted words
     */
@@ -30,7 +29,7 @@ class WordCountScala(platforms: Platform*) {
       .map(word => (word.toLowerCase, 1)).withName("To lower case, add counter")
       .reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 + c2._2)).withName("Add counters")
       .withUdfJarsOf(classOf[WordCountScala])
-      .collect()
+      .collect(jobName = s"WordCount ($inputUrl)")
   }
 
 }

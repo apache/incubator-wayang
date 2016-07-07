@@ -34,13 +34,13 @@ object Parameters {
     id match {
       case warmPlatform(name) => {
         val platform = platformFactories
-          .getOrElse(name, throw new IllegalArgumentException("Unknown platform: \"$name\""))
+          .getOrElse(name, throw new IllegalArgumentException(s"Unknown platform: $name"))
           .apply
         platform.warmUp(configFactory())
         platform
       }
       case name: String => platformFactories
-        .getOrElse(name, throw new IllegalArgumentException("Unknown platform: \"$name\""))
+        .getOrElse(name, throw new IllegalArgumentException(s"Unknown platform: $name"))
         .apply
       case _ => throw new IllegalArgumentException(s"Illegal platform name")
     }

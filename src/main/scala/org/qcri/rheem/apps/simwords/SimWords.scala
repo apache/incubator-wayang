@@ -4,8 +4,6 @@ import org.qcri.rheem.api._
 import org.qcri.rheem.apps.util.Parameters
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.platform.Platform
-import org.qcri.rheem.java.JavaPlatform
-import org.qcri.rheem.spark.platform.SparkPlatform
 
 /**
   * TODO
@@ -46,7 +44,7 @@ class SimWords(platforms: Platform*) {
         wv._2.normalize(); wv
       }.withName("Normalize word vectors")
 
-    // Sample initial centroids.
+    // Generate initial centroids.
 //    val initialCentroids = wordVectors
 //      .customOperator[(Int, SparseVector)](
 //      new SampleOperator[(Int, SparseVector)](numClusters, dataSetType[(Int, SparseVector)], SampleOperator.Methods.RANDOM)
@@ -82,7 +80,9 @@ class SimWords(platforms: Platform*) {
       .mapJava(new ResolveClusterFunction("wordIds")).withBroadcast(wordIds, "wordIds").withName("Resolve word IDs")
 
 
-    val result = clusters.withUdfJarsOf(classOf[SimWords]).collect()
+    val result = clusters.withUdfJarsOf(classOf[SimWords]).collect(
+      jobName = s"SimWords ($inputFile, reach=$neighborhoodReach, clusters=$numClusters, $numIterations iterations)"
+    )
 
 
     result.toIndexedSeq.sortBy(_.size).reverse.take(100).foreach(println(_))

@@ -2,12 +2,10 @@ package org.qcri.rheem.apps.crocopr
 
 import org.qcri.rheem.api.{DataQuanta, PlanBuilder}
 import org.qcri.rheem.apps.util.Parameters
-import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.api.exception.RheemException
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.core.util.RheemCollections
-import org.qcri.rheem.java.JavaPlatform
-import org.qcri.rheem.spark.platform.SparkPlatform
 
 /**
   * Rheem implementation of the cross-community PageRank.
@@ -86,7 +84,7 @@ class CrocoPR(platforms: Platform*) {
       .join[VertexId, Long](_._1, vertexIds, _.field0).withName("Join page ranks with vertex IDs")
       .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0._2)).withName("Make page ranks readable")
       .withUdfJarsOf(this.getClass)
-      .collect()
+      .collect(jobName = s"CrocoPR ($inputUrl1, $inputUrl2, $numIterations iterations)")
 
   }
 
