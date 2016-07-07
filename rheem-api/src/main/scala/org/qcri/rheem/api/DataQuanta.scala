@@ -450,19 +450,19 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     *
     * @param f the action to perform
     */
-  def foreach(f: Out => _): Unit = foreachJava(toConsumer(f))
+  def foreach(f: Out => _, jobName: String = null): Unit = foreachJava(toConsumer(f), jobName)
 
   /**
     * Perform a local action on each data quantum in this instance. Triggers execution.
     *
     * @param f the action to perform as Java 8 lambda expression
     */
-  def foreachJava(f: Consumer[Out]): Unit = {
+  def foreachJava(f: Consumer[Out], jobName: String = null): Unit = {
     val sink = new LocalCallbackSink(f, dataSetType[Out])
     sink.setName("foreach()")
     this.connectTo(sink, 0)
     this.planBuilder.sinks += sink
-    this.planBuilder.buildAndExecute()
+    this.planBuilder.buildAndExecute(jobName)
     this.planBuilder.sinks.clear()
   }
 
@@ -471,7 +471,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     *
     * @return the data quanta
     */
-  def collect(): Iterable[Out] = {
+  def collect(jobName: String = null): Iterable[Out] = {
     // Set up the sink.
     val collector = new java.util.LinkedList[Out]()
     val sink = LocalCallbackSink.createCollectingSink(collector, dataSetType[Out])
@@ -480,7 +480,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
 
     // Do the execution.
     this.planBuilder.sinks += sink
-    this.planBuilder.buildAndExecute()
+    this.planBuilder.buildAndExecute(jobName)
     this.planBuilder.sinks.clear()
 
     // Return the collected values.

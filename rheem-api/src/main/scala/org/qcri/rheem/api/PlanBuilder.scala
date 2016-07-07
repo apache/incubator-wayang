@@ -27,9 +27,9 @@ class PlanBuilder(rheemContext: RheemContext) {
     case _ =>
   }
 
-  def buildAndExecute(): Unit = {
+  def buildAndExecute(jobName: String): Unit = {
     val plan: RheemPlan = new RheemPlan(this.sinks.toArray: _*)
-    this.rheemContext.execute(plan, this.udfJars.toArray:_*)
+    this.rheemContext.execute(jobName, plan, this.udfJars.toArray:_*)
   }
 
   def readTextFile(url: String): DataQuanta[String] =
