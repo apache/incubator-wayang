@@ -42,11 +42,11 @@ public class SparkPlatform extends Platform {
     private static SparkPlatform instance = null;
 
     private static final String[] REQUIRED_SPARK_PROPERTIES = {
-            "spark.master",
-            "spark.app.name"
+            "spark.master"
     };
 
     private static final String[] OPTIONAL_SPARK_PROPERTIES = {
+            "spark.app.name",
             "spark.executor.memory",
             "spark.executor.cores",
             "spark.executor.instances",
@@ -117,6 +117,9 @@ public class SparkPlatform extends Platform {
             configuration.getOptionalStringProperty(property).ifPresent(
                     value -> sparkConf.set(property, value)
             );
+        }
+        if (job.getName() != null) {
+            sparkConf.set("spark.app.name", job.getName());
         }
 
         if (this.sparkContextReference == null || this.sparkContextReference.isDisposed()) {
