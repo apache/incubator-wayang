@@ -1,15 +1,18 @@
 package org.qcri.rheem.core.function;
 
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 
 import java.io.Serializable;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.function.Predicate;
 
 /**
  * This descriptor pertains to predicates that consume a single data unit.
  *
- * @param <Input>  input type of the transformation function
+ * @param <Input> input type of the transformation function
  */
 public class PredicateDescriptor<Input> extends FunctionDescriptor {
 
@@ -17,32 +20,46 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
 
     private final SerializablePredicate<Input> javaImplementation;
 
+    /**
+     * The selectivity ({code 0..1}) of this instance or {@code null} if unspecified.
+     */
+    private ProbabilisticDoubleInterval selectivity;
+
     public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
                                Class<Input> inputTypeClass) {
-        this(javaImplementation, BasicDataUnitType.createBasic(inputTypeClass));
+        this(javaImplementation, inputTypeClass, null);
+    }
+
+    public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
+                               Class<Input> inputTypeClass,
+                               ProbabilisticDoubleInterval selectivity) {
+        this(javaImplementation, inputTypeClass, selectivity, null, null);
     }
 
     public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
                                Class<Input> inputTypeClass,
                                LoadEstimator cpuLoadEstimator,
                                LoadEstimator ramLoadEstimator) {
-        this(javaImplementation, BasicDataUnitType.createBasic(inputTypeClass), cpuLoadEstimator, ramLoadEstimator);
+        this(javaImplementation, inputTypeClass, null, cpuLoadEstimator, ramLoadEstimator);
     }
 
     public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
-                               BasicDataUnitType<Input> inputType) {
-        this(javaImplementation, inputType,
-                LoadEstimator.createFallback(1, 1),
-                LoadEstimator.createFallback(1, 1));
+                               Class<Input> inputTypeClass,
+                               ProbabilisticDoubleInterval selectivity,
+                               LoadEstimator cpuLoadEstimator,
+                               LoadEstimator ramLoadEstimator) {
+        this(javaImplementation, BasicDataUnitType.createBasic(inputTypeClass), selectivity, cpuLoadEstimator, ramLoadEstimator);
     }
 
     public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
-                               BasicDataUnitType inputType,
+                               BasicDataUnitType<Input> inputType,
+                               ProbabilisticDoubleInterval selectivity,
                                LoadEstimator cpuLoadEstimator,
                                LoadEstimator ramLoadEstimator) {
         super(cpuLoadEstimator, ramLoadEstimator);
         this.javaImplementation = javaImplementation;
         this.inputType = inputType;
+        this.selectivity = selectivity;
     }
 
     /**
@@ -67,6 +84,15 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
 
     public BasicDataUnitType<Input> getInputType() {
         return this.inputType;
+    }
+
+    /**
+     * Get the selectivity of this instance.
+     *
+     * @return an {@link Optional} with the selectivity or an empty one if no selectivity was specified
+     */
+    public Optional<ProbabilisticDoubleInterval> getSelectivity() {
+        return Optional.ofNullable(this.selectivity);
     }
 
     @FunctionalInterface

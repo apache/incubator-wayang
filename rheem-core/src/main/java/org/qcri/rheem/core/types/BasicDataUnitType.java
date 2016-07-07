@@ -43,7 +43,7 @@ public class BasicDataUnitType<T> extends DataUnitType<T> {
     }
 
     @Override
-    public Class getTypeClass() {
+    public Class<T> getTypeClass() {
         return this.typeClass;
     }
 }

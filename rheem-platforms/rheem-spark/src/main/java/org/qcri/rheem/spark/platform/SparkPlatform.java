@@ -29,7 +29,7 @@ import java.util.LinkedList;
 import java.util.Set;
 
 /**
- * {@link Platform} for a single JVM executor based on the {@link java.util.stream} library.
+ * {@link Platform} for Apache Spark.
  */
 public class SparkPlatform extends Platform {
 

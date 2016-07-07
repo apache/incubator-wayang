@@ -4,6 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
@@ -39,7 +40,7 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     public FlatMapOperator(FunctionDescriptor.SerializableFunction<InputType, Iterable<OutputType>> function,
                            Class<InputType> inputTypeClass,
                            Class<OutputType> outputTypeClass) {
-        this (new FlatMapDescriptor<>(function, inputTypeClass, outputTypeClass));
+        this(new FlatMapDescriptor<>(function, inputTypeClass, outputTypeClass));
     }
 
     /**
@@ -61,7 +62,7 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return Optional.of(new FlatMapOperator.CardinalityEstimator());
+        return Optional.of(new FlatMapOperator.CardinalityEstimator(configuration));
     }
 
     /**
@@ -69,33 +70,26 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
      */
     private class CardinalityEstimator implements org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator {
 
-        public static final double DEFAULT_SELECTIVITY_CORRECTNESS = 0.9;
-
         /**
-         * We expect selectivities to be between {@value #DEFAULT_SELECTIVITY_DEVIATION} and {@code 1/}{@value #DEFAULT_SELECTIVITY_DEVIATION}.
+         * The selectivity of this instance.
          */
-        public static final double DEFAULT_SELECTIVITY_DEVIATION = 0.1;
+        private final ProbabilisticDoubleInterval selectivity;
+
+        private CardinalityEstimator(Configuration configuration) {
+            this.selectivity = configuration
+                    .getMultimapSelectivityProvider()
+                    .provideFor(FlatMapOperator.this.functionDescriptor);
+        }
 
         @Override
         public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
             assert FlatMapOperator.this.getNumInputs() == inputEstimates.length;
             final CardinalityEstimate inputEstimate = inputEstimates[0];
-
-            final Optional<Double> selectivity = configuration.getMultimapSelectivityProvider().optionallyProvideFor(
-                    FlatMapOperator.this.functionDescriptor);
-            if (selectivity.isPresent()) {
-                return new CardinalityEstimate(
-                        (long) (inputEstimate.getLowerEstimate() * selectivity.get()),
-                        (long) (inputEstimate.getUpperEstimate() * selectivity.get()),
-                        inputEstimate.getCorrectnessProbability() * DEFAULT_SELECTIVITY_CORRECTNESS
-                );
-            } else {
-                return new CardinalityEstimate(
-                        (long) (inputEstimate.getLowerEstimate() * DEFAULT_SELECTIVITY_DEVIATION),
-                        (long) (inputEstimate.getUpperEstimate() / DEFAULT_SELECTIVITY_DEVIATION),
-                        inputEstimate.getCorrectnessProbability() * DEFAULT_SELECTIVITY_CORRECTNESS
-                );
-            }
+            return new CardinalityEstimate(
+                    (long) (inputEstimate.getLowerEstimate() * this.selectivity.getLowerEstimate()),
+                    (long) (inputEstimate.getUpperEstimate() * this.selectivity.getUpperEstimate()),
+                    inputEstimate.getCorrectnessProbability() * this.selectivity.getCorrectnessProbability()
+            );
         }
     }
 }

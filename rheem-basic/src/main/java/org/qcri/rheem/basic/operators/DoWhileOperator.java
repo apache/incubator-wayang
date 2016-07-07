@@ -5,8 +5,8 @@ import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.SwitchForwardCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.ReflectionUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,7 +52,7 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
                            int numExpectedIterations) {
         this(inputType,
                 convergenceType,
-                new PredicateDescriptor<>(criterionPredicate, (BasicDataUnitType) convergenceType.getDataUnitType()),
+                new PredicateDescriptor<>(criterionPredicate, ReflectionUtils.specify(Collection.class)),
                 numExpectedIterations
         );
     }

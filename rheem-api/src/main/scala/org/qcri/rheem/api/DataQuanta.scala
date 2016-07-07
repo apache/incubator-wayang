@@ -8,6 +8,7 @@ import org.qcri.rheem.basic.operators._
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
 import org.qcri.rheem.core.function.{FlatMapDescriptor, PredicateDescriptor, ReduceDescriptor, TransformationDescriptor}
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.plan.rheemplan.{InputSlot, Operator, OutputSlot, RheemPlan}
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.core.util.{ReflectionUtils, RheemCollections, Tuple => RheemTuple}
@@ -69,19 +70,22 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   /**
     * Feed this instance into a [[FilterOperator]].
     *
-    * @param udf UDF for the [[FilterOperator]]
+    * @param udf         UDF for the [[FilterOperator]]
+    * @param selectivity selectivity of the UDF
     * @return a new instance representing the [[FilterOperator]]'s output
     */
-  def filter(udf: Out => Boolean) = filterJava(toSerializablePredicate(udf))
+  def filter(udf: Out => Boolean, selectivity: ProbabilisticDoubleInterval = null) =
+    filterJava(toSerializablePredicate(udf), selectivity)
 
   /**
     * Feed this instance into a [[FilterOperator]].
     *
-    * @param udf UDF for the [[FilterOperator]]
+    * @param udf         UDF for the [[FilterOperator]]
+    * @param selectivity selectivity of the UDF
     * @return a new instance representing the [[FilterOperator]]'s output
     */
-  def filterJava(udf: SerializablePredicate[Out]): DataQuanta[Out] = {
-    val filterOperator = new FilterOperator(new PredicateDescriptor(udf, basicDataUnitType[Out]))
+  def filterJava(udf: SerializablePredicate[Out], selectivity: ProbabilisticDoubleInterval = null): DataQuanta[Out] = {
+    val filterOperator = new FilterOperator(new PredicateDescriptor(udf, basicDataUnitType[Out], selectivity, null, null))
     this.connectTo(filterOperator, 0)
     filterOperator
   }
@@ -89,21 +93,24 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   /**
     * Feed this instance into a [[FlatMapOperator]].
     *
-    * @param udf UDF for the [[FlatMapOperator]]
+    * @param udf         UDF for the [[FlatMapOperator]]
+    * @param selectivity selectivity of the UDF
     * @return a new instance representing the [[FlatMapOperator]]'s output
     */
-  def flatMap[NewOut: ClassTag](udf: Out => Iterable[NewOut]): DataQuanta[NewOut] =
-    flatMapJava(toSerializableFlatteningFunction(udf))
+  def flatMap[NewOut: ClassTag](udf: Out => Iterable[NewOut], selectivity: ProbabilisticDoubleInterval = null): DataQuanta[NewOut] =
+    flatMapJava(toSerializableFlatteningFunction(udf), selectivity)
 
   /**
     * Feed this instance into a [[FlatMapOperator]].
     *
-    * @param udf a Java 8 lambda expression as UDF for the [[FlatMapOperator]]
+    * @param udf         a Java 8 lambda expression as UDF for the [[FlatMapOperator]]
+    * @param selectivity selectivity of the UDF
     * @return a new instance representing the [[FlatMapOperator]]'s output
     */
-  def flatMapJava[NewOut: ClassTag](udf: SerializableFunction[Out, java.lang.Iterable[NewOut]]): DataQuanta[NewOut] = {
+  def flatMapJava[NewOut: ClassTag](udf: SerializableFunction[Out, java.lang.Iterable[NewOut]],
+                                    selectivity: ProbabilisticDoubleInterval = null): DataQuanta[NewOut] = {
     val flatMapOperator = new FlatMapOperator(new FlatMapDescriptor(
-      udf, basicDataUnitType[Out], basicDataUnitType[NewOut]
+      udf, basicDataUnitType[Out], basicDataUnitType[NewOut], selectivity, null, null
     ))
     this.connectTo(flatMapOperator, 0)
     flatMapOperator
@@ -297,7 +304,6 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   }
 
 
-
   /**
     * Feeds this instance into a do-while loop (guarded by a [[DoWhileOperator]].
     *
@@ -335,7 +341,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     val doWhileOperator = new DoWhileOperator(
       dataSetType[Out],
       dataSetType[ConvOut],
-      new PredicateDescriptor(udf, basicDataUnitType[java.util.Collection[ConvOut]]),
+      new PredicateDescriptor(udf, basicDataUnitType[JavaCollection[ConvOut]], null, null, null),
       numExpectedIterations
     )
     this.connectTo(doWhileOperator, DoWhileOperator.INITIAL_INPUT_INDEX)
@@ -377,7 +383,11 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
       dataSetType[Out],
       dataSetType[Int],
       new PredicateDescriptor(
-        toSerializablePredicate[JavaCollection[Int]](i => RheemCollections.getSingle(i) >= n), basicDataUnitType[JavaCollection[Int]]
+        toSerializablePredicate[JavaCollection[Int]](i => RheemCollections.getSingle(i) >= n),
+        basicDataUnitType[JavaCollection[Int]],
+        null,
+        null,
+        null
       ),
       n
     )

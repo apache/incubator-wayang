@@ -6,6 +6,7 @@ import _root_.java.util.function.Consumer
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.plan.rheemplan.Operator
 import org.qcri.rheem.core.types.{BasicDataUnitType, DataSetType, DataUnitGroupType, DataUnitType}
 
@@ -31,7 +32,7 @@ package object api {
   implicit def dataSetType[T](implicit classTag: ClassTag[T]): DataSetType[T] =
     DataSetType.createDefault(basicDataUnitType[T])
 
-  implicit def groupedDataSetType[T](implicit classTag: ClassTag[T]): DataSetType[java.lang.Iterable[T]] =
+  implicit def groupedDataSetType[T](implicit classTag: ClassTag[T]): DataSetType[JavaIterable[T]] =
     DataSetType.createGrouped(basicDataUnitType[T])
 
 
@@ -60,6 +61,8 @@ package object api {
       def accept(t: T) = scalaFunc.apply(t)
     }
   }
+
+  implicit def toInterval(double: Double): ProbabilisticDoubleInterval = ProbabilisticDoubleInterval.ofExactly(double)
 
   implicit def createPlanBuilder(rheemContext: RheemContext): PlanBuilder = new PlanBuilder(rheemContext)
 

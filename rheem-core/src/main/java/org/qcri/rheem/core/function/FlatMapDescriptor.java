@@ -1,9 +1,11 @@
 package org.qcri.rheem.core.function;
 
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataUnitType;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -20,11 +22,24 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
 
     private final SerializableFunction<Input, Iterable<Output>> javaImplementation;
 
+    /**
+     * The selectivity ({code 0..1}) of this instance or {@code null} if unspecified.
+     */
+    private ProbabilisticDoubleInterval selectivity;
+
     public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
                              Class<Input> inputTypeClass,
                              Class<Output> outputTypeClass) {
-        this(javaImplementation, DataUnitType.createBasic(inputTypeClass), DataUnitType.createBasic(outputTypeClass));
+        this(javaImplementation, inputTypeClass, outputTypeClass, null);
     }
+
+    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
+                             Class<Input> inputTypeClass,
+                             Class<Output> outputTypeClass,
+                             ProbabilisticDoubleInterval selectivity) {
+        this(javaImplementation, inputTypeClass, outputTypeClass, selectivity, null, null);
+    }
+
 
     public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
                              Class<Input> inputTypeClass,
@@ -32,31 +47,37 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
                              LoadEstimator cpuLoadEstimator,
                              LoadEstimator ramLoadEstimator) {
         this(javaImplementation,
+                inputTypeClass,
+                outputTypeClass,
+                null,
+                cpuLoadEstimator,
+                ramLoadEstimator);
+    }
+    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
+                             Class<Input> inputTypeClass,
+                             Class<Output> outputTypeClass,
+                             ProbabilisticDoubleInterval selectivity,
+                             LoadEstimator cpuLoadEstimator,
+                             LoadEstimator ramLoadEstimator) {
+        this(javaImplementation,
                 DataUnitType.createBasic(inputTypeClass),
                 DataUnitType.createBasic(outputTypeClass),
+                selectivity,
                 cpuLoadEstimator,
                 ramLoadEstimator);
     }
 
-    @Deprecated
     public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
-                             BasicDataUnitType inputType,
-                             BasicDataUnitType outputType) {
-        this(javaImplementation, inputType, outputType,
-                LoadEstimator.createFallback(1, 1),
-                LoadEstimator.createFallback(1, 1));
-    }
-
-    @Deprecated
-    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
-                             BasicDataUnitType inputType,
-                             BasicDataUnitType outputType,
+                             BasicDataUnitType<Input> inputType,
+                             BasicDataUnitType<Output> outputType,
+                             ProbabilisticDoubleInterval selectivity,
                              LoadEstimator cpuLoadEstimator,
                              LoadEstimator ramLoadEstimator) {
         super(cpuLoadEstimator, ramLoadEstimator);
         this.javaImplementation = javaImplementation;
         this.inputType = inputType;
         this.outputType = outputType;
+        this.selectivity = selectivity;
     }
 
     /**
@@ -85,5 +106,14 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
 
     public BasicDataUnitType<Output> getOutputType() {
         return this.outputType;
+    }
+
+    /**
+     * Get the selectivity of this instance.
+     *
+     * @return an {@link Optional} with the selectivity or an empty one if no selectivity was specified
+     */
+    public Optional<ProbabilisticDoubleInterval> getSelectivity() {
+        return Optional.ofNullable(this.selectivity);
     }
 }

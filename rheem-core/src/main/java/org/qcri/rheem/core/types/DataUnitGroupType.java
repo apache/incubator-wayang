@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.types;
 
+import org.qcri.rheem.core.util.ReflectionUtils;
+
 import java.util.Objects;
 
 /**
@@ -19,8 +21,8 @@ public class DataUnitGroupType<T> extends DataUnitType<Iterable<T>> {
     }
 
     @Override
-    public Class getTypeClass() {
-        return baseType.getTypeClass();
+    public Class<Iterable<T>> getTypeClass() {
+        return ReflectionUtils.specify(Iterable.class);
     }
 
     public DataUnitType<T> getBaseType() {
