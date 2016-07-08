@@ -14,30 +14,33 @@ import java.util.function.Function;
  */
 public abstract class FunctionDescriptor {
 
-    protected LoadEstimator cpuLoadEstimator;
-
-    protected LoadEstimator memoryLoadEstimator;
+    private LoadProfileEstimator loadProfileEstimator;
 
     public FunctionDescriptor() {
         this(null, null);
     }
 
     public FunctionDescriptor(LoadEstimator cpuLoadEstimator, LoadEstimator memoryLoadEstimator) {
-        this.cpuLoadEstimator = cpuLoadEstimator;
-        this.memoryLoadEstimator = memoryLoadEstimator;
+        this.setLoadEstimators(cpuLoadEstimator, memoryLoadEstimator);
     }
 
     public void setLoadEstimators(LoadEstimator cpuLoadEstimator, LoadEstimator memoryLoadEstimator) {
-        this.cpuLoadEstimator = cpuLoadEstimator;
-        this.memoryLoadEstimator = memoryLoadEstimator;
+        if (cpuLoadEstimator == null && memoryLoadEstimator == null) {
+            this.loadProfileEstimator = null;
+        } else {
+            this.loadProfileEstimator = new NestableLoadProfileEstimator(
+                    cpuLoadEstimator == null ?
+                            LoadEstimator.createFallback(LoadEstimator.UNSPECIFIED_NUM_SLOTS, LoadEstimator.UNSPECIFIED_NUM_SLOTS) :
+                            cpuLoadEstimator,
+                    memoryLoadEstimator == null ?
+                            LoadEstimator.createFallback(LoadEstimator.UNSPECIFIED_NUM_SLOTS, LoadEstimator.UNSPECIFIED_NUM_SLOTS) :
+                            memoryLoadEstimator
+            );
+        }
     }
 
     public Optional<LoadProfileEstimator> getLoadProfileEstimator() {
-        if (this.cpuLoadEstimator != null && this.memoryLoadEstimator != null) {
-            return Optional.of(new NestableLoadProfileEstimator(this.cpuLoadEstimator, this.memoryLoadEstimator));
-        } else {
-            return Optional.empty();
-        }
+        return Optional.ofNullable(this.loadProfileEstimator);
     }
 
     /**

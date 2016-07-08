@@ -9,6 +9,8 @@ import java.util.Arrays;
  */
 public abstract class LoadEstimator {
 
+    public static final int UNSPECIFIED_NUM_SLOTS = -1;
+
     /**
      * Should be used to replace {@code null} {@link CardinalityEstimate}s.
      */

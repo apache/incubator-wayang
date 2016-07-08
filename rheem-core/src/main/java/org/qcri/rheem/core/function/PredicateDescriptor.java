@@ -6,7 +6,6 @@ import org.qcri.rheem.core.types.BasicDataUnitType;
 
 import java.io.Serializable;
 import java.util.Optional;
-import java.util.OptionalDouble;
 import java.util.function.Predicate;
 
 /**

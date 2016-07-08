@@ -14,8 +14,6 @@ import java.util.stream.LongStream;
  */
 public class DefaultLoadEstimator extends LoadEstimator {
 
-    public static final int UNSPECIFIED_NUM_SLOTS = -1;
-
     private final double correctnessProbablity;
 
     private final int numInputs, numOutputs;

@@ -1,13 +1,15 @@
 package org.qcri.rheem
 
 import _root_.java.lang.{Class => JavaClass, Iterable => JavaIterable}
-import _root_.java.util.function.Consumer
+import _root_.java.util.function.{Consumer, ToLongBiFunction}
 
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
-import org.qcri.rheem.core.plan.rheemplan.{ElementaryOperator, Operator}
+import org.qcri.rheem.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, FixedSizeCardinalityEstimator}
+import org.qcri.rheem.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator}
+import org.qcri.rheem.core.plan.rheemplan.ElementaryOperator
 import org.qcri.rheem.core.types.{BasicDataUnitType, DataSetType, DataUnitGroupType, DataUnitType}
 
 import scala.collection.JavaConversions
@@ -61,6 +63,20 @@ package object api {
       def accept(t: T) = scalaFunc.apply(t)
     }
   }
+
+  implicit def toCardinalityEstimator(fixCardinality: Long): CardinalityEstimator =
+    new FixedSizeCardinalityEstimator(fixCardinality, true)
+
+  implicit def toLoadEstimator(f: (Array[Long], Array[Long]) => Long): LoadEstimator =
+    new DefaultLoadEstimator(
+      LoadEstimator.UNSPECIFIED_NUM_SLOTS,
+      LoadEstimator.UNSPECIFIED_NUM_SLOTS,
+      1d,
+      CardinalityEstimate.EMPTY_ESTIMATE,
+      new ToLongBiFunction[Array[Long], Array[Long]] {
+        override def applyAsLong(t: Array[Long], u: Array[Long]): Long = f.apply(t, u)
+      }
+    )
 
   implicit def toInterval(double: Double): ProbabilisticDoubleInterval = ProbabilisticDoubleInterval.ofExactly(double)
 

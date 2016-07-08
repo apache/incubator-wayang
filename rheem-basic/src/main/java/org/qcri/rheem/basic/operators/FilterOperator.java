@@ -71,7 +71,7 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         return Optional.of(new FilterOperator.CardinalityEstimator(this.predicateDescriptor, configuration));
     }
 
-    public DataSetType getType() {
+    public DataSetType<Type> getType() {
         return this.getInputType();
     }
 
