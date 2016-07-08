@@ -3,6 +3,7 @@ package org.qcri.rheem.apps.wordcount
 import org.qcri.rheem.api._
 import org.qcri.rheem.apps.util.Parameters
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.platform.Platform
 
 /**
@@ -24,10 +25,11 @@ class WordCountScala(platforms: Platform*) {
 
     rheemCtx
       .readTextFile(inputUrl).withName("Load file")
-      .flatMap(_.split("\\W+")).withName("Split words")
+      .flatMap(_.split("\\W+"), selectivity = new ProbabilisticDoubleInterval(100, 10000, .8d)).withName("Split words")
       .filter(_.nonEmpty).withName("Filter empty words")
       .map(word => (word.toLowerCase, 1)).withName("To lower case, add counter")
       .reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 + c2._2)).withName("Add counters")
+      .withCardinalityEstimator((in: Long) => math.round(in * 0.01))
       .withUdfJarsOf(classOf[WordCountScala])
       .collect(jobName = s"WordCount ($inputUrl)")
   }

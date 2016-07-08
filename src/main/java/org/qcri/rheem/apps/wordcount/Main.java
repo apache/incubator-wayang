@@ -6,6 +6,7 @@ import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
@@ -39,10 +40,10 @@ public class Main {
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
                 new FlatMapDescriptor<>(line -> Arrays.asList(line.split("\\W+")),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(String.class)
-                ), DataSetType.createDefault(String.class),
-                DataSetType.createDefault(String.class)
+                        String.class,
+                        String.class,
+                        new ProbabilisticDoubleInterval(100, 10000, 0.8)
+                )
         );
         flatMapOperator.setName("Split words");
 
