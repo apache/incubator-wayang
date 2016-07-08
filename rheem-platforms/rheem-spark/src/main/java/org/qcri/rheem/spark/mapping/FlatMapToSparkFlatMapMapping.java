@@ -17,28 +17,23 @@ public class FlatMapToSparkFlatMapMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(
-                new PlanTransformation(
-                        this.createSubplanPattern(),
-                        this.createReplacementSubplanFactory(),
-                        SparkPlatform.getInstance()
-                )
-        );
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                SparkPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "flatMap", new FlatMapOperator<>(null, DataSetType.none(), DataSetType.none()), false);
+                "flatMap", new FlatMapOperator<>(null, DataSetType.none(), DataSetType.none()), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<FlatMapOperator>(
-                (matchedOperator, epoch) -> new SparkFlatMapOperator<>(
-                        matchedOperator.getInputType(),
-                        matchedOperator.getOutputType(),
-                        matchedOperator.getFunctionDescriptor()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new SparkFlatMapOperator<>(matchedOperator).at(epoch)
         );
     }
 }

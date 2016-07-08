@@ -1,9 +1,11 @@
 package org.qcri.rheem.spark.mapping;
 
+import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.basic.operators.UnionAllOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.spark.operators.SparkReduceByOperator;
 import org.qcri.rheem.spark.operators.SparkUnionAllOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -17,22 +19,23 @@ public class UnionAllToSparkUnionAllMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                SparkPlatform.getInstance()));
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                SparkPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "unionAll", new UnionAllOperator<>(DataSetType.none()), false);
+                "unionAll", new UnionAllOperator<>(DataSetType.none()), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final UnionAllOperator<?> originalOperator = (UnionAllOperator<?>) subplanMatch.getMatch("unionAll").getOperator();
-            return new SparkUnionAllOperator<>(originalOperator.getInputType0()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<UnionAllOperator>(
+                (matchedOperator, epoch) -> new SparkUnionAllOperator<>(matchedOperator).at(epoch)
+        );
     }
 }

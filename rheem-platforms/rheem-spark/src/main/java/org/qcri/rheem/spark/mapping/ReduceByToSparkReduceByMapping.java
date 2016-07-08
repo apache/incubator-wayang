@@ -16,28 +16,23 @@ public class ReduceByToSparkReduceByMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(
-                new PlanTransformation(
-                        this.createSubplanPattern(),
-                        this.createReplacementSubplanFactory(),
-                        SparkPlatform.getInstance()
-                )
-        );
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                SparkPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "reduceBy", new ReduceByOperator<>(null, null, null), false);
+                "reduceBy", new ReduceByOperator<>(null, null, null), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<ReduceByOperator>(
-                (matchedOperator, epoch) -> new SparkReduceByOperator<>(
-                        matchedOperator.getType(),
-                        matchedOperator.getKeyDescriptor(),
-                        matchedOperator.getReduceDescriptor()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new SparkReduceByOperator<>(matchedOperator).at(epoch)
         );
     }
 }

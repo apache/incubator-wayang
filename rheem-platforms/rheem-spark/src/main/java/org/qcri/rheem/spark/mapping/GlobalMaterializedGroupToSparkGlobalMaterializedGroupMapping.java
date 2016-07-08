@@ -1,11 +1,9 @@
 package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator;
-import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkGlobalMaterializedGroupOperator;
-import org.qcri.rheem.spark.operators.SparkGlobalReduceOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;
@@ -28,16 +26,14 @@ public class GlobalMaterializedGroupToSparkGlobalMaterializedGroupMapping implem
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "group", new GlobalMaterializedGroupOperator<>(DataSetType.none(), DataSetType.none()), false);
+                "group", new GlobalMaterializedGroupOperator<>(DataSetType.none(), DataSetType.none()), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<GlobalMaterializedGroupOperator>(
-                (matchedOperator, epoch) -> new SparkGlobalMaterializedGroupOperator<>(
-                        matchedOperator.getInputType(),
-                        matchedOperator.getOutputType()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new SparkGlobalMaterializedGroupOperator<>(matchedOperator).at(epoch)
         );
     }
 
