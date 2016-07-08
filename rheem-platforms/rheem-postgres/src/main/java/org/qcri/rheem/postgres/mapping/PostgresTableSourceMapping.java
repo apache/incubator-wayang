@@ -2,10 +2,9 @@ package org.qcri.rheem.postgres.mapping;
 
 import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.postgres.operators.PostgresTableSource;
 import org.qcri.rheem.postgres.PostgresPlatform;
+import org.qcri.rheem.postgres.operators.PostgresTableSource;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -17,22 +16,23 @@ public class PostgresTableSourceMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                PostgresPlatform.getInstance()));
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                PostgresPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "source", new org.qcri.rheem.basic.operators.TableSource(null, DataSetType.none()), false);
+                "source", new TableSource(null, DataSetType.none()), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final TableSource originalSource = (TableSource) subplanMatch.getMatch("source").getOperator();
-            return new PostgresTableSource(originalSource.getTableName(), originalSource.getType()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<TableSource>(
+                (matchedOperator, epoch) -> new PostgresTableSource<>(matchedOperator).at(epoch)
+        );
     }
 }

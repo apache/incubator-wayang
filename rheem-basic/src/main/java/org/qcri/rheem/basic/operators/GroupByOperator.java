@@ -5,8 +5,6 @@ import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.Iterator;
-
 /**
  * This is the auxiliary GroupBy operator, i.e., it behaves differently depending on its context. If it is followed
  * by a {@link ReduceOperator} (and akin), it turns that one into a {@link ReduceByOperator}. Otherwise, it corresponds to a

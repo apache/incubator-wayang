@@ -34,10 +34,7 @@ public class GlobalMaterializedGroupToJavaGlobalMaterializedGroupMapping impleme
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<GlobalMaterializedGroupOperator>(
-                (matchedOperator, epoch) -> new JavaGlobalMaterializedGroupOperator<>(
-                        matchedOperator.getInputType(),
-                        matchedOperator.getOutputType()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new JavaGlobalMaterializedGroupOperator<>(matchedOperator).at(epoch)
         );
     }
 }

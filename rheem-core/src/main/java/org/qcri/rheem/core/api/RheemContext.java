@@ -1,7 +1,6 @@
 package org.qcri.rheem.core.api;
 
 import org.apache.commons.lang3.StringUtils;
-import org.qcri.rheem.core.api.configuration.ExplicitCollectionProvider;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Platform;
@@ -53,7 +52,19 @@ public class RheemContext {
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
     public void execute(RheemPlan rheemPlan, String... udfJars) {
-        this.createJob(rheemPlan, udfJars).execute();
+        this.execute(null, rheemPlan, udfJars);
+    }
+
+    /**
+     * Execute a plan.
+     *
+     * @param jobName   name of the {@link Job} or {@code null}
+     * @param rheemPlan the plan to execute
+     * @param udfJars   JARs that declare the code for the UDFs
+     * @see ReflectionUtils#getDeclaringJar(Class)
+     */
+    public void execute(String jobName, RheemPlan rheemPlan, String... udfJars) {
+        this.createJob(jobName, rheemPlan, udfJars).execute();
     }
 
     /**
@@ -61,8 +72,8 @@ public class RheemContext {
      *
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
-    public Job createJob(RheemPlan rheemPlan, String... udfJars) {
-        return new Job(this, rheemPlan, udfJars);
+    public Job createJob(String jobName, RheemPlan rheemPlan, String... udfJars) {
+        return new Job(this, jobName, rheemPlan, udfJars);
     }
 
     public Configuration getConfiguration() {

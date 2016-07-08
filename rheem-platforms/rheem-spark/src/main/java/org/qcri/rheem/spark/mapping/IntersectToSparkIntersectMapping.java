@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.IntersectOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkIntersectOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
@@ -17,8 +16,11 @@ public class IntersectToSparkIntersectMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                SparkPlatform.getInstance()));
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                SparkPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -28,12 +30,9 @@ public class IntersectToSparkIntersectMapping implements Mapping {
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final IntersectOperator<?> originalOperator = (IntersectOperator<?>) subplanMatch.getMatch("intersect").getOperator();
-            return new SparkIntersectOperator<>(originalOperator.getInputType0()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<IntersectOperator>(
+                (matchedOperator, epoch) -> new SparkIntersectOperator<>(matchedOperator).at(epoch)
+        );
     }
 }

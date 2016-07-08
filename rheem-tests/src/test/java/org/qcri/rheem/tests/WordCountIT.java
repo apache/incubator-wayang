@@ -49,10 +49,9 @@ public class WordCountIT {
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
                 new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(String.class)
-                ), DataSetType.createDefault(String.class),
-                DataSetType.createDefault(String.class)
+                        String.class,
+                        String.class
+                )
         );
         flatMapOperator.getFunctionDescriptor().setLoadEstimators(
                 new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 670),
@@ -133,10 +132,9 @@ public class WordCountIT {
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
                 new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(String.class)
-                ), DataSetType.createDefault(String.class),
-                DataSetType.createDefault(String.class)
+                        String.class,
+                        String.class
+                )
         );
 
 
@@ -177,7 +175,7 @@ public class WordCountIT {
 
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
-        final Job job = rheemContext.createJob(rheemPlan);
+        final Job job = rheemContext.createJob(null, rheemPlan);
         job.getConfiguration().getPlatformProvider().addToWhitelist(SparkPlatform.getInstance());
         job.execute();
 
@@ -212,8 +210,8 @@ public class WordCountIT {
                 DataSetType.createDefault(String.class),
                 DataSetType.createDefault(String.class),
                 new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(String.class)
+                        String.class,
+                        String.class
                 ));
 
 
@@ -282,10 +280,9 @@ public class WordCountIT {
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
                 new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(String.class)
-                ), DataSetType.createDefault(String.class),
-                DataSetType.createDefault(String.class)
+                        String.class,
+                        String.class
+                )
         );
         flatMapOperator.addTargetPlatform(JavaPlatform.getInstance());
         flatMapOperator.setName("Split words");
@@ -363,10 +360,9 @@ public class WordCountIT {
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
                 new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(String.class)
-                ), DataSetType.createDefault(String.class),
-                DataSetType.createDefault(String.class)
+                        String.class,
+                        String.class
+                )
         );
 
 

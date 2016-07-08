@@ -26,16 +26,14 @@ public class GlobalReduceMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "reduce", new GlobalReduceOperator<>(null, DataSetType.none()), false);
+                "reduce", new GlobalReduceOperator<>(null, DataSetType.none()), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<GlobalReduceOperator>(
-                (matchedOperator, epoch) -> new SparkGlobalReduceOperator<>(
-                        matchedOperator.getType(),
-                        matchedOperator.getReduceDescriptor()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new SparkGlobalReduceOperator<>(matchedOperator ).at(epoch)
         );
     }
 

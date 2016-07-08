@@ -42,6 +42,15 @@ public class JavaReduceByOperator<Type, KeyType>
         super(keyDescriptor, reduceDescriptor, type);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaReduceByOperator(ReduceByOperator<Type, KeyType> that) {
+        super(that);
+    }
+
     @Override
     public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
         final BiFunction<Type, Type, Type> udf = compiler.compile(this.reduceDescriptor);
@@ -64,7 +73,7 @@ public class JavaReduceByOperator<Type, KeyType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
                 configuration.getStringProperty("rheem.java.reduceby.load")
         );

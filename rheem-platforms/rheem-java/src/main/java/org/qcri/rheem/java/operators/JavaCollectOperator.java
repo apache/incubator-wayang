@@ -4,18 +4,13 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
-import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 
@@ -27,12 +22,10 @@ import java.util.stream.Collectors;
 /**
  * Converts {@link StreamChannel} into a {@link CollectionChannel}
  */
-public class JavaCollectOperator<Type> extends OperatorBase implements JavaExecutionOperator {
+public class JavaCollectOperator<Type> extends UnaryToUnaryOperator<Type, Type> implements JavaExecutionOperator {
 
     public JavaCollectOperator(DataSetType<Type> type) {
-        super(1, 1, false, null);
-        this.inputSlots[0] = new InputSlot<>("input", this, type);
-        this.outputSlots[0] = new OutputSlot<>("output", this, type);
+        super(type, type, false, null);
     }
 
     @Override
@@ -55,7 +48,7 @@ public class JavaCollectOperator<Type> extends OperatorBase implements JavaExecu
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, 0, outputIndex);
@@ -64,7 +57,7 @@ public class JavaCollectOperator<Type> extends OperatorBase implements JavaExecu
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
                 configuration.getStringProperty("rheem.java.collect.load")
         );

@@ -31,8 +31,17 @@ public class ZipWithIdOperator<InputType> extends UnaryToUnaryOperator<InputType
         super(inputType, DataSetType.createDefaultUnchecked(Tuple2.class), false, null);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public ZipWithIdOperator(ZipWithIdOperator<InputType> that) {
+        super(that);
+    }
+
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

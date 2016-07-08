@@ -45,6 +45,18 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         this.datasetSize = datasetSize;
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SampleOperator(SampleOperator<Type> that) {
+        super(that);
+        this.sampleSize = that.getSampleSize();
+        this.sampleMethod = that.getSampleMethod();
+        this.datasetSize = that.getDatasetSize();
+    }
+
 
     public DataSetType getType() { return this.getInputType(); }
 
@@ -55,7 +67,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     public Methods getSampleMethod() { return this.sampleMethod; }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

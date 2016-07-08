@@ -14,13 +14,22 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Integer, Integ
 
     /**
      * Creates a new instance.
-
      */
     public PageRankOperator(int numIterations) {
         super(DataSetType.createDefaultUnchecked(Tuple2.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class),
                 false, null);
         this.numIterations = numIterations;
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public PageRankOperator(PageRankOperator that) {
+        super(that);
+        this.numIterations = that.getNumIterations();
     }
 
     public int getNumIterations() {

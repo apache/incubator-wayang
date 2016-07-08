@@ -19,29 +19,23 @@ public class DoWhileMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(
-                new PlanTransformation(
-                        this.createSubplanPattern(),
-                        this.createReplacementSubplanFactory(),
-                        SparkPlatform.getInstance()
-                )
-        );
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                SparkPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "loop", new DoWhileOperator<>(null, null, (PredicateDescriptor) null, 1), false);
+                "loop", new DoWhileOperator<>(null, null, (PredicateDescriptor) null, 1), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<DoWhileOperator>(
-                (matchedOperator, epoch) -> new SparkDoWhileOperator<>(
-                        matchedOperator.getInputType(),
-                        matchedOperator.getConvergenceType(),
-                        matchedOperator.getCriterionDescriptor(),
-                        matchedOperator.getNumExpectedIterations()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new SparkDoWhileOperator<>(matchedOperator).at(epoch)
         );
     }
 }

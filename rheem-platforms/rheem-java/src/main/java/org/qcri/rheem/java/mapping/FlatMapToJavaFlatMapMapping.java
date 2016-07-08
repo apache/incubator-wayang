@@ -34,11 +34,7 @@ public class FlatMapToJavaFlatMapMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<FlatMapOperator>(
-                (matchedOperator, epoch) -> new JavaFlatMapOperator<>(
-                        matchedOperator.getInputType(),
-                        matchedOperator.getOutputType(),
-                        matchedOperator.getFunctionDescriptor()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new JavaFlatMapOperator<>(matchedOperator).at(epoch)
         );
     }
 }

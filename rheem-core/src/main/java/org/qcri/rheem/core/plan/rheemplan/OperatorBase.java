@@ -4,6 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
@@ -43,6 +44,11 @@ public abstract class OperatorBase implements Operator {
     private ExecutionOperator original;
 
     /**
+     * Optional {@link CardinalityEstimator}s for this instance.
+     */
+    private CardinalityEstimator[] cardinalityEstimators;
+
+    /**
      * Optional name. Helpful for debugging.
      */
     private String name;
@@ -58,10 +64,27 @@ public abstract class OperatorBase implements Operator {
         this.isSupportingBroadcastInputs = isSupportingBroadcastInputs;
         this.inputSlots = inputSlots;
         this.outputSlots = outputSlots;
+        this.cardinalityEstimators = new CardinalityEstimator[this.outputSlots.length];
     }
 
     public OperatorBase(int numInputSlots, int numOutputSlots, boolean isSupportingBroadcastInputs, OperatorContainer container) {
         this(new InputSlot[numInputSlots], new OutputSlot[numOutputSlots], isSupportingBroadcastInputs, container);
+    }
+
+    /**
+     * Creates a plain copy of the given {@link OperatorBase}, including
+     * <ul>
+     * <li>the number of regular {@link InputSlot}s (not the actual {@link InputSlot}s, though)</li>
+     * <li>the number of {@link OutputSlot}s (not the actual {@link OutputSlot}s, though)</li>
+     * <li>whether broadcasts are supported</li>
+     * <li>any specific {@link CardinalityEstimator}s</li>
+     * </ul>
+     *
+     * @param that the {@link OperatorBase} to be copied
+     */
+    protected OperatorBase(OperatorBase that) {
+        this(that.getNumRegularInputs(), that.getNumOutputs(), that.isSupportingBroadcastInputs(), null);
+        System.arraycopy(that.cardinalityEstimators, 0, this.cardinalityEstimators, 0, this.getNumOutputs());
     }
 
     @Override
@@ -257,4 +280,29 @@ public abstract class OperatorBase implements Operator {
     public void setName(String name) {
         this.name = name;
     }
+
+    /**
+     * Retrieve a {@link CardinalityEstimator} tied specifically to this instance. Applicable to
+     * {@link ElementaryOperator}s only.
+     *
+     * @param outputIndex for the output described by the {@code cardinalityEstimator}
+     * @return the {@link CardinalityEstimator} or {@code null} if none exists
+     */
+    public CardinalityEstimator getCardinalityEstimator(int outputIndex) {
+        Validate.isAssignableFrom(ElementaryOperator.class, this.getClass());
+        return this.cardinalityEstimators[outputIndex];
+    }
+
+    /**
+     * Tie a specific {@link CardinalityEstimator} to this instance. Applicable to {@link ElementaryOperator}s
+     * only.
+     *
+     * @param outputIndex          for the output described by the {@code cardinalityEstimator}
+     * @param cardinalityEstimator the {@link CardinalityEstimator}
+     */
+    public void setCardinalityEstimator(int outputIndex, CardinalityEstimator cardinalityEstimator) {
+        Validate.isAssignableFrom(ElementaryOperator.class, this.getClass());
+        this.cardinalityEstimators[outputIndex] = cardinalityEstimator;
+    }
+
 }

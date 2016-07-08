@@ -33,6 +33,15 @@ public class PostgresFilterOperator<Type>
         super(predicateDescriptor, typeClass);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public PostgresFilterOperator(FilterOperator<Type> that) {
+        super(that);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public String evaluate(ChannelInstance[] inputChannels, ChannelInstance[] outputChannels, FunctionCompiler compiler) {

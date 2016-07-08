@@ -24,7 +24,7 @@ public class JavaReservoirSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
-    Random rand;
+    Random rand = new Random();
 
     /**
      * Creates a new instance.
@@ -33,7 +33,6 @@ public class JavaReservoirSampleOperator<Type>
      */
     public JavaReservoirSampleOperator(int sampleSize, DataSetType type) {
         super(sampleSize, type, Methods.RESERVOIR);
-        rand = new Random();
     }
 
     /**
@@ -44,9 +43,16 @@ public class JavaReservoirSampleOperator<Type>
      */
     public JavaReservoirSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
         super(sampleSize, datasetSize, type, Methods.RESERVOIR);
-        rand = new Random();
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaReservoirSampleOperator(SampleOperator<Type> that) {
+        super(that);
+    }
 
     @Override
     @SuppressWarnings("unchecked")
@@ -75,7 +81,7 @@ public class JavaReservoirSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         return Optional.of(new NestableLoadProfileEstimator(
                 new DefaultLoadEstimator(this.getNumInputs(), 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
                 LoadEstimator.createFallback(this.getNumInputs(), 1)

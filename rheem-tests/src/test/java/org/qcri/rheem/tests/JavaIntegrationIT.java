@@ -106,7 +106,7 @@ public class JavaIntegrationIT {
         rheemContext.register(JavaPlatform.getInstance());
 
         // Have Rheem execute the plan.
-        final Job job = rheemContext.createJob(rheemPlan);
+        final Job job = rheemContext.createJob(null, rheemPlan);
         // ILLEGAL: We blacklist the Java platform, although we need it.
         job.getConfiguration().getPlatformProvider().addToBlacklist(JavaPlatform.getInstance());
         job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());

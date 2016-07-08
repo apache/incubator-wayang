@@ -10,11 +10,25 @@ public abstract class UnaryToUnaryOperator<InputType, OutputType> extends Operat
     /**
      * Creates a new instance.
      */
-    public UnaryToUnaryOperator(DataSetType inputType, DataSetType outputType, boolean isSupportingBroadcastInputs,
-                                OperatorContainer container) {
+    protected UnaryToUnaryOperator(DataSetType<InputType> inputType,
+                                   DataSetType<OutputType> outputType,
+                                   boolean isSupportingBroadcastInputs,
+                                   OperatorContainer container) {
         super(1, 1, isSupportingBroadcastInputs, container);
         this.inputSlots[0] = new InputSlot<>("input", this, inputType);
         this.outputSlots[0] = new OutputSlot<>("output", this, outputType);
+    }
+
+    /**
+     * Copies the given instance.
+     *
+     * @see UnaryToUnaryOperator#UnaryToUnaryOperator(DataSetType, DataSetType, boolean, OperatorContainer)
+     * @see OperatorBase#OperatorBase(OperatorBase)
+     */
+    protected UnaryToUnaryOperator(UnaryToUnaryOperator<InputType, OutputType> that) {
+        super(that);
+        this.inputSlots[0] = new InputSlot<>("input", this, that.getInputType());
+        this.outputSlots[0] = new OutputSlot<>("output", this, that.getOutputType());
     }
 
     public InputSlot<InputType> getInput() {

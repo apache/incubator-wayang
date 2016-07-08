@@ -46,6 +46,15 @@ public class SparkBernoulliSampleOperator<Type>
         super(sampleSize, datasetSize, type, Methods.BERNOULLI);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkBernoulliSampleOperator(SampleOperator<Type> that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
@@ -73,7 +82,7 @@ public class SparkBernoulliSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         // NB: This was not measured but is guesswork, adapted from SparkFilterOperator.
         final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
                 new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),

@@ -36,12 +36,7 @@ public class DoWhileMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<DoWhileOperator>(
-                (matchedOperator, epoch) -> new JavaDoWhileOperator<>(
-                        matchedOperator.getInputType(),
-                        matchedOperator.getConvergenceType(),
-                        matchedOperator.getCriterionDescriptor(),
-                        matchedOperator.getNumExpectedIterations()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new JavaDoWhileOperator<>(matchedOperator).at(epoch)
         );
     }
 }

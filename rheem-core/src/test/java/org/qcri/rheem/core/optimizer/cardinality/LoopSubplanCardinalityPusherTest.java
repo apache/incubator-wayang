@@ -31,7 +31,7 @@ public class LoopSubplanCardinalityPusherTest {
                             assert outputSlot.getOwner().isElementary()
                                     : String.format("Cannot provide estimator for composite %s.", outputSlot.getOwner());
                             return ((ElementaryOperator) outputSlot.getOwner())
-                                    .getCardinalityEstimator(outputSlot.getIndex(), this.configuration)
+                                    .createCardinalityEstimator(outputSlot.getIndex(), this.configuration)
                                     .orElse(null);
                         },
                         this.configuration);

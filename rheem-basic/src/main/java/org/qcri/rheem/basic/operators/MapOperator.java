@@ -48,12 +48,22 @@ public class MapOperator<InputType, OutputType> extends UnaryToUnaryOperator<Inp
         this.functionDescriptor = functionDescriptor;
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public MapOperator(MapOperator<InputType, OutputType> that) {
+        super(that);
+        this.functionDescriptor = that.getFunctionDescriptor();
+    }
+
     public TransformationDescriptor<InputType, OutputType> getFunctionDescriptor() {
         return this.functionDescriptor;
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

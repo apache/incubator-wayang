@@ -29,6 +29,15 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
         super(inputUrl);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkTextFileSource(TextFileSource that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
@@ -46,7 +55,7 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
 //        final OptionalLong optionalFileSize;
 //        if (this.getInputUrl() == null) {
 //            optionalFileSize = OptionalLong.empty();

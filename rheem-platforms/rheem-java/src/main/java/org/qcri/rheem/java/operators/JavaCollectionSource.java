@@ -22,10 +22,19 @@ import java.util.Optional;
 /**
  * This is execution operator implements the {@link TextFileSource}.
  */
-public class JavaCollectionSource extends CollectionSource implements JavaExecutionOperator {
+public class JavaCollectionSource<T> extends CollectionSource<T> implements JavaExecutionOperator {
 
-    public JavaCollectionSource(Collection<?> collection, DataSetType type) {
+    public JavaCollectionSource(Collection<T> collection, DataSetType<T> type) {
         super(collection, type);
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaCollectionSource(CollectionSource<T> that) {
+        super(that);
     }
 
     @Override
@@ -37,7 +46,7 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
                 configuration.getStringProperty("rheem.java.collectionsource.load")
         );
@@ -46,7 +55,7 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaCollectionSource(this.getCollection(), this.getType());
+        return new JavaCollectionSource<>(this.getCollection(), this.getType());
     }
 
     @Override

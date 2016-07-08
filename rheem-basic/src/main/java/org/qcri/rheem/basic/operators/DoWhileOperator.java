@@ -5,8 +5,8 @@ import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.SwitchForwardCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.ReflectionUtils;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,7 +52,7 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
                            int numExpectedIterations) {
         this(inputType,
                 convergenceType,
-                new PredicateDescriptor<>(criterionPredicate, (BasicDataUnitType) convergenceType.getDataUnitType()),
+                new PredicateDescriptor<>(criterionPredicate, ReflectionUtils.specify(Collection.class)),
                 numExpectedIterations
         );
     }
@@ -66,22 +66,39 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
                            int numExpectedIterations) {
         super(3, 2, true, null);
         this.criterionDescriptor = criterionDescriptor;
+        this.numExpectedIterations = numExpectedIterations;
+        this.state = State.NOT_STARTED;
+        this.initializeSlots(inputType, convergenceType);
+    }
+
+    /**
+     * Creates a copy of the given {@link LoopOperator}.
+     *
+     * @param that should be copied
+     */
+    public DoWhileOperator(DoWhileOperator<InputType, ConvergenceType> that) {
+        super(that);
+        this.criterionDescriptor = that.getCriterionDescriptor();
+        this.numExpectedIterations = that.getNumExpectedIterations();
+        this.state = that.getState();
+        this.initializeSlots(that.getInputType(), that.getConvergenceType());
+    }
+
+    private void initializeSlots(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType) {
         this.inputSlots[INITIAL_INPUT_INDEX] = new InputSlot<>("initialInput", this, inputType);
         this.inputSlots[ITERATION_INPUT_INDEX] = new InputSlot<>("iterationInput", this, inputType);
         this.inputSlots[CONVERGENCE_INPUT_INDEX] = new InputSlot<>("convergenceInput", this, convergenceType);
 
         this.outputSlots[ITERATION_OUTPUT_INDEX] = new OutputSlot<>("iterationOutput", this, inputType);
         this.outputSlots[FINAL_OUTPUT_INDEX] = new OutputSlot<>("output", this, inputType);
-        this.state = State.NOT_STARTED;
-
-        this.numExpectedIterations = numExpectedIterations;
     }
 
-
+    @SuppressWarnings("unchecked")
     public DataSetType<InputType> getInputType() {
         return ((InputSlot<InputType>) this.getInput(INITIAL_INPUT_INDEX)).getType();
     }
 
+    @SuppressWarnings("unchecked")
     public DataSetType<ConvergenceType> getConvergenceType() {
         return ((InputSlot<ConvergenceType>) this.getInput(CONVERGENCE_INPUT_INDEX)).getType();
     }
@@ -134,7 +151,7 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex, Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex, Configuration configuration) {
         switch (outputIndex) {
             case ITERATION_OUTPUT_INDEX:
             case FINAL_OUTPUT_INDEX:

@@ -38,7 +38,7 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @return an {@link Optional} that might contain the {@link LoadProfileEstimator} (but {@link Optional#empty()}
      * by default)
      */
-    default Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    default Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         return Optional.empty();
     }
 
@@ -87,4 +87,5 @@ public interface ExecutionOperator extends ElementaryOperator {
         // Heuristic that hopefully holds.
         return this.getNumOutputs() > 0 && !this.getOutputChannelDescriptor(0).isReusable();
     }
+
 }

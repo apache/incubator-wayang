@@ -43,6 +43,13 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
         super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 
+    /**
+     * Creates a new instance.
+     */
+    public JavaDoWhileOperator(DoWhileOperator<InputType, ConvergenceType> that) {
+        super(that);
+    }
+
     @Override
     public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
         final Predicate<Collection<ConvergenceType>> udf = compiler.compile(this.criterionDescriptor);
@@ -96,10 +103,14 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
                 configuration.getStringProperty("rheem.java.while.load")
         );
+        final LoadProfileEstimator udfEstimator = configuration
+                .getFunctionLoadProfileEstimatorProvider()
+                .provideFor(this.criterionDescriptor);
+        estimator.nest(udfEstimator);
         return Optional.of(estimator);
     }
 

@@ -20,12 +20,10 @@ import java.util.Optional;
 /**
  * Takes care of creating a {@link Broadcast} that can be used later on.
  */
-public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkExecutionOperator {
+public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Type> implements SparkExecutionOperator {
 
     public SparkBroadcastOperator(DataSetType<Type> type, OperatorContainer operatorContainer) {
-        super(1, 1, false, operatorContainer);
-        this.inputSlots[0] = new InputSlot<>("input", this, type);
-        this.outputSlots[0] = new OutputSlot<>("output", this, type);
+        super(type, type, false, operatorContainer);
     }
 
     @Override
@@ -52,7 +50,7 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         final String specification = configuration.getStringProperty("rheem.spark.broadcast.load");
         final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);

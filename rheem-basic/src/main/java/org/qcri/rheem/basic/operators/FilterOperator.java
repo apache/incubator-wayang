@@ -3,6 +3,7 @@ package org.qcri.rheem.basic.operators;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
@@ -25,7 +26,7 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * Creates a new instance.
      */
     public FilterOperator(PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor, Class<Type> typeClass) {
-        this(new PredicateDescriptor<>(predicateDescriptor, BasicDataUnitType.createBasic(typeClass)));
+        this(new PredicateDescriptor<>(predicateDescriptor, typeClass));
     }
 
     /**
@@ -45,7 +46,7 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * @param type type of the dataunit elements
      */
     public FilterOperator(DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
-        this(new PredicateDescriptor<>(predicateDescriptor, (BasicDataUnitType) type.getDataUnitType()), type);
+        this(new PredicateDescriptor<>(predicateDescriptor, type.getDataUnitType().getTypeClass()), type);
     }
 
     /**
@@ -58,19 +59,29 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         this.predicateDescriptor = predicateDescriptor;
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public FilterOperator(FilterOperator<Type> that) {
+        super(that);
+        this.predicateDescriptor = that.getPredicateDescriptor();
+    }
+
     public PredicateDescriptor<Type> getPredicateDescriptor() {
         return this.predicateDescriptor;
     }
 
     @Override
-    public Optional<org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator> getCardinalityEstimator(
+    public Optional<org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return Optional.of(new FilterOperator.CardinalityEstimator());
+        return Optional.of(new FilterOperator.CardinalityEstimator(this.predicateDescriptor, configuration));
     }
 
-    public DataSetType getType() {
+    public DataSetType<Type> getType() {
         return this.getInputType();
     }
 
@@ -79,28 +90,25 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      */
     private class CardinalityEstimator implements org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator {
 
-        public static final double DEFAULT_SELECTIVITY_CORRECTNESS = 0.9;
+        /**
+         * The expected selectivity to be applied in this instance.
+         */
+        private final ProbabilisticDoubleInterval selectivity;
+
+        public CardinalityEstimator(PredicateDescriptor<?> predicateDescriptor, Configuration configuration) {
+            this.selectivity = configuration.getPredicateSelectivityProvider().provideFor(predicateDescriptor);
+        }
 
         @Override
         public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
             Validate.isTrue(inputEstimates.length == FilterOperator.this.getNumInputs());
             final CardinalityEstimate inputEstimate = inputEstimates[0];
 
-            final Optional<Double> selectivity = configuration.getPredicateSelectivityProvider()
-                    .optionallyProvideFor(FilterOperator.this.predicateDescriptor);
-            if (selectivity.isPresent()) {
-                return new CardinalityEstimate(
-                        (long) (inputEstimate.getLowerEstimate() * selectivity.get()),
-                        (long) (inputEstimate.getUpperEstimate() * selectivity.get()),
-                        inputEstimate.getCorrectnessProbability() * DEFAULT_SELECTIVITY_CORRECTNESS
-                );
-            } else {
-                return new CardinalityEstimate(
-                        0l,
-                        inputEstimate.getUpperEstimate(),
-                        inputEstimate.getCorrectnessProbability()
-                );
-            }
+            return new CardinalityEstimate(
+                    (long) (inputEstimate.getLowerEstimate() * this.selectivity.getLowerEstimate()),
+                    (long) (inputEstimate.getUpperEstimate() * this.selectivity.getUpperEstimate()),
+                    inputEstimate.getCorrectnessProbability() * this.selectivity.getCorrectnessProbability()
+            );
         }
     }
 }

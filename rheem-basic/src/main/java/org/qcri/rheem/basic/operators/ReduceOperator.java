@@ -39,14 +39,13 @@ public class ReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         this.reduceDescriptor = reduceDescriptor;
     }
 
-
     public ReduceDescriptor<Type> getReduceDescriptor() {
         return this.reduceDescriptor;
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
-                                                                  Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex,
+                                                                     Configuration configuration) {
         return Optional.of(new FixedSizeCardinalityEstimator(1L));
     }
 }

@@ -7,9 +7,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
@@ -25,13 +23,11 @@ import java.util.Optional;
  * Converts an uncached {@link RddChannel} into a cached {@link RddChannel}.
  */
 public class SparkCacheOperator<Type>
-        extends OperatorBase
+        extends UnaryToUnaryOperator<Type, Type>
         implements SparkExecutionOperator {
 
     public SparkCacheOperator(DataSetType<Type> type) {
-        super(1, 1, false, null);
-        this.inputSlots[0] = new InputSlot<>("input", this, type);
-        this.outputSlots[0] = new OutputSlot<>("output", this, type);
+        super(type, type, false, null);
     }
 
     @Override
@@ -55,7 +51,7 @@ public class SparkCacheOperator<Type>
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, 0, outputIndex);
@@ -64,7 +60,7 @@ public class SparkCacheOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final String specification = configuration.getStringProperty("rheem.spark.cache.load");
         final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);

@@ -30,7 +30,7 @@ public class SparkShufflePartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
-    protected Random rand;
+    protected Random rand = new Random();
     int partitionID = 0;
     int tupleID = 0;
     int threshold = 5000;
@@ -42,7 +42,6 @@ public class SparkShufflePartitionSampleOperator<Type>
      */
     public SparkShufflePartitionSampleOperator(int sampleSize, DataSetType type) {
         super(sampleSize, type, Methods.SHUFFLE_FIRST);
-        rand = new Random();
     }
 
     /**
@@ -52,7 +51,15 @@ public class SparkShufflePartitionSampleOperator<Type>
      */
     public SparkShufflePartitionSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
         super(sampleSize, datasetSize, type, Methods.SHUFFLE_FIRST);
-        rand = new Random();
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkShufflePartitionSampleOperator(SampleOperator<Type> that) {
+        super(that);
     }
 
     int nb_partitions = 0;
@@ -112,7 +119,7 @@ public class SparkShufflePartitionSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         // NB: This was not measured but is guesswork, adapted from SparkFilterOperator.
         final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
                 new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),

@@ -37,7 +37,7 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
     }
 
     public GraphChiPageRankOperator(PageRankOperator pageRankOperator) {
-        super(pageRankOperator.getNumIterations());
+        super(pageRankOperator);
     }
 
     @Override

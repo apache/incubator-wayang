@@ -7,6 +7,7 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.*;
@@ -17,8 +18,7 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy;
-import org.qcri.rheem.core.util.Actions;
-import org.qcri.rheem.core.util.ReflectionUtils;
+import org.qcri.rheem.core.util.*;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.slf4j.Logger;
@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
+import java.util.Optional;
 
 /**
  * Describes both the configuration of a {@link RheemContext} and {@link Job}s.
@@ -56,9 +57,9 @@ public class Configuration {
 
     private KeyValueProvider<OutputSlot<?>, CardinalityEstimator> cardinalityEstimatorProvider;
 
-    private KeyValueProvider<PredicateDescriptor, Double> predicateSelectivityProvider;
+    private KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> predicateSelectivityProvider;
 
-    private KeyValueProvider<FlatMapDescriptor<?, ?>, Double> multimapSelectivityProvider;
+    private KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> multimapSelectivityProvider;
 
     private KeyValueProvider<ExecutionOperator, LoadProfileEstimator> operatorLoadProfileEstimatorProvider;
 
@@ -238,8 +239,14 @@ public class Configuration {
                 new FunctionalKeyValueProvider<>(fallbackProvider, (outputSlot, requestee) -> {
                     assert outputSlot.getOwner().isElementary()
                             : String.format("Cannot provide estimator for composite %s.", outputSlot.getOwner());
-                    return ((ElementaryOperator) outputSlot.getOwner())
-                            .getCardinalityEstimator(outputSlot.getIndex(), configuration)
+                    final ElementaryOperator operator = (ElementaryOperator) outputSlot.getOwner();
+                    // Instance-level estimator?
+                    if (operator.getCardinalityEstimator(outputSlot.getIndex()) != null) {
+                        return operator.getCardinalityEstimator(outputSlot.getIndex());
+                    }
+                    // Type-level estimator?
+                    return operator
+                            .createCardinalityEstimator(outputSlot.getIndex(), configuration)
                             .orElse(null);
                 });
 
@@ -251,26 +258,46 @@ public class Configuration {
     }
 
     private static void bootstrapSelectivityProviders(Configuration configuration) {
+        // Selectivity of PredicateDescriptors
         {
             // Safety net: provide a fallback selectivity.
-            KeyValueProvider<PredicateDescriptor, Double> fallbackProvider =
-                    new FunctionalKeyValueProvider<PredicateDescriptor, Double>(
-                            predicateClass -> 0.5d,
+            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> fallbackProvider =
+                    new FunctionalKeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval>(
+                            predicateClass -> new ProbabilisticDoubleInterval(0.1, 1, 0.9d),
                             configuration
-                    ).withSlf4jWarning("Creating fallback selectivity for {}.");
+                    ).withSlf4jWarning("Using fallback selectivity for {}.");
+
+            // Built-in option: Let the PredicateDescriptor provide its selectivity.
+            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> builtInProvider =
+                    new FunctionalKeyValueProvider<>(
+                            fallbackProvider,
+                            predicateDescriptor ->  predicateDescriptor.getSelectivity().orElse(null)
+                    );
 
             // Customizable layer: Users can override manually.
-            KeyValueProvider<PredicateDescriptor, Double> overrideProvider =
-                    new MapBasedKeyValueProvider<>(fallbackProvider);
+            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> overrideProvider =
+                    new MapBasedKeyValueProvider<>(builtInProvider);
 
             configuration.setPredicateSelectivityProvider(overrideProvider);
         }
         {
-            // No safety net here.
+            // Safety net: provide a fallback selectivity.
+            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> fallbackProvider =
+                    new FunctionalKeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval>(
+                            flatMapDescriptor -> new ProbabilisticDoubleInterval(0.1, 100, 0.9d),
+                            configuration
+                    ).withSlf4jWarning("Using fallback selectivity for {}.");
+
+            // Built-in option: Let the FlatMapDescriptor provide its selectivity.
+            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> builtInProvider =
+                    new FunctionalKeyValueProvider<>(
+                            fallbackProvider,
+                            flatMapDescriptor -> flatMapDescriptor.getSelectivity().orElse(null)
+                    );
 
             // Customizable layer: Users can override manually.
-            KeyValueProvider<FlatMapDescriptor<?, ?>, Double> overrideProvider =
-                    new MapBasedKeyValueProvider<>(configuration, false);
+            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> overrideProvider =
+                    new MapBasedKeyValueProvider<>(builtInProvider, false);
 
             configuration.setMultimapSelectivityProvider(overrideProvider);
         }
@@ -283,7 +310,7 @@ public class Configuration {
                     new FunctionalKeyValueProvider<ExecutionOperator, LoadProfileEstimator>(
                             operator -> new NestableLoadProfileEstimator(
                                     DefaultLoadEstimator.createIOLinearEstimator(operator, 10000),
-                                    DefaultLoadEstimator.createIOLinearEstimator(operator, 10000),
+                                    DefaultLoadEstimator.createIOLinearEstimator(operator, 1000),
                                     DefaultLoadEstimator.createIOLinearEstimator(operator, 1000),
                                     DefaultLoadEstimator.createIOLinearEstimator(operator, 1000)
                             ),
@@ -294,7 +321,7 @@ public class Configuration {
             KeyValueProvider<ExecutionOperator, LoadProfileEstimator> builtInProvider =
                     new FunctionalKeyValueProvider<>(
                             fallbackProvider,
-                            operator -> operator.getLoadProfileEstimator(configuration).orElse(null)
+                            operator -> operator.createLoadProfileEstimator(configuration).orElse(null)
                     );
 
             // Customizable layer: Users can override manually.
@@ -308,8 +335,8 @@ public class Configuration {
             KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> fallbackProvider =
                     new FunctionalKeyValueProvider<FunctionDescriptor, LoadProfileEstimator>(
                             functionDescriptor -> new NestableLoadProfileEstimator(
-                                    DefaultLoadEstimator.createIOLinearEstimator(10000),
-                                    DefaultLoadEstimator.createIOLinearEstimator(10000)
+                                    DefaultLoadEstimator.createIOLinearEstimator(200),
+                                    DefaultLoadEstimator.createIOLinearEstimator(100)
                             ),
                             configuration
                     ).withSlf4jWarning("Creating fallback load estimator for {}.");
@@ -450,21 +477,21 @@ public class Configuration {
         this.cardinalityEstimatorProvider = cardinalityEstimatorProvider;
     }
 
-    public KeyValueProvider<PredicateDescriptor, Double> getPredicateSelectivityProvider() {
+    public KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> getPredicateSelectivityProvider() {
         return this.predicateSelectivityProvider;
     }
 
     public void setPredicateSelectivityProvider(
-            KeyValueProvider<PredicateDescriptor, Double> predicateSelectivityProvider) {
+            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> predicateSelectivityProvider) {
         this.predicateSelectivityProvider = predicateSelectivityProvider;
     }
 
-    public KeyValueProvider<FlatMapDescriptor<?, ?>, Double> getMultimapSelectivityProvider() {
+    public KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> getMultimapSelectivityProvider() {
         return this.multimapSelectivityProvider;
     }
 
     public void setMultimapSelectivityProvider(
-            KeyValueProvider<FlatMapDescriptor<?, ?>, Double> multimapSelectivityProvider) {
+            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> multimapSelectivityProvider) {
         this.multimapSelectivityProvider = multimapSelectivityProvider;
     }
 

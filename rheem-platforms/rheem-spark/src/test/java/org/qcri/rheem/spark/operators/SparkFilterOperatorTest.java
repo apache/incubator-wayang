@@ -5,8 +5,6 @@ import org.junit.Test;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.types.DataUnitType;
-import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
@@ -28,7 +26,7 @@ public class SparkFilterOperatorTest extends SparkOperatorTestBase {
         SparkFilterOperator<Integer> filterOperator =
                 new SparkFilterOperator<>(
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        new PredicateDescriptor<>(item -> (item > 0), DataUnitType.createBasic(Integer.class))
+                        new PredicateDescriptor<>(item -> (item > 0), Integer.class)
                 );
 
         // Set up the ChannelInstances.

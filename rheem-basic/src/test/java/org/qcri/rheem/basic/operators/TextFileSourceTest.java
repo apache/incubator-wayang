@@ -45,7 +45,7 @@ public class TextFileSourceTest {
 
         Configuration configuration = new Configuration();
         final Optional<CardinalityEstimator> cardinalityEstimator = textFileSource
-                .getCardinalityEstimator(0, configuration);
+                .createCardinalityEstimator(0, configuration);
 
         Assert.assertTrue(cardinalityEstimator.isPresent());
         final CardinalityEstimate estimate = cardinalityEstimator.get().estimate(configuration);

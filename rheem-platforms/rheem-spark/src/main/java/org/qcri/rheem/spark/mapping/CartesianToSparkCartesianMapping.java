@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.CartesianOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkCartesianOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
@@ -17,23 +16,23 @@ public class CartesianToSparkCartesianMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                SparkPlatform.getInstance()));
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                SparkPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "cartesian", new CartesianOperator<>(DataSetType.none(), DataSetType.none()), false);
+                "cartesian", new CartesianOperator<>(DataSetType.none(), DataSetType.none()), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final CartesianOperator<?, ?> originalOperator = (CartesianOperator<?, ?>) subplanMatch.getMatch("cartesian").getOperator();
-            return new SparkCartesianOperator<>(originalOperator.getInputType0(),
-                    originalOperator.getInputType1()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<CartesianOperator>(
+                (matchedOperator, epoch) -> new SparkCartesianOperator<>(matchedOperator).at(epoch)
+        );
     }
 }

@@ -35,6 +35,15 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         super(inputUrl);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaTextFileSource(TextFileSource that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();
@@ -63,7 +72,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
 //        final OptionalLong optionalFileSize;
 //        if (this.getInputUrl() == null) {
 //            optionalFileSize = OptionalLong.empty();

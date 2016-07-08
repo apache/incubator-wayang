@@ -36,6 +36,15 @@ public class JavaMapOperator<InputType, OutputType>
         super(functionDescriptor, inputType, outputType);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaMapOperator(MapOperator<InputType, OutputType> that) {
+        super(that);
+    }
+
     @Override
     public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
         final Function<InputType, OutputType> udf = compiler.compile(this.functionDescriptor);
@@ -59,14 +68,13 @@ public class JavaMapOperator<InputType, OutputType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator operatorEstimator = NestableLoadProfileEstimator.parseSpecification(
                 configuration.getStringProperty("rheem.java.map.load")
         );
         final LoadProfileEstimator functionEstimator =
                 configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getFunctionDescriptor());
         operatorEstimator.nest(functionEstimator);
-
         return Optional.of(operatorEstimator);
     }
 

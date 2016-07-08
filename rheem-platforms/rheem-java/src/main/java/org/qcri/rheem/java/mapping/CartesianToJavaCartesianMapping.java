@@ -29,10 +29,7 @@ public class CartesianToJavaCartesianMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<CartesianOperator>(
-                (matchedOperator, epoch) -> new JavaCartesianOperator<>(
-                        matchedOperator.getInputType0(),
-                        matchedOperator.getInputType1()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new JavaCartesianOperator<>(matchedOperator).at(epoch)
         );
     }
 }

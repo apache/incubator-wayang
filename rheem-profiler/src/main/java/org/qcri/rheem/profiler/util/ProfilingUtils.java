@@ -23,7 +23,7 @@ public class ProfilingUtils {
      * @param udfJars paths to JAR files needed to run the UDFs (see {@link ReflectionUtils#getDeclaringJar(Class)})
      */
     public static Job fakeJob(String... udfJars) {
-        return new RheemContext().createJob(new RheemPlan(), udfJars);
+        return new RheemContext().createJob("Fake job", new RheemPlan(), udfJars);
     }
 
     /**

@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.CountOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkCountOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
@@ -17,22 +16,23 @@ public class CountToSparkCountMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                SparkPlatform.getInstance()));
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                SparkPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "count", new CountOperator<>(DataSetType.none()), false);
+                "count", new CountOperator<>(DataSetType.none()), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final CountOperator<?> originalOperator = (CountOperator<?>) subplanMatch.getMatch("count").getOperator();
-            return new SparkCountOperator<>(originalOperator.getInputType()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<CountOperator>(
+                (matchedOperator, epoch) -> new SparkCountOperator<>(matchedOperator).at(epoch)
+        );
     }
 }

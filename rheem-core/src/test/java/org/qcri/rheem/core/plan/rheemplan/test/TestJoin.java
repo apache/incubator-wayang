@@ -38,8 +38,8 @@ public class TestJoin<In1, In2, Out> extends BinaryToUnaryOperator<In1, In2, Out
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
-                                                                  Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex,
+                                                                     Configuration configuration) {
         return Optional.of(new DefaultCardinalityEstimator(ESTIMATION_CERTAINTY, 2, false, (cards) -> cards[0] * cards[1]));
     }
 }

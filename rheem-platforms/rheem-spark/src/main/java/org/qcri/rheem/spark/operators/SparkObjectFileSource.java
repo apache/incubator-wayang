@@ -66,7 +66,7 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         // NB: Not measured, instead adapted from SparkTextFileSource.
 //        final OptionalLong optionalFileSize;
 //        if (this.sourcePath == null) {

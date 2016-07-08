@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.ZipWithIdOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkZipWithIdOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
@@ -17,21 +16,22 @@ public class ZipWithIdToSparkZipWithIdMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                SparkPlatform.getInstance()));
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                SparkPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern<>("zipwithid", new ZipWithIdOperator<>(DataSetType.none()), false);
+        final OperatorPattern operatorPattern =
+                new OperatorPattern<>("zipwithid", new ZipWithIdOperator<>(DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final ZipWithIdOperator<?> originalOperator = (ZipWithIdOperator<?>) subplanMatch.getMatch("zipwithid").getOperator();
-            return new SparkZipWithIdOperator<>(originalOperator.getInputType()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<ZipWithIdOperator>(
+                (matchedOperator, epoch) -> new SparkZipWithIdOperator<>(matchedOperator).at(epoch)
+        );
     }
 }

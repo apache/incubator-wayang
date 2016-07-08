@@ -29,8 +29,8 @@ public class TestFilterOperator<InputType> extends UnaryToUnaryOperator<InputTyp
 
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
-                                                                  Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex,
+                                                                     Configuration configuration) {
         assert outputIndex == 0;
         return Optional.of(new DefaultCardinalityEstimator(1d, 1, true, cards -> Math.round(this.selectivity * cards[0])));
     }

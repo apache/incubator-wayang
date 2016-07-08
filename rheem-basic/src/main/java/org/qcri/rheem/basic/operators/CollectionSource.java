@@ -28,12 +28,22 @@ public class CollectionSource<T> extends UnarySource<T> implements ElementaryOpe
         this.collection = collection;
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public CollectionSource(CollectionSource that) {
+        super(that);
+        this.collection = that.getCollection();
+    }
+
     public Collection<T> getCollection() {
         return this.collection;
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

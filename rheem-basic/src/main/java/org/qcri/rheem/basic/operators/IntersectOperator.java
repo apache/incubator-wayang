@@ -24,6 +24,15 @@ public class IntersectOperator<Type> extends BinaryToUnaryOperator<Type, Type, T
     }
 
     /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public IntersectOperator(IntersectOperator<Type> that) {
+        super(that);
+    }
+
+    /**
      * Provides the type of input and output datasets.
      *
      * @return the {@link DataSetType}
@@ -33,7 +42,7 @@ public class IntersectOperator<Type> extends BinaryToUnaryOperator<Type, Type, T
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

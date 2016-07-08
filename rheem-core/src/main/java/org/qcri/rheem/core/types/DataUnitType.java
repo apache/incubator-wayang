@@ -41,5 +41,5 @@ public abstract class DataUnitType<T> {
      */
     public abstract BasicDataUnitType<T> toBasicDataUnitType();
 
-    public abstract Class getTypeClass();
+    public abstract Class<T> getTypeClass();
 }

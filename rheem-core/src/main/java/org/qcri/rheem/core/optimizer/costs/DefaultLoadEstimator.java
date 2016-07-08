@@ -14,8 +14,6 @@ import java.util.stream.LongStream;
  */
 public class DefaultLoadEstimator extends LoadEstimator {
 
-    public static final int UNSPECIFIED_NUM_SLOTS = -1;
-
     private final double correctnessProbablity;
 
     private final int numInputs, numOutputs;
@@ -50,28 +48,32 @@ public class DefaultLoadEstimator extends LoadEstimator {
     }
 
     /**
+     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element.
+     */
+    public static LoadEstimator createIOLinearEstimator(long loadPerCardinalityUnit) {
+        return createIOLinearEstimator(null, loadPerCardinalityUnit);
+    }
+
+    /**
      * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element. Missing
      * {@link CardinalityEstimate}s are interpreted as a cardinality of {@code 0}.
      */
     public static LoadEstimator createIOLinearEstimator(ExecutionOperator operator, long loadPerCardinalityUnit) {
-        return new DefaultLoadEstimator(operator.getNumInputs(),
-                operator.getNumOutputs(),
-                0.01,
-                CardinalityEstimate.EMPTY_ESTIMATE,
-                (inputCards, outputCards) ->
-                        loadPerCardinalityUnit * LongStream.concat(
-                                Arrays.stream(inputCards),
-                                Arrays.stream(outputCards)
-                        ).sum()
-        );
+        return createIOLinearEstimator(operator, loadPerCardinalityUnit, CardinalityEstimate.EMPTY_ESTIMATE);
     }
 
     /**
-     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element.
+     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element. Missing
+     * {@link CardinalityEstimate}s are interpreted as a cardinality of {@code 0}.
      */
-    public static LoadEstimator createIOLinearEstimator(long loadPerCardinalityUnit) {
-        return new DefaultLoadEstimator(UNSPECIFIED_NUM_SLOTS, UNSPECIFIED_NUM_SLOTS,
+    public static LoadEstimator createIOLinearEstimator(ExecutionOperator operator,
+                                                        long loadPerCardinalityUnit,
+                                                        CardinalityEstimate nullCardinalityReplacement) {
+        return new DefaultLoadEstimator(
+                operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumInputs(),
+                operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumOutputs(),
                 0.01,
+                nullCardinalityReplacement,
                 (inputCards, outputCards) ->
                         loadPerCardinalityUnit * LongStream.concat(
                                 Arrays.stream(inputCards),

@@ -29,7 +29,7 @@ import java.util.LinkedList;
 import java.util.Set;
 
 /**
- * {@link Platform} for a single JVM executor based on the {@link java.util.stream} library.
+ * {@link Platform} for Apache Spark.
  */
 public class SparkPlatform extends Platform {
 
@@ -42,11 +42,11 @@ public class SparkPlatform extends Platform {
     private static SparkPlatform instance = null;
 
     private static final String[] REQUIRED_SPARK_PROPERTIES = {
-            "spark.master",
-            "spark.app.name"
+            "spark.master"
     };
 
     private static final String[] OPTIONAL_SPARK_PROPERTIES = {
+            "spark.app.name",
             "spark.executor.memory",
             "spark.executor.cores",
             "spark.executor.instances",
@@ -117,6 +117,9 @@ public class SparkPlatform extends Platform {
             configuration.getOptionalStringProperty(property).ifPresent(
                     value -> sparkConf.set(property, value)
             );
+        }
+        if (job.getName() != null) {
+            sparkConf.set("spark.app.name", job.getName());
         }
 
         if (this.sparkContextReference == null || this.sparkContextReference.isDisposed()) {
@@ -221,7 +224,7 @@ public class SparkPlatform extends Platform {
                 DataSetType.createDefault(Integer.class)
         );
         source.connectTo(0, sink, 0);
-        final Job job = rheemCtx.createJob(new RheemPlan(sink));
+        final Job job = rheemCtx.createJob("Warm up", new RheemPlan(sink));
         // Make sure not to have the warm-up jobs bloat the execution logs.
         job.getConfiguration().setProperty("rheem.core.log.enabled", "false");
         job.execute();

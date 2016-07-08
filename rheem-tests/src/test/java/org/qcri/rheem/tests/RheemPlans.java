@@ -432,8 +432,8 @@ public class RheemPlans {
                             }
                             return result;
                         },
-                        DataUnitType.createBasic(char[].class),
-                        DataUnitType.<Tuple2<Character, Character>>createBasicUnchecked(Tuple2.class))
+                        char[].class,
+                        ReflectionUtils.specify(Tuple2.class))
         );
         adjacencySplitter.setName("adjacency splitter");
         adjacencySource.connectTo(0, adjacencySplitter, 0);
@@ -447,8 +447,8 @@ public class RheemPlans {
                             vertices.add(edge.field1);
                             return vertices;
                         },
-                        DataUnitType.<Tuple2<Character, Character>>createBasicUnchecked(Tuple2.class),
-                        DataUnitType.createBasic(Character.class)
+                        ReflectionUtils.specify(Tuple2.class),
+                        Character.class
                 )
         );
         vertexSplitter.setName("vertex splitter");
