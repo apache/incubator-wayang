@@ -16,13 +16,11 @@ public class ReduceByOperatorToJavaReduceByOperatorMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(
-                new PlanTransformation(
-                        this.createSubplanPattern(),
-                        this.createReplacementSubplanFactory(),
-                        JavaPlatform.getInstance()
-                )
-        );
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                JavaPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -33,11 +31,7 @@ public class ReduceByOperatorToJavaReduceByOperatorMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<ReduceByOperator>(
-                (matchedOperator, epoch) -> new JavaReduceByOperator<>(
-                        matchedOperator.getType(),
-                        matchedOperator.getKeyDescriptor(),
-                        matchedOperator.getReduceDescriptor()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new JavaReduceByOperator<>(matchedOperator).at(epoch)
         );
     }
 }

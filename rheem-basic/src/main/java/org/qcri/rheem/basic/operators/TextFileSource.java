@@ -21,7 +21,7 @@ import java.util.OptionalLong;
 /**
  * This source reads a text file and outputs the lines as data units.
  */
-public class TextFileSource extends UnarySource {
+public class TextFileSource extends UnarySource<String> {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 

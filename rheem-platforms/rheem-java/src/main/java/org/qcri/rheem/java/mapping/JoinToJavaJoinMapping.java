@@ -16,9 +16,11 @@ public class JoinToJavaJoinMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(),
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
                 this.createReplacementSubplanFactory(),
-                JavaPlatform.getInstance()));
+                JavaPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -30,12 +32,7 @@ public class JoinToJavaJoinMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<JoinOperator<Object, Object, Object>>(
-                (matchedOperator, epoch) -> new JavaJoinOperator<>(
-                        matchedOperator.getInputType0(),
-                        matchedOperator.getInputType1(),
-                        matchedOperator.getKeyDescriptor0(),
-                        matchedOperator.getKeyDescriptor1()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new JavaJoinOperator<>(matchedOperator).at(epoch)
         );
     }
 }

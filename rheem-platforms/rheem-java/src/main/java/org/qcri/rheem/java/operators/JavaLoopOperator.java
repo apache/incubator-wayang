@@ -43,6 +43,15 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 
+    /**
+     * Creates a copy of the given {@link LoopOperator}.
+     *
+     * @param that should be copied
+     */
+    public JavaLoopOperator(LoopOperator<InputType, ConvergenceType> that) {
+        super(that);
+    }
+
     @Override
     public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
         final Predicate<Collection<ConvergenceType>> udf = compiler.compile(this.criterionDescriptor);

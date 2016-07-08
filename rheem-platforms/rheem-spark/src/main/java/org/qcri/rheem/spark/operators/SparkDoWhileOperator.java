@@ -44,6 +44,13 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
         super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 
+    /**
+     * Creates a new instance.
+     */
+    public SparkDoWhileOperator(DoWhileOperator<InputType, ConvergenceType> that) {
+        super(that);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler,

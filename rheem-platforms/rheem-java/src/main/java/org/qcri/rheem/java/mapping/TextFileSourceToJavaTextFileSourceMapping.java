@@ -2,9 +2,8 @@ package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.java.operators.JavaTextFileSource;
 import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.operators.JavaTextFileSource;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -16,22 +15,23 @@ public class TextFileSourceToJavaTextFileSourceMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                JavaPlatform.getInstance()));
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                JavaPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "source", new org.qcri.rheem.basic.operators.TextFileSource(null), false);
+                "source", new org.qcri.rheem.basic.operators.TextFileSource((String) null), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final TextFileSource originalSource = (TextFileSource) subplanMatch.getMatch("source").getOperator();
-            return new JavaTextFileSource(originalSource.getInputUrl()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<TextFileSource>(
+                (matchedOperator, epoch) -> new JavaTextFileSource(matchedOperator).at(epoch)
+        );
     }
 }

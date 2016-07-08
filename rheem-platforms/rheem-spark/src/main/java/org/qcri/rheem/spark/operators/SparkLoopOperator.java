@@ -43,6 +43,15 @@ public class SparkLoopOperator<InputType, ConvergenceType>
         super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 
+    /**
+     * Creates a copy of the given {@link LoopOperator}.
+     *
+     * @param that should be copied
+     */
+    public SparkLoopOperator(LoopOperator<InputType, ConvergenceType> that) {
+        super(that);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler,

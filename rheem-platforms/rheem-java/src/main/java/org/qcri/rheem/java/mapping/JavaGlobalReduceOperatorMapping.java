@@ -17,13 +17,11 @@ public class JavaGlobalReduceOperatorMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(
-                new PlanTransformation(
-                        this.createSubplanPattern(),
-                        this.createReplacementSubplanFactory(),
-                        JavaPlatform.getInstance()
-                )
-        );
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                JavaPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -34,10 +32,7 @@ public class JavaGlobalReduceOperatorMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<GlobalReduceOperator>(
-                (matchedOperator, epoch) -> new JavaGlobalReduceOperator<>(
-                        matchedOperator.getType(),
-                        matchedOperator.getReduceDescriptor()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new JavaGlobalReduceOperator<>(matchedOperator).at(epoch)
         );
     }
 }

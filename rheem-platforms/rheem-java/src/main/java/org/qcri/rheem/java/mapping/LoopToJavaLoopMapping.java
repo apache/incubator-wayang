@@ -17,13 +17,11 @@ public class LoopToJavaLoopMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(
-                new PlanTransformation(
-                        this.createSubplanPattern(),
-                        this.createReplacementSubplanFactory(),
-                        JavaPlatform.getInstance()
-                )
-        );
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                JavaPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -34,12 +32,7 @@ public class LoopToJavaLoopMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<LoopOperator>(
-                (matchedOperator, epoch) -> new JavaLoopOperator<>(
-                        matchedOperator.getInputType(),
-                        matchedOperator.getConvergenceType(),
-                        matchedOperator.getCriterionDescriptor(),
-                        matchedOperator.getNumExpectedIterations()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new JavaLoopOperator<>(matchedOperator).at(epoch)
         );
     }
 }

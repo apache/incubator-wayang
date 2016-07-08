@@ -34,10 +34,7 @@ public class FilterToJavaFilterMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<FilterOperator>(
-                (matchedOperator, epoch) -> new JavaFilterOperator<>(
-                        matchedOperator.getType(),
-                        matchedOperator.getPredicateDescriptor()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new JavaFilterOperator<>(matchedOperator).at(epoch)
         );
     }
 }

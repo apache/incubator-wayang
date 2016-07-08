@@ -22,9 +22,9 @@ import java.util.Optional;
 /**
  * This is execution operator implements the {@link TextFileSource}.
  */
-public class JavaCollectionSource extends CollectionSource implements JavaExecutionOperator {
+public class JavaCollectionSource<T> extends CollectionSource<T> implements JavaExecutionOperator {
 
-    public JavaCollectionSource(Collection<?> collection, DataSetType type) {
+    public JavaCollectionSource(Collection<T> collection, DataSetType<T> type) {
         super(collection, type);
     }
 
@@ -33,7 +33,7 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
      *
      * @param that that should be copied
      */
-    public JavaCollectionSource(CollectionSource that) {
+    public JavaCollectionSource(CollectionSource<T> that) {
         super(that);
     }
 
@@ -55,7 +55,7 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaCollectionSource(this.getCollection(), this.getType());
+        return new JavaCollectionSource<>(this.getCollection(), this.getType());
     }
 
     @Override

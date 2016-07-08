@@ -2,10 +2,9 @@ package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -17,8 +16,11 @@ public class JavaLocalCallbackSinkMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                JavaPlatform.getInstance()));
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                JavaPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -27,12 +29,9 @@ public class JavaLocalCallbackSinkMapping implements Mapping {
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final LocalCallbackSink originalSink = (LocalCallbackSink) subplanMatch.getMatch("sink").getOperator();
-            return new JavaLocalCallbackSink<>(originalSink.getCallback(), originalSink.getInput().getType()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<LocalCallbackSink>(
+                (matchedOperator, epoch) -> new JavaLocalCallbackSink<>(matchedOperator).at(epoch)
+        );
     }
 }

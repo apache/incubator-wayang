@@ -43,6 +43,13 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
         super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 
+    /**
+     * Creates a new instance.
+     */
+    public JavaDoWhileOperator(DoWhileOperator<InputType, ConvergenceType> that) {
+        super(that);
+    }
+
     @Override
     public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
         final Predicate<Collection<ConvergenceType>> udf = compiler.compile(this.criterionDescriptor);

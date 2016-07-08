@@ -2,10 +2,9 @@ package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.DistinctOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.operators.JavaDistinctOperator;
 import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.operators.JavaDistinctOperator;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -17,8 +16,9 @@ public class DistinctToJavaDistinctMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(new PlanTransformation(this.createSubplanPattern(), new ReplacementFactory(),
-                JavaPlatform.getInstance()));
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(), this.createReplacementSubplanFactory(), JavaPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
@@ -27,12 +27,9 @@ public class DistinctToJavaDistinctMapping implements Mapping {
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
-    private static class ReplacementFactory extends ReplacementSubplanFactory {
-
-        @Override
-        protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final DistinctOperator<?> originalOperator = (DistinctOperator<?>) subplanMatch.getMatch("distinct").getOperator();
-            return new JavaDistinctOperator<>(originalOperator.getInputType()).at(epoch);
-        }
+    private ReplacementSubplanFactory createReplacementSubplanFactory() {
+        return new ReplacementSubplanFactory.OfSingleOperators<DistinctOperator>(
+                (matchedOperator, epoch) -> new JavaDistinctOperator<>(matchedOperator).at(epoch)
+        );
     }
 }
