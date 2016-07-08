@@ -13,27 +13,24 @@ Rheem is an efficient and scalable distributed data processing framework develop
 - You can download the latest (v0.1) [from here (with spark 1.6 included)](http://rheem-qcri.s3-website-us-east-1.amazonaws.com/rheem-0.1-with-spark-1.6.0.SNAPSHOT.jar), or [here (no spark)](http://rheem-qcri.s3-website-us-east-1.amazonaws.com/rheem-0.1-SNAPSHOT.jar).
 - This version v0.1 provides the platform independence feature (looping and cross-platform optimization features are coming very soon, keep tuned!)
 
-### Source Code
-- The source code can be found [here](https://github.com/daqcri/QCRI-rheem)
-
 ### Prerequisites
 To be able to run a Rheem application, the following software is needed:
 - [Java 1.8](http://www.java.com/en/download/faq/develop.xml)
 - [Apache Maven](http://maven.apache.org)
-- Include the rheem jar files into your project.
+- Include the Rheem jar files into your project.
 - In case spark is needed; Spark (v1.6 and over), hadoop (v2.2 to v2.6.2)
 
 ### Platforms support (Rheem v0.1)
 - Java (standalone JVM)
 - [Apache Spark](https://spark.apache.org/)
+- [Graphchi](https://github.com/GraphChi/graphchi-java)
+- [Postgres](http://www.postgresql.org)
 - Coming soon: 
-    - [Graphchi](https://github.com/GraphChi/graphchi-java)
-    - [Postgres](http://www.postgresql.org)
     - [Torch](http://torch.ch/)
     - [Alluxio](http://www.alluxio.org/)
 
 ### Usage
-- Include the rheem jar as a library in your application.
+- Include the Rheem jar as a library in your application.
 - Steps for writing a rheem application:
     1. Define a [Rheem plan](rheem-resources/docs/org/qcri/rheem/core/plan/rheemplan/RheemPlan.html) using rheem operators. For a list of all currently supported rheem operators check the [api documentation](rheem-resources/docs/org/qcri/rheem/basic/operators/package-summary.html)
     2. Create a rheem context.
@@ -134,7 +131,7 @@ Also note that in this example we registered 2 platforms (lines 3-4), which mean
 ```
 
 
-### License:
+### License
 
 Unless explicitly stated otherwise all files in this repository are licensed under the Apache Software License 2.0
 
