@@ -76,4 +76,9 @@ public abstract class AggregationDescriptor<InputType, OutputType> extends Funct
     public BasicDataUnitType<OutputType> getOutputType() {
         return this.outputType;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s]", this.getClass().getSimpleName(), this.getJavaImplementation());
+    }
 }

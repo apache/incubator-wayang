@@ -102,4 +102,9 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
     public interface ExtendedSerializablePredicate<T> extends SerializablePredicate<T>, ExtendedFunction {
 
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s]", this.getClass().getSimpleName(), this.javaImplementation);
+    }
 }

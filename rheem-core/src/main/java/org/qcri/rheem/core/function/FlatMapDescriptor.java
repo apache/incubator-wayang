@@ -116,4 +116,9 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
     public Optional<ProbabilisticDoubleInterval> getSelectivity() {
         return Optional.ofNullable(this.selectivity);
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s]", this.getClass().getSimpleName(), this.javaImplementation);
+    }
 }
