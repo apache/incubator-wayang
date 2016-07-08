@@ -20,24 +20,23 @@ public class PostgresProjectionMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(
-                new PlanTransformation(
-                        this.createSubplanPattern(),
-                        this.createReplacementSubplanFactory(),
-                        PostgresPlatform.getInstance()
-                )
-        );
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                PostgresPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "projection", new ProjectionOperator<>((ProjectionDescriptor) null, null, null), false);
+                "projection", new ProjectionOperator<>((ProjectionDescriptor) null, null, null), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<ProjectionOperator>(
-                (matchedOperator, epoch) -> new PostgresProjectionOperator<>(matchedOperator.getFunctionDescriptor()).at(epoch)
+                (matchedOperator, epoch) -> new PostgresProjectionOperator<>(matchedOperator).at(epoch)
         );
     }
 }

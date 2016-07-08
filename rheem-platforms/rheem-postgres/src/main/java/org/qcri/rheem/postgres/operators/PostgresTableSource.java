@@ -8,9 +8,9 @@ import org.qcri.rheem.postgres.compiler.FunctionCompiler;
 /**
  * PostgreSQL implementation for the {@link TableSource}.
  */
-public class PostgresTableSource extends TableSource implements PostgresExecutionOperator {
+public class PostgresTableSource<T> extends TableSource<T> implements PostgresExecutionOperator {
 
-    public PostgresTableSource(String tableName, DataSetType type) {
+    public PostgresTableSource(String tableName, DataSetType<T> type) {
         super(tableName, type);
     }
 
@@ -19,7 +19,7 @@ public class PostgresTableSource extends TableSource implements PostgresExecutio
      *
      * @param that that should be copied
      */
-    public PostgresTableSource(TableSource that) {
+    public PostgresTableSource(TableSource<T> that) {
         super(that);
     }
 

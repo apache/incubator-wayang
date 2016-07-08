@@ -18,27 +18,23 @@ public class PostgresFilterMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
-        return Collections.singleton(
-                new PlanTransformation(
-                        this.createSubplanPattern(),
-                        this.createReplacementSubplanFactory(),
-                        PostgresPlatform.getInstance()
-                )
-        );
+        return Collections.singleton(new PlanTransformation(
+                this.createSubplanPattern(),
+                this.createReplacementSubplanFactory(),
+                PostgresPlatform.getInstance()
+        ));
     }
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "filter", new FilterOperator<>((PredicateDescriptor) null, null), false);
+                "filter", new FilterOperator<>((PredicateDescriptor) null, null), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<FilterOperator>(
-                (matchedOperator, epoch) -> new PostgresFilterOperator<>(
-                        matchedOperator.getType(),
-                        matchedOperator.getPredicateDescriptor()
-                ).at(epoch)
+                (matchedOperator, epoch) -> new PostgresFilterOperator<>(matchedOperator).at(epoch)
         );
     }
 }
