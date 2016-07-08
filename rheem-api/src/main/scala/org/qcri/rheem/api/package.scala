@@ -1,13 +1,13 @@
 package org.qcri.rheem
 
 import _root_.java.lang.{Class => JavaClass, Iterable => JavaIterable}
-import _root_.java.util.function.{Consumer, ToLongBiFunction}
+import _root_.java.util.function.{Consumer, ToLongBiFunction, ToLongFunction}
 
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
-import org.qcri.rheem.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, FixedSizeCardinalityEstimator}
+import org.qcri.rheem.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, DefaultCardinalityEstimator, FixedSizeCardinalityEstimator}
 import org.qcri.rheem.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator}
 import org.qcri.rheem.core.plan.rheemplan.ElementaryOperator
 import org.qcri.rheem.core.types.{BasicDataUnitType, DataSetType, DataUnitGroupType, DataUnitType}
@@ -67,14 +67,38 @@ package object api {
   implicit def toCardinalityEstimator(fixCardinality: Long): CardinalityEstimator =
     new FixedSizeCardinalityEstimator(fixCardinality, true)
 
-  implicit def toLoadEstimator(f: (Array[Long], Array[Long]) => Long): LoadEstimator =
+  implicit def toCardinalityEstimator(fixCardinality: Int): CardinalityEstimator =
+    new FixedSizeCardinalityEstimator(fixCardinality, true)
+
+  implicit def toCardinalityEstimator(f: Long => Long): CardinalityEstimator =
+    new DefaultCardinalityEstimator(1d, 1, true, new ToLongFunction[Array[Long]] {
+      override def applyAsLong(inCards: Array[Long]): Long = f.apply(inCards(0))
+    })
+
+  implicit def toCardinalityEstimator(f: (Long, Long) => Long): CardinalityEstimator =
+    new DefaultCardinalityEstimator(1d, 1, true, new ToLongFunction[Array[Long]] {
+      override def applyAsLong(inCards: Array[Long]): Long = f.apply(inCards(0), inCards(1))
+    })
+
+  implicit def toLoadEstimator(f: (Long, Long) => Long): LoadEstimator =
     new DefaultLoadEstimator(
-      LoadEstimator.UNSPECIFIED_NUM_SLOTS,
-      LoadEstimator.UNSPECIFIED_NUM_SLOTS,
+      1,
+      1,
       1d,
       CardinalityEstimate.EMPTY_ESTIMATE,
       new ToLongBiFunction[Array[Long], Array[Long]] {
-        override def applyAsLong(t: Array[Long], u: Array[Long]): Long = f.apply(t, u)
+        override def applyAsLong(t: Array[Long], u: Array[Long]): Long = f.apply(t(0), u(0))
+      }
+    )
+
+  implicit def toLoadEstimator(f: (Long, Long, Long) => Long): LoadEstimator =
+    new DefaultLoadEstimator(
+      2,
+      1,
+      1d,
+      CardinalityEstimate.EMPTY_ESTIMATE,
+      new ToLongBiFunction[Array[Long], Array[Long]] {
+        override def applyAsLong(t: Array[Long], u: Array[Long]): Long = f.apply(t(0), t(1), u(0))
       }
     )
 
