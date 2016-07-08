@@ -3,7 +3,6 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -69,11 +68,14 @@ public class JavaFlatMapOperator<InputType, OutputType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
                 configuration.getStringProperty("rheem.java.flatmap.load")
         );
-        estimator.nest(configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getFunctionDescriptor()));
+        final LoadProfileEstimator udfEstimator = configuration
+                .getFunctionLoadProfileEstimatorProvider()
+                .provideFor(this.functionDescriptor);
+        estimator.nest(udfEstimator);
         return Optional.of(estimator);
     }
 

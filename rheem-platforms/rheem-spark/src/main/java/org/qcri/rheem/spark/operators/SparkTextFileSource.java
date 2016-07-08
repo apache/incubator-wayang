@@ -46,7 +46,7 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
 //        final OptionalLong optionalFileSize;
 //        if (this.getInputUrl() == null) {
 //            optionalFileSize = OptionalLong.empty();

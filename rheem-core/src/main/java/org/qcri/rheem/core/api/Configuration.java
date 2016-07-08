@@ -321,7 +321,7 @@ public class Configuration {
             KeyValueProvider<ExecutionOperator, LoadProfileEstimator> builtInProvider =
                     new FunctionalKeyValueProvider<>(
                             fallbackProvider,
-                            operator -> operator.getLoadProfileEstimator(configuration).orElse(null)
+                            operator -> operator.createLoadProfileEstimator(configuration).orElse(null)
                     );
 
             // Customizable layer: Users can override manually.

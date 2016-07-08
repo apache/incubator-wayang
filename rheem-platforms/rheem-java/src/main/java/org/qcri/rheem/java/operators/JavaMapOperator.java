@@ -59,14 +59,13 @@ public class JavaMapOperator<InputType, OutputType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator operatorEstimator = NestableLoadProfileEstimator.parseSpecification(
                 configuration.getStringProperty("rheem.java.map.load")
         );
         final LoadProfileEstimator functionEstimator =
                 configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getFunctionDescriptor());
         operatorEstimator.nest(functionEstimator);
-
         return Optional.of(operatorEstimator);
     }
 

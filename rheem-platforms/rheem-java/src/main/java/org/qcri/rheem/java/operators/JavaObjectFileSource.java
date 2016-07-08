@@ -74,7 +74,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
 //        final OptionalLong optionalFileSize;
 //        if (this.sourcePath == null) {
 //            optionalFileSize = OptionalLong.empty();

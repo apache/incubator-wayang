@@ -38,7 +38,7 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @return an {@link Optional} that might contain the {@link LoadProfileEstimator} (but {@link Optional#empty()}
      * by default)
      */
-    default Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    default Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         return Optional.empty();
     }
 

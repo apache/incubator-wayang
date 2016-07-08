@@ -61,10 +61,14 @@ public class JavaFilterOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
                 configuration.getStringProperty("rheem.java.filter.load")
         );
+        final LoadProfileEstimator udfEstimator = configuration
+                .getFunctionLoadProfileEstimatorProvider()
+                .provideFor(this.predicateDescriptor);
+        estimator.nest(udfEstimator);
         return Optional.of(estimator);
     }
 

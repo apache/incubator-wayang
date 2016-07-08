@@ -88,7 +88,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
 
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
                 configuration.getStringProperty("rheem.java.objectfilesink.load")
         );

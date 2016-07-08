@@ -46,7 +46,7 @@ public class JavaDistinctOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
                 configuration.getStringProperty("rheem.java.distinct.load")
         );

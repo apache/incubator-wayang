@@ -51,7 +51,7 @@ public class SparkIntersectOperator<Type> extends IntersectOperator<Type> implem
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         final String specification = configuration.getStringProperty("rheem.spark.intersect.load");
         final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);

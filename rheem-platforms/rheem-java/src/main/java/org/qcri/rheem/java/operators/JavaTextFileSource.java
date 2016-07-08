@@ -63,7 +63,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
 //        final OptionalLong optionalFileSize;
 //        if (this.getInputUrl() == null) {
 //            optionalFileSize = OptionalLong.empty();

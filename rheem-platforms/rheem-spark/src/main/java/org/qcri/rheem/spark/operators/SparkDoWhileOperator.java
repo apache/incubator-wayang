@@ -103,9 +103,13 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final String specification = configuration.getStringProperty("rheem.spark.while.load");
         final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
+        final LoadProfileEstimator udfEstimator = configuration
+                .getFunctionLoadProfileEstimatorProvider()
+                .provideFor(this.criterionDescriptor);
+        mainEstimator.nest(udfEstimator);
         return Optional.of(mainEstimator);
     }
 

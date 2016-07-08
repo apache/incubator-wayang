@@ -61,7 +61,7 @@ public class SparkCartesianOperator<InputType0, InputType1>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         final String specification = configuration.getStringProperty("rheem.spark.cartesian.load");
         final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);

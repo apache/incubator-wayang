@@ -73,7 +73,7 @@ public class SparkBernoulliSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
         // NB: This was not measured but is guesswork, adapted from SparkFilterOperator.
         final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
                 new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),

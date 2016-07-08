@@ -64,10 +64,14 @@ public class JavaGlobalReduceOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
                 configuration.getStringProperty("rheem.java.globalreduce.load")
         );
+        final LoadProfileEstimator udfEstimator = configuration
+                .getFunctionLoadProfileEstimatorProvider()
+                .provideFor(this.reduceDescriptor);
+        estimator.nest(udfEstimator);
         return Optional.of(estimator);
     }
 
