@@ -47,6 +47,17 @@ public class JoinOperator<InputType0, InputType1, Key>
 
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JoinOperator(JoinOperator<InputType0, InputType1, Key> that) {
+        super(that);
+        this.keyDescriptor0 = that.getKeyDescriptor0();
+        this.keyDescriptor1 = that.getKeyDescriptor1();
+    }
+
     public TransformationDescriptor<InputType0, Key> getKeyDescriptor0() {
         return this.keyDescriptor0;
     }

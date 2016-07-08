@@ -14,6 +14,15 @@ public class PostgresTableSource extends TableSource implements PostgresExecutio
         super(tableName, type);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public PostgresTableSource(TableSource that) {
+        super(that);
+    }
+
     @Override
     public String evaluate(ChannelInstance[] inputChannels, ChannelInstance[] outputChannels, FunctionCompiler compiler) {
         return "select %s from " + this.getTableName();

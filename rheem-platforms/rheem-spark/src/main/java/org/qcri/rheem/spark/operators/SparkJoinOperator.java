@@ -40,6 +40,15 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
         super(inputType0, inputType1, keyDescriptor0, keyDescriptor1);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkJoinOperator(JoinOperator<InputType0, InputType1, KeyType> that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();

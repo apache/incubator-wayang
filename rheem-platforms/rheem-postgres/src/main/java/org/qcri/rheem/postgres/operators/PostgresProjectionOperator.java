@@ -33,6 +33,15 @@ public class PostgresProjectionOperator<InputType, OutputType> extends Projectio
         super(functionDescriptor);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public PostgresProjectionOperator(ProjectionOperator<InputType, OutputType> that) {
+        super(that);
+    }
+
     @Override
     public String evaluate(ChannelInstance[] inputChannels, ChannelInstance[] outputChannels, FunctionCompiler compiler) {
         List<String> colNames = this.getFunctionDescriptor().getFieldNames();

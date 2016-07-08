@@ -71,6 +71,22 @@ public abstract class OperatorBase implements Operator {
         this(new InputSlot[numInputSlots], new OutputSlot[numOutputSlots], isSupportingBroadcastInputs, container);
     }
 
+    /**
+     * Creates a plain copy of the given {@link OperatorBase}, including
+     * <ul>
+     * <li>the number of regular {@link InputSlot}s (not the actual {@link InputSlot}s, though)</li>
+     * <li>the number of {@link OutputSlot}s (not the actual {@link OutputSlot}s, though)</li>
+     * <li>whether broadcasts are supported</li>
+     * <li>any specific {@link CardinalityEstimator}s</li>
+     * </ul>
+     *
+     * @param that the {@link OperatorBase} to be copied
+     */
+    protected OperatorBase(OperatorBase that) {
+        this(that.getNumRegularInputs(), that.getNumOutputs(), that.isSupportingBroadcastInputs(), null);
+        System.arraycopy(that.cardinalityEstimators, 0, this.cardinalityEstimators, 0, this.getNumOutputs());
+    }
+
     @Override
     public InputSlot<?>[] getAllInputs() {
         return this.inputSlots;

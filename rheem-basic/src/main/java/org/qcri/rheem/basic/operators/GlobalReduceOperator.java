@@ -38,6 +38,17 @@ public class GlobalReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type>
     }
 
     /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public GlobalReduceOperator(GlobalReduceOperator<Type> that) {
+        super(that);
+        this.reduceDescriptor = that.reduceDescriptor;
+    }
+
+
+    /**
      * Creates a new instance.
      *
      * @param reduceDescriptor describes the reduction to be performed on the elements

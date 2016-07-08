@@ -31,6 +31,15 @@ public class ZipWithIdOperator<InputType> extends UnaryToUnaryOperator<InputType
         super(inputType, DataSetType.createDefaultUnchecked(Tuple2.class), false, null);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public ZipWithIdOperator(ZipWithIdOperator<InputType> that) {
+        super(that);
+    }
+
     @Override
     public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,

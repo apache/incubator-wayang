@@ -34,6 +34,15 @@ public class DistinctOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         this(DataSetType.createDefault(typeClass));
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public DistinctOperator(DistinctOperator<Type> that) {
+        super(that);
+    }
+
     @Override
     public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,

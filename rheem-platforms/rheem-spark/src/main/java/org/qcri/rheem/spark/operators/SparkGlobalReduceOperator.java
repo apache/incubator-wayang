@@ -41,6 +41,15 @@ public class SparkGlobalReduceOperator<Type>
         super(reduceDescriptor, type);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkGlobalReduceOperator(GlobalReduceOperator<Type> that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();

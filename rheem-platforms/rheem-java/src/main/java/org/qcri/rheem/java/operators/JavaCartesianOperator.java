@@ -34,6 +34,15 @@ public class JavaCartesianOperator<InputType0, InputType1>
         super(inputType0, inputType1);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaCartesianOperator(CartesianOperator<InputType0, InputType1> that) {
+        super(that);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {

@@ -8,20 +8,32 @@ import org.qcri.rheem.core.types.DataSetType;
 public abstract class UnarySink<T> extends OperatorBase implements ElementaryOperator {
 
     /**
-     * Creates a new instance.
-     */
-    public UnarySink(DataSetType type, boolean isSupportingBroadcastInputs, OperatorContainer container) {
-        super(1, 0, isSupportingBroadcastInputs, container);
-        this.inputSlots[0] = new InputSlot<>("input", this, type);
-    }
-
-    /**
      * Creates a new instance that does not support broadcast {@link InputSlot}s.
      */
     public UnarySink(DataSetType type, OperatorContainer container) {
         this(type, false, container);
     }
 
+    /**
+     * Creates a new instance.
+     */
+    public UnarySink(DataSetType<T> type, boolean isSupportingBroadcastInputs, OperatorContainer container) {
+        super(1, 0, isSupportingBroadcastInputs, container);
+        this.inputSlots[0] = new InputSlot<>("input", this, type);
+    }
+
+    /**
+     * Copies the given instance.
+     *
+     * @see UnarySink#UnarySink(DataSetType, boolean, OperatorContainer)
+     * @see OperatorBase#OperatorBase(OperatorBase)
+     */
+    public UnarySink(UnarySink<T> that) {
+        super(that);
+        this.inputSlots[0] = new InputSlot<>("input", this, that.getType());
+    }
+
+    @SuppressWarnings("unchecked")
     public InputSlot<T> getInput() {
         return (InputSlot<T>) this.getInput(0);
     }

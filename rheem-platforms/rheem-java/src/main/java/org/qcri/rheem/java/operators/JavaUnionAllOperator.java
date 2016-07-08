@@ -2,8 +2,6 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.UnionAllOperator;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -35,6 +33,15 @@ public class JavaUnionAllOperator<Type>
      */
     public JavaUnionAllOperator(DataSetType<Type> type) {
         super(type);
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaUnionAllOperator(UnionAllOperator<Type> that) {
+        super(that);
     }
 
     @Override

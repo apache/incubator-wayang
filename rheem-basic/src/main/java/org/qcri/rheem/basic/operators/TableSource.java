@@ -5,7 +5,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.basic.data.Record;
 
 /**
- * Created by yidris on 3/10/16.
+ * {@link UnarySource} that provides the tuples from a database table.
  */
 public class TableSource<T> extends UnarySource<T> {
 
@@ -22,6 +22,16 @@ public class TableSource<T> extends UnarySource<T> {
     public TableSource(String tableName, DataSetType<T> type) {
         super(type, null);
         this.tableName = tableName;
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public TableSource(TableSource that) {
+        super(that);
+        this.tableName = that.getTableName();
     }
 
     // TODO: Provide a cardinality estimator.

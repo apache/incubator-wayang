@@ -28,6 +28,15 @@ public class JavaCollectionSource extends CollectionSource implements JavaExecut
         super(collection, type);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaCollectionSource(CollectionSource that) {
+        super(that);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {

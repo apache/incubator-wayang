@@ -36,6 +36,15 @@ public class JavaMapOperator<InputType, OutputType>
         super(functionDescriptor, inputType, outputType);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaMapOperator(MapOperator<InputType, OutputType> that) {
+        super(that);
+    }
+
     @Override
     public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
         final Function<InputType, OutputType> udf = compiler.compile(this.functionDescriptor);

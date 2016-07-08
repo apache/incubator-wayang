@@ -34,6 +34,15 @@ public class SparkCartesianOperator<InputType0, InputType1>
         super(inputType0, inputType1);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkCartesianOperator(CartesianOperator<InputType0, InputType1> that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();

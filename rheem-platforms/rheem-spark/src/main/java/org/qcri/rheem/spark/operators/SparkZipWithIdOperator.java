@@ -45,6 +45,15 @@ public class SparkZipWithIdOperator<InputType>
         super(inputTypeClass);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkZipWithIdOperator(ZipWithIdOperator<InputType> that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();

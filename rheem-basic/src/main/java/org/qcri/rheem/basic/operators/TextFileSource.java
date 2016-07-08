@@ -39,6 +39,17 @@ public class TextFileSource extends UnarySource {
         this.encoding = encoding;
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public TextFileSource(TextFileSource that) {
+        super(that);
+        this.inputUrl = that.getInputUrl();
+        this.encoding = that.getEncoding();
+    }
+
     public String getInputUrl() {
         return this.inputUrl;
     }

@@ -24,6 +24,15 @@ public class IntersectOperator<Type> extends BinaryToUnaryOperator<Type, Type, T
     }
 
     /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public IntersectOperator(IntersectOperator<Type> that) {
+        super(that);
+    }
+
+    /**
      * Provides the type of input and output datasets.
      *
      * @return the {@link DataSetType}

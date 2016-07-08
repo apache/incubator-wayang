@@ -33,6 +33,15 @@ public class JavaLocalCallbackSink<T> extends LocalCallbackSink<T> implements Ja
         super(callback, type);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaLocalCallbackSink(LocalCallbackSink<T> that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();

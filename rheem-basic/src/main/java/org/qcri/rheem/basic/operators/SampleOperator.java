@@ -45,6 +45,18 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         this.datasetSize = datasetSize;
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SampleOperator(SampleOperator<Type> that) {
+        super(that);
+        this.sampleSize = that.getSampleSize();
+        this.sampleMethod = that.getSampleMethod();
+        this.datasetSize = that.getDatasetSize();
+    }
+
 
     public DataSetType getType() { return this.getInputType(); }
 

@@ -36,6 +36,15 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
         super(keyDescriptor, inputType, outputType);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkMaterializedGroupByOperator(MaterializedGroupByOperator<Type, KeyType> that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();

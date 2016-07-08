@@ -48,6 +48,16 @@ public class MapOperator<InputType, OutputType> extends UnaryToUnaryOperator<Inp
         this.functionDescriptor = functionDescriptor;
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public MapOperator(MapOperator<InputType, OutputType> that) {
+        super(that);
+        this.functionDescriptor = that.getFunctionDescriptor();
+    }
+
     public TransformationDescriptor<InputType, OutputType> getFunctionDescriptor() {
         return this.functionDescriptor;
     }

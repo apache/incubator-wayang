@@ -50,6 +50,15 @@ public class JavaFilterOperator<Type>
         super(type, predicateDescriptor);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaFilterOperator(FilterOperator<Type> that) {
+        super(that);
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {

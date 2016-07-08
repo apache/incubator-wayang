@@ -45,6 +45,16 @@ public class LocalCallbackSink<T> extends UnarySink<T> {
     }
 
     /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public LocalCallbackSink(LocalCallbackSink<T> that) {
+        super(that);
+        this.callback = that.getCallback();
+    }
+
+    /**
      * Creates a new instance.
      *
      * @param callback callback that is executed locally for each incoming data unit

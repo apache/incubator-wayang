@@ -58,6 +58,17 @@ public class ReduceByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Type
         this.reduceDescriptor = reduceDescriptor;
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public ReduceByOperator(ReduceByOperator<Type, Key> that) {
+        super(that);
+        this.keyDescriptor = that.getKeyDescriptor();
+        this.reduceDescriptor = that.getReduceDescriptor();
+    }
+
     public DataSetType<Type> getType() {
         return this.getInputType();
     }

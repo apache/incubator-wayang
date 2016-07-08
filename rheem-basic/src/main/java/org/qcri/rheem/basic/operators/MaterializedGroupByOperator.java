@@ -9,7 +9,6 @@ import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
-import java.util.Iterator;
 import java.util.Optional;
 
 /**
@@ -55,6 +54,16 @@ public class MaterializedGroupByOperator<Type, Key> extends UnaryToUnaryOperator
                                        DataSetType<Iterable<Type>> outputType) {
         super(inputType, outputType, false, null);
         this.keyDescriptor = keyDescriptor;
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public MaterializedGroupByOperator(MaterializedGroupByOperator<Type, Key> that) {
+        super(that);
+        this.keyDescriptor = that.getKeyDescriptor();
     }
 
     public TransformationDescriptor<Type, Key> getKeyDescriptor() {

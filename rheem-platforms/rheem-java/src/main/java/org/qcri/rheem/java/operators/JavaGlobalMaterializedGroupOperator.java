@@ -28,6 +28,15 @@ public class JavaGlobalMaterializedGroupOperator<Type>
         super(typeClass);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaGlobalMaterializedGroupOperator(GlobalMaterializedGroupOperator<Type> that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == 1;

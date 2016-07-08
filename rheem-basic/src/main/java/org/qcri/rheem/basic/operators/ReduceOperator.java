@@ -39,7 +39,6 @@ public class ReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         this.reduceDescriptor = reduceDescriptor;
     }
 
-
     public ReduceDescriptor<Type> getReduceDescriptor() {
         return this.reduceDescriptor;
     }

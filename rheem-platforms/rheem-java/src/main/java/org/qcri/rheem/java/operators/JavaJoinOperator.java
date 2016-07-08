@@ -38,6 +38,15 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
         super(inputType0, inputType1, keyDescriptor0, keyDescriptor1);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaJoinOperator(JoinOperator<InputType0, InputType1, KeyType> that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
         assert inputs.length == this.getNumInputs();

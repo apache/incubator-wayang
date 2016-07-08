@@ -38,6 +38,15 @@ public class SparkFlatMapOperator<InputType, OutputType>
         super(functionDescriptor, inputType, outputType);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkFlatMapOperator(FlatMapOperator<InputType, OutputType> that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();

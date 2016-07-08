@@ -31,6 +31,15 @@ public class SparkGlobalMaterializedGroupOperator<Type>
         super(typeClass);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkGlobalMaterializedGroupOperator(GlobalMaterializedGroupOperator<Type> that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();

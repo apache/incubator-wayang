@@ -53,6 +53,16 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
         this.functionDescriptor = functionDescriptor;
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public FlatMapOperator(FlatMapOperator<InputType, OutputType> that) {
+        super(that);
+        this.functionDescriptor = that.functionDescriptor;
+    }
+
     public FlatMapDescriptor<InputType, OutputType> getFunctionDescriptor() {
         return this.functionDescriptor;
     }

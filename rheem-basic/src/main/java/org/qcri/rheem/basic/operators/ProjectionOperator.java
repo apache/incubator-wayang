@@ -27,12 +27,12 @@ public class ProjectionOperator<InputType, OutputType> extends UnaryToUnaryOpera
      */
     public ProjectionOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass,
                               String... fieldNames) {
-        this(new ProjectionDescriptor<InputType, OutputType>(inputTypeClass, outputTypeClass, fieldNames));
+        this(new ProjectionDescriptor<>(inputTypeClass, outputTypeClass, fieldNames));
     }
 
     public ProjectionOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass,
                               Integer... fieldIndexes) {
-        this(new ProjectionDescriptor<InputType, OutputType>(inputTypeClass, outputTypeClass, fieldIndexes));
+        this(new ProjectionDescriptor<>(inputTypeClass, outputTypeClass, fieldIndexes));
     }
 
     /**
@@ -51,6 +51,16 @@ public class ProjectionOperator<InputType, OutputType> extends UnaryToUnaryOpera
                               DataSetType<InputType> inputType, DataSetType<OutputType> outputType) {
         super(inputType, outputType, true, null);
         this.functionDescriptor = functionDescriptor;
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public ProjectionOperator(ProjectionOperator<InputType, OutputType> that) {
+        super(that);
+        this.functionDescriptor = that.getFunctionDescriptor();
     }
 
     public ProjectionDescriptor<InputType, OutputType> getFunctionDescriptor() {

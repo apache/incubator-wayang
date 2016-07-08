@@ -28,6 +28,15 @@ public class CartesianOperator<InputType0, InputType1>
         super(inputType0, inputType1, DataSetType.createDefaultUnchecked(Tuple2.class), true);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public CartesianOperator(CartesianOperator<InputType0, InputType1> that) {
+        super(that);
+    }
+
     @Override
     public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,

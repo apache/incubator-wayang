@@ -32,6 +32,15 @@ public class GlobalMaterializedGroupOperator<Type> extends UnaryToUnaryOperator<
         super(inputType, outputType, false, null);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public GlobalMaterializedGroupOperator(GlobalMaterializedGroupOperator<Type> that) {
+        super(that);
+    }
+
     @Override
     public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,

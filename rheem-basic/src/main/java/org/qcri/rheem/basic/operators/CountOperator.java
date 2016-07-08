@@ -34,6 +34,15 @@ public class CountOperator<Type> extends UnaryToUnaryOperator<Type, Long> {
         this(DataSetType.createDefault(typeClass));
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public CountOperator(CountOperator<Type> that) {
+        super(that);
+    }
+
     @Override
     public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,

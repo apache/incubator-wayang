@@ -38,6 +38,15 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
         super(collection, type);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkCollectionSource(CollectionSource that) {
+        super(that);
+    }
+
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length <= 1;

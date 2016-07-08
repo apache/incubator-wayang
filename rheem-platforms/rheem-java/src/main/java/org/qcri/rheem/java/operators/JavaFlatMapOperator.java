@@ -36,6 +36,15 @@ public class JavaFlatMapOperator<InputType, OutputType>
         super(functionDescriptor, inputType, outputType);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaFlatMapOperator(FlatMapOperator<InputType, OutputType> that) {
+        super(that);
+    }
+
     @Override
     public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
         final Function<InputType, Iterable<OutputType>> udf = compiler.compile(this.functionDescriptor);

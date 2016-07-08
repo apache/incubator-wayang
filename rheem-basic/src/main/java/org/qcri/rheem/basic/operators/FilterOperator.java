@@ -59,6 +59,16 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         this.predicateDescriptor = predicateDescriptor;
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public FilterOperator(FilterOperator<Type> that) {
+        super(that);
+        this.predicateDescriptor = that.getPredicateDescriptor();
+    }
+
     public PredicateDescriptor<Type> getPredicateDescriptor() {
         return this.predicateDescriptor;
     }
