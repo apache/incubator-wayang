@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
+import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Canonicalizer;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
@@ -52,6 +53,11 @@ public class PlanImplementation {
      */
     // TODO: I think, we don't maintain this field properly. Also, its semantics blur inside of LoopImplementations. Can we remove it?
     private PlanEnumeration planEnumeration;
+
+    /**
+     * Keep track of the {@link Platform}s of our {@link #operators}.
+     */
+    private Set<Platform> platformCache;
 
     /**
      * {@link OptimizationContext} that provides estimates for the {@link #operators}.
@@ -599,4 +605,33 @@ public class PlanImplementation {
             }
         }
     }
+
+    public Set<Platform> getUtilizedPlatforms() {
+        if (this.platformCache == null) {
+            this.platformCache = this.streamOperators()
+                    .map(ExecutionOperator::getPlatform)
+                    .collect(Collectors.toSet());
+        }
+        return this.platformCache;
+    }
+
+    /**
+     * Stream all the {@link ExecutionOperator}s in this instance.
+     *
+     * @return a {@link Stream} containing every {@link ExecutionOperator} at least once
+     */
+    Stream<ExecutionOperator> streamOperators() {
+        Stream<ExecutionOperator> operatorStream = Stream.concat(
+                this.operators.stream(),
+                this.junctions.values().stream().flatMap(j -> j.getConversionTasks().stream()).map(ExecutionTask::getOperator)
+        );
+        if (!this.loopImplementations.isEmpty()) {
+            operatorStream = Stream.concat(
+                    operatorStream,
+                    this.loopImplementations.values().stream().flatMap(LoopImplementation::streamOperators)
+            );
+        }
+        return operatorStream;
+    }
+
 }

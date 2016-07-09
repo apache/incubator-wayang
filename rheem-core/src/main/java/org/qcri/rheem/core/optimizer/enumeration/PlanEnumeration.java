@@ -451,7 +451,10 @@ public class PlanEnumeration {
      */
     private PlanImplementation createSingletonPartialPlan(ExecutionOperator executionOperator, OptimizationContext optimizationContext) {
         return new PlanImplementation(
-                this, new HashMap<>(0), Collections.singletonList(executionOperator), optimizationContext
+                this,
+                new HashMap<>(0),
+                Collections.singletonList(executionOperator),
+                optimizationContext
         );
     }
 

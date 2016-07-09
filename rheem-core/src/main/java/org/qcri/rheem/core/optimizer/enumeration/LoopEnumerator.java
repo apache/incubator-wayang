@@ -9,10 +9,7 @@ import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.Tuple;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * Enumerator for {@link LoopSubplan}s.
@@ -74,6 +71,7 @@ public class LoopEnumerator extends OneTimeExecutable {
             final PlanImplementation planImplementation = new PlanImplementation(
                     this.loopEnumeration,
                     new HashMap<>(1),
+                    new HashSet<>(4),
                     this.loopContext.getOptimizationContext()
             );
             planImplementation.addLoopImplementation(loop, loopImplementation);
