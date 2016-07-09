@@ -3,6 +3,7 @@ package org.qcri.rheem.apps.simwords
 import org.qcri.rheem.api._
 import org.qcri.rheem.apps.util.Parameters
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.platform.Platform
 
 /**
@@ -26,12 +27,16 @@ class SimWords(platforms: Platform*) {
     val _minWordOccurrences = minWordOccurrences
     val wordIds = planBuilder
       .readTextFile(inputFile).withName("Read corpus (1)")
-      .flatMapJava(new ScrubFunction).withName("Split & scrub")
+      .flatMapJava(new ScrubFunction, selectivity = new ProbabilisticDoubleInterval(100, 10000, 0.9)).withName("Split & scrub")
       .map(word => (word, 1)).withName("Add word counter")
       .reduceByKey(_._1, (wc1, wc2) => (wc1._1, wc1._2 + wc2._2)).withName("Sum word counters")
-      .filter(_._2 >= _minWordOccurrences).withName("Filter frequent words")
+      .withCardinalityEstimator((in: Long) => math.round(in * 0.01))
+      .filter(_._2 >= _minWordOccurrences, selectivity = 1 - 20d / (20 + minWordOccurrences))
+      .withName("Filter frequent words")
       .map(_._1).withName("Strip word counter")
-      .mapJava(new AddIdFunction).withName("Add word ID")
+      .zipWithId.withName("Zip with ID")
+      .map(t => (t.field1, t.field0.toInt)).withName("Convert ID attachment")
+
 
     // Create the word neighborhood vectors.
     val wordVectors = planBuilder
@@ -45,11 +50,11 @@ class SimWords(platforms: Platform*) {
       }.withName("Normalize word vectors")
 
     // Generate initial centroids.
-//    val initialCentroids = wordVectors
-//      .customOperator[(Int, SparseVector)](
-//      new SampleOperator[(Int, SparseVector)](numClusters, dataSetType[(Int, SparseVector)], SampleOperator.Methods.RANDOM)
-//    ).withName("Sample centroids")
-//      .map(x => x).withName("Identity (wa1)")
+    //    val initialCentroids = wordVectors
+    //      .customOperator[(Int, SparseVector)](
+    //      new SampleOperator[(Int, SparseVector)](numClusters, dataSetType[(Int, SparseVector)], SampleOperator.Methods.RANDOM)
+    //    ).withName("Sample centroids")
+    //      .map(x => x).withName("Identity (wa1)")
     val _numClusters = numClusters
     val initialCentroids = wordIds
       .map(_._2).withName("Strip words")
@@ -63,10 +68,13 @@ class SimWords(platforms: Platform*) {
     // Run k-means on the vectors.
     val finalCentroids = initialCentroids.repeat(numIterations, { centroids: DataQuanta[(Int, SparseVector)] =>
       val newCentroids: DataQuanta[(Int, SparseVector)] = wordVectors
-        .mapJava(new SelectNearestCentroidFunction("centroids")).withBroadcast(centroids, "centroids").withName("Select nearest centroids")
-        .map(assignment => (assignment._3, assignment._2))
+        .mapJava(new SelectNearestCentroidFunction("centroids"), udfCpuLoad = (in1: Long, in2: Long, out: Long) => 100L * in1 * in2)
+        .withBroadcast(centroids, "centroids")
+        .withName("Select nearest centroids")
+        .map(assignment => (assignment._3, assignment._2)).withName("Strip word ID")
         .reduceByKey(_._1, (wv1: (Int, SparseVector), wv2: (Int, SparseVector)) => (wv1._1, wv1._2 + wv2._2))
-        .map { centroid: (Int, SparseVector) => centroid._2.normalize(); centroid }
+        .withName("Add up cluster words").withCardinalityEstimator((in: Long) => _numClusters.toLong)
+        .map { centroid: (Int, SparseVector) => centroid._2.normalize(); centroid }.withName("Normalize centroids")
 
       newCentroids
     }).withName("K-means iteration").map(x => x).withName("Identity (wa2)")
@@ -106,7 +114,7 @@ object SimWords {
     val numClusters = args(4).toInt
     val numIterations = args(5).toInt
 
-    val simWords = new SimWords(platforms:_*)
+    val simWords = new SimWords(platforms: _*)
     simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations)
   }
 }
