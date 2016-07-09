@@ -7,7 +7,6 @@ import org.qcri.rheem.apps.util.Parameters
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.ExecutionContext
 import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
-import org.qcri.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator
 import org.qcri.rheem.core.platform.Platform
 
 import scala.collection.JavaConversions._
@@ -39,7 +38,7 @@ class Kmeans(platforms: Platform*) {
     val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
       val newCentroids = points
         .mapJava(new SelectNearestCentroid,
-          udfCpuLoad = (in1: Long, in2: Long) => in1 * in2 * 1000L
+          udfCpuLoad = (in1: Long, in2: Long, out: Long) => in1 * in2 * 100L
         )
         .withBroadcast(currentCentroids, "centroids").withName("Find nearest centroid")
         .reduceByKey(_.centroidId, _ + _).withName("Add up points")
