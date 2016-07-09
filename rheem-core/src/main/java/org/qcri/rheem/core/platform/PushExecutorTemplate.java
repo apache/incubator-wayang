@@ -8,6 +8,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
+import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * {@link Executor} implementation that employs a push model, i.e., data quanta are "pushed"
@@ -145,7 +147,20 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                             ));
         }
 
-        return new PartialExecution(executionDuration, operatorContexts);
+        final PartialExecution partialExecution = new PartialExecution(executionDuration, operatorContexts);
+        if (this.logger.isInfoEnabled()) {
+            this.logger.info(
+                    "Executed {} operator(s) in {} (estimated {}): {}",
+                    operatorContexts.size(),
+                    Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
+                    partialExecution.getOverallTimeEstimate(),
+                    partialExecution.getOperatorContexts().stream()
+                            .map(OptimizationContext.OperatorContext::getOperator)
+                            .collect(Collectors.toSet())
+            );
+        }
+
+        return partialExecution;
     }
 
     /**
