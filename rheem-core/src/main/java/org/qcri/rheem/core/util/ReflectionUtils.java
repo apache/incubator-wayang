@@ -124,7 +124,7 @@ public class ReflectionUtils {
                     }
                     return (T) constructor.newInstance(parameters);
                 } catch (Throwable t) {
-                    logger.error("Could not instantiate {}.", cls.getSimpleName(), t);
+                    logger.debug("Could not instantiate {}.", cls.getSimpleName(), t);
                 }
             }
         } catch (Throwable t) {
