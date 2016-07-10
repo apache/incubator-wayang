@@ -37,7 +37,8 @@ class Kmeans(platforms: Platform*) {
     // Do the k-means loop.
     val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
       val newCentroids = points
-        .mapJava(new SelectNearestCentroid,
+        .mapJava(
+          new SelectNearestCentroid,
           udfCpuLoad = (in1: Long, in2: Long, out: Long) => in1 * in2 * 100L
         )
         .withBroadcast(currentCentroids, "centroids").withName("Find nearest centroid")
@@ -56,7 +57,7 @@ class Kmeans(platforms: Platform*) {
             if (num < _k) println(s"Resurrecting ${_k - num} point(s).")
             Kmeans.createRandomCentroids(_k - num)
           }).withName("Resurrect centroids")
-        newCentroids.union(resurrectedCentroids).withName("New+resurrected centroids")
+        newCentroids.union(resurrectedCentroids).withName("New+resurrected centroids").withCardinalityEstimator(k)
       } else newCentroids
     }).withName("Loop")
 
