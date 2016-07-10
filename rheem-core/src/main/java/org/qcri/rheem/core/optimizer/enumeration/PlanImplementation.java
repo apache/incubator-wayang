@@ -650,4 +650,8 @@ public class PlanImplementation {
         return operatorStream;
     }
 
+    @Override
+    public String toString() {
+        return String.format("PlanImplementation[%s, %s]", this.getUtilizedPlatforms(), this.getTimeEstimate());
+    }
 }
