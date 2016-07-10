@@ -18,7 +18,8 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy;
-import org.qcri.rheem.core.util.*;
+import org.qcri.rheem.core.util.Actions;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.slf4j.Logger;
@@ -29,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
-import java.util.Optional;
 
 /**
  * Describes both the configuration of a {@link RheemContext} and {@link Job}s.
@@ -271,7 +271,7 @@ public class Configuration {
             KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> builtInProvider =
                     new FunctionalKeyValueProvider<>(
                             fallbackProvider,
-                            predicateDescriptor ->  predicateDescriptor.getSelectivity().orElse(null)
+                            predicateDescriptor -> predicateDescriptor.getSelectivity().orElse(null)
                     );
 
             // Customizable layer: Users can override manually.
@@ -356,10 +356,13 @@ public class Configuration {
         }
         {
             // Safety net: provide a fallback start up costs.
-            final KeyValueProvider<Platform, Long> fallbackProvider =
-                    new FunctionalKeyValueProvider<Platform, Long>(platform -> 0L, configuration)
-                            .withSlf4jWarning("Using fallback start up cost provider for {}.");
-            KeyValueProvider<Platform, Long> overrideProvider = new MapBasedKeyValueProvider<>(fallbackProvider);
+            final KeyValueProvider<Platform, Long> builtinProvider = new FunctionalKeyValueProvider<>(
+                    (platform, requestee) -> platform.getInitializeMillis(requestee.getConfiguration()),
+                    configuration
+            );
+
+            // Override layer.
+            KeyValueProvider<Platform, Long> overrideProvider = new MapBasedKeyValueProvider<>(builtinProvider);
             configuration.setPlatformStartUpTimeProvider(overrideProvider);
         }
         {

@@ -232,4 +232,9 @@ public class SparkPlatform extends Platform {
         this.logger.info("Spark warm-up finished in {}.", Formats.formatDuration(stopTime - startTime, true));
 
     }
+
+    @Override
+    public long getInitializeMillis(Configuration configuration) {
+        return configuration.getLongProperty("rheem.spark.initialize.ms");
+    }
 }

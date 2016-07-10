@@ -113,4 +113,13 @@ public abstract class Platform {
         // Do nothing by default.
     }
 
+    /**
+     * Get the time necessary to initialize this instance and use it for execution.
+     *
+     * @return the milliseconds required to initialize this instance
+     */
+    public long getInitializeMillis(Configuration configuration) {
+        return 0L;
+    }
+
 }
