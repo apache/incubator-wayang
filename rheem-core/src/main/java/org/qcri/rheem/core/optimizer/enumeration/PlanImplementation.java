@@ -67,7 +67,7 @@ public class PlanImplementation {
     /**
      * The {@link TimeEstimate} to execute this instance.
      */
-    private TimeEstimate timeEstimateCache;
+    private TimeEstimate timeEstimateCache, timeEstimateWithOverheadCache;
 
     /**
      * Create a new instance.
@@ -535,6 +535,18 @@ public class PlanImplementation {
     }
 
     public TimeEstimate getTimeEstimate() {
+        return this.getTimeEstimate(true);
+    }
+
+    /**
+     * Retrieves the {@link TimeEstimate} for this instance.
+     *
+     * @param isIncludeOverhead whether to include global overhead in the {@link TimeEstimate} (to avoid repeating
+     *                          overhead in nested instances)
+     * @return the {@link TimeEstimate}
+     */
+    TimeEstimate getTimeEstimate(boolean isIncludeOverhead) {
+        assert (this.timeEstimateCache == null) == (this.timeEstimateWithOverheadCache == null);
         if (this.timeEstimateCache == null) {
             final TimeEstimate operatorTimeEstimate = this.operators.stream()
                     .map(op -> this.optimizationContext.getOperatorContext(op).getTimeEstimate())
@@ -546,8 +558,12 @@ public class PlanImplementation {
                     .map(LoopImplementation::getTimeEstimate)
                     .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
             this.timeEstimateCache = operatorTimeEstimate.plus(junctionTimeEstimate).plus(loopTimeEstimate);
+            final long platformInitializationTime = this.getUtilizedPlatforms().stream()
+                    .map(platform -> this.optimizationContext.getConfiguration().getPlatformStartUpTimeProvider().provideFor(platform))
+                    .reduce(0L, (a, b) -> a + b);
+            this.timeEstimateWithOverheadCache = this.timeEstimateCache.plus(platformInitializationTime);
         }
-        return this.timeEstimateCache;
+        return isIncludeOverhead ? this.timeEstimateWithOverheadCache : this.timeEstimateCache;
     }
 
     public Junction getJunction(OutputSlot<?> output) {

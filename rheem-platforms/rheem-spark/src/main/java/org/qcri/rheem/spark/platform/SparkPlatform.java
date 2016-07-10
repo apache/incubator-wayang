@@ -235,6 +235,6 @@ public class SparkPlatform extends Platform {
 
     @Override
     public long getInitializeMillis(Configuration configuration) {
-        return configuration.getLongProperty("rheem.spark.initialize.ms");
+        return configuration.getLongProperty("rheem.spark.init.ms");
     }
 }

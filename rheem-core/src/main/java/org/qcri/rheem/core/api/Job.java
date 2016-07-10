@@ -506,15 +506,24 @@ public class Job extends OneTimeExecutable {
 
     private void logExecution() {
         // Log the execution time.
-        this.logger.info("Accumulated execution time: {}", Formats.formatDuration(this.executionMillis, true));
+        final Collection<PartialExecution> partialExecutions = this.crossPlatformExecutor.getPartialExecutions();
+        long effectiveExecutionMillis = partialExecutions.stream()
+                .map(PartialExecution::getMeasuredExecutionTime)
+                .reduce(0L, (a, b) -> a + b);
+        this.logger.info(
+                "Accumulated execution time: {} (effective: {}, overhead: {})",
+                Formats.formatDuration(this.executionMillis, true),
+                Formats.formatDuration(effectiveExecutionMillis, true),
+                Formats.formatDuration(this.executionMillis - effectiveExecutionMillis, true)
+        );
         int i = 1;
         for (TimeEstimate timeEstimate : timeEstimates) {
-            this.logger.info("Time estimate of execution plan {}: {}", i++, timeEstimate);
+            this.logger.info("Estimated execution time (plan {}): {}", i++, timeEstimate);
         }
 
         // Feed the execution log.
         try (ExecutionLog executionLog = ExecutionLog.open(this.configuration)) {
-            executionLog.storeAll(this.crossPlatformExecutor.getPartialExecutions());
+            executionLog.storeAll(partialExecutions);
         } catch (Exception e) {
             this.logger.error("Storing partial executions failed.", e);
         }

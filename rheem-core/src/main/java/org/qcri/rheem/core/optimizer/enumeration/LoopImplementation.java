@@ -39,8 +39,15 @@ public class LoopImplementation {
         return iterationImplementation;
     }
 
+    /**
+     * Retrieve the {@link TimeEstimate} for this instance. Global overhead is not included.
+     *
+     * @return the {@link TimeEstimate}
+     */
     public TimeEstimate getTimeEstimate() {
-        // TODO: What about the Junctions? Are they already included?
+        // What about the Junctions? Are they already included?
+        // Yes, in-loop Junctions are contained in the body implementations and the surrounding Junctions are
+        // contained in the top-level PlanImplementation.
         TimeEstimate timeEstimate = TimeEstimate.ZERO;
         for (int i = 0; i < this.iterationImplementations.size(); i++) {
             timeEstimate = timeEstimate.plus(this.iterationImplementations.get(i).getTimeEstimate());
@@ -157,9 +164,13 @@ public class LoopImplementation {
             this.exitJunction = exitJunction;
         }
 
+        /**
+         * Retrieve the {@link TimeEstimate} for this instance. Global overhead is not included.
+         *
+         * @return the {@link TimeEstimate}
+         */
         public TimeEstimate getTimeEstimate() {
-            // TODO: Is this enough? Probably not.
-            return this.bodyImplementation.getTimeEstimate();
+            return this.bodyImplementation.getTimeEstimate(false);
         }
 
         /**
