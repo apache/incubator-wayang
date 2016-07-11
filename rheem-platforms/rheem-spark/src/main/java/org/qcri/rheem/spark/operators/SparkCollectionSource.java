@@ -63,7 +63,7 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
         final List<Type> list = RheemCollections.asList(collection);
 
         final RddChannel.Instance output = (RddChannel.Instance) outputs[0];
-        final JavaRDD<Type> rdd = sparkExecutor.sc.parallelize(list);
+        final JavaRDD<Type> rdd = sparkExecutor.sc.parallelize(list, sparkExecutor.getNumDefaultPartitions());
         this.name(rdd);
         output.accept(rdd, sparkExecutor);
     }

@@ -66,7 +66,7 @@ public class SparkReduceByOperator<Type, KeyType>
         Function2<Type, Type, Type> reduceFunc = compiler.compile(this.reduceDescriptor, this, inputs);
         final JavaPairRDD<KeyType, Type> pairRdd = inputStream.mapToPair(keyExtractor);
         this.name(pairRdd);
-        final JavaPairRDD<KeyType, Type> reducedPairRdd = pairRdd.reduceByKey(reduceFunc);
+        final JavaPairRDD<KeyType, Type> reducedPairRdd = pairRdd.reduceByKey(reduceFunc, sparkExecutor.getNumDefaultPartitions());
         this.name(reducedPairRdd);
         final JavaRDD<Type> outputRdd = reducedPairRdd.map(new TupleConverter<>());
         this.name(outputRdd);

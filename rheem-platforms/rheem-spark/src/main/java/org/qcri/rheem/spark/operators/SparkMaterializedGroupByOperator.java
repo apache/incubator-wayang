@@ -56,7 +56,7 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
         final JavaRDD<Type> inputRdd = input.provideRdd();
         final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor, this, inputs);
         final Function<scala.Tuple2<KeyType, Iterable<Type>>, Iterable<Type>> projector = new GroupProjector<>();
-        final JavaPairRDD<KeyType, Iterable<Type>> groupedKeyRdd = inputRdd.groupBy(keyExtractor);
+        final JavaPairRDD<KeyType, Iterable<Type>> groupedKeyRdd = inputRdd.groupBy(keyExtractor, sparkExecutor.getNumDefaultPartitions());
         this.name(groupedKeyRdd);
         final JavaRDD<Iterable<Type>> outputRdd = groupedKeyRdd.map(projector);
         this.name(outputRdd);
