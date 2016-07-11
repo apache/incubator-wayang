@@ -65,4 +65,9 @@ public class SparkCacheOperator<Type>
         final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
+
+    @Override
+    public boolean isExecutedLazily() {
+        return true;
+    }
 }

@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
+import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Canonicalizer;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
@@ -54,6 +55,11 @@ public class PlanImplementation {
     private PlanEnumeration planEnumeration;
 
     /**
+     * Keep track of the {@link Platform}s of our {@link #operators}.
+     */
+    private Set<Platform> platformCache;
+
+    /**
      * {@link OptimizationContext} that provides estimates for the {@link #operators}.
      */
     private final OptimizationContext optimizationContext;
@@ -61,7 +67,7 @@ public class PlanImplementation {
     /**
      * The {@link TimeEstimate} to execute this instance.
      */
-    private TimeEstimate timeEstimateCache;
+    private TimeEstimate timeEstimateCache, timeEstimateWithOverheadCache;
 
     /**
      * Create a new instance.
@@ -529,6 +535,18 @@ public class PlanImplementation {
     }
 
     public TimeEstimate getTimeEstimate() {
+        return this.getTimeEstimate(true);
+    }
+
+    /**
+     * Retrieves the {@link TimeEstimate} for this instance.
+     *
+     * @param isIncludeOverhead whether to include global overhead in the {@link TimeEstimate} (to avoid repeating
+     *                          overhead in nested instances)
+     * @return the {@link TimeEstimate}
+     */
+    TimeEstimate getTimeEstimate(boolean isIncludeOverhead) {
+        assert (this.timeEstimateCache == null) == (this.timeEstimateWithOverheadCache == null);
         if (this.timeEstimateCache == null) {
             final TimeEstimate operatorTimeEstimate = this.operators.stream()
                     .map(op -> this.optimizationContext.getOperatorContext(op).getTimeEstimate())
@@ -540,8 +558,12 @@ public class PlanImplementation {
                     .map(LoopImplementation::getTimeEstimate)
                     .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
             this.timeEstimateCache = operatorTimeEstimate.plus(junctionTimeEstimate).plus(loopTimeEstimate);
+            final long platformInitializationTime = this.getUtilizedPlatforms().stream()
+                    .map(platform -> this.optimizationContext.getConfiguration().getPlatformStartUpTimeProvider().provideFor(platform))
+                    .reduce(0L, (a, b) -> a + b);
+            this.timeEstimateWithOverheadCache = this.timeEstimateCache.plus(platformInitializationTime);
         }
-        return this.timeEstimateCache;
+        return isIncludeOverhead ? this.timeEstimateWithOverheadCache : this.timeEstimateCache;
     }
 
     public Junction getJunction(OutputSlot<?> output) {
@@ -598,5 +620,38 @@ public class PlanImplementation {
                 iterationImplementation.getBodyImplementation().logTimeEstimates();
             }
         }
+    }
+
+    public Set<Platform> getUtilizedPlatforms() {
+        if (this.platformCache == null) {
+            this.platformCache = this.streamOperators()
+                    .map(ExecutionOperator::getPlatform)
+                    .collect(Collectors.toSet());
+        }
+        return this.platformCache;
+    }
+
+    /**
+     * Stream all the {@link ExecutionOperator}s in this instance.
+     *
+     * @return a {@link Stream} containing every {@link ExecutionOperator} at least once
+     */
+    Stream<ExecutionOperator> streamOperators() {
+        Stream<ExecutionOperator> operatorStream = Stream.concat(
+                this.operators.stream(),
+                this.junctions.values().stream().flatMap(j -> j.getConversionTasks().stream()).map(ExecutionTask::getOperator)
+        );
+        if (!this.loopImplementations.isEmpty()) {
+            operatorStream = Stream.concat(
+                    operatorStream,
+                    this.loopImplementations.values().stream().flatMap(LoopImplementation::streamOperators)
+            );
+        }
+        return operatorStream;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("PlanImplementation[%s, %s]", this.getUtilizedPlatforms(), this.getTimeEstimate());
     }
 }

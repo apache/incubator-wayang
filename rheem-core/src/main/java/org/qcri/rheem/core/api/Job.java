@@ -296,22 +296,15 @@ public class Job extends OneTimeExecutable {
                                                      Set<Channel> openChannels,
                                                      Set<ExecutionStage> executedStages) {
 
-        executionPlans.forEach(plan ->
-                System.out.printf("Plan (estimated time: %s)\n%s\n", plan.getTimeEstimate(), plan.getOperators())
-        );
-
-        return executionPlans.stream()
+        final PlanImplementation bestPlanImplementation = executionPlans.stream()
                 .reduce((p1, p2) -> {
                     final TimeEstimate t1 = p1.getTimeEstimate();
                     final TimeEstimate t2 = p2.getTimeEstimate();
-                    return timeEstimateComparator.compare(t1, t2) > 0 ? p1 : p2;
+                    return timeEstimateComparator.compare(t1, t2) < 0 ? p1 : p2;
                 })
-                .map(plan -> {
-                    final TimeEstimate timeEstimate = plan.getTimeEstimate();
-                    this.logger.info("The picked plan's runtime estimate is {}.", timeEstimate);
-                    return plan;
-                })
-                .orElseThrow(() -> new IllegalStateException("Could not find an execution plan."));
+                .orElseThrow(() -> new RheemException("Could not find an execution plan."));
+        this.logger.info("Picked {} as best plan.", bestPlanImplementation);
+        return bestPlanImplementation;
     }
 
     /**
@@ -506,15 +499,24 @@ public class Job extends OneTimeExecutable {
 
     private void logExecution() {
         // Log the execution time.
-        this.logger.info("Accumulated execution time: {}", Formats.formatDuration(this.executionMillis, true));
+        final Collection<PartialExecution> partialExecutions = this.crossPlatformExecutor.getPartialExecutions();
+        long effectiveExecutionMillis = partialExecutions.stream()
+                .map(PartialExecution::getMeasuredExecutionTime)
+                .reduce(0L, (a, b) -> a + b);
+        this.logger.info(
+                "Accumulated execution time: {} (effective: {}, overhead: {})",
+                Formats.formatDuration(this.executionMillis, true),
+                Formats.formatDuration(effectiveExecutionMillis, true),
+                Formats.formatDuration(this.executionMillis - effectiveExecutionMillis, true)
+        );
         int i = 1;
         for (TimeEstimate timeEstimate : timeEstimates) {
-            this.logger.info("Time estimate of execution plan {}: {}", i++, timeEstimate);
+            this.logger.info("Estimated execution time (plan {}): {}", i++, timeEstimate);
         }
 
         // Feed the execution log.
         try (ExecutionLog executionLog = ExecutionLog.open(this.configuration)) {
-            executionLog.storeAll(this.crossPlatformExecutor.getPartialExecutions());
+            executionLog.storeAll(partialExecutions);
         } catch (Exception e) {
             this.logger.error("Storing partial executions failed.", e);
         }

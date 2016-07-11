@@ -56,16 +56,9 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
             } else if (t2.getCorrectnessProbability() == 0d) {
                 return -1;
             }
-            return Long.compare(t1.getAverageEstimate(), t2.getAverageEstimate());
+            // NB: We do not assume a uniform distribution of the estimates within the instances.
+            return Long.compare(t1.getGeometricMeanEstimate(), t2.getGeometricMeanEstimate());
         };
-    }
-
-    @Override
-    public String toString() {
-        return String.format("(%s .. %s, p=%s)",
-                Formats.formatDuration(this.getLowerEstimate(), true),
-                Formats.formatDuration(this.getUpperEstimate(), true),
-                Formats.formatPercentage(this.getCorrectnessProbability()));
     }
 
     public TimeEstimate times(double scalar) {
@@ -74,5 +67,29 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
                 Math.round(this.getUpperEstimate() * scalar),
                 this.getCorrectnessProbability()
         );
+    }
+
+    @Override
+    public String toString() {
+        return this.toIntervalString();
+//        return toGMeanString();
+    }
+
+    @SuppressWarnings("unused")
+    private String toIntervalString() {
+        return String.format("(%s .. %s, p=%s)",
+                Formats.formatDuration(this.getLowerEstimate(), true),
+                Formats.formatDuration(this.getUpperEstimate(), true),
+                Formats.formatPercentage(this.getCorrectnessProbability()));
+    }
+
+    @SuppressWarnings("unused")
+    private String toGMeanString() {
+        final long geometricMeanEstimate = this.getGeometricMeanEstimate();
+        final double dev = geometricMeanEstimate == 0 ? 0d : this.getUpperEstimate() / (double) geometricMeanEstimate;
+        return String.format("(%s, d=%.1f, p=%s)",
+                Formats.formatDuration(geometricMeanEstimate, true),
+                dev,
+                Formats.formatPercentage(this.getCorrectnessProbability()));
     }
 }
