@@ -15,7 +15,8 @@ class SimWords(platforms: Platform*) {
             minWordOccurrences: Int,
             neighborhoodReach: Int,
             numClusters: Int,
-            numIterations: Int) = {
+            numIterations: Int,
+            wordsPerLine: ProbabilisticDoubleInterval) = {
 
     // Initialize.
     val rheemCtx = new RheemContext
@@ -27,11 +28,11 @@ class SimWords(platforms: Platform*) {
     val _minWordOccurrences = minWordOccurrences
     val wordIds = planBuilder
       .readTextFile(inputFile).withName("Read corpus (1)")
-      .flatMapJava(new ScrubFunction, selectivity = new ProbabilisticDoubleInterval(100, 10000, 0.9)).withName("Split & scrub")
+      .flatMapJava(new ScrubFunction, selectivity = wordsPerLine).withName("Split & scrub")
       .map(word => (word, 1)).withName("Add word counter")
       .reduceByKey(_._1, (wc1, wc2) => (wc1._1, wc1._2 + wc2._2)).withName("Sum word counters")
       .withCardinalityEstimator((in: Long) => math.round(in * 0.01))
-      .filter(_._2 >= _minWordOccurrences, selectivity = 1 - 20d / (20 + minWordOccurrences))
+      .filter(_._2 >= _minWordOccurrences, selectivity = 10d / (9d + minWordOccurrences))
       .withName("Filter frequent words")
       .map(_._1).withName("Strip word counter")
       .zipWithId.withName("Zip with ID")
@@ -41,7 +42,10 @@ class SimWords(platforms: Platform*) {
     // Create the word neighborhood vectors.
     val wordVectors = planBuilder
       .readTextFile(inputFile).withName("Read corpus (2)")
-      .flatMapJava(new CreateWordNeighborhoodFunction(neighborhoodReach, "wordIds"))
+      .flatMapJava(
+        new CreateWordNeighborhoodFunction(neighborhoodReach, "wordIds"),
+        selectivity = wordsPerLine
+      )
       .withBroadcast(wordIds, "wordIds")
       .withName("Create word vectors")
       .reduceByKey(_._1, (wv1, wv2) => (wv1._1, wv1._2 + wv2._2)).withName("Add word vectors")
@@ -93,8 +97,7 @@ class SimWords(platforms: Platform*) {
     )
 
 
-    result.toIndexedSeq.sortBy(_.size).reverse.take(100).foreach(println(_))
-
+    result.filter(_.size > 1).toIndexedSeq.sortBy(_.size).reverse.foreach(println(_))
   }
 
 }
@@ -103,7 +106,7 @@ object SimWords {
 
   def main(args: Array[String]): Unit = {
     if (args.isEmpty) {
-      println("Usage: <main class> <platform(,platform)*> <input file> <min word occurrences> <neighborhood reach> <#clusters> <#iterations>")
+      println("Usage: <main class> <platform(,platform)*> <input file> <min word occurrences> <neighborhood reach> <#clusters> <#iterations> [<words per line (from..to)>]")
       sys.exit(1)
     }
 
@@ -113,8 +116,12 @@ object SimWords {
     val neighborhoodRead = args(3).toInt
     val numClusters = args(4).toInt
     val numIterations = args(5).toInt
+    val wordsPerLine = if (args.length >= 7) {
+      val Array(from, to) = args(6).split("\\.\\.").map(_.toDouble)
+      new ProbabilisticDoubleInterval(from, to, .99d)
+    } else new ProbabilisticDoubleInterval(100, 10000, 0.9)
 
     val simWords = new SimWords(platforms: _*)
-    simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations)
+    simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations, wordsPerLine)
   }
 }
