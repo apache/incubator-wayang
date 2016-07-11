@@ -2,6 +2,7 @@ package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -146,7 +147,6 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                                     (accu, node) -> RheemCollections.add(accu, node.getProducerOperatorContext())
                             ));
         }
-        Collections.reverse(operatorContexts);
 
         final PartialExecution partialExecution = new PartialExecution(executionDuration, operatorContexts);
         if (this.logger.isInfoEnabled()) {
@@ -156,12 +156,31 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                     Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
                     partialExecution.getOverallTimeEstimate(),
                     partialExecution.getOperatorContexts().stream()
-                            .map(opCtx -> String.format("%s->%s", opCtx.getOperator(), opCtx.getTimeEstimate()))
+                            .map(opCtx -> String.format(
+                                    "%s(time=%s, cards=%s)",
+                                    opCtx.getOperator(), opCtx.getTimeEstimate(), formatCardinalities(opCtx)
+                            ))
                             .collect(Collectors.toList())
             );
         }
 
         return partialExecution;
+    }
+
+    private static String formatCardinalities(OptimizationContext.OperatorContext opCtx) {
+        StringBuilder sb = new StringBuilder().append('[');
+        String separator = "";
+        final CardinalityEstimate[] inputCardinalities = opCtx.getInputCardinalities();
+        for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
+            if (inputCardinalities[inputIndex] != null) {
+                String slotName = opCtx.getOperator().getNumInputs() > inputIndex ?
+                        opCtx.getOperator().getInput(inputIndex).getName() :
+                        "(none)";
+                sb.append(separator).append(slotName).append(": ").append(inputCardinalities[inputIndex]);
+                separator = ", ";
+            }
+        }
+        return sb.append(']').toString();
     }
 
     /**
