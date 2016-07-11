@@ -112,7 +112,7 @@ public class Job extends OneTimeExecutable {
     Job(RheemContext rheemContext, String name, RheemPlan rheemPlan, String... udfJars) {
         this.rheemContext = rheemContext;
         this.name = name == null ? "Rheem app" : name;
-        this.configuration = this.rheemContext.getConfiguration().fork();
+        this.configuration = this.rheemContext.getConfiguration().fork(this.name);
         this.rheemPlan = rheemPlan;
         for (String udfJar : udfJars) {
             this.addUdfJar(udfJar);

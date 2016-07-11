@@ -43,6 +43,7 @@ public class Configuration {
     private static final Configuration defaultConfiguration = new Configuration((Configuration) null);
 
     static {
+        defaultConfiguration.name = "default";
         Actions.doSafe(() -> bootstrapCardinalityEstimationProvider(defaultConfiguration));
         Actions.doSafe(() -> bootstrapSelectivityProviders(defaultConfiguration));
         Actions.doSafe(() -> bootstrapLoadAndTimeEstimatorProviders(defaultConfiguration));
@@ -52,6 +53,8 @@ public class Configuration {
     }
 
     private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
+
+    private String name = "(no name)";
 
     private final Configuration parent;
 
@@ -98,6 +101,7 @@ public class Configuration {
      */
     public Configuration(String configurationFileUrl) {
         this(getDefaultConfiguration());
+        this.name = configurationFileUrl;
         if (configurationFileUrl != null) {
             this.load(configurationFileUrl);
         }
@@ -115,30 +119,29 @@ public class Configuration {
 
             // Providers for cardinality estimation.
             this.cardinalityEstimatorProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.cardinalityEstimatorProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.cardinalityEstimatorProvider, this);
             this.predicateSelectivityProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.predicateSelectivityProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.predicateSelectivityProvider, this);
             this.multimapSelectivityProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.multimapSelectivityProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.multimapSelectivityProvider, this);
 
             // Providers for cost functions.
             this.operatorLoadProfileEstimatorProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.operatorLoadProfileEstimatorProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.operatorLoadProfileEstimatorProvider, this);
             this.functionLoadProfileEstimatorProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider, this);
             this.loadProfileToTimeConverterProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider, this);
             this.platformStartUpTimeProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider, this);
 
             // Providers for plan enumeration.
             this.pruningStrategyClassProvider = new ExplicitCollectionProvider<>(this, this.parent.pruningStrategyClassProvider);
             this.timeEstimateComparatorProvider = new ConstantProvider<>(this.parent.timeEstimateComparatorProvider);
-            this.instrumentationStrategyProvider = new ConstantProvider<>(
-                    this.parent.instrumentationStrategyProvider);
+            this.instrumentationStrategyProvider = new ConstantProvider<>(this.parent.instrumentationStrategyProvider);
 
             // Properties.
-            this.properties = new MapBasedKeyValueProvider<>(this.parent.properties);
+            this.properties = new MapBasedKeyValueProvider<>(this.parent.properties, this);
 
         }
     }
@@ -146,14 +149,17 @@ public class Configuration {
     private static String findUserConfigurationFile() {
         final String systemProperty = System.getProperty("rheem.configuration");
         if (systemProperty != null) {
+            logger.info("Using configuration at {}.", systemProperty);
             return systemProperty;
         }
 
         final URL classPathResource = ReflectionUtils.getResourceURL("rheem.properties");
         if (classPathResource != null) {
+            logger.info("Using configuration at {}.", classPathResource);
             return classPathResource.toString();
         }
 
+        logger.info("Using blank configuration.");
         return null;
     }
 
@@ -470,6 +476,17 @@ public class Configuration {
         return new Configuration(this);
     }
 
+    /**
+     * Creates a child instance.
+     *
+     * @param name for the child instance
+     */
+    public Configuration fork(String name) {
+        final Configuration configuration = new Configuration(this);
+        configuration.name = name;
+        return configuration;
+    }
+
 
     public KeyValueProvider<OutputSlot<?>, CardinalityEstimator> getCardinalityEstimatorProvider() {
         return this.cardinalityEstimatorProvider;
@@ -635,5 +652,10 @@ public class Configuration {
 
     public Configuration getParent() {
         return parent;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s]", this.getClass().getSimpleName(), this.name);
     }
 }
