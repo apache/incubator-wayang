@@ -129,7 +129,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
             return null;
         }
 
-        Collection<OptimizationContext.OperatorContext> operatorContexts = new LinkedList<>();
+        List<OptimizationContext.OperatorContext> operatorContexts = new ArrayList<>();
         ChannelInstance[] channelInstances;
         if (outputChannelInstances.length > 0) {
             channelInstances = outputChannelInstances;
@@ -146,6 +146,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                                     (accu, node) -> RheemCollections.add(accu, node.getProducerOperatorContext())
                             ));
         }
+        Collections.reverse(operatorContexts);
 
         final PartialExecution partialExecution = new PartialExecution(executionDuration, operatorContexts);
         if (this.logger.isInfoEnabled()) {
@@ -155,8 +156,8 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                     Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
                     partialExecution.getOverallTimeEstimate(),
                     partialExecution.getOperatorContexts().stream()
-                            .map(OptimizationContext.OperatorContext::getOperator)
-                            .collect(Collectors.toSet())
+                            .map(opCtx -> String.format("%s->%s", opCtx.getOperator(), opCtx.getTimeEstimate()))
+                            .collect(Collectors.toList())
             );
         }
 
