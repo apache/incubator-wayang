@@ -89,6 +89,35 @@ public class ReflectionUtils {
     }
 
     /**
+     * Creates a new instance of a {@link Class} via the default constructor.
+     *
+     * @param className name of the {@link Class} to be instantiated
+     * @return the instance
+     */
+    public static <T> T instantiateDefault(String className) {
+        try {
+            @SuppressWarnings("unchecked") // Will fail anyway, if incorrect.
+            Class<T> cls = (Class<T>) Class.forName(className);
+            return cls.newInstance();
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            throw new RheemException("Could not instantiate class.", e);
+        }
+    }
+    /**
+     * Creates a new instance of the given {@link Class} via the default constructor.
+     *
+     * @param cls the {@link Class} to be instantiated
+     * @return the instance
+     */
+    public static <T> T instantiateDefault(Class<? extends T> cls) {
+        try {
+            return cls.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RheemException("Could not instantiate class.", e);
+        }
+    }
+
+    /**
      * Tries to instantiate an arbitrary instance of the given {@link Class}.
      *
      * @param cls               that should be instantiated

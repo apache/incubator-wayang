@@ -74,11 +74,11 @@ public class Configuration {
 
     private ExplicitCollectionProvider<Platform> platformProvider;
 
-    private ConstantProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
+    private ValueProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
 
     private CollectionProvider<Class<PlanEnumerationPruningStrategy>> pruningStrategyClassProvider;
 
-    private ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider;
+    private ValueProvider<InstrumentationStrategy> instrumentationStrategyProvider;
 
     private KeyValueProvider<String, String> properties;
 
@@ -137,8 +137,8 @@ public class Configuration {
 
             // Providers for plan enumeration.
             this.pruningStrategyClassProvider = new ExplicitCollectionProvider<>(this, this.parent.pruningStrategyClassProvider);
-            this.timeEstimateComparatorProvider = new ConstantProvider<>(this.parent.timeEstimateComparatorProvider);
-            this.instrumentationStrategyProvider = new ConstantProvider<>(this.parent.instrumentationStrategyProvider);
+            this.timeEstimateComparatorProvider = new ConstantValueProvider<>(this, this.parent.timeEstimateComparatorProvider);
+            this.instrumentationStrategyProvider = new ConstantValueProvider<>(this, this.parent.instrumentationStrategyProvider);
 
             // Properties.
             this.properties = new MapBasedKeyValueProvider<>(this.parent.properties, this);
@@ -396,10 +396,10 @@ public class Configuration {
             configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
         }
         {
-            ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantProvider<>(TimeEstimate.expectationValueComparator());
-            ConstantProvider<Comparator<TimeEstimate>> overrideProvider =
-                    new ConstantProvider<>(defaultProvider);
+            ValueProvider<Comparator<TimeEstimate>> defaultProvider =
+                    new ConstantValueProvider<>(TimeEstimate.expectationValueComparator(), configuration);
+            ValueProvider<Comparator<TimeEstimate>> overrideProvider =
+                    new ConstantValueProvider<>(defaultProvider);
             configuration.setTimeEstimateComparatorProvider(overrideProvider);
         }
     }
@@ -433,16 +433,29 @@ public class Configuration {
             configuration.setPruningStrategyClassProvider(overrideProvider);
         }
         {
-            ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantProvider<>(TimeEstimate.expectationValueComparator());
-            ConstantProvider<Comparator<TimeEstimate>> overrideProvider =
-                    new ConstantProvider<>(defaultProvider);
+            ValueProvider<Comparator<TimeEstimate>> defaultProvider =
+                    new ConstantValueProvider<>(TimeEstimate.expectationValueComparator(), configuration);
+            ValueProvider<Comparator<TimeEstimate>> overrideProvider =
+                    new ConstantValueProvider<>(defaultProvider);
             configuration.setTimeEstimateComparatorProvider(overrideProvider);
         }
         {
-            ConstantProvider<InstrumentationStrategy> defaultProvider =
-                    new ConstantProvider<>(new OutboundInstrumentationStrategy());
-            configuration.setInstrumentationStrategyProvider(defaultProvider);
+            ValueProvider<InstrumentationStrategy> defaultProvider =
+                    new ConstantValueProvider<>(new OutboundInstrumentationStrategy(), configuration);
+            ValueProvider<InstrumentationStrategy> configProvider =
+                    new FunctionalValueProvider<>(
+                            requestee -> {
+                                Optional<String> optInstrumentationtStrategyClass =
+                                        requestee.getConfiguration().getOptionalStringProperty("rheem.core.optimizer.instrumentation");
+                                if (!optInstrumentationtStrategyClass.isPresent()) {
+                                    return null;
+                                }
+                                return ReflectionUtils.instantiateDefault(optInstrumentationtStrategyClass.get());
+                            },
+                            defaultProvider
+                    );
+            ValueProvider<InstrumentationStrategy> overrideProvider = new ConstantValueProvider<>(configProvider);
+            configuration.setInstrumentationStrategyProvider(overrideProvider);
         }
     }
 
@@ -539,11 +552,11 @@ public class Configuration {
         this.platformProvider = platformProvider;
     }
 
-    public ConstantProvider<Comparator<TimeEstimate>> getTimeEstimateComparatorProvider() {
+    public ValueProvider<Comparator<TimeEstimate>> getTimeEstimateComparatorProvider() {
         return this.timeEstimateComparatorProvider;
     }
 
-    public void setTimeEstimateComparatorProvider(ConstantProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider) {
+    public void setTimeEstimateComparatorProvider(ValueProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider) {
         this.timeEstimateComparatorProvider = timeEstimateComparatorProvider;
     }
 
@@ -556,11 +569,11 @@ public class Configuration {
         this.pruningStrategyClassProvider = pruningStrategyClassProvider;
     }
 
-    public ConstantProvider<InstrumentationStrategy> getInstrumentationStrategyProvider() {
+    public ValueProvider<InstrumentationStrategy> getInstrumentationStrategyProvider() {
         return this.instrumentationStrategyProvider;
     }
 
-    public void setInstrumentationStrategyProvider(ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider) {
+    public void setInstrumentationStrategyProvider(ValueProvider<InstrumentationStrategy> instrumentationStrategyProvider) {
         this.instrumentationStrategyProvider = instrumentationStrategyProvider;
     }
 
