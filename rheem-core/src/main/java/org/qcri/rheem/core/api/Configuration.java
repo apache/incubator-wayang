@@ -8,6 +8,7 @@ import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.*;
@@ -314,12 +315,25 @@ public class Configuration {
             // Safety net: provide a fallback selectivity.
             KeyValueProvider<ExecutionOperator, LoadProfileEstimator> fallbackProvider =
                     new FunctionalKeyValueProvider<ExecutionOperator, LoadProfileEstimator>(
-                            operator -> new NestableLoadProfileEstimator(
-                                    DefaultLoadEstimator.createIOLinearEstimator(operator, 10000),
-                                    DefaultLoadEstimator.createIOLinearEstimator(operator, 1000),
-                                    DefaultLoadEstimator.createIOLinearEstimator(operator, 1000),
-                                    DefaultLoadEstimator.createIOLinearEstimator(operator, 1000)
-                            ),
+                            (operator, requestee) -> {
+                                final Configuration conf = requestee.getConfiguration();
+                                return new NestableLoadProfileEstimator(
+                                        IntervalLoadEstimator.createIOLinearEstimator(
+                                                null,
+                                                conf.getLongProperty("rheem.core.fallback.udf.cpu.lower"),
+                                                conf.getLongProperty("rheem.core.fallback.udf.cpu.upper"),
+                                                conf.getDoubleProperty("rheem.core.fallback.udf.cpu.confidence"),
+                                                CardinalityEstimate.EMPTY_ESTIMATE
+                                        ),
+                                        IntervalLoadEstimator.createIOLinearEstimator(
+                                                null,
+                                                conf.getLongProperty("rheem.core.fallback.udf.ram.lower"),
+                                                conf.getLongProperty("rheem.core.fallback.udf.ram.upper"),
+                                                conf.getDoubleProperty("rheem.core.fallback.udf.ram.confidence"),
+                                                CardinalityEstimate.EMPTY_ESTIMATE
+                                        )
+                                );
+                            },
                             configuration
                     ).withSlf4jWarning("Creating fallback load estimator for {}.");
 
@@ -340,10 +354,25 @@ public class Configuration {
             // Safety net: provide a fallback selectivity.
             KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> fallbackProvider =
                     new FunctionalKeyValueProvider<FunctionDescriptor, LoadProfileEstimator>(
-                            functionDescriptor -> new NestableLoadProfileEstimator(
-                                    DefaultLoadEstimator.createIOLinearEstimator(200),
-                                    DefaultLoadEstimator.createIOLinearEstimator(100)
-                            ),
+                            (operator, requestee) -> {
+                                final Configuration conf = requestee.getConfiguration();
+                                return new NestableLoadProfileEstimator(
+                                        IntervalLoadEstimator.createIOLinearEstimator(
+                                                null,
+                                                conf.getLongProperty("rheem.core.fallback.operator.cpu.lower"),
+                                                conf.getLongProperty("rheem.core.fallback.operator.cpu.upper"),
+                                                conf.getDoubleProperty("rheem.core.fallback.operator.cpu.confidence"),
+                                                CardinalityEstimate.EMPTY_ESTIMATE
+                                        ),
+                                        IntervalLoadEstimator.createIOLinearEstimator(
+                                                null,
+                                                conf.getLongProperty("rheem.core.fallback.operator.ram.lower"),
+                                                conf.getLongProperty("rheem.core.fallback.operator.ram.upper"),
+                                                conf.getDoubleProperty("rheem.core.fallback.operator.ram.confidence"),
+                                                CardinalityEstimate.EMPTY_ESTIMATE
+                                        )
+                                );
+                            },
                             configuration
                     ).withSlf4jWarning("Creating fallback load estimator for {}.");
 
