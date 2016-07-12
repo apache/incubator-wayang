@@ -169,7 +169,7 @@ public class Job extends OneTimeExecutable {
             }
 
             if (this.configuration.getBooleanProperty("rheem.core.log.enabled")) {
-                this.logExecution();
+                this.logExecution(executionPlan);
             }
         } catch (RheemException e) {
             throw e;
@@ -429,14 +429,6 @@ public class Job extends OneTimeExecutable {
         this.updateExecutionPlan(executionPlan);
         round.stopSubround("Update Execution Plan");
 
-        // Collect any instrumentation results for the future.
-        if (this.getConfiguration().getBooleanProperty("rheem.core.log.enabled")) {
-            round.startSubround("Store Cardinalities");
-            final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
-            cardinalityRepository.storeAll(this.crossPlatformExecutor, this.optimizationContext);
-            round.stopSubround("Store Cardinalities");
-        }
-
         round.stop(true, true);
     }
 
@@ -497,7 +489,15 @@ public class Job extends OneTimeExecutable {
         if (this.crossPlatformExecutor != null) this.crossPlatformExecutor.shutdown();
     }
 
-    private void logExecution() {
+    private void logExecution(ExecutionPlan executionPlan) {
+        this.stopWatch.start("Log measurements");
+
+        // For the last time, update the cardinalities and store them.
+        this.reestimateCardinalities(this.crossPlatformExecutor);
+        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
+        cardinalityRepository.storeAll(this.crossPlatformExecutor, this.optimizationContext);
+
+
         // Log the execution time.
         final Collection<PartialExecution> partialExecutions = this.crossPlatformExecutor.getPartialExecutions();
         long effectiveExecutionMillis = partialExecutions.stream()
@@ -520,6 +520,8 @@ public class Job extends OneTimeExecutable {
         } catch (Exception e) {
             this.logger.error("Storing partial executions failed.", e);
         }
+
+        this.stopWatch.stop("Log measurements");
     }
 
     /**

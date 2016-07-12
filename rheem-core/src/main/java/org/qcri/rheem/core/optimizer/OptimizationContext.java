@@ -387,12 +387,15 @@ public abstract class OptimizationContext {
          */
         public void setInputCardinality(int inputIndex, CardinalityEstimate cardinality) {
             this.inputCardinalityMarkers[inputIndex] |= !Objects.equals(this.inputCardinalities[inputIndex], cardinality);
-            this.inputCardinalities[inputIndex] = cardinality;
-            if (OptimizationContext.this.logger.isDebugEnabled()) {
+            if (OptimizationContext.this.logger.isDebugEnabled() && this.inputCardinalityMarkers[inputIndex]) {
                 OptimizationContext.this.logger.debug(
-                        "Setting cardinality of {} to {}.", this.operator.getInput(inputIndex), cardinality
+                        "Changing cardinality of {} from {} to {}.",
+                        this.operator.getInput(inputIndex),
+                        this.inputCardinalities[inputIndex],
+                        cardinality
                 );
             }
+            this.inputCardinalities[inputIndex] = cardinality;
         }
 
         /**
@@ -401,12 +404,15 @@ public abstract class OptimizationContext {
          */
         public void setOutputCardinality(int outputIndex, CardinalityEstimate cardinality) {
             this.outputCardinalityMarkers[outputIndex] |= !Objects.equals(this.outputCardinalities[outputIndex], cardinality);
-            this.outputCardinalities[outputIndex] = cardinality;
-            if (OptimizationContext.this.logger.isDebugEnabled()) {
+            if (OptimizationContext.this.logger.isDebugEnabled() && this.outputCardinalityMarkers[outputIndex]) {
                 OptimizationContext.this.logger.debug(
-                        "Setting cardinality of {} to {}.", this.operator.getOutput(outputIndex), cardinality
+                        "Changing cardinality of {} from {} to {}.",
+                        this.operator.getOutput(outputIndex),
+                        this.outputCardinalities[outputIndex],
+                        cardinality
                 );
             }
+            this.outputCardinalities[outputIndex] = cardinality;
         }
 
         /**

@@ -101,6 +101,13 @@ public class CardinalityEstimatorManager {
                 final InputSlot<?> outerInput = owner.getOutermostInputSlot((InputSlot<?>) correspondingSlot);
                 final Operator outerOperator = outerInput.getOwner();
                 final OptimizationContext.OperatorContext operatorCtx = this.optimizationContext.getOperatorContext(outerOperator);
+                if (this.logger.isInfoEnabled()) {
+                    this.logger.info("Updating cardinality of {} from {} to {}.",
+                            correspondingSlot,
+                            operatorCtx.getInputCardinality(outerInput.getIndex()),
+                            newEstimate
+                    );
+                }
                 operatorCtx.setInputCardinality(outerInput.getIndex(), newEstimate);
                 outerOperator.propagateInputCardinality(outerInput.getIndex(), operatorCtx);
 
@@ -113,6 +120,13 @@ public class CardinalityEstimatorManager {
                     final Operator outerOperator = outerOutput.getOwner();
                     final OptimizationContext.OperatorContext operatorCtx =
                             this.optimizationContext.getOperatorContext(outerOperator);
+                    if (this.logger.isInfoEnabled()) {
+                        this.logger.info("Updating cardinality of {} from {} to {}.",
+                                correspondingSlot,
+                                operatorCtx.getOutputCardinality(outerOutput.getIndex()),
+                                newEstimate
+                        );
+                    }
                     operatorCtx.setOutputCardinality(outerOutput.getIndex(), newEstimate);
                     outerOperator.propagateOutputCardinality(outerOutput.getIndex(), operatorCtx);
                 }
