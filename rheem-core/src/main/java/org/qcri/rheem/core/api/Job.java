@@ -169,7 +169,7 @@ public class Job extends OneTimeExecutable {
             }
 
             if (this.configuration.getBooleanProperty("rheem.core.log.enabled")) {
-                this.logExecution(executionPlan);
+                this.logExecution();
             }
         } catch (RheemException e) {
             throw e;
@@ -348,6 +348,9 @@ public class Job extends OneTimeExecutable {
             this.crossPlatformExecutor = new CrossPlatformExecutor(this, instrumentation);
         }
 
+        if (this.configuration.getOptionalBooleanProperty("rheem.core.debug.skipexecution").orElse(false)) {
+            return true;
+        }
         if (this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize")) {
             this.setUpBreakpoint(executionPlan, round);
         }
@@ -489,7 +492,7 @@ public class Job extends OneTimeExecutable {
         if (this.crossPlatformExecutor != null) this.crossPlatformExecutor.shutdown();
     }
 
-    private void logExecution(ExecutionPlan executionPlan) {
+    private void logExecution() {
         this.stopWatch.start("Log measurements");
 
         // For the last time, update the cardinalities and store them.
