@@ -94,11 +94,13 @@ public class JavaPlatform extends Platform {
         int cpuMhz = (int) configuration.getLongProperty("rheem.java.cpu.mhz");
         int numCores = (int) configuration.getLongProperty("rheem.java.cores");
         double hdfsMsPerMb = configuration.getDoubleProperty("rheem.java.hdfs.ms-per-mb");
-        return LoadProfileToTimeConverter.createDefault(
+        double stretch = configuration.getDoubleProperty("rheem.java.stretch");
+        return LoadProfileToTimeConverter.createTopLevelStretching(
                 LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000d)),
                 LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000d),
                 LoadToTimeConverter.createLinearCoverter(0),
-                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate),
+                stretch
         );
     }
 }
