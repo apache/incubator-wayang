@@ -69,6 +69,7 @@ public class LazyChannelLineage {
 
         private void add(Node predecessor) {
             this.predecessors.add(predecessor);
+            predecessor.channelInstance.noteObtainedReference();
         }
 
         private <T> T traverse(T accumulator, BiFunction<T, Node, T> aggregator, boolean isMark) {
@@ -78,6 +79,7 @@ public class LazyChannelLineage {
                     accumulator = next.traverse(accumulator, aggregator, isMark);
                     if (next.channelInstance.wasExecuted()) {
                         i.remove();
+                        next.channelInstance.noteDiscardedReference(true);
                     }
                 }
 
