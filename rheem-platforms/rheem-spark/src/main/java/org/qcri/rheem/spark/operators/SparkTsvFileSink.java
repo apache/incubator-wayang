@@ -59,7 +59,9 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
                     return String.valueOf(tuple2.field0) + '\t' + String.valueOf(tuple2.field1);
                 });
         this.name(serializedRdd);
-        serializedRdd.saveAsTextFile(targetPath);
+        serializedRdd
+                .coalesce(1) // TODO: Allow more than one TSV file?
+                .saveAsTextFile(targetPath);
 
 
     }
