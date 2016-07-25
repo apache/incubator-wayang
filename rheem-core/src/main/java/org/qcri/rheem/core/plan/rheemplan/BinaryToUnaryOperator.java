@@ -15,9 +15,9 @@ public abstract class BinaryToUnaryOperator<InputType0, InputType1, OutputType> 
                                  DataSetType<OutputType> outputType,
                                  boolean isSupportingBroadcastInputs) {
         super(2, 1, isSupportingBroadcastInputs, null);
-        this.inputSlots[0] = new InputSlot<>("input0", this, inputType0);
-        this.inputSlots[1] = new InputSlot<>("input1", this, inputType1);
-        this.outputSlots[0] = new OutputSlot<>("output", this, outputType);
+        this.inputSlots[0] = new InputSlot<>("in0", this, inputType0);
+        this.inputSlots[1] = new InputSlot<>("in1", this, inputType1);
+        this.outputSlots[0] = new OutputSlot<>("out", this, outputType);
     }
 
     /**
@@ -28,9 +28,9 @@ public abstract class BinaryToUnaryOperator<InputType0, InputType1, OutputType> 
      */
     protected BinaryToUnaryOperator(BinaryToUnaryOperator<InputType0, InputType1, OutputType> that) {
         super(that);
-        this.inputSlots[0] = new InputSlot<>("input0", this, that.getInputType0());
-        this.inputSlots[1] = new InputSlot<>("input1", this, that.getInputType1());
-        this.outputSlots[0] = new OutputSlot<>("output", this, that.getOutputType());
+        this.inputSlots[0] = new InputSlot<>("in0", this, that.getInputType0());
+        this.inputSlots[1] = new InputSlot<>("in1", this, that.getInputType1());
+        this.outputSlots[0] = new OutputSlot<>("out", this, that.getOutputType());
     }
 
     @SuppressWarnings("unchecked")

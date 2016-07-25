@@ -86,14 +86,14 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     }
 
     private void initializeSlots(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType) {
-        this.inputSlots[INITIAL_INPUT_INDEX] = new InputSlot<>("initialInput", this, inputType);
-        this.inputSlots[INITIAL_CONVERGENCE_INPUT_INDEX] = new InputSlot<>("initialConvergenceInput", this, convergenceType);
-        this.inputSlots[ITERATION_INPUT_INDEX] = new InputSlot<>("iterationInput", this, inputType);
-        this.inputSlots[ITERATION_CONVERGENCE_INPUT_INDEX] = new InputSlot<>("convergenceInput", this, convergenceType);
+        this.inputSlots[INITIAL_INPUT_INDEX] = new InputSlot<>("initIn", this, inputType);
+        this.inputSlots[INITIAL_CONVERGENCE_INPUT_INDEX] = new InputSlot<>("initConvIn", this, convergenceType);
+        this.inputSlots[ITERATION_INPUT_INDEX] = new InputSlot<>("iterIn", this, inputType);
+        this.inputSlots[ITERATION_CONVERGENCE_INPUT_INDEX] = new InputSlot<>("convIn", this, convergenceType);
 
-        this.outputSlots[ITERATION_OUTPUT_INDEX] = new OutputSlot<>("iterationOutput", this, inputType);
-        this.outputSlots[ITERATION_CONVERGENCE_OUTPUT_INDEX] = new OutputSlot<>("convergenceOutput", this, convergenceType);
-        this.outputSlots[FINAL_OUTPUT_INDEX] = new OutputSlot<>("output", this, inputType);
+        this.outputSlots[ITERATION_OUTPUT_INDEX] = new OutputSlot<>("iterOut", this, inputType);
+        this.outputSlots[ITERATION_CONVERGENCE_OUTPUT_INDEX] = new OutputSlot<>("convOut", this, convergenceType);
+        this.outputSlots[FINAL_OUTPUT_INDEX] = new OutputSlot<>("finOut", this, inputType);
     }
 
 

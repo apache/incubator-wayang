@@ -20,14 +20,14 @@ public class LoopIsolatorTest {
         TestSource<Integer> source = new TestSource<>(Integer.class);
 
         TestLoopHead<Integer> loopHead = new TestLoopHead<>(Integer.class);
-        source.connectTo("output", loopHead, "initialInput");
+        source.connectTo("out", loopHead, "initialInput");
 
         TestMapOperator<Integer, Integer> inLoopMap = new TestMapOperator<>(Integer.class, Integer.class);
-        loopHead.connectTo("loopOutput", inLoopMap, "input");
-        inLoopMap.connectTo("output", loopHead, "loopInput");
+        loopHead.connectTo("loopOutput", inLoopMap, "in");
+        inLoopMap.connectTo("out", loopHead, "loopInput");
 
         TestSink<Integer> sink = new TestSink<>(Integer.class);
-        loopHead.connectTo("finalOutput", sink, "input");
+        loopHead.connectTo("finalOutput", sink, "in");
 
         RheemPlan rheemPlan = new RheemPlan(sink);
 
@@ -56,15 +56,15 @@ public class LoopIsolatorTest {
         TestSource<Integer> additionalSource = new TestSource<>(Integer.class);
 
         TestLoopHead<Integer> loopHead = new TestLoopHead<>(Integer.class);
-        mainSource.connectTo("output", loopHead, "initialInput");
+        mainSource.connectTo("out", loopHead, "initialInput");
 
         TestMapOperator<Integer, Integer> inLoopMap = new TestMapOperator<>(Integer.class, Integer.class);
         loopHead.broadcastTo("loopOutput", inLoopMap, "broadcast");
-        additionalSource.connectTo("output", inLoopMap, "input");
-        inLoopMap.connectTo("output", loopHead, "loopInput");
+        additionalSource.connectTo("out", inLoopMap, "in");
+        inLoopMap.connectTo("out", loopHead, "loopInput");
 
         TestSink<Integer> sink = new TestSink<>(Integer.class);
-        loopHead.connectTo("finalOutput", sink, "input");
+        loopHead.connectTo("finalOutput", sink, "in");
 
         RheemPlan rheemPlan = new RheemPlan(sink);
 
@@ -92,21 +92,21 @@ public class LoopIsolatorTest {
         TestSource<Integer> mainSource = new TestSource<>(Integer.class);
 
         TestLoopHead<Integer> outerLoopHead = new TestLoopHead<>(Integer.class);
-        mainSource.connectTo("output", outerLoopHead, "initialInput");
+        mainSource.connectTo("out", outerLoopHead, "initialInput");
 
         TestMapOperator<Integer, Integer> inOuterLoopMap = new TestMapOperator<>(Integer.class, Integer.class);
-        outerLoopHead.connectTo("loopOutput", inOuterLoopMap, "input");
+        outerLoopHead.connectTo("loopOutput", inOuterLoopMap, "in");
 
         TestLoopHead<Integer> innerLoopHead = new TestLoopHead<>(Integer.class);
-        inOuterLoopMap.connectTo("output", innerLoopHead, "initialInput");
+        inOuterLoopMap.connectTo("out", innerLoopHead, "initialInput");
 
         TestMapOperator<Integer, Integer> inInnerLoopMap = new TestMapOperator<>(Integer.class, Integer.class);
-        innerLoopHead.connectTo("loopOutput", inInnerLoopMap, "input");
-        inInnerLoopMap.connectTo("output", innerLoopHead, "loopInput");
+        innerLoopHead.connectTo("loopOutput", inInnerLoopMap, "in");
+        inInnerLoopMap.connectTo("out", innerLoopHead, "loopInput");
         innerLoopHead.connectTo("finalOutput", outerLoopHead, "loopInput");
 
         TestSink<Integer> sink = new TestSink<>(Integer.class);
-        outerLoopHead.connectTo("finalOutput", sink, "input");
+        outerLoopHead.connectTo("finalOutput", sink, "in");
 
         RheemPlan rheemPlan = new RheemPlan(sink);
 

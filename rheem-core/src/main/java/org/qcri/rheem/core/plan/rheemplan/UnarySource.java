@@ -19,7 +19,7 @@ public abstract class UnarySource<T> extends OperatorBase implements ElementaryO
      */
     public UnarySource(DataSetType<T> type, boolean isSupportingBroadcastInputs, OperatorContainer container) {
         super(0, 1, isSupportingBroadcastInputs, container);
-        this.outputSlots[0] = new OutputSlot<>("output", this, type);
+        this.outputSlots[0] = new OutputSlot<>("out", this, type);
     }
 
     /**

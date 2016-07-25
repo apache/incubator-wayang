@@ -331,7 +331,7 @@ public class PlanEnumerator {
 
             currentOperator = nextOperator;
         }
-        this.logger.trace("Determined branch : {}.", currentOperator);
+        this.logger.trace("Determined branch: {}.", currentOperator);
 
         return branch;
     }
@@ -668,6 +668,7 @@ public class PlanEnumerator {
 
     /**
      * Checks whether this instance is enumerating a top-level plan and is not a recursively invoked enumeration.
+     *
      * @return
      */
     public boolean isTopLevel() {
@@ -832,10 +833,10 @@ public class PlanEnumerator {
         }
 
         public void updateBaseEnumeration(PlanEnumeration baseEnumeration) {
-            if (this.baseEnumeration == null || this.baseEnumeration.getScope().stream().anyMatch(baseEnumeration.getScope()::contains)) {
-                assert this.baseEnumeration == null || baseEnumeration.getScope().containsAll(this.baseEnumeration.getScope());
-                this.baseEnumeration = baseEnumeration;
-            }
+            // TODO: if (this.baseEnumeration == null || this.baseEnumeration.getScope().stream().anyMatch(baseEnumeration.getScope()::contains)) {
+            assert this.baseEnumeration == null || baseEnumeration.getScope().containsAll(this.baseEnumeration.getScope());
+            this.baseEnumeration = baseEnumeration;
+            // }
         }
 
         public Map<InputSlot<?>, PlanEnumeration> getAdjacentEnumerations() {

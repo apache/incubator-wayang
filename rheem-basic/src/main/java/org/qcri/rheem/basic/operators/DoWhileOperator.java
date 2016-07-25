@@ -85,12 +85,12 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
     }
 
     private void initializeSlots(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType) {
-        this.inputSlots[INITIAL_INPUT_INDEX] = new InputSlot<>("initialInput", this, inputType);
-        this.inputSlots[ITERATION_INPUT_INDEX] = new InputSlot<>("iterationInput", this, inputType);
-        this.inputSlots[CONVERGENCE_INPUT_INDEX] = new InputSlot<>("convergenceInput", this, convergenceType);
+        this.inputSlots[INITIAL_INPUT_INDEX] = new InputSlot<>("initIn", this, inputType);
+        this.inputSlots[ITERATION_INPUT_INDEX] = new InputSlot<>("iterIn", this, inputType);
+        this.inputSlots[CONVERGENCE_INPUT_INDEX] = new InputSlot<>("convIn", this, convergenceType);
 
-        this.outputSlots[ITERATION_OUTPUT_INDEX] = new OutputSlot<>("iterationOutput", this, inputType);
-        this.outputSlots[FINAL_OUTPUT_INDEX] = new OutputSlot<>("output", this, inputType);
+        this.outputSlots[ITERATION_OUTPUT_INDEX] = new OutputSlot<>("iterOut", this, inputType);
+        this.outputSlots[FINAL_OUTPUT_INDEX] = new OutputSlot<>("finOut", this, inputType);
     }
 
     @SuppressWarnings("unchecked")

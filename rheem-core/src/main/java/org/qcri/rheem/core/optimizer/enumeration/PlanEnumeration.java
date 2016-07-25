@@ -548,12 +548,25 @@ public class PlanEnumeration {
 
     @Override
     public String toString() {
+        return this.toIOString();
+    }
+
+    @SuppressWarnings("unused")
+    private String toIOString() {
         return String.format("%s[%dx, inputs=%s, outputs=%s]", this.getClass().getSimpleName(),
                 this.getPlanImplementations().size(),
                 this.requestedInputSlots, this.servingOutputSlots.stream()
                         .map(Tuple::getField0)
                         .distinct()
                         .collect(Collectors.toList())
+        );
+    }
+
+    @SuppressWarnings("unused")
+    private String toScopeString() {
+        return String.format("%s[%dx %s]", this.getClass().getSimpleName(),
+                this.getPlanImplementations().size(),
+                this.scope
         );
     }
 }

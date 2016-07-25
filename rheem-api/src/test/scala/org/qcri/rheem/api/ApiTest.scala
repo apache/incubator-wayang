@@ -180,7 +180,7 @@ class ApiTest {
     // Build and execute a word count RheemPlan.
 
     val values = rheem
-      .readCollection(inputValues).withName("Load input values")
+      .readCollection(inputValues).withName("Load input values").withName(inputValues.mkString(","))
       .repeat(3,
         _.reduce(_ * _).withName("Multiply")
           .flatMap(v => Seq(v, v + 1)).withName("Duplicate")

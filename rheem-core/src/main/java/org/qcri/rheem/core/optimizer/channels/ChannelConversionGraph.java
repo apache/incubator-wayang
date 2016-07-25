@@ -424,8 +424,8 @@ public class ChannelConversionGraph {
 
             // Check if current path is a (new) solution.
             final Bitmask newSettledIndices = this.kernelDestChannelDescriptorsToIndices
-                            .getOrDefault(channelDescriptor, Bitmask.EMPTY_BITMASK)
-                            .andNot(settledDestinationIndices);
+                    .getOrDefault(channelDescriptor, Bitmask.EMPTY_BITMASK)
+                    .andNot(settledDestinationIndices);
             if (!newSettledIndices.isEmpty() && (newSettledIndices.cardinality() < 2 || channelDescriptor.isReusable())) {
                 // Create a new solution.
                 newSolution = Tree.singleton(channelDescriptor, newSettledIndices);
@@ -709,12 +709,17 @@ public class ChannelConversionGraph {
                     TimeEstimate costs) {
             // Exchange the root.
             final TreeVertex newRoot = new TreeVertex(newRootChannelDescriptor, newRootSettledIndices);
-            newRoot.linkTo(newToObsoleteRootConversion, this.root);
+            final TreeEdge edge = newRoot.linkTo(newToObsoleteRootConversion, this.root, costs);
             this.root = newRoot;
             // Update metadata.
             this.employedChannelDescriptors.add(newRootChannelDescriptor);
             this.settledDestinationIndices.orInPlace(newRootSettledIndices);
-            this.costs = this.costs.plus(costs);
+            this.costs = this.costs.plus(edge.timeEstimate);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s[%s, %s]", this.getClass().getSimpleName(), this.costs, this.root.getChildChannelConversions());
         }
     }
 
@@ -750,8 +755,10 @@ public class ChannelConversionGraph {
             this.outEdges = new ArrayList<>(4);
         }
 
-        private void linkTo(ChannelConversion channelConversion, TreeVertex destination) {
-            this.outEdges.add(new TreeEdge(channelConversion, destination));
+        private TreeEdge linkTo(ChannelConversion channelConversion, TreeVertex destination, TimeEstimate timeEstimate) {
+            final TreeEdge edge = new TreeEdge(channelConversion, destination, timeEstimate);
+            this.outEdges.add(edge);
+            return edge;
         }
 
         private void copyEdgesFrom(TreeVertex that) {
@@ -759,6 +766,24 @@ public class ChannelConversionGraph {
             this.outEdges.addAll(that.outEdges);
         }
 
+        /**
+         * Collects all {@link ChannelConversion}s employed by (indirectly) outgoing {@link TreeEdge}s.
+         *
+         * @return a {@link Set} of said {@link ChannelConversion}s
+         */
+        private Set<ChannelConversion> getChildChannelConversions() {
+            Set<ChannelConversion> channelConversions = new HashSet<>();
+            for (TreeEdge edge : this.outEdges) {
+                channelConversions.add(edge.channelConversion);
+                channelConversions.addAll(edge.destination.getChildChannelConversions());
+            }
+            return channelConversions;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s[%s]", this.getClass().getSimpleName(), this.channelDescriptor);
+        }
     }
 
     /**
@@ -770,9 +795,17 @@ public class ChannelConversionGraph {
 
         private final ChannelConversion channelConversion;
 
-        private TreeEdge(ChannelConversion channelConversion, TreeVertex destination) {
+        private final TimeEstimate timeEstimate;
+
+        private TreeEdge(ChannelConversion channelConversion, TreeVertex destination, TimeEstimate timeEstimate) {
             this.channelConversion = channelConversion;
             this.destination = destination;
+            this.timeEstimate = timeEstimate;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s[%s, %s]", this.getClass().getSimpleName(), this.channelConversion, this.timeEstimate);
         }
     }
 }
