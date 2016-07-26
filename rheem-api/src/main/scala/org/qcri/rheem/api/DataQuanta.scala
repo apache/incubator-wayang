@@ -471,7 +471,8 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     iterationResult.connectTo(loopOperator, LoopOperator.ITERATION_INPUT_INDEX)
 
     // Create and wire the convergence loop body.
-    val convergenceResult = new DataQuanta[Int](loopOperator, LoopOperator.ITERATION_CONVERGENCE_OUTPUT_INDEX).map(_ + 1)
+    val convergenceResult = new DataQuanta[Int](loopOperator, LoopOperator.ITERATION_CONVERGENCE_OUTPUT_INDEX)
+      .map(_ + 1).withName("Increment loop counter")
     convergenceResult.connectTo(loopOperator, LoopOperator.ITERATION_CONVERGENCE_INPUT_INDEX)
 
     // Return the iteration result.
