@@ -15,8 +15,6 @@ import java.util.Objects;
  */
 public class SqlQueryChannel extends Channel {
 
-
-
     public SqlQueryChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
         super(descriptor, outputSlot);
     }
