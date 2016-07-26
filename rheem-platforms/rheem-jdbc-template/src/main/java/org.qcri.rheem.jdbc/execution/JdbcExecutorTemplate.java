@@ -12,7 +12,10 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.platform.*;
+import org.qcri.rheem.core.platform.ExecutionState;
+import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.ExecutorTemplate;
+import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
@@ -77,10 +80,10 @@ public class JdbcExecutorTemplate extends ExecutorTemplate {
         Validate.isTrue(startTask.getOperator() instanceof TableSource<?>,
                 "Invalid JDBC stage: Start task has to be a TableSource");
 
+        // Extract the different types of ExecutionOperators from the stage.
         TableSource tableOp = (TableSource) startTask.getOperator();
         Collection<ExecutionTask> filterTasks = new ArrayList<>(4);
         ExecutionTask projectionTask = null;
-
         Set<ExecutionTask> allTasks = stage.getAllTasks();
         assert allTasks.size() <= 3;
         for (ExecutionTask t : allTasks) {
@@ -97,26 +100,17 @@ public class JdbcExecutorTemplate extends ExecutorTemplate {
             }
         }
 
+        // Create the SQL query.
         String tableName = this.getSqlClause(tableOp);
         Collection<String> conditions = filterTasks.stream()
                 .map(ExecutionTask::getOperator)
                 .map(this::getSqlClause)
                 .collect(Collectors.toList());
         String projection = projectionTask == null ? "*" : this.getSqlClause(projectionTask.getOperator());
+        String query = this.createSqlQuery(tableName, conditions, projection);
 
-        StringBuilder sb = new StringBuilder(1000);
-        sb.append("SELECT ").append(projection);
-        if (!conditions.isEmpty()) {
-            sb.append(" WHERE ");
-            String separator = "";
-            for (String condition : conditions) {
-                sb.append(separator).append(condition);
-                separator = " AND ";
-            }
-        }
-        sb.append(" FROM ").append(tableName).append(';');
-        String query = sb.toString();
-
+        // Execute the query.
+        this.logger.info("Querying against {}: {}", this.platform, query);
         try (final PreparedStatement ps = this.connection.prepareStatement(query)) {
             final ResultSet rs = ps.executeQuery();
             final FileChannel.Instance outputFileChannelInstance =
@@ -130,6 +124,29 @@ public class JdbcExecutorTemplate extends ExecutorTemplate {
 
         // TODO: Set output ChannelInstance correctly.
         // TODO: Use StreamChannel instead of TSV files.
+    }
+
+    /**
+     * Creates a SQL query.
+     *
+     * @param tableName  the table to be queried
+     * @param conditions conditions for the {@code WHERE} clause
+     * @param projection projection for the {@code SELECT} clause
+     * @return the SQL query
+     */
+    protected String createSqlQuery(String tableName, Collection<String> conditions, String projection) {
+        StringBuilder sb = new StringBuilder(1000);
+        sb.append("SELECT ").append(projection);
+        if (!conditions.isEmpty()) {
+            sb.append(" WHERE ");
+            String separator = "";
+            for (String condition : conditions) {
+                sb.append(separator).append(condition);
+                separator = " AND ";
+            }
+        }
+        sb.append(" FROM ").append(tableName).append(';');
+        return sb.toString();
     }
 
     /**
