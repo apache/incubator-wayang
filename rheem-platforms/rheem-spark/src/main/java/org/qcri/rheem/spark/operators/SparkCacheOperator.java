@@ -67,7 +67,7 @@ public class SparkCacheOperator<Type>
     }
 
     @Override
-    public boolean isExecutedLazily() {
-        return true;
+    public boolean isExecutedEagerly() {
+        return false;
     }
 }

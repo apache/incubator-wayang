@@ -161,4 +161,14 @@ public class JavaLoopOperator<InputType, ConvergenceType>
                 throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
         }        // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
+    }
+
+    @Override
+    public boolean isEvaluatingEagerly(int inputIndex) {
+        return inputIndex == INITIAL_CONVERGENCE_INPUT_INDEX || inputIndex == ITERATION_CONVERGENCE_INPUT_INDEX;
+    }
 }

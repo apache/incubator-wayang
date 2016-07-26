@@ -14,7 +14,7 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
 
     private OptionalLong measuredCardinality = OptionalLong.empty();
 
-    private boolean wasExecuted = false;
+    private boolean wasProduced = false;
 
     private LazyChannelLineage lazyChannelLineage;
 
@@ -57,13 +57,13 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
     }
 
     @Override
-    public boolean wasExecuted() {
-        return this.wasExecuted;
+    public boolean wasProduced() {
+        return this.wasProduced;
     }
 
     @Override
-    public void markExecuted() {
-        this.wasExecuted = true;
+    public void markProduced() {
+        this.wasProduced = true;
     }
 
     @Override

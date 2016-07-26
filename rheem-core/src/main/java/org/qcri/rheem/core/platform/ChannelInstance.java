@@ -49,21 +49,21 @@ public interface ChannelInstance extends ExecutionResource {
      * @param channelInstance the {@link ChannelInstance}
      */
     default void addPredecessor(ChannelInstance channelInstance) {
-        if (!channelInstance.wasExecuted()) {
+        if (!channelInstance.wasProduced()) {
             this.getLazyChannelLineage().addPredecessor(channelInstance.getLazyChannelLineage());
         }
     }
 
     /**
-     * Tells whether this instance was already executed.
+     * Tells whether this instance was already produced.
      *
-     * @returnwhether this instance was already executed
+     * @return whether this instance was already produced
      */
-    boolean wasExecuted();
+    boolean wasProduced();
 
     /**
-     * Mark this instance as executed.
+     * Mark this instance as produced.
      */
-    void markExecuted();
+    void markProduced();
 
 }

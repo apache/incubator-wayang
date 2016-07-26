@@ -144,4 +144,14 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
         // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
+    }
+
+    @Override
+    public boolean isEvaluatingEagerly(int inputIndex) {
+        return inputIndex == CONVERGENCE_INPUT_INDEX;
+    }
 }

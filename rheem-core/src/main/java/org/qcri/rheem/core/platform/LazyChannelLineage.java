@@ -68,23 +68,24 @@ public class LazyChannelLineage {
         }
 
         private void add(Node predecessor) {
+            assert !this.predecessors.contains(predecessor);
             this.predecessors.add(predecessor);
-            predecessor.channelInstance.noteObtainedReference();
+//            predecessor.channelInstance.noteObtainedReference();
         }
 
         private <T> T traverse(T accumulator, BiFunction<T, Node, T> aggregator, boolean isMark) {
-            if (!this.channelInstance.wasExecuted()) {
+            if (!this.channelInstance.wasProduced()) {
                 for (Iterator<Node> i = this.predecessors.iterator(); i.hasNext(); ) {
-                    Node next = i.next();
-                    accumulator = next.traverse(accumulator, aggregator, isMark);
-                    if (next.channelInstance.wasExecuted()) {
+                    Node predecessor = i.next();
+                    accumulator = predecessor.traverse(accumulator, aggregator, isMark);
+                    if (predecessor.channelInstance.wasProduced()) {
                         i.remove();
-                        next.channelInstance.noteDiscardedReference(true);
+//                        next.channelInstance.noteDiscardedReference(true);
                     }
                 }
 
                 accumulator = aggregator.apply(accumulator, this);
-                if (isMark) this.channelInstance.markExecuted();
+                if (isMark) this.channelInstance.markProduced();
             }
 
             return accumulator;

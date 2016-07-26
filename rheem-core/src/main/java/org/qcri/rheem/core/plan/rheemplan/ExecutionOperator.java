@@ -5,6 +5,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.LoggerFactory;
 
@@ -79,13 +80,25 @@ public interface ExecutionOperator extends ElementaryOperator {
     }
 
     /**
-     * Tells whether this instance will not be executed instantaneously.
+     * Tells whether this instance is executed eagerly, i.e., it will do its work right away and not wait for combination
+     * with down-stream instances. Note that this does not imply that all input {@link ExecutionOperator}s are evaluated
+     * right away.
      *
-     * @return whether this instance is executed lazily
+     * @return whether this instance is executed eagerly
      */
-    default boolean isExecutedLazily() {
-        // Heuristic that hopefully holds.
-        return this.getNumOutputs() > 0 && !this.getOutputChannelDescriptor(0).isReusable();
+    default boolean isExecutedEagerly() {
+        // Heuristic that holds for many, but not all of the cases.
+        return this.getNumOutputs() == 0 || this.getOutputChannelDescriptor(0).isReusable();
+    }
+
+    /**
+     * Tells whether this instance will evaluate a certain input {@link ChannelInstance} eagerly.
+     *
+     * @param inputIndex the index of an input {@link ChannelInstance}
+     * @return whether the {@link OutputSlot} is executed eagerly
+     */
+    default boolean isEvaluatingEagerly(int inputIndex) {
+        return this.isExecutedEagerly();
     }
 
 }

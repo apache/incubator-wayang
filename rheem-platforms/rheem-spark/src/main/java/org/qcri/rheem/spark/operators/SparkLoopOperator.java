@@ -162,4 +162,14 @@ public class SparkLoopOperator<InputType, ConvergenceType>
                 throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
         }
     }
+    
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
+    }
+
+    @Override
+    public boolean isEvaluatingEagerly(int inputIndex) {
+        return inputIndex == INITIAL_CONVERGENCE_INPUT_INDEX || inputIndex == ITERATION_CONVERGENCE_INPUT_INDEX;
+    }
 }
