@@ -13,31 +13,24 @@ import java.sql.Connection;
  */
 public abstract class JdbcFilterOperator<Type> extends FilterOperator<Type> implements JdbcExecutionOperator {
 
-    /**
-     * Creates a new instance.
-     *
-     * @param type type of the dataset elements
-     */
-    public JdbcFilterOperator(DataSetType<Type> type, PredicateDescriptor<Type> predicateDescriptor) {
-        super(predicateDescriptor, type);
+    public JdbcFilterOperator(PredicateDescriptor<Type> predicateDescriptor) {
+        super(predicateDescriptor);
     }
 
-
-    public JdbcFilterOperator(DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
-        super(type, predicateDescriptor);
+    public JdbcFilterOperator(PredicateDescriptor<Type> predicateDescriptor, DataSetType<Type> type) {
+        super(predicateDescriptor, type);
     }
 
     public JdbcFilterOperator(PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor, Class<Type> typeClass) {
         super(predicateDescriptor, typeClass);
     }
 
-    /**
-     * Copies an instance (exclusive of broadcasts).
-     *
-     * @param that that should be copied
-     */
     public JdbcFilterOperator(FilterOperator<Type> that) {
         super(that);
+    }
+
+    public JdbcFilterOperator(DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
+        super(type, predicateDescriptor);
     }
 
     @Override
