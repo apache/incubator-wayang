@@ -9,9 +9,6 @@ import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.jdbc.execution.JdbcExecutorTemplate;
-import org.qcri.rheem.jdbc.mapping.PostgresFilterMapping;
-import org.qcri.rheem.jdbc.mapping.PostgresProjectionMapping;
-import org.qcri.rheem.jdbc.mapping.PostgresTableSourceMapping;
 
 import java.sql.Connection;
 import java.util.Collection;
@@ -36,8 +33,7 @@ public abstract class JdbcPlatformTemplate extends Platform {
 
     public final String defaultConfigFile = String.format("rheem-%s-defaults.properties");
 
-
-    private final Collection<Mapping> mappings = new LinkedList<>();
+    protected final Collection<Mapping> mappings = new LinkedList<>();
 
     private static JdbcPlatformTemplate instance = null;
 
@@ -58,11 +54,7 @@ public abstract class JdbcPlatformTemplate extends Platform {
         defaultConfiguration.load(ReflectionUtils.loadResource(this.defaultConfigFile));
     }
 
-    private void initializeMappings() {
-        this.mappings.add(new PostgresTableSourceMapping());
-        this.mappings.add(new PostgresFilterMapping());
-        this.mappings.add(new PostgresProjectionMapping());
-    }
+    protected abstract void initializeMappings();
 
     @Override
     public Collection<Mapping> getMappings() {
