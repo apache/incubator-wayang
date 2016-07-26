@@ -1,6 +1,5 @@
 package org.qcri.rheem.jdbc.execution;
 
-import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.basic.operators.ProjectionOperator;
@@ -9,6 +8,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
@@ -16,9 +16,11 @@ import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.ExecutorTemplate;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
+import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
 import org.qcri.rheem.jdbc.operators.JdbcExecutionOperator;
 import org.slf4j.Logger;
@@ -72,32 +74,37 @@ public class JdbcExecutorTemplate extends ExecutorTemplate {
         Collection<?> termTasks = stage.getTerminalTasks();
 
         // Verify that we can handle this instance.
-        Validate.isTrue(startTasks.size() == 1, "Invalid jdbc stage: multiple sources are not currently supported");
+        assert startTasks.size() == 1 : "Invalid jdbc stage: multiple sources are not currently supported";
         ExecutionTask startTask = (ExecutionTask) startTasks.toArray()[0];
-        Validate.isTrue(termTasks.size() == 1,
-                "Invalid JDBC stage: multiple terminal tasks are not currently supported");
+        assert termTasks.size() == 1 : "Invalid JDBC stage: multiple terminal tasks are not currently supported.";
         ExecutionTask termTask = (ExecutionTask) termTasks.toArray()[0];
-        Validate.isTrue(startTask.getOperator() instanceof TableSource<?>,
-                "Invalid JDBC stage: Start task has to be a TableSource");
+        assert startTask.getOperator() instanceof TableSource<?> : "Invalid JDBC stage: Start task has to be a TableSource";
 
         // Extract the different types of ExecutionOperators from the stage.
         TableSource tableOp = (TableSource) startTask.getOperator();
+        SqlQueryChannel.Instance tipChannelInstance = this.instantiateOutboundChannel(startTask, optimizationContext);
         Collection<ExecutionTask> filterTasks = new ArrayList<>(4);
         ExecutionTask projectionTask = null;
         Set<ExecutionTask> allTasks = stage.getAllTasks();
         assert allTasks.size() <= 3;
-        for (ExecutionTask t : allTasks) {
-            if (t == startTask)
-                continue;
-            if (t.getOperator() instanceof FilterOperator<?>) {
-                filterTasks.add(t);
-            } else if (t.getOperator() instanceof ProjectionOperator<?, ?>) {
+        ExecutionTask nextTask = this.findJdbcExecutionOperatorTaskInStage(startTask, stage);
+        while (nextTask != null) {
+            // Evaluate the nextTask.
+            if (nextTask.getOperator() instanceof FilterOperator<?>) {
+                filterTasks.add(nextTask);
+            } else if (nextTask.getOperator() instanceof ProjectionOperator<?, ?>) {
                 assert projectionTask == null; //Allow one projection operator per stage for now.
-                projectionTask = t;
+                projectionTask = nextTask;
 
             } else {
-                throw new RheemException(String.format("Unsupported JDBC execution task %s", t.toString()));
+                throw new RheemException(String.format("Unsupported JDBC execution task %s", nextTask.toString()));
             }
+
+            // Move the tipChannelInstance.
+            tipChannelInstance = this.instantiateOutboundChannel(nextTask, optimizationContext, tipChannelInstance);
+
+            // Go to the next nextTask.
+            nextTask = this.findJdbcExecutionOperatorTaskInStage(nextTask, stage);
         }
 
         // Create the SQL query.
@@ -108,22 +115,59 @@ public class JdbcExecutorTemplate extends ExecutorTemplate {
                 .collect(Collectors.toList());
         String projection = projectionTask == null ? "*" : this.getSqlClause(projectionTask.getOperator());
         String query = this.createSqlQuery(tableName, conditions, projection);
+        tipChannelInstance.setSqlQuery(query);
 
-        // Execute the query.
-        this.logger.info("Querying against {}: {}", this.platform, query);
-        try (final PreparedStatement ps = this.connection.prepareStatement(query)) {
-            final ResultSet rs = ps.executeQuery();
-            final FileChannel.Instance outputFileChannelInstance =
-                    (FileChannel.Instance) termTask.getOutputChannel(0).createInstance(this, null, 0);
-//            outputFileChannelInstance.addPredecessor(tipChannelInstance);
-            this.saveResult(outputFileChannelInstance, rs);
-            executionState.register(outputFileChannelInstance);
-        } catch (IOException | SQLException e) {
-            throw new RheemException("PostgreSQL execution failed.", e);
-        }
+        // Return the tipChannelInstance.
+        executionState.register(tipChannelInstance);
+    }
 
-        // TODO: Set output ChannelInstance correctly.
-        // TODO: Use StreamChannel instead of TSV files.
+    /**
+     * Retrieves the follow-up {@link ExecutionTask} of the given {@code task} unless it is not comprising a
+     * {@link JdbcExecutionOperator}.
+     *
+     * @param task  whose follow-up {@link ExecutionTask} is requested; should have a single follower
+     * @param stage in which the follow-up {@link ExecutionTask} should be
+     * @return the said follow-up {@link ExecutionTask} or {@code null} if none
+     */
+    private ExecutionTask findJdbcExecutionOperatorTaskInStage(ExecutionTask task, ExecutionStage stage) {
+        assert task.getNumOuputChannels() == 1;
+        final Channel outputChannel = task.getOutputChannel(0);
+        final ExecutionTask consumer = RheemCollections.getSingle(outputChannel.getConsumers());
+        assert consumer.getStage() == stage;
+        return consumer.getOperator() instanceof JdbcExecutionOperator ? consumer : null;
+    }
+
+    /**
+     * Instantiates the outbound {@link SqlQueryChannel} of an {@link ExecutionTask}.
+     *
+     * @param task                whose outbound {@link SqlQueryChannel} should be instantiated
+     * @param optimizationContext provides information about the {@link ExecutionTask}
+     * @return the {@link SqlQueryChannel.Instance}
+     */
+    private SqlQueryChannel.Instance instantiateOutboundChannel(ExecutionTask task,
+                                                                OptimizationContext optimizationContext) {
+        assert task.getNumOuputChannels() == 1 : String.format("Illegal task: %s.", task);
+        assert task.getOutputChannel(0) instanceof SqlQueryChannel : String.format("Illegal task: %s.", task);
+
+        SqlQueryChannel outputChannel = (SqlQueryChannel) task.getOutputChannel(0);
+        OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(task.getOperator());
+        return outputChannel.createInstance(this, operatorContext, 0);
+    }
+
+    /**
+     * Instantiates the outbound {@link SqlQueryChannel} of an {@link ExecutionTask}.
+     *
+     * @param task                       whose outbound {@link SqlQueryChannel} should be instantiated
+     * @param optimizationContext        provides information about the {@link ExecutionTask}
+     * @param predecessorChannelInstance preceeding {@link SqlQueryChannel.Instance} to keep track of lineage
+     * @return the {@link SqlQueryChannel.Instance}
+     */
+    private SqlQueryChannel.Instance instantiateOutboundChannel(ExecutionTask task,
+                                                                OptimizationContext optimizationContext,
+                                                                SqlQueryChannel.Instance predecessorChannelInstance) {
+        final SqlQueryChannel.Instance newInstance = this.instantiateOutboundChannel(task, optimizationContext);
+        newInstance.getLazyChannelLineage().addPredecessor(predecessorChannelInstance.getLazyChannelLineage());
+        return newInstance;
     }
 
     /**
