@@ -3,13 +3,18 @@ package org.qcri.rheem.jdbc;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
+import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.ReflectionUtils;
+import org.qcri.rheem.java.channels.StreamChannel;
+import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
 import org.qcri.rheem.jdbc.execution.DatabaseDescriptor;
 import org.qcri.rheem.jdbc.execution.JdbcExecutor;
+import org.qcri.rheem.jdbc.operators.SqlToStreamOperator;
 
 import java.sql.Connection;
 import java.util.Collection;
@@ -34,7 +39,10 @@ public abstract class JdbcPlatformTemplate extends Platform {
 
     public final String defaultConfigFile = String.format("rheem-%s-defaults.properties", this.getPlatformId());
 
-    private DatabaseDescriptor databaseDescriptor;
+    /**
+     * {@link ChannelDescriptor} for {@link SqlQueryChannel}s with this instance.
+     */
+    private final SqlQueryChannel.Descriptor sqlQueryChannelDescriptor = new SqlQueryChannel.Descriptor(this);
 
     protected final Collection<Mapping> mappings = new LinkedList<>();
 
@@ -71,7 +79,11 @@ public abstract class JdbcPlatformTemplate extends Platform {
 
     @Override
     public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
-
+        channelConversionGraph.add(new DefaultChannelConversion(
+                this.getSqlQueryChannelDescriptor(),
+                StreamChannel.DESCRIPTOR,
+                () -> new SqlToStreamOperator(this.getSqlQueryChannelDescriptor())
+        ));
     }
 
     @Override
@@ -105,6 +117,15 @@ public abstract class JdbcPlatformTemplate extends Platform {
      * @return the driver {@link Class} name
      */
     protected abstract String getJdbcDriverClassName();
+
+    /**
+     * Retrieve a {@link SqlQueryChannel.Descriptor} for this instance.
+     *
+     * @return the {@link SqlQueryChannel.Descriptor}
+     */
+    public SqlQueryChannel.Descriptor getSqlQueryChannelDescriptor() {
+        return this.sqlQueryChannelDescriptor;
+    }
 
     /**
      * Creates a new {@link DatabaseDescriptor} for this instance and the given {@link Configuration}.

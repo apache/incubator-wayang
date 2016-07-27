@@ -3,9 +3,10 @@ package org.qcri.rheem.jdbc.operators;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
+import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
@@ -17,24 +18,30 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Spliterator;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
  * This {@link Operator} converts {@link SqlQueryChannel}s to {@link StreamChannel}s.
  */
-public class SqlToStreamOperator extends OperatorBase implements JavaExecutionOperator {
+public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator {
 
-    public SqlToStreamOperator() {
-        super(1, 1, false, null);
+    private final ChannelDescriptor inputChannelDescriptor;
+
+    /**
+     * Creates a new instance.
+     *
+     * @param inputChannelDescriptor the exact {@link ChannelDescriptor} to be converted with this instance.
+     */
+    public SqlToStreamOperator(ChannelDescriptor inputChannelDescriptor) {
+        super(DataSetType.createDefault(Record.class), DataSetType.createDefault(Record.class), false, null);
+        this.inputChannelDescriptor = inputChannelDescriptor;
     }
 
-    protected SqlToStreamOperator(OperatorBase that) {
+    protected SqlToStreamOperator(SqlToStreamOperator that) {
         super(that);
+        this.inputChannelDescriptor = that.inputChannelDescriptor;
     }
 
     @Override
@@ -62,12 +69,12 @@ public class SqlToStreamOperator extends OperatorBase implements JavaExecutionOp
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        return null;
+        return Collections.singletonList(this.inputChannelDescriptor);
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        return null;
+        return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
     /**

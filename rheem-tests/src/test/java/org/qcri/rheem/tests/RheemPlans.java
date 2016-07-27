@@ -1,17 +1,24 @@
 package org.qcri.rheem.tests;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
-import org.qcri.rheem.postgres.compiler.FunctionCompiler;
+import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
+import org.qcri.rheem.sqlite3.Sqlite3Platform;
+import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -261,14 +268,14 @@ public class RheemPlans {
         SampleOperator<Integer> sampleOperator = new SampleOperator<>(3, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM);
         sampleOperator.setName("sample");
 
-        MapOperator<Integer, Integer> mapOperator = new MapOperator<>(n -> 2*n, Integer.class, Integer.class);
+        MapOperator<Integer, Integer> mapOperator = new MapOperator<>(n -> 2 * n, Integer.class, Integer.class);
         mapOperator.setName("map");
 
         LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(collector, Integer.class);
         sink.setName("sink");
 
         source.connectTo(0, sampleOperator, 0);
-        sampleOperator.connectTo(0, mapOperator,0);
+        sampleOperator.connectTo(0, mapOperator, 0);
         mapOperator.connectTo(0, sink, 0);
 
         // Create the RheemPlan.
@@ -295,7 +302,7 @@ public class RheemPlans {
         sink.setName("sink");
 
         source.connectTo(0, globalMaterializedGroupOperator, 0);
-        globalMaterializedGroupOperator.connectTo(0, sink,0);
+        globalMaterializedGroupOperator.connectTo(0, sink, 0);
 
         // Create the RheemPlan.
         return new RheemPlan(sink);
@@ -331,15 +338,14 @@ public class RheemPlans {
         sink.setName("sink");
 
         source.connectTo(0, zipWithId, 0);
-        zipWithId.connectTo(0, stripValue,0);
-        stripValue.connectTo(0, distinctIds,0);
-        distinctIds.connectTo(0, count,0);
-        count.connectTo(0, sink,0);
+        zipWithId.connectTo(0, stripValue, 0);
+        stripValue.connectTo(0, distinctIds, 0);
+        distinctIds.connectTo(0, count, 0);
+        count.connectTo(0, sink, 0);
 
         // Create the RheemPlan.
         return new RheemPlan(sink);
     }
-
 
 
     /**
@@ -589,11 +595,11 @@ public class RheemPlans {
     }
 
     public static Integer increment(Integer k) {
-        if (k==null) {
+        if (k == null) {
             return 1;
+        } else {
+            return k++;
         }
-        else {
-        return k++;}
     }
 
     public static String concat9(String k) {
@@ -637,87 +643,89 @@ public class RheemPlans {
         return new RheemPlan(stdoutSink);
     }
 
-    public static RheemPlan postgresReadStdout() {
-        //Tuple2.class
-        LocalCallbackSink<Tuple2> stdoutSink = LocalCallbackSink.createStdoutSink(Tuple2.class);
-        TableSource table = new TableSource<>("employee", Tuple2.class);
-        table.connectTo(0, stdoutSink, 0);
-        return new RheemPlan(stdoutSink);
+    /**
+     * Prepair a SQLite3 database for the {@code sqlite3Scenario*} methods.
+     *
+     * @param configuration designates the location of the database
+     * @throws SQLException
+     */
+    public static void prepareSqlite3Scenarios(Configuration configuration) throws SQLException {
+        try (Connection connection = Sqlite3Platform.getInstance()
+                .createDatabaseDescriptor(configuration)
+                .createJdbcConnection()) {
+            final Statement statement = connection.createStatement();
+            statement.addBatch("DROP TABLE IF EXISTS customer;");
+            statement.addBatch("CREATE TABLE customer (name TEXT, age INT);");
+            statement.addBatch("INSERT INTO customer VALUES ('John', 20)");
+            statement.addBatch("INSERT INTO customer VALUES ('Timmy', 16)");
+            statement.addBatch("INSERT INTO customer VALUES ('Evelyn', 35)");
+            statement.executeBatch();
+        }
+    }
+
+    public static List<Record> getSqlite3Customers() {
+        return Arrays.asList(
+                new Record("John", 20),
+                new Record("Timmy", 16),
+                new Record("Evelyn", 35)
+        );
+    }
+
+    public static RheemPlan sqlite3Scenario1(Collection<Record> collector) {
+        Sqlite3TableSource customers = new Sqlite3TableSource("customer");
+        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
+        customers.connectTo(0, sink, 0);
+        return new RheemPlan(sink);
 
     }
 
-    public static RheemPlan postgresScenario2() {
-        //Tuple2.class
-        LocalCallbackSink<Tuple2> stdoutSink = LocalCallbackSink.createStdoutSink(Tuple2.class);
-        ProjectionOperator projectionOperator = new ProjectionOperator<>(Tuple2.class, Tuple2.class, "id", "salary");
-        FilterOperator<Tuple2> filterOp = new FilterOperator<Tuple2>(
-                new PredicateDescriptor.SerializablePredicate<Tuple2>() {
+    public static RheemPlan sqlite3Scenario2(Collection<Record> collector) {
+        Sqlite3TableSource customers = new Sqlite3TableSource("customer");
+        FilterOperator<Record> filter = new FilterOperator<>(
+                new PredicateDescriptor.SerializablePredicate<Record>() {
                     @Override
-                    @FunctionCompiler.SQL("salary>1000")
-                    public boolean test(Tuple2 s) {
-                        return (Float)s.getField1()>1000;
+                    @FunctionCompiler.SQL("age >= 18")
+                    public boolean test(Record record) {
+                        return (Integer) record.getField(1) >= 18;
                     }
-                }, Tuple2.class);
+                },
+                Record.class
+        );
+        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
 
-        TableSource table = new TableSource<>("employee", Tuple2.class);
-        table.connectTo(0, projectionOperator, 0);
-        projectionOperator.connectTo(0, filterOp, 0);
-        filterOp.connectTo(0, stdoutSink, 0);
-        //filterOp.addTargetPlatform(JavaPlatform.getInstance());
-        return new RheemPlan(stdoutSink);
+        customers.connectTo(0, filter, 0);
+        filter.connectTo(0, sink, 0);
+
+        return new RheemPlan(sink);
 
     }
 
-    public static RheemPlan postgresScenario3() {
-
-        LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
-        // Select second field.
-        ProjectionOperator projectionOperator = new ProjectionOperator<>(Tuple2.class, Float.class, 1);
-
-        FilterOperator<Float> filterOp = new FilterOperator<Float>(
-                new PredicateDescriptor.SerializablePredicate<Float>() {
+    public static RheemPlan sqlite3Scenario3(Collection<Record> collector) {
+        Sqlite3TableSource customers = new Sqlite3TableSource("customer");
+        FilterOperator<Record> filter = new FilterOperator<>(
+                new PredicateDescriptor.SerializablePredicate<Record>() {
                     @Override
-                    @FunctionCompiler.SQL("salary>1000")
-                    public boolean test(Float s) {
-                        return s>1000;
+                    @FunctionCompiler.SQL("age >= 18")
+                    public boolean test(Record record) {
+                        return (Integer) record.getField(1) >= 18;
                     }
-                }, Float.class);
+                },
+                Record.class
+        );
+        ProjectionOperator<Record, Record> projection = new ProjectionOperator<Record, Record>(
+          Record.class, Record.class, "name"
+        );
+        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
 
-        TableSource table = new TableSource<>("employee", Tuple2.class);
-        table.connectTo(0, projectionOperator, 0);
-        projectionOperator.connectTo(0, filterOp, 0);
-        filterOp.connectTo(0, stdoutSink, 0);
-        //filterOp.addTargetPlatform(JavaPlatform.getInstance());
-        return new RheemPlan(stdoutSink);
+        customers.connectTo(0, filter, 0);
+        filter.connectTo(0, projection, 0);
+        projection.connectTo(0, sink, 0);
+
+        return new RheemPlan(sink);
 
     }
 
-    public static RheemPlan postgresMixedScenario4() {
 
-        LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
-        // Select second field.
-        ProjectionOperator projectionOperator = new ProjectionOperator<>(Tuple2.class, Float.class, 1);
-        DistinctOperator<Float> distinctLinesOperator = new DistinctOperator<>(Float.class);
-
-        FilterOperator<Float> filterOp = new FilterOperator<Float>(
-                new PredicateDescriptor.SerializablePredicate<Float>() {
-                    @Override
-                    @FunctionCompiler.SQL("salary>1000")
-                    public boolean test(Float salary) {
-                        return salary>1000;
-                    }
-                }, Float.class);
-
-        //FilterOperator<Float> filterOp = new FilterOperator<Float>(salary-> salary>1000, Float.class);
-
-        TableSource table = new TableSource<>("employee", Tuple2.class);
-        table.connectTo(0, projectionOperator, 0);
-        projectionOperator.connectTo(0, filterOp, 0);
-        filterOp.connectTo(0, distinctLinesOperator, 0);
-        distinctLinesOperator.connectTo(0, stdoutSink, 0);
-        return new RheemPlan(stdoutSink);
-
-    }
 }
 
 

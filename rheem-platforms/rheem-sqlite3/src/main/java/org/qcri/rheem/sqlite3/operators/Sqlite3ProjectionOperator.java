@@ -1,5 +1,6 @@
 package org.qcri.rheem.sqlite3.operators;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.basic.operators.ProjectionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -12,21 +13,17 @@ import java.util.List;
 /**
  * Implementation of the {@link ProjectionOperator} for the {@link Sqlite3Platform}.
  */
-public class Sqlite3ProjectionOperator<Input, Output> extends JdbcProjectionOperator<Input, Output> {
+public class Sqlite3ProjectionOperator extends JdbcProjectionOperator {
 
-    public Sqlite3ProjectionOperator(ProjectionDescriptor<Input, Output> functionDescriptor) {
+    public Sqlite3ProjectionOperator(ProjectionDescriptor<Record, Record> functionDescriptor) {
         super(functionDescriptor);
     }
 
-    public Sqlite3ProjectionOperator(Class<Input> inputClass, Class<Output> outputClass, Integer... fieldIndexes) {
-        super(inputClass, outputClass, fieldIndexes);
+    public Sqlite3ProjectionOperator(Class<Record> inputClass, Class<Record> outputClass, String... fieldNames) {
+        super(fieldNames);
     }
 
-    public Sqlite3ProjectionOperator(Class<Input> inputClass, Class<Output> outputClass, String... fieldNames) {
-        super(inputClass, outputClass, fieldNames);
-    }
-
-    public Sqlite3ProjectionOperator(ProjectionOperator<Input, Output> that) {
+    public Sqlite3ProjectionOperator(ProjectionOperator<Record, Record> that) {
         super(that);
     }
 
@@ -38,13 +35,13 @@ public class Sqlite3ProjectionOperator<Input, Output> extends JdbcProjectionOper
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         assert index == 0;
-        return Collections.singletonList(this.getPlatform().sqlQueryChannelDescriptor);
+        return Collections.singletonList(this.getPlatform().getSqlQueryChannelDescriptor());
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index == 0;
-        return Collections.singletonList(this.getPlatform().sqlQueryChannelDescriptor);
+        return Collections.singletonList(this.getPlatform().getSqlQueryChannelDescriptor());
     }
 
 }

@@ -656,7 +656,11 @@ public class Configuration {
     }
 
     public long getLongProperty(String key) {
-        return this.getOptionalLongProperty(key).getAsLong();
+        final OptionalLong optionalLongProperty = this.getOptionalLongProperty(key);
+        if (!optionalLongProperty.isPresent()) {
+            throw new RheemException(String.format("No value for \"%s\".", key));
+        }
+        return optionalLongProperty.getAsLong();
     }
 
     public long getLongProperty(String key, long fallback) {

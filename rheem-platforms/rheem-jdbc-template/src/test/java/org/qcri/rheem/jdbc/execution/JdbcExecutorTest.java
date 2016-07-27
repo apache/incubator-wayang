@@ -39,7 +39,7 @@ public class JdbcExecutorTest {
         Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
         when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new NoInstrumentationStrategy()));
-        SqlQueryChannel.Descriptor sqlChannelDescriptor = new SqlQueryChannel.Descriptor(HsqldbPlatform.getInstance());
+        SqlQueryChannel.Descriptor sqlChannelDescriptor = HsqldbPlatform.getInstance().getSqlQueryChannelDescriptor();
 
         ExecutionStage sqlStage = mock(ExecutionStage.class);
 
@@ -53,7 +53,7 @@ public class JdbcExecutorTest {
 
         ExecutionStage nextStage = mock(ExecutionStage.class);
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator();
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlChannelDescriptor);
         ExecutionTask sqlToStreamTask = new ExecutionTask(sqlToStreamOperator);
         tableSourceTask.getOutputChannel(0).addConsumer(sqlToStreamTask, 0);
         sqlToStreamTask.setStage(nextStage);
@@ -75,7 +75,7 @@ public class JdbcExecutorTest {
         Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
         when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new NoInstrumentationStrategy()));
-        SqlQueryChannel.Descriptor sqlChannelDescriptor = new SqlQueryChannel.Descriptor(HsqldbPlatform.getInstance());
+        SqlQueryChannel.Descriptor sqlChannelDescriptor = HsqldbPlatform.getInstance().getSqlQueryChannelDescriptor();
 
         ExecutionStage sqlStage = mock(ExecutionStage.class);
 
@@ -106,7 +106,7 @@ public class JdbcExecutorTest {
 
         ExecutionStage nextStage = mock(ExecutionStage.class);
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator();
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlChannelDescriptor);
         ExecutionTask sqlToStreamTask = new ExecutionTask(sqlToStreamOperator);
         ageFilterTask.getOutputChannel(0).addConsumer(sqlToStreamTask, 0);
         sqlToStreamTask.setStage(nextStage);
@@ -128,7 +128,7 @@ public class JdbcExecutorTest {
         Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
         when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new NoInstrumentationStrategy()));
-        SqlQueryChannel.Descriptor sqlChannelDescriptor = new SqlQueryChannel.Descriptor(HsqldbPlatform.getInstance());
+        SqlQueryChannel.Descriptor sqlChannelDescriptor = HsqldbPlatform.getInstance().getSqlQueryChannelDescriptor();
 
         ExecutionStage sqlStage = mock(ExecutionStage.class);
 
@@ -148,7 +148,7 @@ public class JdbcExecutorTest {
 
         ExecutionStage nextStage = mock(ExecutionStage.class);
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator();
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlChannelDescriptor);
         ExecutionTask sqlToStreamTask = new ExecutionTask(sqlToStreamOperator);
         projectionTask.getOutputChannel(0).addConsumer(sqlToStreamTask, 0);
         sqlToStreamTask.setStage(nextStage);
@@ -170,7 +170,7 @@ public class JdbcExecutorTest {
         Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
         when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new NoInstrumentationStrategy()));
-        SqlQueryChannel.Descriptor sqlChannelDescriptor = new SqlQueryChannel.Descriptor(HsqldbPlatform.getInstance());
+        SqlQueryChannel.Descriptor sqlChannelDescriptor = HsqldbPlatform.getInstance().getSqlQueryChannelDescriptor();
 
         ExecutionStage sqlStage = mock(ExecutionStage.class);
 
@@ -224,7 +224,7 @@ public class JdbcExecutorTest {
 
         ExecutionStage nextStage = mock(ExecutionStage.class);
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator();
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlChannelDescriptor);
         ExecutionTask sqlToStreamTask = new ExecutionTask(sqlToStreamOperator);
         projectionTask.getOutputChannel(0).addConsumer(sqlToStreamTask, 0);
         sqlToStreamTask.setStage(nextStage);

@@ -61,7 +61,7 @@ public class SqlToStreamOperatorTest {
                 new PredicateDescriptor<>(x -> false, Record.class)
         );
         final SqlQueryChannel sqlQueryChannel = new SqlQueryChannel(
-                new SqlQueryChannel.Descriptor(hsqldbPlatform),
+                HsqldbPlatform.getInstance().getSqlQueryChannelDescriptor(),
                 filterOperator.getOutput(0)
         );
         SqlQueryChannel.Instance sqlQueryChannelInstance = sqlQueryChannel.createInstance(
@@ -80,7 +80,7 @@ public class SqlToStreamOperatorTest {
                         0
                 );
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator();
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlQueryChannel.getDescriptor());
         sqlToStreamOperator.evaluate(
                 new ChannelInstance[] { sqlQueryChannelInstance },
                 new ChannelInstance[] { streamChannelInstance },
@@ -120,7 +120,7 @@ public class SqlToStreamOperatorTest {
                 new PredicateDescriptor<>(x -> false, Record.class)
         );
         final SqlQueryChannel sqlQueryChannel = new SqlQueryChannel(
-                new SqlQueryChannel.Descriptor(hsqldbPlatform),
+                HsqldbPlatform.getInstance().getSqlQueryChannelDescriptor(),
                 filterOperator.getOutput(0)
         );
         SqlQueryChannel.Instance sqlQueryChannelInstance = sqlQueryChannel.createInstance(
@@ -139,7 +139,7 @@ public class SqlToStreamOperatorTest {
                         0
                 );
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator();
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlQueryChannel.getDescriptor());
         sqlToStreamOperator.evaluate(
                 new ChannelInstance[] { sqlQueryChannelInstance },
                 new ChannelInstance[] { streamChannelInstance },

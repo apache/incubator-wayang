@@ -1,9 +1,7 @@
 package org.qcri.rheem.sqlite3;
 
-import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
-import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
 import org.qcri.rheem.sqlite3.mappings.FilterMapping;
 import org.qcri.rheem.sqlite3.mappings.ProjectionMapping;
 
@@ -16,10 +14,12 @@ public class Sqlite3Platform extends JdbcPlatformTemplate {
 
     private static Sqlite3Platform instance = null;
 
-    /**
-     * {@link ChannelDescriptor} for {@link SqlQueryChannel}s with this instance.
-     */
-    public final SqlQueryChannel.Descriptor sqlQueryChannelDescriptor = new SqlQueryChannel.Descriptor(this);
+    public static Sqlite3Platform getInstance() {
+        if (instance == null) {
+            instance = new Sqlite3Platform();
+        }
+        return instance;
+    }
 
     protected Sqlite3Platform() {
         super(PLATFORM_NAME);
@@ -31,13 +31,6 @@ public class Sqlite3Platform extends JdbcPlatformTemplate {
         this.mappings.add(new ProjectionMapping());
     }
 
-    public static Sqlite3Platform getInstance() {
-        if (instance == null) {
-            instance = new Sqlite3Platform();
-        }
-        return instance;
-    }
-
     @Override
     protected String getPlatformId() {
         return "sqlite3";
@@ -47,4 +40,5 @@ public class Sqlite3Platform extends JdbcPlatformTemplate {
     public String getJdbcDriverClassName() {
         return org.sqlite.JDBC.class.getName();
     }
+
 }
