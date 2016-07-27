@@ -32,7 +32,7 @@ class Kmeans(platforms: Platform*) {
 
     // Create initial centroids.
     val initialCentroids = rheemCtx
-      .readCollection(Kmeans.createRandomCentroids(k)).withName("Load random centroids")
+      .loadCollection(Kmeans.createRandomCentroids(k)).withName("Load random centroids")
 
     // Do the k-means loop.
     val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
