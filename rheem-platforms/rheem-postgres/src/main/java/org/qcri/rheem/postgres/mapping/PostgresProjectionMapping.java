@@ -36,7 +36,7 @@ public class PostgresProjectionMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<ProjectionOperator>(
-                (matchedOperator, epoch) -> new PostgresProjectionOperator<>(matchedOperator).at(epoch)
+                (matchedOperator, epoch) -> new PostgresProjectionOperator(matchedOperator).at(epoch)
         );
     }
 }

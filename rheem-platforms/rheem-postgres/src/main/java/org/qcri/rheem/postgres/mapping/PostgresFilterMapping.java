@@ -34,7 +34,7 @@ public class PostgresFilterMapping implements Mapping {
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<FilterOperator>(
-                (matchedOperator, epoch) -> new PostgresFilterOperator<>(matchedOperator).at(epoch)
+                (matchedOperator, epoch) -> new PostgresFilterOperator(matchedOperator).at(epoch)
         );
     }
 }

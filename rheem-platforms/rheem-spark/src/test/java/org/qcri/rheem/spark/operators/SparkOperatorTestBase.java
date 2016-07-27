@@ -4,6 +4,9 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.junit.Before;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.platform.CrossPlatformExecutor;
+import org.qcri.rheem.core.profiling.FullInstrumentationStrategy;
+import org.qcri.rheem.core.profiling.NoInstrumentationStrategy;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.platform.SparkExecutor;
@@ -20,7 +23,6 @@ import static org.mockito.Mockito.when;
  */
 public class SparkOperatorTestBase {
 
-
     protected Configuration configuration;
 
     protected SparkExecutor sparkExecutor;
@@ -34,6 +36,7 @@ public class SparkOperatorTestBase {
     Job mockJob() {
         final Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(this.configuration);
+        when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new FullInstrumentationStrategy()));
         return job;
     }
 
