@@ -1,7 +1,6 @@
 package org.qcri.rheem.jdbc.operators;
 
 import org.qcri.rheem.basic.data.Record;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
@@ -9,6 +8,7 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
@@ -38,19 +38,26 @@ public class SqlToStreamOperator extends OperatorBase implements JavaExecutionOp
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, JavaExecutor executor) {
         // Cast the inputs and outputs.
         final SqlQueryChannel.Instance input = (SqlQueryChannel.Instance) inputs[0];
         final StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 
         JdbcPlatformTemplate producerPlatform = (JdbcPlatformTemplate) input.getChannel().getProducer().getPlatform();
-        final Connection connection = producerPlatform.createDatabaseDescriptor(new Configuration()).createJdbcConnection();// TODO
+        final Connection connection = producerPlatform
+                .createDatabaseDescriptor(executor.getConfiguration())
+                .createJdbcConnection();
 
         Iterator<Record> resultSetIterator = new ResultSetIterator(connection, input.getSqlQuery());
         Spliterator<Record> resultSetSpliterator = Spliterators.spliteratorUnknownSize(resultSetIterator, 0);
         Stream<Record> resultSetStream = StreamSupport.stream(resultSetSpliterator, false);
 
         output.accept(resultSetStream);
+    }
+
+    @Override
+    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+        throw new RheemException("This method should not be called.");
     }
 
     @Override
@@ -91,6 +98,7 @@ public class SqlToStreamOperator extends OperatorBase implements JavaExecutionOp
                 this.close();
                 throw new RheemException("Could not execute SQL.", e);
             }
+            this.moveToNext();
         }
 
         /**
@@ -118,7 +126,7 @@ public class SqlToStreamOperator extends OperatorBase implements JavaExecutionOp
 
         @Override
         public boolean hasNext() {
-            return this.next == null;
+            return this.next != null;
         }
 
         @Override

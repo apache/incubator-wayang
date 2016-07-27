@@ -26,13 +26,13 @@ public abstract class JdbcPlatformTemplate extends Platform {
 
     public final String hdfsMsPerMbProperty = String.format("rheem.%s.hdfs.ms-per-mb", this.getPlatformId());
 
-    public final String jdbcUserProperty = String.format("rheem.%s.jdbc.url");
+    public final String jdbcUserProperty = String.format("rheem.%s.jdbc.url", this.getPlatformId());
 
-    public final String jdbcPasswordProperty = String.format("rheem.%s.jdbc.user");
+    public final String jdbcPasswordProperty = String.format("rheem.%s.jdbc.user", this.getPlatformId());
 
-    public final String jdbcUrlProperty = String.format("rheem.%s.jdbc.password");
+    public final String jdbcUrlProperty = String.format("rheem.%s.jdbc.password", this.getPlatformId());
 
-    public final String defaultConfigFile = String.format("rheem-%s-defaults.properties");
+    public final String defaultConfigFile = String.format("rheem-%s-defaults.properties", this.getPlatformId());
 
     private DatabaseDescriptor databaseDescriptor;
 

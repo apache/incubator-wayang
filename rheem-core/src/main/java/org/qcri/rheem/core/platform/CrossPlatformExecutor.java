@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.*;
@@ -491,6 +492,10 @@ public class CrossPlatformExecutor implements ExecutionState {
      */
     public Set<ExecutionStage> getCompletedStages() {
         return this.completedStages;
+    }
+
+    public Configuration getConfiguration() {
+        return this.job.getConfiguration();
     }
 
     /**

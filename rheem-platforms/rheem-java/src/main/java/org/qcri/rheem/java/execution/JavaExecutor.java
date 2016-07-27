@@ -58,7 +58,7 @@ public class JavaExecutor extends PushExecutorTemplate {
         // Execute.
         long startTime = System.currentTimeMillis();
         try {
-            cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this.compiler);
+            cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this);
         } catch (Exception e) {
             throw new RheemException(String.format("Executing %s failed.", task), e);
         }
@@ -99,5 +99,9 @@ public class JavaExecutor extends PushExecutorTemplate {
             ExtendedFunction extendedFunction = (ExtendedFunction) function;
             extendedFunction.open(new JavaExecutionContext(operator, inputs));
         }
+    }
+
+    public FunctionCompiler getCompiler() {
+        return this.compiler;
     }
 }

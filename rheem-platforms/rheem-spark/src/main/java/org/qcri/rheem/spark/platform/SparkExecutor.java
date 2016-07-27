@@ -1,7 +1,6 @@
 package org.qcri.rheem.spark.platform;
 
 import org.apache.spark.api.java.JavaSparkContext;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExtendedFunction;
@@ -130,10 +129,6 @@ public class SparkExecutor extends PushExecutorTemplate {
     @Override
     public SparkPlatform getPlatform() {
         return this.platform;
-    }
-
-    public Configuration getConfiguration() {
-        return this.job.getConfiguration();
     }
 
     /**
