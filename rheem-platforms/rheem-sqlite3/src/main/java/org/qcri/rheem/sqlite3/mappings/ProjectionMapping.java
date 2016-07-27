@@ -1,8 +1,8 @@
 package org.qcri.rheem.sqlite3.mappings;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.ProjectionOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.sqlite3.Sqlite3Platform;
 import org.qcri.rheem.sqlite3.operators.Sqlite3ProjectionOperator;
 
@@ -28,13 +28,13 @@ public class ProjectionMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "projection", new ProjectionOperator<>(null, DataSetType.none(), DataSetType.none()), false);
+                "projection", new ProjectionOperator<>(Record.class, Record.class, ""), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<ProjectionOperator<?, ?>>(
-                (matchedOperator, epoch) -> new Sqlite3ProjectionOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<ProjectionOperator<Record, Record>>(
+                (matchedOperator, epoch) -> new Sqlite3ProjectionOperator(matchedOperator).at(epoch)
         );
     }
 }

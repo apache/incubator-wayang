@@ -11,7 +11,6 @@ import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.postgres.execution.PostgresExecutor;
 import org.qcri.rheem.postgres.mapping.PostgresFilterMapping;
 import org.qcri.rheem.postgres.mapping.PostgresProjectionMapping;
-import org.qcri.rheem.postgres.mapping.PostgresTableSourceMapping;
 
 import java.sql.Connection;
 import java.util.Collection;
@@ -69,7 +68,6 @@ public class PostgresPlatform extends Platform {
     }
 
     private void initializeMappings() {
-        this.mappings.add(new PostgresTableSourceMapping());
         this.mappings.add(new PostgresFilterMapping());
         this.mappings.add(new PostgresProjectionMapping());
     }
