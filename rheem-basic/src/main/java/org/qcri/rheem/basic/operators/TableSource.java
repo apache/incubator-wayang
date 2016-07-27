@@ -2,12 +2,11 @@ package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.basic.data.Record;
 
 /**
  * {@link UnarySource} that provides the tuples from a database table.
  */
-public class TableSource<T> extends UnarySource<T> {
+public abstract class TableSource<T> extends UnarySource<T> {
 
     private final String tableName;
 
