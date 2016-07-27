@@ -44,7 +44,7 @@ class ScalaTest {
     )
 
 
-    val textDQ = rheem.readCollection(text).withName("Load input values")
+    val textDQ = rheem.loadCollection(text).withName("Load input values")
     overrideCardinalityEstimate(textDQ, 1000000000)
 
     val wordCounts = textDQ

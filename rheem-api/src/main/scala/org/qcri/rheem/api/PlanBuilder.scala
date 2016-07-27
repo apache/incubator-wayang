@@ -2,10 +2,12 @@ package org.qcri.rheem.api
 
 import org.apache.commons.lang3.Validate
 import org.qcri.rheem.api
+import org.qcri.rheem.basic.data.Record
 import org.qcri.rheem.basic.operators.{CollectionSource, TextFileSource}
 import org.qcri.rheem.core.api.RheemContext
-import org.qcri.rheem.core.plan.rheemplan.{ElementaryOperator, Operator, RheemPlan}
+import org.qcri.rheem.core.plan.rheemplan.{ElementaryOperator, Operator, RheemPlan, UnarySource}
 import org.qcri.rheem.core.util.ReflectionUtils
+import org.qcri.rheem.jdbc.operators.JdbcTableSource
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
@@ -35,11 +37,13 @@ class PlanBuilder(rheemContext: RheemContext) {
   def readTextFile(url: String): DataQuanta[String] =
     new TextFileSource(url)
 
-  def readCollection[T: ClassTag](collection: java.util.Collection[T]): DataQuanta[T] =
+  def loadCollection[T: ClassTag](collection: java.util.Collection[T]): DataQuanta[T] =
     new CollectionSource[T](collection, dataSetType[T])
 
-  def readCollection[T: ClassTag](iterable: Iterable[T]): DataQuanta[T] =
-    readCollection(JavaConversions.asJavaCollection(iterable))
+  def loadCollection[T: ClassTag](iterable: Iterable[T]): DataQuanta[T] =
+    loadCollection(JavaConversions.asJavaCollection(iterable))
+
+  def load[T: ClassTag](source: UnarySource[T]): DataQuanta[T] = source
 
   def customOperator(operator: Operator, inputs: DataQuanta[_]*): IndexedSeq[DataQuanta[_]] = {
     Validate.isTrue(operator.getNumRegularInputs == inputs.size)

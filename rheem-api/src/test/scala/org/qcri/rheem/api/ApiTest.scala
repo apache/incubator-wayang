@@ -1,12 +1,18 @@
 package org.qcri.rheem.api
 
+import java.io.File
+import java.sql.{Connection, Statement}
+
 import org.junit.{Assert, Test}
-import org.qcri.rheem.core.api.RheemContext
+import org.qcri.rheem.basic.data.Record
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
 import org.qcri.rheem.core.function.{ExecutionContext, TransformationDescriptor}
 import org.qcri.rheem.java.JavaPlatform
 import org.qcri.rheem.java.operators.JavaMapOperator
 import org.qcri.rheem.spark.platform.SparkPlatform
+import org.qcri.rheem.sqlite3.Sqlite3Platform
+import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource
 
 /**
   * Tests the Rheem API.
@@ -25,7 +31,7 @@ class ApiTest {
 
     // Build and execute a Rheem plan.
     val outputValues = rheem
-      .readCollection(inputValues).withName("Load input values")
+      .loadCollection(inputValues).withName("Load input values")
       .map(_ + 2).withName("Add 2")
       .collect()
 
@@ -45,7 +51,7 @@ class ApiTest {
     val inputValues = (for (i <- 1 to 10) yield i).toArray
 
     // Build and execute a Rheem plan.
-    val inputDataSet = rheem.readCollection(inputValues).withName("Load input values")
+    val inputDataSet = rheem.loadCollection(inputValues).withName("Load input values")
 
     // Add the custom operator.
     val IndexedSeq(addedValues) = rheem.customOperator(new JavaMapOperator(
@@ -78,7 +84,7 @@ class ApiTest {
 
     // Build and execute a Rheem plan.
     val outputValues = rheem
-      .readCollection(inputValues).withName("Load input values")
+      .loadCollection(inputValues).withName("Load input values")
       .customOperator[Int](new JavaMapOperator(
       dataSetType[Int],
       dataSetType[Int],
@@ -106,7 +112,7 @@ class ApiTest {
 
     // Build and execute a word count RheemPlan.
     val wordCounts = rheem
-      .readCollection(inputValues).withName("Load input values")
+      .loadCollection(inputValues).withName("Load input values")
       .flatMap(_.split("\\s+")).withName("Split words")
       .map(_.replaceAll("\\W+", "").toLowerCase).withName("To lowercase")
       .map((_, 1)).withName("Attach counter")
@@ -130,7 +136,7 @@ class ApiTest {
 
     // Build and execute a word count RheemPlan.
     val wordCounts = rheem
-      .readCollection(inputValues).withName("Load input values").withTargetPlatforms(JavaPlatform.getInstance)
+      .loadCollection(inputValues).withName("Load input values").withTargetPlatforms(JavaPlatform.getInstance)
       .flatMap(_.split("\\s+")).withName("Split words").withTargetPlatforms(JavaPlatform.getInstance)
       .map(_.replaceAll("\\W+", "").toLowerCase).withName("To lowercase").withTargetPlatforms(SparkPlatform.getInstance)
       .map((_, 1)).withName("Attach counter").withTargetPlatforms(SparkPlatform.getInstance)
@@ -155,7 +161,7 @@ class ApiTest {
     // Build and execute a word count RheemPlan.
 
     val values = rheem
-      .readCollection(inputValues).withName("Load input values")
+      .loadCollection(inputValues).withName("Load input values")
       .doWhile[Int](vals => vals.max > 100, {
       start =>
         val sum = start.reduce(_ + _).withName("Sum")
@@ -180,7 +186,7 @@ class ApiTest {
     // Build and execute a word count RheemPlan.
 
     val values = rheem
-      .readCollection(inputValues).withName("Load input values").withName(inputValues.mkString(","))
+      .loadCollection(inputValues).withName("Load input values").withName(inputValues.mkString(","))
       .repeat(3,
         _.reduce(_ * _).withName("Multiply")
           .flatMap(v => Seq(v, v + 1)).withName("Duplicate")
@@ -203,11 +209,11 @@ class ApiTest {
     val inputStrings = Array("Hello", "World", "Hi", "Mars")
     val selectors = Array('o', 'l')
 
-    val selectorsDataSet = rheem.readCollection(selectors).withName("Load selectors")
+    val selectorsDataSet = rheem.loadCollection(selectors).withName("Load selectors")
 
     // Build and execute a word count RheemPlan.
     val values = rheem
-      .readCollection(inputStrings).withName("Load input values")
+      .loadCollection(inputStrings).withName("Load input values")
       .filterJava(new ExtendedSerializablePredicate[String] {
 
         var selectors: Iterable[Char] = _
@@ -237,7 +243,7 @@ class ApiTest {
     val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
 
     val result = rheem
-      .readCollection(inputValues)
+      .loadCollection(inputValues)
       .groupByKey(_ % 2)
       .map {
         group =>
@@ -263,7 +269,7 @@ class ApiTest {
     val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
 
     val result = rheem
-      .readCollection(inputValues)
+      .loadCollection(inputValues)
       .group()
       .map {
         group =>
@@ -290,8 +296,8 @@ class ApiTest {
     val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
 
     val builder = new PlanBuilder(rheem)
-    val dataQuanta1 = builder.readCollection(inputValues1)
-    val dataQuanta2 = builder.readCollection(inputValues2)
+    val dataQuanta1 = builder.loadCollection(inputValues1)
+    val dataQuanta2 = builder.loadCollection(inputValues2)
     val result = dataQuanta1
       .join[(String, String), String](_._1, dataQuanta2, _._2)
       .map(joinTuple => (joinTuple.field1._1, joinTuple.field0._2))
@@ -312,8 +318,8 @@ class ApiTest {
     val inputValues2 = Array(0, 2, 3, 3, 4, 5, 7, 8, 9, 11)
 
     val builder = new PlanBuilder(rheem)
-    val dataQuanta1 = builder.readCollection(inputValues1)
-    val dataQuanta2 = builder.readCollection(inputValues2)
+    val dataQuanta1 = builder.loadCollection(inputValues1)
+    val dataQuanta2 = builder.loadCollection(inputValues2)
     val result = dataQuanta1
       .intersect(dataQuanta2)
       .collect()
@@ -332,7 +338,7 @@ class ApiTest {
     val inputValues = for (i <- 0 until 100; j <- 0 until 42) yield i
 
     val result = rheem
-      .readCollection(inputValues)
+      .loadCollection(inputValues)
       .zipWithId
       .groupByKey(_.field1)
       .map { group =>
@@ -344,5 +350,45 @@ class ApiTest {
 
     val expectedValues = Set((42, 100))
     Assert.assertEquals(expectedValues, result.toSet)
+  }
+
+  @Test
+  def testSql() = {
+    // Initialize some test data.
+    val configuration = new Configuration
+    val sqlite3dbFile = File.createTempFile("rheem-sqlite3", "db")
+    sqlite3dbFile.deleteOnExit()
+    configuration.setProperty("rheem.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath)
+
+    try {
+      val connection: Connection = Sqlite3Platform.getInstance.createDatabaseDescriptor(configuration).createJdbcConnection
+      try {
+        val statement: Statement = connection.createStatement
+        statement.addBatch("DROP TABLE IF EXISTS customer;")
+        statement.addBatch("CREATE TABLE customer (name TEXT, age INT);")
+        statement.addBatch("INSERT INTO customer VALUES ('John', 20)")
+        statement.addBatch("INSERT INTO customer VALUES ('Timmy', 16)")
+        statement.addBatch("INSERT INTO customer VALUES ('Evelyn', 35)")
+        statement.executeBatch
+      } finally {
+        if (connection != null) connection.close()
+      }
+    }
+
+    // Set up RheemContext.
+    val rheem = new RheemContext(configuration)
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(Sqlite3Platform.getInstance)
+
+    val result = rheem
+      .load(new Sqlite3TableSource("customer"))
+      .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18")
+      .projectByName[Record](Seq("name"))
+      .map(_.getField(0).asInstanceOf[String])
+      .collect("SQLite3 with Scala API")
+      .toSet
+
+    val expectedValues = Set("John", "Evelyn")
+    Assert.assertEquals(expectedValues, result)
   }
 }
