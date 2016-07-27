@@ -1,5 +1,6 @@
 package org.qcri.rheem.jdbc.operators;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
@@ -9,10 +10,10 @@ import java.sql.Connection;
 /**
  * PostgreSQL implementation for the {@link TableSource}.
  */
-public abstract class JdbcTableSource<T> extends TableSource<T> implements JdbcExecutionOperator {
+public abstract class JdbcTableSource extends TableSource<Record> implements JdbcExecutionOperator {
 
-    public JdbcTableSource(String tableName, DataSetType<T> type) {
-        super(tableName, type);
+    public JdbcTableSource(String tableName) {
+        super(tableName, DataSetType.createDefault(Record.class));
     }
 
     /**
@@ -20,7 +21,7 @@ public abstract class JdbcTableSource<T> extends TableSource<T> implements JdbcE
      *
      * @param that that should be copied
      */
-    public JdbcTableSource(TableSource<T> that) {
+    public JdbcTableSource(JdbcTableSource that) {
         super(that);
     }
 

@@ -1,5 +1,6 @@
 package org.qcri.rheem.jdbc.operators;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.basic.operators.ProjectionOperator;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
@@ -9,21 +10,15 @@ import java.sql.Connection;
 /**
  * PostgreSQL implementation for the {@link ProjectionOperator}.
  */
-public abstract class JdbcProjectionOperator<InputType, OutputType> extends ProjectionOperator<InputType, OutputType>
+public abstract class JdbcProjectionOperator extends ProjectionOperator<Record, Record>
         implements JdbcExecutionOperator {
 
 
-    public JdbcProjectionOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass,
-                                  String... fieldNames) {
-        super(inputTypeClass, outputTypeClass, fieldNames);
+    public JdbcProjectionOperator(String... fieldNames) {
+        super(Record.class, Record.class, fieldNames);
     }
 
-    public JdbcProjectionOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass,
-                                  Integer... fieldIndexes) {
-        super(inputTypeClass, outputTypeClass, fieldIndexes);
-    }
-
-    public JdbcProjectionOperator(ProjectionDescriptor<InputType, OutputType> functionDescriptor) {
+    public JdbcProjectionOperator(ProjectionDescriptor<Record, Record> functionDescriptor) {
         super(functionDescriptor);
     }
 
@@ -32,7 +27,7 @@ public abstract class JdbcProjectionOperator<InputType, OutputType> extends Proj
      *
      * @param that that should be copied
      */
-    public JdbcProjectionOperator(ProjectionOperator<InputType, OutputType> that) {
+    public JdbcProjectionOperator(ProjectionOperator<Record, Record> that) {
         super(that);
     }
 

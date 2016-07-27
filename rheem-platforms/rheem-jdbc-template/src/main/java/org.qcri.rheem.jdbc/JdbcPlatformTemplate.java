@@ -9,7 +9,7 @@ import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.jdbc.execution.DatabaseDescriptor;
-import org.qcri.rheem.jdbc.execution.JdbcExecutorTemplate;
+import org.qcri.rheem.jdbc.execution.JdbcExecutor;
 
 import java.sql.Connection;
 import java.util.Collection;
@@ -26,11 +26,11 @@ public abstract class JdbcPlatformTemplate extends Platform {
 
     public final String hdfsMsPerMbProperty = String.format("rheem.%s.hdfs.ms-per-mb", this.getPlatformId());
 
-    public final String jdbcUserProperty = String.format("rheem.%s.jdbc.url", this.getPlatformId());
+    public final String jdbcUrlProperty = String.format("rheem.%s.jdbc.url", this.getPlatformId());
 
-    public final String jdbcPasswordProperty = String.format("rheem.%s.jdbc.user", this.getPlatformId());
+    public final String jdbcUserProperty = String.format("rheem.%s.jdbc.user", this.getPlatformId());
 
-    public final String jdbcUrlProperty = String.format("rheem.%s.jdbc.password", this.getPlatformId());
+    public final String jdbcPasswordProperty = String.format("rheem.%s.jdbc.password", this.getPlatformId());
 
     public final String defaultConfigFile = String.format("rheem-%s-defaults.properties", this.getPlatformId());
 
@@ -76,7 +76,7 @@ public abstract class JdbcPlatformTemplate extends Platform {
 
     @Override
     public Executor.Factory getExecutorFactory() {
-        return job -> new JdbcExecutorTemplate(this, job);
+        return job -> new JdbcExecutor(this, job);
     }
 
     @Override
@@ -114,7 +114,7 @@ public abstract class JdbcPlatformTemplate extends Platform {
      */
     public DatabaseDescriptor createDatabaseDescriptor(Configuration configuration) {
         return new DatabaseDescriptor(
-                configuration.getStringProperty(this.jdbcUserProperty),
+                configuration.getStringProperty(this.jdbcUrlProperty),
                 configuration.getStringProperty(this.jdbcUserProperty, null),
                 configuration.getStringProperty(this.jdbcPasswordProperty, null),
                 this.getJdbcDriverClassName()

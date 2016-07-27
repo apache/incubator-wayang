@@ -1,5 +1,6 @@
 package org.qcri.rheem.jdbc.operators;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
@@ -11,26 +12,26 @@ import java.sql.Connection;
 /**
  * Template for JDBC-based {@link FilterOperator}.
  */
-public abstract class JdbcFilterOperator<Type> extends FilterOperator<Type> implements JdbcExecutionOperator {
+public abstract class JdbcFilterOperator extends FilterOperator<Record> implements JdbcExecutionOperator {
 
-    public JdbcFilterOperator(PredicateDescriptor<Type> predicateDescriptor) {
+    public JdbcFilterOperator(PredicateDescriptor<Record> predicateDescriptor) {
         super(predicateDescriptor);
     }
 
-    public JdbcFilterOperator(PredicateDescriptor<Type> predicateDescriptor, DataSetType<Type> type) {
-        super(predicateDescriptor, type);
+    public JdbcFilterOperator(PredicateDescriptor<Record> predicateDescriptor, DataSetType<Record> Record) {
+        super(predicateDescriptor, Record);
     }
 
-    public JdbcFilterOperator(PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor, Class<Type> typeClass) {
-        super(predicateDescriptor, typeClass);
+    public JdbcFilterOperator(PredicateDescriptor.SerializablePredicate<Record> predicateDescriptor, Class<Record> RecordClass) {
+        super(predicateDescriptor, RecordClass);
     }
 
-    public JdbcFilterOperator(FilterOperator<Type> that) {
+    public JdbcFilterOperator(FilterOperator<Record> that) {
         super(that);
     }
 
-    public JdbcFilterOperator(DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
-        super(type, predicateDescriptor);
+    public JdbcFilterOperator(DataSetType<Record> Record, PredicateDescriptor.SerializablePredicate<Record> predicateDescriptor) {
+        super(Record, predicateDescriptor);
     }
 
     @Override

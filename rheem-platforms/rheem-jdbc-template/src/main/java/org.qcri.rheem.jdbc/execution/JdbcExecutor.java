@@ -4,7 +4,6 @@ import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.basic.operators.ProjectionOperator;
 import org.qcri.rheem.basic.operators.TableSource;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -29,7 +28,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
@@ -38,7 +40,7 @@ import java.util.stream.Collectors;
 /**
  * {@link Executor} implementation for the {@link JdbcPlatformTemplate}.
  */
-public class JdbcExecutorTemplate extends ExecutorTemplate {
+public class JdbcExecutor extends ExecutorTemplate {
 
     private final JdbcPlatformTemplate platform;
 
@@ -48,7 +50,7 @@ public class JdbcExecutorTemplate extends ExecutorTemplate {
 
     private final FunctionCompiler functionCompiler = new FunctionCompiler();
 
-    public JdbcExecutorTemplate(JdbcPlatformTemplate platform, Job job) {
+    public JdbcExecutor(JdbcPlatformTemplate platform, Job job) {
         super(job.getCrossPlatformExecutor());
         this.platform = platform;
         this.connection = this.platform.createDatabaseDescriptor(job.getConfiguration()).createJdbcConnection();
@@ -110,7 +112,7 @@ public class JdbcExecutorTemplate extends ExecutorTemplate {
 
     /**
      * Retrieves the follow-up {@link ExecutionTask} of the given {@code task} unless it is not comprising a
-     * {@link JdbcExecutionOperator}.
+     * {@link JdbcExecutionOperator} and/or not in the given {@link ExecutionStage}.
      *
      * @param task  whose follow-up {@link ExecutionTask} is requested; should have a single follower
      * @param stage in which the follow-up {@link ExecutionTask} should be
@@ -120,8 +122,9 @@ public class JdbcExecutorTemplate extends ExecutorTemplate {
         assert task.getNumOuputChannels() == 1;
         final Channel outputChannel = task.getOutputChannel(0);
         final ExecutionTask consumer = RheemCollections.getSingle(outputChannel.getConsumers());
-        assert consumer.getStage() == stage;
-        return consumer.getOperator() instanceof JdbcExecutionOperator ? consumer : null;
+        return consumer.getStage() == stage && consumer.getOperator() instanceof JdbcExecutionOperator ?
+                consumer :
+                null;
     }
 
     /**
@@ -167,7 +170,7 @@ public class JdbcExecutorTemplate extends ExecutorTemplate {
      */
     protected String createSqlQuery(String tableName, Collection<String> conditions, String projection) {
         StringBuilder sb = new StringBuilder(1000);
-        sb.append("SELECT ").append(projection);
+        sb.append("SELECT ").append(projection).append(" FROM ").append(tableName);
         if (!conditions.isEmpty()) {
             sb.append(" WHERE ");
             String separator = "";
@@ -176,7 +179,7 @@ public class JdbcExecutorTemplate extends ExecutorTemplate {
                 separator = " AND ";
             }
         }
-        sb.append(" FROM ").append(tableName).append(';');
+        sb.append(';');
         return sb.toString();
     }
 
