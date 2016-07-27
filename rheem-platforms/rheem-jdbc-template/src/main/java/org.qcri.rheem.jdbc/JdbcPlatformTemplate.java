@@ -8,6 +8,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.ReflectionUtils;
+import org.qcri.rheem.jdbc.execution.DatabaseDescriptor;
 import org.qcri.rheem.jdbc.execution.JdbcExecutorTemplate;
 
 import java.sql.Connection;
@@ -32,6 +33,8 @@ public abstract class JdbcPlatformTemplate extends Platform {
     public final String jdbcUrlProperty = String.format("rheem.%s.jdbc.password");
 
     public final String defaultConfigFile = String.format("rheem-%s-defaults.properties");
+
+    private DatabaseDescriptor databaseDescriptor;
 
     protected final Collection<Mapping> mappings = new LinkedList<>();
 
@@ -101,5 +104,20 @@ public abstract class JdbcPlatformTemplate extends Platform {
      *
      * @return the driver {@link Class} name
      */
-    public abstract String getJdbcDriverClassName();
+    protected abstract String getJdbcDriverClassName();
+
+    /**
+     * Creates a new {@link DatabaseDescriptor} for this instance and the given {@link Configuration}.
+     *
+     * @param configuration provides configuration information for the result
+     * @return the {@link DatabaseDescriptor}
+     */
+    public DatabaseDescriptor createDatabaseDescriptor(Configuration configuration) {
+        return new DatabaseDescriptor(
+                configuration.getStringProperty(this.jdbcUserProperty),
+                configuration.getStringProperty(this.jdbcUserProperty, null),
+                configuration.getStringProperty(this.jdbcPasswordProperty, null),
+                this.getJdbcDriverClassName()
+        );
+    }
 }

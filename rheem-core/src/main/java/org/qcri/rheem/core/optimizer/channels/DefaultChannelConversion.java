@@ -33,7 +33,7 @@ public class DefaultChannelConversion extends ChannelConversion {
         this(
                 sourceChannelDescriptor,
                 targetChannelDescriptor,
-                (sourceChannel, configuration) -> executionOperatorFactory.get(),
+                executionOperatorFactory,
                 "via " + executionOperatorFactory.get().getClass().getSimpleName()
         );
     }

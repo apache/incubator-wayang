@@ -51,20 +51,7 @@ public class JdbcExecutorTemplate extends ExecutorTemplate {
     public JdbcExecutorTemplate(JdbcPlatformTemplate platform, Job job) {
         super(job.getCrossPlatformExecutor());
         this.platform = platform;
-        this.connection = this.createJdbcConnection(job.getConfiguration());
-    }
-
-    private Connection createJdbcConnection(Configuration configuration) {
-        try {
-            Class.forName(this.platform.getJdbcDriverClassName());
-            return DriverManager.getConnection(
-                    configuration.getStringProperty(this.platform.jdbcUserProperty),
-                    configuration.getStringProperty(this.platform.jdbcUserProperty, null),
-                    configuration.getStringProperty(this.platform.jdbcPasswordProperty, null)
-            );
-        } catch (Exception e) {
-            throw new RheemException(String.format("Could not connect to %s.", this.platform.getName()), e);
-        }
+        this.connection = this.platform.createDatabaseDescriptor(job.getConfiguration()).createJdbcConnection();
     }
 
     @Override
