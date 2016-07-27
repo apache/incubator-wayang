@@ -12,7 +12,6 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.profiling.NoInstrumentationStrategy;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
-import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
 import org.qcri.rheem.jdbc.operators.JdbcFilterOperator;
 import org.qcri.rheem.jdbc.operators.JdbcProjectionOperator;
 import org.qcri.rheem.jdbc.operators.JdbcTableSource;
@@ -86,15 +85,11 @@ public class JdbcExecutorTest {
 
         JdbcFilterOperator ageFilterOperator = new HsqldbFilterOperator(
                 new PredicateDescriptor<>(
-                        new PredicateDescriptor.SerializablePredicate<Record>() {
-                            @Override
-                            @FunctionCompiler.SQL("age >= 18")
-                            public boolean test(Record record) {
-                                throw new UnsupportedOperationException();
-                            }
+                        (PredicateDescriptor.SerializablePredicate<Record>) record -> {
+                            throw new UnsupportedOperationException();
                         },
                         Record.class
-                )
+                ).withSqlImplementation("age >= 18")
         );
         ExecutionTask ageFilterTask = new ExecutionTask(ageFilterOperator);
         ageFilterTask.setStage(sqlStage);
@@ -181,15 +176,11 @@ public class JdbcExecutorTest {
 
         JdbcFilterOperator ageFilterOperator = new HsqldbFilterOperator(
                 new PredicateDescriptor<>(
-                        new PredicateDescriptor.SerializablePredicate<Record>() {
-                            @Override
-                            @FunctionCompiler.SQL("age >= 18")
-                            public boolean test(Record record) {
-                                throw new UnsupportedOperationException();
-                            }
+                        (PredicateDescriptor.SerializablePredicate<Record>) record -> {
+                            throw new UnsupportedOperationException();
                         },
                         Record.class
-                )
+                ).withSqlImplementation("age >= 18")
         );
         ExecutionTask ageFilterTask = new ExecutionTask(ageFilterOperator);
         ageFilterTask.setStage(sqlStage);
@@ -198,15 +189,11 @@ public class JdbcExecutorTest {
 
         JdbcFilterOperator nameFilterOperator = new HsqldbFilterOperator(
                 new PredicateDescriptor<>(
-                        new PredicateDescriptor.SerializablePredicate<Record>() {
-                            @Override
-                            @FunctionCompiler.SQL("name IS NOT NULL")
-                            public boolean test(Record record) {
-                                throw new UnsupportedOperationException();
-                            }
+                        (PredicateDescriptor.SerializablePredicate<Record>) record -> {
+                            throw new UnsupportedOperationException();
                         },
                         Record.class
-                )
+                ).withSqlImplementation("name IS NOT NULL")
         );
         ExecutionTask nameFilterTask = new ExecutionTask(nameFilterOperator);
         nameFilterTask.setStage(sqlStage);

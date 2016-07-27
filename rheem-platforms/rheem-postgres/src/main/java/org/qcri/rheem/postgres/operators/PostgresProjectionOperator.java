@@ -4,8 +4,6 @@ import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.basic.operators.ProjectionOperator;
-import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.jdbc.operators.JdbcFilterOperator;
 import org.qcri.rheem.jdbc.operators.JdbcProjectionOperator;
 
 /**

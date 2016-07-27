@@ -3,6 +3,7 @@ package org.qcri.rheem.basic.function;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.types.BasicDataUnitType;
+import org.qcri.rheem.core.util.RheemArrays;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -34,51 +35,57 @@ public class ProjectionDescriptor<Input, Output> extends TransformationDescripto
 
     public ProjectionDescriptor(Class<Input> inputTypeClass,
                                 Class<Output> outputTypeClass,
-                                Integer... fieldIndexes) {
+                                int... fieldIndexes) {
         this(BasicDataUnitType.createBasic(inputTypeClass),
                 BasicDataUnitType.createBasic(outputTypeClass),
                 fieldIndexes);
     }
 
-    public ProjectionDescriptor(BasicDataUnitType inputType, BasicDataUnitType outputType, String... fieldNames) {
+    public ProjectionDescriptor(BasicDataUnitType<Input> inputType, BasicDataUnitType<Output> outputType, String... fieldNames) {
         super(createJavaImplementation(fieldNames, inputType), inputType, outputType);
         this.fieldNames = Collections.unmodifiableList(Arrays.asList(fieldNames));
         this.fieldIndexes = null;
     }
 
-    public ProjectionDescriptor(BasicDataUnitType inputType, BasicDataUnitType outputType, Integer... fieldIndexes) {
+    public ProjectionDescriptor(BasicDataUnitType<Input> inputType, BasicDataUnitType<Output> outputType, int... fieldIndexes) {
         super(createJavaImplementation(fieldIndexes, inputType), inputType, outputType);
-        this.fieldIndexes = Collections.unmodifiableList(Arrays.asList(fieldIndexes));
+        this.fieldIndexes = Collections.unmodifiableList(RheemArrays.asList(fieldIndexes));
         this.fieldNames = null;
         projectByIndexes = true;
     }
 
     private static <Input, Output> FunctionDescriptor.SerializableFunction<Input, Output>
-    createJavaImplementation(String[] fieldNames, BasicDataUnitType inputType) {
+    createJavaImplementation(String[] fieldNames, BasicDataUnitType<Input> inputType) {
         // Get the names of the fields to be projected.
         if (fieldNames.length != 1) {
-            //throw new IllegalStateException("The projection descriptor currently supports only a single field.");
+            return t -> {
+                throw new IllegalStateException("The projection descriptor currently supports only a single field.");
+            };
         }
         String fieldName = fieldNames[0];
         return new JavaFunction<>(fieldName);
     }
 
     private static <Input, Output> FunctionDescriptor.SerializableFunction<Input, Output>
-    createJavaImplementation(Integer[] fieldIndexes, BasicDataUnitType inputType) {
+    createJavaImplementation(int[] fieldIndexes, BasicDataUnitType<Input> inputType) {
         // Get the indexes of the fields to be projected.
         if (fieldIndexes.length != 1) {
-            //throw new IllegalStateException("The projection descriptor currently supports only a single field.");
+            return t -> {
+                throw new IllegalStateException("The projection descriptor currently supports only a single field.");
+            };
         }
-        Integer fieldIndex = fieldIndexes[0];
+        int fieldIndex = fieldIndexes[0];
         return new JavaFunction<>(fieldIndex);
     }
 
     public List<String> getFieldNames() {
         return this.fieldNames;
     }
+
     public void setFieldNames(List<String> fieldNames) {
-         this.fieldNames = fieldNames;
+        this.fieldNames = fieldNames;
     }
+
     public List<Integer> getFieldIndexes() {
         return fieldIndexes;
     }
@@ -103,18 +110,22 @@ public class ProjectionDescriptor<Input, Output> extends TransformationDescripto
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public Output apply(Input input) {
             // Initialization code.
             if (this.field == null) {
+
                 // Get the input class.
                 final Class<?> typeClass = input.getClass();
 
                 // Find the projection field via reflection.
                 try {
-                    if (this.fieldName!=null)
+                    if (this.fieldName != null) {
                         this.field = typeClass.getField(this.fieldName);
-                    else
-                        this.field = typeClass.getFields()[fieldIndex];
+                    } else {
+                        assert this.fieldIndex != null;
+                        this.field = typeClass.getFields()[this.fieldIndex];
+                    }
                 } catch (Exception e) {
                     throw new IllegalStateException("The configuration of the projection seems to be illegal.", e);
                 }

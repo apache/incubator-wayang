@@ -682,14 +682,11 @@ public class RheemPlans {
     public static RheemPlan sqlite3Scenario2(Collection<Record> collector) {
         Sqlite3TableSource customers = new Sqlite3TableSource("customer");
         FilterOperator<Record> filter = new FilterOperator<>(
-                new PredicateDescriptor.SerializablePredicate<Record>() {
-                    @Override
-                    @FunctionCompiler.SQL("age >= 18")
-                    public boolean test(Record record) {
-                        return (Integer) record.getField(1) >= 18;
-                    }
-                },
-                Record.class
+                new PredicateDescriptor<>(
+                        (PredicateDescriptor.SerializablePredicate<Record>) record -> (Integer) record.getField(1) >= 18,
+                        Record.class
+                ).withSqlImplementation("age >= 18"),
+                DataSetType.createDefault(Record.class)
         );
         LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
 
@@ -703,17 +700,14 @@ public class RheemPlans {
     public static RheemPlan sqlite3Scenario3(Collection<Record> collector) {
         Sqlite3TableSource customers = new Sqlite3TableSource("customer");
         FilterOperator<Record> filter = new FilterOperator<>(
-                new PredicateDescriptor.SerializablePredicate<Record>() {
-                    @Override
-                    @FunctionCompiler.SQL("age >= 18")
-                    public boolean test(Record record) {
-                        return (Integer) record.getField(1) >= 18;
-                    }
-                },
-                Record.class
+                new PredicateDescriptor<>(
+                        (PredicateDescriptor.SerializablePredicate<Record>) record -> (Integer) record.getField(1) >= 18,
+                        Record.class
+                ).withSqlImplementation("age >= 18"),
+                DataSetType.createDefault(Record.class)
         );
-        ProjectionOperator<Record, Record> projection = new ProjectionOperator<Record, Record>(
-          Record.class, Record.class, "name"
+        ProjectionOperator<Record, Record> projection = new ProjectionOperator<>(
+                Record.class, Record.class, "name"
         );
         LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
 

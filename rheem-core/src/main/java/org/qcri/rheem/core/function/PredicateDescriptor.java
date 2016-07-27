@@ -19,6 +19,8 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
 
     private final SerializablePredicate<Input> javaImplementation;
 
+    private String sqlImplementation;
+
     /**
      * The selectivity ({code 0..1}) of this instance or {@code null} if unspecified.
      */
@@ -62,13 +64,34 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
     }
 
     /**
-     * This is function is not built to last. It is thought to help out devising programs while we are still figuring
+     * This function is not built to last. It is thought to help out devising programs while we are still figuring
      * out how to express functions in a platform-independent way.
      *
      * @return a function that can perform the reduce
      */
     public SerializablePredicate<Input> getJavaImplementation() {
         return this.javaImplementation;
+    }
+
+    /**
+     * This function is not built to last. It is thought to help out devising programs while we are still figuring
+     * out how to express functions in a platform-independent way.
+     *
+     * @return a SQL predicate applicable in a {@code WHERE} clause representing this predicate
+     */
+    public String getSqlImplementation() {
+        return this.sqlImplementation;
+    }
+
+    /**
+     * This function is not built to last. It is thought to help out devising programs while we are still figuring
+     * out how to express functions in a platform-independent way.
+     *
+     * @param sqlImplementation  a SQL predicate applicable in a {@code WHERE} clause representing this predicate
+     */
+    public PredicateDescriptor<Input> withSqlImplementation(String sqlImplementation) {
+        this.sqlImplementation = sqlImplementation;
+        return this;
     }
 
     /**

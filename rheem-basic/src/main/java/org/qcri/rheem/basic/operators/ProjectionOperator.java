@@ -31,7 +31,7 @@ public class ProjectionOperator<InputType, OutputType> extends UnaryToUnaryOpera
     }
 
     public ProjectionOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass,
-                              Integer... fieldIndexes) {
+                              int... fieldIndexes) {
         this(new ProjectionDescriptor<>(inputTypeClass, outputTypeClass, fieldIndexes));
     }
 
