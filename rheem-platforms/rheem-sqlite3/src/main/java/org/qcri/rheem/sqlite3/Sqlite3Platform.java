@@ -6,7 +6,6 @@ import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
 import org.qcri.rheem.sqlite3.mappings.FilterMapping;
 import org.qcri.rheem.sqlite3.mappings.ProjectionMapping;
-import org.qcri.rheem.sqlite3.mappings.TableSourceMapping;
 
 /**
  * {@link Platform} implementation for SQLite3.
@@ -28,7 +27,6 @@ public class Sqlite3Platform extends JdbcPlatformTemplate {
 
     @Override
     protected void initializeMappings() {
-        this.mappings.add(new TableSourceMapping());
         this.mappings.add(new FilterMapping());
         this.mappings.add(new ProjectionMapping());
     }
