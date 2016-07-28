@@ -2,24 +2,28 @@ package org.qcri.rheem.jdbc.operators;
 
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
-import org.qcri.rheem.basic.operators.ProjectionOperator;
+import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
 
 import java.sql.Connection;
 import java.util.Optional;
 
 /**
- * PostgreSQL implementation for the {@link ProjectionOperator}.
+ * Projects the fields of {@link Record}s.
  */
-public abstract class JdbcProjectionOperator extends ProjectionOperator<Record, Record>
+public abstract class JdbcProjectionOperator extends MapOperator<Record, Record>
         implements JdbcExecutionOperator {
 
-
     public JdbcProjectionOperator(String... fieldNames) {
-        super(Record.class, Record.class, fieldNames);
+        super(
+                new ProjectionDescriptor<>(Record.class, Record.class, fieldNames),
+                DataSetType.createDefault(Record.class),
+                DataSetType.createDefault(Record.class)
+        );
     }
 
     public JdbcProjectionOperator(ProjectionDescriptor<Record, Record> functionDescriptor) {
@@ -31,13 +35,21 @@ public abstract class JdbcProjectionOperator extends ProjectionOperator<Record, 
      *
      * @param that that should be copied
      */
-    public JdbcProjectionOperator(ProjectionOperator<Record, Record> that) {
+    public JdbcProjectionOperator(MapOperator<Record, Record> that) {
         super(that);
+        if (!(that.getFunctionDescriptor() instanceof ProjectionDescriptor)) {
+            throw new IllegalArgumentException("Can only copy from MapOperators with ProjectionDescriptors.");
+        }
     }
 
     @Override
     public String createSqlClause(Connection connection, FunctionCompiler compiler) {
         return String.join(", ", this.getFunctionDescriptor().getFieldNames());
+    }
+
+    @Override
+    public ProjectionDescriptor<Record, Record> getFunctionDescriptor() {
+        return (ProjectionDescriptor<Record, Record>) super.getFunctionDescriptor();
     }
 
     @Override

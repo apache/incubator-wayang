@@ -1,8 +1,6 @@
 package org.qcri.rheem.jdbc.execution;
 
 import org.qcri.rheem.basic.channels.FileChannel;
-import org.qcri.rheem.basic.operators.FilterOperator;
-import org.qcri.rheem.basic.operators.ProjectionOperator;
 import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
@@ -22,6 +20,8 @@ import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
 import org.qcri.rheem.jdbc.operators.JdbcExecutionOperator;
+import org.qcri.rheem.jdbc.operators.JdbcFilterOperator;
+import org.qcri.rheem.jdbc.operators.JdbcProjectionOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,9 +79,9 @@ public class JdbcExecutor extends ExecutorTemplate {
         ExecutionTask nextTask = this.findJdbcExecutionOperatorTaskInStage(startTask, stage);
         while (nextTask != null) {
             // Evaluate the nextTask.
-            if (nextTask.getOperator() instanceof FilterOperator<?>) {
+            if (nextTask.getOperator() instanceof JdbcFilterOperator) {
                 filterTasks.add(nextTask);
-            } else if (nextTask.getOperator() instanceof ProjectionOperator<?, ?>) {
+            } else if (nextTask.getOperator() instanceof JdbcProjectionOperator) {
                 assert projectionTask == null; //Allow one projection operator per stage for now.
                 projectionTask = nextTask;
 

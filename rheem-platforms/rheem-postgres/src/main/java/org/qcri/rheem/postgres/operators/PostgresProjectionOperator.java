@@ -3,7 +3,7 @@ package org.qcri.rheem.postgres.operators;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.basic.operators.FilterOperator;
-import org.qcri.rheem.basic.operators.ProjectionOperator;
+import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.jdbc.operators.JdbcProjectionOperator;
 
 /**
@@ -19,7 +19,7 @@ public class PostgresProjectionOperator extends JdbcProjectionOperator implement
         super(functionDescriptor);
     }
 
-    public PostgresProjectionOperator(ProjectionOperator<Record, Record> that) {
+    public PostgresProjectionOperator(MapOperator<Record, Record> that) {
         super(that);
     }
 

@@ -1,6 +1,7 @@
 package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
@@ -56,6 +57,32 @@ public class MapOperator<InputType, OutputType> extends UnaryToUnaryOperator<Inp
     public MapOperator(MapOperator<InputType, OutputType> that) {
         super(that);
         this.functionDescriptor = that.getFunctionDescriptor();
+    }
+
+    /**
+     * Creates a new instance that projects the given fields.
+     *
+     * @param fieldNames the field names for the projected fields
+     * @return the new instance
+     */
+    public static <Input, Output> MapOperator<Input, Output> createProjection(
+            Class<Input> inputClass,
+            Class<Output> outputClass,
+            String... fieldNames) {
+        return new MapOperator<>(new ProjectionDescriptor<>(inputClass, outputClass, fieldNames));
+    }
+
+    /**
+     * Creates a new instance that projects the given fields.
+     *
+     * @param fieldIndices the field names for the projected fields
+     * @return the new instance
+     */
+    public static <Input, Output> MapOperator<Input, Output> createProjection(
+            Class<Input> inputClass,
+            Class<Output> outputClass,
+            int... fieldIndices) {
+        return new MapOperator<>(new ProjectionDescriptor<>(inputClass, outputClass, fieldIndices));
     }
 
     public TransformationDescriptor<InputType, OutputType> getFunctionDescriptor() {

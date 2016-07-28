@@ -70,7 +70,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   }
 
   /**
-    * Feed this instance into a [[ProjectionOperator]].
+    * Feed this instance into a [[MapOperator]] with a [[ProjectionDescriptor]].
     *
     * @param fieldNames names of the fields to be projected
     * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
@@ -80,7 +80,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def projectByName[NewOut: ClassTag](fieldNames: Seq[String],
                                       udfCpuLoad: LoadEstimator = null,
                                       udfRamLoad: LoadEstimator = null): DataQuanta[NewOut] = {
-    val projectionOperator = new ProjectionOperator(
+    val projectionOperator = new MapOperator(
       new ProjectionDescriptor(basicDataUnitType[Out], basicDataUnitType[NewOut], fieldNames: _*)
     )
     this.connectTo(projectionOperator, 0)
@@ -88,7 +88,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   }
 
   /**
-    * Feed this instance into a [[ProjectionOperator]].
+    * Feed this instance into a [[MapOperator]] with a [[ProjectionDescriptor]].
     *
     * @param indices    indices of the fields to be projected
     * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
@@ -98,7 +98,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def projectByIndex[NewOut: ClassTag](indices: Seq[Int],
                                        udfCpuLoad: LoadEstimator = null,
                                        udfRamLoad: LoadEstimator = null): DataQuanta[NewOut] = {
-    val projectionOperator = new ProjectionOperator(
+    val projectionOperator = new MapOperator(
       new ProjectionDescriptor(basicDataUnitType[Out], basicDataUnitType[NewOut], indices: _*)
     )
     this.connectTo(projectionOperator, 0)

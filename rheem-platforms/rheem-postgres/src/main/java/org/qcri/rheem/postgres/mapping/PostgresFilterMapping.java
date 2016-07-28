@@ -2,7 +2,6 @@ package org.qcri.rheem.postgres.mapping;
 
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.FilterOperator;
-import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.postgres.PostgresPlatform;

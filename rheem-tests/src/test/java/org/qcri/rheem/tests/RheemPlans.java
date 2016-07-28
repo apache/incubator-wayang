@@ -10,7 +10,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
-import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
 import org.qcri.rheem.sqlite3.Sqlite3Platform;
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource;
 
@@ -706,9 +705,7 @@ public class RheemPlans {
                 ).withSqlImplementation("age >= 18"),
                 DataSetType.createDefault(Record.class)
         );
-        ProjectionOperator<Record, Record> projection = new ProjectionOperator<>(
-                Record.class, Record.class, "name"
-        );
+        MapOperator<Record, Record> projection = MapOperator.createProjection(Record.class, Record.class, "name");
         LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
 
         customers.connectTo(0, filter, 0);
