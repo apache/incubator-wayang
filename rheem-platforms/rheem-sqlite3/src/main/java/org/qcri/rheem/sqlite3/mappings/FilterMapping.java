@@ -2,9 +2,7 @@ package org.qcri.rheem.sqlite3.mappings;
 
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.FilterOperator;
-import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.sqlite3.Sqlite3Platform;
 import org.qcri.rheem.sqlite3.operators.Sqlite3FilterOperator;
 
@@ -29,8 +27,9 @@ public class FilterMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern(
-                "filter", new FilterOperator<>(null, Record.class), false);
+        final OperatorPattern operatorPattern = new OperatorPattern<>(
+                "filter", new FilterOperator<>(null, Record.class), false
+        ).withAdditionalTest(op -> op.getPredicateDescriptor().getSqlImplementation() != null);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

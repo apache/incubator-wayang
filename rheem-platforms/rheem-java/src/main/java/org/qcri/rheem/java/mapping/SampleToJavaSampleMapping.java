@@ -27,8 +27,12 @@ public class SampleToJavaSampleMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern(
-                "sample", new SampleOperator<>(0, DataSetType.none(), null), false);
+        final OperatorPattern operatorPattern = new OperatorPattern<>(
+                "sample", new SampleOperator<>(0, DataSetType.none(), null), false
+        ).withAdditionalTest(op ->
+                op.getSampleMethod() == SampleOperator.Methods.RANDOM
+                        || op.getSampleMethod() == SampleOperator.Methods.RESERVOIR
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

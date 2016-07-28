@@ -28,9 +28,9 @@ public class PostgresFilterMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern(
-                "filter", new FilterOperator<>((PredicateDescriptor) null, DataSetType.createDefault(Record.class)), false
-        );
+        final OperatorPattern<FilterOperator<Record>> operatorPattern = new OperatorPattern<>(
+                "filter", new FilterOperator<>(null, DataSetType.createDefault(Record.class)), false
+        ).withAdditionalTest(op -> op.getPredicateDescriptor().getSqlImplementation() != null);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

@@ -28,8 +28,12 @@ public class SampleToSparkSampleMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern(
+        final OperatorPattern operatorPattern = new OperatorPattern<>(
                 "sample", new SampleOperator<>(0, DataSetType.none(), null), false
+        ).withAdditionalTest(op ->
+                op.getSampleMethod() == SampleOperator.Methods.RANDOM
+                        || op.getSampleMethod() == SampleOperator.Methods.SHUFFLE_FIRST
+                        || op.getSampleMethod() == SampleOperator.Methods.BERNOULLI
         ); //TODO: check if the zero here affects execution
         return SubplanPattern.createSingleton(operatorPattern);
     }
@@ -49,7 +53,6 @@ public class SampleToSparkSampleMapping implements Mapping {
                                     "%s sample method is not yet supported in Java platform.",
                                     matchedOperator.getSampleMethod()
                             ));
-                            //FIXME: in case the user chose another Sample method but the optimizer chose to run in Java we get the exception. This should be fixed.
                     }
                 }
         );
