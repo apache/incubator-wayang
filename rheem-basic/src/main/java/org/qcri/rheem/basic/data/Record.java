@@ -37,4 +37,61 @@ public class Record implements Serializable {
         return this.values[index];
     }
 
+    /**
+     * Retrieve a field as a {@code double}. It must be castable as such.
+     *
+     * @param index the index of the field
+     * @return the {@code double} representation of the field
+     */
+    public double getDouble(int index) {
+        Object field = this.values[index];
+        if (field instanceof Double) return (Double) field;
+        else if (field instanceof Integer) return (Integer) field;
+        else if (field instanceof Float) return (Float) field;
+        else if (field instanceof Long) return (Long) field;
+        else if (field instanceof Short) return (Short) field;
+        else if (field instanceof Byte) return (Byte) field;
+        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", field));
+    }
+
+    /**
+     * Retrieve a field as a {@code long}. It must be castable as such.
+     *
+     * @param index the index of the field
+     * @return the {@code long} representation of the field
+     */
+    public long getLong(int index) {
+        Object field = this.values[index];
+        if (field instanceof Integer) return (Integer) field;
+        else if (field instanceof Long) return (Long) field;
+        else if (field instanceof Short) return (Short) field;
+        else if (field instanceof Byte) return (Byte) field;
+        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", field));
+    }
+
+    /**
+     * Retrieve a field as a {@code int}. It must be castable as such.
+     *
+     * @param index the index of the field
+     * @return the {@code int} representation of the field
+     */
+    public int getInt(int index) {
+        Object field = this.values[index];
+        if (field instanceof Integer) return (Integer) field;
+        else if (field instanceof Short) return (Short) field;
+        else if (field instanceof Byte) return (Byte) field;
+        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", field));
+    }
+
+    /**
+     * Retrieve a field as a {@link String}.
+     *
+     * @param index the index of the field
+     * @return the field as a {@link String} (obtained via {@link Object#toString()}) or {@code null} if the field is {@code null}
+     */
+    public String getString(int index) {
+        Object field = this.values[index];
+        return field == null ? null : field.toString();
+    }
+
 }
