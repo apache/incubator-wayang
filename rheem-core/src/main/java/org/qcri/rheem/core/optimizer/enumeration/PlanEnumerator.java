@@ -361,6 +361,14 @@ public class PlanEnumerator {
                 operatorEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) operator, optimizationContext);
             }
 
+            if (operatorEnumeration.getPlanImplementations().isEmpty()) {
+                if (this.isTopLevel()) {
+                    throw new RheemException(String.format("No implementations enumerated for %s.", operator));
+                } else {
+                    this.logger.warn("No implementations enumerated for {}.", operator);
+                }
+            }
+
             if (branchEnumeration == null) {
                 branchEnumeration = operatorEnumeration;
             } else {
@@ -372,7 +380,11 @@ public class PlanEnumerator {
                         optimizationContext
                 );
                 if (branchEnumeration.getPlanImplementations().isEmpty()) {
-                    this.logger.warn("No implementations enumerated after concatenating {}.", output);
+                    if (this.isTopLevel()) {
+                        throw new RheemException(String.format("Could not concatenate %s in %s.", operator, branch));
+                    } else {
+                        this.logger.warn("Could not concatenate {} in {}.", operator, branch);
+                    }
                 }
                 this.prune(branchEnumeration);
             }
