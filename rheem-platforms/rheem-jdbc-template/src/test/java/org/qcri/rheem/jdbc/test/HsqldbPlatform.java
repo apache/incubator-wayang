@@ -23,7 +23,7 @@ public class HsqldbPlatform extends JdbcPlatformTemplate {
     }
 
     @Override
-    protected String getPlatformId() {
+    public String getPlatformId() {
         return "hsqldb";
     }
 

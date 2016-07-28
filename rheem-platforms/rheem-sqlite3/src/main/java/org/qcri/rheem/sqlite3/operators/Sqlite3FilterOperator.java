@@ -28,16 +28,4 @@ public class Sqlite3FilterOperator extends JdbcFilterOperator {
         return Sqlite3Platform.getInstance();
     }
 
-    @Override
-    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        assert index == 0;
-        return Collections.singletonList(this.getPlatform().getSqlQueryChannelDescriptor());
-    }
-
-    @Override
-    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        assert index == 0;
-        return Collections.singletonList(this.getPlatform().getSqlQueryChannelDescriptor());
-    }
-
 }

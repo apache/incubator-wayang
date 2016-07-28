@@ -1,7 +1,10 @@
 package org.qcri.rheem.jdbc.operators;
 
 import org.qcri.rheem.basic.data.Record;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -27,21 +30,21 @@ import java.util.stream.StreamSupport;
  */
 public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator {
 
-    private final ChannelDescriptor inputChannelDescriptor;
+    private final JdbcPlatformTemplate jdbcPlatform;
 
     /**
      * Creates a new instance.
      *
-     * @param inputChannelDescriptor the exact {@link ChannelDescriptor} to be converted with this instance.
+     * @param jdbcPlatform from which the SQL data comes
      */
-    public SqlToStreamOperator(ChannelDescriptor inputChannelDescriptor) {
+    public SqlToStreamOperator(JdbcPlatformTemplate jdbcPlatform) {
         super(DataSetType.createDefault(Record.class), DataSetType.createDefault(Record.class), false, null);
-        this.inputChannelDescriptor = inputChannelDescriptor;
+        this.jdbcPlatform = jdbcPlatform;
     }
 
     protected SqlToStreamOperator(SqlToStreamOperator that) {
         super(that);
-        this.inputChannelDescriptor = that.inputChannelDescriptor;
+        this.jdbcPlatform = that.jdbcPlatform;
     }
 
     @Override
@@ -69,12 +72,21 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        return Collections.singletonList(this.inputChannelDescriptor);
+        return Collections.singletonList(this.jdbcPlatform.getSqlQueryChannelDescriptor());
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
+        final String estimatorKey = String.format("rheem.%s.sqltostream.load", this.jdbcPlatform.getPlatformId());
+        final NestableLoadProfileEstimator operatorEstimator = NestableLoadProfileEstimator.parseSpecification(
+                configuration.getStringProperty(estimatorKey)
+        );
+        return Optional.of(operatorEstimator);
     }
 
     /**

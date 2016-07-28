@@ -52,7 +52,7 @@ public class JdbcExecutorTest {
 
         ExecutionStage nextStage = mock(ExecutionStage.class);
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlChannelDescriptor);
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(HsqldbPlatform.getInstance());
         ExecutionTask sqlToStreamTask = new ExecutionTask(sqlToStreamOperator);
         tableSourceTask.getOutputChannel(0).addConsumer(sqlToStreamTask, 0);
         sqlToStreamTask.setStage(nextStage);
@@ -101,7 +101,7 @@ public class JdbcExecutorTest {
 
         ExecutionStage nextStage = mock(ExecutionStage.class);
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlChannelDescriptor);
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(HsqldbPlatform.getInstance());
         ExecutionTask sqlToStreamTask = new ExecutionTask(sqlToStreamOperator);
         ageFilterTask.getOutputChannel(0).addConsumer(sqlToStreamTask, 0);
         sqlToStreamTask.setStage(nextStage);
@@ -143,7 +143,7 @@ public class JdbcExecutorTest {
 
         ExecutionStage nextStage = mock(ExecutionStage.class);
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlChannelDescriptor);
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(HsqldbPlatform.getInstance());
         ExecutionTask sqlToStreamTask = new ExecutionTask(sqlToStreamOperator);
         projectionTask.getOutputChannel(0).addConsumer(sqlToStreamTask, 0);
         sqlToStreamTask.setStage(nextStage);
@@ -211,7 +211,7 @@ public class JdbcExecutorTest {
 
         ExecutionStage nextStage = mock(ExecutionStage.class);
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlChannelDescriptor);
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(HsqldbPlatform.getInstance());
         ExecutionTask sqlToStreamTask = new ExecutionTask(sqlToStreamOperator);
         projectionTask.getOutputChannel(0).addConsumer(sqlToStreamTask, 0);
         sqlToStreamTask.setStage(nextStage);

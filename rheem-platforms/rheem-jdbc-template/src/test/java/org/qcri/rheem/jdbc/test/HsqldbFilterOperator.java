@@ -17,7 +17,7 @@ public class HsqldbFilterOperator extends JdbcFilterOperator {
     }
 
     @Override
-    public Platform getPlatform() {
+    public HsqldbPlatform getPlatform() {
         return HsqldbPlatform.getInstance();
     }
 

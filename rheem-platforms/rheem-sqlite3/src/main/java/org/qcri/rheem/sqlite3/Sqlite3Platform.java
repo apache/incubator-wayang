@@ -32,7 +32,7 @@ public class Sqlite3Platform extends JdbcPlatformTemplate {
     }
 
     @Override
-    protected String getPlatformId() {
+    public String getPlatformId() {
         return "sqlite3";
     }
 

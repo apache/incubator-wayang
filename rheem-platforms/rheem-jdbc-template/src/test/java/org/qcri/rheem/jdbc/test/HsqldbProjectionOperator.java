@@ -17,7 +17,7 @@ public class HsqldbProjectionOperator extends JdbcProjectionOperator {
     }
 
     @Override
-    public Platform getPlatform() {
+    public HsqldbPlatform getPlatform() {
         return HsqldbPlatform.getInstance();
     }
 

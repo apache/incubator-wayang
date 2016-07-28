@@ -4,9 +4,13 @@ import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.basic.operators.ProjectionOperator;
 import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
 
 import java.sql.Connection;
+import java.util.Collections;
+import java.util.List;
 
 public interface JdbcExecutionOperator extends ExecutionOperator {
 
@@ -20,5 +24,18 @@ public interface JdbcExecutionOperator extends ExecutionOperator {
      * @return the SQL clause
      */
     String createSqlClause(Connection connection, FunctionCompiler compiler);
+
+    @Override
+    JdbcPlatformTemplate getPlatform();
+
+    @Override
+    default List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        return Collections.singletonList(this.getPlatform().getSqlQueryChannelDescriptor());
+    }
+
+    @Override
+    default List<ChannelDescriptor> getSupportedOutputChannels(int index) {
+        return Collections.singletonList(this.getPlatform().getSqlQueryChannelDescriptor());
+    }
 
 }

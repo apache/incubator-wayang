@@ -80,7 +80,7 @@ public class SqlToStreamOperatorTest {
                         0
                 );
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlQueryChannel.getDescriptor());
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(HsqldbPlatform.getInstance());
         sqlToStreamOperator.evaluate(
                 new ChannelInstance[] { sqlQueryChannelInstance },
                 new ChannelInstance[] { streamChannelInstance },
@@ -139,7 +139,7 @@ public class SqlToStreamOperatorTest {
                         0
                 );
 
-        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(sqlQueryChannel.getDescriptor());
+        SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(HsqldbPlatform.getInstance());
         sqlToStreamOperator.evaluate(
                 new ChannelInstance[] { sqlQueryChannelInstance },
                 new ChannelInstance[] { streamChannelInstance },

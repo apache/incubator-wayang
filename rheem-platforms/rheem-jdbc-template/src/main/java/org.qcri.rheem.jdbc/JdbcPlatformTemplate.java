@@ -82,7 +82,7 @@ public abstract class JdbcPlatformTemplate extends Platform {
         channelConversionGraph.add(new DefaultChannelConversion(
                 this.getSqlQueryChannelDescriptor(),
                 StreamChannel.DESCRIPTOR,
-                () -> new SqlToStreamOperator(this.getSqlQueryChannelDescriptor())
+                () -> new SqlToStreamOperator(this)
         ));
     }
 
@@ -109,7 +109,7 @@ public abstract class JdbcPlatformTemplate extends Platform {
      *
      * @return the platform ID
      */
-    protected abstract String getPlatformId();
+    public abstract String getPlatformId();
 
     /**
      * Provide the name of the JDBC driver {@link Class} for this instance.

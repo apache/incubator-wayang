@@ -17,7 +17,7 @@ public class HsqldbTableSource extends JdbcTableSource {
     }
 
     @Override
-    public Platform getPlatform() {
+    public HsqldbPlatform getPlatform() {
         return HsqldbPlatform.getInstance();
     }
 
