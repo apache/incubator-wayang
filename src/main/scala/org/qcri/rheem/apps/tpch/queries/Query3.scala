@@ -107,9 +107,12 @@ class Query3(platforms: Platform*) {
 
       .reduceByKey(
         t => (t.orderKey, t.orderDate, t.shipPriority),
-        (t1, t2) => { t1.revenue += t2.revenue; t2 }
+        (t1, t2) => {
+          t1.revenue += t2.revenue; t2
+        }
       )
       .withName("Aggregate revenue")
+      .withUdfJarsOf(classOf[Query3])
       .collect(s"${this.getClass.getSimpleName}")
   }
 
