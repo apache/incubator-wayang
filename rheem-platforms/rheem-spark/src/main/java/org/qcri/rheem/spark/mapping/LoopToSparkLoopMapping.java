@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.mapping;
 import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkLoopOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -26,7 +27,7 @@ public class LoopToSparkLoopMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "loop", new LoopOperator<>(null, null, (PredicateDescriptor) null, 1), false
+                "loop", new LoopOperator<>(DataSetType.none(), DataSetType.none(), (PredicateDescriptor) null, 1), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }

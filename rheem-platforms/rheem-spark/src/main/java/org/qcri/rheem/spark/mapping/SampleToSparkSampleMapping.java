@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.mapping;
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkBernoulliSampleOperator;
 import org.qcri.rheem.spark.operators.SparkRandomPartitionSampleOperator;
 import org.qcri.rheem.spark.operators.SparkShufflePartitionSampleOperator;
@@ -28,7 +29,7 @@ public class SampleToSparkSampleMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "sample", new SampleOperator<>(0, null, null), false
+                "sample", new SampleOperator<>(0, DataSetType.none(), null), false
         ); //TODO: check if the zero here affects execution
         return SubplanPattern.createSingleton(operatorPattern);
     }

@@ -1,11 +1,8 @@
 package org.qcri.rheem.spark.mapping;
 
-import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.basic.operators.UnionAllOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.operators.SparkReduceByOperator;
 import org.qcri.rheem.spark.operators.SparkUnionAllOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 

@@ -3,6 +3,7 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaFilterOperator;
 import org.qcri.rheem.java.JavaPlatform;
 
@@ -28,7 +29,7 @@ public class FilterToJavaFilterMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "filter", new FilterOperator<>((PredicateDescriptor) null, null), false);
+                "filter", new FilterOperator<>((PredicateDescriptor) null, DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

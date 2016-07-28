@@ -1,9 +1,10 @@
 package org.qcri.rheem.postgres.mapping;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
-import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.basic.operators.ProjectionOperator;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.postgres.PostgresPlatform;
 import org.qcri.rheem.postgres.operators.PostgresProjectionOperator;
 
@@ -11,8 +12,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
-
-/**
+ * /**
  * Mapping from {@link ProjectionOperator} to {@link PostgresProjectionOperator}.
  */
 @SuppressWarnings("unchecked")
@@ -29,7 +29,13 @@ public class PostgresProjectionMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "projection", new ProjectionOperator<>((ProjectionDescriptor) null, null, null), false
+                "projection",
+                new ProjectionOperator<>(
+                        (ProjectionDescriptor) null,
+                        DataSetType.createDefault(Record.class),
+                        DataSetType.createDefault(Record.class)
+                ),
+                false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }

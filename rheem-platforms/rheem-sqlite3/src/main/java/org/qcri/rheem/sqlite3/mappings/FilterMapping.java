@@ -30,7 +30,7 @@ public class FilterMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "filter", new FilterOperator<>(null, DataSetType.createDefault(Record.class)), false);
+                "filter", new FilterOperator<>(null, Record.class), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

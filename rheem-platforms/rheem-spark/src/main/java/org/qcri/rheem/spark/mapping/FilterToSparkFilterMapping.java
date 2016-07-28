@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.mapping;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkFilterOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -26,7 +27,7 @@ public class FilterToSparkFilterMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "filter", new FilterOperator<>((PredicateDescriptor) null, null), false);
+                "filter", new FilterOperator<>((PredicateDescriptor) null, DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

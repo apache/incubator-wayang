@@ -32,7 +32,7 @@ public class PostgresPlatform extends JdbcPlatformTemplate {
     }
 
     @Override
-    protected String getPlatformId() {
+    public String getPlatformId() {
         return "postgres";
     }
 

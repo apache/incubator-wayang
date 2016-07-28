@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkReduceByOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -25,7 +26,7 @@ public class ReduceByToSparkReduceByMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "reduceBy", new ReduceByOperator<>(null, null, null), false
+                "reduceBy", new ReduceByOperator<>(null, null, DataSetType.none()), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }

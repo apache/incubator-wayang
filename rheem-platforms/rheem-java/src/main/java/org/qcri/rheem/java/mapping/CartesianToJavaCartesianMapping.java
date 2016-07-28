@@ -23,7 +23,7 @@ public class CartesianToJavaCartesianMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "cartesian", new CartesianOperator<>(null, DataSetType.none()), false);
+                "cartesian", new CartesianOperator<>(DataSetType.none(), DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

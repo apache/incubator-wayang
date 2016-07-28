@@ -1,6 +1,5 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.platform.ChannelInstance;

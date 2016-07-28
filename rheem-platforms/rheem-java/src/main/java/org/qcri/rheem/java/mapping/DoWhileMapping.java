@@ -4,6 +4,7 @@ import org.qcri.rheem.basic.operators.DoWhileOperator;
 import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaDoWhileOperator;
 import org.qcri.rheem.java.operators.JavaLoopOperator;
@@ -30,7 +31,7 @@ public class DoWhileMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "loop", new DoWhileOperator<>(null, null, (PredicateDescriptor) null, 1), false);
+                "loop", new DoWhileOperator<>(DataSetType.none(), DataSetType.none(), (PredicateDescriptor) null, 1), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
