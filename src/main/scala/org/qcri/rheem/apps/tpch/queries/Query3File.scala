@@ -34,7 +34,7 @@ import org.qcri.rheem.core.platform.Platform
   *   o_orderdate;
   * }}}
   */
-class Query3(platforms: Platform*) {
+class Query3File(platforms: Platform*) {
 
   def apply(configuration: Configuration,
             segment: String = "BUILDING",
@@ -112,8 +112,8 @@ class Query3(platforms: Platform*) {
         }
       )
       .withName("Aggregate revenue")
-      .withUdfJarsOf(classOf[Query3])
-      .collect(s"${this.getClass.getSimpleName}")
+      .withUdfJarsOf(classOf[Query3Sqlite])
+      .collect(s"TPC-H (${this.getClass.getSimpleName})")
   }
 
 }

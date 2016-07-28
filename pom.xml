@@ -95,6 +95,11 @@
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-sqlite3</artifactId>
+            <version>${rheem.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-api</artifactId>
             <version>${rheem.version}</version>
         </dependency>

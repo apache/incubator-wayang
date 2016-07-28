@@ -6,6 +6,7 @@ import org.qcri.rheem.graphchi.GraphChiPlatform
 import org.qcri.rheem.java.JavaPlatform
 import org.qcri.rheem.postgres.PostgresPlatform
 import org.qcri.rheem.spark.platform.SparkPlatform
+import org.qcri.rheem.sqlite3.Sqlite3Platform
 
 /**
   * Utility to parse parameters of the apps.
@@ -19,7 +20,8 @@ object Parameters {
     "java" -> (() => JavaPlatform.getInstance),
     "spark" -> (() => SparkPlatform.getInstance),
     "graphchi" -> (() => GraphChiPlatform.getInstance),
-    "postgres" -> (() => PostgresPlatform.getInstance)
+    "postgres" -> (() => PostgresPlatform.getInstance),
+    "sqlite3" -> (() => Sqlite3Platform.getInstance)
   )
 
   /**
