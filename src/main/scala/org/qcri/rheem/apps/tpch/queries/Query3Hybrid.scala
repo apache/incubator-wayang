@@ -2,6 +2,7 @@ package org.qcri.rheem.apps.tpch.queries
 
 import org.qcri.rheem.api._
 import org.qcri.rheem.apps.tpch.CsvUtils
+import org.qcri.rheem.apps.tpch.data.LineItem
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource
@@ -34,7 +35,7 @@ import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource
   *   o_orderdate;
   * }}}
   */
-class Query3Sqlite(platforms: Platform*) {
+class Query3Hybrid(platforms: Platform*) {
 
   def apply(configuration: Configuration,
             segment: String = "BUILDING",
@@ -42,6 +43,8 @@ class Query3Sqlite(platforms: Platform*) {
 
     val rheemCtx = new RheemContext(configuration)
     platforms.foreach(rheemCtx.register)
+
+    val lineitemFile = configuration.getStringProperty("rheem.apps.tpch.csv.lineitem")
 
     // Read, filter, and project the customer data.
     val _segment = segment
@@ -73,16 +76,15 @@ class Query3Sqlite(platforms: Platform*) {
 
     // Read, filter, and project the line item data.
     val lineItems = rheemCtx
-      .load(new Sqlite3TableSource("LINEITEM"))
-      .withName("Load LINEITEM table")
+      .readTextFile(lineitemFile)
+      .withName("Read line items")
+      .map(LineItem.parseCsv)
+      .withName("Parse line items")
 
-      .filter(t => CsvUtils.parseDate(t.getString(10)) > _date, sqlUdf = s"l_shipDate > date('$date')")
+      .filter(_.shipDate > _date)
       .withName("Filter line items")
 
-      .map(li => (
-        li.getLong(0), //li.orderKey,
-        li.getDouble(5) * (1 - li.getDouble(6)) //li.extendedPrice * (1 - li.discount)
-        )) // TODO: Cannot express projection across SQL/Java
+      .map(li => (li.orderKey, li.extendedPrice * (1 - li.discount)))
       .withName("Project line items")
 
     // Join and aggregate the different datasets.
@@ -110,7 +112,7 @@ class Query3Sqlite(platforms: Platform*) {
         }
       )
       .withName("Aggregate revenue")
-      .withUdfJarsOf(classOf[Query3Sqlite])
+      .withUdfJarsOf(classOf[Query3Hybrid])
       .collect(s"TPC-H (${this.getClass.getSimpleName})")
   }
 
