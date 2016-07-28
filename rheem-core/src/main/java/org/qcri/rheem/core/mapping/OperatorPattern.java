@@ -3,6 +3,10 @@ package org.qcri.rheem.core.mapping;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.types.DataSetType;
 
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.function.Predicate;
+
 /**
  * An operator pattern matches to a class of operator instances.
  */
@@ -27,6 +31,11 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
      * Whether broadcast {@link InputSlot}s are allowed.
      */
     private final boolean isAllowBroadcasts;
+
+    /**
+     * Additional predicates to test in order to establish a match.
+     */
+    private final Collection<Predicate<T>> additionalTests = new LinkedList<>();
 
     /**
      * Creates a new instance.
@@ -59,11 +68,12 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
      * @param operator the operator to match or {@code null}, which represents the absence of an operator to match
      * @return whether the operator matches
      */
+    @SuppressWarnings("unchecked")
     public OperatorMatch match(Operator operator) {
         if (operator == null) return null;
 
         // Only match by the class so far.
-        if (this.matchOperatorClass(operator) && this.matchSlots(operator)) {
+        if (this.matchOperatorClass(operator) && this.matchSlots(operator) && this.matchAdditionalTests((T) operator)) {
             this.checkSanity(operator);
             return new OperatorMatch(this, operator);
         }
@@ -126,6 +136,16 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
         return slotPattern.getType().isNone() || slotPattern.getType().equals(testSlot.getType());
     }
 
+    /**
+     * Test whether the {@link #additionalTests} are satisfied.
+     *
+     * @param operator that should be tested
+     * @return the tests are satisfied
+     */
+    private boolean matchAdditionalTests(T operator) {
+        return this.additionalTests.stream().allMatch(test -> test.test((T) operator));
+    }
+
     private void checkSanity(Operator operator) {
         if (this.getNumRegularInputs() != operator.getNumRegularInputs()) {
             throw new IllegalStateException(String.format("%s expected %d inputs, but matched %s with %d inputs.",
@@ -136,6 +156,16 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
         }
     }
 
+    /**
+     * Add an additional {@link Predicate} that must be satisfied in order to establish matches with {@link Operator}s.
+     *
+     * @param additionalTest the {@link Predicate}
+     * @return this instance
+     */
+    public OperatorPattern<T> withAdditionalTest(Predicate<T> additionalTest) {
+        this.additionalTests.add(additionalTest);
+        return this;
+    }
 
     public String getName() {
         return this.name;
