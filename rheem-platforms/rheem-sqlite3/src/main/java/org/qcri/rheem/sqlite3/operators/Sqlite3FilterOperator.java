@@ -3,12 +3,8 @@ package org.qcri.rheem.sqlite3.operators;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.jdbc.operators.JdbcFilterOperator;
 import org.qcri.rheem.sqlite3.Sqlite3Platform;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Implementation of the {@link FilterOperator} for the {@link Sqlite3Platform}.

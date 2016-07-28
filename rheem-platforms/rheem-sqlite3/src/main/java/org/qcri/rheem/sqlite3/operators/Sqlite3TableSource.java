@@ -5,7 +5,6 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.jdbc.operators.JdbcTableSource;
 import org.qcri.rheem.sqlite3.Sqlite3Platform;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,12 +28,6 @@ public class Sqlite3TableSource extends JdbcTableSource {
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         throw new UnsupportedOperationException("Input channels are not supported.");
-    }
-
-    @Override
-    public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        assert index == 0;
-        return Collections.singletonList(this.getPlatform().getSqlQueryChannelDescriptor());
     }
 
 }
