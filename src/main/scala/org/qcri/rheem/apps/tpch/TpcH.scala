@@ -1,6 +1,6 @@
 package org.qcri.rheem.apps.tpch
 
-import org.qcri.rheem.apps.tpch.queries.{Query3File, Query3Sqlite}
+import org.qcri.rheem.apps.tpch.queries.{Query3File, Query3Hybrid, Query3Sqlite}
 import org.qcri.rheem.apps.util.{Parameters, StdOut}
 import org.qcri.rheem.core.api.Configuration
 
@@ -30,6 +30,11 @@ object TpcH {
       }
       case "Query3Sqlite" => {
         val query = new Query3Sqlite(platforms: _*)
+        val result = query(configuration)
+        StdOut.printLimited(result, 10)
+      }
+      case "Query3Hybrid" => {
+        val query = new Query3Hybrid(platforms: _*)
         val result = query(configuration)
         StdOut.printLimited(result, 10)
       }
