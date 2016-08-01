@@ -110,8 +110,15 @@ public class DataSetType<T> {
         return (DataSetType<Iterable<Object>>) this;
     }
 
-    public boolean isCompatibleTo(DataSetType otherDataSetType) {
-        return this.dataUnitType.toBasicDataUnitType().equals(otherDataSetType.dataUnitType.toBasicDataUnitType());
+    /**
+     * Checks whether this instance is more general that the given one, i.e., it is a valid type of datasets that are
+     * also valid under the given type.
+     *
+     * @param that the other instance
+     * @return whether this instance is a super type of {@code that} instance
+     */
+    public boolean isSupertypeOf(DataSetType that) {
+        return this.dataUnitType.toBasicDataUnitType().isSupertypeOf(that.dataUnitType.toBasicDataUnitType());
     }
 
     /**

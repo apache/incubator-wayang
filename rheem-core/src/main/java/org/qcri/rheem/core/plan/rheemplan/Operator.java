@@ -147,7 +147,7 @@ public interface Operator {
     default <T> void connectTo(int thisOutputIndex, Operator that, int thatInputIndex) {
         final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputIndex);
         final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputIndex);
-        if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
+        if (!inputSlot.getType().isSupertypeOf(outputSlot.getType())) {
             throw new IllegalArgumentException(String.format("Cannot connect %s slot to %s slot.", outputSlot.getType(), inputSlot.getType()));
         }
         outputSlot.connectTo(inputSlot);
@@ -164,7 +164,7 @@ public interface Operator {
     default <T> void connectTo(String thisOutputName, Operator that, String thatInputName) {
         final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputName);
         final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputName);
-        if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
+        if (!inputSlot.getType().isSupertypeOf(outputSlot.getType())) {
             throw new IllegalArgumentException("Cannot connect slots: mismatching types");
         }
         outputSlot.connectTo(inputSlot);

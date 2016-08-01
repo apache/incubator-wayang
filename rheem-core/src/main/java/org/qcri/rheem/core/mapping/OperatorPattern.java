@@ -133,7 +133,7 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
      * @return whether the {@code testSlot} matches the {@code slotPattern}
      */
     private boolean matchSlot(Slot<?> slotPattern, Slot<?> testSlot) {
-        return slotPattern.getType().isNone() || slotPattern.getType().equals(testSlot.getType());
+        return slotPattern.getType().isNone() || slotPattern.getType().isSupertypeOf(testSlot.getType());
     }
 
     /**
