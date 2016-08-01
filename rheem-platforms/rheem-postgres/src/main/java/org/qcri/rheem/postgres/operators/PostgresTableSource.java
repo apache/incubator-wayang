@@ -11,8 +11,13 @@ import java.util.List;
  */
 public class PostgresTableSource extends JdbcTableSource implements PostgresExecutionOperator {
 
-    public PostgresTableSource(String tableName) {
-        super(tableName);
+    /**
+     * Creates a new instance.
+     *
+     * @see TableSource#TableSource(String, String...)
+     */
+    public PostgresTableSource(String tableName, String... columnNames) {
+        super(tableName, columnNames);
     }
 
     /**

@@ -3,6 +3,7 @@ package org.qcri.rheem.tests;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
+import org.qcri.rheem.basic.types.RecordType;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
@@ -679,7 +680,7 @@ public class RheemPlans {
     }
 
     public static RheemPlan sqlite3Scenario2(Collection<Record> collector) {
-        Sqlite3TableSource customers = new Sqlite3TableSource("customer");
+        Sqlite3TableSource customers = new Sqlite3TableSource("customer", "name", "age");
         FilterOperator<Record> filter = new FilterOperator<>(
                 new PredicateDescriptor<>(
                         (PredicateDescriptor.SerializablePredicate<Record>) record -> (Integer) record.getField(1) >= 18,
@@ -697,15 +698,18 @@ public class RheemPlans {
     }
 
     public static RheemPlan sqlite3Scenario3(Collection<Record> collector) {
-        Sqlite3TableSource customers = new Sqlite3TableSource("customer");
+        Sqlite3TableSource customers = new Sqlite3TableSource("customer", "name", "age");
         FilterOperator<Record> filter = new FilterOperator<>(
                 new PredicateDescriptor<>(
                         (PredicateDescriptor.SerializablePredicate<Record>) record -> (Integer) record.getField(1) >= 18,
                         Record.class
                 ).withSqlImplementation("age >= 18"),
-                DataSetType.createDefault(Record.class)
+                customers.getType()
         );
-        MapOperator<Record, Record> projection = MapOperator.createProjection(Record.class, Record.class, "name");
+        MapOperator<Record, Record> projection = MapOperator.createProjection(
+                (RecordType) filter.getOutputType().getDataUnitType(),
+                "name"
+        );
         LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
 
         customers.connectTo(0, filter, 0);

@@ -1,7 +1,7 @@
 package org.qcri.rheem.jdbc.test;
 
+import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.jdbc.operators.JdbcFilterOperator;
 import org.qcri.rheem.jdbc.operators.JdbcTableSource;
 
@@ -12,8 +12,13 @@ import java.util.List;
  */
 public class HsqldbTableSource extends JdbcTableSource {
 
-    public HsqldbTableSource(String tableName) {
-        super(tableName);
+    /**
+     * Creates a new instance.
+     *
+     * @see TableSource#TableSource(String, String...)
+     */
+    public HsqldbTableSource(String tableName, String... columnNames) {
+        super(tableName, columnNames);
     }
 
     @Override

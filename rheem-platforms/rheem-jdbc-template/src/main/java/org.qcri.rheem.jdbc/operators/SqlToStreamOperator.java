@@ -1,6 +1,7 @@
 package org.qcri.rheem.jdbc.operators;
 
 import org.qcri.rheem.basic.data.Record;
+import org.qcri.rheem.basic.types.RecordType;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -38,7 +39,17 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
      * @param jdbcPlatform from which the SQL data comes
      */
     public SqlToStreamOperator(JdbcPlatformTemplate jdbcPlatform) {
-        super(DataSetType.createDefault(Record.class), DataSetType.createDefault(Record.class), false, null);
+        this(jdbcPlatform, DataSetType.createDefault(Record.class));
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param jdbcPlatform from which the SQL data comes
+     * @param dataSetType  type of the {@link Record}s being transformed; see {@link RecordType}
+     */
+    public SqlToStreamOperator(JdbcPlatformTemplate jdbcPlatform, DataSetType<Record> dataSetType) {
+        super(dataSetType, dataSetType, false, null);
         this.jdbcPlatform = jdbcPlatform;
     }
 

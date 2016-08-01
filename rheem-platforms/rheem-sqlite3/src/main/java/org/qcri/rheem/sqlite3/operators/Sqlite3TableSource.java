@@ -12,8 +12,13 @@ import java.util.List;
  */
 public class Sqlite3TableSource extends JdbcTableSource {
 
-    public Sqlite3TableSource(String tableName) {
-        super(tableName);
+    /**
+     * Creates a new instance.
+     *
+     * @see TableSource#TableSource(String, String...)
+     */
+    public Sqlite3TableSource(String tableName, String... columnNames) {
+        super(tableName, columnNames);
     }
 
     public Sqlite3TableSource(Sqlite3TableSource that) {

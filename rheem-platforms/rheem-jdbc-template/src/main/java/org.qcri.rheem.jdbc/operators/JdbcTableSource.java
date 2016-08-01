@@ -1,13 +1,11 @@
 package org.qcri.rheem.jdbc.operators;
 
-import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
-import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
 import org.slf4j.LoggerFactory;
 
@@ -19,10 +17,15 @@ import java.util.Optional;
 /**
  * PostgreSQL implementation for the {@link TableSource}.
  */
-public abstract class JdbcTableSource extends TableSource<Record> implements JdbcExecutionOperator {
+public abstract class JdbcTableSource extends TableSource implements JdbcExecutionOperator {
 
-    public JdbcTableSource(String tableName) {
-        super(tableName, DataSetType.createDefault(Record.class));
+    /**
+     * Creates a new instance.
+     *
+     * @see TableSource#TableSource(String, String...)
+     */
+    public JdbcTableSource(String tableName, String... columnNames) {
+        super(tableName, columnNames);
     }
 
     /**
