@@ -304,6 +304,20 @@
                 </exclusions>
             </dependency>
 
+            <!-- SQLite 3 -->
+            <dependency>
+                <groupId>org.xerial</groupId>
+                <artifactId>sqlite-jdbc</artifactId>
+                <version>3.8.11.2</version>
+            </dependency>
+
+            <!-- PostgreSQL -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>9.4.1208</version>
+            </dependency>
+
             <!-- Miscellaneous -->
             <dependency>
                 <groupId>org.json</groupId>

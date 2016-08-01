@@ -331,7 +331,7 @@ public class PlanEnumerator {
 
             currentOperator = nextOperator;
         }
-        this.logger.trace("Determined branch : {}.", currentOperator);
+        this.logger.trace("Determined branch: {}.", currentOperator);
 
         return branch;
     }
@@ -361,6 +361,14 @@ public class PlanEnumerator {
                 operatorEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) operator, optimizationContext);
             }
 
+            if (operatorEnumeration.getPlanImplementations().isEmpty()) {
+                if (this.isTopLevel()) {
+                    throw new RheemException(String.format("No implementations enumerated for %s.", operator));
+                } else {
+                    this.logger.warn("No implementations enumerated for {}.", operator);
+                }
+            }
+
             if (branchEnumeration == null) {
                 branchEnumeration = operatorEnumeration;
             } else {
@@ -372,7 +380,11 @@ public class PlanEnumerator {
                         optimizationContext
                 );
                 if (branchEnumeration.getPlanImplementations().isEmpty()) {
-                    this.logger.warn("No implementations enumerated after concatenating {}.", output);
+                    if (this.isTopLevel()) {
+                        throw new RheemException(String.format("Could not concatenate %s in %s.", operator, branch));
+                    } else {
+                        this.logger.warn("Could not concatenate {} in {}.", operator, branch);
+                    }
                 }
                 this.prune(branchEnumeration);
             }
@@ -668,6 +680,7 @@ public class PlanEnumerator {
 
     /**
      * Checks whether this instance is enumerating a top-level plan and is not a recursively invoked enumeration.
+     *
      * @return
      */
     public boolean isTopLevel() {
@@ -832,10 +845,10 @@ public class PlanEnumerator {
         }
 
         public void updateBaseEnumeration(PlanEnumeration baseEnumeration) {
-            if (this.baseEnumeration == null || this.baseEnumeration.getScope().stream().anyMatch(baseEnumeration.getScope()::contains)) {
-                assert this.baseEnumeration == null || baseEnumeration.getScope().containsAll(this.baseEnumeration.getScope());
-                this.baseEnumeration = baseEnumeration;
-            }
+            // TODO: if (this.baseEnumeration == null || this.baseEnumeration.getScope().stream().anyMatch(baseEnumeration.getScope()::contains)) {
+            assert this.baseEnumeration == null || baseEnumeration.getScope().containsAll(this.baseEnumeration.getScope());
+            this.baseEnumeration = baseEnumeration;
+            // }
         }
 
         public Map<InputSlot<?>, PlanEnumeration> getAdjacentEnumerations() {

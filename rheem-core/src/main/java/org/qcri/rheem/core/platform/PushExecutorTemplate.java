@@ -2,6 +2,7 @@ package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -125,43 +126,80 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                                                         ChannelInstance[] outputChannelInstances,
                                                         long executionDuration) {
 
-        if (task.getOperator().isExecutedLazily()) {
+        // Mark and collect all unproduced ChannelInstances that have been produced.
+        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
+        if (task.getOperator().isExecutedEagerly()) {
+            if (outputChannelInstances.length == 0) {
+                executedOperatorContexts.add(producerOperatorContext);
+            } else {
+                for (ChannelInstance outputChannelInstance : outputChannelInstances) {
+                    this.markAndAddUnproducedChannelInstances(outputChannelInstance, executedOperatorContexts);
+                }
+            }
+        } else {
+            int inputIndex = 0;
+            for (ChannelInstance inputChannelInstance : inputChannelInstances) {
+                if (inputChannelInstance != null && task.getOperator().isEvaluatingEagerly(inputIndex)) {
+                    this.markAndAddUnproducedChannelInstances(inputChannelInstance, executedOperatorContexts);
+                }
+                inputIndex++;
+            }
+        }
+
+        // When no ExecutionOperators have been executed, we should not produce a PartialExecution.
+        if (executedOperatorContexts.isEmpty()) {
             return null;
         }
 
-        List<OptimizationContext.OperatorContext> operatorContexts = new ArrayList<>();
-        ChannelInstance[] channelInstances;
-        if (outputChannelInstances.length > 0) {
-            channelInstances = outputChannelInstances;
-        } else {
-            channelInstances = inputChannelInstances.toArray(new ChannelInstance[inputChannelInstances.size()]);
-            operatorContexts.add(producerOperatorContext);
-        }
-        for (ChannelInstance channelInstance : channelInstances) {
-            operatorContexts.addAll(
-                    channelInstance
-                            .getLazyChannelLineage()
-                            .traverseAndMark(
-                                    new LinkedList<>(),
-                                    (accu, node) -> RheemCollections.add(accu, node.getProducerOperatorContext())
-                            ));
-        }
-        Collections.reverse(operatorContexts);
-
-        final PartialExecution partialExecution = new PartialExecution(executionDuration, operatorContexts);
+        final PartialExecution partialExecution = new PartialExecution(executionDuration, executedOperatorContexts);
         if (this.logger.isInfoEnabled()) {
             this.logger.info(
                     "Executed {} operator(s) in {} (estimated {}): {}",
-                    operatorContexts.size(),
+                    executedOperatorContexts.size(),
                     Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
                     partialExecution.getOverallTimeEstimate(),
                     partialExecution.getOperatorContexts().stream()
-                            .map(opCtx -> String.format("%s->%s", opCtx.getOperator(), opCtx.getTimeEstimate()))
+                            .map(opCtx -> String.format(
+                                    "%s(time=%s, cards=%s)",
+                                    opCtx.getOperator(), opCtx.getTimeEstimate(), formatCardinalities(opCtx)
+                            ))
                             .collect(Collectors.toList())
             );
         }
 
         return partialExecution;
+    }
+
+    /**
+     * Marks all unproduced {@link ChannelInstance}s in a lineage and collects them in a {@link Collection}.
+     * @param channelInstance that should be marked and collected - including its predecessors
+     * @param collector collects the marked {@link ChannelInstance}s
+     */
+    private void markAndAddUnproducedChannelInstances(
+            ChannelInstance channelInstance,
+            Collection<OptimizationContext.OperatorContext> collector) {
+        channelInstance
+                .getLazyChannelLineage()
+                .traverseAndMark(
+                        collector,
+                        (accu, node) -> RheemCollections.add(accu, node.getProducerOperatorContext())
+                );
+    }
+
+    private static String formatCardinalities(OptimizationContext.OperatorContext opCtx) {
+        StringBuilder sb = new StringBuilder().append('[');
+        String separator = "";
+        final CardinalityEstimate[] inputCardinalities = opCtx.getInputCardinalities();
+        for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
+            if (inputCardinalities[inputIndex] != null) {
+                String slotName = opCtx.getOperator().getNumInputs() > inputIndex ?
+                        opCtx.getOperator().getInput(inputIndex).getName() :
+                        "(none)";
+                sb.append(separator).append(slotName).append(": ").append(inputCardinalities[inputIndex]);
+                separator = ", ";
+            }
+        }
+        return sb.append(']').toString();
     }
 
     /**

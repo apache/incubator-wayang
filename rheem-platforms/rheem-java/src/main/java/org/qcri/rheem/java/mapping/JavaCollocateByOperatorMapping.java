@@ -24,13 +24,13 @@ public class JavaCollocateByOperatorMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern(
-                "operator", new MaterializedGroupByOperator<>(null, DataSetType.none(), DataSetType.none()), false);
+        final OperatorPattern operatorPattern = new OperatorPattern<>(
+                "operator", new MaterializedGroupByOperator<>(null, DataSetType.none(), DataSetType.groupedNone()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<MaterializedGroupByOperator>(
+        return new ReplacementSubplanFactory.OfSingleOperators<MaterializedGroupByOperator<?, ?>>(
                 (matchedOperator, epoch) -> new JavaMaterializedGroupByOperator<>(matchedOperator).at(epoch)
         );
     }

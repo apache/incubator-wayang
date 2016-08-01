@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStageLoop;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
@@ -131,5 +132,9 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
     @Override
     public String toString() {
         return String.format("%s[%x]", this.getClass().getSimpleName(), this.id);
+    }
+
+    public Configuration getConfiguration() {
+        return this.crossPlatformExecutor.getConfiguration();
     }
 }

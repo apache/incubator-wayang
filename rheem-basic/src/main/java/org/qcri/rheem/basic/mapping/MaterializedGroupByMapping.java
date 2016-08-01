@@ -25,8 +25,9 @@ public class MaterializedGroupByMapping implements Mapping {
                 "groupBy",
                 new GroupByOperator<>(
                         null,
-                        DataSetType.createDefault(Void.class),
-                        DataSetType.createGrouped(Void.class)),
+                        DataSetType.none(),
+                        DataSetType.groupedNone()
+                ),
                 false);
         return SubplanPattern.createSingleton(groupByPattern);
     }

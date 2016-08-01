@@ -112,7 +112,7 @@ public class Job extends OneTimeExecutable {
     Job(RheemContext rheemContext, String name, RheemPlan rheemPlan, String... udfJars) {
         this.rheemContext = rheemContext;
         this.name = name == null ? "Rheem app" : name;
-        this.configuration = this.rheemContext.getConfiguration().fork();
+        this.configuration = this.rheemContext.getConfiguration().fork(this.name);
         this.rheemPlan = rheemPlan;
         for (String udfJar : udfJars) {
             this.addUdfJar(udfJar);
@@ -348,6 +348,9 @@ public class Job extends OneTimeExecutable {
             this.crossPlatformExecutor = new CrossPlatformExecutor(this, instrumentation);
         }
 
+        if (this.configuration.getOptionalBooleanProperty("rheem.core.debug.skipexecution").orElse(false)) {
+            return true;
+        }
         if (this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize")) {
             this.setUpBreakpoint(executionPlan, round);
         }
@@ -429,14 +432,6 @@ public class Job extends OneTimeExecutable {
         this.updateExecutionPlan(executionPlan);
         round.stopSubround("Update Execution Plan");
 
-        // Collect any instrumentation results for the future.
-        if (this.getConfiguration().getBooleanProperty("rheem.core.log.enabled")) {
-            round.startSubround("Store Cardinalities");
-            final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
-            cardinalityRepository.storeAll(this.crossPlatformExecutor, this.optimizationContext);
-            round.stopSubround("Store Cardinalities");
-        }
-
         round.stop(true, true);
     }
 
@@ -498,6 +493,14 @@ public class Job extends OneTimeExecutable {
     }
 
     private void logExecution() {
+        this.stopWatch.start("Log measurements");
+
+        // For the last time, update the cardinalities and store them.
+        this.reestimateCardinalities(this.crossPlatformExecutor);
+        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
+        cardinalityRepository.storeAll(this.crossPlatformExecutor, this.optimizationContext);
+
+
         // Log the execution time.
         final Collection<PartialExecution> partialExecutions = this.crossPlatformExecutor.getPartialExecutions();
         long effectiveExecutionMillis = partialExecutions.stream()
@@ -520,6 +523,8 @@ public class Job extends OneTimeExecutable {
         } catch (Exception e) {
             this.logger.error("Storing partial executions failed.", e);
         }
+
+        this.stopWatch.stop("Log measurements");
     }
 
     /**

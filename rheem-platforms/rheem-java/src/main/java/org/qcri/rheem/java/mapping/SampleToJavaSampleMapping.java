@@ -3,6 +3,7 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaRandomSampleOperator;
 import org.qcri.rheem.java.operators.JavaReservoirSampleOperator;
@@ -26,8 +27,12 @@ public class SampleToJavaSampleMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern(
-                "sample", new SampleOperator<>(0, null, null), false);
+        final OperatorPattern operatorPattern = new OperatorPattern<>(
+                "sample", new SampleOperator<>(0, DataSetType.none(), null), false
+        ).withAdditionalTest(op ->
+                op.getSampleMethod() == SampleOperator.Methods.RANDOM
+                        || op.getSampleMethod() == SampleOperator.Methods.RESERVOIR
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

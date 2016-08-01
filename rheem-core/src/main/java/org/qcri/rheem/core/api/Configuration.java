@@ -8,6 +8,7 @@ import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.*;
@@ -43,6 +44,7 @@ public class Configuration {
     private static final Configuration defaultConfiguration = new Configuration((Configuration) null);
 
     static {
+        defaultConfiguration.name = "default";
         Actions.doSafe(() -> bootstrapCardinalityEstimationProvider(defaultConfiguration));
         Actions.doSafe(() -> bootstrapSelectivityProviders(defaultConfiguration));
         Actions.doSafe(() -> bootstrapLoadAndTimeEstimatorProviders(defaultConfiguration));
@@ -52,6 +54,8 @@ public class Configuration {
     }
 
     private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
+
+    private String name = "(no name)";
 
     private final Configuration parent;
 
@@ -71,11 +75,11 @@ public class Configuration {
 
     private ExplicitCollectionProvider<Platform> platformProvider;
 
-    private ConstantProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
+    private ValueProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
 
     private CollectionProvider<Class<PlanEnumerationPruningStrategy>> pruningStrategyClassProvider;
 
-    private ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider;
+    private ValueProvider<InstrumentationStrategy> instrumentationStrategyProvider;
 
     private KeyValueProvider<String, String> properties;
 
@@ -98,6 +102,7 @@ public class Configuration {
      */
     public Configuration(String configurationFileUrl) {
         this(getDefaultConfiguration());
+        this.name = configurationFileUrl;
         if (configurationFileUrl != null) {
             this.load(configurationFileUrl);
         }
@@ -115,30 +120,29 @@ public class Configuration {
 
             // Providers for cardinality estimation.
             this.cardinalityEstimatorProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.cardinalityEstimatorProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.cardinalityEstimatorProvider, this);
             this.predicateSelectivityProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.predicateSelectivityProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.predicateSelectivityProvider, this);
             this.multimapSelectivityProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.multimapSelectivityProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.multimapSelectivityProvider, this);
 
             // Providers for cost functions.
             this.operatorLoadProfileEstimatorProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.operatorLoadProfileEstimatorProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.operatorLoadProfileEstimatorProvider, this);
             this.functionLoadProfileEstimatorProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider, this);
             this.loadProfileToTimeConverterProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider, this);
             this.platformStartUpTimeProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider, this);
 
             // Providers for plan enumeration.
             this.pruningStrategyClassProvider = new ExplicitCollectionProvider<>(this, this.parent.pruningStrategyClassProvider);
-            this.timeEstimateComparatorProvider = new ConstantProvider<>(this.parent.timeEstimateComparatorProvider);
-            this.instrumentationStrategyProvider = new ConstantProvider<>(
-                    this.parent.instrumentationStrategyProvider);
+            this.timeEstimateComparatorProvider = new ConstantValueProvider<>(this, this.parent.timeEstimateComparatorProvider);
+            this.instrumentationStrategyProvider = new ConstantValueProvider<>(this, this.parent.instrumentationStrategyProvider);
 
             // Properties.
-            this.properties = new MapBasedKeyValueProvider<>(this.parent.properties);
+            this.properties = new MapBasedKeyValueProvider<>(this.parent.properties, this);
 
         }
     }
@@ -146,14 +150,17 @@ public class Configuration {
     private static String findUserConfigurationFile() {
         final String systemProperty = System.getProperty("rheem.configuration");
         if (systemProperty != null) {
+            logger.info("Using configuration at {}.", systemProperty);
             return systemProperty;
         }
 
         final URL classPathResource = ReflectionUtils.getResourceURL("rheem.properties");
         if (classPathResource != null) {
+            logger.info("Using configuration at {}.", classPathResource);
             return classPathResource.toString();
         }
 
+        logger.info("Using blank configuration.");
         return null;
     }
 
@@ -308,12 +315,25 @@ public class Configuration {
             // Safety net: provide a fallback selectivity.
             KeyValueProvider<ExecutionOperator, LoadProfileEstimator> fallbackProvider =
                     new FunctionalKeyValueProvider<ExecutionOperator, LoadProfileEstimator>(
-                            operator -> new NestableLoadProfileEstimator(
-                                    DefaultLoadEstimator.createIOLinearEstimator(operator, 10000),
-                                    DefaultLoadEstimator.createIOLinearEstimator(operator, 1000),
-                                    DefaultLoadEstimator.createIOLinearEstimator(operator, 1000),
-                                    DefaultLoadEstimator.createIOLinearEstimator(operator, 1000)
-                            ),
+                            (operator, requestee) -> {
+                                final Configuration conf = requestee.getConfiguration();
+                                return new NestableLoadProfileEstimator(
+                                        IntervalLoadEstimator.createIOLinearEstimator(
+                                                null,
+                                                conf.getLongProperty("rheem.core.fallback.udf.cpu.lower"),
+                                                conf.getLongProperty("rheem.core.fallback.udf.cpu.upper"),
+                                                conf.getDoubleProperty("rheem.core.fallback.udf.cpu.confidence"),
+                                                CardinalityEstimate.EMPTY_ESTIMATE
+                                        ),
+                                        IntervalLoadEstimator.createIOLinearEstimator(
+                                                null,
+                                                conf.getLongProperty("rheem.core.fallback.udf.ram.lower"),
+                                                conf.getLongProperty("rheem.core.fallback.udf.ram.upper"),
+                                                conf.getDoubleProperty("rheem.core.fallback.udf.ram.confidence"),
+                                                CardinalityEstimate.EMPTY_ESTIMATE
+                                        )
+                                );
+                            },
                             configuration
                     ).withSlf4jWarning("Creating fallback load estimator for {}.");
 
@@ -334,10 +354,25 @@ public class Configuration {
             // Safety net: provide a fallback selectivity.
             KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> fallbackProvider =
                     new FunctionalKeyValueProvider<FunctionDescriptor, LoadProfileEstimator>(
-                            functionDescriptor -> new NestableLoadProfileEstimator(
-                                    DefaultLoadEstimator.createIOLinearEstimator(200),
-                                    DefaultLoadEstimator.createIOLinearEstimator(100)
-                            ),
+                            (operator, requestee) -> {
+                                final Configuration conf = requestee.getConfiguration();
+                                return new NestableLoadProfileEstimator(
+                                        IntervalLoadEstimator.createIOLinearEstimator(
+                                                null,
+                                                conf.getLongProperty("rheem.core.fallback.operator.cpu.lower"),
+                                                conf.getLongProperty("rheem.core.fallback.operator.cpu.upper"),
+                                                conf.getDoubleProperty("rheem.core.fallback.operator.cpu.confidence"),
+                                                CardinalityEstimate.EMPTY_ESTIMATE
+                                        ),
+                                        IntervalLoadEstimator.createIOLinearEstimator(
+                                                null,
+                                                conf.getLongProperty("rheem.core.fallback.operator.ram.lower"),
+                                                conf.getLongProperty("rheem.core.fallback.operator.ram.upper"),
+                                                conf.getDoubleProperty("rheem.core.fallback.operator.ram.confidence"),
+                                                CardinalityEstimate.EMPTY_ESTIMATE
+                                        )
+                                );
+                            },
                             configuration
                     ).withSlf4jWarning("Creating fallback load estimator for {}.");
 
@@ -390,10 +425,10 @@ public class Configuration {
             configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
         }
         {
-            ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantProvider<>(TimeEstimate.expectationValueComparator());
-            ConstantProvider<Comparator<TimeEstimate>> overrideProvider =
-                    new ConstantProvider<>(defaultProvider);
+            ValueProvider<Comparator<TimeEstimate>> defaultProvider =
+                    new ConstantValueProvider<>(TimeEstimate.expectationValueComparator(), configuration);
+            ValueProvider<Comparator<TimeEstimate>> overrideProvider =
+                    new ConstantValueProvider<>(defaultProvider);
             configuration.setTimeEstimateComparatorProvider(overrideProvider);
         }
     }
@@ -427,16 +462,29 @@ public class Configuration {
             configuration.setPruningStrategyClassProvider(overrideProvider);
         }
         {
-            ConstantProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantProvider<>(TimeEstimate.expectationValueComparator());
-            ConstantProvider<Comparator<TimeEstimate>> overrideProvider =
-                    new ConstantProvider<>(defaultProvider);
+            ValueProvider<Comparator<TimeEstimate>> defaultProvider =
+                    new ConstantValueProvider<>(TimeEstimate.expectationValueComparator(), configuration);
+            ValueProvider<Comparator<TimeEstimate>> overrideProvider =
+                    new ConstantValueProvider<>(defaultProvider);
             configuration.setTimeEstimateComparatorProvider(overrideProvider);
         }
         {
-            ConstantProvider<InstrumentationStrategy> defaultProvider =
-                    new ConstantProvider<>(new OutboundInstrumentationStrategy());
-            configuration.setInstrumentationStrategyProvider(defaultProvider);
+            ValueProvider<InstrumentationStrategy> defaultProvider =
+                    new ConstantValueProvider<>(new OutboundInstrumentationStrategy(), configuration);
+            ValueProvider<InstrumentationStrategy> configProvider =
+                    new FunctionalValueProvider<>(
+                            requestee -> {
+                                Optional<String> optInstrumentationtStrategyClass =
+                                        requestee.getConfiguration().getOptionalStringProperty("rheem.core.optimizer.instrumentation");
+                                if (!optInstrumentationtStrategyClass.isPresent()) {
+                                    return null;
+                                }
+                                return ReflectionUtils.instantiateDefault(optInstrumentationtStrategyClass.get());
+                            },
+                            defaultProvider
+                    );
+            ValueProvider<InstrumentationStrategy> overrideProvider = new ConstantValueProvider<>(configProvider);
+            configuration.setInstrumentationStrategyProvider(overrideProvider);
         }
     }
 
@@ -468,6 +516,17 @@ public class Configuration {
      */
     public Configuration fork() {
         return new Configuration(this);
+    }
+
+    /**
+     * Creates a child instance.
+     *
+     * @param name for the child instance
+     */
+    public Configuration fork(String name) {
+        final Configuration configuration = new Configuration(this);
+        configuration.name = name;
+        return configuration;
     }
 
 
@@ -522,11 +581,11 @@ public class Configuration {
         this.platformProvider = platformProvider;
     }
 
-    public ConstantProvider<Comparator<TimeEstimate>> getTimeEstimateComparatorProvider() {
+    public ValueProvider<Comparator<TimeEstimate>> getTimeEstimateComparatorProvider() {
         return this.timeEstimateComparatorProvider;
     }
 
-    public void setTimeEstimateComparatorProvider(ConstantProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider) {
+    public void setTimeEstimateComparatorProvider(ValueProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider) {
         this.timeEstimateComparatorProvider = timeEstimateComparatorProvider;
     }
 
@@ -539,11 +598,11 @@ public class Configuration {
         this.pruningStrategyClassProvider = pruningStrategyClassProvider;
     }
 
-    public ConstantProvider<InstrumentationStrategy> getInstrumentationStrategyProvider() {
+    public ValueProvider<InstrumentationStrategy> getInstrumentationStrategyProvider() {
         return this.instrumentationStrategyProvider;
     }
 
-    public void setInstrumentationStrategyProvider(ConstantProvider<InstrumentationStrategy> instrumentationStrategyProvider) {
+    public void setInstrumentationStrategyProvider(ValueProvider<InstrumentationStrategy> instrumentationStrategyProvider) {
         this.instrumentationStrategyProvider = instrumentationStrategyProvider;
     }
 
@@ -597,7 +656,11 @@ public class Configuration {
     }
 
     public long getLongProperty(String key) {
-        return this.getOptionalLongProperty(key).getAsLong();
+        final OptionalLong optionalLongProperty = this.getOptionalLongProperty(key);
+        if (!optionalLongProperty.isPresent()) {
+            throw new RheemException(String.format("No value for \"%s\".", key));
+        }
+        return optionalLongProperty.getAsLong();
     }
 
     public long getLongProperty(String key, long fallback) {
@@ -635,5 +698,10 @@ public class Configuration {
 
     public Configuration getParent() {
         return parent;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s]", this.getClass().getSimpleName(), this.name);
     }
 }

@@ -58,7 +58,7 @@ public class SparkSortOperator<Type>
         // TODO: Better sort function!
         final JavaPairRDD<Type, Boolean> keyedRdd = inputRdd.mapToPair(x -> new Tuple2<>(x, true));
         this.name(keyedRdd);
-        final JavaPairRDD<Type, Boolean> sortedKeyedRdd = keyedRdd.sortByKey();
+        final JavaPairRDD<Type, Boolean> sortedKeyedRdd = keyedRdd.sortByKey(true, sparkExecutor.getNumDefaultPartitions());
         this.name(sortedKeyedRdd);
         final JavaRDD<Type> outputRdd = sortedKeyedRdd.map(y -> y._1);
         this.name(outputRdd);

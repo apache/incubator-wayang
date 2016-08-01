@@ -1,8 +1,9 @@
 package org.qcri.rheem.postgres.mapping;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.FilterOperator;
-import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.postgres.PostgresPlatform;
 import org.qcri.rheem.postgres.operators.PostgresFilterOperator;
 
@@ -26,15 +27,15 @@ public class PostgresFilterMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern(
-                "filter", new FilterOperator<>((PredicateDescriptor) null, null), false
-        );
+        final OperatorPattern<FilterOperator<Record>> operatorPattern = new OperatorPattern<>(
+                "filter", new FilterOperator<>(null, DataSetType.createDefault(Record.class)), false
+        ).withAdditionalTest(op -> op.getPredicateDescriptor().getSqlImplementation() != null);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
         return new ReplacementSubplanFactory.OfSingleOperators<FilterOperator>(
-                (matchedOperator, epoch) -> new PostgresFilterOperator<>(matchedOperator).at(epoch)
+                (matchedOperator, epoch) -> new PostgresFilterOperator(matchedOperator).at(epoch)
         );
     }
 }

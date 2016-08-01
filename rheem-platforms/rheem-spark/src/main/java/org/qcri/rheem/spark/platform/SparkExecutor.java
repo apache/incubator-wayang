@@ -1,7 +1,6 @@
 package org.qcri.rheem.spark.platform;
 
 import org.apache.spark.api.java.JavaSparkContext;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExtendedFunction;
@@ -37,9 +36,20 @@ public class SparkExecutor extends PushExecutorTemplate {
      */
     public final JavaSparkContext sc;
 
+    /**
+     * Compiler to create Spark UDFs.
+     */
     public FunctionCompiler compiler = new FunctionCompiler();
 
+    /**
+     * Reference to the {@link SparkPlatform} that provides the {@link #sparkContextReference}.
+     */
     private final SparkPlatform platform;
+
+    /**
+     * The requested number of partitions. Should be incorporated by {@link SparkExecutionOperator}s.
+     */
+    private final int numDefaultPartitions;
 
     public SparkExecutor(SparkPlatform platform, Job job) {
         super(job);
@@ -47,6 +57,13 @@ public class SparkExecutor extends PushExecutorTemplate {
         this.sparkContextReference = this.platform.getSparkContext(job);
         this.sparkContextReference.noteObtainedReference();
         this.sc = this.sparkContextReference.get();
+        if (this.sc.getConf().contains("spark.executor.cores")) {
+            this.numDefaultPartitions = 2 * this.sc.getConf().getInt("spark.executor.cores", -1);
+        } else {
+            this.numDefaultPartitions =
+                    (int) (2 * this.getConfiguration().getLongProperty("rheem.spark.machines")
+                            * this.getConfiguration().getLongProperty("rheem.spark.cores-per-machine"));
+        }
     }
 
     @Override
@@ -114,8 +131,13 @@ public class SparkExecutor extends PushExecutorTemplate {
         return this.platform;
     }
 
-    public Configuration getConfiguration() {
-        return this.job.getConfiguration();
+    /**
+     * Hint to {@link SparkExecutionOperator}s on how many partitions they should request.
+     *
+     * @return the default number of partitions
+     */
+    public int getNumDefaultPartitions() {
+        return this.numDefaultPartitions;
     }
 
     @Override

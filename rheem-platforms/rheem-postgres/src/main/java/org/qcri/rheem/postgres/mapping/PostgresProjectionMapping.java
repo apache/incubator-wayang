@@ -1,9 +1,10 @@
 package org.qcri.rheem.postgres.mapping;
 
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
-import org.qcri.rheem.basic.operators.FilterOperator;
-import org.qcri.rheem.basic.operators.ProjectionOperator;
+import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.postgres.PostgresPlatform;
 import org.qcri.rheem.postgres.operators.PostgresProjectionOperator;
 
@@ -11,9 +12,8 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
-
-/**
- * Mapping from {@link ProjectionOperator} to {@link PostgresProjectionOperator}.
+ * /**
+ * Mapping from {@link MapOperator} to {@link PostgresProjectionOperator}.
  */
 @SuppressWarnings("unchecked")
 public class PostgresProjectionMapping implements Mapping {
@@ -28,15 +28,23 @@ public class PostgresProjectionMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern(
-                "projection", new ProjectionOperator<>((ProjectionDescriptor) null, null, null), false
-        );
+        OperatorPattern<MapOperator<Record, Record>> operatorPattern = new OperatorPattern<>(
+                "projection",
+                new MapOperator<>(
+                        null,
+                        DataSetType.createDefault(Record.class),
+                        DataSetType.createDefault(Record.class)
+                ),
+                false
+        )
+                .withAdditionalTest(op -> op.getFunctionDescriptor() instanceof ProjectionDescriptor)
+                .withAdditionalTest(op -> op.getNumInputs() == 1); // No broadcasts.
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<ProjectionOperator>(
-                (matchedOperator, epoch) -> new PostgresProjectionOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<MapOperator<Record, Record>>(
+                (matchedOperator, epoch) -> new PostgresProjectionOperator(matchedOperator).at(epoch)
         );
     }
 }

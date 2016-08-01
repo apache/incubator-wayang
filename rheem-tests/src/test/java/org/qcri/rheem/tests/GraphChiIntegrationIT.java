@@ -3,7 +3,6 @@ package org.qcri.rheem.tests;
 import org.junit.Test;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.core.profiling.FullInstrumentationStrategy;
 import org.qcri.rheem.graphchi.GraphChiPlatform;
 import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
@@ -20,7 +19,6 @@ public class GraphChiIntegrationIT {
         RheemContext rc = new RheemContext();
         rc.register(JavaPlatform.getInstance());
         rc.register(GraphChiPlatform.getInstance());
-        rc.getConfiguration().getInstrumentationStrategyProvider().set(new FullInstrumentationStrategy());
 
         rc.execute(rheemPlan);
 

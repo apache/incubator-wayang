@@ -7,7 +7,6 @@ import org.qcri.rheem.core.optimizer.cardinality.{CardinalityEstimator, FixedSiz
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot
 import org.qcri.rheem.graphchi.GraphChiPlatform
 import org.qcri.rheem.java.JavaPlatform
-import org.qcri.rheem.postgres.PostgresPlatform
 import org.qcri.rheem.spark.platform.SparkPlatform
 
 /**
@@ -34,7 +33,6 @@ class ScalaTest {
     rheem.register(JavaPlatform.getInstance)
     rheem.register(SparkPlatform.getInstance)
     rheem.register(GraphChiPlatform.getInstance)
-    rheem.register(PostgresPlatform.getInstance)
 
     // Wikipedia abstract of Rheem, California ;)
     val text = Seq(
@@ -46,7 +44,7 @@ class ScalaTest {
     )
 
 
-    val textDQ = rheem.readCollection(text).withName("Load input values")
+    val textDQ = rheem.loadCollection(text).withName("Load input values")
     overrideCardinalityEstimate(textDQ, 1000000000)
 
     val wordCounts = textDQ

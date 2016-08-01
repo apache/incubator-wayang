@@ -28,7 +28,7 @@ public class GlobalMaterializedGroupToJavaGlobalMaterializedGroupMapping impleme
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "group", new GlobalMaterializedGroupOperator<>(DataSetType.none(), DataSetType.none()), false);
+                "group", new GlobalMaterializedGroupOperator<>(DataSetType.none(), DataSetType.groupedNone()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 

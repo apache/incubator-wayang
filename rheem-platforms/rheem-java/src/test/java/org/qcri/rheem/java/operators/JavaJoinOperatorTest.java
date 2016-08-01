@@ -31,7 +31,7 @@ public class JavaJoinOperatorTest extends JavaExecutionOperatorTestBase {
         ).stream();
 
         // Build the Cartesian operator.
-        JavaJoinOperator<Tuple2, Tuple2, Integer> join =
+        JavaJoinOperator<Tuple2<Integer, String>, Tuple2<String, Integer>, Integer> join =
                 new JavaJoinOperator<>(
                         DataSetType.createDefaultUnchecked(Tuple2.class),
                         DataSetType.createDefaultUnchecked(Tuple2.class),
@@ -41,7 +41,7 @@ public class JavaJoinOperatorTest extends JavaExecutionOperatorTestBase {
                                 "field0"),
                         new ProjectionDescriptor<>(
                                 DataUnitType.createBasicUnchecked(Tuple2.class),
-                                DataUnitType.createBasic(String.class),
+                                DataUnitType.createBasic(Integer.class),
                                 "field1"));
 
         // Execute.

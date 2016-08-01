@@ -4,6 +4,7 @@ import org.qcri.rheem.basic.operators.DoWhileOperator;
 import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkDoWhileOperator;
 import org.qcri.rheem.spark.operators.SparkLoopOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
@@ -28,7 +29,7 @@ public class DoWhileMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "loop", new DoWhileOperator<>(null, null, (PredicateDescriptor) null, 1), false
+                "loop", new DoWhileOperator<>(DataSetType.none(), DataSetType.none(), (PredicateDescriptor) null, 1), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }

@@ -22,9 +22,9 @@ public class DefaultLoadEstimator extends LoadEstimator {
 
     public DefaultLoadEstimator(int numInputs,
                                 int numOutputs,
-                                double correctnessProbablity,
+                                double correctnessProbability,
                                 ToLongBiFunction<long[], long[]> singlePointFunction) {
-        this(numInputs, numOutputs, correctnessProbablity, null, singlePointFunction);
+        this(numInputs, numOutputs, correctnessProbability, null, singlePointFunction);
     }
 
     public DefaultLoadEstimator(int numInputs,
@@ -43,36 +43,52 @@ public class DefaultLoadEstimator extends LoadEstimator {
     /**
      * Utility to create new instances: Rounds the results of a given estimation function.
      */
+    @SuppressWarnings("unused")
     public static ToLongBiFunction<long[], long[]> rounded(ToDoubleBiFunction<long[], long[]> f) {
         return (inputCards, outputCards) -> Math.round(f.applyAsDouble(inputCards, outputCards));
     }
 
     /**
      * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element.
+     *
+     * @param loadPerCardinalityUnit expected load units per input and output data quantum
+     * @param confidence             confidence in the new instance
      */
-    public static LoadEstimator createIOLinearEstimator(long loadPerCardinalityUnit) {
-        return createIOLinearEstimator(null, loadPerCardinalityUnit);
+    public static LoadEstimator createIOLinearEstimator(long loadPerCardinalityUnit, double confidence) {
+        return createIOLinearEstimator(null, loadPerCardinalityUnit, confidence);
     }
 
     /**
-     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element. Missing
+     * Create a {@link LoadEstimator} that accounts a given load for each input and output element. Missing
      * {@link CardinalityEstimate}s are interpreted as a cardinality of {@code 0}.
-     */
-    public static LoadEstimator createIOLinearEstimator(ExecutionOperator operator, long loadPerCardinalityUnit) {
-        return createIOLinearEstimator(operator, loadPerCardinalityUnit, CardinalityEstimate.EMPTY_ESTIMATE);
-    }
-
-    /**
-     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element. Missing
-     * {@link CardinalityEstimate}s are interpreted as a cardinality of {@code 0}.
+     *
+     * @param operator               an {@link ExecutionOperator} being addressed by the new instance
+     * @param loadPerCardinalityUnit expected load units per input and output data quantum
+     * @param confidence             confidence in the new instance
      */
     public static LoadEstimator createIOLinearEstimator(ExecutionOperator operator,
                                                         long loadPerCardinalityUnit,
+                                                        double confidence) {
+        return createIOLinearEstimator(operator, loadPerCardinalityUnit, confidence, CardinalityEstimate.EMPTY_ESTIMATE);
+    }
+
+    /**
+     * Create a {@link LoadEstimator} that accounts a given load for each input and output element. Missing
+     * {@link CardinalityEstimate}s are interpreted as a cardinality of {@code 0}.
+     *
+     * @param operator                   an {@link ExecutionOperator} being addressed by the new instance
+     * @param loadPerCardinalityUnit     expected load units per input and output data quantum
+     * @param confidence                 confidence in the new instance
+     * @param nullCardinalityReplacement replacement for {@code null}s as {@link CardinalityEstimate}s
+     */
+    public static LoadEstimator createIOLinearEstimator(ExecutionOperator operator,
+                                                        long loadPerCardinalityUnit,
+                                                        double confidence,
                                                         CardinalityEstimate nullCardinalityReplacement) {
         return new DefaultLoadEstimator(
                 operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumInputs(),
                 operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumOutputs(),
-                0.01,
+                confidence,
                 nullCardinalityReplacement,
                 (inputCards, outputCards) ->
                         loadPerCardinalityUnit * LongStream.concat(

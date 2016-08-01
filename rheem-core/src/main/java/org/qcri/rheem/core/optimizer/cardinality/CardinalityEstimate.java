@@ -3,6 +3,7 @@ package org.qcri.rheem.core.optimizer.cardinality;
 import org.json.JSONObject;
 import org.qcri.rheem.core.optimizer.ProbabilisticIntervalEstimate;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.JsonSerializable;
 
 /**
@@ -78,5 +79,15 @@ public class CardinalityEstimate extends ProbabilisticIntervalEstimate implement
         json.put("upperBound", this.getUpperEstimate());
         json.put("confidence", this.getCorrectnessProbability());
         return json;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "(%,d..%,d, %s)",
+                this.getLowerEstimate(),
+                this.getUpperEstimate(),
+                Formats.formatPercentage(this.getCorrectnessProbability())
+        );
     }
 }

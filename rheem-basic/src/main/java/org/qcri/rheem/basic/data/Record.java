@@ -1,8 +1,6 @@
 package org.qcri.rheem.basic.data;
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -13,44 +11,8 @@ public class Record implements Serializable {
 
     private Object[] values;
 
-    private RecordSchema schema;
-
-    public RecordSchema getSchema() {
-        return schema;
-    }
-
     public Record(Object... values) {
-        String[] names = new String[values.length];
-        Class[] types = new Class[values.length];
         this.values = values;
-        for (Integer i=0; i <values.length; i++){
-            names[i] = String.format("field%s", i);
-            types[i] = values[i].getClass();
-        }
-        this.schema = new RecordSchema(names, types);
-
-    }
-
-    public Record(String[] names, Object[] values) {
-        assert names.length == values.length;
-        this.values = values;
-        Class [] types = new Class[values.length];
-        for (Integer i=0; i <values.length; i++){
-            types[i] = values[i].getClass();
-        }
-        this.schema = new RecordSchema(names, types);
-
-    }
-
-    public Record(RecordSchema schema, Object[] values) {
-        this.values = values;
-        this.schema = schema;
-    }
-
-    public Record copy() {
-        Object[] values_c = new Object[values.length];
-        System.arraycopy(values, 0, values_c, 0, values.length);
-        return new Record(schema.copy(), values_c);
     }
 
     @Override
@@ -68,27 +30,68 @@ public class Record implements Serializable {
 
     @Override
     public String toString() {
-        return Arrays.toString(values);
+        return "Record" + Arrays.toString(this.values);
     }
 
-    public Object getField(Integer index) {
-        return values[index];
+    public Object getField(int index) {
+        return this.values[index];
     }
 
-    public Object getField(String name) {
-        return values[schema.getFieldIndex(name)];
+    /**
+     * Retrieve a field as a {@code double}. It must be castable as such.
+     *
+     * @param index the index of the field
+     * @return the {@code double} representation of the field
+     */
+    public double getDouble(int index) {
+        Object field = this.values[index];
+        if (field instanceof Double) return (Double) field;
+        else if (field instanceof Integer) return (Integer) field;
+        else if (field instanceof Float) return (Float) field;
+        else if (field instanceof Long) return (Long) field;
+        else if (field instanceof Short) return (Short) field;
+        else if (field instanceof Byte) return (Byte) field;
+        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", field));
     }
 
-    public String getFieldName(Integer index) {
-        return schema.getFieldName(index);
+    /**
+     * Retrieve a field as a {@code long}. It must be castable as such.
+     *
+     * @param index the index of the field
+     * @return the {@code long} representation of the field
+     */
+    public long getLong(int index) {
+        Object field = this.values[index];
+        if (field instanceof Integer) return (Integer) field;
+        else if (field instanceof Long) return (Long) field;
+        else if (field instanceof Short) return (Short) field;
+        else if (field instanceof Byte) return (Byte) field;
+        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", field));
     }
 
-    public Class getFieldType(Integer index) {
-        return schema.getFieldType(index);
+    /**
+     * Retrieve a field as a {@code int}. It must be castable as such.
+     *
+     * @param index the index of the field
+     * @return the {@code int} representation of the field
+     */
+    public int getInt(int index) {
+        Object field = this.values[index];
+        if (field instanceof Integer) return (Integer) field;
+        else if (field instanceof Short) return (Short) field;
+        else if (field instanceof Byte) return (Byte) field;
+        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", field));
     }
 
-    public Class getFieldType(String name) {
-        return schema.getFieldType(name);
+    /**
+     * Retrieve a field as a {@link String}.
+     *
+     * @param index the index of the field
+     * @return the field as a {@link String} (obtained via {@link Object#toString()}) or {@code null} if the field is {@code null}
+     */
+    public String getString(int index) {
+        Object field = this.values[index];
+        return field == null ? null : field.toString();
     }
 
 }

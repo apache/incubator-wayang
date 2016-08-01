@@ -38,7 +38,7 @@ public class SparkJoinOperatorTest extends SparkOperatorTestBase {
                                 "field0"),
                         new ProjectionDescriptor<>(
                                 DataUnitType.createBasicUnchecked(Tuple2.class),
-                                DataUnitType.createBasic(String.class),
+                                DataUnitType.createBasic(Integer.class),
                                 "field1"));
 
         // Set up the ChannelInstances.

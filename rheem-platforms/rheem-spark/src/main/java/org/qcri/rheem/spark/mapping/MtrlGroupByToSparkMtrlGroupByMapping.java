@@ -25,7 +25,7 @@ public class MtrlGroupByToSparkMtrlGroupByMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "operator", new MaterializedGroupByOperator<>(null, DataSetType.none(), DataSetType.none()), false
+                "operator", new MaterializedGroupByOperator<>(null, DataSetType.none(), DataSetType.groupedNone()), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }

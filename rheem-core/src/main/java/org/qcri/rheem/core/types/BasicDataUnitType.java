@@ -24,6 +24,16 @@ public class BasicDataUnitType<T> extends DataUnitType<T> {
         return this;
     }
 
+    /**
+     * In generic code, we do not have the type parameter values of operators, functions etc. This method avoids casting issues.
+     *
+     * @return this instance with type parameters set to {@code T}
+     */
+    @SuppressWarnings("unchecked")
+    public <T> DataUnitType<T> unchecked() {
+        return (DataUnitType<T>) this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

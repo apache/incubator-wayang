@@ -53,7 +53,7 @@ public class SparkDistinctOperator<Type>
         final RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
         final JavaRDD<Type> inputRdd = input.provideRdd();
-        final JavaRDD<Type> outputRdd = inputRdd.distinct();
+        final JavaRDD<Type> outputRdd = inputRdd.distinct(sparkExecutor.getNumDefaultPartitions());
         this.name(outputRdd);
         output.accept(outputRdd, sparkExecutor);
     }

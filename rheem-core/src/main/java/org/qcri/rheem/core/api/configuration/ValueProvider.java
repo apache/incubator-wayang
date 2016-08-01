@@ -10,7 +10,7 @@ import java.util.Optional;
 /**
  * Used by {@link Configuration}s to provide some value.
  */
-public class ConstantProvider<Value> {
+public abstract class ValueProvider<Value> {
 
     public static class NotAvailableException extends RheemException {
         public NotAvailableException(String message) {
@@ -20,37 +20,30 @@ public class ConstantProvider<Value> {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    protected ConstantProvider<Value> parent;
+    private final Configuration configuration;
 
-    private Value value;
+    protected final ValueProvider<Value> parent;
 
     private String warningSlf4j;
 
-    public ConstantProvider(ConstantProvider<Value> parent) {
-        this(parent, null);
-    }
-
-    public ConstantProvider(Value value) {
-        this(null, value);
-    }
-
-    public ConstantProvider(ConstantProvider<Value> parent, Value value) {
+    protected ValueProvider(Configuration configuration, ValueProvider<Value> parent) {
         this.parent = parent;
-        this.value = value;
+        this.configuration = configuration;
     }
 
     public Value provide() {
         return this.provide(this);
     }
 
-    protected Value provide(ConstantProvider<Value> requestee) {
+    protected Value provide(ValueProvider<Value> requestee) {
         if (this.warningSlf4j != null) {
             this.logger.warn(this.warningSlf4j);
         }
 
         // Look for a custom answer.
-        if (this.value != null) {
-            return this.value;
+        Value value = this.tryProvide(requestee);
+        if (value != null) {
+            return value;
         }
 
         // If present, delegate request to parent.
@@ -61,6 +54,14 @@ public class ConstantProvider<Value> {
         throw new NotAvailableException(String.format("Could not provide value."));
     }
 
+    /**
+     * Try to provide a value.
+     *
+     * @param requestee the original instance asked to provide a value
+     * @return the requested value or {@code null} if the request could not be served
+     */
+    protected abstract Value tryProvide(ValueProvider<Value> requestee);
+
     public Optional<Value> optionallyProvide() {
         try {
             return Optional.of(this.provide());
@@ -69,18 +70,12 @@ public class ConstantProvider<Value> {
         }
     }
 
-
-
-    public void setParent(ConstantProvider<Value> parent) {
-        this.parent = parent;
-    }
-
-    public ConstantProvider<Value> withSlf4jWarning(String message) {
+    public ValueProvider<Value> withSlf4jWarning(String message) {
         this.warningSlf4j = message;
         return this;
     }
 
-    public void set(Value value) {
-        this.value = value;
+    public Configuration getConfiguration() {
+        return this.configuration;
     }
 }

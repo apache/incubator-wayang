@@ -15,8 +15,8 @@ public abstract class UnaryToUnaryOperator<InputType, OutputType> extends Operat
                                    boolean isSupportingBroadcastInputs,
                                    OperatorContainer container) {
         super(1, 1, isSupportingBroadcastInputs, container);
-        this.inputSlots[0] = new InputSlot<>("input", this, inputType);
-        this.outputSlots[0] = new OutputSlot<>("output", this, outputType);
+        this.inputSlots[0] = new InputSlot<>("in", this, inputType);
+        this.outputSlots[0] = new OutputSlot<>("out", this, outputType);
     }
 
     /**
@@ -27,8 +27,8 @@ public abstract class UnaryToUnaryOperator<InputType, OutputType> extends Operat
      */
     protected UnaryToUnaryOperator(UnaryToUnaryOperator<InputType, OutputType> that) {
         super(that);
-        this.inputSlots[0] = new InputSlot<>("input", this, that.getInputType());
-        this.outputSlots[0] = new OutputSlot<>("output", this, that.getOutputType());
+        this.inputSlots[0] = new InputSlot<>("in", this, that.getInputType());
+        this.outputSlots[0] = new OutputSlot<>("out", this, that.getOutputType());
     }
 
     public InputSlot<InputType> getInput() {

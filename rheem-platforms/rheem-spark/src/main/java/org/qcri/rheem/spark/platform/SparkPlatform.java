@@ -186,11 +186,13 @@ public class SparkPlatform extends Platform {
         int numCores = (int) (numMachines * configuration.getLongProperty("rheem.spark.cores-per-machine"));
         double hdfsMsPerMb = configuration.getDoubleProperty("rheem.spark.hdfs.ms-per-mb");
         double networkMsPerMb = configuration.getDoubleProperty("rheem.spark.network.ms-per-mb");
-        return LoadProfileToTimeConverter.createDefault(
+        double stretch = configuration.getDoubleProperty("rheem.spark.stretch");
+        return LoadProfileToTimeConverter.createTopLevelStretching(
                 LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000d)),
                 LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000d),
                 LoadToTimeConverter.createLinearCoverter(networkMsPerMb / 1000000d),
-                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate),
+                stretch
         );
     }
 

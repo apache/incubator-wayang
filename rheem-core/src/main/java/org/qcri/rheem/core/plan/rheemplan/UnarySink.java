@@ -10,7 +10,7 @@ public abstract class UnarySink<T> extends OperatorBase implements ElementaryOpe
     /**
      * Creates a new instance that does not support broadcast {@link InputSlot}s.
      */
-    public UnarySink(DataSetType type, OperatorContainer container) {
+    public UnarySink(DataSetType<T> type, OperatorContainer container) {
         this(type, false, container);
     }
 
@@ -19,7 +19,7 @@ public abstract class UnarySink<T> extends OperatorBase implements ElementaryOpe
      */
     public UnarySink(DataSetType<T> type, boolean isSupportingBroadcastInputs, OperatorContainer container) {
         super(1, 0, isSupportingBroadcastInputs, container);
-        this.inputSlots[0] = new InputSlot<>("input", this, type);
+        this.inputSlots[0] = new InputSlot<>("in", this, type);
     }
 
     /**
@@ -30,7 +30,7 @@ public abstract class UnarySink<T> extends OperatorBase implements ElementaryOpe
      */
     public UnarySink(UnarySink<T> that) {
         super(that);
-        this.inputSlots[0] = new InputSlot<>("input", this, that.getType());
+        this.inputSlots[0] = new InputSlot<>("in", this, that.getType());
     }
 
     @SuppressWarnings("unchecked")

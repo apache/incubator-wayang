@@ -21,6 +21,11 @@ public class DefaultChannelConversion extends ChannelConversion {
 
     private final BiFunction<Channel, Configuration, ExecutionOperator> executionOperatorFactory;
 
+    /**
+     * For debug purposes.
+     */
+    private final String name;
+
     public DefaultChannelConversion(
             ChannelDescriptor sourceChannelDescriptor,
             ChannelDescriptor targetChannelDescriptor,
@@ -28,16 +33,32 @@ public class DefaultChannelConversion extends ChannelConversion {
         this(
                 sourceChannelDescriptor,
                 targetChannelDescriptor,
-                (sourceChannel, configuration) -> executionOperatorFactory.get()
+                executionOperatorFactory,
+                "via " + executionOperatorFactory.get().getClass().getSimpleName()
         );
     }
 
     public DefaultChannelConversion(
             ChannelDescriptor sourceChannelDescriptor,
             ChannelDescriptor targetChannelDescriptor,
-            BiFunction<Channel, Configuration, ExecutionOperator> executionOperatorFactory) {
+            Supplier<ExecutionOperator> executionOperatorFactory,
+            String name) {
+        this(
+                sourceChannelDescriptor,
+                targetChannelDescriptor,
+                (sourceChannel, configuration) -> executionOperatorFactory.get(),
+                name
+        );
+    }
+
+    public DefaultChannelConversion(
+            ChannelDescriptor sourceChannelDescriptor,
+            ChannelDescriptor targetChannelDescriptor,
+            BiFunction<Channel, Configuration, ExecutionOperator> executionOperatorFactory,
+            String name) {
         super(sourceChannelDescriptor, targetChannelDescriptor);
         this.executionOperatorFactory = executionOperatorFactory;
+        this.name = name;
     }
 
     @Override
@@ -137,5 +158,10 @@ public class DefaultChannelConversion extends ChannelConversion {
         for (int outputIndex = 0; outputIndex < numOutputs; outputIndex++) {
             operatorContext.setOutputCardinality(outputIndex, cardinality);
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s]", this.getClass().getSimpleName(), this.name);
     }
 }

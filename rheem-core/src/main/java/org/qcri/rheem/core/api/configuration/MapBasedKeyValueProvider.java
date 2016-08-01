@@ -22,6 +22,12 @@ public class MapBasedKeyValueProvider<Key, Value> extends KeyValueProvider<Key, 
         this(parent, true);
     }
 
+    /**
+     * Creates a new caching instance.
+     */
+    public MapBasedKeyValueProvider(KeyValueProvider<Key, Value> parent, Configuration configuration) {
+        this(parent, configuration, true);
+    }
 
     /**
      * Creates a new instance.
@@ -33,6 +39,7 @@ public class MapBasedKeyValueProvider<Key, Value> extends KeyValueProvider<Key, 
         this.isCaching = isCaching;
     }
 
+
     /**
      * Creates a new instance.
      *
@@ -40,6 +47,14 @@ public class MapBasedKeyValueProvider<Key, Value> extends KeyValueProvider<Key, 
      */
     public MapBasedKeyValueProvider(Configuration configuration, boolean isCaching) {
         super(null, configuration);
+        this.isCaching = isCaching;
+    }
+
+    /**
+     * Creates a new instance.
+     */
+    public MapBasedKeyValueProvider(KeyValueProvider<Key, Value> parent, Configuration configuration, boolean isCaching) {
+        super(parent, configuration);
         this.isCaching = isCaching;
     }
 
