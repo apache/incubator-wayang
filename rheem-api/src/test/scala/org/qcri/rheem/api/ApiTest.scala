@@ -4,7 +4,6 @@ import java.io.File
 import java.sql.{Connection, Statement}
 
 import org.junit.{Assert, Test}
-import org.qcri.rheem.basic.data.Record
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
 import org.qcri.rheem.core.function.{ExecutionContext, TransformationDescriptor}
@@ -353,7 +352,7 @@ class ApiTest {
   }
 
   @Test
-  def testSql() = {
+  def testSqlOnJava() = {
     // Initialize some test data.
     val configuration = new Configuration
     val sqlite3dbFile = File.createTempFile("rheem-sqlite3", "db")
@@ -381,9 +380,49 @@ class ApiTest {
     rheem.register(Sqlite3Platform.getInstance)
 
     val result = rheem
-      .load(new Sqlite3TableSource("customer"))
+      .readTable(new Sqlite3TableSource("customer", "name", "age"))
+      .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18").withTargetPlatforms(JavaPlatform.getInstance)
+      .projectRecords(Seq("name"))
+      .map(_.getField(0).asInstanceOf[String])
+      .collect("SQLite3 with Scala API")
+      .toSet
+
+    val expectedValues = Set("John", "Evelyn")
+    Assert.assertEquals(expectedValues, result)
+  }
+
+  @Test
+  def testSqlOnSqlite3() = {
+    // Initialize some test data.
+    val configuration = new Configuration
+    val sqlite3dbFile = File.createTempFile("rheem-sqlite3", "db")
+    sqlite3dbFile.deleteOnExit()
+    configuration.setProperty("rheem.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath)
+
+    try {
+      val connection: Connection = Sqlite3Platform.getInstance.createDatabaseDescriptor(configuration).createJdbcConnection
+      try {
+        val statement: Statement = connection.createStatement
+        statement.addBatch("DROP TABLE IF EXISTS customer;")
+        statement.addBatch("CREATE TABLE customer (name TEXT, age INT);")
+        statement.addBatch("INSERT INTO customer VALUES ('John', 20)")
+        statement.addBatch("INSERT INTO customer VALUES ('Timmy', 16)")
+        statement.addBatch("INSERT INTO customer VALUES ('Evelyn', 35)")
+        statement.executeBatch
+      } finally {
+        if (connection != null) connection.close()
+      }
+    }
+
+    // Set up RheemContext.
+    val rheem = new RheemContext(configuration)
+    rheem.register(JavaPlatform.getInstance)
+    rheem.register(Sqlite3Platform.getInstance)
+
+    val result = rheem
+      .readTable(new Sqlite3TableSource("customer", "name", "age"))
       .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18")
-      .projectByName[Record](Seq("name"))
+      .projectRecords(Seq("name")).withTargetPlatforms(Sqlite3Platform.getInstance)
       .map(_.getField(0).asInstanceOf[String])
       .collect("SQLite3 with Scala API")
       .toSet

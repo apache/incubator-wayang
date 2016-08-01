@@ -3,6 +3,7 @@ package org.qcri.rheem
 import _root_.java.lang.{Class => JavaClass, Iterable => JavaIterable}
 import _root_.java.util.function.{Consumer, ToLongBiFunction, ToLongFunction}
 
+import org.qcri.rheem.basic.data.Record
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
 import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
@@ -108,5 +109,7 @@ package object api {
 
   implicit private[api] def wrap[Out: ClassTag](op: ElementaryOperator)(implicit planBuilder: PlanBuilder): DataQuanta[Out] =
     new DataQuanta[Out](op)
+
+  implicit def elevateRecordDataQuanta(dataQuanta: DataQuanta[Record]) = new RecordDataQuanta(dataQuanta)
 
 }

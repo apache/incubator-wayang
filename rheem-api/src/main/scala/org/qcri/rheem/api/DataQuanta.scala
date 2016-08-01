@@ -27,7 +27,7 @@ import scala.reflect._
   * @param ev$1        the data type of the elements in this instance
   * @param planBuilder keeps track of the [[RheemPlan]] being build
   */
-class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: Int = 0)(implicit planBuilder: PlanBuilder) {
+class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: Int = 0)(implicit val planBuilder: PlanBuilder) {
 
   Validate.isTrue(operator.getNumOutputs > outputIndex)
 
@@ -36,7 +36,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @return the said [[OutputSlot]]
     */
-  implicit def output = operator.getOutput(outputIndex)
+  implicit def output = operator.getOutput(outputIndex).asInstanceOf[OutputSlot[Out]]
 
   /**
     * Feed this instance into a [[MapOperator]].
@@ -77,7 +77,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the [[MapOperator]]'s output
     */
-  def projectByName[NewOut: ClassTag](fieldNames: Seq[String],
+  def project[NewOut: ClassTag](fieldNames: Seq[String],
                                       udfCpuLoad: LoadEstimator = null,
                                       udfRamLoad: LoadEstimator = null): DataQuanta[NewOut] = {
     val projectionOperator = new MapOperator(
@@ -86,25 +86,6 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     this.connectTo(projectionOperator, 0)
     projectionOperator
   }
-
-  /**
-    * Feed this instance into a [[MapOperator]] with a [[ProjectionDescriptor]].
-    *
-    * @param indices    indices of the fields to be projected
-    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
-    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
-    * @return a new instance representing the [[MapOperator]]'s output
-    */
-  def projectByIndex[NewOut: ClassTag](indices: Seq[Int],
-                                       udfCpuLoad: LoadEstimator = null,
-                                       udfRamLoad: LoadEstimator = null): DataQuanta[NewOut] = {
-    val projectionOperator = new MapOperator(
-      new ProjectionDescriptor(basicDataUnitType[Out], basicDataUnitType[NewOut], indices: _*)
-    )
-    this.connectTo(projectionOperator, 0)
-    projectionOperator
-  }
-
 
   /**
     * Connects the [[operator]] to a further [[Operator]].
@@ -149,7 +130,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                  udfCpuLoad: LoadEstimator = null,
                  udfRamLoad: LoadEstimator = null): DataQuanta[Out] = {
     val filterOperator = new FilterOperator(new PredicateDescriptor(
-      udf, basicDataUnitType[Out], selectivity, udfCpuLoad, udfRamLoad
+      udf, this.output.getType.getDataUnitType.toBasicDataUnitType, selectivity, udfCpuLoad, udfRamLoad
     ).withSqlImplementation(sqlUdf))
     this.connectTo(filterOperator, 0)
     filterOperator

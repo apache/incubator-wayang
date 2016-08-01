@@ -67,7 +67,7 @@ public class JdbcExecutor extends ExecutorTemplate {
         ExecutionTask startTask = (ExecutionTask) startTasks.toArray()[0];
         assert termTasks.size() == 1 : "Invalid JDBC stage: multiple terminal tasks are not currently supported.";
         ExecutionTask termTask = (ExecutionTask) termTasks.toArray()[0];
-        assert startTask.getOperator() instanceof TableSource<?> : "Invalid JDBC stage: Start task has to be a TableSource";
+        assert startTask.getOperator() instanceof TableSource : "Invalid JDBC stage: Start task has to be a TableSource";
 
         // Extract the different types of ExecutionOperators from the stage.
         TableSource tableOp = (TableSource) startTask.getOperator();
