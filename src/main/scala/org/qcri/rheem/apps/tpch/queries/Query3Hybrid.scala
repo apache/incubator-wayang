@@ -2,7 +2,7 @@ package org.qcri.rheem.apps.tpch.queries
 
 import org.qcri.rheem.api._
 import org.qcri.rheem.apps.tpch.CsvUtils
-import org.qcri.rheem.apps.tpch.data.LineItem
+import org.qcri.rheem.apps.tpch.data.{Customer, LineItem, Order}
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource
@@ -49,30 +49,36 @@ class Query3Hybrid(platforms: Platform*) {
     // Read, filter, and project the customer data.
     val _segment = segment
     val customerKeys = rheemCtx
-      .load(new Sqlite3TableSource("CUSTOMER"))
+      .readTable(new Sqlite3TableSource("CUSTOMER", Customer.fields: _*))
       .withName("Load CUSTOMER table")
 
       .filter(_.getString(6) == _segment, sqlUdf = s"c_mktsegment LIKE '$segment%'", selectivity = .25)
       .withName("Filter customers")
 
-      .map(_.getLong(0)) // TODO: Cannot express projection across SQL/Java
+      .projectRecords(Seq("c_custkey"))
       .withName("Project customers")
+
+      .map(_.getLong(0))
+      .withName("Extract customer ID")
 
     // Read, filter, and project the order data.
     val _date = CsvUtils.parseDate(date)
     val orders = rheemCtx
-      .load(new Sqlite3TableSource("ORDERS"))
+      .load(new Sqlite3TableSource("ORDERS", Order.fields: _*))
       .withName("Load ORDERS table")
 
       .filter(t => CsvUtils.parseDate(t.getString(4)) > _date, sqlUdf = s"o_orderdate < date('$date')")
       .withName("Filter orders")
 
+      .projectRecords(Seq("o_orderkey", "o_custkey", "o_orderdate", "o_shippriority"))
+      .withName("Project orders")
+
       .map(order => (order.getLong(0), // orderKey
         order.getLong(1), // custKey
-        CsvUtils.parseDate(order.getString(4)), // orderDate
-        order.getInt(7)) // shipPriority
-      ) // TODO: Cannot express projection across SQL/Java
-      .withName("Project orders")
+        CsvUtils.parseDate(order.getString(2)), // orderDate
+        order.getInt(3)) // shipPriority
+      )
+      .withName("Unpack orders")
 
     // Read, filter, and project the line item data.
     val lineItems = rheemCtx

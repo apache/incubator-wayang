@@ -14,6 +14,8 @@ case class Customer(custKey: Long,
 
 object Customer {
 
+  val fields = IndexedSeq("c_custkey", "c_name", "c_address", "c_nationkey", "c_phone", "c_acctbal", "c_mktsegment", "c_comment")
+
   /**
     * Parse a CSV row into a [[Customer]] instance.
     *
