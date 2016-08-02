@@ -7,11 +7,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utilities for reflection code.
@@ -19,6 +24,18 @@ import java.util.function.Supplier;
 public class ReflectionUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(ReflectionUtils.class);
+
+    private static final Pattern defaultConstructorPattern = Pattern.compile(
+            "new ([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*)\\(\\)"
+    );
+
+    private static final Pattern arglessMethodPattern = Pattern.compile(
+            "([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*)\\.([a-zA-Z_][a-zA-Z0-9_]*)\\(\\)"
+    );
+
+    private static final Pattern constantPattern = Pattern.compile(
+            "([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*)\\.([a-zA-Z_][a-zA-Z0-9_]*)"
+    );
 
     private static final List<Tuple<Class<?>, Supplier<?>>> defaultParameterSuppliers = Arrays.asList(
             new Tuple<>(int.class, () -> 0),
@@ -98,6 +115,89 @@ public class ReflectionUtils {
     @SuppressWarnings("unchecked")
     public static <T> Class<T> generalize(Class<? extends T> baseClass) {
         return (Class<T>) baseClass;
+    }
+
+    /**
+     * Tries to evaluate the given statement, thereby supporting the following statement types:
+     * <ul>
+     * <li>{@code new <class name>()}</li>
+     * <li>{@code <class name>.<constant>}</li>
+     * <li>{@code <class name>.<static method>}()</li>
+     * </ul>
+     *
+     * @param statement the statement
+     * @param <T>       the return type
+     * @return the result of the evaluated statement
+     */
+    public static <T> T evaluate(String statement) throws IllegalArgumentException {
+        statement = statement.trim();
+        Matcher matcher = defaultConstructorPattern.matcher(statement);
+        if (matcher.matches()) {
+            try {
+                return instantiateDefault(matcher.group(1));
+            } catch (Exception e) {
+                throw new IllegalArgumentException(String.format("Could not instantiate '%s'.", statement), e);
+            }
+        }
+
+        matcher = arglessMethodPattern.matcher(statement);
+        if (matcher.matches()) {
+            try {
+                return executeStaticArglessMethod(matcher.group(1), matcher.group(2));
+            } catch (Exception e) {
+                throw new IllegalArgumentException(String.format("Could not execute '%s'.", statement), e);
+            }
+        }
+
+        matcher = constantPattern.matcher(statement);
+        if (matcher.matches()) {
+            try {
+                return retrieveStaticVariable(matcher.group(1), matcher.group(2));
+            } catch (Exception e) {
+                throw new IllegalArgumentException(String.format("Could not execute '%s'.", statement), e);
+            }
+        }
+
+        throw new IllegalArgumentException(String.format("Unknown expression type: '%s'.", statement));
+    }
+
+    /**
+     * Executes a parameterless static method.
+     *
+     * @param className  the name of the {@link Class} that comprises the method
+     * @param methodName the name of the method
+     * @param <T>
+     * @return the return value of the executed method
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T executeStaticArglessMethod(String className, String methodName) {
+        try {
+            final Class<?> cls = Class.forName(className);
+            final Method method = cls.getMethod(methodName);
+            Validate.isTrue(method.getParameters().length == 0, "Method has parameters.");
+            return (T) method.invoke(null);
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalArgumentException(String.format("Could not execute %s.%s().", className, methodName), e);
+        }
+    }
+
+    /**
+     * Retrieves a static variable.
+     *
+     * @param className    the name of the {@link Class} that comprises the method
+     * @param variableName the name of the method
+     * @param <T>
+     * @return the return value of the executed method
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T retrieveStaticVariable(String className, String variableName) {
+        try {
+            final Class<?> cls = Class.forName(className);
+            final Field field = cls.getField(variableName);
+            return (T) field.get(null);
+        } catch (ClassNotFoundException | NoSuchFieldException | IllegalAccessException e) {
+            throw new IllegalArgumentException(String.format("Could not retrieve %s.%s.", className, variableName), e);
+        }
     }
 
     /**

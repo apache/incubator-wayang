@@ -8,9 +8,7 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import org.qcri.rheem.core.util.ReflectionUtils;
 
 /**
  * A platform describes an execution engine that executes {@link ExecutionOperator}s.
@@ -27,12 +25,9 @@ public abstract class Platform {
      * @return the {@link Platform} instance
      */
     public static Platform load(String platformClassName) {
-        final Class<?> platformClass;
         try {
-            platformClass = Class.forName(platformClassName);
-            final Method getInstanceMethod = platformClass.getMethod("getInstance");
-            return (Platform) getInstanceMethod.invoke(null);
-        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            return ReflectionUtils.executeStaticArglessMethod(platformClassName, "getInstance");
+        } catch (Exception e) {
             throw new RheemException("Could not load platform: " + platformClassName, e);
         }
     }
