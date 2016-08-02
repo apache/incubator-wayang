@@ -1,7 +1,8 @@
 package org.qcri.rheem.core.api.configuration;
 
-import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -12,6 +13,8 @@ import java.util.Set;
  * {@link CollectionProvider} implementation based on a blacklist and a whitelist.
  */
 public class ExplicitCollectionProvider<Value> extends CollectionProvider<Value> {
+
+    private static final Logger logger = LoggerFactory.getLogger(ExplicitCollectionProvider.class);
 
     private Set<Value> whitelist = new LinkedHashSet<>();
 
@@ -26,23 +29,25 @@ public class ExplicitCollectionProvider<Value> extends CollectionProvider<Value>
     }
 
     public boolean addToWhitelist(Value value) {
-        Validate.isTrue(!this.blacklist.contains(value), "%s is already in the blacklist.", value);
+        if (this.blacklist.remove(value)) {
+            logger.warn("{} was in the blacklist, moved it to the whitelist.", value);
+        }
         return this.whitelist.add(value);
     }
 
     public void addAllToWhitelist(Collection<Value> values) {
-        Validate.isTrue(values.stream().noneMatch(this.blacklist::contains), "Some given value is already in the blacklist.");
-        this.whitelist.addAll(values);
+        values.forEach(this::addToWhitelist);
     }
 
     public boolean addToBlacklist(Value value) {
-        Validate.isTrue(!this.whitelist.contains(value), "%s is already in the whitelist.", value);
+        if (this.whitelist.remove(value)) {
+            logger.warn("{} was in the whitelist, moved it to the blacklist.", value);
+        }
         return this.blacklist.add(value);
     }
 
     public void addAllToBlacklist(Collection<Value> values) {
-        Validate.isTrue(values.stream().noneMatch(this.whitelist::contains), "Some given value is already in the whitelist.");
-        this.blacklist.addAll(values);
+        values.forEach(this::addToBlacklist);
     }
 
     @Override
