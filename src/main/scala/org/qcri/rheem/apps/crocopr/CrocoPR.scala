@@ -1,7 +1,7 @@
 package org.qcri.rheem.apps.crocopr
 
 import org.qcri.rheem.api.{DataQuanta, PlanBuilder}
-import org.qcri.rheem.apps.util.Parameters
+import org.qcri.rheem.apps.util.{Parameters, StdOut}
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.api.exception.RheemException
 import org.qcri.rheem.core.plugin.Plugin
@@ -134,7 +134,7 @@ object CrocoPR {
 
     // Print the result.
     println(s"Calculated ${pageRanks.size} page ranks:")
-    pageRanks.foreach(pr => println(s"${pr._1} has a page rank of ${pr._2}"))
+    StdOut.printLimited(pageRanks, formatter = (pr: (String, Double)) => s"${pr._1} has a page rank of ${pr._2}")
   }
 
 }
