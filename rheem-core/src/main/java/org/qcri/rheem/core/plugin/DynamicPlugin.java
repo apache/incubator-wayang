@@ -64,56 +64,65 @@ public class DynamicPlugin implements Plugin {
             throw new RheemException(String.format("Could not load %s.", yamlUrl));
         }
 
+        DynamicPlugin plugin = new DynamicPlugin();
         try {
             // Evaluate YAML file.
-            DynamicPlugin plugin = new DynamicPlugin();
             Map<String, Object> values = asInstanceOf(yaml, Map.class);
-
-            // Platforms.
-            List<String> platformExpressions = asInstanceOf(values.get("platforms"), List.class);
-            for (String platformExpression : platformExpressions) {
-                Object eval = ReflectionUtils.evaluate(platformExpression);
-                if (eval instanceof Platform) {
-                    plugin.addRequiredPlatform((Platform) eval);
-                } else {
-                    Collection<?> platforms = (Collection<?>) eval;
-                    for (Object platform : platforms) {
-                        plugin.addRequiredPlatform((Platform) platform);
+            if (values != null) {
+                // Platforms.
+                List<String> platformExpressions = asInstanceOf(values.get("platforms"), List.class);
+                if (platformExpressions != null) {
+                    for (String platformExpression : platformExpressions) {
+                        Object eval = ReflectionUtils.evaluate(platformExpression);
+                        if (eval instanceof Platform) {
+                            plugin.addRequiredPlatform((Platform) eval);
+                        } else {
+                            Collection<?> platforms = (Collection<?>) eval;
+                            for (Object platform : platforms) {
+                                plugin.addRequiredPlatform((Platform) platform);
+                            }
+                        }
                     }
                 }
-            }
 
-            // Mappings.
-            List<String> mappingExpressions = asInstanceOf(values.get("mappings"), List.class);
-            for (String mappingExpression : mappingExpressions) {
-                Object eval = ReflectionUtils.evaluate(mappingExpression);
-                if (eval instanceof Mapping) {
-                    plugin.addMapping((Mapping) eval);
-                } else {
-                    Collection<?> mappings = (Collection<?>) eval;
-                    for (Object mapping : mappings) {
-                        plugin.addMapping((Mapping) mapping);
+                // Mappings.
+                List<String> mappingExpressions = asInstanceOf(values.get("mappings"), List.class);
+                if (mappingExpressions != null) {
+                    for (String mappingExpression : mappingExpressions) {
+                        Object eval = ReflectionUtils.evaluate(mappingExpression);
+                        if (eval instanceof Mapping) {
+                            plugin.addMapping((Mapping) eval);
+                        } else {
+                            Collection<?> mappings = (Collection<?>) eval;
+                            for (Object mapping : mappings) {
+                                plugin.addMapping((Mapping) mapping);
+                            }
+                        }
                     }
                 }
-            }
 
-            // ChannelConversions.
-            List<String> conversionExpressions = asInstanceOf(values.get("conversions"), List.class);
-            for (String conversionExpression : conversionExpressions) {
-                Object eval = ReflectionUtils.evaluate(conversionExpression);
-                if (eval instanceof ChannelConversion) {
-                    plugin.addChannelConversion((ChannelConversion) eval);
-                } else {
-                    Collection<?> conversions = (Collection<?>) eval;
-                    for (Object conversion : conversions) {
-                        plugin.addChannelConversion((ChannelConversion) conversion);
+                // ChannelConversions.
+                List<String> conversionExpressions = asInstanceOf(values.get("conversions"), List.class);
+                if (conversionExpressions != null) {
+                    for (String conversionExpression : conversionExpressions) {
+                        Object eval = ReflectionUtils.evaluate(conversionExpression);
+                        if (eval instanceof ChannelConversion) {
+                            plugin.addChannelConversion((ChannelConversion) eval);
+                        } else {
+                            Collection<?> conversions = (Collection<?>) eval;
+                            for (Object conversion : conversions) {
+                                plugin.addChannelConversion((ChannelConversion) conversion);
+                            }
+                        }
                     }
                 }
-            }
 
-            // Properties.
-            Map<String, Object> properties = asInstanceOf(values.get("properties"), Map.class);
-            properties.forEach(plugin::addProperty);
+                // Properties.
+                Map<String, Object> properties = asInstanceOf(values.get("properties"), Map.class);
+                if (properties != null) {
+                    properties.forEach(plugin::addProperty);
+                }
+            }
 
             return plugin;
         } catch (Exception e) {
@@ -131,6 +140,7 @@ public class DynamicPlugin implements Plugin {
      */
     @SuppressWarnings("unchecked")
     public static <T> T asInstanceOf(Object o, Class<? super T> t) {
+        if (o == null) return null;
         Validate.isInstanceOf(t, o, "Expected %s to be of type %s (is %s).", o, t, o == null ? null : o.getClass());
         return (T) o;
     }

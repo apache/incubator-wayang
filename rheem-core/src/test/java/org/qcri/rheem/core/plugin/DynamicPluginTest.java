@@ -50,4 +50,34 @@ public class DynamicPluginTest {
         Assert.assertEquals("abcdef", configuration.getStringProperty("org.qcri.rheem.test.string"));
         Assert.assertEquals(1234567890123456789L, configuration.getLongProperty("org.qcri.rheem.test.long"));
     }
+
+    @Test
+    public void testPartialYaml() {
+        final DynamicPlugin plugin =
+                DynamicPlugin.loadYaml(ReflectionUtils.getResourceURL("partial-plugin.yaml").toString());
+
+        Set<Platform> expectedPlatforms = RheemCollections.asSet(DummyPlatform.getInstance());
+        Assert.assertEquals(expectedPlatforms, RheemCollections.asSet(plugin.getRequiredPlatforms()));
+
+        Set<Mapping> expectedMappings = RheemCollections.asSet(new TestSinkMapping());
+        Assert.assertEquals(expectedMappings, RheemCollections.asSet(plugin.getMappings()));
+
+        Set<ChannelConversion> expectedConversions = Collections.emptySet();
+        Assert.assertEquals(expectedConversions, RheemCollections.asSet(plugin.getChannelConversions()));
+    }
+
+    @Test
+    public void testEmptyYaml() {
+        final DynamicPlugin plugin =
+                DynamicPlugin.loadYaml(ReflectionUtils.getResourceURL("empty-plugin.yaml").toString());
+
+        Set<Platform> expectedPlatforms = Collections.emptySet();
+        Assert.assertEquals(expectedPlatforms, RheemCollections.asSet(plugin.getRequiredPlatforms()));
+
+        Set<Mapping> expectedMappings = Collections.emptySet();
+        Assert.assertEquals(expectedMappings, RheemCollections.asSet(plugin.getMappings()));
+
+        Set<ChannelConversion> expectedConversions = Collections.emptySet();
+        Assert.assertEquals(expectedConversions, RheemCollections.asSet(plugin.getChannelConversions()));
+    }
 }
