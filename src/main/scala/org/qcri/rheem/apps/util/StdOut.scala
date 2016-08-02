@@ -7,7 +7,9 @@ import java.util.Objects
   */
 object StdOut {
 
-  def printLimited[T](iterable: Iterable[T], limit: Int = 10, formatter: T => String = Objects.toString): Unit = {
+  def printLimited[T](iterable: Iterable[T],
+                      limit: Int = 10,
+                      formatter: T => String = (t: T) => Objects.toString(t)): Unit = {
     iterable.take(limit).map(formatter).foreach(println)
     val numRemainders = iterable.size - limit
     if (numRemainders > 0) {
