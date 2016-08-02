@@ -295,7 +295,6 @@
                 <groupId>org.graphchi</groupId>
                 <artifactId>graphchi-java_${scala.compat.version}</artifactId>
                 <version>${graphchi.version}</version>
-                <scope>${external.platforms.scope}</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
