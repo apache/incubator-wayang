@@ -4,13 +4,13 @@ import org.qcri.rheem.api.{DataQuanta, PlanBuilder}
 import org.qcri.rheem.apps.util.Parameters
 import org.qcri.rheem.core.api.exception.RheemException
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
-import org.qcri.rheem.core.platform.Platform
+import org.qcri.rheem.core.plugin.Plugin
 import org.qcri.rheem.core.util.RheemCollections
 
 /**
   * Rheem implementation of the cross-community PageRank.
   */
-class CrocoPR(platforms: Platform*) {
+class CrocoPR(plugins: Plugin*) {
 
   /**
     * Executes the cross-community PageRank on the given files.
@@ -22,7 +22,7 @@ class CrocoPR(platforms: Platform*) {
   def apply(inputUrl1: String, inputUrl2: String, numIterations: Int) = {
     // Initialize.
     val rheemCtx = new RheemContext
-    platforms.foreach(rheemCtx.register)
+    plugins.foreach(rheemCtx.register)
     implicit val planBuilder = new PlanBuilder(rheemCtx)
 
     // Read the input files.
@@ -45,7 +45,7 @@ class CrocoPR(platforms: Platform*) {
     val edges = allLinks
       .join[VertexId, String](_._1, vertexIds, _.field1).withName("Join source vertex IDs")
       .map { linkAndVertexId =>
-      (linkAndVertexId.field1.field0, linkAndVertexId.field0._2)
+        (linkAndVertexId.field1.field0, linkAndVertexId.field0._2)
       }.withName("Set source vertex ID")
       .join[VertexId, String](_._2, vertexIds, _.field1).withName("Join target vertex IDs")
       .map(linkAndVertexId => (linkAndVertexId.field0._1, linkAndVertexId.field1.field0)).withName("Set target vertex ID")
@@ -121,13 +121,13 @@ object CrocoPR {
       sys.error("Usage: <main class> <platform>(,<platform>)* <input URL1> <input URL2> <#iterations>")
       sys.exit(1)
     }
-    val platforms = Parameters.loadPlatforms(args(0), () => new Configuration)
+    val platforms = Parameters.loadPlugins(args(0), () => new Configuration)
     val inputUrl1 = args(1)
     val inputUrl2 = args(2)
     val numIterations = args(3).toInt
 
     // Prepare the PageRank.
-    val pageRank = new CrocoPR(platforms:_*)
+    val pageRank = new CrocoPR(platforms: _*)
 
     // Run the PageRank.
     val pageRanks = pageRank(inputUrl1, inputUrl2, numIterations).toSeq.sortBy(-_._2)

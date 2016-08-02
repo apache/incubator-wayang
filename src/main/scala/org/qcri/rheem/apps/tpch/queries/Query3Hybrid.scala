@@ -4,7 +4,7 @@ import org.qcri.rheem.api._
 import org.qcri.rheem.apps.tpch.CsvUtils
 import org.qcri.rheem.apps.tpch.data.{Customer, LineItem, Order}
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
-import org.qcri.rheem.core.platform.Platform
+import org.qcri.rheem.core.plugin.Plugin
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource
 
 /**
@@ -35,14 +35,14 @@ import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource
   *   o_orderdate;
   * }}}
   */
-class Query3Hybrid(platforms: Platform*) {
+class Query3Hybrid(plugins: Plugin*) {
 
   def apply(configuration: Configuration,
             segment: String = "BUILDING",
             date: String = "1995-03-15") = {
 
     val rheemCtx = new RheemContext(configuration)
-    platforms.foreach(rheemCtx.register)
+    plugins.foreach(rheemCtx.register)
 
     val lineitemFile = configuration.getStringProperty("rheem.apps.tpch.csv.lineitem")
 

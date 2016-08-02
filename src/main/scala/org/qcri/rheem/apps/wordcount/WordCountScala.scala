@@ -4,14 +4,14 @@ import org.qcri.rheem.api._
 import org.qcri.rheem.apps.util.Parameters
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
-import org.qcri.rheem.core.platform.Platform
+import org.qcri.rheem.core.plugin.Plugin
 
 /**
   * This is app counts words in a file.
   *
   * @see [[org.qcri.rheem.apps.wordcount.Main]]
   */
-class WordCountScala(platforms: Platform*) {
+class WordCountScala(plugin: Plugin*) {
 
   /**
     * Run the word count over a given file.
@@ -22,7 +22,7 @@ class WordCountScala(platforms: Platform*) {
     */
   def apply(inputUrl: String, wordsPerLine: ProbabilisticDoubleInterval = new ProbabilisticDoubleInterval(100, 10000, .8d)) = {
     val rheemCtx = new RheemContext
-    platforms.foreach(rheemCtx.register)
+    plugin.foreach(rheemCtx.register)
 
     rheemCtx
       .readTextFile(inputUrl).withName("Load file")
@@ -48,7 +48,7 @@ object WordCountScala {
       println("Usage: <main class> <platform(,platform)*> <input file> [<words per line a..b>]")
       sys.exit(1)
     }
-    val platforms = Parameters.loadPlatforms(args(0), () => new Configuration)
+    val platforms = Parameters.loadPlugins(args(0), () => new Configuration)
     val inputFile = args(1)
     val wordsPerLine = if (args.length >= 3) {
       val Array(low, high) = args(2).split("""\.\.""").map(_.toDouble)

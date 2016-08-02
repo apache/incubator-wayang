@@ -4,7 +4,7 @@ import org.qcri.rheem.api._
 import org.qcri.rheem.apps.tpch.CsvUtils
 import org.qcri.rheem.apps.tpch.data.{Customer, LineItem, Order}
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
-import org.qcri.rheem.core.platform.Platform
+import org.qcri.rheem.core.plugin.Plugin
 
 /**
   * Rheem implementation of TPC-H Query 3.
@@ -34,14 +34,14 @@ import org.qcri.rheem.core.platform.Platform
   *   o_orderdate;
   * }}}
   */
-class Query3File(platforms: Platform*) {
+class Query3File(plugins: Plugin*) {
 
   def apply(configuration: Configuration,
             segment: String = "BUILDING",
             date: String = "1995-03-15") = {
 
     val rheemCtx = new RheemContext(configuration)
-    platforms.foreach(rheemCtx.register)
+    plugins.foreach(rheemCtx.register)
 
     val customerFile = configuration.getStringProperty("rheem.apps.tpch.csv.customer")
     val ordersFile = configuration.getStringProperty("rheem.apps.tpch.csv.orders")
@@ -108,7 +108,8 @@ class Query3File(platforms: Platform*) {
       .reduceByKey(
         t => (t.orderKey, t.orderDate, t.shipPriority),
         (t1, t2) => {
-          t1.revenue += t2.revenue; t2
+          t1.revenue += t2.revenue;
+          t2
         }
       )
       .withName("Aggregate revenue")

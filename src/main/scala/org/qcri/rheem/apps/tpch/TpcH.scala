@@ -15,7 +15,7 @@ object TpcH {
       sys.exit(1)
     }
 
-    val platforms = Parameters.loadPlatforms(args(0), () => new Configuration)
+    val plugins = Parameters.loadPlugins(args(0), () => new Configuration)
     val configUrl = args(1)
     val queryName = args(2)
 
@@ -24,17 +24,17 @@ object TpcH {
 
     queryName match {
       case "Query3File" => {
-        val query = new Query3File(platforms: _*)
+        val query = new Query3File(plugins: _*)
         val result = query(configuration)
         StdOut.printLimited(result, 10)
       }
       case "Query3Sqlite" => {
-        val query = new Query3Sqlite(platforms: _*)
+        val query = new Query3Sqlite(plugins: _*)
         val result = query(configuration)
         StdOut.printLimited(result, 10)
       }
       case "Query3Hybrid" => {
-        val query = new Query3Hybrid(platforms: _*)
+        val query = new Query3Hybrid(plugins: _*)
         val result = query(configuration)
         StdOut.printLimited(result, 10)
       }

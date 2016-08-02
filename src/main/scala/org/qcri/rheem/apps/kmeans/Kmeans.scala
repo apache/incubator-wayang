@@ -7,7 +7,7 @@ import org.qcri.rheem.apps.util.Parameters
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.ExecutionContext
 import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
-import org.qcri.rheem.core.platform.Platform
+import org.qcri.rheem.core.plugin.Plugin
 
 import scala.collection.JavaConversions._
 import scala.util.Random
@@ -15,12 +15,12 @@ import scala.util.Random
 /**
   * K-Means app for Rheem.
   */
-class Kmeans(platforms: Platform*) {
+class Kmeans(plugin: Plugin*) {
 
   def apply(k: Int, inputFile: String, iterations: Int = 20, isResurrect: Boolean = true): Iterable[Point] = {
     // Set up the RheemContext.
     implicit val rheemCtx = new RheemContext
-    platforms.foreach(rheemCtx.register)
+    plugin.foreach(rheemCtx.register)
 
     // Read and parse the input file(s).
     val points = rheemCtx
@@ -83,7 +83,7 @@ object Kmeans {
       sys.exit(1)
     }
 
-    val platforms = Parameters.loadPlatforms(args(0), () => new Configuration)
+    val platforms = Parameters.loadPlugins(args(0), () => new Configuration)
     val file = args(1)
     val k = args(2).toInt
     val numIterations = args(3).toInt

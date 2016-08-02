@@ -5,11 +5,12 @@ import org.qcri.rheem.apps.util.Parameters
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.platform.Platform
+import org.qcri.rheem.core.plugin.Plugin
 
 /**
   * TODO
   */
-class SimWords(platforms: Platform*) {
+class SimWords(plugins: Plugin*) {
 
   def apply(inputFile: String,
             minWordOccurrences: Int,
@@ -21,7 +22,7 @@ class SimWords(platforms: Platform*) {
     // Initialize.
     val rheemCtx = new RheemContext
     rheemCtx.getConfiguration.setProperty("rheem.core.optimizer.reoptimize", "false")
-    platforms.foreach(rheemCtx.register)
+    plugins.foreach(rheemCtx.register)
     val planBuilder = new PlanBuilder(rheemCtx)
 
     // Create the word dictionary
@@ -110,7 +111,7 @@ object SimWords {
       sys.exit(1)
     }
 
-    val platforms = Parameters.loadPlatforms(args(0), () => new Configuration)
+    val platforms = Parameters.loadPlugins(args(0), () => new Configuration)
     val inputFile = args(1)
     val minWordOccurrences = args(2).toInt
     val neighborhoodRead = args(3).toInt
