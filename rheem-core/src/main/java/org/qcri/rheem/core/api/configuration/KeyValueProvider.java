@@ -55,7 +55,7 @@ public abstract class KeyValueProvider<Key, Value> {
             return this.parent.provideFor(key, requestee);
         }
 
-        throw new NoSuchKeyException(String.format("Could not provide value for %s.", key));
+        throw new NoSuchKeyException(String.format("Could not provide value for %s from %s.", key, requestee.getConfiguration()));
     }
 
     public Optional<Value> optionallyProvideFor(Key key) {

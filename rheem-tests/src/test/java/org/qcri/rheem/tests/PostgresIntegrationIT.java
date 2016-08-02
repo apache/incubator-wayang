@@ -1,16 +1,14 @@
 package org.qcri.rheem.tests;
 
-import org.junit.*;
-import org.qcri.rheem.core.api.RheemContext;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.postgres.PostgresPlatform;
 
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 
 /**

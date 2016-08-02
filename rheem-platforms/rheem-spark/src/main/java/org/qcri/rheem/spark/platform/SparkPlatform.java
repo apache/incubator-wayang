@@ -2,20 +2,22 @@ package org.qcri.rheem.spark.platform;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.qcri.rheem.basic.plugin.RheemBasicPlatform;
+import org.qcri.rheem.basic.plugin.RheemBasic;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.ReflectionUtils;
+import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.spark.channels.ChannelConversions;
 import org.qcri.rheem.spark.mapping.*;
 import org.qcri.rheem.spark.operators.SparkCollectionSource;
@@ -23,15 +25,12 @@ import org.qcri.rheem.spark.operators.SparkLocalCallbackSink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Set;
+import java.util.*;
 
 /**
  * {@link Platform} for Apache Spark.
  */
-public class SparkPlatform extends Platform {
+public class SparkPlatform extends Platform implements Plugin {
 
     private static final String PLATFORM_NAME = "Apache Spark";
 
@@ -82,13 +81,7 @@ public class SparkPlatform extends Platform {
 
     private SparkPlatform() {
         super(PLATFORM_NAME);
-        this.initializeConfiguration();
         this.initializeMappings();
-    }
-
-    @Override
-    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
-        ChannelConversions.ALL.forEach(channelConversionGraph::add);
     }
 
     /**
@@ -96,7 +89,7 @@ public class SparkPlatform extends Platform {
      *
      * @return a {@link SparkContextReference} wrapping the {@link JavaSparkContext}
      */
-    public SparkContextReference getSparkContext(Job job) {
+    SparkContextReference getSparkContext(Job job) {
 
         // NB: There must be only one JavaSparkContext per JVM. Therefore, it is not local to the executor.
         final SparkConf sparkConf;
@@ -133,7 +126,7 @@ public class SparkPlatform extends Platform {
         if (!sparkContext.isLocal()) {
             // Add Rheem JAR files.
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // rheem-spark
-            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasicPlatform.class)); // rheem-basic
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasic.class)); // rheem-basic
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemContext.class)); // rheem-core
             final Set<String> udfJarPaths = job.getUdfJarPaths();
             if (udfJarPaths.isEmpty()) {
@@ -150,8 +143,9 @@ public class SparkPlatform extends Platform {
         if (path != null) this.sparkContextReference.get().addJar(path);
     }
 
-    private void initializeConfiguration() {
-        Configuration.getDefaultConfiguration().load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
+    @Override
+    public void configureDefaults(Configuration configuration) {
+        configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
     }
 
     private void initializeMappings() {
@@ -202,8 +196,18 @@ public class SparkPlatform extends Platform {
     }
 
     @Override
-    public boolean isExecutable() {
-        return true;
+    public Collection<Platform> getRequiredPlatforms() {
+        return Arrays.asList(this, JavaPlatform.getInstance());
+    }
+
+    @Override
+    public Collection<ChannelConversion> getChannelConversions() {
+        return ChannelConversions.ALL;
+    }
+
+    @Override
+    public void setProperties(Configuration configuration) {
+        // Nothing to do, because we already configured the properties in #configureDefaults(...).
     }
 
     @Override
@@ -223,7 +227,8 @@ public class SparkPlatform extends Platform {
                 Collections.singleton(0), DataSetType.createDefault(Integer.class)
         );
         SparkLocalCallbackSink<Integer> sink = new SparkLocalCallbackSink<>(
-                dq -> {},
+                dq -> {
+                },
                 DataSetType.createDefault(Integer.class)
         );
         source.connectTo(0, sink, 0);

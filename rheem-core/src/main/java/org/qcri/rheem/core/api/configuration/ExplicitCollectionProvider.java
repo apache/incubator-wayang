@@ -25,9 +25,9 @@ public class ExplicitCollectionProvider<Value> extends CollectionProvider<Value>
         super(configuration, parent);
     }
 
-    public void addToWhitelist(Value value) {
+    public boolean addToWhitelist(Value value) {
         Validate.isTrue(!this.blacklist.contains(value), "%s is already in the blacklist.", value);
-        this.whitelist.add(value);
+        return this.whitelist.add(value);
     }
 
     public void addAllToWhitelist(Collection<Value> values) {
@@ -35,9 +35,9 @@ public class ExplicitCollectionProvider<Value> extends CollectionProvider<Value>
         this.whitelist.addAll(values);
     }
 
-    public void addToBlacklist(Value value) {
+    public boolean addToBlacklist(Value value) {
         Validate.isTrue(!this.whitelist.contains(value), "%s is already in the whitelist.", value);
-        this.blacklist.add(value);
+        return this.blacklist.add(value);
     }
 
     public void addAllToBlacklist(Collection<Value> values) {

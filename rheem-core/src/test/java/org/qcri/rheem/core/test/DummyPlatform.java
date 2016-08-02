@@ -1,21 +1,12 @@
 package org.qcri.rheem.core.test;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ChannelInitializer;
-import org.qcri.rheem.core.platform.*;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import org.qcri.rheem.core.optimizer.costs.*;
+import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.Platform;
 
 /**
- * TODO
+ * {@link Platform} implementation for test purposes.
  */
 public class DummyPlatform extends Platform {
 
@@ -33,7 +24,7 @@ public class DummyPlatform extends Platform {
     }
 
     @Override
-    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
+    public void configureDefaults(Configuration configuration) {
     }
 
     @Override
@@ -42,17 +33,16 @@ public class DummyPlatform extends Platform {
     }
 
     @Override
-    public Collection<Mapping> getMappings() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isExecutable() {
-        return true;
-    }
-
-    @Override
     public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
-        return null;
+        return new LoadProfileToTimeConverter(null, null, null) {
+            @Override
+            public TimeEstimate convert(LoadProfile loadProfile) {
+                return new TimeEstimate(
+                        loadProfile.getCpuUsage().getLowerEstimate(),
+                        loadProfile.getCpuUsage().getUpperEstimate(),
+                        0.9d
+                );
+            }
+        };
     }
 }

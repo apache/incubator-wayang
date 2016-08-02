@@ -101,8 +101,7 @@ public class JavaExecutorTest {
         loop.endIteration(id1, 0, id2, 0);
         loop.outputConnectTo(sink, 0);
 
-        final RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        final RheemContext rheemContext = new RheemContext().with(JavaPlatform.getInstance());
         rheemContext.execute(new RheemPlan(sink));
 
         Assert.assertEquals(RheemArrays.asList(6, 7, 8), collector);

@@ -3,7 +3,7 @@ package org.qcri.rheem.core.api;
 import org.apache.commons.lang3.StringUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.slf4j.Logger;
@@ -36,12 +36,24 @@ public class RheemContext {
     }
 
     /**
-     * Register a platform that Rheem will then use for execution.
+     * Registers the given {@link Plugin} with this instance.
      *
-     * @param platform the {@link Platform} to register
+     * @param plugin the {@link Plugin} to register
+     * @return this instance
      */
-    public void register(Platform platform) {
-        this.configuration.getPlatformProvider().addToWhitelist(platform);
+    public RheemContext with(Plugin plugin) {
+        this.register(plugin);
+        return this;
+    }
+
+    /**
+     * Registers the given {@link Plugin} with this instance.
+     *
+     * @param plugin the {@link Plugin} to register
+     * @see #with(Plugin)
+     */
+    public void register(Plugin plugin) {
+        plugin.configure(this.getConfiguration());
     }
 
     /**

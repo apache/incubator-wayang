@@ -3,22 +3,24 @@ package org.qcri.rheem.graphchi;
 import edu.cmu.graphchi.io.CompressedIO;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.graphchi.execution.GraphChiExecutor;
 import org.qcri.rheem.graphchi.mappings.PageRankMapping;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 
 /**
  * GraphChi {@link Platform} for Rheem.
  */
-public class GraphChiPlatform extends Platform {
+public class GraphChiPlatform extends Platform implements Plugin {
 
     public static final String CPU_MHZ_PROPERTY = "rheem.graphchi.cpu.mhz";
 
@@ -28,7 +30,7 @@ public class GraphChiPlatform extends Platform {
 
     private static final String DEFAULT_CONFIG_FILE = "rheem-graphchi-defaults.properties";
 
-    private static Platform instance;
+    private static GraphChiPlatform instance;
 
     private final Collection<Mapping> mappings = new LinkedList<>();
 
@@ -46,24 +48,18 @@ public class GraphChiPlatform extends Platform {
         GraphChiPlatform.class.getClassLoader().setClassAssertionStatus(
                 "edu.cmu.graphchi.preprocessing.FastSharder", false);
 
-        this.initializeConfiguration();
         this.mappings.add(new PageRankMapping());
     }
-
-    private void initializeConfiguration() {
-        Configuration.getDefaultConfiguration().load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
+    @Override
+    public void configureDefaults(Configuration configuration) {
+        configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
     }
 
-    public static Platform getInstance() {
+    public static GraphChiPlatform getInstance() {
         if (instance == null) {
             instance = new GraphChiPlatform();
         }
         return instance;
-    }
-
-    @Override
-    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
-        // No ChannelConversions supported so far.
     }
 
     @Override
@@ -77,8 +73,18 @@ public class GraphChiPlatform extends Platform {
     }
 
     @Override
-    public boolean isExecutable() {
-        return true;
+    public Collection<Platform> getRequiredPlatforms() {
+        return Collections.singleton(this);
+    }
+
+    @Override
+    public Collection<ChannelConversion> getChannelConversions() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void setProperties(Configuration configuration) {
+        // Nothing to do, because we already configured the properties in #configureDefaults(...).
     }
 
     @Override
