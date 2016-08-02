@@ -11,11 +11,11 @@ object TpcH {
 
   def main(args: Array[String]): Unit = {
     if (args.isEmpty) {
-      println("Usage: <main class> <platform(,platform)*> <TPC-H config URL> <query> [<query args>*]")
+      println("Usage: <main class> <plugin(,plugin)*> <TPC-H config URL> <query> [<query args>*]")
       sys.exit(1)
     }
 
-    val plugins = Parameters.loadPlugins(args(0), () => new Configuration)
+    val plugins = Parameters.loadPlugins(args(0))
     val configUrl = args(1)
     val queryName = args(2)
 

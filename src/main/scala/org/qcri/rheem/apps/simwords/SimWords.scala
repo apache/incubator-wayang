@@ -2,9 +2,8 @@ package org.qcri.rheem.apps.simwords
 
 import org.qcri.rheem.api._
 import org.qcri.rheem.apps.util.Parameters
-import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
-import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.core.plugin.Plugin
 
 /**
@@ -107,11 +106,11 @@ object SimWords {
 
   def main(args: Array[String]): Unit = {
     if (args.isEmpty) {
-      println("Usage: <main class> <platform(,platform)*> <input file> <min word occurrences> <neighborhood reach> <#clusters> <#iterations> [<words per line (from..to)>]")
+      println("Usage: <main class> <plugin(,plugin)*> <input file> <min word occurrences> <neighborhood reach> <#clusters> <#iterations> [<words per line (from..to)>]")
       sys.exit(1)
     }
 
-    val platforms = Parameters.loadPlugins(args(0), () => new Configuration)
+    val plugins = Parameters.loadPlugins(args(0))
     val inputFile = args(1)
     val minWordOccurrences = args(2).toInt
     val neighborhoodRead = args(3).toInt
@@ -122,7 +121,7 @@ object SimWords {
       new ProbabilisticDoubleInterval(from, to, .99d)
     } else new ProbabilisticDoubleInterval(100, 10000, 0.9)
 
-    val simWords = new SimWords(platforms: _*)
+    val simWords = new SimWords(plugins: _*)
     simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations, wordsPerLine)
   }
 }

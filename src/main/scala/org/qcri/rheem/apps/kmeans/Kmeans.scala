@@ -4,7 +4,7 @@ import java.util
 
 import org.qcri.rheem.api._
 import org.qcri.rheem.apps.util.Parameters
-import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.function.ExecutionContext
 import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
 import org.qcri.rheem.core.plugin.Plugin
@@ -79,17 +79,17 @@ object Kmeans {
   def main(args: Array[String]): Unit = {
     // Parse args.
     if (args.length == 0) {
-      println("Usage: scala <main class> <platform(,platform)*> <point file> <k> <#iterations>")
+      println("Usage: scala <main class> <plugin(,plugin)*> <point file> <k> <#iterations>")
       sys.exit(1)
     }
 
-    val platforms = Parameters.loadPlugins(args(0), () => new Configuration)
+    val plugins = Parameters.loadPlugins(args(0))
     val file = args(1)
     val k = args(2).toInt
     val numIterations = args(3).toInt
 
     // Initialize k-means.
-    val kmeans = new Kmeans(platforms: _*)
+    val kmeans = new Kmeans(plugins: _*)
 
     // Run k-means.
     val centroids = kmeans(k, file, numIterations)

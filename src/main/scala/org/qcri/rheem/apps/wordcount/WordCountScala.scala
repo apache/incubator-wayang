@@ -2,7 +2,7 @@ package org.qcri.rheem.apps.wordcount
 
 import org.qcri.rheem.api._
 import org.qcri.rheem.apps.util.Parameters
-import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.plugin.Plugin
 
@@ -45,10 +45,10 @@ object WordCountScala {
   def main(args: Array[String]) {
     // Parse args.
     if (args.isEmpty) {
-      println("Usage: <main class> <platform(,platform)*> <input file> [<words per line a..b>]")
+      println("Usage: <main class> <plugin(,plugin)*> <input file> [<words per line a..b>]")
       sys.exit(1)
     }
-    val platforms = Parameters.loadPlugins(args(0), () => new Configuration)
+    val plugins = Parameters.loadPlugins(args(0))
     val inputFile = args(1)
     val wordsPerLine = if (args.length >= 3) {
       val Array(low, high) = args(2).split("""\.\.""").map(_.toDouble)
@@ -56,7 +56,7 @@ object WordCountScala {
     } else null
 
     // Run wordCount.
-    val wordCount = new WordCountScala(platforms: _*)
+    val wordCount = new WordCountScala(plugins: _*)
     val words =
       (if (wordsPerLine != null) {
         wordCount(inputFile, wordsPerLine)

@@ -1,78 +1,49 @@
 package org.qcri.rheem.apps.util
 
-import org.qcri.rheem.core.api.Configuration
-import org.qcri.rheem.core.platform.Platform
-import org.qcri.rheem.core.plugin.Plugin
+import org.qcri.rheem.core.plugin.{DynamicPlugin, Plugin}
 import org.qcri.rheem.graphchi.GraphChiPlatform
 import org.qcri.rheem.java.JavaPlatform
 import org.qcri.rheem.postgres.PostgresPlatform
 import org.qcri.rheem.spark.platform.SparkPlatform
 import org.qcri.rheem.sqlite3.Sqlite3Platform
-import org.slf4j.LoggerFactory
 
 /**
   * Utility to parse parameters of the apps.
   */
 object Parameters {
 
-  /**
-    * Factories for [[Platform]]s
-    */
-  private val pluginFactories: Map[String, () => Plugin] = Map(
-    "java" -> (() => JavaPlatform.getInstance),
-    "spark" -> (() => SparkPlatform.getInstance),
-    "graphchi" -> (() => GraphChiPlatform.getInstance),
-    "postgres" -> (() => PostgresPlatform.getInstance),
-    "sqlite3" -> (() => Sqlite3Platform.getInstance)
-  )
+  private val yamlId = """yaml\((.*)\)""".r
 
   /**
     * Load a plugin.
     *
-    * @param id            name of the plugin; append `+` to warm up the platform
-    * @param configFactory creates a [[Configuration]] to warm up platforms
-    * @return the loaded, and possibly warmed-up [[Plugin]]/[[Platform]]
+    * @param id name of the plugin
+    * @return the loaded [[Plugin]]
     */
-  def loadPlugin(id: String, configFactory: () => Configuration = () => new Configuration): Plugin = {
-    val warmPlatform = """(\w+)\+""".r
-    id match {
-      case warmPlatform(name) => {
-        val plugin = pluginFactories
-          .getOrElse(name, throw new IllegalArgumentException(s"Unknown plugin: $name"))
-          .apply
-        plugin match {
-          case platform: Platform => platform.warmUp(configFactory())
-          case _ => LoggerFactory.getLogger(this.getClass).warn(s"Could not warm up $name.")
-        }
-        plugin
-      }
-      case name: String => pluginFactories
-        .getOrElse(name, throw new IllegalArgumentException(s"Unknown platform: $name"))
-        .apply
-      case _ => throw new IllegalArgumentException(s"Illegal platform name")
-    }
+  def loadPlugin(id: String): Plugin = id match {
+    case "java" => JavaPlatform.getInstance
+    case "spark" => SparkPlatform.getInstance
+    case "graphchi" => GraphChiPlatform.getInstance
+    case "postgres" => PostgresPlatform.getInstance
+    case "sqlite3" => Sqlite3Platform.getInstance
+    case yamlId(url) => DynamicPlugin.loadYaml(url)
+    case other => throw new IllegalArgumentException(s"Could not load platform '$other'.")
   }
 
   /**
     * Loads the specified [[Plugin]]s..
     *
-    * @param platformIds   a comma-separated list of platform IDs
-    * @param configFactory creates a [[Configuration]] to warm up platforms
-    * @return the loaded, and possibly warmed-up [[Plugin]]s
+    * @param platformIds a comma-separated list of platform IDs
+    * @return the loaded [[Plugin]]s
     */
-  def loadPlugins(platformIds: String, configFactory: () => Configuration): Seq[Plugin] =
-    loadPlugins(platformIds.split(","), configFactory)
+  def loadPlugins(platformIds: String): Seq[Plugin] = loadPlugins(platformIds.split(","))
 
   /**
     * Loads the specified [[Plugin]]s.
     *
-    * @param platformIds   platform IDs
-    * @param configFactory creates a [[Configuration]] to warm up platforms
-    * @return the loaded, and possibly warmed-up [[Plugin]]s
+    * @param platformIds platform IDs
+    * @return the loaded [[Plugin]]s
     */
-  def loadPlugins(platformIds: Seq[String], configFactory: () => Configuration): Seq[Plugin] = {
-    val configuration = configFactory()
-    platformIds.map(loadPlugin(_, () => configuration))
-  }
+  def loadPlugins(platformIds: Seq[String]): Seq[Plugin] = platformIds.map(loadPlugin)
 
 }

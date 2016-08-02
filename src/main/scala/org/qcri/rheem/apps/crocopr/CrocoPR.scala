@@ -2,8 +2,8 @@ package org.qcri.rheem.apps.crocopr
 
 import org.qcri.rheem.api.{DataQuanta, PlanBuilder}
 import org.qcri.rheem.apps.util.Parameters
+import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.api.exception.RheemException
-import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.plugin.Plugin
 import org.qcri.rheem.core.util.RheemCollections
 
@@ -118,16 +118,16 @@ object CrocoPR {
   def main(args: Array[String]) {
     // Parse parameters.
     if (args.isEmpty) {
-      sys.error("Usage: <main class> <platform>(,<platform>)* <input URL1> <input URL2> <#iterations>")
+      sys.error("Usage: <main class> <plugin>(,<plugin>)* <input URL1> <input URL2> <#iterations>")
       sys.exit(1)
     }
-    val platforms = Parameters.loadPlugins(args(0), () => new Configuration)
+    val plugins = Parameters.loadPlugins(args(0))
     val inputUrl1 = args(1)
     val inputUrl2 = args(2)
     val numIterations = args(3).toInt
 
     // Prepare the PageRank.
-    val pageRank = new CrocoPR(platforms: _*)
+    val pageRank = new CrocoPR(plugins: _*)
 
     // Run the PageRank.
     val pageRanks = pageRank(inputUrl1, inputUrl2, numIterations).toSeq.sortBy(-_._2)
