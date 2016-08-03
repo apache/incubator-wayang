@@ -42,8 +42,7 @@ public class WordCountIT {
         // Assignment mode: RheemContext.
 
         // Instantiate Rheem and activate the backend.
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        RheemContext rheemContext = new RheemContext().with(JavaPlatform.getInstance());
         TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
 
         // for each line (input) output an iterator of the words
@@ -176,7 +175,7 @@ public class WordCountIT {
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
         final Job job = rheemContext.createJob(null, rheemPlan);
-        job.getConfiguration().getPlatformProvider().addToWhitelist(SparkPlatform.getInstance());
+        SparkPlatform.getInstance().configure(job.getConfiguration());
         job.execute();
 
         // Verify the plan result.

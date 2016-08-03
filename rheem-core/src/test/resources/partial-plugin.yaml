@@ -1,0 +1,7 @@
+platforms:
+  include:
+  - org.qcri.rheem.core.test.DummyPlatform.getInstance()
+
+mappings:
+  exclude:
+  - new org.qcri.rheem.core.mapping.test.TestSinkMapping()

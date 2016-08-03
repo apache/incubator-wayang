@@ -11,7 +11,6 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Junction;
-import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Bitmask;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
@@ -46,9 +45,7 @@ public class ChannelConversionGraph {
      */
     public ChannelConversionGraph(Configuration configuration) {
         this.timeEstimateComparator = configuration.getTimeEstimateComparatorProvider().provide();
-        for (final Platform platform : configuration.getPlatformProvider()) {
-            platform.addChannelConversionsTo(this);
-        }
+        configuration.getChannelConversionProvider().provideAll().forEach(this::add);
     }
 
     /**

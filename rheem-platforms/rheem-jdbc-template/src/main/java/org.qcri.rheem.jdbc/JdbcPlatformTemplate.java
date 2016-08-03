@@ -2,14 +2,16 @@ package org.qcri.rheem.jdbc;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.util.ReflectionUtils;
+import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
 import org.qcri.rheem.jdbc.execution.DatabaseDescriptor;
@@ -17,13 +19,15 @@ import org.qcri.rheem.jdbc.execution.JdbcExecutor;
 import org.qcri.rheem.jdbc.operators.SqlToStreamOperator;
 
 import java.sql.Connection;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 
 /**
  * {@link Platform} implementation for the PostgreSQL database.
  */
-public abstract class JdbcPlatformTemplate extends Platform {
+public abstract class JdbcPlatformTemplate extends Platform implements Plugin {
 
     public final String cpuMhzProperty = String.format("rheem.%s.cpu.mhz", this.getPlatformId());
 
@@ -37,7 +41,9 @@ public abstract class JdbcPlatformTemplate extends Platform {
 
     public final String jdbcPasswordProperty = String.format("rheem.%s.jdbc.password", this.getPlatformId());
 
-    public final String defaultConfigFile = String.format("rheem-%s-defaults.properties", this.getPlatformId());
+    private String getDefaultConfigurationFile() {
+        return String.format("rheem-%s-defaults.properties", this.getPlatformId());
+    }
 
     /**
      * {@link ChannelDescriptor} for {@link SqlQueryChannel}s with this instance.
@@ -45,8 +51,6 @@ public abstract class JdbcPlatformTemplate extends Platform {
     private final SqlQueryChannel.Descriptor sqlQueryChannelDescriptor = new SqlQueryChannel.Descriptor(this);
 
     protected final Collection<Mapping> mappings = new LinkedList<>();
-
-    private static JdbcPlatformTemplate instance = null;
 
     public Connection getConnection() {
         return connection;
@@ -57,12 +61,11 @@ public abstract class JdbcPlatformTemplate extends Platform {
     protected JdbcPlatformTemplate(String platformName) {
         super(platformName);
         this.initializeMappings();
-        this.initializeConfiguration();
     }
 
-    private void initializeConfiguration() {
-        final Configuration defaultConfiguration = Configuration.getDefaultConfiguration();
-        defaultConfiguration.load(ReflectionUtils.loadResource(this.defaultConfigFile));
+    @Override
+    public void configureDefaults(Configuration configuration) {
+        configuration.load(ReflectionUtils.loadResource(this.getDefaultConfigurationFile()));
     }
 
     protected abstract void initializeMappings();
@@ -73,17 +76,22 @@ public abstract class JdbcPlatformTemplate extends Platform {
     }
 
     @Override
-    public boolean isExecutable() {
-        return true;
-    }
-
-    @Override
-    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
-        channelConversionGraph.add(new DefaultChannelConversion(
+    public Collection<ChannelConversion> getChannelConversions() {
+        return Collections.singleton(new DefaultChannelConversion(
                 this.getSqlQueryChannelDescriptor(),
                 StreamChannel.DESCRIPTOR,
                 () -> new SqlToStreamOperator(this)
         ));
+    }
+
+    @Override
+    public void setProperties(Configuration configuration) {
+        // Nothing to do, because we already configured the properties in #configureDefaults(...).
+    }
+
+    @Override
+    public Collection<Platform> getRequiredPlatforms() {
+        return Arrays.asList(this, JavaPlatform.getInstance());
     }
 
     @Override

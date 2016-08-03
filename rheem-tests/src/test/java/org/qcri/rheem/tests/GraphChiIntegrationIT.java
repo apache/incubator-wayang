@@ -15,25 +15,15 @@ public class GraphChiIntegrationIT {
     @Test
     public void testPageRankWithJava() {
         RheemPlan rheemPlan = RheemPlans.createCrossCommunityPageRank();
-
-        RheemContext rc = new RheemContext();
-        rc.register(JavaPlatform.getInstance());
-        rc.register(GraphChiPlatform.getInstance());
-
+        RheemContext rc = new RheemContext().with(JavaPlatform.getInstance()).with(GraphChiPlatform.getInstance());
         rc.execute(rheemPlan);
-
     }
 
     @Test
     public void testPageRankWithSpark() {
         RheemPlan rheemPlan = RheemPlans.createCrossCommunityPageRank();
-
-        RheemContext rc = new RheemContext();
-        rc.register(SparkPlatform.getInstance());
-        rc.register(GraphChiPlatform.getInstance());
-
+        RheemContext rc = new RheemContext().with(SparkPlatform.getInstance()).with(GraphChiPlatform.getInstance());
         rc.execute(rheemPlan);
-
     }
 
 }

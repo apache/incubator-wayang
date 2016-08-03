@@ -19,10 +19,7 @@ import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
-import org.qcri.rheem.core.util.Formats;
-import org.qcri.rheem.core.util.OneTimeExecutable;
-import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.core.util.StopWatch;
+import org.qcri.rheem.core.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -212,9 +209,10 @@ public class Job extends OneTimeExecutable {
      * Gather all available {@link PlanTransformation}s from the {@link #configuration}.
      */
     private Collection<PlanTransformation> gatherTransformations() {
-        return this.configuration.getPlatformProvider().provideAll().stream()
-                .flatMap(platform -> platform.getMappings().stream())
+        final Set<Platform> platforms = RheemCollections.asSet(this.configuration.getPlatformProvider().provideAll());
+        return this.configuration.getMappingProvider().provideAll().stream()
                 .flatMap(mapping -> mapping.getTransformations().stream())
+                .filter(t -> t.getTargetPlatforms().isEmpty() || platforms.containsAll(t.getTargetPlatforms()))
                 .collect(Collectors.toList());
     }
 

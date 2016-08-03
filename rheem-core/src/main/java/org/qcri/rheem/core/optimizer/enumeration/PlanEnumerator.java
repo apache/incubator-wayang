@@ -345,7 +345,6 @@ public class PlanEnumerator {
      */
     private PlanEnumeration enumerateBranch(List<Operator> branch, OptimizationContext optimizationContext) {
         PlanEnumeration branchEnumeration = null;
-
         Operator lastOperator = null;
         for (Operator operator : branch) {
             PlanEnumeration operatorEnumeration;
@@ -834,7 +833,7 @@ public class PlanEnumerator {
 
         private void register(PlanEnumeration planEnumeration, InputSlot openInputSlot) {
             assert deemsRelevant(openInputSlot)
-                    : String.format("Trying to register irrelevant %s to %s.", openInputSlot, this);
+                    : String.format("Trying to registerChannelConversion irrelevant %s to %s.", openInputSlot, this);
             assert openInputSlot.getOccupant() == this.outputSlot;
             this.activationCollector.put(openInputSlot, planEnumeration);
             assert this.numRequiredActivations >= this.activationCollector.size();

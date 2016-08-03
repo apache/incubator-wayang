@@ -7,16 +7,19 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.ElementaryOperator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy;
 import org.qcri.rheem.core.util.Actions;
@@ -31,6 +34,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
+
+import static org.qcri.rheem.core.util.ReflectionUtils.instantiateDefault;
 
 /**
  * Describes both the configuration of a {@link RheemContext} and {@link Job}s.
@@ -50,10 +55,10 @@ public class Configuration {
         Actions.doSafe(() -> bootstrapLoadAndTimeEstimatorProviders(defaultConfiguration));
         Actions.doSafe(() -> bootstrapPruningProviders(defaultConfiguration));
         Actions.doSafe(() -> bootstrapProperties(defaultConfiguration));
-        Actions.doSafe(() -> bootstrapPlatforms(defaultConfiguration));
+        Actions.doSafe(() -> bootstrapPlugins(defaultConfiguration));
     }
 
-    private static final String BASIC_PLATFORM = "org.qcri.rheem.basic.plugin.RheemBasicPlatform";
+    private static final String BASIC_PLUGIN = "org.qcri.rheem.basic.plugin.RheemBasic";
 
     private String name = "(no name)";
 
@@ -74,6 +79,10 @@ public class Configuration {
     private KeyValueProvider<Platform, Long> platformStartUpTimeProvider;
 
     private ExplicitCollectionProvider<Platform> platformProvider;
+
+    private ExplicitCollectionProvider<Mapping> mappingProvider;
+
+    private ExplicitCollectionProvider<ChannelConversion> channelConversionProvider;
 
     private ValueProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
 
@@ -102,8 +111,8 @@ public class Configuration {
      */
     public Configuration(String configurationFileUrl) {
         this(getDefaultConfiguration());
-        this.name = configurationFileUrl;
         if (configurationFileUrl != null) {
+            this.name = configurationFileUrl;
             this.load(configurationFileUrl);
         }
     }
@@ -117,6 +126,8 @@ public class Configuration {
         if (this.parent != null) {
             // Providers for platforms.
             this.platformProvider = new ExplicitCollectionProvider<>(this, this.parent.platformProvider);
+            this.mappingProvider = new ExplicitCollectionProvider<>(this, this.parent.mappingProvider);
+            this.channelConversionProvider = new ExplicitCollectionProvider<>(this, this.parent.channelConversionProvider);
 
             // Providers for cardinality estimation.
             this.cardinalityEstimatorProvider =
@@ -222,15 +233,17 @@ public class Configuration {
         return defaultConfiguration;
     }
 
-    private static void bootstrapPlatforms(Configuration configuration) {
-        ExplicitCollectionProvider<Platform> platformProvider = new ExplicitCollectionProvider<>(configuration);
+    private static void bootstrapPlugins(Configuration configuration) {
+        configuration.setPlatformProvider(new ExplicitCollectionProvider<>(configuration));
+        configuration.setMappingProvider(new ExplicitCollectionProvider<>(configuration));
+        configuration.setChannelConversionProvider(new ExplicitCollectionProvider<>(configuration));
         try {
-            Platform platform = Platform.load(BASIC_PLATFORM);
-            platformProvider.addToWhitelist(platform);
+            Plugin basicPlugin = ReflectionUtils.instantiateDefault(BASIC_PLUGIN);
+            basicPlugin.configure(configuration);
         } catch (Exception e) {
-            LoggerFactory.getLogger(Configuration.class).error("Could not load Rheem basic.");
+            logger.warn("Could not load basic plugin.");
+            logger.debug("", e);
         }
-        configuration.setPlatformProvider(platformProvider);
     }
 
     private static void bootstrapCardinalityEstimationProvider(final Configuration configuration) {
@@ -341,7 +354,7 @@ public class Configuration {
             KeyValueProvider<ExecutionOperator, LoadProfileEstimator> builtInProvider =
                     new FunctionalKeyValueProvider<>(
                             fallbackProvider,
-                            operator -> operator.createLoadProfileEstimator(configuration).orElse(null)
+                            (operator, requestee) -> operator.createLoadProfileEstimator(requestee.getConfiguration()).orElse(null)
                     );
 
             // Customizable layer: Users can override manually.
@@ -479,7 +492,7 @@ public class Configuration {
                                 if (!optInstrumentationtStrategyClass.isPresent()) {
                                     return null;
                                 }
-                                return ReflectionUtils.instantiateDefault(optInstrumentationtStrategyClass.get());
+                                return instantiateDefault(optInstrumentationtStrategyClass.get());
                             },
                             defaultProvider
                     );
@@ -579,6 +592,22 @@ public class Configuration {
 
     public void setPlatformProvider(ExplicitCollectionProvider<Platform> platformProvider) {
         this.platformProvider = platformProvider;
+    }
+
+    public ExplicitCollectionProvider<Mapping> getMappingProvider() {
+        return mappingProvider;
+    }
+
+    public void setMappingProvider(ExplicitCollectionProvider<Mapping> mappingProvider) {
+        this.mappingProvider = mappingProvider;
+    }
+
+    public ExplicitCollectionProvider<ChannelConversion> getChannelConversionProvider() {
+        return channelConversionProvider;
+    }
+
+    public void setChannelConversionProvider(ExplicitCollectionProvider<ChannelConversion> channelConversionProvider) {
+        this.channelConversionProvider = channelConversionProvider;
     }
 
     public ValueProvider<Comparator<TimeEstimate>> getTimeEstimateComparatorProvider() {
