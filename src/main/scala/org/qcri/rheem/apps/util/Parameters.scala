@@ -1,11 +1,16 @@
 package org.qcri.rheem.apps.util
 
 import org.qcri.rheem.core.plugin.{DynamicPlugin, Plugin}
+import org.qcri.rheem.graphchi.GraphChi
 import org.qcri.rheem.graphchi.platform.GraphChiPlatform
-import org.qcri.rheem.java.JavaPlatform
-import org.qcri.rheem.postgres.PostgresPlatform
+import org.qcri.rheem.java.Java
+import org.qcri.rheem.java.platform.JavaPlatform
+import org.qcri.rheem.postgres.Postgres
+import org.qcri.rheem.postgres.platform.PostgresPlatform
+import org.qcri.rheem.spark.Spark
 import org.qcri.rheem.spark.platform.SparkPlatform
-import org.qcri.rheem.sqlite3.Sqlite3Platform
+import org.qcri.rheem.sqlite3.Sqlite3
+import org.qcri.rheem.sqlite3.platform.Sqlite3Platform
 
 /**
   * Utility to parse parameters of the apps.
@@ -21,11 +26,11 @@ object Parameters {
     * @return the loaded [[Plugin]]
     */
   def loadPlugin(id: String): Plugin = id match {
-    case "java" => JavaPlatform.getInstance
-    case "spark" => SparkPlatform.getInstance
-    case "graphchi" => GraphChiPlatform.getInstance
-    case "postgres" => PostgresPlatform.getInstance
-    case "sqlite3" => Sqlite3Platform.getInstance
+    case "java" => Java.basicPlugin
+    case "spark" => Spark.basicPlugin
+    case "graphchi" => GraphChi.plugin
+    case "postgres" => Postgres.plugin
+    case "sqlite3" => Sqlite3.plugin
     case yamlId(url) => DynamicPlugin.loadYaml(url)
     case other => throw new IllegalArgumentException(s"Could not load platform '$other'.")
   }
