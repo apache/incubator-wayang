@@ -11,7 +11,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
-import org.qcri.rheem.sqlite3.platform.Sqlite3Platform;
+import org.qcri.rheem.sqlite3.Sqlite3;
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource;
 
 import java.net.URI;
@@ -650,7 +650,7 @@ public class RheemPlans {
      * @throws SQLException
      */
     public static void prepareSqlite3Scenarios(Configuration configuration) throws SQLException {
-        try (Connection connection = Sqlite3Platform.getInstance()
+        try (Connection connection = Sqlite3.platform()
                 .createDatabaseDescriptor(configuration)
                 .createJdbcConnection()) {
             final Statement statement = connection.createStatement();

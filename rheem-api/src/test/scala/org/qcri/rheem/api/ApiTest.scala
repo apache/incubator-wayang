@@ -7,14 +7,11 @@ import org.junit.{Assert, Test}
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
 import org.qcri.rheem.core.function.{ExecutionContext, TransformationDescriptor}
+import org.qcri.rheem.java.Java
 import org.qcri.rheem.java.operators.JavaMapOperator
-import org.qcri.rheem.java.platform.JavaPlatform
-import org.qcri.rheem.java.plugin.JavaBasicPlugin
-import org.qcri.rheem.spark.platform.SparkPlatform
-import org.qcri.rheem.spark.plugin.SparkBasicPlugin
+import org.qcri.rheem.spark.Spark
+import org.qcri.rheem.sqlite3.Sqlite3
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource
-import org.qcri.rheem.sqlite3.platform.Sqlite3Platform
-import org.qcri.rheem.sqlite3.plugin.Sqlite3Plugin
 
 /**
   * Tests the Rheem API.
@@ -24,7 +21,7 @@ class ApiTest {
   @Test
   def testReadMapCollect(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = (for (i <- 1 to 10) yield i).toArray
@@ -43,7 +40,7 @@ class ApiTest {
   @Test
   def testCustomOperator(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = (for (i <- 1 to 10) yield i).toArray
@@ -73,7 +70,7 @@ class ApiTest {
   @Test
   def testCustomOperatorShortCut(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = (for (i <- 1 to 10) yield i).toArray
@@ -99,7 +96,7 @@ class ApiTest {
   @Test
   def testWordCount(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array("Big data is big.", "Is data big data?")
@@ -121,18 +118,18 @@ class ApiTest {
   @Test
   def testWordCountOnSparkAndJava(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array("Big data is big.", "Is data big data?")
 
     // Build and execute a word count RheemPlan.
     val wordCounts = rheem
-      .loadCollection(inputValues).withName("Load input values").withTargetPlatforms(JavaPlatform.getInstance)
-      .flatMap(_.split("\\s+")).withName("Split words").withTargetPlatforms(JavaPlatform.getInstance)
-      .map(_.replaceAll("\\W+", "").toLowerCase).withName("To lowercase").withTargetPlatforms(SparkPlatform.getInstance)
-      .map((_, 1)).withName("Attach counter").withTargetPlatforms(SparkPlatform.getInstance)
-      .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)).withName("Sum counters").withTargetPlatforms(SparkPlatform.getInstance)
+      .loadCollection(inputValues).withName("Load input values").withTargetPlatforms(Java.platform)
+      .flatMap(_.split("\\s+")).withName("Split words").withTargetPlatforms(Java.platform)
+      .map(_.replaceAll("\\W+", "").toLowerCase).withName("To lowercase").withTargetPlatforms(Spark.platform)
+      .map((_, 1)).withName("Attach counter").withTargetPlatforms(Spark.platform)
+      .reduceByKey(_._1, (a, b) => (a._1, a._2 + b._2)).withName("Sum counters").withTargetPlatforms(Spark.platform)
       .collect().toSet
 
     val expectedWordCounts = Set(("big", 3), ("is", 2), ("data", 3))
@@ -143,7 +140,7 @@ class ApiTest {
   @Test
   def testDoWhile(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array(1, 2)
@@ -166,7 +163,7 @@ class ApiTest {
   @Test
   def testRepeat(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array(1, 2)
@@ -189,7 +186,7 @@ class ApiTest {
   @Test
   def testBroadcast() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     // Generate some test data.
     val inputStrings = Array("Hello", "World", "Hi", "Mars")
@@ -222,7 +219,7 @@ class ApiTest {
   @Test
   def testGroupBy() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
 
@@ -246,7 +243,7 @@ class ApiTest {
   @Test
   def testGroup() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
 
@@ -270,7 +267,7 @@ class ApiTest {
   @Test
   def testJoin() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     val inputValues1 = Array(("Water", 0), ("Tonic", 5), ("Juice", 10))
     val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
@@ -290,7 +287,7 @@ class ApiTest {
   @Test
   def testIntersect() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     val inputValues1 = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
     val inputValues2 = Array(0, 2, 3, 3, 4, 5, 7, 8, 9, 11)
@@ -309,7 +306,7 @@ class ApiTest {
   @Test
   def testZipWithId() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new SparkBasicPlugin)
+    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
 
     val inputValues = for (i <- 0 until 100; j <- 0 until 42) yield i
 
@@ -337,7 +334,7 @@ class ApiTest {
     configuration.setProperty("rheem.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath)
 
     try {
-      val connection: Connection = Sqlite3Platform.getInstance.createDatabaseDescriptor(configuration).createJdbcConnection
+      val connection: Connection = Sqlite3.platform.createDatabaseDescriptor(configuration).createJdbcConnection
       try {
         val statement: Statement = connection.createStatement
         statement.addBatch("DROP TABLE IF EXISTS customer;")
@@ -352,11 +349,11 @@ class ApiTest {
     }
 
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new Sqlite3Plugin)
+    val rheem = new RheemContext(configuration).`with`(Java.basicPlugin).`with`(Sqlite3.plugin)
 
     val result = rheem
       .readTable(new Sqlite3TableSource("customer", "name", "age"))
-      .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18").withTargetPlatforms(JavaPlatform.getInstance)
+      .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18").withTargetPlatforms(Java.platform)
       .projectRecords(Seq("name"))
       .map(_.getField(0).asInstanceOf[String])
       .collect("SQLite3 with Scala API")
@@ -375,7 +372,7 @@ class ApiTest {
     configuration.setProperty("rheem.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath)
 
     try {
-      val connection: Connection = Sqlite3Platform.getInstance.createDatabaseDescriptor(configuration).createJdbcConnection
+      val connection: Connection = Sqlite3.platform.createDatabaseDescriptor(configuration).createJdbcConnection
       try {
         val statement: Statement = connection.createStatement
         statement.addBatch("DROP TABLE IF EXISTS customer;")
@@ -390,12 +387,12 @@ class ApiTest {
     }
 
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(new JavaBasicPlugin).`with`(new Sqlite3Plugin)
+    val rheem = new RheemContext(configuration).`with`(Java.basicPlugin).`with`(Sqlite3.plugin)
 
     val result = rheem
       .readTable(new Sqlite3TableSource("customer", "name", "age"))
       .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18")
-      .projectRecords(Seq("name")).withTargetPlatforms(Sqlite3Platform.getInstance)
+      .projectRecords(Seq("name")).withTargetPlatforms(Sqlite3.platform)
       .map(_.getField(0).asInstanceOf[String])
       .collect("SQLite3 with Scala API")
       .toSet

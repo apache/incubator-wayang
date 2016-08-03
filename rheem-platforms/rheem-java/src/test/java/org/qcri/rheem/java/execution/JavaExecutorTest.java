@@ -10,11 +10,11 @@ import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.java.Java;
 import org.qcri.rheem.java.operators.JavaCollectionSource;
 import org.qcri.rheem.java.operators.JavaDoWhileOperator;
 import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 import org.qcri.rheem.java.operators.JavaMapOperator;
-import org.qcri.rheem.java.plugin.JavaBasicPlugin;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -104,7 +104,7 @@ public class JavaExecutorTest {
         loop.endIteration(id1, 0, id2, 0);
         loop.outputConnectTo(sink, 0);
 
-        final RheemContext rheemContext = new RheemContext().with(new JavaBasicPlugin());
+        final RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
         rheemContext.execute(new RheemPlan(sink));
 
         Assert.assertEquals(RheemArrays.asList(6, 7, 8), collector);

@@ -18,11 +18,9 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.java.platform.JavaPlatform;
-import org.qcri.rheem.java.plugin.JavaBasicPlugin;
-import org.qcri.rheem.spark.platform.SparkPlatform;
-import org.qcri.rheem.spark.plugin.SparkBasicPlugin;
-import org.qcri.rheem.sqlite3.plugin.Sqlite3Plugin;
+import org.qcri.rheem.java.Java;
+import org.qcri.rheem.spark.Spark;
+import org.qcri.rheem.sqlite3.Sqlite3;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
 import java.io.File;
@@ -63,8 +61,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
@@ -80,14 +78,14 @@ public class FullIntegrationIT {
         List<String> collector = new LinkedList<>();
         RheemPlan rheemPlan = RheemPlans.readWrite(RheemPlans.FILE_SOME_LINES_TXT, collector);
         final Operator sink = rheemPlan.getSinks().stream().findFirst().get();
-        sink.addTargetPlatform(SparkPlatform.getInstance());
+        sink.addTargetPlatform(Spark.platform());
         final Operator source = sink.getInputOperator(0);
-        source.addTargetPlatform(JavaPlatform.getInstance());
+        source.addTargetPlatform(Java.platform());
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
@@ -104,8 +102,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
@@ -120,8 +118,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
@@ -139,8 +137,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
@@ -170,8 +168,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);
@@ -195,8 +193,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
 
@@ -212,8 +210,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
 
@@ -228,8 +226,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
 
@@ -244,8 +242,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
     }
@@ -257,8 +255,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
     }
@@ -270,8 +268,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
     }
@@ -283,8 +281,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
     }
@@ -295,17 +293,17 @@ public class FullIntegrationIT {
         final Set<Integer> collector = new HashSet<>();
         RheemPlan rheemPlan = RheemPlans.simpleLoop(3, collector, 0, 1, 2);
 
-        rheemPlan.collectTopLevelOperatorByName("source").addTargetPlatform(SparkPlatform.getInstance());
-        rheemPlan.collectTopLevelOperatorByName("convergenceSource").addTargetPlatform(SparkPlatform.getInstance());
-        rheemPlan.collectTopLevelOperatorByName("loop").addTargetPlatform(JavaPlatform.getInstance());
-        rheemPlan.collectTopLevelOperatorByName("step").addTargetPlatform(JavaPlatform.getInstance());
-        rheemPlan.collectTopLevelOperatorByName("counter").addTargetPlatform(JavaPlatform.getInstance());
-        rheemPlan.collectTopLevelOperatorByName("sink").addTargetPlatform(SparkPlatform.getInstance());
+        rheemPlan.collectTopLevelOperatorByName("source").addTargetPlatform(Spark.platform());
+        rheemPlan.collectTopLevelOperatorByName("convergenceSource").addTargetPlatform(Spark.platform());
+        rheemPlan.collectTopLevelOperatorByName("loop").addTargetPlatform(Java.platform());
+        rheemPlan.collectTopLevelOperatorByName("step").addTargetPlatform(Java.platform());
+        rheemPlan.collectTopLevelOperatorByName("counter").addTargetPlatform(Java.platform());
+        rheemPlan.collectTopLevelOperatorByName("sink").addTargetPlatform(Spark.platform());
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
 
@@ -319,17 +317,17 @@ public class FullIntegrationIT {
         final List<Integer> collector = new LinkedList<>();
         RheemPlan rheemPlan = RheemPlans.simpleLoop(3, collector, 0, 1, 2);
 
-        rheemPlan.collectTopLevelOperatorByName("source").addTargetPlatform(SparkPlatform.getInstance());
-        rheemPlan.collectTopLevelOperatorByName("convergenceSource").addTargetPlatform(SparkPlatform.getInstance());
-        rheemPlan.collectTopLevelOperatorByName("loop").addTargetPlatform(JavaPlatform.getInstance());
-        rheemPlan.collectTopLevelOperatorByName("step").addTargetPlatform(SparkPlatform.getInstance());
-        rheemPlan.collectTopLevelOperatorByName("counter").addTargetPlatform(JavaPlatform.getInstance());
-        rheemPlan.collectTopLevelOperatorByName("sink").addTargetPlatform(SparkPlatform.getInstance());
+        rheemPlan.collectTopLevelOperatorByName("source").addTargetPlatform(Spark.platform());
+        rheemPlan.collectTopLevelOperatorByName("convergenceSource").addTargetPlatform(Spark.platform());
+        rheemPlan.collectTopLevelOperatorByName("loop").addTargetPlatform(Java.platform());
+        rheemPlan.collectTopLevelOperatorByName("step").addTargetPlatform(Spark.platform());
+        rheemPlan.collectTopLevelOperatorByName("counter").addTargetPlatform(Java.platform());
+        rheemPlan.collectTopLevelOperatorByName("sink").addTargetPlatform(Spark.platform());
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
         final HashSet<Integer> expected = new HashSet<>(RheemArrays.asList(RheemArrays.range(0, 24)));
@@ -344,8 +342,8 @@ public class FullIntegrationIT {
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
 
         rheemContext.execute(rheemPlan);
         System.out.println(collector);
@@ -376,8 +374,8 @@ public class FullIntegrationIT {
         mapOperator.connectTo(0, sink, 0);
 
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new SparkBasicPlugin())
-                .with(new JavaBasicPlugin());
+                .with(Spark.basicPlugin())
+                .with(Java.basicPlugin());
 
         rheemContext.execute(new RheemPlan(sink));
         System.out.println(collector);
@@ -389,9 +387,9 @@ public class FullIntegrationIT {
         final RheemPlan rheemPlan = RheemPlans.sqlite3Scenario1(collector);
 
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin())
-                .with(new Sqlite3Plugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin())
+                .with(Sqlite3.plugin());
 
         rheemContext.execute("SQLite3 scenario 1", rheemPlan);
 
@@ -404,9 +402,9 @@ public class FullIntegrationIT {
         final RheemPlan rheemPlan = RheemPlans.sqlite3Scenario2(collector);
 
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin())
-                .with(new Sqlite3Plugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin())
+                .with(Sqlite3.plugin());
 
         rheemContext.execute("SQLite3 scenario 2", rheemPlan);
 
@@ -422,9 +420,9 @@ public class FullIntegrationIT {
         final RheemPlan rheemPlan = RheemPlans.sqlite3Scenario3(collector);
 
         RheemContext rheemContext = new RheemContext(configuration)
-                .with(new JavaBasicPlugin())
-                .with(new SparkBasicPlugin())
-                .with(new Sqlite3Plugin());
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin())
+                .with(Sqlite3.plugin());
 
         rheemContext.execute("SQLite3 scenario 3", rheemPlan);
 
