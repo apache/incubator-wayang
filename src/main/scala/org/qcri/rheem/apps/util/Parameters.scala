@@ -1,7 +1,7 @@
 package org.qcri.rheem.apps.util
 
 import org.qcri.rheem.core.plugin.{DynamicPlugin, Plugin}
-import org.qcri.rheem.graphchi.GraphChiPlatform
+import org.qcri.rheem.graphchi.platform.GraphChiPlatform
 import org.qcri.rheem.java.JavaPlatform
 import org.qcri.rheem.postgres.PostgresPlatform
 import org.qcri.rheem.spark.platform.SparkPlatform
