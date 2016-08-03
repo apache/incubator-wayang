@@ -2,6 +2,7 @@ package org.qcri.rheem.tests;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.CollectionSource;
@@ -216,6 +217,24 @@ public class FullIntegrationIT {
         rheemContext.execute(rheemPlan);
 
         Assert.assertEquals(RheemCollections.asSet(1, 4, 9), RheemCollections.asSet(collector));
+    }
+
+    @Ignore("No implementation/mapping for the RepeatOperator so far.")
+    @Test
+    public void testRepeat() {
+        // Build the RheemPlan.
+        List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.repeat(collector, 5, 0, 10, 20, 30, 45);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext(configuration)
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
+
+        rheemContext.execute(rheemPlan);
+
+        Assert.assertEquals(5, collector.size());
+        Assert.assertEquals(RheemCollections.asSet(5, 15, 25, 35, 50), RheemCollections.asSet(collector));
     }
 
     @Test

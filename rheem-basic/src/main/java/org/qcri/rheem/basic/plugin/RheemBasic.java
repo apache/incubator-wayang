@@ -1,8 +1,6 @@
 package org.qcri.rheem.basic.plugin;
 
-import org.qcri.rheem.basic.mapping.GlobalReduceMapping;
-import org.qcri.rheem.basic.mapping.MaterializedGroupByMapping;
-import org.qcri.rheem.basic.mapping.ReduceByMapping;
+import org.qcri.rheem.basic.mapping.Mappings;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
@@ -13,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -49,7 +46,7 @@ public class RheemBasic implements Plugin {
 
     @Override
     public Collection<Mapping> getMappings() {
-        return Arrays.asList(new ReduceByMapping(), new MaterializedGroupByMapping(), new GlobalReduceMapping());
+        return Mappings.BASIC_MAPPINGS;
     }
 
     @Override

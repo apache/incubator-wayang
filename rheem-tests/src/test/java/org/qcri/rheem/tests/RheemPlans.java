@@ -308,6 +308,39 @@ public class RheemPlans {
         return new RheemPlan(sink);
     }
 
+
+    /**
+     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link RepeatOperator}.
+     * The input values will be incremented by 1 n times.
+     * It will then push the results in the {@code collector}.
+     */
+    public static RheemPlan repeat(Collection<Integer> collector, int numIterations, final int... values) {
+        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        source.setName("source");
+
+        RepeatOperator<Integer> repeat = new RepeatOperator<>(numIterations, Integer.class);
+        repeat.setName("repeat");
+
+        MapOperator<Integer, Integer> increment = new MapOperator<>(
+                i -> i + 1, Integer.class, Integer.class
+        );
+        increment.setName("increment");
+
+        LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(
+                collector,
+                DataSetType.createDefault(Integer.class)
+        );
+        sink.setName("sink");
+
+        repeat.initialize(source, 0);
+        repeat.beginIteration(increment, 0);
+        repeat.endIteration(increment, 0);
+        repeat.connectFinalOutputTo(sink, 0);
+
+        return new RheemPlan(sink);
+    }
+
+
     /**
      * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link ZipWithIdOperator}.
      * It will then push the results in the {@code collector}.

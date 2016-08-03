@@ -19,8 +19,8 @@ public class RepeatOperator<Type> extends OperatorBase implements ElementaryOper
     public static final int INITIAL_INPUT_INDEX = 0;
     public static final int ITERATION_INPUT_INDEX = 1;
 
-    public static final int ITERATION_OUTPUT_INDEX = 1;
-    public static final int FINAL_OUTPUT_INDEX = 0;
+    public static final int ITERATION_OUTPUT_INDEX = 0;
+    public static final int FINAL_OUTPUT_INDEX = 1;
 
     private final int numIterations;
 
