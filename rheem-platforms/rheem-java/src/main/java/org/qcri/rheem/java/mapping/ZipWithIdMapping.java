@@ -7,7 +7,7 @@ import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaMapOperator;
 
 import java.util.Collection;

@@ -6,8 +6,8 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.*;
-import org.qcri.rheem.graphchi.GraphChiPlatform;
-import org.qcri.rheem.graphchi.operators.GraphChiOperator;
+import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
+import org.qcri.rheem.graphchi.operators.GraphChiExecutionOperator;
 
 import java.util.*;
 
@@ -47,7 +47,7 @@ public class GraphChiExecutor extends ExecutorTemplate {
      * Brings the given {@code task} into execution.
      */
     private void execute(ExecutionTask task, OptimizationContext optimizationContext, ExecutionState executionState) {
-        final GraphChiOperator graphChiOperator = (GraphChiOperator) task.getOperator();
+        final GraphChiExecutionOperator graphChiExecutionOperator = (GraphChiExecutionOperator) task.getOperator();
 
         ChannelInstance[] inputChannelInstances = new ChannelInstance[task.getNumInputChannels()];
         for (int i = 0; i < inputChannelInstances.length; i++) {
@@ -57,9 +57,9 @@ public class GraphChiExecutor extends ExecutorTemplate {
         for (int i = 0; i < outputChannelInstances.length; i++) {
             outputChannelInstances[i] = task
                     .getOutputChannel(i)
-                    .createInstance(this, optimizationContext.getOperatorContext(graphChiOperator), i);
+                    .createInstance(this, optimizationContext.getOperatorContext(graphChiExecutionOperator), i);
         }
-        graphChiOperator.execute(inputChannelInstances, outputChannelInstances, this.configuration);
+        graphChiExecutionOperator.execute(inputChannelInstances, outputChannelInstances, this.configuration);
         for (ChannelInstance outputChannelInstance : outputChannelInstances) {
             if (outputChannelInstance != null) {
                 executionState.register(outputChannelInstance);

@@ -15,7 +15,7 @@ import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
-import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
+import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
 import org.slf4j.LoggerFactory;
 

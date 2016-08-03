@@ -8,7 +8,7 @@ import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 
 /**
  * {@link Channel} that represents a broadcasted value.

@@ -7,7 +7,7 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.Collection;
 

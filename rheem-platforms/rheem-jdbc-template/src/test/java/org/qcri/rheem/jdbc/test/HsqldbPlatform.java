@@ -1,6 +1,6 @@
 package org.qcri.rheem.jdbc.test;
 
-import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
+import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 
 /**
  * {@link JdbcPlatformTemplate} implementation based on HSQLDB for test purposes.
@@ -11,11 +11,6 @@ public class HsqldbPlatform extends JdbcPlatformTemplate {
 
     public HsqldbPlatform() {
         super("HSQLDB (test)");
-    }
-
-    @Override
-    protected void initializeMappings() {
-        // TODO
     }
 
     public static HsqldbPlatform getInstance() {

@@ -5,14 +5,14 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.operators.*;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * {@link ChannelConversion}s used by the {@link JavaPlatform}.
+ * {@link ChannelConversion}s for the {@link JavaPlatform}.
  */
 public class ChannelConversions {
 

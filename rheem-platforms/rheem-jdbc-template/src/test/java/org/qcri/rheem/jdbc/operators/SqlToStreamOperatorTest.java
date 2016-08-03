@@ -13,7 +13,7 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.profiling.FullInstrumentationStrategy;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;

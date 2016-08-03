@@ -4,7 +4,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.postgres.PostgresPlatform;
+import org.qcri.rheem.postgres.platform.PostgresPlatform;
 
 import java.sql.Connection;
 import java.sql.SQLException;

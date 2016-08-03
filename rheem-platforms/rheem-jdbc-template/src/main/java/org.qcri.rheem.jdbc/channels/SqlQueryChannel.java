@@ -6,7 +6,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.*;
-import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
+import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 
 import java.util.Objects;
 

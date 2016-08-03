@@ -17,7 +17,7 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
-import org.qcri.rheem.graphchi.GraphChiPlatform;
+import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * PageRank {@link Operator} implementation for the {@link GraphChiPlatform}.
  */
-public class GraphChiPageRankOperator extends PageRankOperator implements GraphChiOperator {
+public class GraphChiPageRankOperator extends PageRankOperator implements GraphChiExecutionOperator {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
