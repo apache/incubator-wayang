@@ -5,7 +5,7 @@ import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.slf4j.LoggerFactory;
 

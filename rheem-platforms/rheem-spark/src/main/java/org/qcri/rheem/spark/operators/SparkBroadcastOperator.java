@@ -10,7 +10,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.Collection;
 import java.util.Collections;

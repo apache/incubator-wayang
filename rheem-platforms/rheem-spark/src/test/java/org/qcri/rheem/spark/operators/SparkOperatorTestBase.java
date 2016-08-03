@@ -6,10 +6,9 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.profiling.FullInstrumentationStrategy;
-import org.qcri.rheem.core.profiling.NoInstrumentationStrategy;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.qcri.rheem.spark.test.ChannelFactory;
 

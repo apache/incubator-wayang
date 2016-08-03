@@ -16,7 +16,7 @@ import java.util.Collections;
  * Mapping from {@link SampleOperator} to {@link SparkRandomPartitionSampleOperator}.
  */
 @SuppressWarnings("unchecked")
-public class SampleToSparkSampleMapping implements Mapping {
+public class SampleMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {

@@ -14,7 +14,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collections;

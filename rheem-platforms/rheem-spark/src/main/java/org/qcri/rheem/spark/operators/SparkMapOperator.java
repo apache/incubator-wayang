@@ -4,7 +4,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -14,7 +13,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.Arrays;
 import java.util.Collections;

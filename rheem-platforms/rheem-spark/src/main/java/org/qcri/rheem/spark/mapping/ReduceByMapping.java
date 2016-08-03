@@ -1,20 +1,19 @@
 package org.qcri.rheem.spark.mapping;
 
-import org.qcri.rheem.basic.operators.MapOperator;
+import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.operators.SparkMapOperator;
-import org.qcri.rheem.spark.operators.SparkMapPartitionsOperator;
+import org.qcri.rheem.spark.operators.SparkReduceByOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link MapOperator} to {@link SparkMapOperator}.
+ * Mapping from {@link ReduceByOperator} to {@link SparkReduceByOperator}.
  */
 @SuppressWarnings("unchecked")
-public class MapOperatorToSparkMapPartitionsOperatorMapping implements Mapping {
+public class ReduceByMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -27,14 +26,14 @@ public class MapOperatorToSparkMapPartitionsOperatorMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "map", new MapOperator<>(null, DataSetType.none(), DataSetType.none()), false
+                "reduceBy", new ReduceByOperator<>(null, null, DataSetType.none()), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<MapOperator>(
-                (matchedOperator, epoch) -> new SparkMapPartitionsOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<ReduceByOperator>(
+                (matchedOperator, epoch) -> new SparkReduceByOperator<>(matchedOperator).at(epoch)
         );
     }
 }

@@ -24,6 +24,7 @@ import org.qcri.rheem.spark.operators.SparkFlatMapOperator;
 import org.qcri.rheem.spark.operators.SparkMapOperator;
 import org.qcri.rheem.spark.operators.SparkTextFileSource;
 import org.qcri.rheem.spark.platform.SparkPlatform;
+import org.qcri.rheem.spark.plugin.SparkBasicPlugin;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -176,7 +177,7 @@ public class WordCountIT {
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
         final Job job = rheemContext.createJob(null, rheemPlan);
-        SparkPlatform.getInstance().configure(job.getConfiguration());
+        new SparkBasicPlugin().configure(job.getConfiguration());
         job.execute();
 
         // Verify the plan result.
@@ -200,7 +201,7 @@ public class WordCountIT {
 
         // Instantiate Rheem and activate the backend.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(SparkPlatform.getInstance());
+        rheemContext.register(new SparkBasicPlugin());
         rheemContext.register(new JavaBasicPlugin());
 
         TextFileSource textFileSource = new SparkTextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
@@ -331,7 +332,7 @@ public class WordCountIT {
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
         rheemContext.register(new JavaBasicPlugin());
-        rheemContext.register(SparkPlatform.getInstance());
+        rheemContext.register(new SparkBasicPlugin());
         rheemContext.execute(rheemPlan);
 
         // Verify the plan result.
@@ -404,7 +405,7 @@ public class WordCountIT {
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
         rheemContext.register(new JavaBasicPlugin());
-        rheemContext.register(SparkPlatform.getInstance());
+        rheemContext.register(new SparkBasicPlugin());
         rheemContext.execute(rheemPlan);
 
         // Verify the plan result.

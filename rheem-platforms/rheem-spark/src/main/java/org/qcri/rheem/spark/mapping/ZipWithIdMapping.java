@@ -1,18 +1,18 @@
 package org.qcri.rheem.spark.mapping;
 
-import org.qcri.rheem.basic.operators.UnionAllOperator;
+import org.qcri.rheem.basic.operators.ZipWithIdOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.operators.SparkUnionAllOperator;
+import org.qcri.rheem.spark.operators.SparkZipWithIdOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link UnionAllOperator} to {@link SparkUnionAllOperator}.
+ * Mapping from {@link ZipWithIdOperator} to {@link SparkZipWithIdOperator}.
  */
-public class UnionAllToSparkUnionAllMapping implements Mapping {
+public class ZipWithIdMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -24,15 +24,14 @@ public class UnionAllToSparkUnionAllMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern(
-                "unionAll", new UnionAllOperator<>(DataSetType.none()), false
-        );
+        final OperatorPattern operatorPattern =
+                new OperatorPattern<>("zipwithid", new ZipWithIdOperator<>(DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<UnionAllOperator>(
-                (matchedOperator, epoch) -> new SparkUnionAllOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<ZipWithIdOperator>(
+                (matchedOperator, epoch) -> new SparkZipWithIdOperator<>(matchedOperator).at(epoch)
         );
     }
 }

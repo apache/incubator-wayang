@@ -1,4 +1,4 @@
-package org.qcri.rheem.spark.platform;
+package org.qcri.rheem.spark.execution;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.api.Job;
@@ -13,8 +13,8 @@ import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
-import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
+import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Arrays;
 import java.util.List;

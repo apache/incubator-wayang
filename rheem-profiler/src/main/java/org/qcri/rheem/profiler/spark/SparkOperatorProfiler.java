@@ -12,7 +12,7 @@ import org.qcri.rheem.profiler.util.RrdAccessor;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.rrd4j.ConsolFun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

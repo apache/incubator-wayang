@@ -1,19 +1,18 @@
 package org.qcri.rheem.spark.mapping;
 
-import org.qcri.rheem.basic.operators.MapOperator;
+import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.operators.SparkMapOperator;
+import org.qcri.rheem.spark.operators.SparkMaterializedGroupByOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link MapOperator} to {@link SparkMapOperator}.
+ * Mapping from {@link MaterializedGroupByOperator} to {@link SparkMaterializedGroupByOperator}.
  */
-@SuppressWarnings("unchecked")
-public class MapOperatorToSparkMapOperatorMapping implements Mapping {
+public class MaterializedGroupByMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -26,14 +25,14 @@ public class MapOperatorToSparkMapOperatorMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "map", new MapOperator<>(null, DataSetType.none(), DataSetType.none()), false
+                "operator", new MaterializedGroupByOperator<>(null, DataSetType.none(), DataSetType.groupedNone()), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<MapOperator>(
-                (matchedOperator, epoch) -> new SparkMapOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<MaterializedGroupByOperator>(
+                (matchedOperator, epoch) -> new SparkMaterializedGroupByOperator<>(matchedOperator).at(epoch)
         );
     }
 }

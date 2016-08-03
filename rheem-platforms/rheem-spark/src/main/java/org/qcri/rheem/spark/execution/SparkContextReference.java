@@ -1,4 +1,4 @@
-package org.qcri.rheem.spark.platform;
+package org.qcri.rheem.spark.execution;
 
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;

@@ -6,37 +6,32 @@ import org.qcri.rheem.basic.plugin.RheemBasic;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.java.platform.JavaPlatform;
-import org.qcri.rheem.spark.channels.ChannelConversions;
-import org.qcri.rheem.spark.mapping.*;
+import org.qcri.rheem.spark.execution.SparkContextReference;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.operators.SparkCollectionSource;
 import org.qcri.rheem.spark.operators.SparkLocalCallbackSink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * {@link Platform} for Apache Spark.
  */
-public class SparkPlatform extends Platform implements Plugin {
+public class SparkPlatform extends Platform {
 
     private static final String PLATFORM_NAME = "Apache Spark";
 
     private static final String DEFAULT_CONFIG_FILE = "rheem-spark-defaults.properties";
-
-    private final Collection<Mapping> mappings = new LinkedList<>();
 
     private static SparkPlatform instance = null;
 
@@ -81,7 +76,6 @@ public class SparkPlatform extends Platform implements Plugin {
 
     private SparkPlatform() {
         super(PLATFORM_NAME);
-        this.initializeMappings();
     }
 
     /**
@@ -89,7 +83,7 @@ public class SparkPlatform extends Platform implements Plugin {
      *
      * @return a {@link SparkContextReference} wrapping the {@link JavaSparkContext}
      */
-    SparkContextReference getSparkContext(Job job) {
+    public SparkContextReference getSparkContext(Job job) {
 
         // NB: There must be only one JavaSparkContext per JVM. Therefore, it is not local to the executor.
         final SparkConf sparkConf;
@@ -148,31 +142,6 @@ public class SparkPlatform extends Platform implements Plugin {
         configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
     }
 
-    private void initializeMappings() {
-        this.mappings.add(new CartesianToSparkCartesianMapping());
-        this.mappings.add(new CollectionSourceMapping());
-        this.mappings.add(new CountToSparkCountMapping());
-        this.mappings.add(new DistinctToSparkDistinctMapping());
-        this.mappings.add(new FilterToSparkFilterMapping());
-        this.mappings.add(new GlobalReduceMapping());
-        this.mappings.add(new GlobalMaterializedGroupToSparkGlobalMaterializedGroupMapping());
-        this.mappings.add(new LocalCallbackSinkMapping());
-        this.mappings.add(new FlatMapToSparkFlatMapMapping());
-        this.mappings.add(new MapOperatorToSparkMapOperatorMapping());
-        this.mappings.add(new MapOperatorToSparkMapPartitionsOperatorMapping());
-        this.mappings.add(new MtrlGroupByToSparkMtrlGroupByMapping());
-        this.mappings.add(new ReduceByToSparkReduceByMapping());
-        this.mappings.add(new SortToSparkSortMapping());
-        this.mappings.add(new TextFileSourceMapping());
-        this.mappings.add(new UnionAllToSparkUnionAllMapping());
-        this.mappings.add(new IntersectToSparkIntersectMapping());
-        this.mappings.add(new JoinToSparkJoinMapping());
-        this.mappings.add(new LoopToSparkLoopMapping());
-        this.mappings.add(new DoWhileMapping());
-        this.mappings.add(new ZipWithIdToSparkZipWithIdMapping());
-        this.mappings.add(new SampleToSparkSampleMapping());
-    }
-
     @Override
     public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
         int cpuMhz = (int) configuration.getLongProperty("rheem.spark.cpu.mhz");
@@ -188,26 +157,6 @@ public class SparkPlatform extends Platform implements Plugin {
                 (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate),
                 stretch
         );
-    }
-
-    @Override
-    public Collection<Mapping> getMappings() {
-        return this.mappings;
-    }
-
-    @Override
-    public Collection<Platform> getRequiredPlatforms() {
-        return Arrays.asList(this, JavaPlatform.getInstance());
-    }
-
-    @Override
-    public Collection<ChannelConversion> getChannelConversions() {
-        return ChannelConversions.ALL;
-    }
-
-    @Override
-    public void setProperties(Configuration configuration) {
-        // Nothing to do, because we already configured the properties in #configureDefaults(...).
     }
 
     @Override

@@ -1,20 +1,18 @@
 package org.qcri.rheem.spark.mapping;
 
-import org.qcri.rheem.basic.operators.FilterOperator;
-import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.basic.operators.SortOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.spark.operators.SparkFilterOperator;
+import org.qcri.rheem.spark.operators.SparkSortOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link FilterOperator} to {@link SparkFilterOperator}.
+ * Mapping from {@link SortOperator} to {@link SparkSortOperator}.
  */
-@SuppressWarnings("unchecked")
-public class FilterToSparkFilterMapping implements Mapping {
+public class SortMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -27,13 +25,14 @@ public class FilterToSparkFilterMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "filter", new FilterOperator<>((PredicateDescriptor) null, DataSetType.none()), false);
+                "sort", new SortOperator<>(DataSetType.none()), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<FilterOperator>(
-                (matchedOperator, epoch) -> new SparkFilterOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<SortOperator>(
+                (matchedOperator, epoch) -> new SparkSortOperator<>(matchedOperator).at(epoch)
         );
     }
 }
