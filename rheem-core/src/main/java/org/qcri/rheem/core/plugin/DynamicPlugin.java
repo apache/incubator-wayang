@@ -14,17 +14,18 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * This {@link Plugin} can be arbitrarily customized.
  */
 public class DynamicPlugin implements Plugin {
 
-    private final Set<Platform> requiredPlatforms = new HashSet<>();
+    private final Set<Platform> requiredPlatforms = new HashSet<>(), excludedRequiredPlatforms = new HashSet<>();
 
-    private final Set<Mapping> mappings = new HashSet<>();
+    private final Set<Mapping> mappings = new HashSet<>(), excludedMappings = new HashSet<>();
 
-    private final Set<ChannelConversion> channelConversions = new HashSet<>();
+    private final Set<ChannelConversion> channelConversions = new HashSet<>(), excludedChannelConversions = new HashSet<>();
 
     private final Map<String, String> properties = new HashMap<>();
 
@@ -33,11 +34,21 @@ public class DynamicPlugin implements Plugin {
      * <pre>{@code
      * # mappings to be loaded by this plugin
      * mappings:
-     *   - <expression that evaluates to a Mapping instance or Collection of such>
+     *   include:
+     *     - <expression that evaluates to a Mapping instance or Collection of such>
+     *     - ...
+     *   exclude:
+     *     - <expression that evaluates to a Mapping instance or Collection of such>
+     *     - ...
      *
      * # channel conversions to be loaded by this plugin
      * conversions:
-     *   - <expression that evaulates to a ChannelConversion instance or Collection of such>
+     *   include:
+     *     - <expression that evaulates to a ChannelConversion instance or Collection of such>
+     *     - ..
+     *   exclude:
+     *     - <expression that evaulates to a ChannelConversion instance or Collection of such>
+     *     - ..
      *
      * # properties configured by this plugin
      * properties:
@@ -45,7 +56,13 @@ public class DynamicPlugin implements Plugin {
      *
      * # required platforms
      * platforms:
-     *   - <expression that evaluates to a Platform instance or Collection of such>
+     *   include:
+     *     - <expression that evaluates to a Platform instance or Collection of such>
+     *     - ..
+     *   exclude:
+     *     - <expression that evaluates to a Platform instance or Collection of such>
+     *     - ..
+     *
      * }</pre>
      *
      * @param yamlUrl an URL to a YAML file of the above format
@@ -67,62 +84,102 @@ public class DynamicPlugin implements Plugin {
         DynamicPlugin plugin = new DynamicPlugin();
         try {
             // Evaluate YAML file.
-            Map<String, Object> values = asInstanceOf(yaml, Map.class);
-            if (values != null) {
+            DynamicPlugin.<Map<String, Object>>ifPresent(yaml, Map.class, values -> {
                 // Platforms.
-                List<String> platformExpressions = asInstanceOf(values.get("platforms"), List.class);
-                if (platformExpressions != null) {
-                    for (String platformExpression : platformExpressions) {
-                        Object eval = ReflectionUtils.evaluate(platformExpression);
-                        if (eval instanceof Platform) {
-                            plugin.addRequiredPlatform((Platform) eval);
-                        } else {
-                            Collection<?> platforms = (Collection<?>) eval;
-                            for (Object platform : platforms) {
-                                plugin.addRequiredPlatform((Platform) platform);
+                DynamicPlugin.<Map<String, Object>>ifPresent(values.get("platforms"), Map.class, platforms -> {
+                    DynamicPlugin.<List<String>>ifPresent(platforms.get("include"), List.class, expressions -> {
+                        for (String expression : expressions) {
+                            Object eval = ReflectionUtils.evaluate(expression);
+                            if (eval instanceof Platform) {
+                                plugin.addRequiredPlatform((Platform) eval);
+                            } else {
+                                Collection<?> platformCollection = (Collection<?>) eval;
+                                for (Object platform : platformCollection) {
+                                    plugin.addRequiredPlatform((Platform) platform);
+                                }
                             }
                         }
-                    }
-                }
+                    });
+                    DynamicPlugin.<List<String>>ifPresent(platforms.get("exclude"), List.class, expressions -> {
+                        for (String expression : expressions) {
+                            Object eval = ReflectionUtils.evaluate(expression);
+                            if (eval instanceof Platform) {
+                                plugin.excludeRequiredPlatform((Platform) eval);
+                            } else {
+                                Collection<?> platformCollection = (Collection<?>) eval;
+                                for (Object platform : platformCollection) {
+                                    plugin.excludeRequiredPlatform((Platform) platform);
+                                }
+                            }
+                        }
+                    });
+                });
 
                 // Mappings.
-                List<String> mappingExpressions = asInstanceOf(values.get("mappings"), List.class);
-                if (mappingExpressions != null) {
-                    for (String mappingExpression : mappingExpressions) {
-                        Object eval = ReflectionUtils.evaluate(mappingExpression);
-                        if (eval instanceof Mapping) {
-                            plugin.addMapping((Mapping) eval);
-                        } else {
-                            Collection<?> mappings = (Collection<?>) eval;
-                            for (Object mapping : mappings) {
-                                plugin.addMapping((Mapping) mapping);
+                DynamicPlugin.<Map<String, Object>>ifPresent(values.get("mappings"), Map.class, mappings -> {
+                    DynamicPlugin.<List<String>>ifPresent(mappings.get("include"), List.class, expressions -> {
+                        for (String expression : expressions) {
+                            Object eval = ReflectionUtils.evaluate(expression);
+                            if (eval instanceof Mapping) {
+                                plugin.addMapping((Mapping) eval);
+                            } else {
+                                Collection<?> collection = (Collection<?>) eval;
+                                for (Object element : collection) {
+                                    plugin.addMapping((Mapping) element);
+                                }
                             }
                         }
-                    }
-                }
+                    });
+                    DynamicPlugin.<List<String>>ifPresent(mappings.get("exclude"), List.class, expressions -> {
+                        for (String expression : expressions) {
+                            Object eval = ReflectionUtils.evaluate(expression);
+                            if (eval instanceof Mapping) {
+                                plugin.excludeMapping((Mapping) eval);
+                            } else {
+                                Collection<?> collection = (Collection<?>) eval;
+                                for (Object element : collection) {
+                                    plugin.excludeMapping((Mapping) element);
+                                }
+                            }
+                        }
+                    });
+                });
 
                 // ChannelConversions.
-                List<String> conversionExpressions = asInstanceOf(values.get("conversions"), List.class);
-                if (conversionExpressions != null) {
-                    for (String conversionExpression : conversionExpressions) {
-                        Object eval = ReflectionUtils.evaluate(conversionExpression);
-                        if (eval instanceof ChannelConversion) {
-                            plugin.addChannelConversion((ChannelConversion) eval);
-                        } else {
-                            Collection<?> conversions = (Collection<?>) eval;
-                            for (Object conversion : conversions) {
-                                plugin.addChannelConversion((ChannelConversion) conversion);
+                DynamicPlugin.<Map<String, Object>>ifPresent(values.get("conversions"), Map.class, conversions -> {
+                    DynamicPlugin.<List<String>>ifPresent(conversions.get("include"), List.class, expressions -> {
+                        for (String expression : expressions) {
+                            Object eval = ReflectionUtils.evaluate(expression);
+                            if (eval instanceof ChannelConversion) {
+                                plugin.addChannelConversion((ChannelConversion) eval);
+                            } else {
+                                Collection<?> collection = (Collection<?>) eval;
+                                for (Object element : collection) {
+                                    plugin.addChannelConversion((ChannelConversion) element);
+                                }
                             }
                         }
-                    }
-                }
+                    });
+                    DynamicPlugin.<List<String>>ifPresent(conversions.get("exclude"), List.class, expressions -> {
+                        for (String expression : expressions) {
+                            Object eval = ReflectionUtils.evaluate(expression);
+                            if (eval instanceof ChannelConversion) {
+                                plugin.excludeChannelConversion((ChannelConversion) eval);
+                            } else {
+                                Collection<?> collection = (Collection<?>) eval;
+                                for (Object element : collection) {
+                                    plugin.excludeChannelConversion((ChannelConversion) element);
+                                }
+                            }
+                        }
+                    });
+                });
 
                 // Properties.
-                Map<String, Object> properties = asInstanceOf(values.get("properties"), Map.class);
-                if (properties != null) {
+                DynamicPlugin.<Map<String, Object>>ifPresent(values.get("properties"), Map.class, properties -> {
                     properties.forEach(plugin::addProperty);
-                }
-            }
+                });
+            });
 
             return plugin;
         } catch (Exception e) {
@@ -130,23 +187,29 @@ public class DynamicPlugin implements Plugin {
         }
     }
 
+
     /**
-     * Checks and casts the given {@link Object}.
+     * Checks and casts the given {@link Object}. If it is not {@code null}, feed it to a {@link Consumer}.
      *
-     * @param o   to be casted
-     * @param t   to that should be casted
-     * @param <T>
-     * @return {@code o}, casted
+     * @param o        to be casted
+     * @param t        to that should be casted
+     * @param consumer accepts the casted {@code o} unless it is {@code null}
      */
     @SuppressWarnings("unchecked")
-    public static <T> T asInstanceOf(Object o, Class<? super T> t) {
-        if (o == null) return null;
-        Validate.isInstanceOf(t, o, "Expected %s to be of type %s (is %s).", o, t, o == null ? null : o.getClass());
-        return (T) o;
+    public static <T> void ifPresent(Object o, Class<? super T> t, Consumer<T> consumer) {
+        if (o == null) return;
+        Validate.isInstanceOf(t, o, "Expected %s to be of type %s (is %s).", o, t, o.getClass());
+        consumer.accept((T) o);
     }
 
     public void addRequiredPlatform(Platform platform) {
         this.requiredPlatforms.add(platform);
+        this.excludedRequiredPlatforms.remove(platform);
+    }
+
+    public void excludeRequiredPlatform(Platform platform) {
+        this.excludedRequiredPlatforms.add(platform);
+        this.requiredPlatforms.remove(platform);
     }
 
     @Override
@@ -154,8 +217,19 @@ public class DynamicPlugin implements Plugin {
         return this.requiredPlatforms;
     }
 
+    @Override
+    public Collection<Platform> getExcludedRequiredPlatforms() {
+        return this.excludedRequiredPlatforms;
+    }
+
     public void addMapping(Mapping mapping) {
         this.mappings.add(mapping);
+        this.excludedMappings.remove(mapping);
+    }
+
+    public void excludeMapping(Mapping mapping) {
+        this.excludedMappings.add(mapping);
+        this.mappings.remove(mapping);
     }
 
     @Override
@@ -163,13 +237,29 @@ public class DynamicPlugin implements Plugin {
         return this.mappings;
     }
 
+    @Override
+    public Collection<Mapping> getExcludedMappings() {
+        return this.excludedMappings;
+    }
+
     public void addChannelConversion(ChannelConversion channelConversion) {
         this.channelConversions.add(channelConversion);
+        this.excludedChannelConversions.remove(channelConversion);
+    }
+
+    public void excludeChannelConversion(ChannelConversion channelConversion) {
+        this.excludedChannelConversions.add(channelConversion);
+        this.channelConversions.remove(channelConversion);
     }
 
     @Override
     public Collection<ChannelConversion> getChannelConversions() {
         return this.channelConversions;
+    }
+
+    @Override
+    public Collection<ChannelConversion> getExcludedChannelConversions() {
+        return this.excludedChannelConversions;
     }
 
     public void addProperty(String key, Object value) {

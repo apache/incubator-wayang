@@ -7,6 +7,7 @@ import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * A plugin contributes the following components to a {@link RheemContext}:
@@ -26,8 +27,11 @@ public interface Plugin {
      */
     default void configure(Configuration configuration) {
         configuration.getPlatformProvider().addAllToWhitelist(this.getRequiredPlatforms());
+        configuration.getPlatformProvider().addAllToBlacklist(this.getExcludedRequiredPlatforms());
         configuration.getMappingProvider().addAllToWhitelist(this.getMappings());
+        configuration.getMappingProvider().addAllToBlacklist(this.getExcludedMappings());
         configuration.getChannelConversionProvider().addAllToWhitelist(this.getChannelConversions());
+        configuration.getChannelConversionProvider().addAllToBlacklist(this.getExcludedChannelConversions());
         this.setProperties(configuration);
     }
 
@@ -39,18 +43,45 @@ public interface Plugin {
     Collection<Platform> getRequiredPlatforms();
 
     /**
-     * Provides the {@link Mapping}s required by this instance.
+     * Provides the required {@link Platform}s excluded by this instance.
+     *
+     * @return the {@link Platform}s
+     */
+    default Collection<Platform> getExcludedRequiredPlatforms() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Provides the {@link Mapping}s shipped with this instance.
      *
      * @return the {@link Mapping}s
      */
     Collection<Mapping> getMappings();
 
     /**
-     * Provides the {@link ChannelConversion}s required by this instance.
+     * Provides the {@link Mapping}s excluded by this instance.
+     *
+     * @return the {@link Mapping}s
+     */
+    default Collection<Mapping> getExcludedMappings() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Provides the {@link ChannelConversion}s shipped with this instance.
      *
      * @return the {@link ChannelConversion}s
      */
     Collection<ChannelConversion> getChannelConversions();
+
+    /**
+     * Provides the {@link ChannelConversion}s excluded by this instance.
+     *
+     * @return the {@link ChannelConversion}s
+     */
+    default Collection<ChannelConversion> getExcludedChannelConversions() {
+        return Collections.emptyList();
+    }
 
     /**
      * Provides relevant {@link Configuration} properties.

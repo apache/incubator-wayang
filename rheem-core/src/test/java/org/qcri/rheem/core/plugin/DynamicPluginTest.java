@@ -38,11 +38,20 @@ public class DynamicPluginTest {
         Set<Platform> expectedPlatforms = RheemCollections.asSet(DummyPlatform.getInstance());
         Assert.assertEquals(expectedPlatforms, RheemCollections.asSet(plugin.getRequiredPlatforms()));
 
+        Set<Platform> expectedExcludedPlatforms = Collections.emptySet();
+        Assert.assertEquals(expectedExcludedPlatforms, RheemCollections.asSet(plugin.getExcludedRequiredPlatforms()));
+
         Set<Mapping> expectedMappings = RheemCollections.asSet(new TestSinkMapping());
         Assert.assertEquals(expectedMappings, RheemCollections.asSet(plugin.getMappings()));
 
-        Set<ChannelConversion> expectedConversions = RheemCollections.asSet(CHANNEL_CONVERSIONS);
+        Set<Mapping> expectedExcludedMappings = RheemCollections.asSet();
+        Assert.assertEquals(expectedExcludedMappings, RheemCollections.asSet(plugin.getExcludedMappings()));
+
+        Set<ChannelConversion> expectedConversions = RheemCollections.asSet();
         Assert.assertEquals(expectedConversions, RheemCollections.asSet(plugin.getChannelConversions()));
+
+        Set<ChannelConversion> expectedExcludedConversions = RheemCollections.asSet(CHANNEL_CONVERSIONS);
+        Assert.assertEquals(expectedExcludedConversions, RheemCollections.asSet(plugin.getExcludedChannelConversions()));
 
         Configuration configuration = new Configuration();
         plugin.setProperties(configuration);
@@ -59,11 +68,20 @@ public class DynamicPluginTest {
         Set<Platform> expectedPlatforms = RheemCollections.asSet(DummyPlatform.getInstance());
         Assert.assertEquals(expectedPlatforms, RheemCollections.asSet(plugin.getRequiredPlatforms()));
 
-        Set<Mapping> expectedMappings = RheemCollections.asSet(new TestSinkMapping());
+        Set<Platform> expectedExcludedPlatforms = Collections.emptySet();
+        Assert.assertEquals(expectedExcludedPlatforms, RheemCollections.asSet(plugin.getExcludedRequiredPlatforms()));
+
+        Set<Mapping> expectedMappings = RheemCollections.asSet();
         Assert.assertEquals(expectedMappings, RheemCollections.asSet(plugin.getMappings()));
 
-        Set<ChannelConversion> expectedConversions = Collections.emptySet();
+        Set<Mapping> expectedExcludedMappings = RheemCollections.asSet(new TestSinkMapping());
+        Assert.assertEquals(expectedExcludedMappings, RheemCollections.asSet(plugin.getExcludedMappings()));
+
+        Set<ChannelConversion> expectedConversions = RheemCollections.asSet();
         Assert.assertEquals(expectedConversions, RheemCollections.asSet(plugin.getChannelConversions()));
+
+        Set<ChannelConversion> expectedExcludedConversions = RheemCollections.asSet();
+        Assert.assertEquals(expectedExcludedConversions, RheemCollections.asSet(plugin.getExcludedChannelConversions()));
     }
 
     @Test
@@ -79,5 +97,27 @@ public class DynamicPluginTest {
 
         Set<ChannelConversion> expectedConversions = Collections.emptySet();
         Assert.assertEquals(expectedConversions, RheemCollections.asSet(plugin.getChannelConversions()));
+    }
+
+    @Test
+    public void testExclusion() {
+        final TestSinkMapping mapping = new TestSinkMapping();
+        Configuration configuration = new Configuration();
+
+        final DynamicPlugin plugin1 = new DynamicPlugin();
+        plugin1.addMapping(mapping);
+        plugin1.configure(configuration);
+        Assert.assertEquals(
+                RheemCollections.asSet(mapping),
+                RheemCollections.asSet(configuration.getMappingProvider().provideAll())
+        );
+
+        final DynamicPlugin plugin2 = new DynamicPlugin();
+        plugin2.excludeMapping(mapping);
+        plugin2.configure(configuration);
+        Assert.assertEquals(
+                RheemCollections.asSet(),
+                RheemCollections.asSet(configuration.getMappingProvider().provideAll())
+        );
     }
 }
