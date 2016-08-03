@@ -1,18 +1,19 @@
 package org.qcri.rheem.java.mapping;
 
-import org.qcri.rheem.basic.operators.CollectionSource;
+import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.operators.JavaCollectionSource;
+import org.qcri.rheem.java.operators.JavaReduceByOperator;
+import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link CollectionSource} to {@link JavaCollectionSource}.
+ * Mapping from {@link ReduceByOperator} to {@link JavaReduceByOperator}.
  */
-public class JavaCollectionSourceMapping implements Mapping {
+@SuppressWarnings("unchecked")
+public class ReduceByMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -25,14 +26,13 @@ public class JavaCollectionSourceMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "source", new CollectionSource(Collections.emptyList(), DataSetType.none()), false
-        );
+                "reduceBy", new ReduceByOperator<>(null, null, DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<CollectionSource>(
-                (matchedOperator, epoch) -> new JavaCollectionSource<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<ReduceByOperator>(
+                (matchedOperator, epoch) -> new JavaReduceByOperator<>(matchedOperator).at(epoch)
         );
     }
 }

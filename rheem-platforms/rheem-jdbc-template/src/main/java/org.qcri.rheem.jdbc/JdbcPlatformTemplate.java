@@ -11,7 +11,7 @@ import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
 import org.qcri.rheem.jdbc.execution.DatabaseDescriptor;

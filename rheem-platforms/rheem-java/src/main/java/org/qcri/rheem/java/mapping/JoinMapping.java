@@ -1,18 +1,18 @@
 package org.qcri.rheem.java.mapping;
 
-import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
+import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.operators.JavaMaterializedGroupByOperator;
+import org.qcri.rheem.java.platform.JavaPlatform;
+import org.qcri.rheem.java.operators.JavaJoinOperator;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link MaterializedGroupByOperator} to {@link JavaMaterializedGroupByOperator}.
+ * Mapping from {@link JoinOperator} to {@link JavaJoinOperator}.
  */
-public class JavaCollocateByOperatorMapping implements Mapping {
+public class JoinMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -25,13 +25,14 @@ public class JavaCollocateByOperatorMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern<>(
-                "operator", new MaterializedGroupByOperator<>(null, DataSetType.none(), DataSetType.groupedNone()), false);
+                "join", new JoinOperator<>(DataSetType.none(), DataSetType.none(), null, null), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<MaterializedGroupByOperator<?, ?>>(
-                (matchedOperator, epoch) -> new JavaMaterializedGroupByOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<JoinOperator<Object, Object, Object>>(
+                (matchedOperator, epoch) -> new JavaJoinOperator<>(matchedOperator).at(epoch)
         );
     }
 }

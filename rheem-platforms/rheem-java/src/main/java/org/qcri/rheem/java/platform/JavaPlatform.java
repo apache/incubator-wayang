@@ -1,4 +1,4 @@
-package org.qcri.rheem.java;
+package org.qcri.rheem.java.platform;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
@@ -20,13 +20,11 @@ import java.util.LinkedList;
 /**
  * {@link Platform} for a single JVM executor based on the {@link java.util.stream} library.
  */
-public class JavaPlatform extends Platform implements Plugin {
+public class JavaPlatform extends Platform {
 
     private static final String PLATFORM_NAME = "Java Streams";
 
     private static final String DEFAULT_CONFIG_FILE = "rheem-java-defaults.properties";
-
-    private final Collection<Mapping> mappings = new LinkedList<>();
 
     private static JavaPlatform instance = null;
 
@@ -39,56 +37,11 @@ public class JavaPlatform extends Platform implements Plugin {
 
     private JavaPlatform() {
         super(PLATFORM_NAME);
-        this.initializeMappings();
     }
 
     @Override
     public void configureDefaults(Configuration configuration) {
         configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
-    }
-
-    @Override
-    public void setProperties(Configuration configuration) {
-        // Nothing to do, because we already configured the properties in #configureDefaults(...).
-    }
-
-    private void initializeMappings() {
-        this.mappings.add(new TextFileSourceToJavaTextFileSourceMapping());
-        this.mappings.add(new MapOperatorToJavaMapOperatorMapping());
-        this.mappings.add(new ReduceByOperatorToJavaReduceByOperatorMapping());
-        this.mappings.add(new JavaCollectionSourceMapping());
-        this.mappings.add(new JavaLocalCallbackSinkMapping());
-        this.mappings.add(new JavaGlobalReduceOperatorMapping());
-        this.mappings.add(new JavaCollocateByOperatorMapping());
-        this.mappings.add(new GlobalMaterializedGroupToJavaGlobalMaterializedGroupMapping());
-        this.mappings.add(new FlatMapToJavaFlatMapMapping());
-        this.mappings.add(new CountToJavaCountMapping());
-        this.mappings.add(new DistinctToJavaDistinctMapping());
-        this.mappings.add(new SortToJavaSortMapping());
-        this.mappings.add(new FilterToJavaFilterMapping());
-        this.mappings.add(new UnionAllToJavaUnionAllMapping());
-        this.mappings.add(new IntersectToJavaIntersectMapping());
-        this.mappings.add(new CartesianToJavaCartesianMapping());
-        this.mappings.add(new JoinToJavaJoinMapping());
-        this.mappings.add(new LoopToJavaLoopMapping());
-        this.mappings.add(new DoWhileMapping());
-        this.mappings.add(new SampleToJavaSampleMapping());
-        this.mappings.add(new ZipWithIdMapping());
-    }
-
-    @Override
-    public Collection<Mapping> getMappings() {
-        return this.mappings;
-    }
-
-    @Override
-    public Collection<ChannelConversion> getChannelConversions() {
-        return ChannelConversions.ALL;
-    }
-
-    @Override
-    public Collection<Platform> getRequiredPlatforms() {
-        return Collections.singleton(this);
     }
 
     @Override

@@ -7,8 +7,8 @@ import org.junit.{Assert, Test}
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
 import org.qcri.rheem.core.function.{ExecutionContext, TransformationDescriptor}
-import org.qcri.rheem.java.JavaPlatform
 import org.qcri.rheem.java.operators.JavaMapOperator
+import org.qcri.rheem.java.platform.JavaPlatform
 import org.qcri.rheem.spark.platform.SparkPlatform
 import org.qcri.rheem.sqlite3.Sqlite3Platform
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource

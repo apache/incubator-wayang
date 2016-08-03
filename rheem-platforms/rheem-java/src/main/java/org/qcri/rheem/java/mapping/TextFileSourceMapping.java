@@ -1,19 +1,17 @@
 package org.qcri.rheem.java.mapping;
 
-import org.qcri.rheem.basic.operators.ReduceByOperator;
+import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.operators.JavaReduceByOperator;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
+import org.qcri.rheem.java.operators.JavaTextFileSource;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link ReduceByOperator} to {@link JavaReduceByOperator}.
+ * Mapping from {@link TextFileSource} to {@link JavaTextFileSource}.
  */
-@SuppressWarnings("unchecked")
-public class ReduceByOperatorToJavaReduceByOperatorMapping implements Mapping {
+public class TextFileSourceMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -26,13 +24,14 @@ public class ReduceByOperatorToJavaReduceByOperatorMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "reduceBy", new ReduceByOperator<>(null, null, DataSetType.none()), false);
+                "source", new org.qcri.rheem.basic.operators.TextFileSource((String) null), false
+        );
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<ReduceByOperator>(
-                (matchedOperator, epoch) -> new JavaReduceByOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<TextFileSource>(
+                (matchedOperator, epoch) -> new JavaTextFileSource(matchedOperator).at(epoch)
         );
     }
 }

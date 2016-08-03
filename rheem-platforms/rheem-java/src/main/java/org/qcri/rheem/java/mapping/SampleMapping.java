@@ -4,7 +4,7 @@ import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaRandomSampleOperator;
 import org.qcri.rheem.java.operators.JavaReservoirSampleOperator;
 
@@ -15,7 +15,7 @@ import java.util.Collections;
  * Mapping from {@link SampleOperator} to {@link JavaRandomSampleOperator}.
  */
 @SuppressWarnings("unchecked")
-public class SampleToJavaSampleMapping implements Mapping {
+public class SampleMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {

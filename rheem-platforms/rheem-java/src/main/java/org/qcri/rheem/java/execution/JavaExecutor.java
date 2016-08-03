@@ -11,7 +11,7 @@ import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
 import org.qcri.rheem.core.util.Tuple;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 

@@ -3,9 +3,8 @@ package org.qcri.rheem.tests;
 import org.junit.Test;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
 import org.qcri.rheem.graphchi.plugin.GraphChiPlugin;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 /**

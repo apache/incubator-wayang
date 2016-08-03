@@ -17,7 +17,7 @@ import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.spark.channels.ChannelConversions;
 import org.qcri.rheem.spark.mapping.*;
 import org.qcri.rheem.spark.operators.SparkCollectionSource;

@@ -1,18 +1,18 @@
 package org.qcri.rheem.java.mapping;
 
-import org.qcri.rheem.basic.operators.JoinOperator;
+import org.qcri.rheem.basic.operators.SortOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.operators.JavaJoinOperator;
+import org.qcri.rheem.java.platform.JavaPlatform;
+import org.qcri.rheem.java.operators.JavaSortOperator;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link JoinOperator} to {@link JavaJoinOperator}.
+ * Mapping from {@link SortOperator} to {@link JavaSortOperator}.
  */
-public class JoinToJavaJoinMapping implements Mapping {
+public class SortMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -24,15 +24,14 @@ public class JoinToJavaJoinMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern<>(
-                "join", new JoinOperator<>(DataSetType.none(), DataSetType.none(), null, null), false
-        );
+        final OperatorPattern operatorPattern = new OperatorPattern(
+                "sort", new SortOperator<>(DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<JoinOperator<Object, Object, Object>>(
-                (matchedOperator, epoch) -> new JavaJoinOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<SortOperator>(
+                (matchedOperator, epoch) -> new JavaSortOperator<>(matchedOperator).at(epoch)
         );
     }
 }

@@ -1,19 +1,21 @@
 package org.qcri.rheem.java.mapping;
 
-import org.qcri.rheem.basic.operators.GlobalReduceOperator;
+import org.qcri.rheem.basic.operators.MapOperator;
+import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.operators.JavaGlobalReduceOperator;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.operators.JavaMapOperator;
+import org.qcri.rheem.java.operators.JavaTextFileSource;
+import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link GlobalReduceOperator} to {@link JavaGlobalReduceOperator}.
+ * Mapping from {@link TextFileSource} to {@link JavaTextFileSource}.
  */
 @SuppressWarnings("unchecked")
-public class JavaGlobalReduceOperatorMapping implements Mapping {
+public class MapMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -26,13 +28,14 @@ public class JavaGlobalReduceOperatorMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "reduce", new GlobalReduceOperator<>(null, DataSetType.none()), false);
+                "map", new MapOperator<>(null, DataSetType.none(), DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
+
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<GlobalReduceOperator>(
-                (matchedOperator, epoch) -> new JavaGlobalReduceOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<MapOperator>(
+                (matchedOperator, epoch) -> new JavaMapOperator<>(matchedOperator).at(epoch)
         );
     }
 }

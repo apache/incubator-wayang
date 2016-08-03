@@ -3,7 +3,7 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 
 import java.util.Collection;
@@ -12,7 +12,7 @@ import java.util.Collections;
 /**
  * Mapping from {@link LocalCallbackSink} to {@link JavaLocalCallbackSink}.
  */
-public class JavaLocalCallbackSinkMapping implements Mapping {
+public class LocalCallbackSinkMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {

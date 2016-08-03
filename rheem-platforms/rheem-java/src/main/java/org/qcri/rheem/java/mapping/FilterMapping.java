@@ -5,7 +5,7 @@ import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaFilterOperator;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -14,7 +14,7 @@ import java.util.Collections;
  * Mapping from {@link FilterOperator} to {@link JavaFilterOperator}.
  */
 @SuppressWarnings("unchecked")
-public class FilterToJavaFilterMapping implements Mapping {
+public class FilterMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {

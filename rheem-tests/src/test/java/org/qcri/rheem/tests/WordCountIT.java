@@ -16,9 +16,10 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.Counter;
-import org.qcri.rheem.java.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 import org.qcri.rheem.java.operators.JavaReduceByOperator;
+import org.qcri.rheem.java.platform.JavaPlatform;
+import org.qcri.rheem.java.plugin.JavaBasicPlugin;
 import org.qcri.rheem.spark.operators.SparkFlatMapOperator;
 import org.qcri.rheem.spark.operators.SparkMapOperator;
 import org.qcri.rheem.spark.operators.SparkTextFileSource;
@@ -42,7 +43,7 @@ public class WordCountIT {
         // Assignment mode: RheemContext.
 
         // Instantiate Rheem and activate the backend.
-        RheemContext rheemContext = new RheemContext().with(JavaPlatform.getInstance());
+        RheemContext rheemContext = new RheemContext().with(new JavaBasicPlugin());
         TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
 
         // for each line (input) output an iterator of the words
@@ -200,7 +201,7 @@ public class WordCountIT {
         // Instantiate Rheem and activate the backend.
         RheemContext rheemContext = new RheemContext();
         rheemContext.register(SparkPlatform.getInstance());
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(new JavaBasicPlugin());
 
         TextFileSource textFileSource = new SparkTextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
 
@@ -329,7 +330,7 @@ public class WordCountIT {
 
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(new JavaBasicPlugin());
         rheemContext.register(SparkPlatform.getInstance());
         rheemContext.execute(rheemPlan);
 
@@ -402,7 +403,7 @@ public class WordCountIT {
 
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(new JavaBasicPlugin());
         rheemContext.register(SparkPlatform.getInstance());
         rheemContext.execute(rheemPlan);
 

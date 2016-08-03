@@ -1,18 +1,19 @@
 package org.qcri.rheem.java.mapping;
 
-import org.qcri.rheem.basic.operators.UnionAllOperator;
+import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.java.operators.JavaUnionAllOperator;
+import org.qcri.rheem.java.operators.JavaGlobalReduceOperator;
+import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link UnionAllOperator} to {@link JavaUnionAllOperator}.
+ * Mapping from {@link GlobalReduceOperator} to {@link JavaGlobalReduceOperator}.
  */
-public class UnionAllToJavaUnionAllMapping implements Mapping {
+@SuppressWarnings("unchecked")
+public class GlobalReduceMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -25,14 +26,13 @@ public class UnionAllToJavaUnionAllMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "unionAll", new UnionAllOperator<>(DataSetType.none()), false
-        );
+                "reduce", new GlobalReduceOperator<>(null, DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<UnionAllOperator>(
-                (matchedOperator, epoch) -> new JavaUnionAllOperator(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<GlobalReduceOperator>(
+                (matchedOperator, epoch) -> new JavaGlobalReduceOperator<>(matchedOperator).at(epoch)
         );
     }
 }

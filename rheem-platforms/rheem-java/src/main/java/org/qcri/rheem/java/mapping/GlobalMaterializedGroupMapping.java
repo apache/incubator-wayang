@@ -3,7 +3,7 @@ package org.qcri.rheem.java.mapping;
 import org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaGlobalMaterializedGroupOperator;
 
 import java.util.Collection;
@@ -13,7 +13,7 @@ import java.util.Collections;
  * Mapping from {@link GlobalMaterializedGroupOperator} to {@link JavaGlobalMaterializedGroupOperator}.
  */
 @SuppressWarnings("unchecked")
-public class GlobalMaterializedGroupToJavaGlobalMaterializedGroupMapping implements Mapping {
+public class GlobalMaterializedGroupMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {

@@ -8,7 +8,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.util.Formats;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

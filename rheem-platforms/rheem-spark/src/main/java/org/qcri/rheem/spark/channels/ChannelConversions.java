@@ -5,7 +5,7 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.operators.*;
 
