@@ -1,9 +1,7 @@
-package org.qcri.rheem.postgres;
+package org.qcri.rheem.postgres.platform;
 
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
-import org.qcri.rheem.postgres.mapping.PostgresFilterMapping;
-import org.qcri.rheem.postgres.mapping.PostgresProjectionMapping;
+import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 
 /**
  * {@link Platform} implementation for SQLite3.
@@ -23,12 +21,6 @@ public class PostgresPlatform extends JdbcPlatformTemplate {
 
     protected PostgresPlatform() {
         super(PLATFORM_NAME);
-    }
-
-    @Override
-    protected void initializeMappings() {
-        this.mappings.add(new PostgresFilterMapping());
-        this.mappings.add(new PostgresProjectionMapping());
     }
 
     @Override

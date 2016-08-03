@@ -1,9 +1,7 @@
-package org.qcri.rheem.sqlite3;
+package org.qcri.rheem.sqlite3.platform;
 
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
-import org.qcri.rheem.sqlite3.mappings.FilterMapping;
-import org.qcri.rheem.sqlite3.mappings.ProjectionMapping;
+import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 
 /**
  * {@link Platform} implementation for SQLite3.
@@ -23,12 +21,6 @@ public class Sqlite3Platform extends JdbcPlatformTemplate {
 
     protected Sqlite3Platform() {
         super(PLATFORM_NAME);
-    }
-
-    @Override
-    protected void initializeMappings() {
-        this.mappings.add(new FilterMapping());
-        this.mappings.add(new ProjectionMapping());
     }
 
     @Override

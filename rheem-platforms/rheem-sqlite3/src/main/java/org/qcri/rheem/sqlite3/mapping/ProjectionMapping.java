@@ -1,10 +1,10 @@
-package org.qcri.rheem.sqlite3.mappings;
+package org.qcri.rheem.sqlite3.mapping;
 
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.sqlite3.Sqlite3Platform;
+import org.qcri.rheem.sqlite3.platform.Sqlite3Platform;
 import org.qcri.rheem.sqlite3.operators.Sqlite3ProjectionOperator;
 
 import java.util.Collection;

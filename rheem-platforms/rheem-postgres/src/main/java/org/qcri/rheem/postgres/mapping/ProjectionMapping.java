@@ -5,7 +5,7 @@ import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.postgres.PostgresPlatform;
+import org.qcri.rheem.postgres.platform.PostgresPlatform;
 import org.qcri.rheem.postgres.operators.PostgresProjectionOperator;
 
 import java.util.Collection;
@@ -16,7 +16,7 @@ import java.util.Collections;
  * Mapping from {@link MapOperator} to {@link PostgresProjectionOperator}.
  */
 @SuppressWarnings("unchecked")
-public class PostgresProjectionMapping implements Mapping {
+public class ProjectionMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {

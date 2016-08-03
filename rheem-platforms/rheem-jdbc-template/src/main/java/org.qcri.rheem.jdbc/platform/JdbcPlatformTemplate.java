@@ -1,33 +1,22 @@
-package org.qcri.rheem.jdbc;
+package org.qcri.rheem.jdbc.platform;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
-import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.java.platform.JavaPlatform;
-import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
 import org.qcri.rheem.jdbc.execution.DatabaseDescriptor;
 import org.qcri.rheem.jdbc.execution.JdbcExecutor;
-import org.qcri.rheem.jdbc.operators.SqlToStreamOperator;
 
 import java.sql.Connection;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
 
 /**
- * {@link Platform} implementation for the PostgreSQL database.
+ * {@link Platform} implementation for a JDBC-accessible database.
  */
-public abstract class JdbcPlatformTemplate extends Platform implements Plugin {
+public abstract class JdbcPlatformTemplate extends Platform {
 
     public final String cpuMhzProperty = String.format("rheem.%s.cpu.mhz", this.getPlatformId());
 
@@ -50,8 +39,6 @@ public abstract class JdbcPlatformTemplate extends Platform implements Plugin {
      */
     private final SqlQueryChannel.Descriptor sqlQueryChannelDescriptor = new SqlQueryChannel.Descriptor(this);
 
-    protected final Collection<Mapping> mappings = new LinkedList<>();
-
     public Connection getConnection() {
         return connection;
     }
@@ -60,38 +47,11 @@ public abstract class JdbcPlatformTemplate extends Platform implements Plugin {
 
     protected JdbcPlatformTemplate(String platformName) {
         super(platformName);
-        this.initializeMappings();
     }
 
     @Override
     public void configureDefaults(Configuration configuration) {
         configuration.load(ReflectionUtils.loadResource(this.getDefaultConfigurationFile()));
-    }
-
-    protected abstract void initializeMappings();
-
-    @Override
-    public Collection<Mapping> getMappings() {
-        return this.mappings;
-    }
-
-    @Override
-    public Collection<ChannelConversion> getChannelConversions() {
-        return Collections.singleton(new DefaultChannelConversion(
-                this.getSqlQueryChannelDescriptor(),
-                StreamChannel.DESCRIPTOR,
-                () -> new SqlToStreamOperator(this)
-        ));
-    }
-
-    @Override
-    public void setProperties(Configuration configuration) {
-        // Nothing to do, because we already configured the properties in #configureDefaults(...).
-    }
-
-    @Override
-    public Collection<Platform> getRequiredPlatforms() {
-        return Arrays.asList(this, JavaPlatform.getInstance());
     }
 
     @Override

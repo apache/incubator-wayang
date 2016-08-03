@@ -3,7 +3,7 @@ package org.qcri.rheem.jdbc.operators;
 import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.jdbc.JdbcPlatformTemplate;
+import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
 
 import java.sql.Connection;

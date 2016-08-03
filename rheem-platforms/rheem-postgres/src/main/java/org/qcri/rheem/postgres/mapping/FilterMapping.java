@@ -4,7 +4,7 @@ import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.postgres.PostgresPlatform;
+import org.qcri.rheem.postgres.platform.PostgresPlatform;
 import org.qcri.rheem.postgres.operators.PostgresFilterOperator;
 
 import java.util.Collection;
@@ -15,7 +15,7 @@ import java.util.Collections;
  * Mapping from {@link FilterOperator} to {@link PostgresFilterOperator}.
  */
 @SuppressWarnings("unchecked")
-public class PostgresFilterMapping implements Mapping {
+public class FilterMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
