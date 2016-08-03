@@ -2,7 +2,7 @@ package org.qcri.rheem.graphchi.mappings;
 
 import org.qcri.rheem.basic.operators.PageRankOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.graphchi.GraphChiPlatform;
+import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
 import org.qcri.rheem.graphchi.operators.GraphChiPageRankOperator;
 
 import java.util.Collection;

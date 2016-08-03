@@ -8,7 +8,7 @@ import org.qcri.rheem.graphchi.execution.GraphChiExecutor;
 /**
  * {@link ExecutionOperator} that can be run by the {@link GraphChiExecutor}.
  */
-public interface GraphChiOperator extends ExecutionOperator {
+public interface GraphChiExecutionOperator extends ExecutionOperator {
 
     void execute(ChannelInstance[] inputChannels, ChannelInstance[] outputChannels, Configuration configuration);
 

@@ -6,7 +6,7 @@ import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.graphchi.GraphChiPlatform;
+import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
 import org.qcri.rheem.graphchi.execution.GraphChiExecutor;
 
 import java.io.IOException;

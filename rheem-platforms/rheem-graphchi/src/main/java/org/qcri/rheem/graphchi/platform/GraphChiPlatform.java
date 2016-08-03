@@ -1,4 +1,4 @@
-package org.qcri.rheem.graphchi;
+package org.qcri.rheem.graphchi.platform;
 
 import edu.cmu.graphchi.io.CompressedIO;
 import org.qcri.rheem.core.api.Configuration;
@@ -20,7 +20,7 @@ import java.util.LinkedList;
 /**
  * GraphChi {@link Platform} for Rheem.
  */
-public class GraphChiPlatform extends Platform implements Plugin {
+public class GraphChiPlatform extends Platform {
 
     public static final String CPU_MHZ_PROPERTY = "rheem.graphchi.cpu.mhz";
 
@@ -31,8 +31,6 @@ public class GraphChiPlatform extends Platform implements Plugin {
     private static final String DEFAULT_CONFIG_FILE = "rheem-graphchi-defaults.properties";
 
     private static GraphChiPlatform instance;
-
-    private final Collection<Mapping> mappings = new LinkedList<>();
 
     protected GraphChiPlatform() {
         super("GraphChi");
@@ -47,9 +45,8 @@ public class GraphChiPlatform extends Platform implements Plugin {
         CompressedIO.disableCompression();
         GraphChiPlatform.class.getClassLoader().setClassAssertionStatus(
                 "edu.cmu.graphchi.preprocessing.FastSharder", false);
-
-        this.mappings.add(new PageRankMapping());
     }
+
     @Override
     public void configureDefaults(Configuration configuration) {
         configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
@@ -65,26 +62,6 @@ public class GraphChiPlatform extends Platform implements Plugin {
     @Override
     public Executor.Factory getExecutorFactory() {
         return job -> new GraphChiExecutor(this, job);
-    }
-
-    @Override
-    public Collection<Mapping> getMappings() {
-        return this.mappings;
-    }
-
-    @Override
-    public Collection<Platform> getRequiredPlatforms() {
-        return Collections.singleton(this);
-    }
-
-    @Override
-    public Collection<ChannelConversion> getChannelConversions() {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public void setProperties(Configuration configuration) {
-        // Nothing to do, because we already configured the properties in #configureDefaults(...).
     }
 
     @Override
