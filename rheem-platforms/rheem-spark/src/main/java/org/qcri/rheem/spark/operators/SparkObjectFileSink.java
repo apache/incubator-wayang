@@ -33,7 +33,7 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
     }
 
     public SparkObjectFileSink(String targetPath, DataSetType<T> type) {
-        super(type, null);
+        super(type);
         this.targetPath = targetPath;
     }
 

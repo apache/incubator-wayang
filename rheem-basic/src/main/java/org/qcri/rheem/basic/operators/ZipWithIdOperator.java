@@ -28,7 +28,7 @@ public class ZipWithIdOperator<InputType> extends UnaryToUnaryOperator<InputType
      * Creates a new instance.
      */
     public ZipWithIdOperator(DataSetType<InputType> inputType) {
-        super(inputType, DataSetType.createDefaultUnchecked(Tuple2.class), false, null);
+        super(inputType, DataSetType.createDefaultUnchecked(Tuple2.class), false);
     }
 
     /**

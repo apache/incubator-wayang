@@ -44,7 +44,7 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
     }
 
     public JavaTsvFileSink(String targetPath, DataSetType<T> type) {
-        super(type, null);
+        super(type);
         assert type.equals(DataSetType.createDefault(Tuple2.class)) :
                 String.format("Illegal type for %s: %s", this, type);
         this.targetPath = targetPath;

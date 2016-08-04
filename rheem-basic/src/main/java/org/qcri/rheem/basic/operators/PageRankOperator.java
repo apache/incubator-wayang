@@ -18,7 +18,7 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Integer, Integ
     public PageRankOperator(int numIterations) {
         super(DataSetType.createDefaultUnchecked(Tuple2.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class),
-                false, null);
+                false);
         this.numIterations = numIterations;
     }
 

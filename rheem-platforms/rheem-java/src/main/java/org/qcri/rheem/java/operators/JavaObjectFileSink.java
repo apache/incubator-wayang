@@ -46,7 +46,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
         this(null, type);
     }
     public JavaObjectFileSink(String targetPath, DataSetType<T> type) {
-        super(type, null);
+        super(type);
         this.targetPath = targetPath;
     }
 

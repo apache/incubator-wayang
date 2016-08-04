@@ -33,12 +33,12 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
 
     private final String sourcePath;
 
-    public SparkObjectFileSource(DataSetType type) {
+    public SparkObjectFileSource(DataSetType<T> type) {
         this(null, type);
     }
 
-    public SparkObjectFileSource(String sourcePath, DataSetType type) {
-        super(type, null);
+    public SparkObjectFileSource(String sourcePath, DataSetType<T> type) {
+        super(type);
         this.sourcePath = sourcePath;
     }
 

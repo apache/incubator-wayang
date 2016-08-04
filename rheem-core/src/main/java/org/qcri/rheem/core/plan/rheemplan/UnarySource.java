@@ -10,22 +10,22 @@ public abstract class UnarySource<T> extends OperatorBase implements ElementaryO
     /**
      * Creates a new instance that does not support broadcast {@link InputSlot}s.
      */
-    public UnarySource(DataSetType<T> type, OperatorContainer container) {
-        this(type, false, container);
+    public UnarySource(DataSetType<T> type) {
+        this(type, false);
     }
 
     /**
      * Creates a new instance.
      */
-    public UnarySource(DataSetType<T> type, boolean isSupportingBroadcastInputs, OperatorContainer container) {
-        super(0, 1, isSupportingBroadcastInputs, container);
+    public UnarySource(DataSetType<T> type, boolean isSupportingBroadcastInputs) {
+        super(0, 1, isSupportingBroadcastInputs);
         this.outputSlots[0] = new OutputSlot<>("out", this, type);
     }
 
     /**
      * Copies the given instance.
      *
-     * @see UnarySource#UnarySource(DataSetType, boolean, OperatorContainer)
+     * @see UnarySource#UnarySource(DataSetType, boolean)
      * @see OperatorBase#OperatorBase(OperatorBase)
      */
     protected UnarySource(UnarySource<T> that) {

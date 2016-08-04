@@ -2,6 +2,8 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.types.DataSetType;
 
+import java.util.List;
+
 /**
  * An input slot declares an input of an {@link Operator}.
  *
@@ -43,6 +45,23 @@ public class InputSlot<T> extends Slot<T> {
     }
 
     /**
+     * Copy the {@link InputSlot}s to a given {@link Operator}.
+     */
+    public static void mock(List<InputSlot<?>> inputSlots, Operator mock, boolean isKeepBroadcastStatus) {
+        if (inputSlots.size() != mock.getNumInputs()) {
+            throw new IllegalArgumentException("Cannot mock inputs: Mismatching number of inputs.");
+        }
+
+        InputSlot[] mockSlots = mock.getAllInputs();
+        int i = 0;
+        for (InputSlot<?> inputSlot : inputSlots) {
+            mockSlots[i++] = isKeepBroadcastStatus ?
+                    inputSlot.copyFor(mock) :
+                    inputSlot.copyAsNonBroadcastFor(mock);
+        }
+    }
+
+    /**
      * Take the input connections away from one operator and give them to another one.
      */
     public static void stealConnections(Operator victim, Operator thief) {
@@ -59,7 +78,11 @@ public class InputSlot<T> extends Slot<T> {
      * Takes away the occupant {@link OutputSlot} of the {@code victim} and connects it to this instance.
      */
     public void stealOccupant(InputSlot<T> victim) {
-        assert this.getOccupant() == null;
+        if (victim.getOccupant() == null) return;
+        assert this.getOccupant() == null : String.format(
+                "%s cannot steal %s's occuppant %s, because there already is %s.",
+                this, victim, victim.getOccupant(), this.getOccupant()
+        );
         final OutputSlot<T> occupant = victim.getOccupant();
         if (occupant != null) {
             occupant.disconnectFrom(victim);

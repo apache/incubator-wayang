@@ -54,7 +54,7 @@ public class RepeatOperator<Type> extends OperatorBase implements ElementaryOper
      * @param type          of the "circulated" dataset
      */
     public RepeatOperator(int numIterations, DataSetType<Type> type) {
-        super(2, 2, false, null);
+        super(2, 2, false);
         this.initializeSlots(type);
         this.numIterations = numIterations;
     }

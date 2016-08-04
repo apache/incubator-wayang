@@ -25,17 +25,17 @@ public class LoopHeadAlternative extends OperatorAlternative implements LoopHead
      *
      * @param loopHead original {@link LoopHeadOperator} to be wrapped
      */
-    protected LoopHeadAlternative(LoopHeadOperator loopHead) {
+    LoopHeadAlternative(LoopHeadOperator loopHead) {
         super(loopHead);
         this.originalLoopHead = loopHead;
 
     }
 
     @Override
-    public void addAlternative(Operator alternative) {
-        assert alternative.isLoopHead();
-        assert !this.getAlternatives().isEmpty() || alternative == this.originalLoopHead;
-        super.addAlternative(alternative);
+    public Alternative addAlternative(Operator alternativeOperator) {
+        assert alternativeOperator.isLoopHead();
+        assert !this.getAlternatives().isEmpty() || alternativeOperator == this.originalLoopHead;
+        Alternative alternative = super.addAlternative(alternativeOperator);
         if (this.getAlternatives().size() == 1) {
             final Alternative originalAlternative = this.getAlternatives().get(0);
             this.loopBodyInputs = this.originalLoopHead.getLoopBodyInputs().stream()
@@ -55,6 +55,7 @@ public class LoopHeadAlternative extends OperatorAlternative implements LoopHead
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
         }
+        return alternative;
     }
 
     @Override

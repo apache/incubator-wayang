@@ -40,7 +40,7 @@ public class LocalCallbackSink<T> extends UnarySink<T> {
      * @param type     type of the incoming elements
      */
     public LocalCallbackSink(Consumer<T> callback, DataSetType<T> type) {
-        super(type, null);
+        super(type);
         this.callback = callback;
     }
 

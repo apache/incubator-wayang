@@ -69,7 +69,7 @@ public class Operators {
      */
     public static void assertEqualInputs(Operator o1, Operator o2) throws IllegalArgumentException {
         if (o1.getNumInputs() != o2.getNumInputs()) {
-            throw new IllegalArgumentException("Operators have different numbers of inputs.");
+            throw new IllegalArgumentException(String.format("%s and %s have different numbers of inputs.", o1, o2));
         }
 
         for (int i = 0; i < o1.getNumInputs(); i++) {
@@ -90,7 +90,7 @@ public class Operators {
      */
     public static void assertEqualOutputs(Operator o1, Operator o2) throws IllegalArgumentException {
         if (o1.getNumOutputs() != o2.getNumOutputs()) {
-            throw new IllegalArgumentException("Operators have different numbers of outputs.");
+            throw new IllegalArgumentException(String.format("%s and %s have different numbers of outputs.", o1, o2));
         }
 
         for (int i = 0; i < o1.getNumOutputs(); i++) {
@@ -104,17 +104,13 @@ public class Operators {
         }
     }
 
-    public static final Operator slotlessOperator(OperatorContainer container) {
-        return new OperatorBase(0, 0, false, container) {
+    public static final Operator slotlessOperator() {
+        return new OperatorBase(0, 0, false) {
             @Override
             public <Payload, Return> Return accept(TopDownPlanVisitor<Payload, Return> visitor, OutputSlot<?> outputSlot, Payload payload) {
                 throw new RuntimeException("Slotless operator should not be traversed.");
             }
         };
-    }
-
-    public static final Operator slotlessOperator() {
-        return slotlessOperator(null);
     }
 
     /**

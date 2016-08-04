@@ -44,7 +44,7 @@ public class SubplanPattern extends OperatorBase {
      * Creates a new instance.
      */
     private SubplanPattern(OperatorPattern inputPattern, OperatorPattern outputPattern) {
-        super(inputPattern.getAllInputs(), outputPattern.getAllOutputs(), false, null);
+        super(inputPattern.getAllInputs(), outputPattern.getAllOutputs(), false);
         this.inputPattern = inputPattern;
         this.outputPattern = outputPattern;
     }
@@ -201,10 +201,12 @@ public class SubplanPattern extends OperatorBase {
                 // NB: As of now, that should be exactly one (see top).
                 boolean hasInputOperatorPatterns = false;
                 for (int inputIndex = 0; inputIndex < pattern.getNumInputs(); inputIndex++) {
-                    final OperatorPattern inputOperatorPattern = (OperatorPattern) pattern.getInputOperator(inputIndex);
-                    if (inputOperatorPattern == null) {
+                    final OutputSlot<?> patternOccupant = pattern.getEffectiveOccupant(pattern.getInput(inputIndex));
+                    if (patternOccupant == null) {
                         continue;
                     }
+                    final OperatorPattern inputOperatorPattern = (OperatorPattern) patternOccupant.getOwner();
+
                     hasInputOperatorPatterns = true;
                     final InputSlot<?> outerInputSlot = operator.getOutermostInputSlot(operator.getInput(inputIndex));
                     final OutputSlot<?> occupant = outerInputSlot.getOccupant();

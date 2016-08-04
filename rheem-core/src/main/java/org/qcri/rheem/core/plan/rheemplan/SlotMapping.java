@@ -144,6 +144,7 @@ public class SlotMapping {
             final SlotMapping oldToNewSlotMapping = oldOperator.getContainer().getSlotMapping();
             for (int i = 0; i < oldOperator.getNumInputs(); i++) {
                 final InputSlot<?> oldInput = oldOperator.getInput(i);
+                assert  oldInput != null : String.format("No %dth input for %s (for %s).", i, oldOperator, newOperator);
                 if (oldInput.getOccupant() != null) continue;
 
                 final InputSlot<?> outerInput = this.resolveUpstream(oldInput);

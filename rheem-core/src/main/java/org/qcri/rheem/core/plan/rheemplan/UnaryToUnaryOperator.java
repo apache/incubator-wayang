@@ -12,9 +12,8 @@ public abstract class UnaryToUnaryOperator<InputType, OutputType> extends Operat
      */
     protected UnaryToUnaryOperator(DataSetType<InputType> inputType,
                                    DataSetType<OutputType> outputType,
-                                   boolean isSupportingBroadcastInputs,
-                                   OperatorContainer container) {
-        super(1, 1, isSupportingBroadcastInputs, container);
+                                   boolean isSupportingBroadcastInputs) {
+        super(1, 1, isSupportingBroadcastInputs);
         this.inputSlots[0] = new InputSlot<>("in", this, inputType);
         this.outputSlots[0] = new OutputSlot<>("out", this, outputType);
     }
@@ -22,7 +21,7 @@ public abstract class UnaryToUnaryOperator<InputType, OutputType> extends Operat
     /**
      * Copies the given instance.
      *
-     * @see UnaryToUnaryOperator#UnaryToUnaryOperator(DataSetType, DataSetType, boolean, OperatorContainer)
+     * @see UnaryToUnaryOperator#UnaryToUnaryOperator(DataSetType, DataSetType, boolean)
      * @see OperatorBase#OperatorBase(OperatorBase)
      */
     protected UnaryToUnaryOperator(UnaryToUnaryOperator<InputType, OutputType> that) {
@@ -31,10 +30,12 @@ public abstract class UnaryToUnaryOperator<InputType, OutputType> extends Operat
         this.outputSlots[0] = new OutputSlot<>("out", this, that.getOutputType());
     }
 
+    @SuppressWarnings("unchecked")
     public InputSlot<InputType> getInput() {
         return (InputSlot<InputType>) this.getInput(0);
     }
 
+    @SuppressWarnings("unchecked")
     public OutputSlot<OutputType> getOutput() {
         return (OutputSlot<OutputType>) this.getOutput(0);
     }

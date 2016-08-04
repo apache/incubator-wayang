@@ -29,7 +29,7 @@ public class SparkCollectOperator<Type>
         implements SparkExecutionOperator {
 
     public SparkCollectOperator(DataSetType<Type> type) {
-        super(type, type, false, null);
+        super(type, type, false);
     }
 
     @Override

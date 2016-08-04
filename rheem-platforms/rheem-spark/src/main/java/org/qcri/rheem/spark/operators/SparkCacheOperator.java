@@ -27,7 +27,7 @@ public class SparkCacheOperator<Type>
         implements SparkExecutionOperator {
 
     public SparkCacheOperator(DataSetType<Type> type) {
-        super(type, type, false, null);
+        super(type, type, false);
     }
 
     @Override

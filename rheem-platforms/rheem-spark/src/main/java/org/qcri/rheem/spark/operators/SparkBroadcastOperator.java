@@ -3,7 +3,8 @@ package org.qcri.rheem.spark.operators;
 import org.apache.spark.broadcast.Broadcast;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
-import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
@@ -22,8 +23,12 @@ import java.util.Optional;
  */
 public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Type> implements SparkExecutionOperator {
 
-    public SparkBroadcastOperator(DataSetType<Type> type, OperatorContainer operatorContainer) {
-        super(type, type, false, operatorContainer);
+    public SparkBroadcastOperator(DataSetType<Type> type) {
+        super(type, type, false);
+    }
+
+    public SparkBroadcastOperator(SparkBroadcastOperator<Type> that) {
+        super(that);
     }
 
     @Override
@@ -46,7 +51,7 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkBroadcastOperator<>(this.getType(), this.getContainer());
+        return new SparkBroadcastOperator<>(this);
     }
 
     @Override

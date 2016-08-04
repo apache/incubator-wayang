@@ -17,7 +17,7 @@ public class TestSource<T> extends UnarySource<T> {
     private CardinalityEstimator cardinalityEstimator = new FixedSizeCardinalityEstimator(100);
 
     public TestSource(DataSetType outputType) {
-        super(outputType, null);
+        super(outputType);
     }
 
     public TestSource(Class<?> dataQuantumClass) {

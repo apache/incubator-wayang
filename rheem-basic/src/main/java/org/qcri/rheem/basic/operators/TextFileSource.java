@@ -34,7 +34,7 @@ public class TextFileSource extends UnarySource<String> {
     }
 
     public TextFileSource(String inputUrl, String encoding) {
-        super(DataSetType.createDefault(String.class), null);
+        super(DataSetType.createDefault(String.class));
         this.inputUrl = inputUrl;
         this.encoding = encoding;
     }

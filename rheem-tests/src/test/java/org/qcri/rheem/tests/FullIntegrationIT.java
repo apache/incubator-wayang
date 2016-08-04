@@ -2,7 +2,6 @@ package org.qcri.rheem.tests;
 
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.CollectionSource;
@@ -80,7 +79,7 @@ public class FullIntegrationIT {
         RheemPlan rheemPlan = RheemPlans.readWrite(RheemPlans.FILE_SOME_LINES_TXT, collector);
         final Operator sink = rheemPlan.getSinks().stream().findFirst().get();
         sink.addTargetPlatform(Spark.platform());
-        final Operator source = sink.getInputOperator(0);
+        final Operator source = sink.getEffectiveOccupant(0).getOwner();
         source.addTargetPlatform(Java.platform());
 
         // Instantiate Rheem and activate the Java backend.

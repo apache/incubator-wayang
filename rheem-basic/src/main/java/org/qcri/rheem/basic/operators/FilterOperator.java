@@ -35,8 +35,7 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     public FilterOperator(PredicateDescriptor<Type> predicateDescriptor) {
         super(DataSetType.createDefault(predicateDescriptor.getInputType()),
                 DataSetType.createDefault(predicateDescriptor.getInputType()),
-                true,
-                null);
+                true);
         this.predicateDescriptor = predicateDescriptor;
     }
 
@@ -55,7 +54,7 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * @param type type of the dataunit elements
      */
     public FilterOperator(PredicateDescriptor<Type> predicateDescriptor, DataSetType<Type> type) {
-        super(type, type, true, null);
+        super(type, type, true);
         this.predicateDescriptor = predicateDescriptor;
     }
 

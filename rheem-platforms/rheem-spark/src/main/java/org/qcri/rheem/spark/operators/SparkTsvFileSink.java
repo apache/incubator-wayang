@@ -31,12 +31,12 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
 
     private final String targetPath;
 
-    public SparkTsvFileSink(DataSetType type) {
+    public SparkTsvFileSink(DataSetType<T> type) {
         this(null, type);
     }
 
-    public SparkTsvFileSink(String targetPath, DataSetType type) {
-        super(type, null);
+    public SparkTsvFileSink(String targetPath, DataSetType<T> type) {
+        super(type);
         assert type.equals(DataSetType.createDefault(Tuple2.class)) :
                 String.format("Illegal type for %s: %s", this, type);
         this.targetPath = targetPath;

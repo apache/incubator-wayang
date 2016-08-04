@@ -4,7 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
-import org.qcri.rheem.core.optimizer.cardinality.SubplanCardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.OperatorContainerPusher;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -51,7 +51,9 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
      * steals existing connections, initializes the {@link #slotMapping}, and sets as inner {@link Operator}s' parent.
      */
     public static Subplan wrap(List<InputSlot<?>> inputs, List<OutputSlot<?>> outputs, OperatorContainer container) {
-        return new Subplan(inputs, outputs, container);
+        final Subplan subplan = new Subplan(inputs, outputs);
+        subplan.setContainer(container);
+        return subplan;
     }
 
     /**
@@ -61,8 +63,10 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
      * @see #wrap(Operator, Operator)
      * @see #wrap(List, List, OperatorContainer)
      */
-    protected Subplan(List<InputSlot<?>> inputs, List<OutputSlot<?>> outputs, OperatorContainer container) {
-        super(inputs.size(), outputs.size(), false, container);
+    protected Subplan(List<InputSlot<?>> inputs, List<OutputSlot<?>> outputs) {
+        super(inputs.size(), outputs.size(), false);
+        InputSlot.mock(inputs, this, false);
+        OutputSlot.mock(outputs, this);
         OperatorContainers.wrap(inputs, outputs, this);
     }
 
@@ -150,27 +154,10 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         return visitor.visit(this, outputSlot, payload);
     }
 
-//    @Override
-//    public <Payload, Return> Return accept(BottomUpPlanVisitor<Payload, Return> visitor, InputSlot<?> inputSlot, Payload payload) {
-//        return visitor.visit(this, inputSlot, payload);
-//    }
-
     // TODO: develop constructors/factory methods to deal with more than one input and output operator
 
-
     @Override
-    public SlotMapping getSlotMappingFor(Operator child) {
-        if (child.getParent() != this) {
-            throw new IllegalArgumentException("Given operator is not a child of this subplan.");
-        }
-
-        return this.slotMapping;
-    }
-
-    @Override
-    public void replace(Operator oldOperator, Operator newOperator) {
-        this.slotMapping.replaceInputSlotMappings(oldOperator, newOperator);
-        this.slotMapping.replaceOutputSlotMappings(oldOperator, newOperator);
+    public void noteReplaced(Operator oldOperator, Operator newOperator) {
     }
 
     @Override
@@ -240,7 +227,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     @Override
     public CardinalityPusher getCardinalityPusher(
             final Configuration configuration) {
-        return SubplanCardinalityPusher.createFor(this, configuration);
+        return OperatorContainerPusher.createFor(this, configuration);
     }
 
     @Override

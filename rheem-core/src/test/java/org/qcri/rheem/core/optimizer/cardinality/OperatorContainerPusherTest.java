@@ -17,9 +17,9 @@ import org.qcri.rheem.core.plan.rheemplan.test.TestSource;
 import org.qcri.rheem.core.types.DataSetType;
 
 /**
- * Test suite for {@link org.qcri.rheem.core.optimizer.cardinality.SubplanCardinalityPusher}.
+ * Test suite for {@link OperatorContainerPusher}.
  */
-public class SubplanCardinalityPusherTest {
+public class OperatorContainerPusherTest {
 
     private Configuration configuration;
 
@@ -60,7 +60,7 @@ public class SubplanCardinalityPusherTest {
         subplanCtx.setInputCardinality(0, inputCardinality);
         subplan.propagateInputCardinality(0, subplanCtx);
 
-        final CardinalityPusher pusher = SubplanCardinalityPusher.createFor(subplan, this.configuration);
+        final CardinalityPusher pusher = OperatorContainerPusher.createFor(subplan, this.configuration);
         pusher.push(subplanCtx, this.configuration);
 
         Assert.assertEquals(inputCardinality, subplanCtx.getOutputCardinality(0));
@@ -83,7 +83,7 @@ public class SubplanCardinalityPusherTest {
         OptimizationContext optimizationContext = new DefaultOptimizationContext(subplan, this.configuration);
         final OptimizationContext.OperatorContext subplanCtx = optimizationContext.getOperatorContext(subplan);
 
-        final CardinalityPusher pusher = SubplanCardinalityPusher.createFor(subplan, this.configuration);
+        final CardinalityPusher pusher = OperatorContainerPusher.createFor(subplan, this.configuration);
         pusher.push(subplanCtx, this.configuration);
 
         Assert.assertEquals(sourceCardinality, subplanCtx.getOutputCardinality(0));
@@ -119,7 +119,7 @@ public class SubplanCardinalityPusherTest {
         subplanCtx.setInputCardinality(0, inputCardinality);
         subplan.propagateInputCardinality(0, subplanCtx);
 
-        final CardinalityPusher pusher = SubplanCardinalityPusher.createFor(subplan, this.configuration);
+        final CardinalityPusher pusher = OperatorContainerPusher.createFor(subplan, this.configuration);
         pusher.push(subplanCtx, this.configuration);
 
         final CardinalityEstimate outputCardinality = subplanCtx.getOutputCardinality(0);

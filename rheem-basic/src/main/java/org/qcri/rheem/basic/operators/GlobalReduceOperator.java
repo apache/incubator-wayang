@@ -55,7 +55,7 @@ public class GlobalReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type>
      * @param type             type of the reduce elements (i.e., type of {@link #getInput()} and {@link #getOutput()})
      */
     public GlobalReduceOperator(ReduceDescriptor<Type> reduceDescriptor, DataSetType<Type> type) {
-        super(type, type, true, null);
+        super(type, type, true);
         this.reduceDescriptor = reduceDescriptor;
     }
 

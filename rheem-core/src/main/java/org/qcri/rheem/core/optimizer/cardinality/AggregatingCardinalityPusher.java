@@ -42,7 +42,7 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
             Configuration configuration) {
         return operatorAlternative.getAlternatives().stream()
                 .map(alternative -> {
-                    final CardinalityPusher pusher = getPusherFunction.apply(alternative.getOperator(), configuration);
+                    final CardinalityPusher pusher = getPusherFunction.apply(alternative.getContainedOperator(), configuration);
                     return new Tuple<>(alternative, pusher);
                 })
                 .collect(Collectors.toList());
@@ -86,7 +86,7 @@ public class AggregatingCardinalityPusher extends CardinalityPusher {
     private OptimizationContext.OperatorContext getOperatorContext(
             Tuple<OperatorAlternative.Alternative, CardinalityPusher> pushPath,
             OptimizationContext optimizationCtx) {
-        final Operator alternativeOperator = pushPath.getField0().getOperator();
+        final Operator alternativeOperator = pushPath.getField0().getContainedOperator();
         return optimizationCtx.getOperatorContext(alternativeOperator);
     }
 

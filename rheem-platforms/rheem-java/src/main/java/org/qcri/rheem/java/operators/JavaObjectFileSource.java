@@ -45,7 +45,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
     }
 
     public JavaObjectFileSource(String sourcePath, DataSetType<T> type) {
-        super(type, null);
+        super(type);
         this.sourcePath = sourcePath;
     }
 

@@ -49,7 +49,7 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
      * @param dataSetType  type of the {@link Record}s being transformed; see {@link RecordType}
      */
     public SqlToStreamOperator(JdbcPlatformTemplate jdbcPlatform, DataSetType<Record> dataSetType) {
-        super(dataSetType, dataSetType, false, null);
+        super(dataSetType, dataSetType, false);
         this.jdbcPlatform = jdbcPlatform;
     }
 

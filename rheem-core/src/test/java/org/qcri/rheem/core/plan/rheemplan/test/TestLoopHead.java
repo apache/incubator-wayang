@@ -18,7 +18,7 @@ public class TestLoopHead<T> extends OperatorBase implements LoopHeadOperator, E
     private int numExpectedIterations;
 
     public TestLoopHead(Class<T> dataQuantumClass) {
-        super(2, 2, false, null);
+        super(2, 2, false);
 
         final DataSetType<T> dataSetType = DataSetType.createDefault(DataUnitType.createBasic(dataQuantumClass));
         this.inputSlots[0] = new InputSlot<>("initialInput", this, dataSetType);

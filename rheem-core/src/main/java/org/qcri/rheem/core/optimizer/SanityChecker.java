@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer;
 
 import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,15 +51,15 @@ public class SanityChecker {
     public boolean checkProperSubplans() {
         final AtomicBoolean testOutcome = new AtomicBoolean(true);
         PlanTraversal.upstream()
-            .withCallback(this.getProperSubplanCallback(testOutcome))
-            .traverse(this.rheemPlan.getSinks());
+                .withCallback(this.getProperSubplanCallback(testOutcome))
+                .traverse(this.rheemPlan.getSinks());
         return testOutcome.get();
     }
 
     /**
      * Callback for the recursive test for proper usage of {@link Subplan}.
      *
-     * @param testOutcome         carries the current test outcome and will be updated on problems
+     * @param testOutcome carries the current test outcome and will be updated on problems
      */
     private PlanTraversal.Callback getProperSubplanCallback(AtomicBoolean testOutcome) {
         return (operator, fromInputSlot, fromOutputSlot) -> {
@@ -68,14 +69,9 @@ public class SanityChecker {
                 this.checkSubplanNotASingleton((Subplan) operator, testOutcome);
             } else if (operator.isAlternative()) {
                 final OperatorAlternative operatorAlternative = (OperatorAlternative) operator;
-                operatorAlternative.getAlternatives().stream()
-                        .map(OperatorAlternative.Alternative::getOperator)
-                        .filter(Operator::isSubplan) // No need to traverse alternatives (must be flat) or single operators.
-                        .map((subplan) -> (Subplan) subplan)
-                        .forEach(subplan -> {
-                            this.checkSubplanNotASingleton(subplan, testOutcome);
-                            this.traverse(subplan, this.getProperSubplanCallback(testOutcome));
-                        });
+                operatorAlternative.getAlternatives().forEach(
+                        alternative -> alternative.traverse(this.getProperSubplanCallback(testOutcome))
+                );
             }
         };
     }
@@ -86,6 +82,7 @@ public class SanityChecker {
      * @param subplan     is subject to the check
      * @param testOutcome carries the current test outcome and will be updated on problems
      */
+    @SuppressWarnings("unused")
     private void checkSubplanNotASingleton(Subplan subplan, final AtomicBoolean testOutcome) {
         boolean isSingleton = this.traverse(subplan, PlanTraversal.Callback.NOP)
                 .getTraversedNodes()
@@ -109,14 +106,17 @@ public class SanityChecker {
             if (operator.isAlternative()) {
                 final OperatorAlternative operatorAlternative = (OperatorAlternative) operator;
                 for (OperatorAlternative.Alternative alternative : operatorAlternative.getAlternatives()) {
-                    final Operator alternativeOperator = alternative.getOperator();
-                    if (alternativeOperator.isAlternative()) {
-                        this.logger.warn("Improper alternative {}: contains alternatives.");
-                        testOutcome.set(false);
-                    } else if (alternativeOperator.isSubplan()) {
+                    final Collection<Operator> containedOperators = alternative.getContainedOperators();
+                    if (containedOperators.size() == 1) {
+                        Operator containedOperator = RheemCollections.getSingle(containedOperators);
+                        if (containedOperator.isAlternative()) {
+                            this.logger.warn("Improper alternative {}: contains alternatives.", alternative);
+                            testOutcome.set(false);
+                        }
+                    } else {
                         // We could check if there are singleton Subplans with an OperatorAlternative embedded,
                         // but this would violate the singleton Subplan rule anyway.
-                        this.traverse((Subplan) alternativeOperator, this.getFlatAlternativeCallback(testOutcome));
+                        alternative.traverse(this.getFlatAlternativeCallback(testOutcome));
                     }
                 }
             }

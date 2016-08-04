@@ -14,7 +14,7 @@ import java.util.Optional;
 public class TestSink<T> extends UnarySink<T> {
 
     public TestSink(DataSetType<T> inputType) {
-        super(inputType, null);
+        super(inputType);
     }
 
     public TestSink(Class<T> typeClass) {

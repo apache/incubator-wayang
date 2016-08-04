@@ -2,6 +2,7 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -181,4 +182,52 @@ public interface OperatorContainer {
         // Usually the same.
         return outerOptimizationContext;
     }
+
+    /**
+     * Acknowledge that the given old {@link Operator} has been replaced with an {@link OperatorContainer}.
+     *
+     * @param operator     that has been replaced
+     * @param newContainer with that the {@code operator} has been replaced
+     */
+    default void noteReplaced(Operator operator, OperatorContainer newContainer) {
+        final CompositeOperator newOperator = newContainer.toOperator();
+        final SlotMapping slotMapping = this.getSlotMapping();
+        slotMapping.replaceInputSlotMappings(operator, newOperator);
+        slotMapping.replaceOutputSlotMappings(operator, newOperator);
+
+        this.toOperator().noteReplaced(operator, newOperator);
+    }
+
+    /**
+     * Retrieves all {@link Operator}s that are <i>immediately</i> encased by this instance.
+     *
+     * @return the encased {@link Operator}s
+     */
+    default Collection<Operator> getContainedOperators() {
+        Operator seed = this.isSink() ?
+                this.getSink() :
+                this.traceOutput(this.toOperator().getOutput(0)).getOwner();
+
+        return PlanTraversal.fanOut().traverse(seed).getTraversedNodes();
+    }
+
+    /**
+     * Retrieves the single(!) {@link Operator} that is <i>immediately</i> encased by this instance.
+     *
+     * @return the encased {@link Operator}s
+     */
+    default Operator getContainedOperator() {
+        return RheemCollections.getSingleOrNull(this.getContainedOperators());
+    }
+
+    /**
+     * Traverses the encased subplan.
+     */
+    default void traverse(PlanTraversal.Callback callback) {
+        Operator seed = this.isSink() ?
+                this.getSink() :
+                this.traceOutput(this.toOperator().getOutput(0)).getOwner();
+        PlanTraversal.fanOut().withCallback(callback).traverse(seed);
+    }
+
 }

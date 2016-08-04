@@ -229,51 +229,27 @@ public interface Operator {
         this.connectTo(output.getIndex(), that, broadcastIndex);
     }
 
-
     /**
-     * Retrieve the operator that is connected to the input at the given index. If necessary, escape the current
-     * parent.
+     * Retrieves the effective occupant of the given {@link InputSlot}, i.e., the {@link OutputSlot} that is
+     * either connected to the given or an outer-more, mapped {@link InputSlot}.
      *
-     * @param inputIndex the index of the input to consider
-     * @return the input operator or {@code null} if no such operator exists
-     * @see #getParent()
+     * @param inputIndex of the {@link InputSlot} whose effective occupant is requested
+     * @return the effective occupant or {@code null} if none
      */
-    default Operator getInputOperator(int inputIndex) {
-        return this.getInputOperator(this.getInput(inputIndex));
+    @SuppressWarnings("unchecked")
+    default <T> OutputSlot<T> getEffectiveOccupant(int inputIndex) {
+        return this.getOutermostInputSlot((InputSlot<T>) this.getInput(inputIndex)).getOccupant();
     }
 
     /**
-     * Retrieve the operator that is connected to the given input. If necessary, escape the current parent.
+     * Retrieves the effective occupant of the given {@link InputSlot}, i.e., the {@link OutputSlot} that is
+     * either connected to the given or an outer-more, mapped {@link InputSlot}.
      *
-     * @param input the index of the input to consider
-     * @return the input operator or {@code null} if no such operator exists
-     * @see #getParent()
+     * @param input whose effective occupant is requested
+     * @return the effective occupant or {@code null} if none
      */
-    default Operator getInputOperator(InputSlot<?> input) {
-        if (!this.isOwnerOf(input)) {
-            throw new IllegalArgumentException("Slot does not belong to this operator.");
-        }
-
-        // Try to exit through the parent.
-        final OutputSlot occupant = input.getOccupant();
-        final Operator parent = this.getParent();
-        if (occupant == null && parent != null) {
-            if (parent instanceof Subplan) {
-                final InputSlot<?> exitInputSlot = ((Subplan) parent).exit(input);
-                if (exitInputSlot != null) {
-                    return parent.getInputOperator(exitInputSlot);
-                }
-
-            } else if (parent instanceof OperatorAlternative.Alternative) {
-                final InputSlot<?> exitInputSlot = ((OperatorAlternative.Alternative) parent).exit(input);
-                if (exitInputSlot != null) {
-                    return parent.getInputOperator(exitInputSlot);
-                }
-            }
-
-        }
-
-        return occupant == null ? null : occupant.getOwner();
+    default <T> OutputSlot<T> getEffectiveOccupant(InputSlot<T> input) {
+        return this.getOutermostInputSlot(input).getOccupant();
     }
 
     /**

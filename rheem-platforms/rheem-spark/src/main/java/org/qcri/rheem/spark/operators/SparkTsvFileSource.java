@@ -34,8 +34,8 @@ public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecut
         this(null, type);
     }
 
-    public SparkTsvFileSource(String sourcePath, DataSetType type) {
-        super(type, null);
+    public SparkTsvFileSource(String sourcePath, DataSetType<T> type) {
+        super(type);
         this.sourcePath = sourcePath;
     }
 

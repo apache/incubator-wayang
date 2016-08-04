@@ -9,7 +9,7 @@ import org.qcri.rheem.core.types.DataSetType;
 public class TestSource<T> extends UnarySource<T> {
 
     public TestSource(DataSetType outputType) {
-        super(outputType, null);
+        super(outputType);
     }
 
 }

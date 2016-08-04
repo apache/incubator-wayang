@@ -64,7 +64,7 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
                            DataSetType<ConvergenceType> convergenceType,
                            PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
                            int numExpectedIterations) {
-        super(3, 2, true, null);
+        super(3, 2, true);
         this.criterionDescriptor = criterionDescriptor;
         this.numExpectedIterations = numExpectedIterations;
         this.state = State.NOT_STARTED;

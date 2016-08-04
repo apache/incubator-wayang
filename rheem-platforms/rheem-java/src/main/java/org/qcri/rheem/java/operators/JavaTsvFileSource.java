@@ -38,7 +38,7 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
     private final String sourcePath;
 
     public JavaTsvFileSource(String sourcePath, DataSetType type) {
-        super(type, null);
+        super(type);
         this.sourcePath = sourcePath;
     }
 

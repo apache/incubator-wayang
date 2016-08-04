@@ -31,8 +31,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      */
     public SampleOperator(int sampleSize, DataSetType<Type> type, Methods sampleMethod) {
         super(type, type,
-                true,
-                null);
+                true);
         this.sampleSize = sampleSize;
         this.sampleMethod = sampleMethod;
     }
