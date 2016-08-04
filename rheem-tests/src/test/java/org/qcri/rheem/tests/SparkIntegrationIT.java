@@ -190,6 +190,22 @@ public class SparkIntegrationIT {
     }
 
     @Test
+    public void testRepeat() {
+        // Build the RheemPlan.
+        List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.repeat(collector, 5, 0, 10, 20, 30, 45);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext()
+                .with(Spark.basicPlugin());
+
+        rheemContext.execute(rheemPlan);
+
+        Assert.assertEquals(5, collector.size());
+        Assert.assertEquals(RheemCollections.asSet(5, 15, 25, 35, 50), RheemCollections.asSet(collector));
+    }
+
+    @Test
     public void testZipWithId() throws URISyntaxException {
         // Build the RheemPlan.
         List<Long> collector = new LinkedList<>();

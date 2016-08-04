@@ -1,54 +1,42 @@
 package org.qcri.rheem.spark.operators;
 
-import org.apache.spark.api.java.function.Function;
-import org.qcri.rheem.basic.operators.DoWhileOperator;
+import org.qcri.rheem.basic.operators.RepeatOperator;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
- * Spark implementation of the {@link DoWhileOperator}.
+ * Spark implementation of the {@link RepeatOperator}.
  */
-public class SparkDoWhileOperator<InputType, ConvergenceType>
-        extends DoWhileOperator<InputType, ConvergenceType>
+public class SparkRepeatOperator<Type>
+        extends RepeatOperator<Type>
         implements SparkExecutionOperator {
 
-
     /**
-     * Creates a new instance.
+     * Keeps track of the current iteration number.
      */
-    public SparkDoWhileOperator(DataSetType<InputType> inputType,
-                                DataSetType<ConvergenceType> convergenceType,
-                                PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
-                                int numExpectedIterations) {
-        super(inputType, convergenceType, criterionPredicate, numExpectedIterations);
+    private int iterationCounter;
+
+    public SparkRepeatOperator(int numIterations, DataSetType<Type> type) {
+        super(numIterations, type);
     }
 
-    public SparkDoWhileOperator(DataSetType<InputType> inputType,
-                                DataSetType<ConvergenceType> convergenceType,
-                                PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
-                                int numExpectedIterations) {
-        super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
-    }
-
-    /**
-     * Creates a new instance.
-     */
-    public SparkDoWhileOperator(DoWhileOperator<InputType, ConvergenceType> that) {
+    public SparkRepeatOperator(RepeatOperator<Type> that) {
         super(that);
     }
+
 
     @Override
     @SuppressWarnings("unchecked")
@@ -57,35 +45,25 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final RddChannel.Instance iterationInput;
-        final Function<Collection<ConvergenceType>, Boolean> stoppingCondition =
-                compiler.compile(this.criterionDescriptor, this, inputs);
-        boolean endloop = false;
+
+        RddChannel.Instance iterationInput;
         switch (this.getState()) {
             case NOT_STARTED:
                 assert inputs[INITIAL_INPUT_INDEX] != null;
-
                 iterationInput = (RddChannel.Instance) inputs[INITIAL_INPUT_INDEX];
+                this.iterationCounter = 0;
                 break;
             case RUNNING:
                 assert inputs[ITERATION_INPUT_INDEX] != null;
-                assert inputs[CONVERGENCE_INPUT_INDEX] != null;
-
                 iterationInput = (RddChannel.Instance) inputs[ITERATION_INPUT_INDEX];
-                final CollectionChannel.Instance convergenceInput = (CollectionChannel.Instance) inputs[CONVERGENCE_INPUT_INDEX];
-                final Collection<ConvergenceType> convergenceCollection = convergenceInput.provideCollection();
-                try {
-                    endloop = stoppingCondition.call(convergenceCollection);
-                } catch (Exception e) {
-                    throw new RheemException(String.format("Could not evaluate stopping condition for %s.", this), e);
-                }
+                this.iterationCounter++;
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
 
         }
 
-        if (endloop) {
+        if (this.iterationCounter >= this.getNumIterations()) {
             // final loop output
             ((RddChannel.Instance) outputs[FINAL_OUTPUT_INDEX]).accept(iterationInput.provideRdd(), sparkExecutor);
             outputs[ITERATION_OUTPUT_INDEX] = null;
@@ -100,22 +78,13 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkDoWhileOperator<>(
-                this.getInputType(),
-                this.getConvergenceType(),
-                this.getCriterionDescriptor().getJavaImplementation(),
-                this.getNumExpectedIterations()
-        );
+        return new SparkRepeatOperator<>(this);
     }
 
     @Override
     public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.while.load");
+        final String specification = configuration.getStringProperty("rheem.spark.repeat.load");
         final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
-        final LoadProfileEstimator udfEstimator = configuration
-                .getFunctionLoadProfileEstimatorProvider()
-                .provideFor(this.criterionDescriptor);
-        mainEstimator.nest(udfEstimator);
         return Optional.of(mainEstimator);
     }
 
@@ -126,8 +95,6 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
             case INITIAL_INPUT_INDEX:
             case ITERATION_INPUT_INDEX:
                 return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
-            case CONVERGENCE_INPUT_INDEX:
-                return Collections.singletonList(CollectionChannel.DESCRIPTOR);
             default:
                 throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
         }
@@ -147,6 +114,6 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     public boolean isEvaluatingEagerly(int inputIndex) {
-        return inputIndex == CONVERGENCE_INPUT_INDEX;
+        return false;
     }
 }

@@ -30,6 +30,7 @@ public class Mappings {
             new JoinMapping(),
             new LoopMapping(),
             new DoWhileMapping(),
+            new RepeatMapping(),
             new SampleMapping(),
             new ZipWithIdMapping()
     );
