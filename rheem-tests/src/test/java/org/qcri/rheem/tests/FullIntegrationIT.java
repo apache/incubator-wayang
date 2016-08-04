@@ -219,7 +219,6 @@ public class FullIntegrationIT {
         Assert.assertEquals(RheemCollections.asSet(1, 4, 9), RheemCollections.asSet(collector));
     }
 
-    @Ignore("No implementation/mapping for the RepeatOperator so far.")
     @Test
     public void testRepeat() {
         // Build the RheemPlan.

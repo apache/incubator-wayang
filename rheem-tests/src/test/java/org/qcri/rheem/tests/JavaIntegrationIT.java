@@ -1,6 +1,7 @@
 package org.qcri.rheem.tests;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.FilterOperator;
@@ -18,6 +19,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.Java;
+import org.qcri.rheem.spark.Spark;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
 import java.io.IOException;
@@ -192,6 +194,23 @@ public class JavaIntegrationIT {
 
         Assert.assertEquals(RheemCollections.asSet(1, 4, 9), RheemCollections.asSet(collector));
     }
+
+    @Test
+    public void testRepeat() {
+        // Build the RheemPlan.
+        List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.repeat(collector, 5, 0, 10, 20, 30, 45);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext()
+                .with(Java.basicPlugin());
+
+        rheemContext.execute(rheemPlan);
+
+        Assert.assertEquals(5, collector.size());
+        Assert.assertEquals(RheemCollections.asSet(5, 15, 25, 35, 50), RheemCollections.asSet(collector));
+    }
+
 
     @Test
     public void testZipWithId() throws URISyntaxException {
