@@ -23,9 +23,16 @@ public interface OperatorContainer {
     /**
      * Enter this container. This container's {@link CompositeOperator} needs to be a source.
      *
-     * @return the sink operator within this container
+     * @return the source operator within this container
      */
     Operator getSource();
+
+    /**
+     * Set the source. This container's {@link CompositeOperator} needs to be a source itself.
+     *
+     * @param innerSource the source operator within this container
+     */
+    void setSource(Operator innerSource);
 
     /**
      * Enter the encased plan by following an {@code inputSlot} of the encasing {@link CompositeOperator}.
@@ -49,6 +56,13 @@ public interface OperatorContainer {
      * @return the sink operator within this subplan
      */
     Operator getSink();
+
+    /**
+     * Set the sink. This container's {@link CompositeOperator} needs to be a sink itself.
+     *
+     * @param innerSink the sink operator within this container
+     */
+    void setSink(Operator innerSink);
 
     /**
      * @return whether this container corresponds to a sink

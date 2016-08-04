@@ -206,6 +206,11 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
         }
 
         @Override
+        public void setSink(Operator innerSink) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public <T> OutputSlot<T> traceOutput(OutputSlot<T> alternativeOutputSlot) {
             // If this alternative is not a sink, we trace the given output slot via the slot mapping.
             if (!OperatorAlternative.this.isOwnerOf(alternativeOutputSlot)) {
@@ -235,6 +240,11 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             }
 
             return this.operator;
+        }
+
+        @Override
+        public void setSource(Operator innerSource) {
+            throw new UnsupportedOperationException();
         }
 
         @Override

@@ -51,7 +51,10 @@ public interface Operator {
      * @return the number of broadcast {@link InputSlot}s of this instance
      */
     default int getNumBroadcastInputs() {
-        return (int) Arrays.stream(this.getAllInputs()).filter(InputSlot::isBroadcast).count();
+        return (int) Arrays.stream(this.getAllInputs())
+                .filter(Objects::nonNull)
+                .filter(InputSlot::isBroadcast)
+                .count();
     }
 
     /**
@@ -70,6 +73,32 @@ public interface Operator {
      * @return the {@link OutputSlot}s of this instance
      */
     OutputSlot<?>[] getAllOutputs();
+
+    /**
+     * Sets the {@link InputSlot} of this instance. This method must only be invoked, when the input index is not
+     * yet filled.
+     *
+     * @param index at which the {@link InputSlot} should be placed
+     * @param input the new {@link InputSlot}
+     */
+    default void setInput(int index, InputSlot<?> input) {
+        assert index < this.getNumRegularInputs() && this.getInput(index) == null;
+        assert input.getOwner() == this;
+        ((InputSlot[]) this.getAllInputs())[index] = input;
+    }
+
+    /**
+     * Sets the {@link OutputSlot} of this instance. This method must only be invoked, when the output index is not
+     * yet filled.
+     *
+     * @param index  at which the {@link OutputSlot} should be placed
+     * @param output the new {@link OutputSlot}
+     */
+    default void setOutput(int index, OutputSlot<?> output) {
+        assert index < this.getNumOutputs() && this.getOutput(index) == null;
+        assert output.getOwner() == this;
+        ((OutputSlot[]) this.getAllOutputs())[index] = output;
+    }
 
     /**
      * Retrieve an {@link InputSlot} of this instance using its index.
@@ -558,12 +587,14 @@ public interface Operator {
 
     /**
      * Provides an instance's name.
+     *
      * @return the name of this instance or {@code null} if none
      */
     String getName();
 
     /**
      * Provide a name for this instance.
+     *
      * @param name the name
      */
     void setName(String name);
