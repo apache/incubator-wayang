@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.java.mapping.graph.PageRankMapping;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,6 +34,10 @@ public class Mappings {
             new RepeatMapping(),
             new SampleMapping(),
             new ZipWithIdMapping()
+    );
+
+    public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(
+            new PageRankMapping()
     );
 
 }

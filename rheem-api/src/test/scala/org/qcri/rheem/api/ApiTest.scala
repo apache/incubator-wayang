@@ -307,20 +307,23 @@ class ApiTest {
   @Test
   def testPageRank() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(RheemBasics.graphPlugin).`with`(Java.basicPlugin)
+    val rheem = new RheemContext()
+      .`with`(Java.graphPlugin)
+      .`with`(RheemBasics.graphPlugin)
+      .`with`(Java.basicPlugin)
     import org.qcri.rheem.api.graph._
 
     type Edge = org.qcri.rheem.basic.data.Tuple2[Integer, Integer]
     val edges = Seq((0, 1), (0, 2), (0, 3), (1, 0), (2, 1), (3, 2), (3, 1)).map(t => new Edge(t._1, t._2))
 
-    val builder = new PlanBuilder(rheem)
-    val pageRanks = builder
+    val pageRanks = rheem
       .loadCollection(edges).withName("Load edges")
       .pageRank(20).withName("PageRank")
       .collect()
       .map(t => t.field0 -> t.field1)
       .toMap
 
+    print(pageRanks)
     // Let's not check absolute numbers but only the relative ordering.
     Assert.assertTrue(pageRanks(1) > pageRanks(0))
     Assert.assertTrue(pageRanks(0) > pageRanks(2))

@@ -2,6 +2,7 @@ package org.qcri.rheem.java;
 
 import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.plugin.JavaBasicPlugin;
+import org.qcri.rheem.java.plugin.JavaGraphPlugin;
 
 /**
  * Register for relevant components of this module.
@@ -9,6 +10,8 @@ import org.qcri.rheem.java.plugin.JavaBasicPlugin;
 public class Java {
 
     private final static JavaBasicPlugin PLUGIN = new JavaBasicPlugin();
+
+    private final static JavaGraphPlugin GRAPH_PLUGIN = new JavaGraphPlugin();
 
     /**
      * Retrieve the {@link JavaBasicPlugin}.
@@ -19,6 +22,14 @@ public class Java {
         return PLUGIN;
     }
 
+    /**
+     * Retrieve the {@link JavaGraphPlugin}.
+     *
+     * @return the {@link JavaGraphPlugin}
+     */
+    public static JavaGraphPlugin graphPlugin() {
+        return GRAPH_PLUGIN;
+    }
 
     /**
      * Retrieve the {@link JavaPlatform}.
@@ -28,5 +39,5 @@ public class Java {
     public static JavaPlatform platform() {
         return JavaPlatform.getInstance();
     }
-    
+
 }
