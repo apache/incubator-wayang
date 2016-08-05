@@ -18,7 +18,7 @@ import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**
-  * Created by basti on 03/22/16.
+  * Provides implicits for the basic Rheem API.
   */
 package object api {
 
@@ -110,6 +110,7 @@ package object api {
   implicit private[api] def wrap[Out: ClassTag](op: ElementaryOperator)(implicit planBuilder: PlanBuilder): DataQuanta[Out] =
     new DataQuanta[Out](op)
 
-  implicit def elevateRecordDataQuanta(dataQuanta: DataQuanta[Record]) = new RecordDataQuanta(dataQuanta)
+  implicit def elevateRecordDataQuanta(dataQuanta: DataQuanta[Record]): RecordDataQuanta =
+    new RecordDataQuanta(dataQuanta)
 
 }

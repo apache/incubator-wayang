@@ -4,6 +4,7 @@ import java.io.File
 import java.sql.{Connection, Statement}
 
 import org.junit.{Assert, Test}
+import org.qcri.rheem.basic.RheemBasics
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
 import org.qcri.rheem.core.function.{ExecutionContext, TransformationDescriptor}
@@ -301,6 +302,29 @@ class ApiTest {
 
     val expectedValues = Set(2, 3, 4, 5, 7, 8, 9)
     Assert.assertEquals(expectedValues, result.toSet)
+  }
+
+  @Test
+  def testPageRank() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext().`with`(RheemBasics.graphPlugin).`with`(Java.basicPlugin)
+    import org.qcri.rheem.api.graph._
+
+    type Edge = org.qcri.rheem.basic.data.Tuple2[Integer, Integer]
+    val edges = Seq((0, 1), (0, 2), (0, 3), (1, 0), (2, 1), (3, 2), (3, 1)).map(t => new Edge(t._1, t._2))
+
+    val builder = new PlanBuilder(rheem)
+    val pageRanks = builder
+      .loadCollection(edges).withName("Load edges")
+      .pageRank(20).withName("PageRank")
+      .collect()
+      .map(t => t.field0 -> t.field1)
+      .toMap
+
+    // Let's not check absolute numbers but only the relative ordering.
+    Assert.assertTrue(pageRanks(1) > pageRanks(0))
+    Assert.assertTrue(pageRanks(0) > pageRanks(2))
+    Assert.assertTrue(pageRanks(2) > pageRanks(3))
   }
 
   @Test

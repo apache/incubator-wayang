@@ -109,21 +109,7 @@ public class PageRankMapping implements Mapping {
 
         // Create the initial page ranks.
         MapOperator<Integer, Tuple2<Integer, Float>> initializeRanks = new MapOperator<>(
-                new FunctionDescriptor.ExtendedSerializableFunction<Integer, Tuple2<Integer, Float>>() {
-
-                    private Float initialRank;
-
-                    @Override
-                    public void open(ExecutionContext ctx) {
-                        long numVertices = RheemCollections.getSingle(ctx.getBroadcast("numVertices"));
-                        this.initialRank = 1f / numVertices;
-                    }
-
-                    @Override
-                    public Tuple2<Integer, Float> apply(Integer vertexId) {
-                        return new Tuple2<>(vertexId, this.initialRank);
-                    }
-                },
+                new RankInitializer(),
                 Integer.class, ReflectionUtils.specify(Tuple2.class)
         );
         initializeRanks.setName(String.format("%s (initialize ranks)", operatorBaseName));
@@ -184,26 +170,7 @@ public class PageRankMapping implements Mapping {
 
         // Apply the damping factor.
         MapOperator<Tuple2<Integer, Float>, Tuple2<Integer, Float>> damping = new MapOperator<>(
-                new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Integer, Float>, Tuple2<Integer, Float>>() {
-
-                    private final float dampingFactor = 0.85f;
-
-                    private float minRank;
-
-                    @Override
-                    public void open(ExecutionContext ctx) {
-                        long numVertices = RheemCollections.getSingle(ctx.getBroadcast("numVertices"));
-                        this.minRank = (1 - this.dampingFactor) / numVertices;
-                    }
-
-                    @Override
-                    public Tuple2<Integer, Float> apply(Tuple2<Integer, Float> rank) {
-                        return new Tuple2<>(
-                                rank.field0,
-                                this.minRank + this.dampingFactor * rank.field1
-                        );
-                    }
-                },
+                new ApplyDamping(),
                 ReflectionUtils.specify(Tuple2.class),
                 ReflectionUtils.specify(Tuple2.class)
         );
@@ -219,5 +186,50 @@ public class PageRankMapping implements Mapping {
                 Collections.singletonList(loopSubplan.getOutput(0)),
                 null
         );
+    }
+
+    /**
+     * Creates intial page ranks.
+     */
+    public static class RankInitializer
+            implements FunctionDescriptor.ExtendedSerializableFunction<Integer,Tuple2<Integer,Float>>{
+
+        private Float initialRank;
+
+        @Override
+        public void open(ExecutionContext ctx) {
+            long numVertices = RheemCollections.getSingle(ctx.getBroadcast("numVertices"));
+            this.initialRank = 1f / numVertices;
+        }
+
+        @Override
+        public Tuple2<Integer, Float> apply(Integer vertexId) {
+            return new Tuple2<>(vertexId, this.initialRank);
+        }
+    }
+
+    /**
+     * Applies damping to page ranks.
+     */
+    private static class ApplyDamping implements
+            FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Integer, Float>, Tuple2<Integer, Float>> {
+
+        private final float dampingFactor = 0.85f;
+
+        private float minRank;
+
+        @Override
+        public void open(ExecutionContext ctx) {
+            long numVertices = RheemCollections.getSingle(ctx.getBroadcast("numVertices"));
+            this.minRank = (1 - this.dampingFactor) / numVertices;
+        }
+
+        @Override
+        public Tuple2<Integer, Float> apply(Tuple2<Integer, Float> rank) {
+            return new Tuple2<>(
+                    rank.field0,
+                    this.minRank + this.dampingFactor * rank.field1
+            );
+        }
     }
 }
