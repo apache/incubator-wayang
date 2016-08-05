@@ -2,9 +2,8 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityPusher;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
-import org.qcri.rheem.core.optimizer.cardinality.OperatorContainerPusher;
+import org.qcri.rheem.core.optimizer.cardinality.OperatorAlternativeCardinalityPusher;
 import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.*;
@@ -158,11 +157,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
     @Override
     public CardinalityPusher getCardinalityPusher(final Configuration configuration) {
-        return new AggregatingCardinalityPusher(this, configuration);
-    }
-
-    protected CardinalityPusher getCardinalityPusherFor(Alternative alternative, Configuration configuration) {
-        return OperatorContainerPusher.createFor(alternative, configuration);
+        return new OperatorAlternativeCardinalityPusher(this, configuration);
     }
 
     @Override
@@ -231,7 +226,6 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             return OperatorAlternative.this;
         }
 
-
         @Override
         public Operator getSource() {
             return this.source;
@@ -262,15 +256,16 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
         @Override
         public <T> InputSlot<T> traceInput(InputSlot<T> inputSlot) {
-            if (inputSlot.getOccupant() != null) {
-                throw new IllegalStateException("Cannot trace an InputSlot that has an occupant.");
-            }
-
             if (inputSlot.getOwner().getContainer() != this) {
                 throw new IllegalArgumentException("Cannot trace input slot: does not belong to this alternative.");
             }
 
-            return this.slotMapping.resolveUpstream(inputSlot);
+            final InputSlot<T> tracedInput = this.slotMapping.resolveUpstream(inputSlot);
+            assert tracedInput == null || inputSlot.getOccupant() == null : String.format(
+                    "%s has both the occupant %s and the outer mapped input %s.",
+                    inputSlot, inputSlot.getOccupant(), tracedInput
+            );
+            return tracedInput;
         }
 
         @Override
@@ -285,14 +280,9 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             return OperatorAlternative.this;
         }
 
-        private Operator getStartOperator() {
-            if (this.source != null) return this.source;
-            return RheemCollections.getAny(this.followInput(this.getOperatorAlternative().getInput(0))).getOwner();
+        @Override
+        public String toString() {
+            return String.format("%s[%s]", this.getClass().getSimpleName(), this.getContainedOperators());
         }
-
-        public CardinalityPusher getCardinalityPusher(Configuration configuration) {
-            return this.getOperatorAlternative().getCardinalityPusherFor(this, configuration);
-        }
-
     }
 }

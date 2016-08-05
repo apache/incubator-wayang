@@ -3,10 +3,7 @@ package org.qcri.rheem.core.optimizer.cardinality;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
-import org.qcri.rheem.core.plan.rheemplan.PlanTraversal;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
 
@@ -21,6 +18,30 @@ public class CardinalityEstimationTraversal {
     private final Collection<Activation> inputActivations;
 
     private final Collection<? extends Activator> sourceActivators;
+
+    /**
+     * Create an instance that pushes {@link CardinalityEstimate}s through a data flow plan starting at the given
+     * {@code inputSlots} and {@code sourceOperators}, thereby putting {@link CardinalityEstimate}s into the
+     * {@code cache}.
+     *
+     * @param operatorContainer that should be traversed
+     * @param configuration     provides utilities for the estimation
+     */
+    public static CardinalityEstimationTraversal createPushTraversal(OperatorContainer operatorContainer, Configuration configuration) {
+        if (operatorContainer.isSource()) {
+            return createPushTraversal(
+                    Collections.emptyList(),
+                    Collections.singleton(operatorContainer.getSource()),
+                    configuration
+            );
+        } else {
+            return createPushTraversal(
+                    operatorContainer.getMappedInputs(),
+                    Collections.emptyList(),
+                    configuration
+            );
+        }
+    }
 
     /**
      * Create an instance that pushes {@link CardinalityEstimate}s through a data flow plan starting at the given
@@ -221,6 +242,15 @@ public class CardinalityEstimationTraversal {
 
         protected Collection<Activation> getDependentActivations(OutputSlot<?> outputSlot) {
             return this.dependentActivations[outputSlot.getIndex()];
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder activations = new StringBuilder(this.isActivated.length);
+            for (boolean b : this.isActivated) {
+                activations.append(b ? "|" : "-");
+            }
+            return String.format("%s[%s, %s]", this.getClass().getSimpleName(), this.operator, activations);
         }
     }
 

@@ -94,7 +94,7 @@ public class SlotMapping {
 
     public <T> InputSlot<T> resolveUpstream(InputSlot<T> source) {
         if (source.getOccupant() != null) {
-            throw new IllegalStateException("Tried to resolve (upstream) an InputSlot with an occupant, which is illegal.");
+            this.logger.warn("Trying to resolve (upstream) an InputSlot with an occupant.");
         }
         return (InputSlot<T>) this.upstreamMapping.get(source);
     }
@@ -109,7 +109,7 @@ public class SlotMapping {
 
     public <T> Collection<OutputSlot<T>> resolveDownstream(OutputSlot<T> source) {
         if (!source.getOccupiedSlots().isEmpty()) {
-            throw new IllegalStateException("Tried to resolve (downstream) an OutputSlot with occupiers, which is illegal.");
+            this.logger.warn("Trying to resolve (downstream) an OutputSlot with occupiers.");
         }
         return (Collection<OutputSlot<T>>) this.getOrCreateDownstreamMapping().getOrDefault(source, Collections.emptyList());
     }
@@ -144,7 +144,7 @@ public class SlotMapping {
             final SlotMapping oldToNewSlotMapping = oldOperator.getContainer().getSlotMapping();
             for (int i = 0; i < oldOperator.getNumInputs(); i++) {
                 final InputSlot<?> oldInput = oldOperator.getInput(i);
-                assert  oldInput != null : String.format("No %dth input for %s (for %s).", i, oldOperator, newOperator);
+                assert oldInput != null : String.format("No %dth input for %s (for %s).", i, oldOperator, newOperator);
                 if (oldInput.getOccupant() != null) continue;
 
                 final InputSlot<?> outerInput = this.resolveUpstream(oldInput);
@@ -268,5 +268,13 @@ public class SlotMapping {
         return result;
     }
 
+    /**
+     * Retrieves the upstream mapping of {@link Slot}s. Do not modify!
+     *
+     * @return the upstream mapping
+     */
+    public Map<Slot, Slot> getUpstreamMapping() {
+        return this.upstreamMapping;
+    }
 
 }

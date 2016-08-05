@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 /**
  * {@link CardinalityPusher} implementation for {@link Subplan}s (but not for {@link LoopSubplan}s!)
  */
-public class OperatorContainerPusher extends CardinalityPusher {
+public class SubplanCardinalityPusher extends CardinalityPusher {
 
     private final CardinalityEstimationTraversal traversal;
 
@@ -33,13 +33,13 @@ public class OperatorContainerPusher extends CardinalityPusher {
         final CardinalityEstimationTraversal traversal = CardinalityEstimationTraversal.createPushTraversal(
                 innerInputs, sourceOperators, configuration);
 
-        return new OperatorContainerPusher(traversal, compositeOperator);
+        return new SubplanCardinalityPusher(traversal, compositeOperator);
     }
 
     /**
      * Creates a new instance.
      */
-    private OperatorContainerPusher(CardinalityEstimationTraversal traversal, final CompositeOperator compositeOperator) {
+    private SubplanCardinalityPusher(CardinalityEstimationTraversal traversal, final CompositeOperator compositeOperator) {
         super(compositeOperator);
         assert !compositeOperator.isLoopSubplan() : String.format("%s is not suited for %s instances.",
                 this.getClass().getSimpleName(), Subplan.class.getSimpleName());

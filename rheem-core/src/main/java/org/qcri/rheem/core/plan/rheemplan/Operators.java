@@ -2,6 +2,7 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Utility class for {@link Operator}s.

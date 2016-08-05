@@ -118,7 +118,6 @@ public class PlanTransformation {
 
         // Add a new alternative to the operatorAlternative.
         operatorAlternative.addAlternative(replacement);
-
     }
 
     /**

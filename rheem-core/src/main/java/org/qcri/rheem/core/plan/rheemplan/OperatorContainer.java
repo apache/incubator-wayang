@@ -6,6 +6,7 @@ import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 /**
  * This is not an {@link Operator} in its own right. However, it contains a set of operators and can redirect
@@ -34,6 +35,15 @@ public interface OperatorContainer {
      * @param innerSource the source operator within this container
      */
     void setSource(Operator innerSource);
+
+    /**
+     * Tells whether this instance represents a sink.
+     *
+     * @return whether this container corresponds to a source
+     */
+    default boolean isSource() {
+        return this.toOperator().isSource();
+    }
 
     /**
      * Enter the encased plan by following an {@code inputSlot} of the encasing {@link CompositeOperator}.
@@ -230,4 +240,27 @@ public interface OperatorContainer {
         PlanTraversal.fanOut().withCallback(callback).traverse(seed);
     }
 
+    /**
+     * Get those {@link InputSlot}s within this instance, that are mapped via the {@link SlotMapping}.
+     *
+     * @return the {@link InputSlot}s
+     */
+    default Collection<InputSlot<?>> getMappedInputs() {
+        return this.getSlotMapping().getUpstreamMapping().keySet().stream()
+                .filter(Slot::isInputSlot)
+                .map(slot -> (InputSlot<?>) slot)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get those {@link OutputSlot}s within this instance, that are mapped via the {@link SlotMapping}.
+     *
+     * @return the {@link OutputSlot}s
+     */
+    default Collection<OutputSlot<?>> getMappedOutputs() {
+        return this.getSlotMapping().getUpstreamMapping().values().stream()
+                .filter(Slot::isOutputSlot)
+                .map(slot -> (OutputSlot<?>) slot)
+                .collect(Collectors.toList());
+    }
 }

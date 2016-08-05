@@ -1,8 +1,8 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityPusher;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.LoopHeadAlternativeCardinalityPusher;
 import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.Collection;
@@ -28,7 +28,6 @@ public class LoopHeadAlternative extends OperatorAlternative implements LoopHead
     LoopHeadAlternative(LoopHeadOperator loopHead) {
         super(loopHead);
         this.originalLoopHead = loopHead;
-
     }
 
     @Override
@@ -85,25 +84,34 @@ public class LoopHeadAlternative extends OperatorAlternative implements LoopHead
 
     @Override
     public CardinalityPusher getCardinalityPusher(Configuration configuration) {
-        return new AggregatingCardinalityPusher(this, this.getLoopBodyInputs(), this.getLoopBodyOutputs(),
-                Operator::getCardinalityPusher, configuration);
+        return new LoopHeadAlternativeCardinalityPusher(
+                this,
+                this.getLoopBodyInputs(),
+                this.getLoopBodyOutputs(),
+                (alternative, conf) -> alternative.getContainedOperator().getCardinalityPusher(conf),
+                configuration
+        );
     }
 
     @Override
     public CardinalityPusher getInitializationPusher(Configuration configuration) {
-        return new AggregatingCardinalityPusher(this,
+        return new LoopHeadAlternativeCardinalityPusher(
+                this,
                 this.getLoopInitializationInputs(),
                 this.getLoopBodyOutputs(),
-                (op, conf) -> ((LoopHeadOperator) op).getInitializationPusher(conf),
-                configuration);
+                (alternative, conf) -> ((LoopHeadOperator) alternative.getContainedOperator()).getInitializationPusher(conf),
+                configuration
+        );
     }
 
     @Override
     public CardinalityPusher getFinalizationPusher(Configuration configuration) {
-        return new AggregatingCardinalityPusher(this,
+        return new LoopHeadAlternativeCardinalityPusher(
+                this,
                 this.getLoopBodyInputs(),
-                this.getLoopBodyOutputs(),
-                (op, conf) -> ((LoopHeadOperator) op).getFinalizationPusher(conf),
-                configuration);
+                this.getFinalLoopOutputs(),
+                (alternative, conf) -> ((LoopHeadOperator) alternative.getContainedOperator()).getFinalizationPusher(conf),
+                configuration
+        );
     }
 }

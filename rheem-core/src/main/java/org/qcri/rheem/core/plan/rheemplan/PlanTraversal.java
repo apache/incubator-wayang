@@ -1,5 +1,8 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -13,9 +16,15 @@ import java.util.stream.Stream;
  */
 public class PlanTraversal {
 
+    private static final Logger logger = LoggerFactory.getLogger(PlanTraversal.class);
+
     public Set<Operator> visitedOperators = new HashSet<>();
 
-    private final boolean isFollowInputs, isFollowOutputs;
+    private final boolean isFollowInputs;
+
+    private final boolean isFollowOutputs;
+
+    private boolean isHierarchical;
 
     private Callback traversalCallback = null;
 
@@ -78,6 +87,17 @@ public class PlanTraversal {
     }
 
     /**
+     * If this method is invoked, this instance will not treat {@link Subplan}s and {@link OperatorAlternative}s as
+     * normal traversed {@link Operator}s but will rather enter them and traverse their contained {@link Operator}s.
+     *
+     * @return this instance
+     */
+    public PlanTraversal traversingHierarchical() {
+        this.isHierarchical = true;
+        return this;
+    }
+
+    /**
      * Traversing as with {@link #traverse(Operator, InputSlot, OutputSlot)} for every operator.
      */
     public PlanTraversal traverse(Collection<? extends Operator> operators) {
@@ -103,6 +123,13 @@ public class PlanTraversal {
         return this.traverse(operator, null, null);
     }
 
+    /**
+     * Traverses a plan in a focused manner.
+     *
+     * @param operator     from that the traversal should be started (will not be traversed itself)
+     * @param focusedSlots {@link OutputSlot}s of the {@code operator} that should be followed
+     * @return this instance
+     */
     public PlanTraversal traverseFocused(Operator operator, Collection<OutputSlot<?>> focusedSlots) {
         this.visitedOperators.add(operator);
         assert focusedSlots.stream().allMatch(slot -> slot.getOwner() == operator);
@@ -110,9 +137,25 @@ public class PlanTraversal {
         return this;
     }
 
+    /**
+     * Traverses a plan.
+     *
+     * @param operator       from that the traversal should be started
+     * @param fromInputSlot  {@link InputSlot} of the {@code operator} that has been followed
+     * @param fromOutputSlot {@link OutputSlot} of the {@code operator} that has been followed
+     * @return this instance
+     */
     public PlanTraversal traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
-        if (this.visitedOperators.add(operator)) {
-            if (this.traversalCallback != null) {
+        // Try to do a hierarchical traversal.
+        // Important: Don't add hierarchical Operators to the #visitedOperators, otherwise we might not traverse
+        // them completely (e.g., by not entering via all InputSlots).
+        boolean isOperatorHierarchical =
+                this.isHierarchical && this.traverseHierarchical(operator, fromInputSlot, fromOutputSlot);
+        boolean isUnseenOperator = this.visitedOperators.add(operator);
+
+        // Otherwise, treat the operator as a normal operator.
+        if (isUnseenOperator) {
+            if (!isOperatorHierarchical && this.traversalCallback != null) {
                 this.traversalCallback.traverse(operator, fromInputSlot, fromOutputSlot);
             }
 
@@ -121,6 +164,60 @@ public class PlanTraversal {
         }
 
         return this;
+    }
+
+    /**
+     * Try to enter the given {@link Operator} either via an {@link InputSlot} or {@link OutputSlot} or via its
+     * sink or source.
+     *
+     * @param operator   a possibly non-elementary (composite) {@link Operator} to enter
+     * @param fromInput  {@link InputSlot} via that the {@link Operator} should be entered
+     * @param fromOutput {@link OutputSlot} via that the {@link Operator} should be entered
+     * @return whether the {@link Operator} could be entered
+     */
+    private boolean traverseHierarchical(Operator operator, InputSlot<?> fromInput, OutputSlot<?> fromOutput) {
+        if (operator.isSubplan()) {
+            this.enter((Subplan) operator, fromInput, fromOutput);
+            return true;
+        } else if (operator.isAlternative()) {
+            OperatorAlternative operatorAlternative = (OperatorAlternative) operator;
+            for (OperatorAlternative.Alternative alternative : operatorAlternative.getAlternatives()) {
+                this.enter(alternative, fromInput, fromOutput);
+            }
+            return true;
+        }
+
+        assert operator.isElementary() : String.format("Unknown composite operator: %s", operator);
+        return false;
+    }
+
+    /**
+     * Try to enter the given {@link OperatorContainer} either via an {@link InputSlot} or {@link OutputSlot} or via its
+     * sink or source.
+     *
+     * @param container  the {@link OperatorContainer}
+     * @param fromInput  {@link InputSlot} via that the {@link Operator} should be entered
+     * @param fromOutput {@link OutputSlot} via that the {@link Operator} should be entered
+     * @return whether the {@link Operator} could be entered
+     */
+    private void enter(OperatorContainer container, InputSlot<?> fromInput, OutputSlot<?> fromOutput) {
+        if (fromInput != null) {
+            final Collection<InputSlot<Object>> innerInputs = container.followInput(fromInput.unchecked());
+            for (InputSlot<Object> innerInput : innerInputs) {
+                this.traverse(innerInput.getOwner(), innerInput, null);
+            }
+        } else if (fromOutput != null) {
+            final OutputSlot<Object> innerOutput = container.traceOutput(fromOutput.unchecked());
+            this.traverse(innerOutput.getOwner(), null, innerOutput);
+        } else if (container.isSink()) {
+            final Operator innerSink = container.getSink();
+            this.traverse(innerSink, null, null);
+        } else if (container.isSource()) {
+            final Operator innerSource = container.getSource();
+            this.traverse(innerSource, null, null);
+        } else {
+            logger.warn("Could not enter {} during hierarchical traversal.", container);
+        }
     }
 
     /**
@@ -140,6 +237,7 @@ public class PlanTraversal {
     private void followOutputs(Operator operator) {
         this.followOutputs(Arrays.stream(operator.getAllOutputs()));
     }
+
     /**
      * Override to control the traversal behavior.
      */
@@ -180,8 +278,9 @@ public class PlanTraversal {
 
         /**
          * Perform some action on a traversed operator.
-         * @param operator the operator that is being traversed
-         * @param fromInputSlot if the operator is being traversed via an input slot, this parameter is that slot, otherwise {@code null}
+         *
+         * @param operator       the operator that is being traversed
+         * @param fromInputSlot  if the operator is being traversed via an input slot, this parameter is that slot, otherwise {@code null}
          * @param fromOutputSlot if the operator is being traversed via an output slot, this parameter is that slot, otherwise {@code null}
          */
         void traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot);
@@ -200,6 +299,7 @@ public class PlanTraversal {
 
         /**
          * Perform some action on a traversed operator.
+         *
          * @param operator the operator that is being traversed
          */
         void traverse(Operator operator);

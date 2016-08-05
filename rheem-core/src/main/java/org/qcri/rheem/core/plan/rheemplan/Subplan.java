@@ -4,7 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
-import org.qcri.rheem.core.optimizer.cardinality.OperatorContainerPusher;
+import org.qcri.rheem.core.optimizer.cardinality.SubplanCardinalityPusher;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -101,6 +101,11 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
             }
         }
         return resolvedSlots;
+    }
+
+    @Override
+    public boolean isSource() {
+        return this.getNumInputs() == 0;
     }
 
     @Override
@@ -227,7 +232,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     @Override
     public CardinalityPusher getCardinalityPusher(
             final Configuration configuration) {
-        return OperatorContainerPusher.createFor(this, configuration);
+        return SubplanCardinalityPusher.createFor(this, configuration);
     }
 
     @Override
