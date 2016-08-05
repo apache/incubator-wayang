@@ -16,4 +16,8 @@ public class Mappings {
             new GlobalReduceMapping()
     );
 
+    public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(
+            new PageRankMapping()
+    );
+
 }
