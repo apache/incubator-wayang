@@ -115,7 +115,7 @@ public class SubplanPattern extends OperatorBase {
          */
         public List<SubplanMatch> match(RheemPlan plan) {
             // Start an attempt to match from each operator that is upstream-reachable from one of the RheemPlan sinks.
-            PlanTraversal.upstream().traversingHierarchical()
+            PlanTraversal.upstream().traversingHierarchically()
                     .withCallback(this::attemptMatchFrom)
                     .traverse(plan.getSinks());
             return this.matches;

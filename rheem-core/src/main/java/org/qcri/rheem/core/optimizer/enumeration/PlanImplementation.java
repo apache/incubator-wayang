@@ -444,6 +444,7 @@ public class PlanImplementation {
         escapedPlanImplementation.settledAlternatives.putAll(this.settledAlternatives);
         assert !escapedPlanImplementation.settledAlternatives.containsKey(alternative.getOperatorAlternative());
         escapedPlanImplementation.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
+        escapedPlanImplementation.loopImplementations.putAll(this.getLoopImplementations());
         return escapedPlanImplementation;
     }
 

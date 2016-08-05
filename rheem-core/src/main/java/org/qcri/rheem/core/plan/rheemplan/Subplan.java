@@ -65,7 +65,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
      */
     protected Subplan(List<InputSlot<?>> inputs, List<OutputSlot<?>> outputs) {
         super(inputs.size(), outputs.size(), false);
-        InputSlot.mock(inputs, this, false);
+        InputSlot.mock(inputs, this, false); // TODO: This could give use problems with Slot name collisions.
         OutputSlot.mock(outputs, this);
         OperatorContainers.wrap(inputs, outputs, this);
     }
@@ -243,5 +243,10 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     @Override
     public void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorContext) {
         OperatorContainer.super.propagateOutputCardinality(outputIndex, operatorContext);
+    }
+
+    @Override
+    public Collection<OperatorContainer> getContainers() {
+        return Collections.singleton(this);
     }
 }

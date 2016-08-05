@@ -3,6 +3,7 @@ package org.qcri.rheem.core.plan.rheemplan;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.util.RheemCollections;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -155,9 +156,19 @@ public interface OperatorContainer {
         final OutputSlot<?> innerOutput = this.traceOutput(compositeOperator.getOutput(outputIndex));
 
         if (innerOutput != null) {
+            if (compositeOperator.isLoopSubplan()) {
+                LoggerFactory.getLogger(this.getClass()).warn(
+                        "Will not propagate cardinality of {} back to {}.",
+                        compositeOperator.getOutput(outputIndex),
+                        innerOutput
+                );
+                return;
+            }
+
             // Identify the appropriate OperatorContext.
             OptimizationContext innerOptimizationCtx = operatorCtx.getOptimizationContext();
             OptimizationContext.OperatorContext innerOperatorCtx = innerOptimizationCtx.getOperatorContext(innerOutput.getOwner());
+            assert innerOperatorCtx != null : String.format("No OperatorContext for %s's owner.", innerOutput);
 
             // Update the CardinalityEstimate.
             final CardinalityEstimate cardinality = operatorCtx.getOutputCardinality(outputIndex);
@@ -263,4 +274,5 @@ public interface OperatorContainer {
                 .map(slot -> (OutputSlot<?>) slot)
                 .collect(Collectors.toList());
     }
+
 }

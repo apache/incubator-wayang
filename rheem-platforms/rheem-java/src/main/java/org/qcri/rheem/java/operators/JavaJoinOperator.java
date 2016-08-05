@@ -35,7 +35,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
                             TransformationDescriptor<InputType0, KeyType> keyDescriptor0,
                             TransformationDescriptor<InputType1, KeyType> keyDescriptor1) {
 
-        super(inputType0, inputType1, keyDescriptor0, keyDescriptor1);
+        super(keyDescriptor0, keyDescriptor1, inputType0, inputType1);
     }
 
     /**

@@ -18,13 +18,23 @@ public class PlanTraversal {
 
     private static final Logger logger = LoggerFactory.getLogger(PlanTraversal.class);
 
-    public Set<Operator> visitedOperators = new HashSet<>();
+    public Set<Operator> visitedRelevantOperators = new HashSet<>(), visitedIrrelevantOperators = new HashSet<>();
 
     private final boolean isFollowInputs;
 
     private final boolean isFollowOutputs;
 
-    private boolean isHierarchical;
+    /**
+     * Whether to visit the {@link Operator}s contained in {@link CompositeOperator}s.
+     */
+    private Predicate<OperatorContainer> containerEnterCondition = container -> false;
+
+    /**
+     * If a {@link CompositeOperator} has been entered as permitted by {@link #containerEnterCondition}, then this
+     * field tells whether {@link CompositeOperator}s should still be treated like {@link ElementaryOperator}s,
+     * e.g., w.rt. the {@link #traversalCallback}.
+     */
+    private Predicate<CompositeOperator> compositeRelevanceCondition = compositeOperator -> false;
 
     private Callback traversalCallback = null;
 
@@ -87,14 +97,39 @@ public class PlanTraversal {
     }
 
     /**
+     * Criterion to control when to visit the {@link Operator}s contained in {@link CompositeOperator}s.
+     */
+    public PlanTraversal enteringContainersIf(Predicate<OperatorContainer> containerEnterCondition) {
+        this.containerEnterCondition = containerEnterCondition;
+        return this;
+    }
+
+    /**
+     * Criterion when to consider an entered {@link CompositeOperator} as normal {@link Operator} as well.
+     */
+    public PlanTraversal consideringEnteredOperatorsIf(Predicate<CompositeOperator> compositeRelevanceCondition) {
+        this.compositeRelevanceCondition = compositeRelevanceCondition;
+        return this;
+    }
+
+    /**
      * If this method is invoked, this instance will not treat {@link Subplan}s and {@link OperatorAlternative}s as
      * normal traversed {@link Operator}s but will rather enter them and traverse their contained {@link Operator}s.
      *
      * @return this instance
      */
-    public PlanTraversal traversingHierarchical() {
-        this.isHierarchical = true;
-        return this;
+    public PlanTraversal traversingHierarchically() {
+        return this.enteringContainersIf(operatorContainer -> true).consideringEnteredOperatorsIf(op -> false);
+    }
+
+    /**
+     * If this method is invoked, this instance will not enter {@link CompositeOperator}s and instead treat
+     * them just the same as {@link ElementaryOperator}s. This is the default.
+     *
+     * @return this instance
+     */
+    public PlanTraversal traversingFlat() {
+        return this.enteringContainersIf(operatorContainer -> false);
     }
 
     /**
@@ -131,7 +166,7 @@ public class PlanTraversal {
      * @return this instance
      */
     public PlanTraversal traverseFocused(Operator operator, Collection<OutputSlot<?>> focusedSlots) {
-        this.visitedOperators.add(operator);
+        this.visitedRelevantOperators.add(operator);
         assert focusedSlots.stream().allMatch(slot -> slot.getOwner() == operator);
         this.followOutputs(focusedSlots.stream());
         return this;
@@ -146,24 +181,47 @@ public class PlanTraversal {
      * @return this instance
      */
     public PlanTraversal traverse(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
-        // Try to do a hierarchical traversal.
-        // Important: Don't add hierarchical Operators to the #visitedOperators, otherwise we might not traverse
-        // them completely (e.g., by not entering via all InputSlots).
-        boolean isOperatorHierarchical =
-                this.isHierarchical && this.traverseHierarchical(operator, fromInputSlot, fromOutputSlot);
-        boolean isUnseenOperator = this.visitedOperators.add(operator);
+        // Visit the operator.
+        boolean isUnseenOperator = this.visit(operator, fromInputSlot, fromOutputSlot);
 
-        // Otherwise, treat the operator as a normal operator.
+        // If it has not been seen yet, continue the traversal.
         if (isUnseenOperator) {
-            if (!isOperatorHierarchical && this.traversalCallback != null) {
-                this.traversalCallback.traverse(operator, fromInputSlot, fromOutputSlot);
-            }
-
             if (this.isFollowInputs) this.followInputs(operator);
             if (this.isFollowOutputs) this.followOutputs(operator);
         }
 
         return this;
+    }
+
+    /**
+     * Visit the given {@link Operator}: Route to contained {@link Operator}s if possible; note the existence of
+     * the {@link Operator} and whether it has been seen already; do the callback if requested.
+     *
+     * @param operator       from that the traversal should be started
+     * @param fromInputSlot  {@link InputSlot} of the {@code operator} that has been followed
+     * @param fromOutputSlot {@link OutputSlot} of the {@code operator} that has been followed
+     * @return whether the {@code operator} has not been seen yet
+     */
+    private boolean visit(Operator operator, InputSlot<?> fromInputSlot, OutputSlot<?> fromOutputSlot) {
+        // Try to do a hierarchical traversal.
+        // Important: Don't add hierarchical Operators to the #visitedRelevantOperators, otherwise we might not traverse
+        // them completely (e.g., by not entering via all InputSlots).
+        boolean isOperatorEntered = false;
+        if (!operator.isElementary()) {
+            for (OperatorContainer operatorContainer : ((CompositeOperator) operator).getContainers()) {
+                if (this.containerEnterCondition.test(operatorContainer)) {
+                    this.enter(operatorContainer, fromInputSlot, fromOutputSlot);
+                    isOperatorEntered = true;
+                }
+            }
+        }
+        boolean isRelevantOperator = !isOperatorEntered || this.compositeRelevanceCondition.test((CompositeOperator) operator);
+        final Set<Operator> visitedOperators = isRelevantOperator ? this.visitedRelevantOperators : this.visitedIrrelevantOperators;
+        final boolean isUnseenOperator = visitedOperators.add(operator);
+        if (isUnseenOperator && isRelevantOperator && this.traversalCallback != null) {
+            this.traversalCallback.traverse(operator, fromInputSlot, fromOutputSlot);
+        }
+        return isUnseenOperator;
     }
 
     /**
@@ -178,7 +236,6 @@ public class PlanTraversal {
     private boolean traverseHierarchical(Operator operator, InputSlot<?> fromInput, OutputSlot<?> fromOutput) {
         if (operator.isSubplan()) {
             this.enter((Subplan) operator, fromInput, fromOutput);
-            return true;
         } else if (operator.isAlternative()) {
             OperatorAlternative operatorAlternative = (OperatorAlternative) operator;
             for (OperatorAlternative.Alternative alternative : operatorAlternative.getAlternatives()) {
@@ -258,7 +315,7 @@ public class PlanTraversal {
      * @return previously traversed operators matching the predicated
      */
     public Collection<Operator> getTraversedNodesWith(Predicate<Operator> operatorPredicate) {
-        return this.visitedOperators.stream().filter(operatorPredicate).collect(Collectors.toList());
+        return this.visitedRelevantOperators.stream().filter(operatorPredicate).collect(Collectors.toList());
     }
 
     /**
@@ -288,7 +345,8 @@ public class PlanTraversal {
         /**
          * Does nothing.
          */
-        Callback NOP = (operator, fromInputSlot, fromOutputSlot) -> {};
+        Callback NOP = (operator, fromInputSlot, fromOutputSlot) -> {
+        };
     }
 
     /**

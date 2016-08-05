@@ -161,6 +161,12 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public Collection<OperatorContainer> getContainers() {
+        return (Collection<OperatorContainer>) (Collection) this.alternatives;
+    }
+
+    @Override
     public String toString() {
         return String.format("%s[%dx ~%s, %x]",
                 this.getSimpleClassName(),
