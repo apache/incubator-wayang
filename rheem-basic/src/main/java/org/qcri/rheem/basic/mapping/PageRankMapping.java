@@ -3,8 +3,11 @@ package org.qcri.rheem.basic.mapping;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.function.ExecutionContext;
+import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.LoopIsolator;
 import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
@@ -21,6 +24,8 @@ import java.util.List;
  * This {@link Mapping} translates a {@link PageRankOperator} into a {@link Subplan} of basic {@link Operator}s.
  */
 public class PageRankMapping implements Mapping {
+
+    private static final double NUM_VERTICES_PER_EDGE = 0.01d;
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -62,13 +67,16 @@ public class PageRankMapping implements Mapping {
 
         // Find all vertices.
         FlatMapOperator<Tuple2<Integer, Integer>, Integer> vertexExtractor = new FlatMapOperator<>(
-                (FunctionDescriptor.SerializableFunction<Tuple2<Integer, Integer>, Iterable<Integer>>) integer -> {
-                    final List<Integer> out = new ArrayList<>(2);
-                    out.add(integer.field0);
-                    out.add(integer.field1);
-                    return out;
-                },
-                ReflectionUtils.specify(Tuple2.class), Integer.class
+                new FlatMapDescriptor<>(
+                        (FunctionDescriptor.SerializableFunction<Tuple2<Integer, Integer>, Iterable<Integer>>) integer -> {
+                            final List<Integer> out = new ArrayList<>(2);
+                            out.add(integer.field0);
+                            out.add(integer.field1);
+                            return out;
+                        },
+                        ReflectionUtils.specify(Tuple2.class), Integer.class,
+                        ProbabilisticDoubleInterval.ofExactly(2)
+                )
         );
         vertexExtractor.at(epoch);
         vertexExtractor.setName(String.format("%s (extract vertices)", operatorBaseName));
@@ -78,6 +86,9 @@ public class PageRankMapping implements Mapping {
         DistinctOperator<Integer> vertexDistincter = new DistinctOperator<>(Integer.class);
         vertexDistincter.at(epoch);
         vertexDistincter.setName(String.format("%s (distinct vertices)", operatorBaseName));
+        vertexDistincter.setCardinalityEstimator(0, new DefaultCardinalityEstimator(
+                0.5d, 1, false, longs -> Math.round(longs[0] * NUM_VERTICES_PER_EDGE / 2)
+        ));
         vertexExtractor.connectTo(0, vertexDistincter, 0);
 
         // Count the vertices.
@@ -111,6 +122,9 @@ public class PageRankMapping implements Mapping {
         );
         adjacencyCreator.at(epoch);
         adjacencyCreator.setName(String.format("%s (create adjacencies)", operatorBaseName));
+        adjacencyCreator.setCardinalityEstimator(0, new DefaultCardinalityEstimator(
+                0.5d, 1, false, longs -> Math.round(longs[0] * NUM_VERTICES_PER_EDGE)
+        ));
         adjacencyPreparator.connectTo(0, adjacencyCreator, 0);
 
         // Create the initial page ranks.
@@ -142,12 +156,15 @@ public class PageRankMapping implements Mapping {
                 );
         rankJoin.at(epoch);
         rankJoin.setName(String.format("%s (join adjacencies and ranks)", operatorBaseName));
+        rankJoin.setCardinalityEstimator(0, new DefaultCardinalityEstimator(
+                .99d, 2, false, longs -> longs[0]
+        ));
         adjacencyCreator.connectTo(0, rankJoin, 0);
         loopHead.connectTo(RepeatOperator.ITERATION_OUTPUT_INDEX, rankJoin, 1);
 
         // Create the new partial ranks.
         FlatMapOperator<Tuple2<Tuple2<Integer, int[]>, Tuple2<Integer, Float>>, Tuple2<Integer, Float>> partialRankCreator =
-                new FlatMapOperator<>(
+                new FlatMapOperator<>(new FlatMapDescriptor<>(
                         adjacencyAndRank -> {
                             Integer sourceVertex = adjacencyAndRank.field0.field0;
                             final int[] targetVertices = adjacencyAndRank.field0.field1;
@@ -162,8 +179,9 @@ public class PageRankMapping implements Mapping {
                             return partialRanks;
                         },
                         ReflectionUtils.specify(Tuple2.class),
-                        ReflectionUtils.specify(Tuple2.class)
-                );
+                        ReflectionUtils.specify(Tuple2.class),
+                        ProbabilisticDoubleInterval.ofExactly(1d / NUM_VERTICES_PER_EDGE)
+                ));
         partialRankCreator.at(epoch);
         partialRankCreator.setName(String.format("%s (create partial ranks)", operatorBaseName));
         rankJoin.connectTo(0, partialRankCreator, 0);
@@ -177,11 +195,14 @@ public class PageRankMapping implements Mapping {
         );
         sumPartialRanks.at(epoch);
         sumPartialRanks.setName(String.format("%s (sum partial ranks)", operatorBaseName));
+        sumPartialRanks.setCardinalityEstimator(0, new DefaultCardinalityEstimator(
+                0.5d, 1, false, longs -> Math.round(longs[0] * NUM_VERTICES_PER_EDGE)
+        ));
         partialRankCreator.connectTo(0, sumPartialRanks, 0);
 
         // Apply the damping factor.
         MapOperator<Tuple2<Integer, Float>, Tuple2<Integer, Float>> damping = new MapOperator<>(
-                new ApplyDamping(),
+                new ApplyDamping(pageRankOperator.getDampingFactor()),
                 ReflectionUtils.specify(Tuple2.class),
                 ReflectionUtils.specify(Tuple2.class)
         );
@@ -205,7 +226,7 @@ public class PageRankMapping implements Mapping {
      * Creates intial page ranks.
      */
     public static class RankInitializer
-            implements FunctionDescriptor.ExtendedSerializableFunction<Integer,Tuple2<Integer,Float>>{
+            implements FunctionDescriptor.ExtendedSerializableFunction<Integer, Tuple2<Integer, Float>> {
 
         private Float initialRank;
 
@@ -227,9 +248,13 @@ public class PageRankMapping implements Mapping {
     private static class ApplyDamping implements
             FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Integer, Float>, Tuple2<Integer, Float>> {
 
-        private final float dampingFactor = 0.85f;
+        private final float dampingFactor;
 
         private float minRank;
+
+        private ApplyDamping(float dampingFactor) {
+            this.dampingFactor = dampingFactor;
+        }
 
         @Override
         public void open(ExecutionContext ctx) {

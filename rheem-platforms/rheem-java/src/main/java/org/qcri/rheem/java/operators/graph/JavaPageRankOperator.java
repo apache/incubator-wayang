@@ -58,7 +58,7 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
         }
         int numVertices = degrees.size();
         float initialRank = 1f / numVertices;
-        float dampingRank = (1 - 0.85f) / numVertices;
+        float dampingRank = (1 - this.dampingFactor) / numVertices;
 
         // Initialize the rank map.
         TIntFloatMap initialRanks = new TIntFloatHashMap();
@@ -82,7 +82,7 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
                 final int targetVertex = edge.field1;
                 final int degree = degrees.get(sourceVertex);
                 final float currentRank = currentRanks.get(sourceVertex);
-                final float partialRank = .85f * currentRank / degree;
+                final float partialRank = this.dampingFactor * currentRank / degree;
                 newRanks.adjustOrPutValue(targetVertex, partialRank, partialRank);
             }
 
