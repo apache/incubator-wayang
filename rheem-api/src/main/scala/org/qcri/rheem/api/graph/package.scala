@@ -7,7 +7,11 @@ import org.qcri.rheem.basic.data.{Tuple2 => T2}
   */
 package object graph {
 
-  implicit def elevateEdgeDataQuanta(dataQuanta: DataQuanta[T2[Integer, Integer]]): EdgeDataQuanta =
+  type Vertex = Long
+
+  type Edge = T2[Vertex, Vertex]
+
+  implicit def elevateEdgeDataQuanta(dataQuanta: DataQuanta[Edge]): EdgeDataQuanta =
     new EdgeDataQuanta(dataQuanta)
 
 }

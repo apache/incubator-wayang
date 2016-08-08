@@ -583,9 +583,9 @@ public class RheemPlans {
      *
      * @return a {@link RheemPlan} implementing the above described
      */
-    public static RheemPlan pageRank(Collection<Tuple2<Integer, Integer>> edges,
-                                     Collection<Tuple2<Integer, Float>> collector) {
-        CollectionSource<Tuple2<Integer, Integer>> source = new CollectionSource<>(
+    public static RheemPlan pageRank(Collection<Tuple2<Long, Long>> edges,
+                                     Collection<Tuple2<Long, Float>> collector) {
+        CollectionSource<Tuple2<Long, Long>> source = new CollectionSource<>(
                 edges, ReflectionUtils.specify(Tuple2.class)
         );
         source.setName("source");
@@ -594,7 +594,7 @@ public class RheemPlans {
         pageRank.setName("pageRank");
         source.connectTo(0, pageRank, 0);
 
-        final LocalCallbackSink<Tuple2<Integer, Float>> sink =
+        final LocalCallbackSink<Tuple2<Long, Float>> sink =
                 LocalCallbackSink.createCollectingSink(collector, ReflectionUtils.specify(Tuple2.class));
         pageRank.connectTo(0, sink, 0);
 

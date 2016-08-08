@@ -313,7 +313,6 @@ class ApiTest {
       .`with`(Java.basicPlugin)
     import org.qcri.rheem.api.graph._
 
-    type Edge = org.qcri.rheem.basic.data.Tuple2[Integer, Integer]
     val edges = Seq((0, 1), (0, 2), (0, 3), (1, 0), (2, 1), (3, 2), (3, 1)).map(t => new Edge(t._1, t._2))
 
     val pageRanks = rheem

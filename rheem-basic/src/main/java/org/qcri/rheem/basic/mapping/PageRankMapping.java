@@ -58,7 +58,7 @@ public class PageRankMapping implements Mapping {
 
         // TODO: We only need this MapOperator, because we cannot have a singl Subplan InputSlot that maps to two
         // inner InputSlots.
-        MapOperator<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> forward = new MapOperator<>(
+        MapOperator<Tuple2<Long, Long>, Tuple2<Long, Long>> forward = new MapOperator<>(
                 t -> t, ReflectionUtils.specify(Tuple2.class), ReflectionUtils.specify(Tuple2.class)
         );
         forward.at(epoch);
@@ -66,15 +66,15 @@ public class PageRankMapping implements Mapping {
 
 
         // Find all vertices.
-        FlatMapOperator<Tuple2<Integer, Integer>, Integer> vertexExtractor = new FlatMapOperator<>(
+        FlatMapOperator<Tuple2<Long, Long>, Long> vertexExtractor = new FlatMapOperator<>(
                 new FlatMapDescriptor<>(
-                        (FunctionDescriptor.SerializableFunction<Tuple2<Integer, Integer>, Iterable<Integer>>) integer -> {
-                            final List<Integer> out = new ArrayList<>(2);
-                            out.add(integer.field0);
-                            out.add(integer.field1);
+                        (FunctionDescriptor.SerializableFunction<Tuple2<Long, Long>, Iterable<Long>>) edge -> {
+                            final List<Long> out = new ArrayList<>(2);
+                            out.add(edge.field0);
+                            out.add(edge.field1);
                             return out;
                         },
-                        ReflectionUtils.specify(Tuple2.class), Integer.class,
+                        ReflectionUtils.specify(Tuple2.class), Long.class,
                         ProbabilisticDoubleInterval.ofExactly(2)
                 )
         );
@@ -83,7 +83,7 @@ public class PageRankMapping implements Mapping {
         forward.connectTo(0, vertexExtractor, 0);
 
         // Get the distinct vertices.
-        DistinctOperator<Integer> vertexDistincter = new DistinctOperator<>(Integer.class);
+        DistinctOperator<Long> vertexDistincter = new DistinctOperator<>(Long.class);
         vertexDistincter.at(epoch);
         vertexDistincter.setName(String.format("%s (distinct vertices)", operatorBaseName));
         vertexDistincter.setCardinalityEstimator(0, new DefaultCardinalityEstimator(
@@ -92,14 +92,14 @@ public class PageRankMapping implements Mapping {
         vertexExtractor.connectTo(0, vertexDistincter, 0);
 
         // Count the vertices.
-        CountOperator<Integer> vertexCounter = new CountOperator<>(Integer.class);
+        CountOperator<Long> vertexCounter = new CountOperator<>(Long.class);
         vertexCounter.at(epoch);
         vertexCounter.setName(String.format("%s (count vertices)", operatorBaseName));
         vertexDistincter.connectTo(0, vertexCounter, 0);
 
         // Create the adjancencies.
-        MapOperator<Tuple2<Integer, Integer>, Tuple2<Integer, int[]>> adjacencyPreparator = new MapOperator<>(
-                t -> new Tuple2<>(t.field0, new int[]{t.field1}),
+        MapOperator<Tuple2<Long, Long>, Tuple2<Long, long[]>> adjacencyPreparator = new MapOperator<>(
+                t -> new Tuple2<>(t.field0, new long[]{t.field1}),
                 ReflectionUtils.specify(Tuple2.class),
                 ReflectionUtils.specify(Tuple2.class)
         );
@@ -107,17 +107,17 @@ public class PageRankMapping implements Mapping {
         adjacencyPreparator.setName(String.format("%s (prepare adjacencies)", operatorBaseName));
         forward.connectTo(0, adjacencyPreparator, 0);
 
-        ReduceByOperator<Tuple2<Integer, int[]>, Integer> adjacencyCreator = new ReduceByOperator<>(
+        ReduceByOperator<Tuple2<Long, long[]>, Long> adjacencyCreator = new ReduceByOperator<>(
                 Tuple2::getField0,
                 (t1, t2) -> {
                     // NB: We don't care about duplicates because they should influence the PageRanks.
                     // That being said, in some cases there are more efficient implementations of bags.
-                    int[] targetVertices = new int[t1.field1.length + t2.field1.length];
+                    long[] targetVertices = new long[t1.field1.length + t2.field1.length];
                     System.arraycopy(t1.field1, 0, targetVertices, 0, t1.field1.length);
                     System.arraycopy(t2.field1, 0, targetVertices, t1.field1.length, t2.field1.length);
                     return new Tuple2<>(t1.field0, targetVertices);
                 },
-                ReflectionUtils.specify(Integer.class),
+                ReflectionUtils.specify(Long.class),
                 ReflectionUtils.specify(Tuple2.class)
         );
         adjacencyCreator.at(epoch);
@@ -128,9 +128,9 @@ public class PageRankMapping implements Mapping {
         adjacencyPreparator.connectTo(0, adjacencyCreator, 0);
 
         // Create the initial page ranks.
-        MapOperator<Integer, Tuple2<Integer, Float>> initializeRanks = new MapOperator<>(
+        MapOperator<Long, Tuple2<Long, Float>> initializeRanks = new MapOperator<>(
                 new RankInitializer(),
-                Integer.class, ReflectionUtils.specify(Tuple2.class)
+                Long.class, ReflectionUtils.specify(Tuple2.class)
         );
         initializeRanks.at(epoch);
         initializeRanks.setName(String.format("%s (initialize ranks)", operatorBaseName));
@@ -138,7 +138,7 @@ public class PageRankMapping implements Mapping {
         vertexCounter.broadcastTo(0, initializeRanks, "numVertices");
 
         // Send the initial page ranks into the loop.
-        RepeatOperator<Tuple2<Integer, int[]>> loopHead = new RepeatOperator<>(
+        RepeatOperator<Tuple2<Long, long[]>> loopHead = new RepeatOperator<>(
                 pageRankOperator.getNumIterations(), ReflectionUtils.specify(Tuple2.class)
         );
         loopHead.at(epoch);
@@ -146,13 +146,13 @@ public class PageRankMapping implements Mapping {
         loopHead.initialize(initializeRanks, 0);
 
         // Join adjacencies and current ranks.
-        JoinOperator<Tuple2<Integer, int[]>, Tuple2<Integer, Float>, Integer> rankJoin =
+        JoinOperator<Tuple2<Long, long[]>, Tuple2<Long, Float>, Long> rankJoin =
                 new JoinOperator<>(
                         Tuple2::getField0,
                         Tuple2::getField0,
                         ReflectionUtils.specify(Tuple2.class),
                         ReflectionUtils.specify(Tuple2.class),
-                        Integer.class
+                        Long.class
                 );
         rankJoin.at(epoch);
         rankJoin.setName(String.format("%s (join adjacencies and ranks)", operatorBaseName));
@@ -163,15 +163,15 @@ public class PageRankMapping implements Mapping {
         loopHead.connectTo(RepeatOperator.ITERATION_OUTPUT_INDEX, rankJoin, 1);
 
         // Create the new partial ranks.
-        FlatMapOperator<Tuple2<Tuple2<Integer, int[]>, Tuple2<Integer, Float>>, Tuple2<Integer, Float>> partialRankCreator =
+        FlatMapOperator<Tuple2<Tuple2<Long, long[]>, Tuple2<Long, Float>>, Tuple2<Long, Float>> partialRankCreator =
                 new FlatMapOperator<>(new FlatMapDescriptor<>(
                         adjacencyAndRank -> {
-                            Integer sourceVertex = adjacencyAndRank.field0.field0;
-                            final int[] targetVertices = adjacencyAndRank.field0.field1;
+                            Long sourceVertex = adjacencyAndRank.field0.field0;
+                            final long[] targetVertices = adjacencyAndRank.field0.field1;
                             final float baseRank = adjacencyAndRank.field1.field1;
                             final Float partialRank = baseRank / targetVertices.length;
-                            Collection<Tuple2<Integer, Float>> partialRanks = new ArrayList<>(targetVertices.length + 1);
-                            for (int targetVertex : targetVertices) {
+                            Collection<Tuple2<Long, Float>> partialRanks = new ArrayList<>(targetVertices.length + 1);
+                            for (long targetVertex : targetVertices) {
                                 partialRanks.add(new Tuple2<>(targetVertex, partialRank));
                             }
                             // Add a surrogate partial rank to avoid losing unreferenced vertices.
@@ -187,10 +187,10 @@ public class PageRankMapping implements Mapping {
         rankJoin.connectTo(0, partialRankCreator, 0);
 
         // Sum the partial ranks.
-        ReduceByOperator<Tuple2<Integer, Float>, Integer> sumPartialRanks = new ReduceByOperator<>(
+        ReduceByOperator<Tuple2<Long, Float>, Long> sumPartialRanks = new ReduceByOperator<>(
                 Tuple2::getField0,
                 (t1, t2) -> new Tuple2<>(t1.field0, t1.field1 + t2.field1),
-                Integer.class,
+                Long.class,
                 ReflectionUtils.specify(Tuple2.class)
         );
         sumPartialRanks.at(epoch);
@@ -201,7 +201,7 @@ public class PageRankMapping implements Mapping {
         partialRankCreator.connectTo(0, sumPartialRanks, 0);
 
         // Apply the damping factor.
-        MapOperator<Tuple2<Integer, Float>, Tuple2<Integer, Float>> damping = new MapOperator<>(
+        MapOperator<Tuple2<Long, Float>, Tuple2<Long, Float>> damping = new MapOperator<>(
                 new ApplyDamping(pageRankOperator.getDampingFactor()),
                 ReflectionUtils.specify(Tuple2.class),
                 ReflectionUtils.specify(Tuple2.class)
@@ -226,7 +226,7 @@ public class PageRankMapping implements Mapping {
      * Creates intial page ranks.
      */
     public static class RankInitializer
-            implements FunctionDescriptor.ExtendedSerializableFunction<Integer, Tuple2<Integer, Float>> {
+            implements FunctionDescriptor.ExtendedSerializableFunction<Long, Tuple2<Long, Float>> {
 
         private Float initialRank;
 
@@ -237,7 +237,7 @@ public class PageRankMapping implements Mapping {
         }
 
         @Override
-        public Tuple2<Integer, Float> apply(Integer vertexId) {
+        public Tuple2<Long, Float> apply(Long vertexId) {
             return new Tuple2<>(vertexId, this.initialRank);
         }
     }
@@ -246,7 +246,7 @@ public class PageRankMapping implements Mapping {
      * Applies damping to page ranks.
      */
     private static class ApplyDamping implements
-            FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Integer, Float>, Tuple2<Integer, Float>> {
+            FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Long, Float>, Tuple2<Long, Float>> {
 
         private final float dampingFactor;
 
@@ -263,7 +263,7 @@ public class PageRankMapping implements Mapping {
         }
 
         @Override
-        public Tuple2<Integer, Float> apply(Tuple2<Integer, Float> rank) {
+        public Tuple2<Long, Float> apply(Tuple2<Long, Float> rank) {
             return new Tuple2<>(
                     rank.field0,
                     this.minRank + this.dampingFactor * rank.field1

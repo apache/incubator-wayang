@@ -16,7 +16,7 @@ import java.util.Optional;
  * is represented as {@code (source vertex ID, target vertex ID)} tuple. Its output are the page ranks, codified
  * as {@code (vertex ID, page rank)} tuples.
  */
-public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Integer, Integer>, Tuple2<Integer, Float>> {
+public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, Tuple2<Long, Float>> {
 
     protected final int numIterations;
 

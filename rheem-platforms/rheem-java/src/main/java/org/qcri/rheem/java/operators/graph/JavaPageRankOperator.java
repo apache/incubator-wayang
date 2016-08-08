@@ -1,10 +1,10 @@
 package org.qcri.rheem.java.operators.graph;
 
-import gnu.trove.iterator.TIntFloatIterator;
-import gnu.trove.map.TIntFloatMap;
-import gnu.trove.map.TIntIntMap;
-import gnu.trove.map.hash.TIntFloatHashMap;
-import gnu.trove.map.hash.TIntIntHashMap;
+import gnu.trove.iterator.TLongFloatIterator;
+import gnu.trove.map.TLongFloatMap;
+import gnu.trove.map.TLongIntMap;
+import gnu.trove.map.hash.TLongFloatHashMap;
+import gnu.trove.map.hash.TLongIntHashMap;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.PageRankOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -36,9 +36,9 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
         CollectionChannel.Instance input = (CollectionChannel.Instance) inputs[0];
         StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 
-        final Collection<Tuple2<Integer, Integer>> edges = input.provideCollection();
-        final TIntFloatMap pageRanks = this.pageRank(edges);
-        final Stream<Tuple2<Integer, Float>> pageRankStream = this.stream(pageRanks);
+        final Collection<Tuple2<Long, Long>> edges = input.provideCollection();
+        final TLongFloatMap pageRanks = this.pageRank(edges);
+        final Stream<Tuple2<Long, Float>> pageRankStream = this.stream(pageRanks);
 
         output.accept(pageRankStream);
     }
@@ -49,10 +49,10 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
      * @param edgeDataSet edges of a graph
      * @return the page ranks
      */
-    private TIntFloatMap pageRank(Collection<Tuple2<Integer, Integer>> edgeDataSet) {
+    private TLongFloatMap pageRank(Collection<Tuple2<Long, Long>> edgeDataSet) {
         // Get the degress of all vertices and make sure we collect *all* vertices.
-        TIntIntMap degrees = new TIntIntHashMap();
-        for (Tuple2<Integer, Integer> edge : edgeDataSet) {
+        TLongIntMap degrees = new TLongIntHashMap();
+        for (Tuple2<Long, Long> edge : edgeDataSet) {
             degrees.adjustOrPutValue(edge.field0, 1, 1);
             degrees.adjustOrPutValue(edge.field0, 0, 0);
         }
@@ -61,25 +61,25 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
         float dampingRank = (1 - this.dampingFactor) / numVertices;
 
         // Initialize the rank map.
-        TIntFloatMap initialRanks = new TIntFloatHashMap();
+        TLongFloatMap initialRanks = new TLongFloatHashMap();
         degrees.forEachKey(k -> {
             initialRanks.putIfAbsent(k, initialRank);
             return true;
         });
 
-        TIntFloatMap currentRanks = initialRanks;
+        TLongFloatMap currentRanks = initialRanks;
         for (int iteration = 0; iteration < this.getNumIterations(); iteration++) {
             // Add the damping first.
-            TIntFloatMap newRanks = new TIntFloatHashMap(currentRanks.size());
+            TLongFloatMap newRanks = new TLongFloatHashMap(currentRanks.size());
             degrees.forEachKey(k -> {
                 newRanks.putIfAbsent(k, dampingRank);
                 return true;
             });
 
             // Now add the other ranks.
-            for (Tuple2<Integer, Integer> edge : edgeDataSet) {
-                final int sourceVertex = edge.field0;
-                final int targetVertex = edge.field1;
+            for (Tuple2<Long, Long> edge : edgeDataSet) {
+                final long sourceVertex = edge.field0;
+                final long targetVertex = edge.field1;
                 final int degree = degrees.get(sourceVertex);
                 final float currentRank = currentRanks.get(sourceVertex);
                 final float partialRank = this.dampingFactor * currentRank / degree;
@@ -92,18 +92,18 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
         return currentRanks;
     }
 
-    private Stream<Tuple2<Integer, Float>> stream(TIntFloatMap map) {
-        final TIntFloatIterator tIntFloatIterator = map.iterator();
-        Iterator<Tuple2<Integer, Float>> iterator = new Iterator<Tuple2<Integer, Float>>() {
+    private Stream<Tuple2<Long, Float>> stream(TLongFloatMap map) {
+        final TLongFloatIterator tLongFloatIterator = map.iterator();
+        Iterator<Tuple2<Long, Float>> iterator = new Iterator<Tuple2<Long, Float>>() {
             @Override
             public boolean hasNext() {
-                return tIntFloatIterator.hasNext();
+                return tLongFloatIterator.hasNext();
             }
 
             @Override
-            public Tuple2<Integer, Float> next() {
-                tIntFloatIterator.advance();
-                return new Tuple2<>(tIntFloatIterator.key(), tIntFloatIterator.value());
+            public Tuple2<Long, Float> next() {
+                tLongFloatIterator.advance();
+                return new Tuple2<>(tLongFloatIterator.key(), tLongFloatIterator.value());
             }
         };
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);

@@ -214,16 +214,16 @@ public class JavaIntegrationIT {
     @Test
     public void testPageRankWithGraphBasic() {
         // Build the RheemPlan.
-        List<Tuple2<Integer, Integer>> edges = Arrays.asList(
-                new Tuple2<>(0, 1),
-                new Tuple2<>(0, 2),
-                new Tuple2<>(0, 3),
-                new Tuple2<>(1, 2),
-                new Tuple2<>(1, 3),
-                new Tuple2<>(2, 3),
-                new Tuple2<>(3, 0)
+        List<Tuple2<Long, Long>> edges = Arrays.asList(
+                new Tuple2<>(0L, 1L),
+                new Tuple2<>(0L, 2L),
+                new Tuple2<>(0L, 3L),
+                new Tuple2<>(1L, 2L),
+                new Tuple2<>(1L, 3L),
+                new Tuple2<>(2L, 3L),
+                new Tuple2<>(3L, 0L)
         );
-        List<Tuple2<Integer, Float>> pageRanks = new LinkedList<>();
+        List<Tuple2<Long, Float>> pageRanks = new LinkedList<>();
         RheemPlan rheemPlan = RheemPlans.pageRank(edges, pageRanks);
 
         // Execute the plan with a certain backend.
@@ -234,9 +234,9 @@ public class JavaIntegrationIT {
 
         // Check the results.
         pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
-        final List<Integer> vertexOrder = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toList());
+        final List<Long> vertexOrder = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toList());
         Assert.assertEquals(
-                Arrays.asList(3, 0, 2, 1),
+                Arrays.asList(3L, 0L, 2L, 1L),
                 vertexOrder
         );
     }
@@ -244,16 +244,16 @@ public class JavaIntegrationIT {
     @Test
     public void testPageRankWithJavaGraph() {
         // Build the RheemPlan.
-        List<Tuple2<Integer, Integer>> edges = Arrays.asList(
-                new Tuple2<>(0, 1),
-                new Tuple2<>(0, 2),
-                new Tuple2<>(0, 3),
-                new Tuple2<>(1, 2),
-                new Tuple2<>(1, 3),
-                new Tuple2<>(2, 3),
-                new Tuple2<>(3, 0)
+        List<Tuple2<Long, Long>> edges = Arrays.asList(
+                new Tuple2<>(0L, 1L),
+                new Tuple2<>(0L, 2L),
+                new Tuple2<>(0L, 3L),
+                new Tuple2<>(1L, 2L),
+                new Tuple2<>(1L, 3L),
+                new Tuple2<>(2L, 3L),
+                new Tuple2<>(3L, 0L)
         );
-        List<Tuple2<Integer, Float>> pageRanks = new LinkedList<>();
+        List<Tuple2<Long, Float>> pageRanks = new LinkedList<>();
         RheemPlan rheemPlan = RheemPlans.pageRank(edges, pageRanks);
 
         // Execute the plan with a certain backend.
@@ -264,9 +264,9 @@ public class JavaIntegrationIT {
 
         // Check the results.
         pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
-        final List<Integer> vertexOrder = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toList());
+        final List<Long> vertexOrder = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toList());
         Assert.assertEquals(
-                Arrays.asList(3, 0, 2, 1),
+                Arrays.asList(3L, 0L, 2L, 1L),
                 vertexOrder
         );
     }
