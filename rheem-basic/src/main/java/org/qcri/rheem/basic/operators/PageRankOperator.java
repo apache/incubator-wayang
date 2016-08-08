@@ -19,7 +19,9 @@ import java.util.Optional;
 public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, Tuple2<Long, Float>> {
 
     public static final double DEFAULT_DAMPING_FACTOR = 0.85d;
+
     public static final ProbabilisticDoubleInterval DEFAULT_GRAPH_DENSITIY = new ProbabilisticDoubleInterval(.0001d, .5d, .5d);
+
     protected final int numIterations;
 
     protected final float dampingFactor;
