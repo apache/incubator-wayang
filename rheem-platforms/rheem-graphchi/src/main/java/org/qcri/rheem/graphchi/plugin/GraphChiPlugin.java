@@ -5,6 +5,7 @@ import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.plugin.Plugin;
+import org.qcri.rheem.core.util.fs.LocalFileSystem;
 import org.qcri.rheem.graphchi.channels.ChannelConversions;
 import org.qcri.rheem.graphchi.mappings.Mappings;
 import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
@@ -34,6 +35,7 @@ public class GraphChiPlugin implements Plugin {
 
     @Override
     public void setProperties(Configuration configuration) {
+        configuration.setProperty("rheem.graphchi.tempdir", LocalFileSystem.findTempDir());
     }
 
 }

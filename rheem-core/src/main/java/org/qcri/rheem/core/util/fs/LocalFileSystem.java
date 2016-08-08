@@ -19,6 +19,17 @@ public class LocalFileSystem implements FileSystem {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalFileSystem.class);
 
+    public static String findTempDir() {
+        try {
+            final File tempFile = File.createTempFile("rheem", "probe");
+            tempFile.deleteOnExit();
+            return tempFile.getParentFile().toURI().toURL().toString();
+        } catch (IOException e) {
+            logger.warn("Could not determine local temp directory.", e);
+            return null;
+        }
+    }
+
     private static File toFile(String fileUrl) throws URISyntaxException, MalformedURLException {
         if (fileUrl.startsWith("file:")) {
             return new File(new URL(fileUrl).toURI());

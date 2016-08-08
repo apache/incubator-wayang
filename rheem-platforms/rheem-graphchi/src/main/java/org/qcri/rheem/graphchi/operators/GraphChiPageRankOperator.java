@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 /**
  * PageRank {@link Operator} implementation for the {@link GraphChiPlatform}.
@@ -61,10 +62,20 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
 
         final String inputPath = inputFileChannelInstance.getSinglePath();
         final String actualInputPath = FileSystems.findActualSingleInputPath(inputPath);
-        final FileSystem inputFs = FileSystems.getFileSystem(inputPath).get();
+        final FileSystem inputFs = FileSystems.getFileSystem(inputPath).orElseThrow(
+                () -> new RheemException(String.format("Could not identify filesystem for \"%s\".", inputPath))
+        );
 
         // Create shards.
-        final File tempFile = File.createTempFile("rheem-graphchi", "graph");
+        String tempDirPath = configuration.getStringProperty("rheem.graphchi.tempdir");
+        Random random = new Random();
+        String tempFilePath = String.format("%s%s%04x-%04x-%04x-%04x.tmp", tempDirPath, File.separator,
+                random.nextInt() & 0xFFFF,
+                random.nextInt() & 0xFFFF,
+                random.nextInt() & 0xFFFF,
+                random.nextInt() & 0xFFFF
+        );
+        final File tempFile = new File(tempFilePath);
         tempFile.deleteOnExit();
         String graphName = tempFile.toString();
         // As suggested by GraphChi, we propose to use approximately 1 shard per 1,000,000 edges.

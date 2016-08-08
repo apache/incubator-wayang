@@ -7,6 +7,7 @@ import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.util.ReflectionUtils;
+import org.qcri.rheem.core.util.fs.LocalFileSystem;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -27,22 +28,12 @@ public class RheemBasic implements Plugin {
     @Override
     public void setProperties(Configuration configuration) {
         configuration.load(ReflectionUtils.loadResource(RHEEM_BASIC_DEFAULTS_PROPERTIES));
-        final String localTempDir = findLocalTempDir();
+        final String localTempDir = LocalFileSystem.findTempDir();
         if (localTempDir != null) {
             configuration.setProperty(TEMP_DIR_PROPERTY, localTempDir);
         }
     }
 
-    private static String findLocalTempDir() {
-        try {
-            final File tempFile = File.createTempFile("rheem", "probe");
-            tempFile.deleteOnExit();
-            return tempFile.getParentFile().toURI().toURL().toString();
-        } catch (IOException e) {
-            LoggerFactory.getLogger(RheemBasic.class).warn("Could not determine local temp directory.", e);
-            return null;
-        }
-    }
 
     @Override
     public Collection<Mapping> getMappings() {
