@@ -82,7 +82,7 @@ public class FileSystems {
 
             // Look for Spark-like directory structure.
             if (children.stream().anyMatch(child -> child.endsWith("_SUCCESS"))) {
-                return children.stream().filter(child -> child.matches(".*/part-\\d{5}")).collect(Collectors.toList());
+                return children.stream().filter(child -> child.matches(".*/part-\\d+")).collect(Collectors.toList());
             } else {
                 throw new RheemException("Could not identify directory structure: " + children);
             }
@@ -98,7 +98,9 @@ public class FileSystems {
         final Collection<String> inputPaths = FileSystems.findActualInputPaths(ostensibleInputFile);
 
         if (inputPaths.size() != 1) {
-            throw new RheemException("Illegal number of Spark result files: " + inputPaths); // TODO: Add support.
+            throw new RheemException(String.format(
+                    "Illegal number of files for \"%s\": %s", ostensibleInputFile, inputPaths
+            )); // TODO: Add support.
         }
 
         return inputPaths.iterator().next();
