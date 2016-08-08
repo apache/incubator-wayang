@@ -46,7 +46,7 @@ public class PageRankMapping implements Mapping {
         return new ReplacementSubplanFactory.OfSingleOperators<>(this::createPageRankSubplan);
     }
 
-    private Subplan createPageRankSubplan(PageRankOperator pageRankOperator, int epoch) {
+    private Operator createPageRankSubplan(PageRankOperator pageRankOperator, int epoch) {
         final String operatorBaseName = pageRankOperator.getName() == null ?
                 "PageRank" :
                 pageRankOperator.getName();
@@ -56,6 +56,7 @@ public class PageRankMapping implements Mapping {
         MapOperator<Tuple2<Integer, Integer>, Tuple2<Integer, Integer>> forward = new MapOperator<>(
                 t -> t, ReflectionUtils.specify(Tuple2.class), ReflectionUtils.specify(Tuple2.class)
         );
+        forward.at(epoch);
         forward.setName(String.format("%s (forward)", operatorBaseName));
 
 
@@ -69,16 +70,19 @@ public class PageRankMapping implements Mapping {
                 },
                 ReflectionUtils.specify(Tuple2.class), Integer.class
         );
+        vertexExtractor.at(epoch);
         vertexExtractor.setName(String.format("%s (extract vertices)", operatorBaseName));
         forward.connectTo(0, vertexExtractor, 0);
 
         // Get the distinct vertices.
         DistinctOperator<Integer> vertexDistincter = new DistinctOperator<>(Integer.class);
+        vertexDistincter.at(epoch);
         vertexDistincter.setName(String.format("%s (distinct vertices)", operatorBaseName));
         vertexExtractor.connectTo(0, vertexDistincter, 0);
 
         // Count the vertices.
         CountOperator<Integer> vertexCounter = new CountOperator<>(Integer.class);
+        vertexCounter.at(epoch);
         vertexCounter.setName(String.format("%s (count vertices)", operatorBaseName));
         vertexDistincter.connectTo(0, vertexCounter, 0);
 
@@ -88,6 +92,7 @@ public class PageRankMapping implements Mapping {
                 ReflectionUtils.specify(Tuple2.class),
                 ReflectionUtils.specify(Tuple2.class)
         );
+        adjacencyPreparator.at(epoch);
         adjacencyPreparator.setName(String.format("%s (prepare adjacencies)", operatorBaseName));
         forward.connectTo(0, adjacencyPreparator, 0);
 
@@ -104,6 +109,7 @@ public class PageRankMapping implements Mapping {
                 ReflectionUtils.specify(Integer.class),
                 ReflectionUtils.specify(Tuple2.class)
         );
+        adjacencyCreator.at(epoch);
         adjacencyCreator.setName(String.format("%s (create adjacencies)", operatorBaseName));
         adjacencyPreparator.connectTo(0, adjacencyCreator, 0);
 
@@ -112,6 +118,7 @@ public class PageRankMapping implements Mapping {
                 new RankInitializer(),
                 Integer.class, ReflectionUtils.specify(Tuple2.class)
         );
+        initializeRanks.at(epoch);
         initializeRanks.setName(String.format("%s (initialize ranks)", operatorBaseName));
         vertexDistincter.connectTo(0, initializeRanks, 0);
         vertexCounter.broadcastTo(0, initializeRanks, "numVertices");
@@ -120,6 +127,7 @@ public class PageRankMapping implements Mapping {
         RepeatOperator<Tuple2<Integer, int[]>> loopHead = new RepeatOperator<>(
                 pageRankOperator.getNumIterations(), ReflectionUtils.specify(Tuple2.class)
         );
+        loopHead.at(epoch);
         loopHead.setName(String.format("%s (loop head)", operatorBaseName));
         loopHead.initialize(initializeRanks, 0);
 
@@ -132,6 +140,7 @@ public class PageRankMapping implements Mapping {
                         ReflectionUtils.specify(Tuple2.class),
                         Integer.class
                 );
+        rankJoin.at(epoch);
         rankJoin.setName(String.format("%s (join adjacencies and ranks)", operatorBaseName));
         adjacencyCreator.connectTo(0, rankJoin, 0);
         loopHead.connectTo(RepeatOperator.ITERATION_OUTPUT_INDEX, rankJoin, 1);
@@ -155,6 +164,7 @@ public class PageRankMapping implements Mapping {
                         ReflectionUtils.specify(Tuple2.class),
                         ReflectionUtils.specify(Tuple2.class)
                 );
+        partialRankCreator.at(epoch);
         partialRankCreator.setName(String.format("%s (create partial ranks)", operatorBaseName));
         rankJoin.connectTo(0, partialRankCreator, 0);
 
@@ -165,6 +175,7 @@ public class PageRankMapping implements Mapping {
                 Integer.class,
                 ReflectionUtils.specify(Tuple2.class)
         );
+        sumPartialRanks.at(epoch);
         sumPartialRanks.setName(String.format("%s (sum partial ranks)", operatorBaseName));
         partialRankCreator.connectTo(0, sumPartialRanks, 0);
 
@@ -174,18 +185,20 @@ public class PageRankMapping implements Mapping {
                 ReflectionUtils.specify(Tuple2.class),
                 ReflectionUtils.specify(Tuple2.class)
         );
+        damping.at(epoch);
         damping.setName(String.format("%s (damping)", operatorBaseName));
         sumPartialRanks.connectTo(0, damping, 0);
         vertexCounter.broadcastTo(0, damping, "numVertices");
         loopHead.endIteration(damping, 0);
 
         final LoopSubplan loopSubplan = LoopIsolator.isolate(loopHead);
+        loopSubplan.at(epoch);
 
         return Subplan.wrap(
                 Collections.singletonList(forward.getInput()),
                 Collections.singletonList(loopSubplan.getOutput(0)),
                 null
-        );
+        ).at(epoch);
     }
 
     /**
