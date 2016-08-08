@@ -6,6 +6,7 @@ import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.api.exception.RheemException
 import org.qcri.rheem.core.plugin.Plugin
 import org.qcri.rheem.core.util.RheemCollections
+import org.qcri.rheem.api.{_, graph._}
 
 /**
   * Rheem implementation of the cross-community PageRank.
