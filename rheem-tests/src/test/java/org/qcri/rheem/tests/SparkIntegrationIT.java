@@ -2,6 +2,8 @@ package org.qcri.rheem.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.basic.RheemBasics;
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
@@ -203,6 +205,36 @@ public class SparkIntegrationIT {
 
         Assert.assertEquals(5, collector.size());
         Assert.assertEquals(RheemCollections.asSet(5, 15, 25, 35, 50), RheemCollections.asSet(collector));
+    }
+
+    @Test
+    public void testPageRankWithGraphBasic() {
+        // Build the RheemPlan.
+        List<Tuple2<Integer, Integer>> edges = Arrays.asList(
+                new Tuple2<>(0, 1),
+                new Tuple2<>(0, 2),
+                new Tuple2<>(0, 3),
+                new Tuple2<>(1, 2),
+                new Tuple2<>(1, 3),
+                new Tuple2<>(2, 3),
+                new Tuple2<>(3, 0)
+        );
+        List<Tuple2<Integer, Float>> pageRanks = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.pageRank(edges, pageRanks);
+
+        // Execute the plan with a certain backend.
+        RheemContext rheemContext = new RheemContext()
+                .with(Spark.basicPlugin())
+                .with(RheemBasics.graphPlugin());
+        rheemContext.execute(rheemPlan);
+
+        // Check the results.
+        pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
+        final List<Integer> vertexOrder = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toList());
+        Assert.assertEquals(
+                Arrays.asList(3, 0, 2, 1),
+                vertexOrder
+        );
     }
 
     @Test

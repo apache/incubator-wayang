@@ -579,6 +579,29 @@ public class RheemPlans {
     }
 
     /**
+     * Feeds the {@code edges} into a {@link PageRankOperator} and collects the page ranks in the {@code collector}.
+     *
+     * @return a {@link RheemPlan} implementing the above described
+     */
+    public static RheemPlan pageRank(Collection<Tuple2<Integer, Integer>> edges,
+                                     Collection<Tuple2<Integer, Float>> collector) {
+        CollectionSource<Tuple2<Integer, Integer>> source = new CollectionSource<>(
+                edges, ReflectionUtils.specify(Tuple2.class)
+        );
+        source.setName("source");
+
+        PageRankOperator pageRank = new PageRankOperator(20);
+        pageRank.setName("pageRank");
+        source.connectTo(0, pageRank, 0);
+
+        final LocalCallbackSink<Tuple2<Integer, Float>> sink =
+                LocalCallbackSink.createCollectingSink(collector, ReflectionUtils.specify(Tuple2.class));
+        pageRank.connectTo(0, sink, 0);
+
+        return new RheemPlan(sink);
+    }
+
+    /**
      * Same as scenarion2 but repeat 10 times before output.
      */
     public static RheemPlan diverseScenario3(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
