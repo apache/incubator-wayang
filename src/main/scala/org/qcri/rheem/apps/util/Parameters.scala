@@ -1,16 +1,12 @@
 package org.qcri.rheem.apps.util
 
+import org.qcri.rheem.basic.RheemBasics
 import org.qcri.rheem.core.plugin.{DynamicPlugin, Plugin}
 import org.qcri.rheem.graphchi.GraphChi
-import org.qcri.rheem.graphchi.platform.GraphChiPlatform
 import org.qcri.rheem.java.Java
-import org.qcri.rheem.java.platform.JavaPlatform
 import org.qcri.rheem.postgres.Postgres
-import org.qcri.rheem.postgres.platform.PostgresPlatform
 import org.qcri.rheem.spark.Spark
-import org.qcri.rheem.spark.platform.SparkPlatform
 import org.qcri.rheem.sqlite3.Sqlite3
-import org.qcri.rheem.sqlite3.platform.Sqlite3Platform
 
 /**
   * Utility to parse parameters of the apps.
@@ -26,7 +22,9 @@ object Parameters {
     * @return the loaded [[Plugin]]
     */
   def loadPlugin(id: String): Plugin = id match {
+    case "basic-graph" => RheemBasics.graphPlugin
     case "java" => Java.basicPlugin
+    case "java-graph" => Java.graphPlugin
     case "spark" => Spark.basicPlugin
     case "graphchi" => GraphChi.plugin
     case "postgres" => Postgres.plugin

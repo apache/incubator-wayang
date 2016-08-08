@@ -6,7 +6,7 @@ import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.api.exception.RheemException
 import org.qcri.rheem.core.plugin.Plugin
 import org.qcri.rheem.core.util.RheemCollections
-import org.qcri.rheem.api.{_, graph._}
+import org.qcri.rheem.api.graph._
 
 /**
   * Rheem implementation of the cross-community PageRank.
@@ -42,48 +42,23 @@ class CrocoPR(plugins: Plugin*) {
       .zipWithId.withName("Add vertex IDs")
 
 
-    type VertexId = org.qcri.rheem.basic.data.Tuple2[Long, String]
+    type VertexId = org.qcri.rheem.basic.data.Tuple2[Vertex, String]
     val edges = allLinks
       .join[VertexId, String](_._1, vertexIds, _.field1).withName("Join source vertex IDs")
       .map { linkAndVertexId =>
         (linkAndVertexId.field1.field0, linkAndVertexId.field0._2)
       }.withName("Set source vertex ID")
       .join[VertexId, String](_._2, vertexIds, _.field1).withName("Join target vertex IDs")
-      .map(linkAndVertexId => (linkAndVertexId.field0._1, linkAndVertexId.field1.field0)).withName("Set target vertex ID")
-
-    // Count the pages to come up with the initial ranks.
-    val numPages = vertexIds
-      .count.withName("Count pages")
-
-    // Create adjacency lists from the links.
-    import scala.collection.JavaConversions._
-    val adjacencyList = edges
-      .groupByKey(_._1).withName("Group edges")
-      .map(edgeGroup => (RheemCollections.getAny(edgeGroup)._1, edgeGroup.map(_._2))).withName("Create adjacency")
+      .map(linkAndVertexId => new Edge(linkAndVertexId.field0._1, linkAndVertexId.field1.field0)).withName("Set target vertex ID")
 
     // Run the PageRank.
-    type Adjacency = (Long, Iterable[Long])
-    val pageRanks = adjacencyList
-      .mapJava[(Long, Double)](new CreateInitialPageRanks("numPages"))
-      .withBroadcast(numPages, "numPages").withName("Create initial page ranks")
-      .repeat(numIterations, { pageRanks =>
-        pageRanks
-          .join[Adjacency, Long](_._1, adjacencyList, _._1).withName("Join page ranks and adjacency list")
-          .flatMap { joinTuple =>
-            val adjacent = joinTuple.field1
-            val sourceRank = joinTuple.field0._2
-
-            val newRank = sourceRank / adjacent._2.size
-            adjacent._2.map(targetVertex => (targetVertex, newRank))
-          }.withName("Send partial ranks")
-          .reduceByKey(_._1, (act1, act2) => (act1._1, act1._2 + act2._2)).withName("Add partial ranks")
-      })
+    val pageRanks = edges.pageRank(numIterations)
 
     // Make the page ranks readable.
     pageRanks
       .map(identity).withName("Hotfix")
-      .join[VertexId, Long](_._1, vertexIds, _.field0).withName("Join page ranks with vertex IDs")
-      .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0._2)).withName("Make page ranks readable")
+      .join[VertexId, Long](_.field0, vertexIds, _.field0).withName("Join page ranks with vertex IDs")
+      .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1)).withName("Make page ranks readable")
       .withUdfJarsOf(this.getClass)
       .collect(jobName = s"CrocoPR ($inputUrl1, $inputUrl2, $numIterations iterations)")
 
@@ -135,7 +110,7 @@ object CrocoPR {
 
     // Print the result.
     println(s"Calculated ${pageRanks.size} page ranks:")
-    StdOut.printLimited(pageRanks, formatter = (pr: (String, Double)) => s"${pr._1} has a page rank of ${pr._2}")
+    StdOut.printLimited(pageRanks, formatter = (pr: (String, Float)) => s"${pr._1} has a page rank of ${pr._2}")
   }
 
 }
