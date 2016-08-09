@@ -10,6 +10,7 @@ import org.qcri.rheem.graphchi.channels.ChannelConversions;
 import org.qcri.rheem.graphchi.mappings.Mappings;
 import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -35,7 +36,10 @@ public class GraphChiPlugin implements Plugin {
 
     @Override
     public void setProperties(Configuration configuration) {
-        configuration.setProperty("rheem.graphchi.tempdir", LocalFileSystem.findTempDir());
+        final File localTempDir = LocalFileSystem.findTempDir();
+        if (localTempDir != null) {
+            configuration.setProperty("rheem.graphchi.tempdir", localTempDir.toString());
+        }
     }
 
 }
