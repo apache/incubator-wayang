@@ -2,6 +2,7 @@ package org.qcri.rheem.java;
 
 import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.plugin.JavaBasicPlugin;
+import org.qcri.rheem.java.plugin.JavaChannelConversionPlugin;
 import org.qcri.rheem.java.plugin.JavaGraphPlugin;
 
 /**
@@ -12,6 +13,8 @@ public class Java {
     private final static JavaBasicPlugin PLUGIN = new JavaBasicPlugin();
 
     private final static JavaGraphPlugin GRAPH_PLUGIN = new JavaGraphPlugin();
+
+    private final static JavaChannelConversionPlugin CONVERSION_PLUGIN = new JavaChannelConversionPlugin();
 
     /**
      * Retrieve the {@link JavaBasicPlugin}.
@@ -29,6 +32,15 @@ public class Java {
      */
     public static JavaGraphPlugin graphPlugin() {
         return GRAPH_PLUGIN;
+    }
+
+    /**
+     * Retrieve the {@link JavaChannelConversionPlugin}.
+     *
+     * @return the {@link JavaChannelConversionPlugin}
+     */
+    public static JavaChannelConversionPlugin channelConversionPlugin() {
+        return CONVERSION_PLUGIN;
     }
 
     /**

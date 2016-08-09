@@ -28,9 +28,9 @@ public class RheemBasic implements Plugin {
     @Override
     public void setProperties(Configuration configuration) {
         configuration.load(ReflectionUtils.loadResource(RHEEM_BASIC_DEFAULTS_PROPERTIES));
-        final String localTempDir = LocalFileSystem.findTempDir();
+        final File localTempDir = LocalFileSystem.findTempDir();
         if (localTempDir != null) {
-            configuration.setProperty(TEMP_DIR_PROPERTY, localTempDir);
+            configuration.setProperty(TEMP_DIR_PROPERTY, LocalFileSystem.toURL(localTempDir));
         }
     }
 

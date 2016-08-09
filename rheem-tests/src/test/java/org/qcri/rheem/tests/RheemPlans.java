@@ -21,6 +21,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Provides plans that can be used for integration testing..
@@ -427,7 +428,7 @@ public class RheemPlans {
     /**
      * Creates a cross-community PageRank Rheem plan, that incorporates the {@link PageRankOperator}.
      */
-    public static RheemPlan createCrossCommunityPageRank() {
+    public static RheemPlan pageRankWithDictionaryCompression(Collection<Tuple2<Character, Float>> pageRankCollector) {
         // Get some graph data. Use the example from Wikipedia: https://en.wikipedia.org/wiki/PageRank
         Collection<char[]> adjacencies = Arrays.asList(
                 new char[]{'B', 'C'},
@@ -440,19 +441,6 @@ public class RheemPlans {
                 new char[]{'I', 'B', 'E'},
                 new char[]{'J', 'E'},
                 new char[]{'K', 'E'}
-        );
-        Collection<Tuple2<Character, Float>> pageRanks = Arrays.asList(
-                new Tuple2<>('A', 0.033f),
-                new Tuple2<>('B', 0.384f),
-                new Tuple2<>('C', 0.343f),
-                new Tuple2<>('D', 0.039f),
-                new Tuple2<>('E', 0.081f),
-                new Tuple2<>('F', 0.039f),
-                new Tuple2<>('G', 0.016f),
-                new Tuple2<>('H', 0.016f),
-                new Tuple2<>('I', 0.016f),
-                new Tuple2<>('J', 0.016f),
-                new Tuple2<>('K', 0.016f)
         );
 
         // Create a RheemPlan:
@@ -499,37 +487,30 @@ public class RheemPlans {
         vertexSplitter.connectTo(0, vertexCanonicalizer, 0);
 
         // Assign an ID to each distinct vertex.
-        MapOperator<Character, Tuple2<Character, Integer>> zipWithId = new MapOperator<>(
-                new TransformationDescriptor<>(
-                        (vertex) -> new Tuple2<>(vertex, Character.hashCode(vertex)),
-                        DataUnitType.createBasic(Character.class),
-                        DataUnitType.<Tuple2<Character, Integer>>createBasicUnchecked(Tuple2.class)
-                )
-        );
+        ZipWithIdOperator<Character> zipWithId = new ZipWithIdOperator<>(Character.class);
         zipWithId.setName("zip with ID");
         vertexCanonicalizer.connectTo(0, zipWithId, 0);
 
         // Base the edge list on vertex IDs.
-        MapOperator<Tuple2<Character, Character>, Tuple2<Integer, Integer>> translate = new MapOperator<>(
+        MapOperator<Tuple2<Character, Character>, Tuple2<Long, Long>> translate = new MapOperator<>(
                 new TransformationDescriptor<>(
-                        new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Character, Character>, Tuple2<Integer, Integer>>() {
+                        new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Character, Character>, Tuple2<Long, Long>>() {
 
-                            private Map<Character, Integer> dictionary;
+                            private Map<Character, Long> dictionary;
 
                             @Override
                             public void open(ExecutionContext ctx) {
-                                this.dictionary = ctx.<Tuple2<Character, Integer>>getBroadcast("vertex IDs").stream().collect(
-                                        Collectors.toMap(Tuple2::getField0, Tuple2::getField1)
-                                );
+                                this.dictionary = ctx.<Tuple2<Long, Character>>getBroadcast("vertex IDs").stream()
+                                        .collect(Collectors.toMap(Tuple2::getField1, Tuple2::getField0));
                             }
 
                             @Override
-                            public Tuple2<Integer, Integer> apply(Tuple2<Character, Character> in) {
+                            public Tuple2<Long, Long> apply(Tuple2<Character, Character> in) {
                                 return new Tuple2<>(this.dictionary.get(in.field0), this.dictionary.get(in.field1));
                             }
                         },
-                        DataUnitType.<Tuple2<Character, Character>>createBasicUnchecked(Tuple2.class),
-                        DataUnitType.<Tuple2<Integer, Integer>>createBasicUnchecked(Tuple2.class)
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
+                        DataUnitType.createBasicUnchecked(Tuple2.class)
                 )
         );
         translate.setName("translate");
@@ -542,40 +523,55 @@ public class RheemPlans {
         translate.connectTo(0, pageRank, 0);
 
         // Back-translate the page ranks.
-        MapOperator<Tuple2<Integer, Float>, Tuple2<Character, Float>> backtranslate = new MapOperator<>(
+        MapOperator<Tuple2<Long, Float>, Tuple2<Character, Float>> backtranslate = new MapOperator<>(
                 new TransformationDescriptor<>(
-                        new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Integer, Float>, Tuple2<Character, Float>>() {
+                        new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Long, Float>, Tuple2<Character, Float>>() {
 
-                            private Map<Integer, Character> dictionary;
+                            private Map<Long, Character> dictionary;
 
                             @Override
                             public void open(ExecutionContext ctx) {
-                                this.dictionary = ctx.<Tuple2<Character, Integer>>getBroadcast("vertex IDs").stream()
-                                        .map(Tuple2::swap)
-                                        .collect(
-                                                Collectors.toMap(Tuple2::getField0, Tuple2::getField1)
-                                        );
+                                this.dictionary = ctx.<Tuple2<Long, Character>>getBroadcast("vertex IDs").stream()
+                                        .collect(Collectors.toMap(Tuple2::getField0, Tuple2::getField1));
                             }
 
                             @Override
-                            public Tuple2<Character, Float> apply(Tuple2<Integer, Float> in) {
+                            public Tuple2<Character, Float> apply(Tuple2<Long, Float> in) {
                                 return new Tuple2<>(this.dictionary.get(in.field0), in.field1);
                             }
                         },
-                        DataUnitType.<Tuple2<Integer, Float>>createBasicUnchecked(Tuple2.class),
-                        DataUnitType.<Tuple2<Character, Float>>createBasicUnchecked(Tuple2.class)
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
+                        DataUnitType.createBasicUnchecked(Tuple2.class)
                 )
         );
         backtranslate.setName("bracktranslate");
         pageRank.connectTo(0, backtranslate, 0);
         zipWithId.broadcastTo(0, backtranslate, "vertex IDs");
 
-        LocalCallbackSink callbackSink = LocalCallbackSink.createStdoutSink(
-                DataSetType.<Tuple2<Character, Float>>createDefaultUnchecked(Tuple2.class));
+        LocalCallbackSink callbackSink = LocalCallbackSink.createCollectingSink(
+                pageRankCollector,
+                DataSetType.<Tuple2<Character, Float>>createDefaultUnchecked(Tuple2.class)
+        );
         callbackSink.setName("sink");
         backtranslate.connectTo(0, callbackSink, 0);
 
         return new RheemPlan(callbackSink);
+    }
+
+    public static Map<Character, Float> pageRankWithDictionaryCompressionSolution() {
+        return Stream.of(
+                new Tuple2<>('A', 0.033f),
+                new Tuple2<>('B', 0.384f),
+                new Tuple2<>('C', 0.343f),
+                new Tuple2<>('D', 0.039f),
+                new Tuple2<>('E', 0.081f),
+                new Tuple2<>('F', 0.039f),
+                new Tuple2<>('G', 0.016f),
+                new Tuple2<>('H', 0.016f),
+                new Tuple2<>('I', 0.016f),
+                new Tuple2<>('J', 0.016f),
+                new Tuple2<>('K', 0.016f)
+        ).collect(Collectors.toMap(Tuple2::getField0, Tuple2::getField1));
     }
 
     /**
