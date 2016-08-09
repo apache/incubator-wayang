@@ -25,6 +25,7 @@ object Parameters {
     case "basic-graph" => RheemBasics.graphPlugin
     case "java" => Java.basicPlugin
     case "java-graph" => Java.graphPlugin
+    case "java-conversions" => Java.channelConversionPlugin
     case "spark" => Spark.basicPlugin
     case "graphchi" => GraphChi.plugin
     case "postgres" => Postgres.plugin
