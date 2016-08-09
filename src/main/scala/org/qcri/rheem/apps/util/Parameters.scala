@@ -27,6 +27,7 @@ object Parameters {
     case "java-graph" => Java.graphPlugin
     case "java-conversions" => Java.channelConversionPlugin
     case "spark" => Spark.basicPlugin
+    case "spark-graph" => Spark.graphPlugin
     case "graphchi" => GraphChi.plugin
     case "postgres" => Postgres.plugin
     case "sqlite3" => Sqlite3.plugin
