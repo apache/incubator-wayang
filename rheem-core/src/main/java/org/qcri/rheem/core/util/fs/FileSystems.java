@@ -36,6 +36,12 @@ public class FileSystems {
                 .findAny();
     }
 
+    public static FileSystem requireFileSystem(String fileUrl) {
+        return getFileSystem(fileUrl).orElseThrow(
+                () -> new RheemException(String.format("Could not identify filesystem for \"%s\".", fileUrl))
+        );
+    }
+
     /**
      * Determine the number of bytes of a given file. This method is not only a short-cut to
      * {@link FileSystem#getFileSize(String)} but also caches file sizes for performance reasons.

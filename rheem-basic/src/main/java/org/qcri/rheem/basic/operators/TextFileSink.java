@@ -14,7 +14,7 @@ public class TextFileSink<T> extends UnarySink<T> {
 
     protected final String textFileUrl;
 
-    protected final TransformationDescriptor formattingDescriptor;
+    protected final TransformationDescriptor<T, String> formattingDescriptor;
 
     /**
      * Creates a new instance with default formatting.
