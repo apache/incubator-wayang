@@ -1,22 +1,17 @@
 package org.qcri.rheem.spark.mapping.graph;
 
-import org.qcri.rheem.basic.operators.DistinctOperator;
 import org.qcri.rheem.basic.operators.PageRankOperator;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.spark.operators.SparkDistinctOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link DistinctOperator} to {@link SparkDistinctOperator}.
+ * Mapping from {@link PageRankOperator} to {@link org.qcri.rheem.spark.operators.graph.SparkPageRankOperator}.
  */
 public class PageRankMapping implements Mapping {
 
@@ -30,7 +25,7 @@ public class PageRankMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern operatorPattern = new OperatorPattern(
+        final OperatorPattern operatorPattern = new OperatorPattern<>(
                 "pageRank", new PageRankOperator(1), false
         );
         return SubplanPattern.createSingleton(operatorPattern);

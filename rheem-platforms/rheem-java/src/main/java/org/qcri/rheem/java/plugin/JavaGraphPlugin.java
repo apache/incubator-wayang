@@ -6,7 +6,6 @@ import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.plugin.Plugin;
-import org.qcri.rheem.java.channels.ChannelConversions;
 import org.qcri.rheem.java.mapping.Mappings;
 import org.qcri.rheem.java.platform.JavaPlatform;
 

@@ -1,7 +1,6 @@
 package org.qcri.rheem.spark.operators;
 
 import org.junit.Test;
-import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.spark.channels.RddChannel;

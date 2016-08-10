@@ -2,7 +2,6 @@ package org.qcri.rheem.java.mapping.graph;
 
 import org.qcri.rheem.basic.operators.PageRankOperator;
 import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.graph.JavaPageRankOperator;
 import org.qcri.rheem.java.platform.JavaPlatform;
 
