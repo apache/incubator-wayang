@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
- * Implementation of the {@link LocalCallbackSink} operator for the Java platform.
+ * Implementation of the {@link LocalCallbackSink} operator for the Spark platform.
  */
 public class SparkLocalCallbackSink<T> extends LocalCallbackSink<T> implements SparkExecutionOperator {
     /**
