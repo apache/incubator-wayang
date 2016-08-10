@@ -1,13 +1,18 @@
 package org.qcri.rheem.api
 
 import java.io.File
+import java.net.URI
+import java.nio.file.{Files, Paths}
 import java.sql.{Connection, Statement}
+import java.util.function.Consumer
+import java.util.stream.Collectors
 
 import org.junit.{Assert, Test}
 import org.qcri.rheem.basic.RheemBasics
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
 import org.qcri.rheem.core.function.{ExecutionContext, TransformationDescriptor}
+import org.qcri.rheem.core.util.fs.LocalFileSystem
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.java.operators.JavaMapOperator
 import org.qcri.rheem.spark.Spark
@@ -349,6 +354,29 @@ class ApiTest {
 
     val expectedValues = Set((42, 100))
     Assert.assertEquals(expectedValues, result.toSet)
+  }
+
+  @Test
+  def testWriteTextFile() = {
+    val tempDir = LocalFileSystem.findTempDir
+    val targetUrl = LocalFileSystem.toURL(new File(tempDir, "testWriteTextFile.txt"))
+
+    // Set up RheemContext.
+    val rheem = new RheemContext().`with`(Java.basicPlugin)
+
+    val inputValues = for (i <- 0 to 5) yield i * 0.333333333333
+
+    val result = rheem
+      .loadCollection(inputValues)
+      .writeTextFile(targetUrl, formatterUdf = d => f"${d%.2f}")
+
+    val lines = scala.collection.mutable.Set[String]()
+    Files.lines(Paths.get(new URI(targetUrl))).forEach(new Consumer[String] {
+      override def accept(line: String): Unit = lines += line
+    })
+
+    val expectedLines = inputValues.map(v => f"${v%.2f}").toSet
+    Assert.assertEquals(expectedLines, lines)
   }
 
   @Test
