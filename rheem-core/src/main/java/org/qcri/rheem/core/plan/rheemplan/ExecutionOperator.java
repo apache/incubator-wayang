@@ -86,10 +86,7 @@ public interface ExecutionOperator extends ElementaryOperator {
      *
      * @return whether this instance is executed eagerly
      */
-    default boolean isExecutedEagerly() {
-        // Heuristic that holds for many, but not all of the cases.
-        return this.getNumOutputs() == 0 || this.getOutputChannelDescriptor(0).isReusable();
-    }
+    boolean isExecutedEagerly();
 
     /**
      * Tells whether this instance will evaluate a certain input {@link ChannelInstance} eagerly.

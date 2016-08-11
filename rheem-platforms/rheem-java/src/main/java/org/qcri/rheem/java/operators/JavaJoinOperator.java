@@ -128,4 +128,9 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
+    }
 }

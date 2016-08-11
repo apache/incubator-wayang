@@ -2,7 +2,6 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -73,5 +72,10 @@ public class JavaLocalCallbackSink<T> extends LocalCallbackSink<T> implements Ja
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         throw new UnsupportedOperationException(String.format("%s does not have outputs.", this));
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
     }
 }

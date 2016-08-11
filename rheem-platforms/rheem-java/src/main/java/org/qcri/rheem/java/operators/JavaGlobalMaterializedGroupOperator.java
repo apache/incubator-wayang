@@ -75,4 +75,8 @@ public class JavaGlobalMaterializedGroupOperator<Type>
         return new JavaGlobalMaterializedGroupOperator<>(this.getInputType(), this.getOutputType());
     }
 
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

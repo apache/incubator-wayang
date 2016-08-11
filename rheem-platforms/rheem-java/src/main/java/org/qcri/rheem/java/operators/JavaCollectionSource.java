@@ -69,4 +69,9 @@ public class JavaCollectionSource<T> extends CollectionSource<T> implements Java
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
+    }
+
 }

@@ -67,4 +67,9 @@ public class SparkCollectOperator<Type>
         final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

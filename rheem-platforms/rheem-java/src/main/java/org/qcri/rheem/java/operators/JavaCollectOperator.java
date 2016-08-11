@@ -63,4 +63,9 @@ public class JavaCollectOperator<Type> extends UnaryToUnaryOperator<Type, Type> 
         );
         return Optional.of(estimator);
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

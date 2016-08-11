@@ -120,4 +120,9 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
         assert index == 0;
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

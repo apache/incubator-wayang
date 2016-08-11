@@ -63,7 +63,7 @@ public class JavaReservoirSampleOperator<Type>
         ((CollectionChannel.Instance) outputs[0]).accept(reservoirSample(rand, ((JavaChannelInstance) inputs[0]).<Type>provideStream().iterator(), sampleSize));
     }
 
-    private static <T> List<T> reservoirSample(Random rand, Iterator<T> items, long m){
+    private static <T> List<T> reservoirSample(Random rand, Iterator<T> items, long m) {
         ArrayList<T> res = new ArrayList<T>(Math.toIntExact(m));
         int count = 0;
         while (items.hasNext()) {
@@ -103,5 +103,10 @@ public class JavaReservoirSampleOperator<Type>
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
     }
 }

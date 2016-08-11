@@ -94,4 +94,9 @@ public class SparkGlobalReduceOperator<Type>
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

@@ -2,8 +2,6 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.DistinctOperator;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -80,4 +78,8 @@ public class JavaDistinctOperator<Type>
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

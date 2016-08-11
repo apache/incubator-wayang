@@ -14,11 +14,11 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
-import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -113,6 +113,11 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
         return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
     }
 
 }

@@ -109,7 +109,7 @@ public class SparkRepeatOperator<Type>
 
     @Override
     public boolean isExecutedEagerly() {
-        return false;
+        return true;
     }
 
     @Override

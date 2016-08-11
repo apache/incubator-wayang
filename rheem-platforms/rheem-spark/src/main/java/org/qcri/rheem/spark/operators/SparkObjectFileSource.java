@@ -92,4 +92,9 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
+    }
 }

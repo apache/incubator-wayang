@@ -180,5 +180,9 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
         }
     }
 
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
+    }
 
 }

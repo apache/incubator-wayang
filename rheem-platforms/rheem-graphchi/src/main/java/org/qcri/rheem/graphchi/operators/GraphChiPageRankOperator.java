@@ -165,4 +165,9 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
+    }
+
 }

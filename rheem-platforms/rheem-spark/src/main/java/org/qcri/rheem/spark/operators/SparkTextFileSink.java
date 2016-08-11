@@ -45,4 +45,9 @@ public class SparkTextFileSink<T> extends TextFileSink<T> implements SparkExecut
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         throw new UnsupportedOperationException("This operator has no outputs.");
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

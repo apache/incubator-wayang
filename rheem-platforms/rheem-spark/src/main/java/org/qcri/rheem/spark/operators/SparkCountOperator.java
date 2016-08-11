@@ -78,4 +78,8 @@ public class SparkCountOperator<Type>
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

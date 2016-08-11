@@ -87,4 +87,9 @@ public class SparkCartesianOperator<InputType0, InputType1>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
+    }
 }

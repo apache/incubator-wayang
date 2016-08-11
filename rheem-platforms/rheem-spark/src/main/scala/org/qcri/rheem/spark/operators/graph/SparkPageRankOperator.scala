@@ -50,4 +50,6 @@ class SparkPageRankOperator(_numIterations: Int,
     assert(index == 0)
     Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR)
   }
+
+  override def isExecutedEagerly: Boolean = true
 }

@@ -71,4 +71,9 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
         assert index == 0;
         return Collections.singletonList(BroadcastChannel.DESCRIPTOR);
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

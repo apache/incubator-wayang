@@ -72,4 +72,9 @@ public class SparkLocalCallbackSink<T> extends LocalCallbackSink<T> implements S
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         throw new UnsupportedOperationException(String.format("%s does not have output channels.", this));
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

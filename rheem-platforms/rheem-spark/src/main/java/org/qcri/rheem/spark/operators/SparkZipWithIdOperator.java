@@ -94,4 +94,9 @@ public class SparkZipWithIdOperator<InputType>
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
+    }
 }

@@ -89,4 +89,9 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
         return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
     }
 
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
+
 }

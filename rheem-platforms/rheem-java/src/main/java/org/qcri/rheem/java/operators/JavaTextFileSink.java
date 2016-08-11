@@ -67,4 +67,9 @@ public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutio
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

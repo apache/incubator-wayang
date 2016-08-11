@@ -112,6 +112,11 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
         return Collections.singletonList(FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR);
     }
 
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
+
     /**
      * Utility to chunk a {@link Stream} into portions of fixed size.
      */

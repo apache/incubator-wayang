@@ -15,9 +15,9 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
-import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -188,4 +188,8 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
+    }
 }
