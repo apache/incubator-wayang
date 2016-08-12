@@ -24,7 +24,7 @@ trait ExperimentDescriptor {
   /**
     * The described [[Subject]].
     */
-  val subject = new Subject(this.name, this.version)
+  def createSubject = new Subject(this.name, this.version)
 
   /**
     * Create a new [[Experiment]] for the described [[Subject]].
@@ -33,6 +33,6 @@ trait ExperimentDescriptor {
     * @param tags tags for the [[Experiment]]
     * @return the [[Experiment]]
     */
-  def createExperiment(id: String, tags: String*) = new Experiment(id, this.subject, tags: _*)
+  def createExperiment(id: String, tags: String*) = new Experiment(id, this.createSubject, tags: _*)
 
 }

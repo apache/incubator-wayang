@@ -18,9 +18,18 @@ object Parameters {
 
   val yamlPluginHel = "yaml(<YAML plugin URL>)"
 
-  private val experiment = """exp\(([^,]*)((?:,[^,]*)*)\)""".r
+  private val intPattern = """[+-]?\d+""".r
 
-  val experimentHelp = "exp(<ID>(,<tag>)*)"
+  private val longPattern = """[+-]?\d+L""".r
+
+  private val doublePattern = """[+-]?\d+\.\d*""".r
+
+  private val booleanPattern = """(?:true)|(?:false)""".r
+
+  private val experiment =
+    """exp\(([^,;]+)(?:;tags=([^,;]+(?:,[^,;]+)*))?(?:;conf=([^,;:]+:[^,;:]+(?:,[^,;:]+:[^,;:]+)*))?\)""".r
+
+  val experimentHelp = "exp(<ID>[,tags=<tag>,...][,conf=<key>:<value>,...])"
 
   /**
     * Load a plugin.
@@ -67,11 +76,37 @@ object Parameters {
     */
   def createExperiment(experimentParameter: String, experimentDescriptor: ExperimentDescriptor) =
   experimentParameter match {
-    case experiment(id, tagList) => {
-      val tags = tagList.split(',').filterNot(_.isEmpty)
-      experimentDescriptor.createExperiment(id, tags: _*)
-    }
+    case experiment(id, tagList, confList) =>
+      val tags = tagList match {
+        case str: String => str.split(',').filterNot(_.isEmpty)
+        case _ => Array[String]()
+      }
+      val experiment = experimentDescriptor.createExperiment(id, tags: _*)
+      confList match {
+        case str: String => str.split(',').map(_.split(':')).foreach { pair =>
+          experiment.getSubject.addConfiguration(pair(0), parseAny(pair(1)))
+        }
+        case _ =>
+      }
+      experiment
     case other => throw new IllegalArgumentException(s"Could parse experiment descriptor '$other'.")
+  }
+
+  /**
+    * Parses a given [[String]] into a specific basic type.
+    *
+    * @param str the [[String]]
+    * @return the parsed value
+    */
+  private[util] def parseAny(str: String): AnyRef = {
+    str match {
+      case "null" => null
+      case intPattern() => java.lang.Integer.valueOf(str)
+      case longPattern() => java.lang.Long.valueOf(str.take(str.length - 1))
+      case doublePattern() => java.lang.Double.valueOf(str)
+      case booleanPattern() => java.lang.Boolean.valueOf(str)
+      case other: String => other
+    }
   }
 
 }
