@@ -2,7 +2,6 @@ package org.qcri.rheem.core.api;
 
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
-import de.hpi.isg.profiledb.store.model.Subject;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
@@ -539,7 +538,14 @@ public class Job extends OneTimeExecutable {
         );
         int i = 1;
         for (TimeEstimate timeEstimate : timeEstimates) {
-            this.logger.info("Estimated execution time (plan {}): {}", i++, timeEstimate);
+            this.logger.info("Estimated execution time (plan {}): {}", i, timeEstimate);
+            TimeMeasurement lowerEstimate = new TimeMeasurement(String.format("Estimate %d (lower)", i));
+            lowerEstimate.setMillis(timeEstimate.getLowerEstimate());
+            this.stopWatch.getExperiment().addMeasurement(lowerEstimate);
+            TimeMeasurement upperEstimate = new TimeMeasurement(String.format("Estimate %d (upper)", i));
+            upperEstimate.setMillis(timeEstimate.getUpperEstimate());
+            this.stopWatch.getExperiment().addMeasurement(upperEstimate);
+            i++;
         }
     }
 
