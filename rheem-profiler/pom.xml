@@ -41,6 +41,10 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.compat.version}</artifactId>
         </dependency>
+        <dependency>
+            <groupId>de.hpi.isg</groupId>
+            <artifactId>profiledb-instrumentation</artifactId>
+        </dependency>
     </dependencies>
 
 

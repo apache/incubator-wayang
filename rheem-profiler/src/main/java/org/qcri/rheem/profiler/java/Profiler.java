@@ -1,9 +1,12 @@
 package org.qcri.rheem.profiler.java;
 
+import de.hpi.isg.profiledb.instrumentation.StopWatch;
+import de.hpi.isg.profiledb.store.model.Experiment;
+import de.hpi.isg.profiledb.store.model.Subject;
+import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.core.util.StopWatch;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.profiler.data.DataGenerators;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
@@ -149,6 +152,11 @@ public class Profiler {
         results.forEach(result -> System.out.println(result.toCsvString()));
     }
 
+    private static StopWatch createStopWatch() {
+        Experiment experiment = new Experiment("rheem-profiler", new Subject("Rheem", "0.1"));
+        return new StopWatch(experiment);
+    }
+
     @SuppressWarnings("unchecked")
     private static <T> Class<T> cast(Class<?> cls) {
         return (Class<T>) cls;
@@ -169,15 +177,15 @@ public class Profiler {
         ProfilingUtils.sleep(1000);
 
         System.out.printf("Profiling %s with %d data quanta.\n", sourceProfiler, cardinality);
-        final StopWatch stopWatch = new StopWatch();
+        final StopWatch stopWatch = createStopWatch();
 
         System.out.println("Prepare...");
-        final StopWatch.Round preparation = stopWatch.start("Preparation");
+        final TimeMeasurement preparation = stopWatch.start("Preparation");
         sourceProfiler.prepare(cardinality);
         preparation.stop();
 
         System.out.println("Execute...");
-        final StopWatch.Round execution = stopWatch.start("Execution");
+        final TimeMeasurement execution = stopWatch.start("Execution");
         final OperatorProfiler.Result result = sourceProfiler.run();
         execution.stop();
 
@@ -203,15 +211,15 @@ public class Profiler {
         ProfilingUtils.sleep(1000);
 
         System.out.printf("Profiling %s with %d data quanta.\n", unaryOperatorProfiler, cardinality);
-        final StopWatch stopWatch = new StopWatch();
+        final StopWatch stopWatch = createStopWatch();
 
         System.out.println("Prepare...");
-        final StopWatch.Round preparation = stopWatch.start("Preparation");
+        final TimeMeasurement preparation = stopWatch.start("Preparation");
         unaryOperatorProfiler.prepare(cardinality);
         preparation.stop();
 
         System.out.println("Execute...");
-        final StopWatch.Round execution = stopWatch.start("Execution");
+        final TimeMeasurement execution = stopWatch.start("Execution");
         final OperatorProfiler.Result result = unaryOperatorProfiler.run();
         execution.stop();
 
@@ -246,15 +254,15 @@ public class Profiler {
         ProfilingUtils.sleep(1000);
 
         System.out.printf("Profiling %s with %dx%d data quanta.\n", binaryOperatorProfiler.getOperator(), cardinality0, cardinality1);
-        final StopWatch stopWatch = new StopWatch();
+        final StopWatch stopWatch = createStopWatch();
 
         System.out.println("Prepare...");
-        final StopWatch.Round preparation = stopWatch.start("Preparation");
+        final TimeMeasurement preparation = stopWatch.start("Preparation");
         binaryOperatorProfiler.prepare(cardinality0, cardinality1);
         preparation.stop();
 
         System.out.println("Execute...");
-        final StopWatch.Round execution = stopWatch.start("Execution");
+        final TimeMeasurement execution = stopWatch.start("Execution");
         final OperatorProfiler.Result result = binaryOperatorProfiler.run();
         execution.stop();
 
@@ -280,15 +288,15 @@ public class Profiler {
         ProfilingUtils.sleep(1000);
 
         System.out.printf("Profiling %s with %d data quanta.\n", sinkProfiler, cardinality);
-        final StopWatch stopWatch = new StopWatch();
+        final StopWatch stopWatch = createStopWatch();
 
         System.out.println("Prepare...");
-        final StopWatch.Round preparation = stopWatch.start("Preparation");
+        final TimeMeasurement preparation = stopWatch.start("Preparation");
         sinkProfiler.prepare(cardinality);
         preparation.stop();
 
         System.out.println("Execute...");
-        final StopWatch.Round execution = stopWatch.start("Execution");
+        final TimeMeasurement execution = stopWatch.start("Execution");
         final OperatorProfiler.Result result = sinkProfiler.run();
         execution.stop();
 
