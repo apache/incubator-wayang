@@ -3,6 +3,7 @@ package org.qcri.rheem.api
 import _root_.java.util.function.{Consumer, Function => JavaFunction}
 import _root_.java.util.{Collection => JavaCollection}
 
+import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
 import org.qcri.rheem.basic.function.ProjectionDescriptor
 import org.qcri.rheem.basic.operators._
@@ -677,6 +678,11 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def withUdfJars(paths: String*) = {
     this.planBuilder.udfJars ++= paths
+    this
+  }
+
+  def withExperiment(experiment: Experiment) = {
+    this.planBuilder.experiment = experiment
     this
   }
 
