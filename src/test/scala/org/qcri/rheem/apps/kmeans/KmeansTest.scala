@@ -1,7 +1,9 @@
 package org.qcri.rheem.apps.kmeans
 
+import de.hpi.isg.profiledb.store.model.{Experiment, Subject}
 import org.junit.Assert._
 import org.junit.Test
+import org.qcri.rheem.core.api.Configuration
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.spark.Spark
 
@@ -9,6 +11,10 @@ import org.qcri.rheem.spark.Spark
   * Test suite for [[Kmeans]].
   */
 class KmeansTest {
+
+  implicit val experiment = new Experiment("test", new Subject("test", "23.42"))
+
+  implicit val configuration = new Configuration
 
   private def getTestFileUrl(fileName: String) =
     Thread.currentThread().getContextClassLoader.getResource(fileName).toString

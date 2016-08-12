@@ -1,13 +1,14 @@
 package org.qcri.rheem.apps.simwords
 
+import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.api._
-import org.qcri.rheem.apps.util.Parameters
-import org.qcri.rheem.core.api.RheemContext
+import org.qcri.rheem.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelper}
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.plugin.Plugin
 
 /**
-  * TODO
+  * This app clusters words by their word neighborhoods in a corpus.
   */
 class SimWords(plugins: Plugin*) {
 
@@ -16,10 +17,12 @@ class SimWords(plugins: Plugin*) {
             neighborhoodReach: Int,
             numClusters: Int,
             numIterations: Int,
-            wordsPerLine: ProbabilisticDoubleInterval) = {
+            wordsPerLine: ProbabilisticDoubleInterval)
+           (implicit experiment: Experiment,
+            configuration: Configuration) = {
 
     // Initialize.
-    val rheemCtx = new RheemContext
+    val rheemCtx = new RheemContext(configuration)
     rheemCtx.getConfiguration.setProperty("rheem.core.optimizer.reoptimize", "false")
     plugins.foreach(rheemCtx.register)
     val planBuilder = new PlanBuilder(rheemCtx)
@@ -92,36 +95,44 @@ class SimWords(plugins: Plugin*) {
       .mapJava(new ResolveClusterFunction("wordIds")).withBroadcast(wordIds, "wordIds").withName("Resolve word IDs")
 
 
-    val result = clusters.withUdfJarsOf(classOf[SimWords]).collect(
+    clusters.withUdfJarsOf(classOf[SimWords]).withExperiment(experiment)
+      .collect(
       jobName = s"SimWords ($inputFile, reach=$neighborhoodReach, clusters=$numClusters, $numIterations iterations)"
     )
-
-
-    result.filter(_.size > 1).toIndexedSeq.sortBy(_.size).reverse.foreach(println(_))
   }
 
 }
 
-object SimWords {
+object SimWords extends ExperimentDescriptor {
+
+  override def version = "0.1.0"
 
   def main(args: Array[String]): Unit = {
     if (args.isEmpty) {
-      println("Usage: <main class> <plugin(,plugin)*> <input file> <min word occurrences> <neighborhood reach> <#clusters> <#iterations> [<words per line (from..to)>]")
+      println(s"Usage: <main class> ${Parameters.experimentHelp} <plugin(,plugin)*> <input file> <min word occurrences> <neighborhood reach> <#clusters> <#iterations> [<words per line (from..to)>]")
       sys.exit(1)
     }
 
-    val plugins = Parameters.loadPlugins(args(0))
-    val inputFile = args(1)
-    val minWordOccurrences = args(2).toInt
-    val neighborhoodRead = args(3).toInt
-    val numClusters = args(4).toInt
-    val numIterations = args(5).toInt
-    val wordsPerLine = if (args.length >= 7) {
-      val Array(from, to) = args(6).split("\\.\\.").map(_.toDouble)
+    implicit val configuration = new Configuration
+    implicit val experiment = Parameters.createExperiment(args(0), this)
+    val plugins = Parameters.loadPlugins(args(1))
+    val inputFile = args(2)
+    val minWordOccurrences = args(3).toInt
+    val neighborhoodRead = args(4).toInt
+    val numClusters = args(5).toInt
+    val numIterations = args(6).toInt
+    val wordsPerLine = if (args.length >= 8) {
+      val Array(from, to) = args(7).split("\\.\\.").map(_.toDouble)
       new ProbabilisticDoubleInterval(from, to, .99d)
     } else new ProbabilisticDoubleInterval(100, 10000, 0.9)
 
     val simWords = new SimWords(plugins: _*)
-    simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations, wordsPerLine)
+    val result = simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations, wordsPerLine)
+
+    // Store experiment data.
+    ProfileDBHelper.store(experiment, configuration)
+
+    // Print the results.
+    result.filter(_.size > 1).toIndexedSeq.sortBy(_.size).reverse.foreach(println(_))
   }
 }

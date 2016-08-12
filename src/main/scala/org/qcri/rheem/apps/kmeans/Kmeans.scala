@@ -2,9 +2,10 @@ package org.qcri.rheem.apps.kmeans
 
 import java.util
 
+import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.api._
-import org.qcri.rheem.apps.util.Parameters
-import org.qcri.rheem.core.api.RheemContext
+import org.qcri.rheem.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelper}
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.ExecutionContext
 import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
 import org.qcri.rheem.core.plugin.Plugin
@@ -17,9 +18,10 @@ import scala.util.Random
   */
 class Kmeans(plugin: Plugin*) {
 
-  def apply(k: Int, inputFile: String, iterations: Int = 20, isResurrect: Boolean = true): Iterable[Point] = {
+  def apply(k: Int, inputFile: String, iterations: Int = 20, isResurrect: Boolean = true)
+           (implicit experiment: Experiment, configuration: Configuration): Iterable[Point] = {
     // Set up the RheemContext.
-    implicit val rheemCtx = new RheemContext
+    implicit val rheemCtx = new RheemContext(configuration)
     plugin.foreach(rheemCtx.register)
 
     // Read and parse the input file(s).
@@ -65,6 +67,7 @@ class Kmeans(plugin: Plugin*) {
     finalCentroids
       .map(_.toPoint).withName("Strip centroid names")
       .withUdfJarsOf(classOf[Kmeans])
+      .withExperiment(experiment)
       .collect(jobName = s"k-means ($inputFile, k=$k, $iterations iterations)")
   }
 
@@ -74,25 +77,32 @@ class Kmeans(plugin: Plugin*) {
 /**
   * Companion object of [[Kmeans]].
   */
-object Kmeans {
+object Kmeans extends ExperimentDescriptor {
+
+  override def version = "0.1.0"
 
   def main(args: Array[String]): Unit = {
     // Parse args.
     if (args.length == 0) {
-      println("Usage: scala <main class> <plugin(,plugin)*> <point file> <k> <#iterations>")
+      println(s"Usage: scala <main class> ${Parameters.experimentHelp} <plugin(,plugin)*> <point file> <k> <#iterations>")
       sys.exit(1)
     }
 
-    val plugins = Parameters.loadPlugins(args(0))
-    val file = args(1)
-    val k = args(2).toInt
-    val numIterations = args(3).toInt
+    implicit val experiment = Parameters.createExperiment(args(0), this)
+    implicit val configuration = new Configuration
+    val plugins = Parameters.loadPlugins(args(1))
+    val file = args(2)
+    val k = args(3).toInt
+    val numIterations = args(4).toInt
 
     // Initialize k-means.
     val kmeans = new Kmeans(plugins: _*)
 
     // Run k-means.
     val centroids = kmeans(k, file, numIterations)
+
+    // Store experiment data.
+    ProfileDBHelper.store(experiment, configuration)
 
     // Print the result.
     println(s"Found ${centroids.size} centroids:")
@@ -108,7 +118,7 @@ object Kmeans {
     */
   def createRandomCentroids(n: Int, random: Random = new Random()) =
   // TODO: The random cluster ID makes collisions during resurrection less likely but in general permits ID collisions.
-    for (i <- 1 to n) yield TaggedPoint(random.nextGaussian(), random.nextGaussian(), random.nextInt())
+  for (i <- 1 to n) yield TaggedPoint(random.nextGaussian(), random.nextGaussian(), random.nextInt())
 
 }
 

@@ -1,7 +1,8 @@
 package org.qcri.rheem.apps.tpch
 
+import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.apps.tpch.queries.{Query3File, Query3Hybrid, Query3Sqlite}
-import org.qcri.rheem.apps.util.{Parameters, StdOut}
+import org.qcri.rheem.apps.util.{Parameters, ProfileDBHelper, StdOut}
 import org.qcri.rheem.core.api.Configuration
 
 /**
@@ -11,31 +12,36 @@ object TpcH {
 
   def main(args: Array[String]): Unit = {
     if (args.isEmpty) {
-      println("Usage: <main class> <plugin(,plugin)*> <TPC-H config URL> <query> [<query args>*]")
+      println(s"Usage: <main class> ${Parameters.experimentHelp} <plugin(,plugin)*> <TPC-H config URL> <query> [<query args>*]")
       sys.exit(1)
     }
 
-    val plugins = Parameters.loadPlugins(args(0))
-    val configUrl = args(1)
-    val queryName = args(2)
+    val experimentArg = args(0)
+    val plugins = Parameters.loadPlugins(args(1))
+    val configUrl = args(2)
+    val queryName = args(3)
 
     val configuration = new Configuration
     configuration.load(configUrl)
 
+    var experiment: Experiment = null
     queryName match {
       case "Query3File" => {
         val query = new Query3File(plugins: _*)
-        val result = query(configuration)
+        experiment = Parameters.createExperiment(experimentArg, query)
+        val result = query(configuration)(experiment)
         StdOut.printLimited(result, 10)
       }
       case "Query3Sqlite" => {
         val query = new Query3Sqlite(plugins: _*)
-        val result = query(configuration)
+        experiment = Parameters.createExperiment(experimentArg, query)
+        val result = query(configuration)(experiment)
         StdOut.printLimited(result, 10)
       }
       case "Query3Hybrid" => {
         val query = new Query3Hybrid(plugins: _*)
-        val result = query(configuration)
+        experiment = Parameters.createExperiment(experimentArg, query)
+        val result = query(configuration)(experiment)
         StdOut.printLimited(result, 10)
       }
       case other: String => {
@@ -43,6 +49,9 @@ object TpcH {
         sys.exit(1)
       }
     }
+
+    // Store experiment data.
+    ProfileDBHelper.store(experiment, configuration)
   }
 
 }

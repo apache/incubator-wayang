@@ -1,8 +1,10 @@
 package org.qcri.rheem.apps.tpch.queries
 
+import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.api._
 import org.qcri.rheem.apps.tpch.CsvUtils
 import org.qcri.rheem.apps.tpch.data.{Customer, LineItem, Order}
+import org.qcri.rheem.apps.util.ExperimentDescriptor
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.plugin.Plugin
 
@@ -34,11 +36,14 @@ import org.qcri.rheem.core.plugin.Plugin
   *   o_orderdate;
   * }}}
   */
-class Query3File(plugins: Plugin*) {
+class Query3File(plugins: Plugin*) extends ExperimentDescriptor {
+
+  override def version = "0.1.0"
 
   def apply(configuration: Configuration,
             segment: String = "BUILDING",
-            date: String = "1995-03-15") = {
+            date: String = "1995-03-15")
+           (implicit experiment: Experiment) = {
 
     val rheemCtx = new RheemContext(configuration)
     plugins.foreach(rheemCtx.register)
@@ -114,6 +119,7 @@ class Query3File(plugins: Plugin*) {
       )
       .withName("Aggregate revenue")
       .withUdfJarsOf(classOf[Query3Sqlite])
+      .withExperiment(experiment)
       .collect(s"TPC-H (${this.getClass.getSimpleName})")
   }
 

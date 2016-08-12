@@ -1,12 +1,12 @@
 package org.qcri.rheem.apps.crocopr
 
-import org.qcri.rheem.api.{DataQuanta, PlanBuilder}
-import org.qcri.rheem.apps.util.{Parameters, StdOut}
-import org.qcri.rheem.core.api.RheemContext
-import org.qcri.rheem.core.api.exception.RheemException
-import org.qcri.rheem.core.plugin.Plugin
-import org.qcri.rheem.core.util.RheemCollections
+import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.api.graph._
+import org.qcri.rheem.api.{DataQuanta, PlanBuilder}
+import org.qcri.rheem.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelper, StdOut}
+import org.qcri.rheem.core.api.exception.RheemException
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.core.plugin.Plugin
 
 /**
   * Rheem implementation of the cross-community PageRank.
@@ -20,9 +20,10 @@ class CrocoPR(plugins: Plugin*) {
     * @param inputUrl2 URL to the second RDF N3 file
     * @return the page ranks
     */
-  def apply(inputUrl1: String, inputUrl2: String, numIterations: Int) = {
+  def apply(inputUrl1: String, inputUrl2: String, numIterations: Int)
+           (implicit experiment: Experiment, configuration: Configuration) = {
     // Initialize.
-    val rheemCtx = new RheemContext
+    val rheemCtx = new RheemContext(configuration)
     plugins.foreach(rheemCtx.register)
     implicit val planBuilder = new PlanBuilder(rheemCtx)
 
@@ -60,6 +61,7 @@ class CrocoPR(plugins: Plugin*) {
       .join[VertexId, Long](_.field0, vertexIds, _.field0).withName("Join page ranks with vertex IDs")
       .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1)).withName("Make page ranks readable")
       .withUdfJarsOf(this.getClass)
+      .withExperiment(experiment)
       .collect(jobName = s"CrocoPR ($inputUrl1, $inputUrl2, $numIterations iterations)")
 
   }
@@ -89,24 +91,31 @@ class CrocoPR(plugins: Plugin*) {
 /**
   * Companion object for [[CrocoPR]].
   */
-object CrocoPR {
+object CrocoPR extends ExperimentDescriptor {
+
+  override def version = "0.1.0"
 
   def main(args: Array[String]) {
     // Parse parameters.
     if (args.isEmpty) {
-      sys.error("Usage: <main class> <plugin>(,<plugin>)* <input URL1> <input URL2> <#iterations>")
+      sys.error(s"Usage: <main class> ${Parameters.experimentHelp} <plugin>(,<plugin>)* <input URL1> <input URL2> <#iterations>")
       sys.exit(1)
     }
-    val plugins = Parameters.loadPlugins(args(0))
-    val inputUrl1 = args(1)
-    val inputUrl2 = args(2)
-    val numIterations = args(3).toInt
+    implicit val configuration = new Configuration
+    implicit val experiment = Parameters.createExperiment(args(0), this)
+    val plugins = Parameters.loadPlugins(args(1))
+    val inputUrl1 = args(2)
+    val inputUrl2 = args(3)
+    val numIterations = args(4).toInt
 
     // Prepare the PageRank.
     val pageRank = new CrocoPR(plugins: _*)
 
     // Run the PageRank.
     val pageRanks = pageRank(inputUrl1, inputUrl2, numIterations).toSeq.sortBy(-_._2)
+
+    // Store experiment data.
+    ProfileDBHelper.store(experiment, configuration)
 
     // Print the result.
     println(s"Calculated ${pageRanks.size} page ranks:")
