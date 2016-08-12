@@ -104,9 +104,13 @@ object CrocoPR extends ExperimentDescriptor {
     implicit val configuration = new Configuration
     implicit val experiment = Parameters.createExperiment(args(0), this)
     val plugins = Parameters.loadPlugins(args(1))
+    experiment.getSubject.addConfiguration("plugins", args(1))
     val inputUrl1 = args(2)
+    experiment.getSubject.addConfiguration("input1", inputUrl1)
     val inputUrl2 = args(3)
+    experiment.getSubject.addConfiguration("input2", inputUrl2)
     val numIterations = args(4).toInt
+    experiment.getSubject.addConfiguration("iterations", numIterations)
 
     // Prepare the PageRank.
     val pageRank = new CrocoPR(plugins: _*)
