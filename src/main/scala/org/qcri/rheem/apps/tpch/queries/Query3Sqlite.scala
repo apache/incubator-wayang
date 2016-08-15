@@ -49,6 +49,10 @@ class Query3Sqlite(plugins: Plugin*) extends ExperimentDescriptor {
     val rheemCtx = new RheemContext(configuration)
     plugins.foreach(rheemCtx.register)
 
+    experiment.getSubject.addConfiguration("jdbcUrl", configuration.getStringProperty("rheem.sqlite3.jdbc.url"))
+    experiment.getSubject.addConfiguration("segment", segment)
+    experiment.getSubject.addConfiguration("date", date)
+
     // Read, filter, and project the customer data.
     val _segment = segment
     val customerKeys = rheemCtx

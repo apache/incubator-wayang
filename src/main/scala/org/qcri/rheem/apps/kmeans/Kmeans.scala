@@ -91,9 +91,13 @@ object Kmeans extends ExperimentDescriptor {
     implicit val experiment = Parameters.createExperiment(args(0), this)
     implicit val configuration = new Configuration
     val plugins = Parameters.loadPlugins(args(1))
+    experiment.getSubject.addConfiguration("plugins", args(1))
     val file = args(2)
+    experiment.getSubject.addConfiguration("input", args(2))
     val k = args(3).toInt
+    experiment.getSubject.addConfiguration("k", args(3))
     val numIterations = args(4).toInt
+    experiment.getSubject.addConfiguration("iterations", args(4))
 
     // Initialize k-means.
     val kmeans = new Kmeans(plugins: _*)

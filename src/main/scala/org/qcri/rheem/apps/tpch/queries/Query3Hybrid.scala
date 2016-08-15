@@ -51,6 +51,11 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
 
     val lineitemFile = configuration.getStringProperty("rheem.apps.tpch.csv.lineitem")
 
+    experiment.getSubject.addConfiguration("jdbcUrl", configuration.getStringProperty("rheem.sqlite3.jdbc.url"))
+    experiment.getSubject.addConfiguration("lineitemInput", lineitemFile)
+    experiment.getSubject.addConfiguration("segment", segment)
+    experiment.getSubject.addConfiguration("date", date)
+
     // Read, filter, and project the customer data.
     val _segment = segment
     val customerKeys = rheemCtx

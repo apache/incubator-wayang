@@ -52,6 +52,12 @@ class Query3File(plugins: Plugin*) extends ExperimentDescriptor {
     val ordersFile = configuration.getStringProperty("rheem.apps.tpch.csv.orders")
     val lineitemFile = configuration.getStringProperty("rheem.apps.tpch.csv.lineitem")
 
+    experiment.getSubject.addConfiguration("customerInput", customerFile)
+    experiment.getSubject.addConfiguration("ordersInput", ordersFile)
+    experiment.getSubject.addConfiguration("lineitemInput", lineitemFile)
+    experiment.getSubject.addConfiguration("segment", segment)
+    experiment.getSubject.addConfiguration("date", date)
+
     // Read, filter, and project the customer data.
     val _segment = segment
     val customerKeys = rheemCtx

@@ -23,7 +23,6 @@ class SimWords(plugins: Plugin*) {
 
     // Initialize.
     val rheemCtx = new RheemContext(configuration)
-    rheemCtx.getConfiguration.setProperty("rheem.core.optimizer.reoptimize", "false")
     plugins.foreach(rheemCtx.register)
     val planBuilder = new PlanBuilder(rheemCtx)
 
@@ -116,13 +115,20 @@ object SimWords extends ExperimentDescriptor {
     implicit val configuration = new Configuration
     implicit val experiment = Parameters.createExperiment(args(0), this)
     val plugins = Parameters.loadPlugins(args(1))
+    experiment.getSubject.addConfiguration("plugins", args(1))
     val inputFile = args(2)
+    experiment.getSubject.addConfiguration("input", args(2))
     val minWordOccurrences = args(3).toInt
+    experiment.getSubject.addConfiguration("minWordOccurrences", args(3))
     val neighborhoodRead = args(4).toInt
+    experiment.getSubject.addConfiguration("neighborhoodReach", args(4))
     val numClusters = args(5).toInt
+    experiment.getSubject.addConfiguration("clusters", args(5))
     val numIterations = args(6).toInt
+    experiment.getSubject.addConfiguration("iterations", args(6))
     val wordsPerLine = if (args.length >= 8) {
       val Array(from, to) = args(7).split("\\.\\.").map(_.toDouble)
+      experiment.getSubject.addConfiguration("wordsPerLine", args(7))
       new ProbabilisticDoubleInterval(from, to, .99d)
     } else new ProbabilisticDoubleInterval(100, 10000, 0.9)
 

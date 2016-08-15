@@ -29,18 +29,24 @@ object TpcH {
       case "Query3File" => {
         val query = new Query3File(plugins: _*)
         experiment = Parameters.createExperiment(experimentArg, query)
+        experiment.getSubject.addConfiguration("plugins", args(1))
+        experiment.getSubject.addConfiguration("query", args(3))
         val result = query(configuration)(experiment)
         StdOut.printLimited(result, 10)
       }
       case "Query3Sqlite" => {
         val query = new Query3Sqlite(plugins: _*)
         experiment = Parameters.createExperiment(experimentArg, query)
+        experiment.getSubject.addConfiguration("plugins", args(1))
+        experiment.getSubject.addConfiguration("query", args(3))
         val result = query(configuration)(experiment)
         StdOut.printLimited(result, 10)
       }
       case "Query3Hybrid" => {
         val query = new Query3Hybrid(plugins: _*)
         experiment = Parameters.createExperiment(experimentArg, query)
+        experiment.getSubject.addConfiguration("plugins", args(1))
+        experiment.getSubject.addConfiguration("query", args(3))
         val result = query(configuration)(experiment)
         StdOut.printLimited(result, 10)
       }

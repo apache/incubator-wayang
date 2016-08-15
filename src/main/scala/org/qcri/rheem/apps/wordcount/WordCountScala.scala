@@ -57,9 +57,12 @@ object WordCountScala extends ExperimentDescriptor {
     implicit val configuration = new Configuration
     implicit val experiment = Parameters.createExperiment(args(0), this)
     val plugins = Parameters.loadPlugins(args(1))
+    experiment.getSubject.addConfiguration("plugins", args(1))
     val inputFile = args(2)
+    experiment.getSubject.addConfiguration("input", inputFile)
     val wordsPerLine = if (args.length >= 4) {
       val Array(low, high) = args(3).split("""\.\.""").map(_.toDouble)
+      experiment.getSubject.addConfiguration("wordsPerLine", args(3))
       new ProbabilisticDoubleInterval(low, high, 0.8)
     } else null
 
