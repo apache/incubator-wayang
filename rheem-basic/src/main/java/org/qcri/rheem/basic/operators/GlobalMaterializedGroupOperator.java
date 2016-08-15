@@ -29,7 +29,7 @@ public class GlobalMaterializedGroupOperator<Type> extends UnaryToUnaryOperator<
      * @param outputType the output {@link DataSetType} of the new instance
      */
     public GlobalMaterializedGroupOperator(DataSetType<Type> inputType, DataSetType<Iterable<Type>> outputType) {
-        super(inputType, outputType, false, null);
+        super(inputType, outputType, false);
     }
 
     /**

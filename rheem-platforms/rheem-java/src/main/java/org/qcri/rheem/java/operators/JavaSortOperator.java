@@ -78,4 +78,9 @@ public class JavaSortOperator<Type>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }

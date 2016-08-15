@@ -47,7 +47,7 @@ public class MapOperator<InputType, OutputType> extends UnaryToUnaryOperator<Inp
      * Creates a new instance.
      */
     public MapOperator(TransformationDescriptor<InputType, OutputType> functionDescriptor, DataSetType<InputType> inputType, DataSetType<OutputType> outputType) {
-        super(inputType, outputType, true, null);
+        super(inputType, outputType, true);
         this.functionDescriptor = functionDescriptor;
     }
 

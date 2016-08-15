@@ -385,7 +385,7 @@ public class PlanEnumeration {
             final Collection<Tuple<OutputSlot<?>, PlanImplementation>> execOpOutputsWithContext =
                     basePlanImplementation.findExecutionOperatorOutputWithContext(output);
             final Tuple<OutputSlot<?>, PlanImplementation> execOpOutputWithCtx =
-                    RheemCollections.getSingle(execOpOutputsWithContext);
+                    RheemCollections.getSingleOrNull(execOpOutputsWithContext);
             assert execOpOutputsWithContext != null && !execOpOutputsWithContext.isEmpty()
                     : String.format("No outputs found for %s.", output);
 
@@ -516,7 +516,6 @@ public class PlanEnumeration {
                 }
             }
         }
-
 
         // Escape the PlanImplementation instances.
         for (PlanImplementation planImplementation : this.planImplementations) {

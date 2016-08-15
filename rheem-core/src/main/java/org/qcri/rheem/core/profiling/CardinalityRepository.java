@@ -83,9 +83,10 @@ public class CardinalityRepository {
      */
     public void store(OutputSlot<?> output, long cardinality, OptimizationContext.OperatorContext operatorContext) {
         assert output.getOwner() == operatorContext.getOperator();
-        assert operatorContext.getOutputCardinality(output.getIndex()).isExactly(cardinality)
-                : String.format("Expected a measured cardinality of %d for %s; found %s.",
-                cardinality, output, operatorContext.getOutputCardinality(output.getIndex()));
+        if (!operatorContext.getOutputCardinality(output.getIndex()).isExactly(cardinality)) {
+            this.logger.error("Expected a measured cardinality of {} for {}; found {}.",
+                    cardinality, output, operatorContext.getOutputCardinality(output.getIndex()));
+        }
 
         this.write(operatorContext, output, cardinality);
     }

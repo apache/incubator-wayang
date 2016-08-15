@@ -164,7 +164,7 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
     @Override
     public boolean isExecutedEagerly() {
-        return false;
+        return true;
     }
 
     @Override

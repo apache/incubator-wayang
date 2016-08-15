@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.operators.DoWhileOperator;
-import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.PredicateDescriptor;
@@ -20,7 +19,7 @@ import org.qcri.rheem.spark.execution.SparkExecutor;
 import java.util.*;
 
 /**
- * Spark implementation of the {@link LoopOperator}.
+ * Spark implementation of the {@link DoWhileOperator}.
  */
 public class SparkDoWhileOperator<InputType, ConvergenceType>
         extends DoWhileOperator<InputType, ConvergenceType>

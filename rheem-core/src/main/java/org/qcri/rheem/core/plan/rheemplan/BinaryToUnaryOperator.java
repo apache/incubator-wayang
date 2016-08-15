@@ -14,7 +14,7 @@ public abstract class BinaryToUnaryOperator<InputType0, InputType1, OutputType> 
                                  DataSetType<InputType1> inputType1,
                                  DataSetType<OutputType> outputType,
                                  boolean isSupportingBroadcastInputs) {
-        super(2, 1, isSupportingBroadcastInputs, null);
+        super(2, 1, isSupportingBroadcastInputs);
         this.inputSlots[0] = new InputSlot<>("in0", this, inputType0);
         this.inputSlots[1] = new InputSlot<>("in1", this, inputType1);
         this.outputSlots[0] = new OutputSlot<>("out", this, outputType);

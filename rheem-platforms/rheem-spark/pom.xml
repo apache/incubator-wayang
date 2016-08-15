@@ -13,6 +13,15 @@
 
     <packaging>jar</packaging>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
@@ -39,6 +48,10 @@
                     <artifactId>snappy-java</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_${scala.compat.version}</artifactId>
         </dependency>
         <dependency>
             <groupId>org.xerial.snappy</groupId>

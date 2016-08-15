@@ -26,7 +26,7 @@ public class ChannelConversions {
     public static final ChannelConversion COLLECTION_TO_BROADCAST = new DefaultChannelConversion(
             CollectionChannel.DESCRIPTOR,
             BroadcastChannel.DESCRIPTOR,
-            () -> new SparkBroadcastOperator<>(DataSetType.createDefault(Void.class), null)
+            () -> new SparkBroadcastOperator<>(DataSetType.createDefault(Void.class))
     );
 
     public static final ChannelConversion COLLECTION_TO_UNCACHED_RDD = new DefaultChannelConversion(

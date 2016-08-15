@@ -63,7 +63,7 @@ public class LoopIsolator extends OneTimeExecutable {
         // ...from the loop head's final OutputSlots? That would be fatal.
 
         // Insert a new Subplan to delimit the loop body.
-        return LoopSubplan.wrap(loopHead, loopInputSlots, loopOutputSlots, loopHead.getContainer());
+        return LoopSubplan.wrap(loopHead, loopInputSlots, loopOutputSlots);
     }
 
     /**

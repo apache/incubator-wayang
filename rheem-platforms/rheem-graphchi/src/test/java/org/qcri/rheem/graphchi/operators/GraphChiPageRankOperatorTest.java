@@ -6,8 +6,10 @@ import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
+import org.qcri.rheem.graphchi.GraphChi;
 import org.qcri.rheem.graphchi.execution.GraphChiExecutor;
+import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
+import org.qcri.rheem.java.channels.StreamChannel;
 
 import java.io.IOException;
 
@@ -30,6 +32,9 @@ public class GraphChiPageRankOperatorTest {
     public void testExecution() throws IOException {
         // Ensure that the GraphChiPlatform is initialized.
         GraphChiPlatform.getInstance();
+        final Configuration configuration = new Configuration();
+        GraphChi.plugin().configure(configuration);
+        final GraphChiPageRankOperator graphChiPageRankOperator = new GraphChiPageRankOperator(20);
 
         final ExecutionOperator outputOperator = mock(ExecutionOperator.class);
         when(outputOperator.getNumOutputs()).thenReturn(1);
@@ -40,15 +45,15 @@ public class GraphChiPageRankOperatorTest {
 
         final ExecutionOperator inputOperator = mock(ExecutionOperator.class);
         when(inputOperator.getNumOutputs()).thenReturn(1);
-        FileChannel.Instance outputFileChannelInstance =
-                (FileChannel.Instance) new FileChannel(FileChannel.HDFS_TSV_DESCRIPTOR)
+        StreamChannel.Instance outputFileChannelInstance =
+                (StreamChannel.Instance) StreamChannel.DESCRIPTOR
+                        .createChannel(graphChiPageRankOperator.getOutput(), configuration)
                         .createInstance(graphChiExecutor, null, -1);
 
-        final GraphChiPageRankOperator graphChiPageRankOperator = new GraphChiPageRankOperator(20);
         graphChiPageRankOperator.execute(
                 new ChannelInstance[]{inputChannelInstance},
                 new ChannelInstance[]{outputFileChannelInstance},
-                new Configuration()
+                configuration
         );
     }
 

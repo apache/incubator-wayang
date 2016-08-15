@@ -3,6 +3,7 @@ package org.qcri.rheem.basic.operators;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
@@ -26,26 +27,35 @@ public class JoinOperator<InputType0, InputType1, Key>
 
     protected final TransformationDescriptor<InputType1, Key> keyDescriptor1;
 
+    public JoinOperator(FunctionDescriptor.SerializableFunction<InputType0, Key> keyExtractor0,
+                        FunctionDescriptor.SerializableFunction<InputType1, Key> keyExtractor1,
+                        Class<InputType0> input0Class,
+                        Class<InputType1> input1Class,
+                        Class<Key> keyClass) {
+        this(
+                new TransformationDescriptor<>(keyExtractor0, input0Class, keyClass),
+                new TransformationDescriptor<>(keyExtractor1, input1Class, keyClass)
+        );
+    }
+
     public JoinOperator(TransformationDescriptor<InputType0, Key> keyDescriptor0,
                         TransformationDescriptor<InputType1, Key> keyDescriptor1) {
         super(DataSetType.createDefault(keyDescriptor0.getInputType()),
                 DataSetType.createDefault(keyDescriptor1.getInputType()),
-                JoinOperator.<InputType0, InputType1>createOutputDataSetType(),
+                JoinOperator.createOutputDataSetType(),
                 true);
         this.keyDescriptor0 = keyDescriptor0;
         this.keyDescriptor1 = keyDescriptor1;
-
     }
-
-    public JoinOperator(DataSetType<InputType0> inputType0,
-                        DataSetType<InputType1> inputType1,
-                        TransformationDescriptor<InputType0, Key> keyDescriptor0,
-                        TransformationDescriptor<InputType1, Key> keyDescriptor1) {
-        super(inputType0, inputType1, JoinOperator.<InputType0, InputType1>createOutputDataSetType(), true);
+    public JoinOperator(TransformationDescriptor<InputType0, Key> keyDescriptor0,
+                        TransformationDescriptor<InputType1, Key> keyDescriptor1,
+                        DataSetType<InputType0> inputType0,
+                        DataSetType<InputType1> inputType1) {
+        super(inputType0, inputType1, JoinOperator.createOutputDataSetType(), true);
         this.keyDescriptor0 = keyDescriptor0;
         this.keyDescriptor1 = keyDescriptor1;
-
     }
+
 
     /**
      * Copies an instance (exclusive of broadcasts).

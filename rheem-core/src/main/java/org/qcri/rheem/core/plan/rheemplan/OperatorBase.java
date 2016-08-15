@@ -58,17 +58,16 @@ public abstract class OperatorBase implements Operator {
      */
     private TimeEstimate timeEstimate;
 
-    public OperatorBase(InputSlot<?>[] inputSlots, OutputSlot<?>[] outputSlots, boolean isSupportingBroadcastInputs,
-                        OperatorContainer container) {
-        this.container = container;
+    public OperatorBase(InputSlot<?>[] inputSlots, OutputSlot<?>[] outputSlots, boolean isSupportingBroadcastInputs) {
+        this.container = null;
         this.isSupportingBroadcastInputs = isSupportingBroadcastInputs;
         this.inputSlots = inputSlots;
         this.outputSlots = outputSlots;
         this.cardinalityEstimators = new CardinalityEstimator[this.outputSlots.length];
     }
 
-    public OperatorBase(int numInputSlots, int numOutputSlots, boolean isSupportingBroadcastInputs, OperatorContainer container) {
-        this(new InputSlot[numInputSlots], new OutputSlot[numOutputSlots], isSupportingBroadcastInputs, container);
+    public OperatorBase(int numInputSlots, int numOutputSlots, boolean isSupportingBroadcastInputs) {
+        this(new InputSlot[numInputSlots], new OutputSlot[numOutputSlots], isSupportingBroadcastInputs);
     }
 
     /**
@@ -83,7 +82,7 @@ public abstract class OperatorBase implements Operator {
      * @param that the {@link OperatorBase} to be copied
      */
     protected OperatorBase(OperatorBase that) {
-        this(that.getNumRegularInputs(), that.getNumOutputs(), that.isSupportingBroadcastInputs(), null);
+        this(that.getNumRegularInputs(), that.getNumOutputs(), that.isSupportingBroadcastInputs());
         System.arraycopy(that.cardinalityEstimators, 0, this.cardinalityEstimators, 0, this.getNumOutputs());
     }
 
@@ -130,10 +129,10 @@ public abstract class OperatorBase implements Operator {
 
     @Override
     public void setContainer(OperatorContainer newContainer) {
-        final CompositeOperator oldParent = this.getParent();
+        final OperatorContainer formerContainer = this.getContainer();
         this.container = newContainer;
-        if (oldParent != null) {
-            oldParent.replace(this, newContainer.toOperator());
+        if (formerContainer != null) {
+            formerContainer.noteReplaced(this, newContainer);
         }
     }
 

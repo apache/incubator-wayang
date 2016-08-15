@@ -6,8 +6,6 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collector;
-import java.util.stream.StreamSupport;
 
 /**
  * Utilities to operate {@link java.util.Collection}s.
@@ -88,6 +86,14 @@ public class RheemCollections {
      */
     public static <T> T getAny(Iterable<T> iterable) {
         return iterable.iterator().next();
+    }
+
+    /**
+     * Return any element from the {@code iterable} if it exists.
+     */
+    public static <T> java.util.Optional<T> getAnyOptional(Iterable<T> iterable) {
+        final Iterator<T> iterator = iterable.iterator();
+        return iterator.hasNext() ? java.util.Optional.of(iterator.next()) : java.util.Optional.empty();
     }
 
     /**

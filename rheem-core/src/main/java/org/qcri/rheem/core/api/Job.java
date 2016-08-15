@@ -1,5 +1,8 @@
 package org.qcri.rheem.core.api;
 
+import de.hpi.isg.profiledb.instrumentation.StopWatch;
+import de.hpi.isg.profiledb.store.model.Experiment;
+import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
@@ -19,7 +22,10 @@ import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
-import org.qcri.rheem.core.util.*;
+import org.qcri.rheem.core.util.Formats;
+import org.qcri.rheem.core.util.OneTimeExecutable;
+import org.qcri.rheem.core.util.ReflectionUtils;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,12 +78,12 @@ public class Job extends OneTimeExecutable {
     /**
      * {@link StopWatch} to measure some key figures.
      */
-    private final StopWatch stopWatch = new StopWatch();
+    private final StopWatch stopWatch;
 
     /**
-     * Accumulates the elapsed time of all partial executions.
+     * {@link TimeMeasurement}s for the optimization and the execution phases.
      */
-    private long executionMillis = 0L;
+    private final TimeMeasurement optimizationRound, executionRound;
 
     /**
      * Collects the {@link TimeEstimate}s of all (partially) executed {@link PlanImplementation}s.
@@ -103,10 +109,11 @@ public class Job extends OneTimeExecutable {
     /**
      * Creates a new instance.
      *
-     * @param name    name for this instance or {@code null} if a default name should be picked
-     * @param udfJars paths to JAR files needed to run the UDFs (see {@link ReflectionUtils#getDeclaringJar(Class)})
+     * @param name       name for this instance or {@code null} if a default name should be picked
+     * @param experiment an {@link Experiment} for that profiling entries will be created
+     * @param udfJars    paths to JAR files needed to run the UDFs (see {@link ReflectionUtils#getDeclaringJar(Class)})
      */
-    Job(RheemContext rheemContext, String name, RheemPlan rheemPlan, String... udfJars) {
+    Job(RheemContext rheemContext, String name, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
         this.rheemContext = rheemContext;
         this.name = name == null ? "Rheem app" : name;
         this.configuration = this.rheemContext.getConfiguration().fork(this.name);
@@ -114,6 +121,11 @@ public class Job extends OneTimeExecutable {
         for (String udfJar : udfJars) {
             this.addUdfJar(udfJar);
         }
+
+        // Prepare instrumentation.
+        this.stopWatch = new StopWatch(experiment);
+        this.optimizationRound = this.stopWatch.getOrCreateRound("Optimization");
+        this.executionRound = this.stopWatch.getOrCreateRound("Execution");
     }
 
     /**
@@ -149,7 +161,9 @@ public class Job extends OneTimeExecutable {
         }
 
         try {
+
             // Prepare the #rheemPlan for the optimization.
+            this.optimizationRound.start();
             this.prepareRheemPlan();
 
             // Estimate cardinalities and execution times for the #rheemPlan.
@@ -157,14 +171,18 @@ public class Job extends OneTimeExecutable {
 
             // Get an execution plan.
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
+            this.optimizationRound.stop();
 
             // Take care of the execution.
             int executionId = 0;
             while (!this.execute(executionPlan, executionId)) {
+                this.optimizationRound.start();
                 this.postProcess(executionPlan, executionId);
                 executionId++;
+                this.optimizationRound.stop();
             }
 
+            this.stopWatch.start("Post-processing");
             if (this.configuration.getBooleanProperty("rheem.core.log.enabled")) {
                 this.logExecution();
             }
@@ -174,9 +192,9 @@ public class Job extends OneTimeExecutable {
             throw new RheemException("Job execution failed.", t);
         } finally {
             this.stopWatch.stopAll();
-            this.stopWatch.start("Release Resources");
+            this.stopWatch.start("Post-processing", "Release Resources");
             this.releaseResources();
-            this.stopWatch.stop("Release Resources");
+            this.stopWatch.stop("Post-processing");
             this.logger.info("StopWatch results:\n{}", this.stopWatch.toPrettyString());
         }
     }
@@ -188,21 +206,21 @@ public class Job extends OneTimeExecutable {
     private void prepareRheemPlan() {
 
         // Prepare the RheemPlan for the optimization.
-        this.stopWatch.start("Prepare", "Prune&Isolate");
+        this.optimizationRound.start("Prepare", "Prune&Isolate");
         this.rheemPlan.prepare();
-        this.stopWatch.stop("Prepare", "Prune&Isolate");
+        this.optimizationRound.stop("Prepare", "Prune&Isolate");
 
         // Apply the mappings to the plan to form a hyperplan.
-        this.stopWatch.start("Prepare", "Transformations");
+        this.optimizationRound.start("Prepare", "Transformations");
         final Collection<PlanTransformation> transformations = this.gatherTransformations();
         this.rheemPlan.applyTransformations(transformations);
-        this.stopWatch.stop("Prepare", "Transformations");
+        this.optimizationRound.stop("Prepare", "Transformations");
 
-        this.stopWatch.start("Prepare", "Sanity");
+        this.optimizationRound.start("Prepare", "Sanity");
         assert this.rheemPlan.isSane();
-        this.stopWatch.stop("Prepare", "Sanity");
+        this.optimizationRound.stop("Prepare", "Sanity");
 
-        this.stopWatch.stopAll("Prepare");
+        this.optimizationRound.stop("Prepare");
     }
 
     /**
@@ -222,23 +240,23 @@ public class Job extends OneTimeExecutable {
      * {@link Operator}s and the execution profile and time of {@link ExecutionOperator}s.
      */
     private void estimateKeyFigures() {
-        this.stopWatch.start("Cardinality&Load Estimation");
+        this.optimizationRound.start("Cardinality&Load Estimation");
         if (this.cardinalityEstimatorManager == null) {
-            this.stopWatch.start("Cardinality&Load Estimation", "Create OptimizationContext");
+            this.optimizationRound.start("Cardinality&Load Estimation", "Create OptimizationContext");
             this.optimizationContext = new DefaultOptimizationContext(this.rheemPlan, this.configuration);
-            this.stopWatch.stop("Cardinality&Load Estimation", "Create OptimizationContext");
+            this.optimizationRound.stop("Cardinality&Load Estimation", "Create OptimizationContext");
 
-            this.stopWatch.start("Cardinality&Load Estimation", "Create CardinalityEstimationManager");
+            this.optimizationRound.start("Cardinality&Load Estimation", "Create CardinalityEstimationManager");
             this.cardinalityEstimatorManager = new CardinalityEstimatorManager(
                     this.rheemPlan, this.optimizationContext, this.configuration);
-            this.stopWatch.stop("Cardinality&Load Estimation", "Create CardinalityEstimationManager");
+            this.optimizationRound.stop("Cardinality&Load Estimation", "Create CardinalityEstimationManager");
         }
 
-        this.stopWatch.start("Cardinality&Load Estimation", "Push Estimation");
+        this.optimizationRound.start("Cardinality&Load Estimation", "Push Estimation");
         this.cardinalityEstimatorManager.pushCardinalities();
-        this.stopWatch.stop("Cardinality&Load Estimation", "Push Estimation");
+        this.optimizationRound.stop("Cardinality&Load Estimation", "Push Estimation");
 
-        this.stopWatch.stopAll("Cardinality&Load Estimation");
+        this.optimizationRound.stop("Cardinality&Load Estimation");
     }
 
 
@@ -246,7 +264,7 @@ public class Job extends OneTimeExecutable {
      * Determine a good/the best execution plan from a given {@link RheemPlan}.
      */
     private ExecutionPlan createInitialExecutionPlan() {
-        this.stopWatch.start("Create Initial Execution Plan");
+        this.optimizationRound.start("Create Initial Execution Plan");
 
         // Defines the plan that we want to use in the end.
         final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
@@ -254,9 +272,9 @@ public class Job extends OneTimeExecutable {
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator();
 
-        this.stopWatch.start("Create Initial Execution Plan", "Enumerate");
+        this.optimizationRound.start("Create Initial Execution Plan", "Enumerate");
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
-        this.stopWatch.stop("Create Initial Execution Plan", "Enumerate");
+        this.optimizationRound.stop("Create Initial Execution Plan", "Enumerate");
 
         final Collection<PlanImplementation> executionPlans = comprehensiveEnumeration.getPlanImplementations();
         this.logger.debug("Enumerated {} plans.", executionPlans.size());
@@ -266,15 +284,15 @@ public class Job extends OneTimeExecutable {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        this.stopWatch.start("Create Initial Execution Plan", "Pick Best Plan");
+        this.optimizationRound.start("Create Initial Execution Plan", "Pick Best Plan");
         final PlanImplementation planImplementation = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
         this.timeEstimates.add(planImplementation.getTimeEstimate());
-        this.stopWatch.stop("Create Initial Execution Plan", "Pick Best Plan");
+        this.optimizationRound.stop("Create Initial Execution Plan", "Pick Best Plan");
 
-        this.stopWatch.start("Create Initial Execution Plan", "Split Stages");
+        this.optimizationRound.start("Create Initial Execution Plan", "Split Stages");
         final ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.createFrom(planImplementation);
         final ExecutionPlan executionPlan = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
-        this.stopWatch.stop("Create Initial Execution Plan", "Split Stages");
+        this.optimizationRound.stop("Create Initial Execution Plan", "Split Stages");
 
         planImplementation.mergeJunctionOptimizationContexts();
 
@@ -283,7 +301,7 @@ public class Job extends OneTimeExecutable {
         //assert executionPlan.isSane();
 
 
-        this.stopWatch.stopAll("Create Initial Execution Plan");
+        this.optimizationRound.stop("Create Initial Execution Plan");
         return executionPlan;
     }
 
@@ -338,7 +356,7 @@ public class Job extends OneTimeExecutable {
      * @return whether the execution of the {@link ExecutionPlan} is completed
      */
     private boolean execute(ExecutionPlan executionPlan, int executionId) {
-        final StopWatch.Round round = this.stopWatch.start(String.format("Execution %d", executionId));
+        final TimeMeasurement currentExecutionRound = this.executionRound.start(String.format("Execution %d", executionId));
 
         // Ensure existence of the #crossPlatformExecutor.
         if (this.crossPlatformExecutor == null) {
@@ -350,19 +368,18 @@ public class Job extends OneTimeExecutable {
             return true;
         }
         if (this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize")) {
-            this.setUpBreakpoint(executionPlan, round);
+            this.setUpBreakpoint(executionPlan, currentExecutionRound);
         }
 
         // Log the current executionPlan.
         this.logStages(executionPlan);
 
         // Trigger the execution.
-        final StopWatch.Round executeRound = round.startSubround("Execute");
+        currentExecutionRound.start("Execute");
         boolean isExecutionComplete = this.crossPlatformExecutor.executeUntilBreakpoint(
                 executionPlan, this.optimizationContext
         );
-        executeRound.stop();
-        this.executionMillis += round.stop(true, true);
+        executionRound.stop();
 
         // Return.
         return isExecutionComplete;
@@ -372,12 +389,12 @@ public class Job extends OneTimeExecutable {
      * Sets up a {@link Breakpoint} for an {@link ExecutionPlan}.
      *
      * @param executionPlan for that the {@link Breakpoint} should be set
-     * @param round         {@link StopWatch.Round} to be extended for any interesting time measurements
+     * @param round         {@link TimeMeasurement} to be extended for any interesting time measurements
      */
-    private void setUpBreakpoint(ExecutionPlan executionPlan, StopWatch.Round round) {
+    private void setUpBreakpoint(ExecutionPlan executionPlan, TimeMeasurement round) {
 
         // Set up appropriate Breakpoints.
-        final StopWatch.Round breakpointRound = round.startSubround("Configure Breakpoint");
+        final TimeMeasurement breakpointRound = round.start("Configure Breakpoint");
         FixBreakpoint immediateBreakpoint = new FixBreakpoint();
         final Set<ExecutionStage> completedStages = this.crossPlatformExecutor.getCompletedStages();
         if (completedStages.isEmpty()) {
@@ -420,17 +437,17 @@ public class Job extends OneTimeExecutable {
      * through re-optimization, and collects measured data.
      */
     private void postProcess(ExecutionPlan executionPlan, int executionId) {
-        final StopWatch.Round round = this.stopWatch.start(String.format("Post-processing %d", executionId));
+        final TimeMeasurement round = this.optimizationRound.start(String.format("Post-processing %d", executionId));
 
-        round.startSubround("Reestimate Cardinalities&Time");
+        round.start("Reestimate Cardinalities&Time");
         this.reestimateCardinalities(this.crossPlatformExecutor);
-        round.stopSubround("Reestimate Cardinalities&Time");
+        round.stop("Reestimate Cardinalities&Time");
 
-        round.startSubround("Update Execution Plan");
+        round.start("Update Execution Plan");
         this.updateExecutionPlan(executionPlan);
-        round.stopSubround("Update Execution Plan");
+        round.stop("Update Execution Plan");
 
-        round.stop(true, true);
+        round.stop();
     }
 
     /**
@@ -491,29 +508,15 @@ public class Job extends OneTimeExecutable {
     }
 
     private void logExecution() {
-        this.stopWatch.start("Log measurements");
+        this.stopWatch.start("Post-processing", "Log measurements");
 
         // For the last time, update the cardinalities and store them.
         this.reestimateCardinalities(this.crossPlatformExecutor);
         final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
         cardinalityRepository.storeAll(this.crossPlatformExecutor, this.optimizationContext);
 
-
         // Log the execution time.
         final Collection<PartialExecution> partialExecutions = this.crossPlatformExecutor.getPartialExecutions();
-        long effectiveExecutionMillis = partialExecutions.stream()
-                .map(PartialExecution::getMeasuredExecutionTime)
-                .reduce(0L, (a, b) -> a + b);
-        this.logger.info(
-                "Accumulated execution time: {} (effective: {}, overhead: {})",
-                Formats.formatDuration(this.executionMillis, true),
-                Formats.formatDuration(effectiveExecutionMillis, true),
-                Formats.formatDuration(this.executionMillis - effectiveExecutionMillis, true)
-        );
-        int i = 1;
-        for (TimeEstimate timeEstimate : timeEstimates) {
-            this.logger.info("Estimated execution time (plan {}): {}", i++, timeEstimate);
-        }
 
         // Feed the execution log.
         try (ExecutionLog executionLog = ExecutionLog.open(this.configuration)) {
@@ -521,8 +524,29 @@ public class Job extends OneTimeExecutable {
         } catch (Exception e) {
             this.logger.error("Storing partial executions failed.", e);
         }
+        this.optimizationRound.stop("Post-processing", "Log measurements");
 
-        this.stopWatch.stop("Log measurements");
+        long effectiveExecutionMillis = partialExecutions.stream()
+                .map(PartialExecution::getMeasuredExecutionTime)
+                .reduce(0L, (a, b) -> a + b);
+        long measuredExecutionMillis = this.executionRound.getMillis();
+        this.logger.info(
+                "Accumulated execution time: {} (effective: {}, overhead: {})",
+                Formats.formatDuration(measuredExecutionMillis, true),
+                Formats.formatDuration(effectiveExecutionMillis, true),
+                Formats.formatDuration(measuredExecutionMillis - effectiveExecutionMillis, true)
+        );
+        int i = 1;
+        for (TimeEstimate timeEstimate : timeEstimates) {
+            this.logger.info("Estimated execution time (plan {}): {}", i, timeEstimate);
+            TimeMeasurement lowerEstimate = new TimeMeasurement(String.format("Estimate %d (lower)", i));
+            lowerEstimate.setMillis(timeEstimate.getLowerEstimate());
+            this.stopWatch.getExperiment().addMeasurement(lowerEstimate);
+            TimeMeasurement upperEstimate = new TimeMeasurement(String.format("Estimate %d (upper)", i));
+            upperEstimate.setMillis(timeEstimate.getUpperEstimate());
+            this.stopWatch.getExperiment().addMeasurement(upperEstimate);
+            i++;
+        }
     }
 
     /**

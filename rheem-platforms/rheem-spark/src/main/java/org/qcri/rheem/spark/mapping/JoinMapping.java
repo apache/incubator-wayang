@@ -25,7 +25,7 @@ public class JoinMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern<>(
-                "join", new JoinOperator<>(DataSetType.none(), DataSetType.none(), null, null), false
+                "join", new JoinOperator<>(null, null, DataSetType.none(), DataSetType.none()), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }

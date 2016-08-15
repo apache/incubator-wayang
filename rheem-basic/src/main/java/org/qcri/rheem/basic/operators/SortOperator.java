@@ -31,7 +31,7 @@ public class SortOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * @param type type of the dataunit elements
      */
     public SortOperator(DataSetType<Type> type) {
-        super(type, type, false, null);
+        super(type, type, false);
     }
 
     /**

@@ -28,6 +28,11 @@
             <version>0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-java</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-common</artifactId>
         </dependency>
@@ -36,6 +41,5 @@
             <artifactId>hadoop-hdfs</artifactId>
         </dependency>
     </dependencies>
-
 
 </project>

@@ -17,7 +17,7 @@ import org.qcri.rheem.core.plan.rheemplan.test.TestSource;
 import org.qcri.rheem.core.types.DataSetType;
 
 /**
- * Test suite for {@link org.qcri.rheem.core.optimizer.cardinality.SubplanCardinalityPusher}.
+ * Test suite for {@link SubplanCardinalityPusher}.
  */
 public class SubplanCardinalityPusherTest {
 

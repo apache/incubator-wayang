@@ -350,8 +350,9 @@ public class PlanEnumerator {
             PlanEnumeration operatorEnumeration;
             if (operator.isAlternative()) {
                 operatorEnumeration = this.enumerateAlternative((OperatorAlternative) operator, optimizationContext);
-                if (operatorEnumeration.getPlanImplementations().isEmpty()) {
+                if (operatorEnumeration == null || operatorEnumeration.getPlanImplementations().isEmpty()) {
                     this.logger.warn("No implementations enumerated for {}.", operator);
+                    return null;
                 }
             } else if (operator.isLoopSubplan()) {
                 operatorEnumeration = this.enumerateLoop((LoopSubplan) operator, optimizationContext);

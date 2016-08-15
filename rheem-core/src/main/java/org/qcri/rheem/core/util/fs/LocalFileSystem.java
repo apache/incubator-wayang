@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.util.fs;
 
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,64 @@ import java.util.stream.Collectors;
 public class LocalFileSystem implements FileSystem {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalFileSystem.class);
+
+    /**
+     * Retrieves a directory that can be used for temporary files.
+     *
+     * @return a {@link File} representing the directory
+     */
+    public static File findTempDir() {
+        try {
+            final File tempFile = File.createTempFile("rheem", "probe");
+            tempFile.deleteOnExit();
+            return tempFile.getParentFile();
+        } catch (IOException e) {
+            logger.warn("Could not determine local temp directory.", e);
+            return null;
+        }
+    }
+
+    /**
+     * Converts a {@link File} object to a URL.
+     *
+     * @param file that should be converted
+     * @return the {@link String} representation of the URL
+     */
+    public static String toURL(File file) {
+        try {
+            return file.toPath().toUri().toURL().toString();
+        } catch (MalformedURLException e) {
+            throw new RheemException(String.format("Could not create URI for %s", file), e);
+        }
+    }
+
+    /**
+     * Ensure that there is a directory represented by the given {@link File}.
+     *
+     * @param file the directory that should be ensured
+     */
+    public static void ensureDir(File file) {
+        if (file.exists()) {
+            if (!file.isDirectory()) {
+                throw new RheemException(String.format("Could not ensure directory %s: It exists, but is not a directory.", file));
+            }
+        } else if (!file.mkdirs()) {
+            throw new RheemException(String.format("Could not ensure directory %s: It does not exist, but could also not be created.", file));
+        }
+    }
+
+    /**
+     * Create an empty file.
+     *
+     * @param file that should be created
+     */
+    public static void touch(File file) {
+        ensureDir(file.getParentFile());
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+        } catch (IOException e) {
+            throw new RheemException(String.format("Could not create %s.", file), e);
+        }
+    }
 
     private static File toFile(String fileUrl) throws URISyntaxException, MalformedURLException {
         if (fileUrl.startsWith("file:")) {

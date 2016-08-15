@@ -1,6 +1,7 @@
 package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.spark.mapping.graph.PageRankMapping;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,6 +13,7 @@ public class Mappings {
 
     public static Collection<Mapping> BASIC_MAPPINGS = Arrays.asList(
             new TextFileSourceMapping(),
+            new TextFileSinkMapping(),
             new MapMapping(),
             new ReduceByMapping(),
             new CollectionSourceMapping(),
@@ -30,8 +32,13 @@ public class Mappings {
             new JoinMapping(),
             new LoopMapping(),
             new DoWhileMapping(),
+            new RepeatMapping(),
             new SampleMapping(),
             new ZipWithIdMapping()
+    );
+
+    public static Collection<Mapping> GRAPH_MAPPINGS = Arrays.asList(
+            new PageRankMapping()
     );
 
 }

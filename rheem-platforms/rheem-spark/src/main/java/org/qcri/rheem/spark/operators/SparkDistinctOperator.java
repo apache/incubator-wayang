@@ -60,7 +60,7 @@ public class SparkDistinctOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkDistinctOperator<>(this.getInputType());
+        return new SparkDistinctOperator<>(this);
     }
 
     @Override
@@ -78,6 +78,11 @@ public class SparkDistinctOperator<Type>
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
     }
 
 }

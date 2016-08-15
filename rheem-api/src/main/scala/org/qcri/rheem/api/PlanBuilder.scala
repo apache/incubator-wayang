@@ -1,5 +1,6 @@
 package org.qcri.rheem.api
 
+import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
 import org.qcri.rheem.api
 import org.qcri.rheem.basic.data.Record
@@ -22,15 +23,23 @@ class PlanBuilder(rheemContext: RheemContext) {
 
   private[api] val udfJars = scala.collection.mutable.Set[String]()
 
+  private[api] var experiment: Experiment = _
+
   // We need to ensure that this module is shipped to Spark etc. in particular because of the Scala-to-Java function wrappers.
   ReflectionUtils.getDeclaringJar(this) match {
     case path: String => udfJars += path
     case _ =>
   }
 
+  /**
+    * Build the [[org.qcri.rheem.core.api.Job]] and execute it.
+    *
+    * @param jobName the name of the [[org.qcri.rheem.core.api.Job]]
+    */
   def buildAndExecute(jobName: String): Unit = {
     val plan: RheemPlan = new RheemPlan(this.sinks.toArray: _*)
-    this.rheemContext.execute(jobName, plan, this.udfJars.toArray: _*)
+    if (this.experiment == null) this.rheemContext.execute(jobName, plan, this.udfJars.toArray: _*)
+    else this.rheemContext.execute(jobName, plan, this.experiment, this.udfJars.toArray: _*)
   }
 
   /**
@@ -44,7 +53,7 @@ class PlanBuilder(rheemContext: RheemContext) {
   /**
     * Reads a database table and provides them as a dataset of [[Record]]s.
     *
-    * @param source  from that the [[Record]]s should be read
+    * @param source from that the [[Record]]s should be read
     * @return [[DataQuanta]] of [[Record]]s in the table
     */
   def readTable(source: TableSource): DataQuanta[Record] = load(source)
@@ -56,7 +65,7 @@ class PlanBuilder(rheemContext: RheemContext) {
     * @return [[DataQuanta]] the `collection`
     */
   def loadCollection[T: ClassTag](collection: java.util.Collection[T]): DataQuanta[T] =
-    load(new CollectionSource[T](collection, dataSetType[T]))
+  load(new CollectionSource[T](collection, dataSetType[T]))
 
   /**
     * Loads a [[Iterable]] into Rheem and represents it as [[DataQuanta]].
@@ -65,10 +74,11 @@ class PlanBuilder(rheemContext: RheemContext) {
     * @return [[DataQuanta]] the `iterable`
     */
   def loadCollection[T: ClassTag](iterable: Iterable[T]): DataQuanta[T] =
-    loadCollection(JavaConversions.asJavaCollection(iterable))
+  loadCollection(JavaConversions.asJavaCollection(iterable))
 
   /**
     * Load [[DataQuanta]] from an arbitrary [[UnarySource]].
+    *
     * @param source that should be loaded from
     * @return the [[DataQuanta]]
     */
@@ -76,6 +86,7 @@ class PlanBuilder(rheemContext: RheemContext) {
 
   /**
     * Execute a custom [[Operator]].
+    *
     * @param operator that should be executed
     * @param inputs   the input [[DataQuanta]] of the `operator`, aligned with its [[InputSlot]]s
     * @return an [[IndexedSeq]] of the `operator`s output [[DataQuanta]], aligned with its [[OutputSlot]]s

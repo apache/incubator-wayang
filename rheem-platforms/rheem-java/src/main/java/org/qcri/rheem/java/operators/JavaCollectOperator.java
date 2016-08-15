@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class JavaCollectOperator<Type> extends UnaryToUnaryOperator<Type, Type> implements JavaExecutionOperator {
 
     public JavaCollectOperator(DataSetType<Type> type) {
-        super(type, type, false, null);
+        super(type, type, false);
     }
 
     @Override
@@ -62,5 +62,10 @@ public class JavaCollectOperator<Type> extends UnaryToUnaryOperator<Type, Type> 
                 configuration.getStringProperty("rheem.java.collect.load")
         );
         return Optional.of(estimator);
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
     }
 }

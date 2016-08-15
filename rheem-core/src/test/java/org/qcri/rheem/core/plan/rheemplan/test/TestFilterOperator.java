@@ -20,7 +20,7 @@ public class TestFilterOperator<InputType> extends UnaryToUnaryOperator<InputTyp
      * Creates a new instance.
      */
     public TestFilterOperator(DataSetType<InputType> inputType) {
-        super(inputType, inputType, true, null);
+        super(inputType, inputType, true);
     }
 
     public TestFilterOperator(Class<InputType> inputTypeClass) {

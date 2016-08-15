@@ -29,7 +29,7 @@ public class SparkCollectOperator<Type>
         implements SparkExecutionOperator {
 
     public SparkCollectOperator(DataSetType<Type> type) {
-        super(type, type, false, null);
+        super(type, type, false);
     }
 
     @Override
@@ -66,5 +66,10 @@ public class SparkCollectOperator<Type>
         final String specification = configuration.getStringProperty("rheem.spark.collect.load");
         final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
         return Optional.of(mainEstimator);
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
     }
 }

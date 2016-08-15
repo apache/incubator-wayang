@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
- * Implementation of the {@link LocalCallbackSink} operator for the Java platform.
+ * Implementation of the {@link LocalCallbackSink} operator for the Spark platform.
  */
 public class SparkLocalCallbackSink<T> extends LocalCallbackSink<T> implements SparkExecutionOperator {
     /**
@@ -71,5 +71,10 @@ public class SparkLocalCallbackSink<T> extends LocalCallbackSink<T> implements S
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         throw new UnsupportedOperationException(String.format("%s does not have output channels.", this));
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
     }
 }

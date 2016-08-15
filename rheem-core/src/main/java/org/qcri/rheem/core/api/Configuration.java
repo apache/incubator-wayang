@@ -58,7 +58,7 @@ public class Configuration {
         Actions.doSafe(() -> bootstrapPlugins(defaultConfiguration));
     }
 
-    private static final String BASIC_PLUGIN = "org.qcri.rheem.basic.plugin.RheemBasic";
+    private static final String BASIC_PLUGIN = "org.qcri.rheem.basic.RheemBasics.defaultPlugin()";
 
     private String name = "(no name)";
 
@@ -238,11 +238,14 @@ public class Configuration {
         configuration.setMappingProvider(new ExplicitCollectionProvider<>(configuration));
         configuration.setChannelConversionProvider(new ExplicitCollectionProvider<>(configuration));
         try {
-            Plugin basicPlugin = ReflectionUtils.instantiateDefault(BASIC_PLUGIN);
+            Plugin basicPlugin = ReflectionUtils.evaluate(BASIC_PLUGIN);
             basicPlugin.configure(configuration);
         } catch (Exception e) {
-            logger.warn("Could not load basic plugin.");
-            logger.debug("", e);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Could not load basic plugin.", e);
+            } else {
+                logger.warn("Could not load basic plugin.");
+            }
         }
     }
 

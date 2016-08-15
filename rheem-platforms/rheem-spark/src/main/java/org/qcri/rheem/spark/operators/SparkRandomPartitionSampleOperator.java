@@ -176,6 +176,11 @@ public class SparkRandomPartitionSampleOperator<Type>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
+    }
 }
 
 class PartitionSampleFunction<V> extends AbstractFunction1<scala.collection.Iterator<V>, List<V>> implements Serializable {

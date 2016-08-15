@@ -46,7 +46,7 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
         this(null, type);
     }
     public JavaObjectFileSink(String targetPath, DataSetType<T> type) {
-        super(type, null);
+        super(type);
         this.targetPath = targetPath;
     }
 
@@ -110,6 +110,11 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
         return Collections.singletonList(FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR);
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
     }
 
     /**

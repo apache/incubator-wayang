@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.api;
 
+import de.hpi.isg.profiledb.store.model.Experiment;
+import de.hpi.isg.profiledb.store.model.Subject;
 import org.apache.commons.lang3.StringUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
@@ -80,12 +82,35 @@ public class RheemContext {
     }
 
     /**
+     * Execute a plan.
+     *
+     * @param jobName    name of the {@link Job} or {@code null}
+     * @param rheemPlan  the plan to execute
+     * @param experiment {@link Experiment} for that profiling entries will be created
+     * @param udfJars    JARs that declare the code for the UDFs
+     * @see ReflectionUtils#getDeclaringJar(Class)
+     */
+    public void execute(String jobName, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
+        this.createJob(jobName, rheemPlan, experiment, udfJars).execute();
+    }
+
+    /**
      * Create a new {@link Job} that should execute the given {@link RheemPlan} eventually.
      *
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
     public Job createJob(String jobName, RheemPlan rheemPlan, String... udfJars) {
-        return new Job(this, jobName, rheemPlan, udfJars);
+        return new Job(this, jobName, rheemPlan, new Experiment("unknown", new Subject("unknown", "unknown")), udfJars);
+    }
+
+    /**
+     * Create a new {@link Job} that should execute the given {@link RheemPlan} eventually.
+     *
+     * @param experiment {@link Experiment} for that profiling entries will be created
+     * @see ReflectionUtils#getDeclaringJar(Class)
+     */
+    public Job createJob(String jobName, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
+        return new Job(this, jobName, rheemPlan, experiment, udfJars);
     }
 
     public Configuration getConfiguration() {

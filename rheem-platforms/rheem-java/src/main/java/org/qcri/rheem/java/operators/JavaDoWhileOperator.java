@@ -147,7 +147,7 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     public boolean isExecutedEagerly() {
-        return false;
+        return true;
     }
 
     @Override

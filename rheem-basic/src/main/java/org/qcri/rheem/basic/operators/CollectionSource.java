@@ -24,7 +24,7 @@ public class CollectionSource<T> extends UnarySource<T> implements ElementaryOpe
     }
 
     public CollectionSource(Collection<T> collection, DataSetType<T> type) {
-        super(type, null);
+        super(type);
         this.collection = collection;
     }
 

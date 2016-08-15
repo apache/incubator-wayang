@@ -46,6 +46,10 @@
             <artifactId>juel-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>de.hpi.isg</groupId>
+            <artifactId>profiledb-instrumentation</artifactId>
+        </dependency>
+        <dependency>
             <groupId>de.odysseus.juel</groupId>
             <artifactId>juel-impl</artifactId>
         </dependency>

@@ -65,7 +65,7 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
                         DataSetType<ConvergenceType> convergenceType,
                         PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
                         int numExpectedIterations) {
-        super(4, 3, true, null);
+        super(4, 3, true);
         this.criterionDescriptor = criterionDescriptor;
         this.numExpectedIterations = numExpectedIterations;
         this.state = State.NOT_STARTED;

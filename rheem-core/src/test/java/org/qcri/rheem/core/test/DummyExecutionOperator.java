@@ -19,7 +19,7 @@ public class DummyExecutionOperator extends OperatorBase implements ExecutionOpe
     public List<List<ChannelDescriptor>> supportedOutputChannelDescriptors = new ArrayList<>();
 
     public DummyExecutionOperator(int numInputs, int numOutputs, boolean isSupportingBroadcastInputs) {
-        super(numInputs, numOutputs, isSupportingBroadcastInputs, null);
+        super(numInputs, numOutputs, isSupportingBroadcastInputs);
         for (int inputIndex = 0; inputIndex < numInputs; inputIndex++) {
             this.inputSlots[inputIndex] = new InputSlot<Object>(String.format("input%d", inputIndex), this, DataSetType.createDefault(Integer.class));
             supportedInputChannelDescriptors.add(new LinkedList<>());
@@ -43,5 +43,10 @@ public class DummyExecutionOperator extends OperatorBase implements ExecutionOpe
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return this.supportedOutputChannelDescriptors.get(index);
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
     }
 }

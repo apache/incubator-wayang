@@ -69,6 +69,11 @@
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
         </dependency>
+        <dependency>
+            <groupId>de.hpi.isg</groupId>
+            <artifactId>profiledb-store</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 

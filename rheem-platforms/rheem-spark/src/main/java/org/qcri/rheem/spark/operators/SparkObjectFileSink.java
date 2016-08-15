@@ -33,7 +33,7 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
     }
 
     public SparkObjectFileSink(String targetPath, DataSetType<T> type) {
-        super(type, null);
+        super(type);
         this.targetPath = targetPath;
     }
 
@@ -72,5 +72,10 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR);
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
     }
 }

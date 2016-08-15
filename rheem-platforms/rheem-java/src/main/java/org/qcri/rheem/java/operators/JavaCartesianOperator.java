@@ -3,8 +3,6 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CartesianOperator;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -104,5 +102,10 @@ public class JavaCartesianOperator<InputType0, InputType1>
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
     }
 }

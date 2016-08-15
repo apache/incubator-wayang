@@ -18,7 +18,7 @@ public class TestMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
      * Creates a new instance.
      */
     public TestMapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType) {
-        super(inputType, outputType, true, null);
+        super(inputType, outputType, true);
     }
 
     public TestMapOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass) {

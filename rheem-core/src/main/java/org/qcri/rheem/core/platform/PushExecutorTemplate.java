@@ -133,6 +133,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                 executedOperatorContexts.add(producerOperatorContext);
             } else {
                 for (ChannelInstance outputChannelInstance : outputChannelInstances) {
+                    if (outputChannelInstance == null) continue;
                     this.markAndAddUnproducedChannelInstances(outputChannelInstance, executedOperatorContexts);
                 }
             }

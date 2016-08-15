@@ -28,6 +28,21 @@ public class OutputSlot<T> extends Slot<T> {
     }
 
     /**
+     * Copy the {@link OutputSlot}s to a given {@link Operator}.
+     */
+    public static void mock(List<OutputSlot<?>> outputs, Operator mock) {
+        if (outputs.size() != mock.getNumOutputs()) {
+            throw new IllegalArgumentException("Cannot mock inputs: Mismatching number of inputs.");
+        }
+
+        OutputSlot[] mockSlots = mock.getAllOutputs();
+        int i = 0;
+        for (OutputSlot<?> output : outputs) {
+            mockSlots[i++] = output.copyFor(mock);
+        }
+    }
+
+    /**
      * Take the output connections away from one operator and give them to another one.
      */
     public static void stealConnections(Operator victim, Operator thief) {

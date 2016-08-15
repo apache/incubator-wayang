@@ -28,7 +28,7 @@ public abstract class TableSource extends UnarySource<Record> {
     }
 
     public TableSource(String tableName, DataSetType<Record> type) {
-        super(type, null);
+        super(type);
         this.tableName = tableName;
     }
 

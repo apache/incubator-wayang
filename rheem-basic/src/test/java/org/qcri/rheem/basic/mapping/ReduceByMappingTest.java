@@ -64,11 +64,11 @@ public class ReduceByMappingTest {
 
         // Check that now we have this plan: source -> reduceBy -> sink.
         final Operator finalSink = plan.getSinks().iterator().next();
-        final Operator inputOperator = finalSink.getInputOperator(0);
+        final Operator inputOperator = finalSink.getEffectiveOccupant(0).getOwner();
         Assert.assertTrue(inputOperator instanceof ReduceByOperator);
         ReduceByOperator reduceBy = (ReduceByOperator) inputOperator;
         Assert.assertEquals(keyDescriptor, reduceBy.getKeyDescriptor());
         Assert.assertEquals(reduceDescriptor, reduceBy.getReduceDescriptor());
-        Assert.assertEquals(source, reduceBy.getInputOperator(0));
+        Assert.assertEquals(source, reduceBy.getEffectiveOccupant(0).getOwner());
     }
 }

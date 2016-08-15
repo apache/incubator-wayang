@@ -29,8 +29,7 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     public FlatMapOperator(FlatMapDescriptor<InputType, OutputType> functionDescriptor) {
         super(DataSetType.createDefault(functionDescriptor.getInputType()),
                 DataSetType.createDefault(functionDescriptor.getOutputType()),
-                true,
-                null);
+                true);
         this.functionDescriptor = functionDescriptor;
     }
 
@@ -49,7 +48,7 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     public FlatMapOperator(FlatMapDescriptor<InputType, OutputType> functionDescriptor,
                            DataSetType<InputType> inputType,
                            DataSetType<OutputType> outputType) {
-        super(inputType, outputType, true, null);
+        super(inputType, outputType, true);
         this.functionDescriptor = functionDescriptor;
     }
 

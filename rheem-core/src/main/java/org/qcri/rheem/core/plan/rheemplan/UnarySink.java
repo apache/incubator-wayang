@@ -10,22 +10,22 @@ public abstract class UnarySink<T> extends OperatorBase implements ElementaryOpe
     /**
      * Creates a new instance that does not support broadcast {@link InputSlot}s.
      */
-    public UnarySink(DataSetType<T> type, OperatorContainer container) {
-        this(type, false, container);
+    public UnarySink(DataSetType<T> type) {
+        this(type, false);
     }
 
     /**
      * Creates a new instance.
      */
-    public UnarySink(DataSetType<T> type, boolean isSupportingBroadcastInputs, OperatorContainer container) {
-        super(1, 0, isSupportingBroadcastInputs, container);
+    public UnarySink(DataSetType<T> type, boolean isSupportingBroadcastInputs) {
+        super(1, 0, isSupportingBroadcastInputs);
         this.inputSlots[0] = new InputSlot<>("in", this, type);
     }
 
     /**
      * Copies the given instance.
      *
-     * @see UnarySink#UnarySink(DataSetType, boolean, OperatorContainer)
+     * @see UnarySink#UnarySink(DataSetType, boolean)
      * @see OperatorBase#OperatorBase(OperatorBase)
      */
     public UnarySink(UnarySink<T> that) {

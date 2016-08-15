@@ -4,7 +4,6 @@ import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -104,6 +103,11 @@ public class JavaReduceByOperator<Type, KeyType>
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public boolean isExecutedEagerly() {
+        return true;
     }
 
     /**

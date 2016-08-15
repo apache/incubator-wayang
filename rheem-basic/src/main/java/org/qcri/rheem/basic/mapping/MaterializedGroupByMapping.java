@@ -21,7 +21,7 @@ public class MaterializedGroupByMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern groupByPattern = new OperatorPattern(
+        final OperatorPattern groupByPattern = new OperatorPattern<>(
                 "groupBy",
                 new GroupByOperator<>(
                         null,

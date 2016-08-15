@@ -1,12 +1,18 @@
 package org.qcri.rheem.api
 
 import java.io.File
+import java.net.URI
+import java.nio.file.{Files, Paths}
 import java.sql.{Connection, Statement}
+import java.util.function.Consumer
+import java.util.stream.Collectors
 
 import org.junit.{Assert, Test}
+import org.qcri.rheem.basic.RheemBasics
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
 import org.qcri.rheem.core.function.{ExecutionContext, TransformationDescriptor}
+import org.qcri.rheem.core.util.fs.LocalFileSystem
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.java.operators.JavaMapOperator
 import org.qcri.rheem.spark.Spark
@@ -304,6 +310,31 @@ class ApiTest {
   }
 
   @Test
+  def testPageRank() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+      .`with`(Java.graphPlugin)
+      .`with`(RheemBasics.graphPlugin)
+      .`with`(Java.basicPlugin)
+    import org.qcri.rheem.api.graph._
+
+    val edges = Seq((0, 1), (0, 2), (0, 3), (1, 0), (2, 1), (3, 2), (3, 1)).map(t => new Edge(t._1, t._2))
+
+    val pageRanks = rheem
+      .loadCollection(edges).withName("Load edges")
+      .pageRank(20).withName("PageRank")
+      .collect()
+      .map(t => t.field0 -> t.field1)
+      .toMap
+
+    print(pageRanks)
+    // Let's not check absolute numbers but only the relative ordering.
+    Assert.assertTrue(pageRanks(1) > pageRanks(0))
+    Assert.assertTrue(pageRanks(0) > pageRanks(2))
+    Assert.assertTrue(pageRanks(2) > pageRanks(3))
+  }
+
+  @Test
   def testZipWithId() = {
     // Set up RheemContext.
     val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
@@ -323,6 +354,29 @@ class ApiTest {
 
     val expectedValues = Set((42, 100))
     Assert.assertEquals(expectedValues, result.toSet)
+  }
+
+  @Test
+  def testWriteTextFile() = {
+    val tempDir = LocalFileSystem.findTempDir
+    val targetUrl = LocalFileSystem.toURL(new File(tempDir, "testWriteTextFile.txt"))
+
+    // Set up RheemContext.
+    val rheem = new RheemContext().`with`(Java.basicPlugin)
+
+    val inputValues = for (i <- 0 to 5) yield i * 0.333333333333
+
+    val result = rheem
+      .loadCollection(inputValues)
+      .writeTextFile(targetUrl, formatterUdf = d => f"${d%.2f}")
+
+    val lines = scala.collection.mutable.Set[String]()
+    Files.lines(Paths.get(new URI(targetUrl))).forEach(new Consumer[String] {
+      override def accept(line: String): Unit = lines += line
+    })
+
+    val expectedLines = inputValues.map(v => f"${v%.2f}").toSet
+    Assert.assertEquals(expectedLines, lines)
   }
 
   @Test

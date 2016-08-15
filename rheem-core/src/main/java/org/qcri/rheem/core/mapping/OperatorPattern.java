@@ -50,8 +50,7 @@ public class OperatorPattern<T extends Operator> extends OperatorBase {
                            boolean isMatchSubclasses) {
 
         super(exampleOperator.getNumInputs(), exampleOperator.getNumOutputs(),
-                exampleOperator.isSupportingBroadcastInputs(),
-                null);
+                exampleOperator.isSupportingBroadcastInputs());
 
         this.name = name;
         InputSlot.mock(exampleOperator, this);

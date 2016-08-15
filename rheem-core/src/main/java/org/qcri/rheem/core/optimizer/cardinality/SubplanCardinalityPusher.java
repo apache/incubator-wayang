@@ -4,7 +4,10 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.*;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -19,25 +22,26 @@ public class SubplanCardinalityPusher extends CardinalityPusher {
      *
      * @return the instance if it could be created
      */
-    public static CardinalityPusher createFor(Subplan subplan, Configuration configuration) {
-
-        final List<InputSlot<?>> innerInputs = Arrays.stream(subplan.getAllInputs())
-                .flatMap(inputSlot -> subplan.followInput(inputSlot).stream())
+    public static CardinalityPusher createFor(OperatorContainer container, Configuration configuration) {
+        final CompositeOperator compositeOperator = container.toOperator();
+        final InputSlot<?>[] outerInputs = compositeOperator.getAllInputs();
+        final List<InputSlot<?>> innerInputs = Arrays.stream(outerInputs)
+                .flatMap(inputSlot -> container.followInput(inputSlot).stream())
                 .collect(Collectors.toList());
-        final Collection<Operator> sourceOperators = subplan.isSource() ?
-                Collections.singleton(subplan.getSource()) : Collections.emptySet();
+        final Collection<Operator> sourceOperators = compositeOperator.isSource() ?
+                Collections.singleton(container.getSource()) : Collections.emptySet();
         final CardinalityEstimationTraversal traversal = CardinalityEstimationTraversal.createPushTraversal(
                 innerInputs, sourceOperators, configuration);
 
-        return new SubplanCardinalityPusher(traversal, subplan);
+        return new SubplanCardinalityPusher(traversal, compositeOperator);
     }
 
     /**
      * Creates a new instance.
      */
-    private SubplanCardinalityPusher(CardinalityEstimationTraversal traversal, final Subplan subplan) {
-        super(subplan);
-        assert !subplan.isLoopSubplan() : String.format("%s is not suited for %s instances.",
+    private SubplanCardinalityPusher(CardinalityEstimationTraversal traversal, final CompositeOperator compositeOperator) {
+        super(compositeOperator);
+        assert !compositeOperator.isLoopSubplan() : String.format("%s is not suited for %s instances.",
                 this.getClass().getSimpleName(), Subplan.class.getSimpleName());
         this.traversal = traversal;
     }

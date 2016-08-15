@@ -3,7 +3,9 @@ package org.qcri.rheem.tests;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.qcri.rheem.basic.RheemBasics;
 import org.qcri.rheem.basic.data.Record;
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.basic.operators.MapOperator;
@@ -79,7 +81,7 @@ public class FullIntegrationIT {
         RheemPlan rheemPlan = RheemPlans.readWrite(RheemPlans.FILE_SOME_LINES_TXT, collector);
         final Operator sink = rheemPlan.getSinks().stream().findFirst().get();
         sink.addTargetPlatform(Spark.platform());
-        final Operator source = sink.getInputOperator(0);
+        final Operator source = sink.getEffectiveOccupant(0).getOwner();
         source.addTargetPlatform(Java.platform());
 
         // Instantiate Rheem and activate the Java backend.
@@ -216,6 +218,54 @@ public class FullIntegrationIT {
         rheemContext.execute(rheemPlan);
 
         Assert.assertEquals(RheemCollections.asSet(1, 4, 9), RheemCollections.asSet(collector));
+    }
+
+    @Test
+    public void testRepeat() {
+        // Build the RheemPlan.
+        List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.repeat(collector, 5, 0, 10, 20, 30, 45);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext(configuration)
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin());
+
+        rheemContext.execute(rheemPlan);
+
+        Assert.assertEquals(5, collector.size());
+        Assert.assertEquals(RheemCollections.asSet(5, 15, 25, 35, 50), RheemCollections.asSet(collector));
+    }
+
+    @Test
+    public void testPageRankWithGraphBasic() {
+        // Build the RheemPlan.
+        List<Tuple2<Long, Long>> edges = Arrays.asList(
+                new Tuple2<>(0L, 1L),
+                new Tuple2<>(0L, 2L),
+                new Tuple2<>(0L, 3L),
+                new Tuple2<>(1L, 2L),
+                new Tuple2<>(1L, 3L),
+                new Tuple2<>(2L, 3L),
+                new Tuple2<>(3L, 0L)
+        );
+        List<Tuple2<Long, Float>> pageRanks = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.pageRank(edges, pageRanks);
+
+        // Execute the plan with a certain backend.
+        RheemContext rheemContext = new RheemContext()
+                .with(Java.basicPlugin())
+                .with(Spark.basicPlugin())
+                .with(RheemBasics.graphPlugin());
+        rheemContext.execute(rheemPlan);
+
+        // Check the results.
+        pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
+        final List<Long> vertexOrder = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toList());
+        Assert.assertEquals(
+                Arrays.asList(3L, 0L, 2L, 1L),
+                vertexOrder
+        );
     }
 
     @Test
