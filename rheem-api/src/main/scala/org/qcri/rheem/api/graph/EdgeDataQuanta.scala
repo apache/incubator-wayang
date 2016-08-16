@@ -1,6 +1,6 @@
-package org.qcri.rheem.api
+package org.qcri.rheem.api.graph
 
-import org.qcri.rheem.api.graph.{Edge, Vertex}
+import org.qcri.rheem.api._
 import org.qcri.rheem.basic.data.{Record, Tuple2 => T2}
 import org.qcri.rheem.basic.operators.{MapOperator, PageRankOperator}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
