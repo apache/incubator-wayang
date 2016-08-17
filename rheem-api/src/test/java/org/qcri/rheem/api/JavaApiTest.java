@@ -5,8 +5,12 @@ import org.junit.Test;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.Java;
+import org.qcri.rheem.java.operators.JavaMapOperator;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -51,6 +55,31 @@ public class JavaApiTest {
                 .collect("testBroadcast()");
 
         Assert.assertEquals(RheemCollections.asSet(-2, -1, 0, 1, 2), RheemCollections.asSet(outputCollection));
+    }
+
+    @Test
+    public void testCustomOperatorShortCut() {
+        // Set up RheemContext.
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+
+        final List<Integer> inputValues = RheemArrays.asList(0, 1, 2, 3);
+
+        // Build and execute a Rheem plan.
+        final Collection<Integer> outputValues = new JavaPlanBuilder(rheemContext)
+                .loadCollection(inputValues).withName("Load input values")
+                .<Integer>customOperator(new JavaMapOperator<>(
+                        DataSetType.createDefault(Integer.class),
+                        DataSetType.createDefault(Integer.class),
+                        new TransformationDescriptor<>(
+                                i -> i + 2,
+                                Integer.class, Integer.class
+                        )
+                )).withName("Add 2")
+                .collect("testCustomOperatorShortCut()");
+
+        // Check the outcome.
+        final List<Integer> expectedOutputValues = RheemArrays.asList(2, 3, 4, 5);
+        Assert.assertEquals(RheemCollections.asSet(expectedOutputValues), RheemCollections.asSet(outputValues));
     }
 
     private static class AddOffset implements FunctionDescriptor.ExtendedSerializableFunction<Integer, Integer> {

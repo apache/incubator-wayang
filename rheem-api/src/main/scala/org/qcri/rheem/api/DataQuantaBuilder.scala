@@ -4,12 +4,12 @@ package org.qcri.rheem.api
 import java.util.{Collection => JavaCollection}
 
 import de.hpi.isg.profiledb.store.model.Experiment
-import org.qcri.rheem.api.util.TypeTrap
+import org.qcri.rheem.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.qcri.rheem.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator}
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator
-import org.qcri.rheem.core.plan.rheemplan.RheemPlan
+import org.qcri.rheem.core.plan.rheemplan.{Operator, OutputSlot, RheemPlan, UnarySource}
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.core.types.DataSetType
 import org.qcri.rheem.core.util.{Logging, ReflectionUtils, RheemCollections}
@@ -21,7 +21,8 @@ import scala.reflect.ClassTag
   * Abstract base class for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
   * Java API for Rheem that compensates for lacking default and named arguments.
   */
-abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, _], Out] extends Logging {
+abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implicit javaPlanBuilder: JavaPlanBuilder)
+  extends Logging {
 
   /**
     * Lazy-initialized. The [[DataQuanta]] product of this builder.
@@ -196,6 +197,20 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, _], Out] extends L
   //    }
 
   /**
+    * Feed the built [[DataQuanta]] into a custom [[Operator]] with a single [[org.qcri.rheem.core.plan.rheemplan.InputSlot]]
+    * and a single [[OutputSlot]].
+    *
+    * @param operator the custom [[Operator]]
+    * @tparam T the type of the output [[DataQuanta]]
+    * @return a [[CustomOperatorDataQuantaBuilder]]
+    */
+  def customOperator[T](operator: Operator) = {
+    assert(operator.getNumInputs == 1, "customOperator(...) only allows for operators with a single input.")
+    assert(operator.getNumOutputs == 1, "customOperator(...) only allows for operators with a single output.")
+    new CustomOperatorDataQuantaBuilder[T](operator, 0, new DataQuantaBuilderCache, this)
+  }
+
+  /**
     * Feed the built [[DataQuanta]] into a [[LocalCallbackSink]] that collects all data quanta locally. This triggers
     * execution of the constructed [[RheemPlan]].
     *
@@ -237,13 +252,26 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, _], Out] extends L
 }
 
 /**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.core.plan.rheemplan.UnarySource]]s.
+  *
+  * @param source          the [[UnarySource]]
+  * @param javaPlanBuilder the [[JavaPlanBuilder]]
+  */
+class UnarySourceDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](source: UnarySource[Out])
+                                                                          (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[This, Out] {
+
+  override protected def build: DataQuanta[Out] = javaPlanBuilder.planBuilder.load(source)(this.classTag)
+
+}
+
+/**
   * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CollectionSource]]s.
   *
   * @param collection      the [[JavaCollection]] to be loaded
   * @param javaPlanBuilder the [[JavaPlanBuilder]]
   */
-class LoadCollectionDataQuantaBuilder[Out](collection: JavaCollection[Out],
-                                           javaPlanBuilder: JavaPlanBuilder)
+class LoadCollectionDataQuantaBuilder[Out](collection: JavaCollection[Out])(implicit javaPlanBuilder: JavaPlanBuilder)
   extends DataQuantaBuilder[LoadCollectionDataQuantaBuilder[Out], Out] {
 
   // Try to infer the type class from the collection.
@@ -268,6 +296,7 @@ class LoadCollectionDataQuantaBuilder[Out](collection: JavaCollection[Out],
   */
 class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
                                     udf: SerializableFunction[In, Out])
+                                   (implicit javaPlanBuilder: JavaPlanBuilder)
   extends DataQuantaBuilder[MapDataQuantaBuilder[In, Out], Out] {
 
   /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
@@ -315,11 +344,18 @@ class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
 
 }
 
-
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.GlobalReduceOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param udf             UDF for the [[org.qcri.rheem.basic.operators.GlobalReduceOperator]]
+  */
 class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
                                        udf: SerializableBinaryOperator[T])
+                                      (implicit javaPlanBuilder: JavaPlanBuilder)
   extends DataQuantaBuilder[GlobalReduceDataQuantaBuilder[T], T] {
 
+  // Reuse the input TypeTrap to enforce type equality between input and output.
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
 
   /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
@@ -360,5 +396,33 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
   }
 
   override protected def build = inputDataQuanta.dataQuanta().reduceJava(udf, this.udfCpuEstimator, this.udfRamEstimator)
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for any [[org.qcri.rheem.core.plan.rheemplan.Operator]]s. Does not offer
+  * any convenience methods, though.
+  *
+  * @param operator        the custom [[org.qcri.rheem.core.plan.rheemplan.Operator]]
+  * @param outputIndex     index of the [[OutputSlot]] addressed by the new instance
+  * @param buildCache      a [[DataQuantaBuilderCache]] that must be shared across instances addressing the same [[Operator]]
+  * @param inputDataQuanta [[DataQuantaBuilder]]s for the input [[DataQuanta]]
+  * @param javaPlanBuilder the [[JavaPlanBuilder]] used to construct the current [[RheemPlan]]
+  */
+class CustomOperatorDataQuantaBuilder[T](operator: Operator,
+                                         outputIndex: Int,
+                                         buildCache: DataQuantaBuilderCache,
+                                         inputDataQuanta: DataQuantaBuilder[_, _]*)
+                                        (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[DataQuantaBuilder[_, T], T] {
+
+  override protected def build = {
+    // If the [[operator]] has multiple [[OutputSlot]]s, make sure that we only execute the build once.
+    if (!buildCache.hasCached) {
+      val dataQuanta = javaPlanBuilder.planBuilder.customOperator(operator, inputDataQuanta.map(_.dataQuanta()): _*)
+      buildCache.cache(dataQuanta)
+    }
+    buildCache(outputIndex)
+  }
 
 }
