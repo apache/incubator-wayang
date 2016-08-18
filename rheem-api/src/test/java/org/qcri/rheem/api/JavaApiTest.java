@@ -385,9 +385,37 @@ public class JavaApiTest {
         Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
     }
 
-    @Ignore("PageRank not implemented for the Java API")
     @Test
     public void testPageRank() {
+        // Set up RheemContext.
+        RheemContext rheemContext = new RheemContext()
+                .with(Java.basicPlugin())
+                .with(Java.graphPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+
+        // Create a test graph.
+        Collection<Tuple2<Long, Long>> edges = Arrays.asList(
+                new Tuple2<>(0L, 1L),
+                new Tuple2<>(0L, 2L),
+                new Tuple2<>(0L, 3L),
+                new Tuple2<>(1L, 0L),
+                new Tuple2<>(2L, 1L),
+                new Tuple2<>(3L, 2L),
+                new Tuple2<>(3L, 1L)
+        );
+
+        // Execute the job.
+        Collection<Tuple2<Long, Float>> pageRanks = builder.loadCollection(edges).asEdges()
+                .pageRank(20)
+                .collect("testPageRank()");
+        List<Tuple2<Long, Float>> sortedPageRanks = new ArrayList<>(pageRanks);
+        sortedPageRanks.sort((pr1, pr2) -> Float.compare(pr2.field1, pr1.field1));
+
+        System.out.println(sortedPageRanks);
+        Assert.assertEquals(1L, sortedPageRanks.get(0).field0.longValue());
+        Assert.assertEquals(0L, sortedPageRanks.get(1).field0.longValue());
+        Assert.assertEquals(2L, sortedPageRanks.get(2).field0.longValue());
+        Assert.assertEquals(3L, sortedPageRanks.get(3).field0.longValue());
     }
 
     @Test

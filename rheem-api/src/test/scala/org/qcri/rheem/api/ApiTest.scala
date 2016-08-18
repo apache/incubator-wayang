@@ -317,13 +317,13 @@ class ApiTest {
       .`with`(Java.basicPlugin)
     import org.qcri.rheem.api.graph._
 
-    val edges = Seq((0, 1), (0, 2), (0, 3), (1, 0), (2, 1), (3, 2), (3, 1)).map(t => new Edge(t._1, t._2))
+    val edges = Seq((0, 1), (0, 2), (0, 3), (1, 0), (2, 1), (3, 2), (3, 1)).map(t => Edge(t._1, t._2))
 
     val pageRanks = rheem
       .loadCollection(edges).withName("Load edges")
       .pageRank(20).withName("PageRank")
       .collect()
-      .map(t => t.field0 -> t.field1)
+      .map(t => t.field0.longValue -> t.field1.longValue)
       .toMap
 
     print(pageRanks)

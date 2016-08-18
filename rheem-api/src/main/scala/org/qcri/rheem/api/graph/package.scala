@@ -7,9 +7,11 @@ import org.qcri.rheem.basic.data.{Tuple2 => T2}
   */
 package object graph {
 
-  type Vertex = Long
+  type Vertex = java.lang.Long
 
   type Edge = T2[Vertex, Vertex]
+
+  type PageRank = T2[Vertex, java.lang.Float]
 
   implicit def elevateEdgeDataQuanta(dataQuanta: DataQuanta[Edge]): EdgeDataQuanta =
     new EdgeDataQuanta(dataQuanta)

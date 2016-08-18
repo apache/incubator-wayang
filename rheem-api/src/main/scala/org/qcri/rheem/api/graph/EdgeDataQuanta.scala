@@ -1,7 +1,7 @@
 package org.qcri.rheem.api.graph
 
 import org.qcri.rheem.api._
-import org.qcri.rheem.basic.data.{Record, Tuple2 => T2}
+import org.qcri.rheem.basic.data.Record
 import org.qcri.rheem.basic.operators.{MapOperator, PageRankOperator}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 
@@ -21,10 +21,10 @@ class EdgeDataQuanta(dataQuanta: DataQuanta[Edge]) {
   def pageRank(numIterations: Int = 20,
                dampingFactor: Double = PageRankOperator.DEFAULT_DAMPING_FACTOR,
                graphDensity: ProbabilisticDoubleInterval = PageRankOperator.DEFAULT_GRAPH_DENSITIY):
-  DataQuanta[T2[Vertex, Float]] = {
+  DataQuanta[PageRank] = {
     val pageRankOperator = new PageRankOperator(numIterations, dampingFactor, graphDensity)
     dataQuanta.connectTo(pageRankOperator, 0)
-    wrap[T2[Vertex, Float]](pageRankOperator)
+    wrap[PageRank](pageRankOperator)
   }
 
 }

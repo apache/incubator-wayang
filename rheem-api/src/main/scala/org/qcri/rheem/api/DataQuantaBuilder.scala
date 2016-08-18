@@ -5,6 +5,7 @@ import java.util.function.{Consumer, Function => JavaFunction}
 import java.util.{Collection => JavaCollection}
 
 import de.hpi.isg.profiledb.store.model.Experiment
+import org.qcri.rheem.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaBuilderDecorator}
 import org.qcri.rheem.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.qcri.rheem.basic.data.{Record, Tuple2 => RT2}
 import org.qcri.rheem.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator}
@@ -325,9 +326,8 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
                     udfRamLoad: LoadEstimator): Unit =
   this.dataQuanta().writeTextFileJava(url, formatterUdf, udfCpuLoad, udfRamLoad, jobName)
 
-
   /**
-    * Enriches the set of operator to [[Record]]-based ones. This instances must deal with data quanta of
+    * Enriches the set of operations to [[Record]]-based ones. This instances must deal with data quanta of
     * type [[Record]], though. Because of Java's type erasure, we need to leave it up to you whether this
     * operation is applicable.
     *
@@ -337,6 +337,20 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     this match {
       case records: RecordDataQuantaBuilder[_] => records.asInstanceOf[RecordDataQuantaBuilder[This]]
       case _ => new RecordDataQuantaBuilderDecorator(this.asInstanceOf[DataQuantaBuilder[_, Record]])
+    }
+  }
+
+  /**
+    * Enriches the set of operations to [[Edge]]-based ones. This instances must deal with data quanta of
+    * type [[Edge]], though. Because of Java's type erasure, we need to leave it up to you whether this
+    * operation is applicable.
+    *
+    * @return a [[EdgeDataQuantaBuilder]]
+    */
+  def asEdges: EdgeDataQuantaBuilder[_ <: This] = {
+    this match {
+      case edges: RecordDataQuantaBuilder[_] => edges.asInstanceOf[EdgeDataQuantaBuilder[This]]
+      case _ => new EdgeDataQuantaBuilderDecorator(this.asInstanceOf[DataQuantaBuilder[_, Edge]])
     }
   }
 
