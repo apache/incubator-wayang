@@ -52,6 +52,17 @@ public class RheemContext {
      * Registers the given {@link Plugin} with this instance.
      *
      * @param plugin the {@link Plugin} to register
+     * @return this instance
+     */
+    public RheemContext withPlugin(Plugin plugin) {
+        this.register(plugin);
+        return this;
+    }
+
+    /**
+     * Registers the given {@link Plugin} with this instance.
+     *
+     * @param plugin the {@link Plugin} to register
      * @see #with(Plugin)
      */
     public void register(Plugin plugin) {
