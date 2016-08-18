@@ -177,7 +177,9 @@ public interface Operator {
         final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputIndex);
         final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputIndex);
         if (!inputSlot.getType().isSupertypeOf(outputSlot.getType())) {
-            throw new IllegalArgumentException(String.format("Cannot connect %s slot to %s slot.", outputSlot.getType(), inputSlot.getType()));
+            throw new IllegalArgumentException(String.format(
+                    "Cannot connect %s of %s to %s of type %s.",
+                    outputSlot, outputSlot.getType(), inputSlot, inputSlot.getType()));
         }
         outputSlot.connectTo(inputSlot);
     }

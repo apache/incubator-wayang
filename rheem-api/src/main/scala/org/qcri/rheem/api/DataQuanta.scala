@@ -219,9 +219,22 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def groupByKey[Key: ClassTag](keyUdf: Out => Key,
                                 udfCpuLoad: LoadEstimator = null,
-                                udfRamLoad: LoadEstimator = null): DataQuanta[java.lang.Iterable[Out]] = {
+                                udfRamLoad: LoadEstimator = null): DataQuanta[java.lang.Iterable[Out]] =
+  groupByKeyJava(toSerializableFunction(keyUdf), udfCpuLoad, udfRamLoad)
+
+  /**
+    * Feed this instance into a [[MaterializedGroupByOperator]].
+    *
+    * @param keyUdf     UDF to extract the grouping key from the data quanta
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
+    * @return a new instance representing the [[MaterializedGroupByOperator]]'s output
+    */
+  def groupByKeyJava[Key: ClassTag](keyUdf: SerializableFunction[Out, Key],
+                                    udfCpuLoad: LoadEstimator = null,
+                                    udfRamLoad: LoadEstimator = null): DataQuanta[java.lang.Iterable[Out]] = {
     val groupByOperator = new MaterializedGroupByOperator(
-      new TransformationDescriptor(toSerializableFunction(keyUdf), basicDataUnitType[Out], basicDataUnitType[Key]),
+      new TransformationDescriptor(keyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
       dataSetType[Out],
       groupedDataSetType[Out]
     )
@@ -353,7 +366,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @return a new instance representing the [[ZipWithIdOperator]]'s output
     */
-  def zipWithId: DataQuanta[org.qcri.rheem.basic.data.Tuple2[Long, Out]] = {
+  def zipWithId: DataQuanta[org.qcri.rheem.basic.data.Tuple2[java.lang.Long, Out]] = {
     val zipWithIdOperator = new ZipWithIdOperator(dataSetType[Out])
     this.connectTo(zipWithIdOperator, 0)
     zipWithIdOperator
@@ -375,7 +388,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @return a new instance representing the [[CountOperator]]'s output
     */
-  def count: DataQuanta[Long] = {
+  def count: DataQuanta[java.lang.Long] = {
     val countOperator = new CountOperator(dataSetType[Out])
     this.connectTo(countOperator, 0)
     countOperator
@@ -598,10 +611,10 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   /**
     * Write the data quanta in this instance to a text file. Triggers execution.
     *
-    * @param url        URL to the text file
-    * @param formatterUdf        UDF to format data quanta to [[String]]s
-    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `formatterUdf`
-    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `formatterUdf`
+    * @param url          URL to the text file
+    * @param formatterUdf UDF to format data quanta to [[String]]s
+    * @param udfCpuLoad   optional [[LoadEstimator]] for the CPU consumption of the `formatterUdf`
+    * @param udfRamLoad   optional [[LoadEstimator]] for the RAM consumption of the `formatterUdf`
     */
   def writeTextFile(url: String,
                     formatterUdf: Out => String,
@@ -614,16 +627,16 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   /**
     * Write the data quanta in this instance to a text file. Triggers execution.
     *
-    * @param url        URL to the text file
-    * @param formatterUdf        UDF to format data quanta to [[String]]s
-    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `formatterUdf`
-    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `formatterUdf`
+    * @param url          URL to the text file
+    * @param formatterUdf UDF to format data quanta to [[String]]s
+    * @param udfCpuLoad   optional [[LoadEstimator]] for the CPU consumption of the `formatterUdf`
+    * @param udfRamLoad   optional [[LoadEstimator]] for the RAM consumption of the `formatterUdf`
     */
   def writeTextFileJava(url: String,
-                    formatterUdf: SerializableFunction[Out, String],
-                    udfCpuLoad: LoadEstimator = null,
-                    udfRamLoad: LoadEstimator = null,
-                    jobName: String = null): Unit = {
+                        formatterUdf: SerializableFunction[Out, String],
+                        udfCpuLoad: LoadEstimator = null,
+                        udfRamLoad: LoadEstimator = null,
+                        jobName: String = null): Unit = {
     val sink = new TextFileSink[Out](
       url,
       new TransformationDescriptor(formatterUdf, basicDataUnitType[Out], basicDataUnitType[String], udfCpuLoad, udfRamLoad)

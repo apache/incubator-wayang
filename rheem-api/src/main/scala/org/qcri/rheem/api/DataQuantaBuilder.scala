@@ -1,18 +1,22 @@
 package org.qcri.rheem.api
 
 
+import java.util.function.{Consumer, Function => JavaFunction}
 import java.util.{Collection => JavaCollection}
 
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.api.util.{DataQuantaBuilderCache, TypeTrap}
+import org.qcri.rheem.basic.data.{Tuple2 => RT2}
 import org.qcri.rheem.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator}
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
+import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator
 import org.qcri.rheem.core.plan.rheemplan.{Operator, OutputSlot, RheemPlan, UnarySource}
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.core.types.DataSetType
-import org.qcri.rheem.core.util.{Logging, ReflectionUtils, RheemCollections}
+import org.qcri.rheem.core.util.{Logging, ReflectionUtils, RheemCollections, Tuple => RheemTuple}
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -173,7 +177,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     *
     * @return the [[ClassTag]]
     */
-  protected implicit def classTag: ClassTag[Out] = ClassTag(outputTypeTrap.typeClass)
+  protected[api] implicit def classTag: ClassTag[Out] = ClassTag(outputTypeTrap.typeClass)
 
   /**
     * Feed the built [[DataQuanta]] into a [[MapOperator]].
@@ -184,6 +188,30 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
   def map[NewOut](udf: SerializableFunction[Out, NewOut]) = new MapDataQuantaBuilder(this, udf)
 
   /**
+    * Feed the built [[DataQuanta]] into a [[MapOperator]] with a [[org.qcri.rheem.basic.function.ProjectionDescriptor]].
+    *
+    * @param fieldNames field names for the [[org.qcri.rheem.basic.function.ProjectionDescriptor]]
+    * @return a [[MapDataQuantaBuilder]]
+    */
+  def project[NewOut](fieldNames: Array[String]) = new ProjectionDataQuantaBuilder(this, fieldNames)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.FilterOperator]].
+    *
+    * @param udf filter UDF
+    * @return a [[FilterDataQuantaBuilder]]
+    */
+  def filter(udf: SerializablePredicate[Out]) = new FilterDataQuantaBuilder(this, udf)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.FlatMapOperator]].
+    *
+    * @param udf the UDF for the [[org.qcri.rheem.basic.operators.FlatMapOperator]]
+    * @return a [[FlatMapDataQuantaBuilder]]
+    */
+  def flatMap[NewOut](udf: SerializableFunction[Out, java.lang.Iterable[NewOut]]) = new FlatMapDataQuantaBuilder(this, udf)
+
+  /**
     * Feed the built [[DataQuanta]] into a [[GlobalReduceOperator]].
     *
     * @param udf the UDF for the [[GlobalReduceOperator]]
@@ -191,10 +219,109 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     */
   def globalReduce(udf: SerializableBinaryOperator[Out]) = new GlobalReduceDataQuantaBuilder(this, udf)
 
-  //  def reduceBy[Key](keyUdf: SerializableFunction[Out, Key], udf: SerializableBinaryOperator[Out]) =
-  //    new DataQuantaBuilder[_, Out] {
-  //      override def build: DataQuanta[Out] = ???
-  //    }
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.ReduceByOperator]].
+    *
+    * @param keyUdf the key UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
+    * @param udf    the UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
+    * @return a [[ReduceByDataQuantaBuilder]]
+    */
+  def reduceBy[Key](keyUdf: SerializableFunction[Out, Key], udf: SerializableBinaryOperator[Out]) =
+  new ReduceByDataQuantaBuilder(this, keyUdf, udf)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]].
+    *
+    * @param keyUdf the key UDF for the [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]]
+    * @return a [[GroupByDataQuantaBuilder]]
+    */
+  def groupBy[Key](keyUdf: SerializableFunction[Out, Key]) =
+  new GroupByDataQuantaBuilder(this, keyUdf)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator]].
+    *
+    * @return a [[GlobalGroupDataQuantaBuilder]]
+    */
+  def groupBy() = new GlobalGroupDataQuantaBuilder(this)
+
+  /**
+    * Feed the built [[DataQuanta]] of this and the given instance into a
+    * [[org.qcri.rheem.basic.operators.UnionAllOperator]].
+    *
+    * @param that the other [[DataQuantaBuilder]] to union with
+    * @return a [[UnionDataQuantaBuilder]]
+    */
+  def union(that: DataQuantaBuilder[_, Out]) = new UnionDataQuantaBuilder(this, that)
+
+  /**
+    * Feed the built [[DataQuanta]] of this and the given instance into a
+    * [[org.qcri.rheem.basic.operators.IntersectOperator]].
+    *
+    * @param that the other [[DataQuantaBuilder]] to intersect with
+    * @return an [[IntersectDataQuantaBuilder]]
+    */
+  def intersect(that: DataQuantaBuilder[_, Out]) = new IntersectDataQuantaBuilder(this, that)
+
+  /**
+    * Feed the built [[DataQuanta]] of this and the given instance into a
+    * [[org.qcri.rheem.basic.operators.JoinOperator]].
+    *
+    * @param thisKeyUdf the key extraction UDF for this instance
+    * @param that       the other [[DataQuantaBuilder]] to join with
+    * @param thatKeyUdf the key extraction UDF for `that` instance
+    * @return a [[JoinDataQuantaBuilder]]
+    */
+  def join[ThatOut, Key](thisKeyUdf: SerializableFunction[Out, Key],
+                                      that: DataQuantaBuilder[_, ThatOut],
+                                      thatKeyUdf: SerializableFunction[ThatOut, Key]) =
+  new JoinDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
+
+  /**
+    * Feed the built [[DataQuanta]] of this and the given instance into a
+    * [[org.qcri.rheem.basic.operators.CartesianOperator]].
+    *
+    * @return a [[CartesianDataQuantaBuilder]]
+    */
+  def cartesian[ThatOut](that: DataQuantaBuilder[_, ThatOut]) = new CartesianDataQuantaBuilder(this, that)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.ZipWithIdOperator]].
+    *
+    * @return a [[ZipWithIdDataQuantaBuilder]] representing the [[org.qcri.rheem.basic.operators.ZipWithIdOperator]]'s output
+    */
+  def zipWithId = new ZipWithIdDataQuantaBuilder(this)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.DistinctOperator]].
+    *
+    * @return a [[DistinctDataQuantaBuilder]] representing the [[org.qcri.rheem.basic.operators.DistinctOperator]]'s output
+    */
+  def distinct = new DistinctDataQuantaBuilder(this)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.CountOperator]].
+    *
+    * @return a [[CountDataQuantaBuilder]] representing the [[org.qcri.rheem.basic.operators.CountOperator]]'s output
+    */
+  def count = new CountDataQuantaBuilder(this)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.DoWhileOperator]].
+    *
+    * @return a [[DoWhileDataQuantaBuilder]]
+    */
+  def doWhile[Conv](conditionUdf: SerializablePredicate[_],
+                       bodyBuilder: JavaFunction[DataQuantaBuilder[_, Out], RheemTuple[DataQuantaBuilder[_, Out], DataQuantaBuilder[_, Conv]]]) =
+  new DoWhileDataQuantaBuilder(this, conditionUdf.asInstanceOf[SerializablePredicate[JavaCollection[Conv]]], bodyBuilder)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.RepeatOperator]].
+    *
+    * @return a [[DoWhileDataQuantaBuilder]]
+    */
+  def repeat(numRepetitions: Int, bodyBuilder: JavaFunction[DataQuantaBuilder[_, Out], DataQuantaBuilder[_, Out]]) =
+  new RepeatDataQuantaBuilder(this, numRepetitions, bodyBuilder)
 
   /**
     * Feed the built [[DataQuanta]] into a custom [[Operator]] with a single [[org.qcri.rheem.core.plan.rheemplan.InputSlot]]
@@ -221,6 +348,42 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     import scala.collection.JavaConversions._
     this.dataQuanta().collect(jobName)
   }
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[JavaFunction]] that runs locally. This triggers
+    * execution of the constructed [[RheemPlan]].
+    *
+    * @param f       the [[JavaFunction]]
+    * @param jobName optional name for the [[RheemPlan]]
+    * @return the collected data quanta
+    */
+  def forEach(f: Consumer[Out], jobName: String): Unit = this.dataQuanta().foreachJava(f, jobName)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.TextFileSink]]. This triggers
+    * execution of the constructed [[RheemPlan]].
+    *
+    * @param url     the URL of the file to be written
+    * @param jobName optional name for the [[RheemPlan]]
+    * @return the collected data quanta
+    */
+  def writeTextFile(url: String, formatterUdf: SerializableFunction[Out, String], jobName: String): Unit =
+  this.writeTextFile(url, formatterUdf, jobName, null, null)
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.TextFileSink]]. This triggers
+    * execution of the constructed [[RheemPlan]].
+    *
+    * @param url     the URL of the file to be written
+    * @param jobName optional name for the [[RheemPlan]]
+    * @return the collected data quanta
+    */
+  def writeTextFile(url: String,
+                    formatterUdf: SerializableFunction[Out, String],
+                    jobName: String,
+                    udfCpuLoad: LoadEstimator,
+                    udfRamLoad: LoadEstimator): Unit =
+  this.dataQuanta().writeTextFileJava(url, formatterUdf, udfCpuLoad, udfRamLoad, jobName)
 
   /**
     * Get or create the [[DataQuanta]] built by this instance.
@@ -309,11 +472,11 @@ class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
   locally {
     val parameters = ReflectionUtils.getTypeParameters(udf.getClass, classOf[SerializableFunction[_, _]])
     parameters.get("Input") match {
-      case cls: Class[Out] => this.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      case cls: Class[In] => inputDataQuanta.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
       case _ => logger.warn("Could not infer types from {}.", udf)
     }
     parameters.get("Output") match {
-      case cls: Class[In] => inputDataQuanta.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      case cls: Class[Out] => this.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
       case _ => logger.warn("Could not infer types from {}.", udf)
     }
   }
@@ -325,7 +488,7 @@ class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
     * @return this instance
     */
   def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-    this.udfCpuEstimator = udfCpuEstimator;
+    this.udfCpuEstimator = udfCpuEstimator
     this
   }
 
@@ -336,13 +499,392 @@ class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
     * @return this instance
     */
   def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-    this.udfRamEstimator = udfRamEstimator;
+    this.udfRamEstimator = udfRamEstimator
     this
   }
 
   override protected def build = inputDataQuanta.dataQuanta().mapJava(udf, this.udfCpuEstimator, this.udfRamEstimator)
 
 }
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapOperator]]s with
+  * [[org.qcri.rheem.basic.function.ProjectionDescriptor]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param fieldNames      field names for the [[org.qcri.rheem.basic.function.ProjectionDescriptor]]
+  */
+class ProjectionDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In], fieldNames: Array[String])
+                                          (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[ProjectionDataQuantaBuilder[In, Out], Out] {
+
+  /** [[LoadEstimator]] to estimate the CPU load of the projection. */
+  private var udfCpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the projection. */
+  private var udfRamEstimator: LoadEstimator = _
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the UDF.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.udfCpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of the UDF.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.udfRamEstimator = udfRamEstimator
+    this
+  }
+
+  override protected def build = inputDataQuanta.dataQuanta().project(fieldNames.toSeq, this.udfCpuEstimator, this.udfRamEstimator)
+
+}
+
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param udf             UDF for the [[MapOperator]]
+  */
+class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: SerializablePredicate[T])
+                                (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[FilterDataQuantaBuilder[T], T] {
+
+  // Reuse the input TypeTrap to enforce type equality between input and output.
+  override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
+
+  /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
+  private var udfCpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the [[udf]]. */
+  private var udfRamEstimator: LoadEstimator = _
+
+  /** Selectivity of the filter predicate. */
+  private var selectivity: ProbabilisticDoubleInterval = _
+
+  /** SQL UDF implementing the filter predicate. */
+  private var sqlUdf: String = _
+
+  // Try to infer the type classes from the udf.
+  locally {
+    val parameters = ReflectionUtils.getTypeParameters(udf.getClass, classOf[SerializableFunction[_, _]])
+    parameters.get("Input") match {
+      case cls: Class[T] => this.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      case _ => logger.warn("Could not infer types from {}.", udf)
+    }
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the UDF.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.udfCpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of the UDF.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.udfRamEstimator = udfRamEstimator
+    this
+  }
+
+  /**
+    * Add a SQL implementation of the UDF.
+    *
+    * @param sqlUdf a SQL condition that can be plugged into a `WHERE` clause
+    * @return this instance
+    */
+  def withSqlUdf(sqlUdf: String) = {
+    this.sqlUdf = sqlUdf
+    this
+  }
+
+  /**
+    * Specify the selectivity of the UDF.
+    *
+    * @param lowerEstimate the lower bound of the expected selectivity
+    * @param upperEstimate the upper bound of the expected selectivity
+    * @param confidence    the probability of the actual selectivity being within these bounds
+    * @return this instance
+    */
+  def withSelectivity(lowerEstimate: Double, upperEstimate: Double, confidence: Double) = {
+    this.selectivity = new ProbabilisticDoubleInterval(lowerEstimate, upperEstimate, confidence)
+    this
+  }
+
+  override protected def build = inputDataQuanta.dataQuanta().filterJava(
+    udf, this.sqlUdf, this.selectivity, this.udfCpuEstimator, this.udfRamEstimator
+  )
+
+}
+
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.FlatMapOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param udf             UDF for the [[org.qcri.rheem.basic.operators.FlatMapOperator]]
+  */
+class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
+                                        udf: SerializableFunction[In, java.lang.Iterable[Out]])
+                                       (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[FlatMapDataQuantaBuilder[In, Out], Out] {
+
+  /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
+  private var udfCpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the [[udf]]. */
+  private var udfRamEstimator: LoadEstimator = _
+
+  /** Selectivity of the filter predicate. */
+  private var selectivity: ProbabilisticDoubleInterval = _
+
+  // Try to infer the type classes from the udf.
+  locally {
+    val parameters = ReflectionUtils.getTypeParameters(udf.getClass, classOf[SerializableFunction[_, _]])
+    parameters.get("Input") match {
+      case cls: Class[In] => inputDataQuanta.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      case _ => logger.warn("Could not infer types from {}.", udf)
+    }
+
+    // TODO: Extract the "T" from "Iterable[T]"
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the UDF.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.udfCpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of the UDF.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.udfRamEstimator = udfRamEstimator
+    this
+  }
+
+  /**
+    * Specify the selectivity of the UDF.
+    *
+    * @param lowerEstimate the lower bound of the expected selectivity
+    * @param upperEstimate the upper bound of the expected selectivity
+    * @param confidence    the probability of the actual selectivity being within these bounds
+    * @return this instance
+    */
+  def withSelectivity(lowerEstimate: Double, upperEstimate: Double, confidence: Double) = {
+    this.selectivity = new ProbabilisticDoubleInterval(lowerEstimate, upperEstimate, confidence)
+    this
+  }
+
+  override protected def build = inputDataQuanta.dataQuanta().flatMapJava(
+    udf, this.selectivity, this.udfCpuEstimator, this.udfRamEstimator
+  )
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.ReduceByOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param udf             UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
+  * @param keyUdf          key extraction UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
+  */
+class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T],
+                                        keyUdf: SerializableFunction[T, Key],
+                                        udf: SerializableBinaryOperator[T])
+                                       (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[ReduceByDataQuantaBuilder[Key, T], T] {
+
+  // Reuse the input TypeTrap to enforce type equality between input and output.
+  override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
+
+  implicit var keyTag: ClassTag[Key] = _
+
+  /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
+  private var udfCpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the [[udf]]. */
+  private var udfRamEstimator: LoadEstimator = _
+
+  // TODO: Add these estimators.
+  //  /** [[LoadEstimator]] to estimate the CPU load of the [[keyUdf]]. */
+  //  private var keyUdfCpuEstimator: LoadEstimator = _
+  //
+  //  /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf]]. */
+  //  private var keyUdfRamEstimator: LoadEstimator = _
+
+  // Try to infer the type classes from the UDFs.
+  locally {
+    var parameters = ReflectionUtils.getTypeParameters(udf.getClass, classOf[SerializableBinaryOperator[_]])
+    parameters.get("Type") match {
+      case cls: Class[T] => this.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      case _ => logger.warn("Could not infer types from {}.", udf)
+    }
+
+    parameters = ReflectionUtils.getTypeParameters(keyUdf.getClass, classOf[SerializableFunction[_, _]])
+    parameters.get("Input") match {
+      case cls: Class[T] => this.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      case _ => logger.warn("Could not infer types from {}.", keyUdf)
+    }
+    this.keyTag = parameters.get("Output") match {
+      case cls: Class[Key] => ClassTag(cls)
+      case _ =>
+        logger.warn("Could not infer types from {}.", keyUdf)
+        ClassTag(DataSetType.none.getDataUnitType.getTypeClass)
+    }
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the UDF.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.udfCpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of the UDF.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.udfRamEstimator = udfRamEstimator
+    this
+  }
+
+  //  /**
+  //    * Set a [[LoadEstimator]] for the CPU load of the key extraction UDF.
+  //    *
+  //    * @param udfCpuEstimator the [[LoadEstimator]]
+  //    * @return this instance
+  //    */
+  //  def withKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+  //    this.keyUdfCpuEstimator = udfCpuEstimator
+  //    this
+  //  }
+  //
+  //  /**
+  //    * Set a [[LoadEstimator]] for the RAM load of the key extraction UDF.
+  //    *
+  //    * @param udfRamEstimator the [[LoadEstimator]]
+  //    * @return this instance
+  //    */
+  //  def withKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+  //    this.keyUdfRamEstimator = udfRamEstimator
+  //    this
+  //  }
+
+  override protected def build =
+    inputDataQuanta.dataQuanta().reduceByKeyJava(keyUdf, udf, this.udfCpuEstimator, this.udfRamEstimator)
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param keyUdf          key extraction UDF for the [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]]
+  */
+class GroupByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T], keyUdf: SerializableFunction[T, Key])
+                                      (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[GroupByDataQuantaBuilder[Key, T], java.lang.Iterable[T]] {
+
+  implicit var keyTag: ClassTag[Key] = _
+
+
+  /** [[LoadEstimator]] to estimate the CPU load of the [[keyUdf]]. */
+  private var keyUdfCpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf]]. */
+  private var keyUdfRamEstimator: LoadEstimator = _
+
+  // Try to infer the type classes from the UDFs.
+  locally {
+    val parameters = ReflectionUtils.getTypeParameters(keyUdf.getClass, classOf[SerializableFunction[_, _]])
+    parameters.get("Input") match {
+      case cls: Class[T] => this.outputTypeTrap.dataSetType = DataSetType.createGrouped(cls)
+      case _ => logger.warn("Could not infer types from {}.", keyUdf)
+    }
+
+    this.keyTag = parameters.get("Output") match {
+      case cls: Class[Key] => ClassTag(cls)
+      case _ =>
+        logger.warn("Could not infer types from {}.", keyUdf)
+        ClassTag(DataSetType.none.getDataUnitType.getTypeClass)
+    }
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the key extraction UDF.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.keyUdfCpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of the key extraction UDF.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.keyUdfRamEstimator = udfRamEstimator
+    this
+  }
+
+  override protected def build =
+    inputDataQuanta.dataQuanta().groupByKeyJava(keyUdf, this.keyUdfCpuEstimator, this.keyUdfRamEstimator)
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  */
+class GlobalGroupDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])(implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[GlobalGroupDataQuantaBuilder[T], java.lang.Iterable[T]] {
+
+  override protected def build = inputDataQuanta.dataQuanta().group()
+
+}
+
 
 /**
   * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.GlobalReduceOperator]]s.
@@ -380,7 +922,7 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
     * @return this instance
     */
   def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-    this.udfCpuEstimator = udfCpuEstimator;
+    this.udfCpuEstimator = udfCpuEstimator
     this
   }
 
@@ -391,13 +933,234 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
     * @return this instance
     */
   def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-    this.udfRamEstimator = udfRamEstimator;
+    this.udfRamEstimator = udfRamEstimator
     this
   }
 
   override protected def build = inputDataQuanta.dataQuanta().reduceJava(udf, this.udfCpuEstimator, this.udfRamEstimator)
 
 }
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.UnionAllOperator]]s.
+  *
+  * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+  * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+  */
+class UnionDataQuantaBuilder[T](inputDataQuanta0: DataQuantaBuilder[_, T],
+                                inputDataQuanta1: DataQuantaBuilder[_, T])
+                               (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[UnionDataQuantaBuilder[T], T] {
+
+  override def getOutputTypeTrap = inputDataQuanta0.outputTypeTrap
+
+  override protected def build = inputDataQuanta0.dataQuanta().union(inputDataQuanta1.dataQuanta())
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.IntersectOperator]]s.
+  *
+  * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+  * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+  */
+class IntersectDataQuantaBuilder[T](inputDataQuanta0: DataQuantaBuilder[_, T],
+                                inputDataQuanta1: DataQuantaBuilder[_, T])
+                               (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[IntersectDataQuantaBuilder[T], T] {
+
+  override def getOutputTypeTrap = inputDataQuanta0.outputTypeTrap
+
+  override protected def build = inputDataQuanta0.dataQuanta().intersect(inputDataQuanta1.dataQuanta())
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.JoinOperator]]s.
+  *
+  * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+  * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+  * @param keyUdf0          first key extraction UDF for the [[org.qcri.rheem.basic.operators.JoinOperator]]
+  * @param keyUdf1          first key extraction UDF for the [[org.qcri.rheem.basic.operators.JoinOperator]]
+  */
+class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_, In0],
+                                           inputDataQuanta1: DataQuantaBuilder[_, In1],
+                                           keyUdf0: SerializableFunction[In0, Key],
+                                           keyUdf1: SerializableFunction[In1, Key])
+                                          (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[JoinDataQuantaBuilder[In0, In1, Key], RT2[In0, In1]] {
+
+  /** [[ClassTag]] or surrogate of [[Key]] */
+  implicit var keyTag: ClassTag[Key] = _
+
+  /** [[LoadEstimator]] to estimate the CPU load of the [[keyUdf0]]. */
+  private var keyUdf0CpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf0]]. */
+  private var keyUdf0RamEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the CPU load of the [[keyUdf1]]. */
+  private var keyUdf1CpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf1]]. */
+  private var keyUdf1RamEstimator: LoadEstimator = _
+
+  // Try to infer the type classes from the UDFs.
+  locally {
+    val parameters = ReflectionUtils.getTypeParameters(keyUdf0.getClass, classOf[SerializableFunction[_, _]])
+    parameters.get("Input") match {
+      case cls: Class[In0] => inputDataQuanta0.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      case _ => logger.warn("Could not infer types from {}.", keyUdf0)
+    }
+
+    this.keyTag = parameters.get("Output") match {
+      case cls: Class[Key] => ClassTag(cls)
+      case _ =>
+        logger.warn("Could not infer types from {}.", keyUdf0)
+        ClassTag(DataSetType.none.getDataUnitType.getTypeClass)
+    }
+  }
+  locally {
+    val parameters = ReflectionUtils.getTypeParameters(keyUdf1.getClass, classOf[SerializableFunction[_, _]])
+    parameters.get("Input") match {
+      case cls: Class[In1] => inputDataQuanta1.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      case _ => logger.warn("Could not infer types from {}.", keyUdf0)
+    }
+
+    this.keyTag = parameters.get("Output") match {
+      case cls: Class[Key] => ClassTag(cls)
+      case _ =>
+        logger.warn("Could not infer types from {}.", keyUdf0)
+        ClassTag(DataSetType.none.getDataUnitType.getTypeClass)
+    }
+  }
+  // Since we are currently not looking at type parameters, we can statically determine the output type.
+  locally {
+    this.outputTypeTrap.dataSetType = dataSetType[RT2[_, _]]
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the first key extraction UDF. Currently effectless.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withThisKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.keyUdf0CpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of first the key extraction UDF. Currently effectless.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withThisKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.keyUdf0RamEstimator = udfRamEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the second key extraction UDF. Currently effectless.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withThatKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.keyUdf1CpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of the second key extraction UDF. Currently effectless.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withThatKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.keyUdf1RamEstimator = udfRamEstimator
+    this
+  }
+
+  override protected def build =
+    inputDataQuanta0.dataQuanta().joinJava(keyUdf0, inputDataQuanta1.dataQuanta(), keyUdf1)(inputDataQuanta1.classTag, this.keyTag)
+
+}
+
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CartesianOperator]]s.
+  *
+  * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+  * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+  */
+class CartesianDataQuantaBuilder[In0, In1](inputDataQuanta0: DataQuantaBuilder[_, In0],
+                                           inputDataQuanta1: DataQuantaBuilder[_, In1])
+                                          (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[CartesianDataQuantaBuilder[In0, In1], RT2[In0, In1]] {
+
+  // Since we are currently not looking at type parameters, we can statically determine the output type.
+  locally {
+    this.outputTypeTrap.dataSetType = dataSetType[RT2[_, _]]
+  }
+
+  override protected def build =
+    inputDataQuanta0.dataQuanta().cartesian(inputDataQuanta1.dataQuanta())(inputDataQuanta1.classTag)
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.ZipWithIdOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  */
+class ZipWithIdDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
+                                       (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[ZipWithIdDataQuantaBuilder[T], RT2[java.lang.Long, T]] {
+
+  // Since we are currently not looking at type parameters, we can statically determine the output type.
+  locally {
+    this.outputTypeTrap.dataSetType = dataSetType[RT2[_, _]]
+  }
+
+  override protected def build = inputDataQuanta.dataQuanta().zipWithId
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.DistinctOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  */
+class DistinctDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
+                                       (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[DistinctDataQuantaBuilder[T], T] {
+
+  // Reuse the input TypeTrap to enforce type equality between input and output.
+  override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
+
+  override protected def build = inputDataQuanta.dataQuanta().distinct
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CountOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  */
+class CountDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
+                                       (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[CountDataQuantaBuilder[T], java.lang.Long] {
+
+  // We can statically determine the output type.
+  locally {
+    this.outputTypeTrap.dataSetType = dataSetType[java.lang.Long]
+  }
+  override protected def build = inputDataQuanta.dataQuanta().count
+
+}
+
 
 /**
   * [[DataQuantaBuilder]] implementation for any [[org.qcri.rheem.core.plan.rheemplan.Operator]]s. Does not offer
@@ -425,4 +1188,137 @@ class CustomOperatorDataQuantaBuilder[T](operator: Operator,
     buildCache(outputIndex)
   }
 
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.DoWhileOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param conditionUdf    UDF for the looping condition
+  * @param bodyBuilder     builds the loop body
+  */
+class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_, T],
+                                           conditionUdf: SerializablePredicate[JavaCollection[ConvOut]],
+                                           bodyBuilder: JavaFunction[DataQuantaBuilder[_, T], RheemTuple[DataQuantaBuilder[_, T], DataQuantaBuilder[_, ConvOut]]])
+                                          (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[DoWhileDataQuantaBuilder[T, ConvOut], T] {
+
+  // TODO: Get the ClassTag right.
+  implicit private var convOutClassTag: ClassTag[ConvOut] = ClassTag(DataSetType.none.getDataUnitType.getTypeClass)
+
+  // Reuse the input TypeTrap to enforce type equality between input and output.
+  override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
+
+  // TODO: We could improve by combining the TypeTraps in the body loop.
+
+  /** [[LoadEstimator]] to estimate the CPU load of the [[conditionUdf]]. */
+  private var udfCpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the [[conditionUdf]]. */
+  private var udfRamEstimator: LoadEstimator = _
+
+  /** Number of expected iterations. */
+  private var numExpectedIterations = 20
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the condition UDF.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.udfCpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of the condition UDF.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.udfRamEstimator = udfRamEstimator
+    this
+  }
+
+
+  /**
+    * Set the number of expected iterations for the built [[org.qcri.rheem.basic.operators.DoWhileOperator]].
+    *
+    * @param numExpectedIterations the expected number of iterations
+    * @return this instance
+    */
+  def withExpectedNumberOfiterations(numExpectedIterations: Int) = {
+    this.numExpectedIterations = numExpectedIterations
+    this
+  }
+
+  override protected def build =
+    inputDataQuanta.dataQuanta().doWhileJava[ConvOut](
+      conditionUdf, dataQuantaBodyBuilder, this.numExpectedIterations, this.udfCpuEstimator, this.udfRamEstimator
+    )(this.convOutClassTag)
+
+
+  /**
+    * Create a loop body builder that is based on [[DataQuanta]].
+    *
+    * @return the loop body builder
+    */
+  private def dataQuantaBodyBuilder =
+  new JavaFunction[DataQuanta[T], RheemTuple[DataQuanta[T], DataQuanta[ConvOut]]] {
+    override def apply(loopStart: DataQuanta[T]) = {
+      val loopStartBuilder = new FakeDataQuantaBuilder(loopStart)
+      val loopEndBuilders = bodyBuilder(loopStartBuilder)
+      new RheemTuple(loopEndBuilders.field0.dataQuanta(), loopEndBuilders.field1.dataQuanta())
+    }
+  }
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.DoWhileOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param numRepetitions  number of repetitions of the loop
+  * @param bodyBuilder     builds the loop body
+  */
+class RepeatDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
+                                 numRepetitions: Int,
+                                 bodyBuilder: JavaFunction[DataQuantaBuilder[_, T], DataQuantaBuilder[_, T]])
+                                (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends DataQuantaBuilder[RepeatDataQuantaBuilder[T], T] {
+
+  // Reuse the input TypeTrap to enforce type equality between input and output.
+  override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
+
+  // TODO: We could improve by combining the TypeTraps in the body loop.
+
+
+  override protected def build =
+    inputDataQuanta.dataQuanta().repeat(numRepetitions, startDataQuanta => {
+      val loopStartbuilder = new FakeDataQuantaBuilder(startDataQuanta)
+      bodyBuilder(loopStartbuilder).dataQuanta()
+    })
+
+}
+
+/**
+  * Wraps [[DataQuanta]] and exposes them as [[DataQuantaBuilder]], i.e., this is an adapter.
+  *
+  * @param _dataQuanta the wrapped [[DataQuanta]]
+  */
+class FakeDataQuantaBuilder[T](_dataQuanta: DataQuanta[T])(implicit javaPlanBuilder: JavaPlanBuilder)
+extends DataQuantaBuilder[FakeDataQuantaBuilder[T], T] {
+
+  override implicit def classTag = ClassTag(_dataQuanta.output.getType.getDataUnitType.getTypeClass)
+
+  override def dataQuanta() = _dataQuanta
+
+  /**
+    * Create the [[DataQuanta]] built by this instance. Note the configuration being done in [[dataQuanta()]].
+    *
+    * @return the created and partially configured [[DataQuanta]]
+    */
+  override protected def build: DataQuanta[T] = _dataQuanta
 }
