@@ -323,7 +323,7 @@ class ApiTest {
       .loadCollection(edges).withName("Load edges")
       .pageRank(20).withName("PageRank")
       .collect()
-      .map(t => t.field0.longValue -> t.field1.longValue)
+      .map(t => t.field0.longValue -> t.field1)
       .toMap
 
     print(pageRanks)

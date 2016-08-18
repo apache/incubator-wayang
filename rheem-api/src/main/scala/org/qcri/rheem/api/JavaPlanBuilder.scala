@@ -45,7 +45,7 @@ class JavaPlanBuilder(rheemCtx: RheemContext) {
     * @param source from that the [[Record]]s should be read
     * @return [[DataQuantaBuilder]] for the [[Record]]s in the table
     */
-  def readTable(source: TableSource) = load[Record](source).asRecords
+  def readTable(source: TableSource) = load(source).asRecords
 
 
   /**
