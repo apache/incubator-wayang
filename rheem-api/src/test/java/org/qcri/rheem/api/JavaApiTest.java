@@ -69,7 +69,7 @@ public class JavaApiTest {
                 .loadCollection(inputCollection).withName("load numbers")
                 .map(i -> i * i).withName("square")
                 .reduce((a, b) -> a + b).withName("sum")
-                .collect("testMapReduce()");
+                .collect();
 
         Assert.assertEquals(RheemCollections.asSet(1 + 4 + 9 + 16), RheemCollections.asSet(outputCollection));
     }
@@ -84,7 +84,7 @@ public class JavaApiTest {
                 .loadCollection(inputCollection).withName("load numbers")
                 .map(i -> i * i).withName("square")
                 .reduceByKey(i -> i & 1, (a, b) -> a + b).withName("sum")
-                .collect("testMapReduceBy()");
+                .collect();
 
         Assert.assertEquals(RheemCollections.asSet(4 + 16, 1 + 9), RheemCollections.asSet(outputCollection));
     }
@@ -104,7 +104,7 @@ public class JavaApiTest {
         Collection<Integer> outputCollection = javaPlanBuilder
                 .loadCollection(inputCollection).withName("load numbers")
                 .map(new AddOffset("offset")).withName("add offset").withBroadcast(offsetDataQuanta, "offset")
-                .collect("testBroadcast()");
+                .collect();
 
         Assert.assertEquals(RheemCollections.asSet(-2, -1, 0, 1, 2), RheemCollections.asSet(outputCollection));
     }
@@ -127,7 +127,7 @@ public class JavaApiTest {
                                 Integer.class, Integer.class
                         )
                 )).withName("Add 2")
-                .collect("testCustomOperatorShortCut()");
+                .collect();
 
         // Check the outcome.
         final List<Integer> expectedOutputValues = RheemArrays.asList(2, 3, 4, 5);
@@ -148,7 +148,7 @@ public class JavaApiTest {
                 .map(token -> token.replaceAll("\\W+", "").toLowerCase()).withName("To lower case")
                 .map(word -> new Tuple2<>(word, 1)).withName("Attach counter")
                 .reduceByKey(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.field0, t1.field1 + t2.field1)).withName("Sum counters")
-                .collect("testWordCount()");
+                .collect();
 
         // Check the outcome.
         final Set<Tuple2<String, Integer>> expectedOutputValues = RheemCollections.asSet(
@@ -173,7 +173,7 @@ public class JavaApiTest {
                 .map(token -> token.replaceAll("\\W+", "").toLowerCase()).withName("To lower case")
                 .map(word -> new Tuple2<>(word, 1)).withName("Attach counter")
                 .reduceByKey(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.field0, t1.field1 + t2.field1)).withName("Sum counters")
-                .collect("testWordCount()");
+                .collect();
 
         // Check the outcome.
         final Set<Tuple2<String, Integer>> expectedOutputValues = RheemCollections.asSet(
@@ -207,7 +207,7 @@ public class JavaApiTest {
                             );
                         }
                 ).withName("While <= 100")
-                .collect("testDoWhile()");
+                .collect();
 
         Set<Integer> expectedValues = RheemCollections.asSet(1, 2, 3, 6, 12, 24, 48, 96, 192);
         Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
@@ -250,7 +250,7 @@ public class JavaApiTest {
                         .reduce((a, b) -> a * b).withName("Multiply")
                         .flatMap(v -> Arrays.asList(v, v + 1)).withName("Duplicate").withOutputClass(Integer.class)
                 ).withName("Repeat 3x")
-                .collect("testRepeat()");
+                .collect();
 
         Set<Integer> expectedValues = RheemCollections.asSet(42, 43);
         Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
@@ -293,7 +293,7 @@ public class JavaApiTest {
                 .loadCollection(inputValues).withName("Load input values")
                 .filter(new SelectWords("selectors")).withName("Filter words")
                 .withBroadcast(selectorsDataSet, "selectors")
-                .collect("testBroadcast()");
+                .collect();
 
         // Verify the outcome.
         Set<String> expectedValues = RheemCollections.asSet("Hello", "World");
@@ -322,7 +322,7 @@ public class JavaApiTest {
                             (sortedGroup.get(sizeDivTwo - 1) + sortedGroup.get(sizeDivTwo)) / 2d :
                             (double) sortedGroup.get(sizeDivTwo);
                 })
-                .collect("testGroupBy()");
+                .collect();
 
         // Verify the outcome.
         Set<Double> expectedValues = RheemCollections.asSet(5d, 6d);
@@ -353,7 +353,7 @@ public class JavaApiTest {
         final Collection<Tuple2<String, Integer>> outputValues = dataQuanta1
                 .join(Tuple2::getField0, dataQuanta2, Tuple2::getField1)
                 .map(joinTuple -> new Tuple2<>(joinTuple.getField1().getField0(), joinTuple.getField0().getField1()))
-                .collect("testJoin()");
+                .collect();
 
         // Verify the outcome.
         Set<Tuple2<String, Integer>> expectedValues = RheemCollections.asSet(
@@ -377,7 +377,7 @@ public class JavaApiTest {
         // Execute the job.
         final LoadCollectionDataQuantaBuilder<Integer> dataQuanta1 = builder.loadCollection(inputValues1);
         final LoadCollectionDataQuantaBuilder<Integer> dataQuanta2 = builder.loadCollection(inputValues2);
-        final Collection<Integer> outputValues = dataQuanta1.intersect(dataQuanta2).collect("testIntersect()");
+        final Collection<Integer> outputValues = dataQuanta1.intersect(dataQuanta2).collect();
 
         // Verify the outcome.
         Set<Integer> expectedValues = RheemCollections.asSet(2, 3, 4, 5, 7, 8, 9);
@@ -406,7 +406,7 @@ public class JavaApiTest {
         // Execute the job.
         Collection<Tuple2<Long, Float>> pageRanks = builder.loadCollection(edges).asEdges()
                 .pageRank(20)
-                .collect("testPageRank()");
+                .collect();
         List<Tuple2<Long, Float>> sortedPageRanks = new ArrayList<>(pageRanks);
         sortedPageRanks.sort((pr1, pr2) -> Float.compare(pr2.field1, pr1.field1));
 
@@ -442,7 +442,7 @@ public class JavaApiTest {
                     return new Tuple2<>(distinctIds, 1);
                 })
                 .reduceByKey(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1()))
-                .collect("testZipWithId()");
+                .collect();
 
         // Check the output.
         Set<Tuple2<Integer, Integer>> expectedOutput = Collections.singleton(new Tuple2<>(42, 100));
@@ -477,13 +477,13 @@ public class JavaApiTest {
         final RheemContext rheemCtx = new RheemContext(this.sqlite3Configuration)
                 .with(Java.basicPlugin())
                 .with(Sqlite3.plugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemCtx);
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemCtx, "testSqlOnJava()");
         final Collection<String> outputValues = builder
                 .readTable(new Sqlite3TableSource("customer", "name", "age"))
                 .filter(r -> (Integer) r.getField(1) >= 18).withSqlUdf("age >= 18").withTargetPlatform(Java.platform())
                 .asRecords().projectRecords(new String[]{"name"})
                 .map(record -> (String) record.getField(0))
-                .collect("testSqlOnJava()");
+                .collect();
 
         // Test the outcome.
         Assert.assertEquals(
@@ -498,13 +498,13 @@ public class JavaApiTest {
         final RheemContext rheemCtx = new RheemContext(this.sqlite3Configuration)
                 .with(Java.basicPlugin())
                 .with(Sqlite3.plugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemCtx);
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemCtx, "testSqlOnSqlite3()");
         final Collection<String> outputValues = builder
                 .readTable(new Sqlite3TableSource("customer", "name", "age"))
                 .filter(r -> (Integer) r.getField(1) >= 18).withSqlUdf("age >= 18")
                 .asRecords().projectRecords(new String[]{"name"}).withTargetPlatform(Sqlite3.platform())
                 .map(record -> (String) record.getField(0))
-                .collect("testSqlOnSqlite3()");
+                .collect();
 
         // Test the outcome.
         Assert.assertEquals(

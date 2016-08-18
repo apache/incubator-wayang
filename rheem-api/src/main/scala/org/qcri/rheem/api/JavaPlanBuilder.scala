@@ -2,6 +2,7 @@ package org.qcri.rheem.api
 
 import java.util.{Collection => JavaCollection}
 
+import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
 import org.qcri.rheem.api.util.DataQuantaBuilderCache
 import org.qcri.rheem.basic.data.Record
@@ -14,18 +15,19 @@ import scala.reflect.ClassTag
 /**
   * Utility to build and execute [[RheemPlan]]s.
   */
-class JavaPlanBuilder(rheemCtx: RheemContext) {
+class JavaPlanBuilder(rheemCtx: RheemContext, jobName: String) {
+
+  def this(rheemContext: RheemContext) = this(rheemContext, null)
 
   /**
     * A [[PlanBuilder]] that actually takes care of building [[RheemPlan]]s.
     */
-  protected[api] val planBuilder = new PlanBuilder(rheemCtx)
+  protected[api] val planBuilder = new PlanBuilder(rheemCtx, jobName = jobName)
 
   /**
     * Feed a [[JavaCollection]] into a [[org.qcri.rheem.basic.operators.CollectionSource]].
     *
     * @param collection the [[JavaCollection]]
-    * @tparam T
     * @return a [[DataQuantaBuilder]] to further develop and configure the just started [[RheemPlan]]
     */
   def loadCollection[T](collection: JavaCollection[T]) = new LoadCollectionDataQuantaBuilder[T](collection)(this)
@@ -72,6 +74,51 @@ class JavaPlanBuilder(rheemCtx: RheemContext) {
     // Set up outputs.
     for (outputIndex <- 0 until operator.getNumOutputs)
       yield new CustomOperatorDataQuantaBuilder(operator, outputIndex, buildCache, inputs: _*)(this)
+  }
+
+  /**
+    * Defines user-code JAR files that might be needed to transfer to execution platforms.
+    *
+    * @param paths paths to JAR files that should be transferred
+    * @return this instance
+    */
+  def withUdfJars(paths: String*) = {
+    this.planBuilder withUdfJars (paths: _*)
+    this
+  }
+
+
+  /**
+    * Defines the [[Experiment]] that should collects metrics of the [[RheemPlan]].
+    *
+    * @param experiment the [[Experiment]]
+    * @return this instance
+    */
+  def withExperiment(experiment: Experiment) = {
+    this.planBuilder withExperiment experiment
+    this
+  }
+
+  /**
+    * Defines user-code JAR files that might be needed to transfer to execution platforms.
+    *
+    * @param classes whose JAR files should be transferred
+    * @return this instance
+    */
+  def withUdfJarsOf(classes: Class[_]*) = {
+    this.planBuilder withUdfJarsOf (classes: _*)
+    this
+  }
+
+  /**
+    * Defines the name for the [[RheemPlan]] that is being created.
+    *
+    * @param jobName the name
+    * @return this instance
+    */
+  def withJobName(jobName: String) = {
+    this.planBuilder withJobName jobName
+    this
   }
 
 }

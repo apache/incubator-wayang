@@ -282,12 +282,11 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * Feed the built [[DataQuanta]] into a [[LocalCallbackSink]] that collects all data quanta locally. This triggers
     * execution of the constructed [[RheemPlan]].
     *
-    * @param jobName optional name for the [[RheemPlan]]
     * @return the collected data quanta
     */
-  def collect(jobName: String): JavaCollection[Out] = {
+  def collect(): JavaCollection[Out] = {
     import scala.collection.JavaConversions._
-    this.dataQuanta().collect(jobName)
+    this.dataQuanta().collect()
   }
 
   /**
@@ -295,10 +294,9 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * execution of the constructed [[RheemPlan]].
     *
     * @param f       the [[JavaFunction]]
-    * @param jobName optional name for the [[RheemPlan]]
     * @return the collected data quanta
     */
-  def forEach(f: Consumer[Out], jobName: String): Unit = this.dataQuanta().foreachJava(f, jobName)
+  def forEach(f: Consumer[Out]): Unit = this.dataQuanta().foreachJava(f)
 
   /**
     * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.TextFileSink]]. This triggers
@@ -309,22 +307,20 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @return the collected data quanta
     */
   def writeTextFile(url: String, formatterUdf: SerializableFunction[Out, String], jobName: String): Unit =
-  this.writeTextFile(url, formatterUdf, jobName, null, null)
+  this.writeTextFile(url, formatterUdf, null, null)
 
   /**
     * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.TextFileSink]]. This triggers
     * execution of the constructed [[RheemPlan]].
     *
     * @param url     the URL of the file to be written
-    * @param jobName optional name for the [[RheemPlan]]
     * @return the collected data quanta
     */
   def writeTextFile(url: String,
                     formatterUdf: SerializableFunction[Out, String],
-                    jobName: String,
                     udfCpuLoad: LoadEstimator,
                     udfRamLoad: LoadEstimator): Unit =
-  this.dataQuanta().writeTextFileJava(url, formatterUdf, udfCpuLoad, udfRamLoad, jobName)
+  this.dataQuanta().writeTextFileJava(url, formatterUdf, udfCpuLoad, udfRamLoad)
 
   /**
     * Enriches the set of operations to [[Record]]-based ones. This instances must deal with data quanta of

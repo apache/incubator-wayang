@@ -14,7 +14,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator
 import org.qcri.rheem.core.plan.rheemplan._
 import org.qcri.rheem.core.platform.Platform
-import org.qcri.rheem.core.util.{ReflectionUtils, RheemCollections, Tuple => RheemTuple}
+import org.qcri.rheem.core.util.{Tuple => RheemTuple}
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
@@ -290,6 +290,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @return a new instance representing the [[UnionAllOperator]]'s output
     */
   def union(that: DataQuanta[Out]): DataQuanta[Out] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
     val unionAllOperator = new UnionAllOperator(dataSetType[Out])
     this.connectTo(unionAllOperator, 0)
     that.connectTo(unionAllOperator, 1)
@@ -303,6 +304,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @return a new instance representing the [[IntersectOperator]]'s output
     */
   def intersect(that: DataQuanta[Out]): DataQuanta[Out] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
     val intersectOperator = new IntersectOperator(dataSetType[Out])
     this.connectTo(intersectOperator, 0)
     that.connectTo(intersectOperator, 1)
@@ -337,6 +339,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
    that: DataQuanta[ThatOut],
    thatKeyUdf: SerializableFunction[ThatOut, Key])
   : DataQuanta[org.qcri.rheem.basic.data.Tuple2[Out, ThatOut]] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
     val joinOperator = new JoinOperator(
       new TransformationDescriptor(thisKeyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
       new TransformationDescriptor(thatKeyUdf, basicDataUnitType[ThatOut], basicDataUnitType[Key])
@@ -354,6 +357,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def cartesian[ThatOut: ClassTag](that: DataQuanta[ThatOut])
   : DataQuanta[org.qcri.rheem.basic.data.Tuple2[Out, ThatOut]] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
     val cartesianOperator = new CartesianOperator(dataSetType[Out], dataSetType[ThatOut])
     this.connectTo(cartesianOperator, 0)
     that.connectTo(cartesianOperator, 1)
@@ -512,6 +516,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @return this instance
     */
   def withBroadcast(sender: DataQuanta[_], broadcastName: String) = {
+    require(this.planBuilder eq sender.planBuilder, s"$this and $sender must use the same plan builders.")
     sender.broadcast(this, broadcastName)
     this
   }
@@ -541,19 +546,19 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @param f the action to perform
     */
-  def foreach(f: Out => _, jobName: String = null): Unit = foreachJava(toConsumer(f), jobName)
+  def foreach(f: Out => _): Unit = foreachJava(toConsumer(f))
 
   /**
     * Perform a local action on each data quantum in this instance. Triggers execution.
     *
     * @param f the action to perform as Java 8 lambda expression
     */
-  def foreachJava(f: Consumer[Out], jobName: String = null): Unit = {
+  def foreachJava(f: Consumer[Out]): Unit = {
     val sink = new LocalCallbackSink(f, dataSetType[Out])
     sink.setName("foreach()")
     this.connectTo(sink, 0)
     this.planBuilder.sinks += sink
-    this.planBuilder.buildAndExecute(jobName)
+    this.planBuilder.buildAndExecute()
     this.planBuilder.sinks.clear()
   }
 
@@ -562,7 +567,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @return the data quanta
     */
-  def collect(jobName: String = null): Iterable[Out] = {
+  def collect(): Iterable[Out] = {
     // Set up the sink.
     val collector = new java.util.LinkedList[Out]()
     val sink = LocalCallbackSink.createCollectingSink(collector, dataSetType[Out])
@@ -571,7 +576,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
 
     // Do the execution.
     this.planBuilder.sinks += sink
-    this.planBuilder.buildAndExecute(jobName)
+    this.planBuilder.buildAndExecute()
     this.planBuilder.sinks.clear()
 
     // Return the collected values.
@@ -589,9 +594,8 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def writeTextFile(url: String,
                     formatterUdf: Out => String,
                     udfCpuLoad: LoadEstimator = null,
-                    udfRamLoad: LoadEstimator = null,
-                    jobName: String = null): Unit = {
-    writeTextFileJava(url, toSerializableFunction(formatterUdf), udfCpuLoad, udfRamLoad, jobName)
+                    udfRamLoad: LoadEstimator = null): Unit = {
+    writeTextFileJava(url, toSerializableFunction(formatterUdf), udfCpuLoad, udfRamLoad)
   }
 
   /**
@@ -605,8 +609,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def writeTextFileJava(url: String,
                         formatterUdf: SerializableFunction[Out, String],
                         udfCpuLoad: LoadEstimator = null,
-                        udfRamLoad: LoadEstimator = null,
-                        jobName: String = null): Unit = {
+                        udfRamLoad: LoadEstimator = null): Unit = {
     val sink = new TextFileSink[Out](
       url,
       new TransformationDescriptor(formatterUdf, basicDataUnitType[Out], basicDataUnitType[String], udfCpuLoad, udfRamLoad)
@@ -616,7 +619,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
 
     // Do the execution.
     this.planBuilder.sinks += sink
-    this.planBuilder.buildAndExecute(jobName)
+    this.planBuilder.buildAndExecute()
     this.planBuilder.sinks.clear()
   }
 
@@ -660,12 +663,19 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @return this instance
     */
   def withUdfJars(paths: String*) = {
-    this.planBuilder.udfJars ++= paths
+    this.planBuilder withUdfJars (paths: _*)
     this
   }
 
+
+  /**
+    * Defines the [[Experiment]] that should collects metrics of the [[RheemPlan]].
+    *
+    * @param experiment the [[Experiment]]
+    * @return this instance
+    */
   def withExperiment(experiment: Experiment) = {
-    this.planBuilder.experiment = experiment
+    this.planBuilder withExperiment experiment
     this
   }
 
@@ -675,9 +685,12 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param classes whose JAR files should be transferred
     * @return this instance
     */
-  def withUdfJarsOf(classes: Class[_]*) =
-  withUdfJars(classes.map(ReflectionUtils.getDeclaringJar).filterNot(_ == null): _*)
+  def withUdfJarsOf(classes: Class[_]*) = {
+    this.planBuilder withUdfJarsOf (classes: _*)
+    this
+  }
 
+  override def toString = s"DataQuanta[$output]"
 
 }
 

@@ -192,15 +192,16 @@ class ApiTest {
   def testBroadcast() = {
     // Set up RheemContext.
     val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    val builder = new PlanBuilder(rheem)
 
     // Generate some test data.
     val inputStrings = Array("Hello", "World", "Hi", "Mars")
     val selectors = Array('o', 'l')
 
-    val selectorsDataSet = rheem.loadCollection(selectors).withName("Load selectors")
+    val selectorsDataSet = builder.loadCollection(selectors).withName("Load selectors")
 
     // Build and execute a word count RheemPlan.
-    val values = rheem
+    val values = builder
       .loadCollection(inputStrings).withName("Load input values")
       .filterJava(new ExtendedSerializablePredicate[String] {
 
@@ -409,7 +410,7 @@ class ApiTest {
       .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18").withTargetPlatforms(Java.platform)
       .projectRecords(Seq("name"))
       .map(_.getField(0).asInstanceOf[String])
-      .collect("SQLite3 with Scala API")
+      .collect()
       .toSet
 
     val expectedValues = Set("John", "Evelyn")
@@ -447,7 +448,7 @@ class ApiTest {
       .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18")
       .projectRecords(Seq("name")).withTargetPlatforms(Sqlite3.platform)
       .map(_.getField(0).asInstanceOf[String])
-      .collect("SQLite3 with Scala API")
+      .collect()
       .toSet
 
     val expectedValues = Set("John", "Evelyn")
