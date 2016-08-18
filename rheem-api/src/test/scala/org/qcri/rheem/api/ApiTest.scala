@@ -5,12 +5,11 @@ import java.net.URI
 import java.nio.file.{Files, Paths}
 import java.sql.{Connection, Statement}
 import java.util.function.Consumer
-import java.util.stream.Collectors
 
 import org.junit.{Assert, Test}
 import org.qcri.rheem.basic.RheemBasics
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
-import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
+import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializablePredicate
 import org.qcri.rheem.core.function.{ExecutionContext, TransformationDescriptor}
 import org.qcri.rheem.core.util.fs.LocalFileSystem
 import org.qcri.rheem.java.Java
@@ -27,7 +26,7 @@ class ApiTest {
   @Test
   def testReadMapCollect(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = (for (i <- 1 to 10) yield i).toArray
@@ -46,7 +45,7 @@ class ApiTest {
   @Test
   def testCustomOperator(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = (for (i <- 1 to 10) yield i).toArray
@@ -76,7 +75,7 @@ class ApiTest {
   @Test
   def testCustomOperatorShortCut(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = (for (i <- 1 to 10) yield i).toArray
@@ -102,7 +101,7 @@ class ApiTest {
   @Test
   def testWordCount(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array("Big data is big.", "Is data big data?")
@@ -124,7 +123,7 @@ class ApiTest {
   @Test
   def testWordCountOnSparkAndJava(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array("Big data is big.", "Is data big data?")
@@ -146,7 +145,7 @@ class ApiTest {
   @Test
   def testDoWhile(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array(1, 2)
@@ -169,7 +168,7 @@ class ApiTest {
   @Test
   def testRepeat(): Unit = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array(1, 2)
@@ -192,16 +191,17 @@ class ApiTest {
   @Test
   def testBroadcast() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    val builder = new PlanBuilder(rheem)
 
     // Generate some test data.
     val inputStrings = Array("Hello", "World", "Hi", "Mars")
     val selectors = Array('o', 'l')
 
-    val selectorsDataSet = rheem.loadCollection(selectors).withName("Load selectors")
+    val selectorsDataSet = builder.loadCollection(selectors).withName("Load selectors")
 
     // Build and execute a word count RheemPlan.
-    val values = rheem
+    val values = builder
       .loadCollection(inputStrings).withName("Load input values")
       .filterJava(new ExtendedSerializablePredicate[String] {
 
@@ -225,13 +225,13 @@ class ApiTest {
   @Test
   def testGroupBy() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
 
     val result = rheem
       .loadCollection(inputValues)
-      .groupByKey(_ % 2)
+      .groupByKey(_ % 2).withName("group odd and even")
       .map {
         group =>
           import scala.collection.JavaConversions._
@@ -239,7 +239,7 @@ class ApiTest {
           buffer.sortBy(identity)
           if (buffer.size % 2 == 0) (buffer(buffer.size / 2 - 1) + buffer(buffer.size / 2)) / 2
           else buffer(buffer.size / 2)
-      }
+      }.withName("median")
       .collect()
 
     val expectedValues = Set(5, 6)
@@ -249,7 +249,7 @@ class ApiTest {
   @Test
   def testGroup() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
 
@@ -273,7 +273,7 @@ class ApiTest {
   @Test
   def testJoin() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues1 = Array(("Water", 0), ("Tonic", 5), ("Juice", 10))
     val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
@@ -293,7 +293,7 @@ class ApiTest {
   @Test
   def testIntersect() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues1 = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
     val inputValues2 = Array(0, 2, 3, 3, 4, 5, 7, 8, 9, 11)
@@ -313,18 +313,18 @@ class ApiTest {
   def testPageRank() = {
     // Set up RheemContext.
     val rheem = new RheemContext()
-      .`with`(Java.graphPlugin)
-      .`with`(RheemBasics.graphPlugin)
-      .`with`(Java.basicPlugin)
+      .withPlugin(Java.graphPlugin)
+      .withPlugin(RheemBasics.graphPlugin)
+      .withPlugin(Java.basicPlugin)
     import org.qcri.rheem.api.graph._
 
-    val edges = Seq((0, 1), (0, 2), (0, 3), (1, 0), (2, 1), (3, 2), (3, 1)).map(t => new Edge(t._1, t._2))
+    val edges = Seq((0, 1), (0, 2), (0, 3), (1, 0), (2, 1), (3, 2), (3, 1)).map(t => Edge(t._1, t._2))
 
     val pageRanks = rheem
       .loadCollection(edges).withName("Load edges")
       .pageRank(20).withName("PageRank")
       .collect()
-      .map(t => t.field0 -> t.field1)
+      .map(t => t.field0.longValue -> t.field1)
       .toMap
 
     print(pageRanks)
@@ -337,7 +337,7 @@ class ApiTest {
   @Test
   def testZipWithId() = {
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin).`with`(Spark.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues = for (i <- 0 until 100; j <- 0 until 42) yield i
 
@@ -362,20 +362,20 @@ class ApiTest {
     val targetUrl = LocalFileSystem.toURL(new File(tempDir, "testWriteTextFile.txt"))
 
     // Set up RheemContext.
-    val rheem = new RheemContext().`with`(Java.basicPlugin)
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin)
 
     val inputValues = for (i <- 0 to 5) yield i * 0.333333333333
 
     val result = rheem
       .loadCollection(inputValues)
-      .writeTextFile(targetUrl, formatterUdf = d => f"${d%.2f}")
+      .writeTextFile(targetUrl, formatterUdf = d => f"${d % .2f}")
 
     val lines = scala.collection.mutable.Set[String]()
     Files.lines(Paths.get(new URI(targetUrl))).forEach(new Consumer[String] {
       override def accept(line: String): Unit = lines += line
     })
 
-    val expectedLines = inputValues.map(v => f"${v%.2f}").toSet
+    val expectedLines = inputValues.map(v => f"${v % .2f}").toSet
     Assert.assertEquals(expectedLines, lines)
   }
 
@@ -396,21 +396,21 @@ class ApiTest {
         statement.addBatch("INSERT INTO customer VALUES ('John', 20)")
         statement.addBatch("INSERT INTO customer VALUES ('Timmy', 16)")
         statement.addBatch("INSERT INTO customer VALUES ('Evelyn', 35)")
-        statement.executeBatch
+        statement.executeBatch()
       } finally {
         if (connection != null) connection.close()
       }
     }
 
     // Set up RheemContext.
-    val rheem = new RheemContext(configuration).`with`(Java.basicPlugin).`with`(Sqlite3.plugin)
+    val rheem = new RheemContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Sqlite3.plugin)
 
     val result = rheem
       .readTable(new Sqlite3TableSource("customer", "name", "age"))
       .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18").withTargetPlatforms(Java.platform)
       .projectRecords(Seq("name"))
       .map(_.getField(0).asInstanceOf[String])
-      .collect("SQLite3 with Scala API")
+      .collect()
       .toSet
 
     val expectedValues = Set("John", "Evelyn")
@@ -441,14 +441,14 @@ class ApiTest {
     }
 
     // Set up RheemContext.
-    val rheem = new RheemContext(configuration).`with`(Java.basicPlugin).`with`(Sqlite3.plugin)
+    val rheem = new RheemContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Sqlite3.plugin)
 
     val result = rheem
       .readTable(new Sqlite3TableSource("customer", "name", "age"))
       .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18")
       .projectRecords(Seq("name")).withTargetPlatforms(Sqlite3.platform)
       .map(_.getField(0).asInstanceOf[String])
-      .collect("SQLite3 with Scala API")
+      .collect()
       .toSet
 
     val expectedValues = Set("John", "Evelyn")

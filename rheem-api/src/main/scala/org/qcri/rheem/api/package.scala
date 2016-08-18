@@ -5,8 +5,7 @@ import _root_.java.util.function.{Consumer, ToLongBiFunction, ToLongFunction}
 
 import org.qcri.rheem.basic.data.Record
 import org.qcri.rheem.core.api.RheemContext
-import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
-import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
+import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, DefaultCardinalityEstimator, FixedSizeCardinalityEstimator}
 import org.qcri.rheem.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator}

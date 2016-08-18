@@ -17,13 +17,13 @@ import scala.reflect._
 /**
   * Utility to build [[RheemPlan]]s.
   */
-class PlanBuilder(rheemContext: RheemContext) {
+class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null) {
 
   private[api] val sinks = ListBuffer[Operator]()
 
-  private[api] val udfJars = scala.collection.mutable.Set[String]()
+  private val udfJars = scala.collection.mutable.Set[String]()
 
-  private[api] var experiment: Experiment = _
+  private var experiment: Experiment = _
 
   // We need to ensure that this module is shipped to Spark etc. in particular because of the Scala-to-Java function wrappers.
   ReflectionUtils.getDeclaringJar(this) match {
@@ -31,12 +31,55 @@ class PlanBuilder(rheemContext: RheemContext) {
     case _ =>
   }
 
+
+  /**
+    * Defines user-code JAR files that might be needed to transfer to execution platforms.
+    *
+    * @param paths paths to JAR files that should be transferred
+    * @return this instance
+    */
+  def withUdfJars(paths: String*) = {
+    this.udfJars ++= paths
+    this
+  }
+
+  /**
+    * Defines the [[Experiment]] that should collects metrics of the [[RheemPlan]].
+    *
+    * @param experiment the [[Experiment]]
+    * @return this instance
+    */
+  def withExperiment(experiment: Experiment) = {
+    this.experiment = experiment
+    this
+  }
+
+
+  /**
+    * Defines the name for the [[RheemPlan]] that is being created.
+    *
+    * @param jobName the name
+    * @return this instance
+    */
+  def withJobName(jobName: String) = {
+    this.jobName = jobName
+    this
+  }
+
+  /**
+    * Defines user-code JAR files that might be needed to transfer to execution platforms.
+    *
+    * @param classes whose JAR files should be transferred
+    * @return this instance
+    */
+  def withUdfJarsOf(classes: Class[_]*) =
+  withUdfJars(classes.map(ReflectionUtils.getDeclaringJar).filterNot(_ == null): _*)
+
+
   /**
     * Build the [[org.qcri.rheem.core.api.Job]] and execute it.
-    *
-    * @param jobName the name of the [[org.qcri.rheem.core.api.Job]]
     */
-  def buildAndExecute(jobName: String): Unit = {
+  def buildAndExecute(): Unit = {
     val plan: RheemPlan = new RheemPlan(this.sinks.toArray: _*)
     if (this.experiment == null) this.rheemContext.execute(jobName, plan, this.udfJars.toArray: _*)
     else this.rheemContext.execute(jobName, plan, this.experiment, this.udfJars.toArray: _*)

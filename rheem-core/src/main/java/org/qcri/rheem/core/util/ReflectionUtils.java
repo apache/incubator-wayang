@@ -6,17 +6,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.net.URI;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Utilities for reflection code.
@@ -292,4 +290,82 @@ public class ReflectionUtils {
         }
         return null;
     }
+
+    /**
+     * Retrieve the {@link Type}s of type parameters from an extended/implemented superclass/interface.
+     *
+     * @param subclass   the {@link Class} implementing the superclass/interface with type parameters
+     * @param superclass the superclass/interface defining the type parameters
+     * @return a {@link Map} mapping the type parameter names to their implemented {@link Type}
+     */
+    public static Map<String, Type> getTypeParameters(Class<?> subclass, Class<?> superclass) {
+        // Gather implemented interfaces and superclass.
+        List<Type> genericSupertypes = Stream.concat(
+                Stream.of(subclass.getGenericSuperclass()), Stream.of(subclass.getGenericInterfaces())
+        ).collect(Collectors.toList());
+
+        for (Type supertype : genericSupertypes) {
+
+            if (supertype instanceof Class<?>) {
+                // If the supertype is a Class, there are no type parameters to worry about.
+                Class<?> cls = (Class<?>) supertype;
+                if (!superclass.isAssignableFrom(cls)) continue;
+                return getTypeParameters(cls, superclass);
+
+            } else if (supertype instanceof ParameterizedType) {
+                // Handle type parameters.
+                ParameterizedType parameterizedType = (ParameterizedType) supertype;
+                final Type rawType = parameterizedType.getRawType();
+                if (!(rawType instanceof Class<?>)) continue;
+                Class<?> cls = (Class<?>) rawType;
+                if (!superclass.isAssignableFrom(cls)) continue;
+                final Map<String, Type> localTypeArguments = getTypeArguments(parameterizedType);
+
+                if (cls.equals(superclass)) {
+                    // If we reached the superclass, we are good.
+                    return localTypeArguments;
+
+                } else {
+                    // If we are not there yet, we need to consider to "redirect" type parameters.
+                    final Map<String, Type> preliminaryResult = getTypeParameters(cls, superclass);
+                    final Map<String, Type> result = new HashMap<>(preliminaryResult.size());
+                    for (Map.Entry<String, Type> entry : preliminaryResult.entrySet()) {
+                        if (entry.getValue() instanceof TypeVariable<?>) {
+                            final Type translatedTypeArgument = localTypeArguments.getOrDefault(
+                                    ((TypeVariable) entry.getValue()).getName(),
+                                    entry.getValue()
+                            );
+                            result.put(entry.getKey(), translatedTypeArgument);
+                        } else {
+                            result.put(entry.getKey(), entry.getValue());
+                        }
+                    }
+                    return result;
+
+                }
+            }
+        }
+
+        return Collections.emptyMap();
+    }
+
+    /**
+     * Put the {@link TypeVariable}s of a {@link ParameterizedType} into a {@link Map}.
+     *
+     * @param type the {@link ParameterizedType}
+     * @return the {@link Map} with the type parameter names as keys
+     */
+    private static Map<String, Type> getTypeArguments(ParameterizedType type) {
+        final Type[] typeArguments = type.getActualTypeArguments();
+        final Class<?> rawType = (Class<?>) type.getRawType();
+        final TypeVariable<? extends Class<?>>[] typeParameters = rawType.getTypeParameters();
+        Map<String, Type> result = new HashMap<>(typeArguments.length);
+        for (int i = 0; i < typeArguments.length; i++) {
+            final TypeVariable<?> typeParameter = typeParameters[i];
+            final Type typeArgument = typeArguments[i];
+            result.put(typeParameter.getName(), typeArgument);
+        }
+        return result;
+    }
+
 }
