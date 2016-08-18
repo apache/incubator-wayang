@@ -68,7 +68,7 @@ public class JavaApiTest {
         Collection<Integer> outputCollection = javaPlanBuilder
                 .loadCollection(inputCollection).withName("load numbers")
                 .map(i -> i * i).withName("square")
-                .globalReduce((a, b) -> a + b).withName("sum")
+                .reduce((a, b) -> a + b).withName("sum")
                 .collect("testMapReduce()");
 
         Assert.assertEquals(RheemCollections.asSet(1 + 4 + 9 + 16), RheemCollections.asSet(outputCollection));
@@ -83,7 +83,7 @@ public class JavaApiTest {
         Collection<Integer> outputCollection = javaPlanBuilder
                 .loadCollection(inputCollection).withName("load numbers")
                 .map(i -> i * i).withName("square")
-                .reduceBy(i -> i & 1, (a, b) -> a + b).withName("sum")
+                .reduceByKey(i -> i & 1, (a, b) -> a + b).withName("sum")
                 .collect("testMapReduceBy()");
 
         Assert.assertEquals(RheemCollections.asSet(4 + 16, 1 + 9), RheemCollections.asSet(outputCollection));
@@ -147,7 +147,7 @@ public class JavaApiTest {
                 .flatMap(line -> Arrays.asList(line.split("\\s+"))).withName("Split words")
                 .map(token -> token.replaceAll("\\W+", "").toLowerCase()).withName("To lower case")
                 .map(word -> new Tuple2<>(word, 1)).withName("Attach counter")
-                .reduceBy(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.field0, t1.field1 + t2.field1)).withName("Sum counters")
+                .reduceByKey(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.field0, t1.field1 + t2.field1)).withName("Sum counters")
                 .collect("testWordCount()");
 
         // Check the outcome.
@@ -172,7 +172,7 @@ public class JavaApiTest {
                 .flatMap(line -> Arrays.asList(line.split("\\s+"))).withName("Split words")
                 .map(token -> token.replaceAll("\\W+", "").toLowerCase()).withName("To lower case")
                 .map(word -> new Tuple2<>(word, 1)).withName("Attach counter")
-                .reduceBy(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.field0, t1.field1 + t2.field1)).withName("Sum counters")
+                .reduceByKey(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.field0, t1.field1 + t2.field1)).withName("Sum counters")
                 .collect("testWordCount()");
 
         // Check the outcome.
@@ -200,7 +200,7 @@ public class JavaApiTest {
                         values -> values.stream().mapToInt(i -> i).sum() > 100,
                         start -> {
                             final GlobalReduceDataQuantaBuilder<Integer> sum =
-                                    start.globalReduce((a, b) -> a + b).withName("sum");
+                                    start.reduce((a, b) -> a + b).withName("sum");
                             return new Tuple<>(
                                     start.union(sum).withName("Old+new"),
                                     sum.map(x -> x).withName("Identity (hotfix)")
@@ -247,7 +247,7 @@ public class JavaApiTest {
         final Collection<Integer> outputValues = new JavaPlanBuilder(rheemContext)
                 .loadCollection(inputValues).withName("Load input values")
                 .repeat(3, start -> start
-                        .globalReduce((a, b) -> a * b).withName("Multiply")
+                        .reduce((a, b) -> a * b).withName("Multiply")
                         .flatMap(v -> Arrays.asList(v, v + 1)).withName("Duplicate").withOutputClass(Integer.class)
                 ).withName("Repeat 3x")
                 .collect("testRepeat()");
@@ -312,7 +312,7 @@ public class JavaApiTest {
         // Execute the job.
         final Collection<Double> outputValues = builder
                 .loadCollection(inputValues).withName("Load input values")
-                .groupBy(i -> i % 2).withName("group odd and even")
+                .groupByKey(i -> i % 2).withName("group odd and even")
                 .map(group -> {
                     List<Integer> sortedGroup = StreamSupport.stream(group.spliterator(), false)
                             .sorted()
@@ -433,7 +433,7 @@ public class JavaApiTest {
         // Execute the job.
         Collection<Tuple2<Integer, Integer>> outputValues = builder.loadCollection(inputValues)
                 .zipWithId()
-                .groupBy(Tuple2::getField1)
+                .groupByKey(Tuple2::getField1)
                 .map(group -> {
                     int distinctIds = (int) StreamSupport.stream(group.spliterator(), false)
                             .map(Tuple2::getField0)
@@ -441,7 +441,7 @@ public class JavaApiTest {
                             .count();
                     return new Tuple2<>(distinctIds, 1);
                 })
-                .reduceBy(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1()))
+                .reduceByKey(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1()))
                 .collect("testZipWithId()");
 
         // Check the output.

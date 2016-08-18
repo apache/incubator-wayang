@@ -158,7 +158,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @param udf the UDF for the [[GlobalReduceOperator]]
     * @return a [[GlobalReduceDataQuantaBuilder]]
     */
-  def globalReduce(udf: SerializableBinaryOperator[Out]) = new GlobalReduceDataQuantaBuilder(this, udf)
+  def reduce(udf: SerializableBinaryOperator[Out]) = new GlobalReduceDataQuantaBuilder(this, udf)
 
   /**
     * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.ReduceByOperator]].
@@ -167,7 +167,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @param udf    the UDF for the [[org.qcri.rheem.basic.operators.ReduceByOperator]]
     * @return a [[ReduceByDataQuantaBuilder]]
     */
-  def reduceBy[Key](keyUdf: SerializableFunction[Out, Key], udf: SerializableBinaryOperator[Out]) =
+  def reduceByKey[Key](keyUdf: SerializableFunction[Out, Key], udf: SerializableBinaryOperator[Out]) =
   new ReduceByDataQuantaBuilder(this, keyUdf, udf)
 
   /**
@@ -176,7 +176,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @param keyUdf the key UDF for the [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]]
     * @return a [[GroupByDataQuantaBuilder]]
     */
-  def groupBy[Key](keyUdf: SerializableFunction[Out, Key]) =
+  def groupByKey[Key](keyUdf: SerializableFunction[Out, Key]) =
   new GroupByDataQuantaBuilder(this, keyUdf)
 
   /**
@@ -184,7 +184,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     *
     * @return a [[GlobalGroupDataQuantaBuilder]]
     */
-  def groupBy() = new GlobalGroupDataQuantaBuilder(this)
+  def group() = new GlobalGroupDataQuantaBuilder(this)
 
   /**
     * Feed the built [[DataQuanta]] of this and the given instance into a
