@@ -7,8 +7,7 @@ import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
 import org.qcri.rheem.basic.function.ProjectionDescriptor
 import org.qcri.rheem.basic.operators._
-import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
-import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
+import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.qcri.rheem.core.function.{FlatMapDescriptor, PredicateDescriptor, ReduceDescriptor, TransformationDescriptor}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator
@@ -459,20 +458,13 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @param n           number of iterations
     * @param bodyBuilder creates the loop body
-    * @param udfCpuLoad  optional [[LoadEstimator]] for the CPU consumption of the `udf`
-    * @param udfRamLoad  optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the final output of the [[LoopOperator]]
     */
-  def repeat(n: Int,
-             bodyBuilder: DataQuanta[Out] => DataQuanta[Out],
-             udfCpuLoad: LoadEstimator = null,
-             udfRamLoad: LoadEstimator = null) =
+  def repeat(n: Int, bodyBuilder: DataQuanta[Out] => DataQuanta[Out]) =
   repeatJava(n,
     new JavaFunction[DataQuanta[Out], DataQuanta[Out]] {
       override def apply(t: DataQuanta[Out]) = bodyBuilder(t)
-    },
-    udfCpuLoad,
-    udfRamLoad
+    }
   )
 
   /**
@@ -480,42 +472,20 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @param n           number of iterations
     * @param bodyBuilder creates the loop body
-    * @param udfCpuLoad  optional [[LoadEstimator]] for the CPU consumption of the `udf`
-    * @param udfRamLoad  optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the final output of the [[LoopOperator]]
     */
-  def repeatJava(n: Int,
-                 bodyBuilder: JavaFunction[DataQuanta[Out], DataQuanta[Out]],
-                 udfCpuLoad: LoadEstimator = null,
-                 udfRamLoad: LoadEstimator = null) = {
-    // Create the DoWhileOperator.
-    val loopOperator = new LoopOperator(
-      dataSetType[Out],
-      dataSetType[Int],
-      new PredicateDescriptor(
-        toSerializablePredicate[JavaCollection[Int]](i => RheemCollections.getSingle(i) >= n),
-        basicDataUnitType[JavaCollection[Int]],
-        null,
-        udfCpuLoad,
-        udfRamLoad
-      ),
-      n
-    )
-    this.connectTo(loopOperator, LoopOperator.INITIAL_INPUT_INDEX)
-    new DataQuanta(CollectionSource.singleton[Int](0, classOf[Int])).connectTo(loopOperator, LoopOperator.INITIAL_CONVERGENCE_INPUT_INDEX)
+  def repeatJava(n: Int, bodyBuilder: JavaFunction[DataQuanta[Out], DataQuanta[Out]]) = {
+    // Create the RepeatOperator.
+    val repeatOperator = new RepeatOperator(n, dataSetType[Out])
+    this.connectTo(repeatOperator, RepeatOperator.INITIAL_INPUT_INDEX)
 
-    // Create and wire the main loop body.
-    val loopDataQuanta = new DataQuanta[Out](loopOperator, LoopOperator.ITERATION_OUTPUT_INDEX)
+    // Create and wire the loop body.
+    val loopDataQuanta = new DataQuanta[Out](repeatOperator, RepeatOperator.ITERATION_OUTPUT_INDEX)
     val iterationResult = bodyBuilder.apply(loopDataQuanta)
-    iterationResult.connectTo(loopOperator, LoopOperator.ITERATION_INPUT_INDEX)
-
-    // Create and wire the convergence loop body.
-    val convergenceResult = new DataQuanta[Int](loopOperator, LoopOperator.ITERATION_CONVERGENCE_OUTPUT_INDEX)
-      .map(_ + 1).withName("Increment loop counter")
-    convergenceResult.connectTo(loopOperator, LoopOperator.ITERATION_CONVERGENCE_INPUT_INDEX)
+    iterationResult.connectTo(repeatOperator, RepeatOperator.ITERATION_INPUT_INDEX)
 
     // Return the iteration result.
-    new DataQuanta[Out](loopOperator, LoopOperator.FINAL_OUTPUT_INDEX)
+    new DataQuanta[Out](repeatOperator, RepeatOperator.FINAL_OUTPUT_INDEX)
   }
 
   /**

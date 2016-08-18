@@ -8,8 +8,7 @@ import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.qcri.rheem.basic.data.{Tuple2 => RT2}
 import org.qcri.rheem.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator}
-import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
-import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
+import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator
@@ -311,7 +310,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     *
     * @return a [[DoWhileDataQuantaBuilder]]
     */
-  def doWhile[Conv](conditionUdf: SerializablePredicate[_],
+  def doWhile[Conv](conditionUdf: SerializablePredicate[JavaCollection[Conv]],
                        bodyBuilder: JavaFunction[DataQuantaBuilder[_, Out], RheemTuple[DataQuantaBuilder[_, Out], DataQuantaBuilder[_, Conv]]]) =
   new DoWhileDataQuantaBuilder(this, conditionUdf.asInstanceOf[SerializablePredicate[JavaCollection[Conv]]], bodyBuilder)
 
@@ -1293,7 +1292,6 @@ class RepeatDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
 
   // TODO: We could improve by combining the TypeTraps in the body loop.
-
 
   override protected def build =
     inputDataQuanta.dataQuanta().repeat(numRepetitions, startDataQuanta => {

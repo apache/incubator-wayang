@@ -5,12 +5,11 @@ import java.net.URI
 import java.nio.file.{Files, Paths}
 import java.sql.{Connection, Statement}
 import java.util.function.Consumer
-import java.util.stream.Collectors
 
 import org.junit.{Assert, Test}
 import org.qcri.rheem.basic.RheemBasics
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
-import org.qcri.rheem.core.function.PredicateDescriptor.ExtendedSerializablePredicate
+import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializablePredicate
 import org.qcri.rheem.core.function.{ExecutionContext, TransformationDescriptor}
 import org.qcri.rheem.core.util.fs.LocalFileSystem
 import org.qcri.rheem.java.Java
@@ -231,7 +230,7 @@ class ApiTest {
 
     val result = rheem
       .loadCollection(inputValues)
-      .groupByKey(_ % 2)
+      .groupByKey(_ % 2).withName("group odd and even")
       .map {
         group =>
           import scala.collection.JavaConversions._
@@ -239,7 +238,7 @@ class ApiTest {
           buffer.sortBy(identity)
           if (buffer.size % 2 == 0) (buffer(buffer.size / 2 - 1) + buffer(buffer.size / 2)) / 2
           else buffer(buffer.size / 2)
-      }
+      }.withName("median")
       .collect()
 
     val expectedValues = Set(5, 6)
@@ -368,14 +367,14 @@ class ApiTest {
 
     val result = rheem
       .loadCollection(inputValues)
-      .writeTextFile(targetUrl, formatterUdf = d => f"${d%.2f}")
+      .writeTextFile(targetUrl, formatterUdf = d => f"${d % .2f}")
 
     val lines = scala.collection.mutable.Set[String]()
     Files.lines(Paths.get(new URI(targetUrl))).forEach(new Consumer[String] {
       override def accept(line: String): Unit = lines += line
     })
 
-    val expectedLines = inputValues.map(v => f"${v%.2f}").toSet
+    val expectedLines = inputValues.map(v => f"${v % .2f}").toSet
     Assert.assertEquals(expectedLines, lines)
   }
 
@@ -396,7 +395,7 @@ class ApiTest {
         statement.addBatch("INSERT INTO customer VALUES ('John', 20)")
         statement.addBatch("INSERT INTO customer VALUES ('Timmy', 16)")
         statement.addBatch("INSERT INTO customer VALUES ('Evelyn', 35)")
-        statement.executeBatch
+        statement.executeBatch()
       } finally {
         if (connection != null) connection.close()
       }

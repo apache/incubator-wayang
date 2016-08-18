@@ -6,7 +6,6 @@ import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
-import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Optional;

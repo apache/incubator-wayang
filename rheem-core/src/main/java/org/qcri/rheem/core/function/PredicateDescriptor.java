@@ -4,9 +4,7 @@ import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 
-import java.io.Serializable;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 /**
  * This descriptor pertains to predicates that consume a single data unit.
@@ -115,15 +113,6 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
      */
     public Optional<ProbabilisticDoubleInterval> getSelectivity() {
         return Optional.ofNullable(this.selectivity);
-    }
-
-    @FunctionalInterface
-    public interface SerializablePredicate<T> extends Predicate<T>, Serializable {
-
-    }
-
-    public interface ExtendedSerializablePredicate<T> extends SerializablePredicate<T>, ExtendedFunction {
-
     }
 
     @Override

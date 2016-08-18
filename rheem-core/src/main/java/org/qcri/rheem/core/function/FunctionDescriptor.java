@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.util.Optional;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * A function operates on single data units or collections of those.
@@ -68,5 +69,14 @@ public abstract class FunctionDescriptor {
      * Extends a {@link SerializableBinaryOperator} to an {@link ExtendedFunction}.
      */
     public interface ExtendedSerializableBinaryOperator<Type> extends SerializableBinaryOperator<Type>, ExtendedFunction {
+    }
+
+    @FunctionalInterface
+    public interface SerializablePredicate<T> extends Predicate<T>, Serializable {
+
+    }
+
+    public interface ExtendedSerializablePredicate<T> extends SerializablePredicate<T>, ExtendedFunction {
+
     }
 }
