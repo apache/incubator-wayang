@@ -24,55 +24,17 @@ import scala.reflect.ClassTag
   * Abstract base class for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
   * Java API for Rheem that compensates for lacking default and named arguments.
   */
-abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implicit javaPlanBuilder: JavaPlanBuilder)
-  extends Logging {
-
-  /**
-    * Lazy-initialized. The [[DataQuanta]] product of this builder.
-    */
-  private var result: DataQuanta[Out] = _
-
-  /**
-    * A name for the [[DataQuanta]] to be built.
-    */
-  private var name: String = _
-
-  /**
-    * An [[Experiment]] for the [[DataQuanta]] to be built.
-    */
-  private var experiment: Experiment = _
-
-  /**
-    * Broadcasts for the [[DataQuanta]] to be built.
-    */
-  private val broadcasts: ListBuffer[(String, DataQuantaBuilder[_, _])] = ListBuffer()
-
-  /**
-    * [[CardinalityEstimator]] for the [[DataQuanta]] to be built.
-    */
-  private var cardinalityEstimator: CardinalityEstimator = _
-
-  /**
-    * Target [[Platform]]s for the [[DataQuanta]] to be built.
-    */
-  private val targetPlatforms: ListBuffer[Platform] = ListBuffer()
-
-  /**
-    * Paths of UDF JAR files for the [[DataQuanta]] to be built.
-    */
-  private val udfJars: ListBuffer[String] = ListBuffer()
+trait DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out] extends Logging {
 
   /**
     * The type of the [[DataQuanta]] to be built.
     */
-  protected[api] val outputTypeTrap = getOutputTypeTrap
+  protected[api] def outputTypeTrap: TypeTrap
 
   /**
-    * Retrieve an intialization value for [[outputTypeTrap]].
-    *
-    * @return the [[TypeTrap]]
+    * Provide a [[JavaPlanBuilder]] to which this instance is associated.
     */
-  protected def getOutputTypeTrap = new TypeTrap
+  protected[api] implicit def javaPlanBuilder: JavaPlanBuilder
 
   /**
     * Set a name for the [[DataQuanta]] and its associated [[org.qcri.rheem.core.plan.rheemplan.Operator]]s.
@@ -80,10 +42,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     * @param name the name
     * @return this instance
     */
-  def withName(name: String): This = {
-    this.name = name
-    this.asInstanceOf[This]
-  }
+  def withName(name: String): This
 
   /**
     * Set an [[Experiment]] for the currently built [[org.qcri.rheem.core.api.Job]].
@@ -91,10 +50,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     * @param experiment the [[Experiment]]
     * @return this instance
     */
-  def withExperiment(experiment: Experiment): This = {
-    this.experiment = experiment
-    this.asInstanceOf[This]
-  }
+  def withExperiment(experiment: Experiment): This
 
   /**
     * Explicitly set an output [[DataSetType]] for the currently built [[DataQuanta]]. Note that it is not
@@ -103,10 +59,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     * @param outputType the output [[DataSetType]]
     * @return this instance
     */
-  def withOutputType(outputType: DataSetType[Out]) = {
-    this.outputTypeTrap.dataSetType = outputType
-    this
-  }
+  def withOutputType(outputType: DataSetType[Out]): This
 
   /**
     * Explicitly set an output [[Class]] for the currently built [[DataQuanta]]. Note that it is not
@@ -115,7 +68,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     * @param cls the output [[Class]]
     * @return this instance
     */
-  def withOutputClass(cls: Class[Out]) = this.withOutputType(DataSetType.createDefault(cls))
+  def withOutputClass(cls: Class[Out]): This
 
   /**
     * Register a broadcast with the [[DataQuanta]] to be built
@@ -124,10 +77,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     * @param broadcastName the name of the broadcast
     * @return this instance
     */
-  def withBroadcast[Sender <: DataQuantaBuilder[_, _]](sender: Sender, broadcastName: String): This = {
-    this.broadcasts += Tuple2(broadcastName, sender)
-    this.asInstanceOf[This]
-  }
+  def withBroadcast[Sender <: DataQuantaBuilder[_, _]](sender: Sender, broadcastName: String): This
 
   /**
     * Set a [[CardinalityEstimator]] for the currently built [[DataQuanta]].
@@ -135,10 +85,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     * @param cardinalityEstimator the [[CardinalityEstimator]]
     * @return this instance
     */
-  def withCardinalityEstimator(cardinalityEstimator: CardinalityEstimator): This = {
-    this.cardinalityEstimator = cardinalityEstimator
-    this.asInstanceOf[This]
-  }
+  def withCardinalityEstimator(cardinalityEstimator: CardinalityEstimator): This
 
   /**
     * Add a target [[Platform]] on which the currently built [[DataQuanta]] should be calculated. Can be invoked
@@ -147,10 +94,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     * @param platform the [[CardinalityEstimator]]
     * @return this instance
     */
-  def withTargetPlatform(platform: Platform): This = {
-    this.targetPlatforms += platform
-    this.asInstanceOf[This]
-  }
+  def withTargetPlatform(platform: Platform): This
 
   /**
     * Register the JAR file containing the given [[Class]] with the currently built [[org.qcri.rheem.core.api.Job]].
@@ -158,7 +102,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     * @param cls the [[Class]]
     * @return this instance
     */
-  def withUdfJarOf(cls: Class[_]): This = this.withUdfJar(ReflectionUtils.getDeclaringJar(cls))
+  def withUdfJarOf(cls: Class[_]): This
 
   /**
     * Register a JAR file with the currently built [[org.qcri.rheem.core.api.Job]].
@@ -166,10 +110,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     * @param path the path of the JAR file
     * @return this instance
     */
-  def withUdfJar(path: String): This = {
-    this.udfJars += path
-    this.asInstanceOf[This]
-  }
+  def withUdfJar(path: String): This
 
   /**
     * Provide a [[ClassTag]] for the constructed [[DataQuanta]].
@@ -272,8 +213,8 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     * @return a [[JoinDataQuantaBuilder]]
     */
   def join[ThatOut, Key](thisKeyUdf: SerializableFunction[Out, Key],
-                                      that: DataQuantaBuilder[_, ThatOut],
-                                      thatKeyUdf: SerializableFunction[ThatOut, Key]) =
+                         that: DataQuantaBuilder[_, ThatOut],
+                         thatKeyUdf: SerializableFunction[ThatOut, Key]) =
   new JoinDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
 
   /**
@@ -311,7 +252,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     * @return a [[DoWhileDataQuantaBuilder]]
     */
   def doWhile[Conv](conditionUdf: SerializablePredicate[JavaCollection[Conv]],
-                       bodyBuilder: JavaFunction[DataQuantaBuilder[_, Out], RheemTuple[DataQuantaBuilder[_, Out], DataQuantaBuilder[_, Conv]]]) =
+                    bodyBuilder: JavaFunction[DataQuantaBuilder[_, Out], RheemTuple[DataQuantaBuilder[_, Out], DataQuantaBuilder[_, Conv]]]) =
   new DoWhileDataQuantaBuilder(this, conditionUdf.asInstanceOf[SerializablePredicate[JavaCollection[Conv]]], bodyBuilder)
 
   /**
@@ -389,7 +330,108 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
     *
     * @return the [[DataQuanta]]
     */
-  protected[api] def dataQuanta(): DataQuanta[Out] = {
+  protected[api] def dataQuanta(): DataQuanta[Out]
+
+}
+
+/**
+  * Abstract base class for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
+  * Java API for Rheem that compensates for lacking default and named arguments.
+  */
+abstract class BasicDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implicit _javaPlanBuilder: JavaPlanBuilder)
+  extends Logging with DataQuantaBuilder[This, Out] {
+
+  /**
+    * Lazy-initialized. The [[DataQuanta]] product of this builder.
+    */
+  private var result: DataQuanta[Out] = _
+
+  /**
+    * A name for the [[DataQuanta]] to be built.
+    */
+  private var name: String = _
+
+  /**
+    * An [[Experiment]] for the [[DataQuanta]] to be built.
+    */
+  private var experiment: Experiment = _
+
+  /**
+    * Broadcasts for the [[DataQuanta]] to be built.
+    */
+  private val broadcasts: ListBuffer[(String, DataQuantaBuilder[_, _])] = ListBuffer()
+
+  /**
+    * [[CardinalityEstimator]] for the [[DataQuanta]] to be built.
+    */
+  private var cardinalityEstimator: CardinalityEstimator = _
+
+  /**
+    * Target [[Platform]]s for the [[DataQuanta]] to be built.
+    */
+  private val targetPlatforms: ListBuffer[Platform] = ListBuffer()
+
+  /**
+    * Paths of UDF JAR files for the [[DataQuanta]] to be built.
+    */
+  private val udfJars: ListBuffer[String] = ListBuffer()
+
+  /**
+    * The type of the [[DataQuanta]] to be built.
+    */
+  protected[api] val outputTypeTrap = getOutputTypeTrap
+
+  /**
+    * Retrieve an intialization value for [[outputTypeTrap]].
+    *
+    * @return the [[TypeTrap]]
+    */
+  protected def getOutputTypeTrap = new TypeTrap
+
+  override protected[api] implicit def javaPlanBuilder = _javaPlanBuilder
+
+  override def withName(name: String): This = {
+    this.name = name
+    this.asInstanceOf[This]
+  }
+
+  override def withExperiment(experiment: Experiment): This = {
+    this.experiment = experiment
+    this.asInstanceOf[This]
+  }
+
+  override def withOutputType(outputType: DataSetType[Out]): This = {
+    this.outputTypeTrap.dataSetType = outputType
+    this.asInstanceOf[This]
+  }
+
+  override def withOutputClass(cls: Class[Out]): This = this.withOutputType(DataSetType.createDefault(cls))
+
+  override def withBroadcast[Sender <: DataQuantaBuilder[_, _]](sender: Sender, broadcastName: String): This = {
+    this.broadcasts += Tuple2(broadcastName, sender)
+    this.asInstanceOf[This]
+  }
+
+  override def withCardinalityEstimator(cardinalityEstimator: CardinalityEstimator): This = {
+    this.cardinalityEstimator = cardinalityEstimator
+    this.asInstanceOf[This]
+  }
+
+  override def withTargetPlatform(platform: Platform): This = {
+    this.targetPlatforms += platform
+    this.asInstanceOf[This]
+  }
+
+  def withUdfJarOf(cls: Class[_]): This = this.withUdfJar(ReflectionUtils.getDeclaringJar(cls))
+
+  override def withUdfJar(path: String): This = {
+    this.udfJars += path
+    this.asInstanceOf[This]
+  }
+
+  override protected[api] implicit def classTag: ClassTag[Out] = ClassTag(outputTypeTrap.typeClass)
+
+  override protected[api] def dataQuanta(): DataQuanta[Out] = {
     if (this.result == null) {
       this.result = this.build
       if (this.name != null) this.result.withName(this.name)
@@ -421,7 +463,7 @@ abstract class DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implici
   */
 class UnarySourceDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](source: UnarySource[Out])
                                                                           (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[This, Out] {
+  extends BasicDataQuantaBuilder[This, Out] {
 
   override protected def build: DataQuanta[Out] = javaPlanBuilder.planBuilder.load(source)(this.classTag)
 
@@ -434,7 +476,7 @@ class UnarySourceDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](sourc
   * @param javaPlanBuilder the [[JavaPlanBuilder]]
   */
 class LoadCollectionDataQuantaBuilder[Out](collection: JavaCollection[Out])(implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[LoadCollectionDataQuantaBuilder[Out], Out] {
+  extends BasicDataQuantaBuilder[LoadCollectionDataQuantaBuilder[Out], Out] {
 
   // Try to infer the type class from the collection.
   locally {
@@ -459,7 +501,7 @@ class LoadCollectionDataQuantaBuilder[Out](collection: JavaCollection[Out])(impl
 class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
                                     udf: SerializableFunction[In, Out])
                                    (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[MapDataQuantaBuilder[In, Out], Out] {
+  extends BasicDataQuantaBuilder[MapDataQuantaBuilder[In, Out], Out] {
 
   /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
   private var udfCpuEstimator: LoadEstimator = _
@@ -515,7 +557,7 @@ class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
   */
 class ProjectionDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In], fieldNames: Array[String])
                                           (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[ProjectionDataQuantaBuilder[In, Out], Out] {
+  extends BasicDataQuantaBuilder[ProjectionDataQuantaBuilder[In, Out], Out] {
 
   /** [[LoadEstimator]] to estimate the CPU load of the projection. */
   private var udfCpuEstimator: LoadEstimator = _
@@ -558,7 +600,7 @@ class ProjectionDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_,
   */
 class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: SerializablePredicate[T])
                                 (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[FilterDataQuantaBuilder[T], T] {
+  extends BasicDataQuantaBuilder[FilterDataQuantaBuilder[T], T] {
 
   // Reuse the input TypeTrap to enforce type equality between input and output.
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
@@ -646,7 +688,7 @@ class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: 
 class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
                                         udf: SerializableFunction[In, java.lang.Iterable[Out]])
                                        (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[FlatMapDataQuantaBuilder[In, Out], Out] {
+  extends BasicDataQuantaBuilder[FlatMapDataQuantaBuilder[In, Out], Out] {
 
   /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
   private var udfCpuEstimator: LoadEstimator = _
@@ -720,7 +762,7 @@ class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T]
                                         keyUdf: SerializableFunction[T, Key],
                                         udf: SerializableBinaryOperator[T])
                                        (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[ReduceByDataQuantaBuilder[Key, T], T] {
+  extends BasicDataQuantaBuilder[ReduceByDataQuantaBuilder[Key, T], T] {
 
   // Reuse the input TypeTrap to enforce type equality between input and output.
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
@@ -818,7 +860,7 @@ class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T]
   */
 class GroupByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T], keyUdf: SerializableFunction[T, Key])
                                       (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[GroupByDataQuantaBuilder[Key, T], java.lang.Iterable[T]] {
+  extends BasicDataQuantaBuilder[GroupByDataQuantaBuilder[Key, T], java.lang.Iterable[T]] {
 
   implicit var keyTag: ClassTag[Key] = _
 
@@ -878,7 +920,7 @@ class GroupByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T],
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   */
 class GlobalGroupDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])(implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[GlobalGroupDataQuantaBuilder[T], java.lang.Iterable[T]] {
+  extends BasicDataQuantaBuilder[GlobalGroupDataQuantaBuilder[T], java.lang.Iterable[T]] {
 
   override protected def build = inputDataQuanta.dataQuanta().group()
 
@@ -894,7 +936,7 @@ class GlobalGroupDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])(
 class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
                                        udf: SerializableBinaryOperator[T])
                                       (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[GlobalReduceDataQuantaBuilder[T], T] {
+  extends BasicDataQuantaBuilder[GlobalReduceDataQuantaBuilder[T], T] {
 
   // Reuse the input TypeTrap to enforce type equality between input and output.
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
@@ -949,7 +991,7 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
 class UnionDataQuantaBuilder[T](inputDataQuanta0: DataQuantaBuilder[_, T],
                                 inputDataQuanta1: DataQuantaBuilder[_, T])
                                (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[UnionDataQuantaBuilder[T], T] {
+  extends BasicDataQuantaBuilder[UnionDataQuantaBuilder[T], T] {
 
   override def getOutputTypeTrap = inputDataQuanta0.outputTypeTrap
 
@@ -964,9 +1006,9 @@ class UnionDataQuantaBuilder[T](inputDataQuanta0: DataQuantaBuilder[_, T],
   * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
   */
 class IntersectDataQuantaBuilder[T](inputDataQuanta0: DataQuantaBuilder[_, T],
-                                inputDataQuanta1: DataQuantaBuilder[_, T])
-                               (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[IntersectDataQuantaBuilder[T], T] {
+                                    inputDataQuanta1: DataQuantaBuilder[_, T])
+                                   (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[IntersectDataQuantaBuilder[T], T] {
 
   override def getOutputTypeTrap = inputDataQuanta0.outputTypeTrap
 
@@ -987,7 +1029,7 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
                                            keyUdf0: SerializableFunction[In0, Key],
                                            keyUdf1: SerializableFunction[In1, Key])
                                           (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[JoinDataQuantaBuilder[In0, In1, Key], RT2[In0, In1]] {
+  extends BasicDataQuantaBuilder[JoinDataQuantaBuilder[In0, In1, Key], RT2[In0, In1]] {
 
   /** [[ClassTag]] or surrogate of [[Key]] */
   implicit var keyTag: ClassTag[Key] = _
@@ -1097,7 +1139,7 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
 class CartesianDataQuantaBuilder[In0, In1](inputDataQuanta0: DataQuantaBuilder[_, In0],
                                            inputDataQuanta1: DataQuantaBuilder[_, In1])
                                           (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[CartesianDataQuantaBuilder[In0, In1], RT2[In0, In1]] {
+  extends BasicDataQuantaBuilder[CartesianDataQuantaBuilder[In0, In1], RT2[In0, In1]] {
 
   // Since we are currently not looking at type parameters, we can statically determine the output type.
   locally {
@@ -1115,8 +1157,8 @@ class CartesianDataQuantaBuilder[In0, In1](inputDataQuanta0: DataQuantaBuilder[_
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   */
 class ZipWithIdDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
-                                       (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[ZipWithIdDataQuantaBuilder[T], RT2[java.lang.Long, T]] {
+                                   (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[ZipWithIdDataQuantaBuilder[T], RT2[java.lang.Long, T]] {
 
   // Since we are currently not looking at type parameters, we can statically determine the output type.
   locally {
@@ -1133,8 +1175,8 @@ class ZipWithIdDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   */
 class DistinctDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
-                                       (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[DistinctDataQuantaBuilder[T], T] {
+                                  (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[DistinctDataQuantaBuilder[T], T] {
 
   // Reuse the input TypeTrap to enforce type equality between input and output.
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
@@ -1149,13 +1191,14 @@ class DistinctDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   */
 class CountDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
-                                       (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[CountDataQuantaBuilder[T], java.lang.Long] {
+                               (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[CountDataQuantaBuilder[T], java.lang.Long] {
 
   // We can statically determine the output type.
   locally {
     this.outputTypeTrap.dataSetType = dataSetType[java.lang.Long]
   }
+
   override protected def build = inputDataQuanta.dataQuanta().count
 
 }
@@ -1176,7 +1219,7 @@ class CustomOperatorDataQuantaBuilder[T](operator: Operator,
                                          buildCache: DataQuantaBuilderCache,
                                          inputDataQuanta: DataQuantaBuilder[_, _]*)
                                         (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[DataQuantaBuilder[_, T], T] {
+  extends BasicDataQuantaBuilder[DataQuantaBuilder[_, T], T] {
 
   override protected def build = {
     // If the [[operator]] has multiple [[OutputSlot]]s, make sure that we only execute the build once.
@@ -1200,7 +1243,7 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
                                            conditionUdf: SerializablePredicate[JavaCollection[ConvOut]],
                                            bodyBuilder: JavaFunction[DataQuantaBuilder[_, T], RheemTuple[DataQuantaBuilder[_, T], DataQuantaBuilder[_, ConvOut]]])
                                           (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[DoWhileDataQuantaBuilder[T, ConvOut], T] {
+  extends BasicDataQuantaBuilder[DoWhileDataQuantaBuilder[T, ConvOut], T] {
 
   // TODO: Get the ClassTag right.
   implicit private var convOutClassTag: ClassTag[ConvOut] = ClassTag(DataSetType.none.getDataUnitType.getTypeClass)
@@ -1286,7 +1329,7 @@ class RepeatDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
                                  numRepetitions: Int,
                                  bodyBuilder: JavaFunction[DataQuantaBuilder[_, T], DataQuantaBuilder[_, T]])
                                 (implicit javaPlanBuilder: JavaPlanBuilder)
-  extends DataQuantaBuilder[RepeatDataQuantaBuilder[T], T] {
+  extends BasicDataQuantaBuilder[RepeatDataQuantaBuilder[T], T] {
 
   // Reuse the input TypeTrap to enforce type equality between input and output.
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
@@ -1307,7 +1350,7 @@ class RepeatDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
   * @param _dataQuanta the wrapped [[DataQuanta]]
   */
 class FakeDataQuantaBuilder[T](_dataQuanta: DataQuanta[T])(implicit javaPlanBuilder: JavaPlanBuilder)
-extends DataQuantaBuilder[FakeDataQuantaBuilder[T], T] {
+  extends BasicDataQuantaBuilder[FakeDataQuantaBuilder[T], T] {
 
   override implicit def classTag = ClassTag(_dataQuanta.output.getType.getDataUnitType.getTypeClass)
 
