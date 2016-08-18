@@ -45,8 +45,8 @@ class JavaPlanBuilder(rheemCtx: RheemContext) {
     * @param source from that the [[Record]]s should be read
     * @return [[DataQuantaBuilder]] for the [[Record]]s in the table
     */
-  def readTable(source: TableSource): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, Record], Record] =
-  load(source)
+  def readTable(source: TableSource) = load[Record](source).asRecords
+
 
   /**
     * Load [[DataQuanta]] from an arbitrary [[UnarySource]].
@@ -70,9 +70,8 @@ class JavaPlanBuilder(rheemCtx: RheemContext) {
     val buildCache = new DataQuantaBuilderCache
 
     // Set up outputs.
-    val x = for (outputIndex <- 0 until operator.getNumOutputs)
+    for (outputIndex <- 0 until operator.getNumOutputs)
       yield new CustomOperatorDataQuantaBuilder(operator, outputIndex, buildCache, inputs: _*)(this)
-    x
   }
 
 }

@@ -6,7 +6,7 @@ import java.util.{Collection => JavaCollection}
 
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.api.util.{DataQuantaBuilderCache, TypeTrap}
-import org.qcri.rheem.basic.data.{Tuple2 => RT2}
+import org.qcri.rheem.basic.data.{Record, Tuple2 => RT2}
 import org.qcri.rheem.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator}
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
@@ -21,10 +21,10 @@ import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /**
-  * Abstract base class for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
+  * Trait/interface for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
   * Java API for Rheem that compensates for lacking default and named arguments.
   */
-trait DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out] extends Logging {
+trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging {
 
   /**
     * The type of the [[DataQuanta]] to be built.
@@ -324,6 +324,21 @@ trait DataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out] extends Logging 
                     udfCpuLoad: LoadEstimator,
                     udfRamLoad: LoadEstimator): Unit =
   this.dataQuanta().writeTextFileJava(url, formatterUdf, udfCpuLoad, udfRamLoad, jobName)
+
+
+  /**
+    * Enriches the set of operator to [[Record]]-based ones. This instances must deal with data quanta of
+    * type [[Record]], though. Because of Java's type erasure, we need to leave it up to you whether this
+    * operation is applicable.
+    *
+    * @return a [[RecordDataQuantaBuilder]]
+    */
+  def asRecords: RecordDataQuantaBuilder[_ <: This] = {
+    this match {
+      case records: RecordDataQuantaBuilder[_] => records.asInstanceOf[RecordDataQuantaBuilder[This]]
+      case _ => new RecordDataQuantaBuilderDecorator(this.asInstanceOf[DataQuantaBuilder[_, Record]])
+    }
+  }
 
   /**
     * Get or create the [[DataQuanta]] built by this instance.

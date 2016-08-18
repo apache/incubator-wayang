@@ -1,6 +1,7 @@
 package org.qcri.rheem.api;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
@@ -38,6 +39,26 @@ import java.util.stream.StreamSupport;
  * Test suite for the Java API.
  */
 public class JavaApiTest {
+
+    private Configuration sqlite3Configuration;
+
+    @Before
+    public void setUp() throws SQLException, IOException {
+        // Generate test data.
+        this.sqlite3Configuration = new Configuration();
+        File sqlite3dbFile = File.createTempFile("rheem-sqlite3", "db");
+        sqlite3dbFile.deleteOnExit();
+        this.sqlite3Configuration.setProperty("rheem.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath());
+        try (Connection connection = Sqlite3.platform().createDatabaseDescriptor(this.sqlite3Configuration).createJdbcConnection()) {
+            Statement statement = connection.createStatement();
+            statement.addBatch("DROP TABLE IF EXISTS customer;");
+            statement.addBatch("CREATE TABLE customer (name TEXT, age INT);");
+            statement.addBatch("INSERT INTO customer VALUES ('John', 20)");
+            statement.addBatch("INSERT INTO customer VALUES ('Timmy', 16)");
+            statement.addBatch("INSERT INTO customer VALUES ('Evelyn', 35)");
+            statement.executeBatch();
+        }
+    }
 
     @Test
     public void testMapReduce() {
@@ -423,57 +444,46 @@ public class JavaApiTest {
         Assert.assertEquals(expectedLines, actualLines);
     }
 
-    @Ignore("Record operations not yet implemented in Java API.")
     @Test
     public void testSqlOnJava() throws IOException, SQLException {
-        // Generate test data.
-        Configuration configuration = new Configuration();
-        File sqlite3dbFile = File.createTempFile("rheem-sqlite3", "db");
-        sqlite3dbFile.deleteOnExit();
-        configuration.setProperty("rheem.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath());
-        try (Connection connection = Sqlite3.platform().createDatabaseDescriptor(configuration).createJdbcConnection()) {
-            Statement statement = connection.createStatement();
-            statement.addBatch("DROP TABLE IF EXISTS customer;");
-            statement.addBatch("CREATE TABLE customer (name TEXT, age INT);");
-            statement.addBatch("INSERT INTO customer VALUES ('John', 20)");
-            statement.addBatch("INSERT INTO customer VALUES ('Timmy', 16)");
-            statement.addBatch("INSERT INTO customer VALUES ('Evelyn', 35)");
-            statement.executeBatch();
-        }
-
         // Execute job.
-        JavaPlanBuilder builder = new JavaPlanBuilder(new RheemContext(configuration));
-        builder
+        final RheemContext rheemCtx = new RheemContext(this.sqlite3Configuration)
+                .with(Java.basicPlugin())
+                .with(Sqlite3.plugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemCtx);
+        final Collection<String> outputValues = builder
                 .readTable(new Sqlite3TableSource("customer", "name", "age"))
-                .filter(r -> (Integer) r.getField(1) >= 18).withSqlUdf("age >= 18")
-                .withTargetPlatform(Java.platform());
-                // .projectRe
+                .filter(r -> (Integer) r.getField(1) >= 18).withSqlUdf("age >= 18").withTargetPlatform(Java.platform())
+                .asRecords().projectRecords(new String[]{"name"})
+                .map(record -> (String) record.getField(0))
+                .collect("testSqlOnJava()");
+
+        // Test the outcome.
+        Assert.assertEquals(
+                RheemCollections.asSet("John", "Evelyn"),
+                RheemCollections.asSet(outputValues)
+        );
     }
 
-    @Ignore("Record operations not yet implemented in Java API.")
     @Test
     public void testSqlOnSqlite3() throws IOException, SQLException {
-        // Generate test data.
-        Configuration configuration = new Configuration();
-        File sqlite3dbFile = File.createTempFile("rheem-sqlite3", "db");
-        sqlite3dbFile.deleteOnExit();
-        configuration.setProperty("rheem.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath());
-        try (Connection connection = Sqlite3.platform().createDatabaseDescriptor(configuration).createJdbcConnection()) {
-            Statement statement = connection.createStatement();
-            statement.addBatch("DROP TABLE IF EXISTS customer;");
-            statement.addBatch("CREATE TABLE customer (name TEXT, age INT);");
-            statement.addBatch("INSERT INTO customer VALUES ('John', 20)");
-            statement.addBatch("INSERT INTO customer VALUES ('Timmy', 16)");
-            statement.addBatch("INSERT INTO customer VALUES ('Evelyn', 35)");
-            statement.executeBatch();
-        }
-
         // Execute job.
-        JavaPlanBuilder builder = new JavaPlanBuilder(new RheemContext(configuration));
-        builder
+        final RheemContext rheemCtx = new RheemContext(this.sqlite3Configuration)
+                .with(Java.basicPlugin())
+                .with(Sqlite3.plugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemCtx);
+        final Collection<String> outputValues = builder
                 .readTable(new Sqlite3TableSource("customer", "name", "age"))
                 .filter(r -> (Integer) r.getField(1) >= 18).withSqlUdf("age >= 18")
-                .withTargetPlatform(Java.platform());
-                // .projectRe
+                .asRecords().projectRecords(new String[]{"name"}).withTargetPlatform(Sqlite3.platform())
+                .map(record -> (String) record.getField(0))
+                .collect("testSqlOnSqlite3()");
+
+        // Test the outcome.
+        Assert.assertEquals(
+                RheemCollections.asSet("John", "Evelyn"),
+                RheemCollections.asSet(outputValues)
+        );
     }
+
 }
