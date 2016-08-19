@@ -4,13 +4,16 @@ import org.json.JSONObject;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator.EstimationFunction;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.util.JuelUtils;
+import org.qcri.rheem.core.util.ReflectionUtils;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.ToDoubleBiFunction;
 import java.util.function.ToLongBiFunction;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Utilities to deal with {@link LoadProfileEstimator}s.
@@ -30,6 +33,7 @@ public class LoadProfileEstimators {
      *      "ram":&lt;JUEL expression&gt;,
      *      "disk":&lt;JUEL expression&gt;,
      *      "network":&lt;JUEL expression&gt;,
+     *      "import":&lt;["optional", "operator", "properties"]&gt;,
      *      "in":&lt;#inputs&gt;,
      *      "out":&lt;#outputs&gt;,
      *      "p":&lt;correctness probability&gt;,
@@ -49,34 +53,38 @@ public class LoadProfileEstimators {
             int numInputs = spec.getInt("in");
             int numOutputs = spec.getInt("out");
             double correctnessProb = spec.getDouble("p");
+            List<String> operatorProperties = spec.has("import") ?
+                    StreamSupport.stream(spec.optJSONArray("import").spliterator(), false).map(Objects::toString).collect(Collectors.toList()) :
+                    Collections.emptyList();
+
 
             LoadEstimator<T> cpuEstimator = new DefaultLoadEstimator<>(
                     numInputs,
                     numOutputs,
                     correctnessProb,
                     CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseLoadJuel(spec.getString("cpu"), numInputs, numOutputs)
+                    parseLoadJuel(spec.getString("cpu"), numInputs, numOutputs, operatorProperties)
             );
             LoadEstimator<T> ramEstimator = new DefaultLoadEstimator<>(
                     numInputs,
                     numOutputs,
                     correctnessProb,
                     CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseLoadJuel(spec.getString("ram"), numInputs, numOutputs)
+                    parseLoadJuel(spec.getString("ram"), numInputs, numOutputs, operatorProperties)
             );
             LoadEstimator<T> diskEstimator = !spec.has("disk") ? null : new DefaultLoadEstimator<>(
                     numInputs,
                     numOutputs,
                     correctnessProb,
                     CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseLoadJuel(spec.getString("disk"), numInputs, numOutputs)
+                    parseLoadJuel(spec.getString("disk"), numInputs, numOutputs, operatorProperties)
             );
             LoadEstimator<T> networkEstimator = !spec.has("network") ? null : new DefaultLoadEstimator<>(
                     numInputs,
                     numOutputs,
                     correctnessProb,
                     CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseLoadJuel(spec.getString("network"), numInputs, numOutputs)
+                    parseLoadJuel(spec.getString("network"), numInputs, numOutputs, operatorProperties)
             );
 
             long overhead = spec.has("overhead") ? spec.getLong("overhead") : 0L;
@@ -97,17 +105,25 @@ public class LoadProfileEstimators {
     }
 
     /**
-     * Parses a JUEL expression and provides it as a {@link ToLongBiFunction}.
+     * Parses a JUEL expression and provides it as a {@link EstimationFunction}.
      *
-     * @param juel       a JUEL expression
-     * @param numInputs  the number of inputs of the estimated operator, reflected as JUEL variables {@code in0}, {@code in1}, ...
-     * @param numOutputs the number of outputs of the estimated operator, reflected as JUEL variables {@code out0}, {@code out1}, ...
+     * @param juel                 a JUEL expression
+     * @param numInputs            the number of inputs of the estimated operator, reflected as JUEL variables {@code in0}, {@code in1}, ...
+     * @param numOutputs           the number of outputs of the estimated operator, reflected as JUEL variables {@code out0}, {@code out1}, ...
+     * @param additionalProperties additional properties to consider
      * @return a {@link ToLongBiFunction} wrapping the JUEL expression
      */
-    private static ToLongBiFunction<long[], long[]> parseLoadJuel(String juel, int numInputs, int numOutputs) {
-        final Map<String, Class<?>> parameterClasses = createJuelParameterClasses(numInputs, numOutputs);
+    private static <T> EstimationFunction<T> parseLoadJuel(String juel,
+                                                           int numInputs,
+                                                           int numOutputs,
+                                                           List<String> additionalProperties) {
+        final Map<String, Class<?>> parameterClasses = createJuelParameterClasses(
+                numInputs,
+                numOutputs,
+                additionalProperties.toArray(new String[additionalProperties.size()])
+        );
         final JuelUtils.JuelFunction<Long> juelFunction = new JuelUtils.JuelFunction<>(juel, Long.class, parameterClasses);
-        return (inCards, outCards) -> applyJuelFunction(juelFunction, inCards, outCards);
+        return (op, inCards, outCards) -> applyJuelFunction(juelFunction, op, inCards, outCards, additionalProperties);
     }
 
     /**
@@ -121,7 +137,7 @@ public class LoadProfileEstimators {
     private static ToDoubleBiFunction<long[], long[]> parseResourceUsageJuel(String juel, int numInputs, int numOutputs) {
         final Map<String, Class<?>> parameterClasses = createJuelParameterClasses(numInputs, numOutputs);
         final JuelUtils.JuelFunction<Double> juelFunction = new JuelUtils.JuelFunction<>(juel, Double.class, parameterClasses);
-        return (inCards, outCards) -> applyJuelFunction(juelFunction, inCards, outCards);
+        return (inCards, outCards) -> applyJuelFunction(juelFunction, null, inCards, outCards, Collections.emptyList());
     }
 
     /**
@@ -131,13 +147,16 @@ public class LoadProfileEstimators {
      * @param numOutputs the number of ouputs
      * @return the parameter names mapped to their parameter classes
      */
-    private static Map<String, Class<?>> createJuelParameterClasses(int numInputs, int numOutputs) {
+    private static Map<String, Class<?>> createJuelParameterClasses(int numInputs, int numOutputs, String... additionalProperties) {
         final Map<String, Class<?>> parameterClasses = new HashMap<>(numOutputs + numOutputs);
         for (int i = 0; i < numInputs; i++) {
             parameterClasses.put("in" + i, Long.class);
         }
         for (int i = 0; i < numOutputs; i++) {
             parameterClasses.put("out" + i, Long.class);
+        }
+        for (String property : additionalProperties) {
+            parameterClasses.put(property, Double.class);
         }
         return parameterClasses;
     }
@@ -150,13 +169,20 @@ public class LoadProfileEstimators {
      * @param outputCardinalities the output cardinalities
      * @return the JUEL function result
      */
-    private static <T> T applyJuelFunction(JuelUtils.JuelFunction<T> juelFunction, long[] inputCardinalities, long[] outputCardinalities) {
+    private static <T> T applyJuelFunction(JuelUtils.JuelFunction<T> juelFunction,
+                                           Object artifact,
+                                           long[] inputCardinalities,
+                                           long[] outputCardinalities,
+                                           List<String> artifactProperties) {
         final Map<String, Object> parameters = new HashMap<>(inputCardinalities.length + outputCardinalities.length);
         for (int i = 0; i < inputCardinalities.length; i++) {
             parameters.put("in" + i, inputCardinalities[i]);
         }
         for (int i = 0; i < outputCardinalities.length; i++) {
             parameters.put("out" + i, outputCardinalities[i]);
+        }
+        for (String property : artifactProperties) {
+            parameters.put(property, ReflectionUtils.getProperty(artifact, property));
         }
         return juelFunction.apply(parameters, true);
     }

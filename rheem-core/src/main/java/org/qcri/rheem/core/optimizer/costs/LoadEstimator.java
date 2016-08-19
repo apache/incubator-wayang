@@ -16,6 +16,26 @@ public abstract class LoadEstimator<Executable> {
     public static final int UNSPECIFIED_NUM_SLOTS = -1;
 
     /**
+     * Functional interface for lambda expressions to express single-point load estimation functions.
+     *
+     * @param <T>
+     */
+    @FunctionalInterface
+    public interface EstimationFunction<T> {
+
+        /**
+         * Estimate the load for the given artifact, input, and output estimates.
+         *
+         * @param artifact        the artifact
+         * @param inputEstimates  the input cardinality estimates
+         * @param outputEstimates the output cardinality estimates
+         * @return the load estimate
+         */
+        long estimate(T artifact, long[] inputEstimates, long[] outputEstimates);
+
+    }
+
+    /**
      * Should be used to replace {@code null} {@link CardinalityEstimate}s.
      */
     protected final CardinalityEstimate nullCardinalityReplacement;
