@@ -10,9 +10,9 @@ import java.util.function.ToLongBiFunction;
 import java.util.stream.LongStream;
 
 /**
- * Implementation of {@link LoadEstimator} that uses a single-point cost function.
+ * Implementation of {@link LoadEstimator} that uses a interval-based cost function.
  */
-public class IntervalLoadEstimator extends LoadEstimator {
+public class IntervalLoadEstimator<T> extends LoadEstimator<T> {
 
     private final double correctnessProbablity;
 
@@ -60,12 +60,13 @@ public class IntervalLoadEstimator extends LoadEstimator {
      * @param confidence                  confidence in the new instance
      * @param nullCardinalityReplacement  replacement for {@code null}s as {@link CardinalityEstimate}s
      */
-    public static LoadEstimator createIOLinearEstimator(ExecutionOperator operator,
-                                                        long lowerLoadPerCardinalityUnit,
-                                                        long upperLoadPerCardinalityUnit,
-                                                        double confidence,
-                                                        CardinalityEstimate nullCardinalityReplacement) {
-        return new IntervalLoadEstimator(
+    public static <T extends ExecutionOperator> LoadEstimator<T> createIOLinearEstimator(
+            T operator,
+            long lowerLoadPerCardinalityUnit,
+            long upperLoadPerCardinalityUnit,
+            double confidence,
+            CardinalityEstimate nullCardinalityReplacement) {
+        return new IntervalLoadEstimator<>(
                 operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumInputs(),
                 operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumOutputs(),
                 confidence,
@@ -84,7 +85,7 @@ public class IntervalLoadEstimator extends LoadEstimator {
     }
 
     @Override
-    public LoadEstimate calculate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
+    public LoadEstimate calculate(T artifact, CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
         Validate.isTrue(inputEstimates.length >= this.numInputs || this.numInputs == UNSPECIFIED_NUM_SLOTS,
                 "Received %d input estimates, require %d.", inputEstimates.length, this.numInputs);
         Validate.isTrue(outputEstimates.length == this.numOutputs || this.numOutputs == UNSPECIFIED_NUM_SLOTS,
@@ -124,24 +125,5 @@ public class IntervalLoadEstimator extends LoadEstimator {
         return new LoadEstimate(lowerEstimate, upperEstimate, correctnessProbability);
     }
 
-    private long[][] enumerateCombinations(CardinalityEstimate[] cardinalityEstimates) {
-        if (cardinalityEstimates.length == 0) {
-            return new long[1][0];
-        }
-
-        int numCombinations = 1 << cardinalityEstimates.length;
-        long[][] combinations = new long[numCombinations][cardinalityEstimates.length];
-        for (int combinationIdentifier = 0; combinationIdentifier < numCombinations; combinationIdentifier++) {
-            for (int pos = 0; pos < cardinalityEstimates.length; pos++) {
-                int bit = (combinationIdentifier >>> pos) & 0x1;
-                final CardinalityEstimate cardinalityEstimate = this.replaceNullCardinality(cardinalityEstimates[pos]);
-                combinations[combinationIdentifier][pos] = bit == 0 ?
-                        cardinalityEstimate.getLowerEstimate() :
-                        cardinalityEstimate.getUpperEstimate();
-            }
-        }
-
-        return combinations;
-    }
 
 }

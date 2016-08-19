@@ -21,8 +21,9 @@ public class NestableLoadProfileEstimatorTest {
                 "\"overhead\":143," +
                 "\"ru\":\"${rheem:logGrowth(0.1, 0.1, 10000, in0+in1)}\"" +
                 "}";
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(specification);
+        final NestableLoadProfileEstimator estimator = LoadProfileEstimators.createFromJuelSpecification(specification);
         final LoadProfile estimate = estimator.estimate(
+                null,
                 new CardinalityEstimate[]{
                         new CardinalityEstimate(10, 10, 1d), new CardinalityEstimate(100, 100, 1d)
                 },

@@ -4,9 +4,11 @@ import org.apache.commons.io.IOUtils;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
@@ -159,7 +161,7 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
 //        final OptionalLong optionalFileSize;
 //        if (this.sourcePath == null) {
 //            optionalFileSize = OptionalLong.empty();
@@ -170,7 +172,7 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
 //            }
 //        }
 
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
+        final NestableLoadProfileEstimator estimator = LoadProfileEstimators.createFromJuelSpecification(
                 configuration.getStringProperty("rheem.java.tsvfilesource.load")
         );
         return Optional.of(estimator);

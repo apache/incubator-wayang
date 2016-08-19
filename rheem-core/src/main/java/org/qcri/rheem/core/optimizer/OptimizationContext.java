@@ -6,10 +6,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
-import org.qcri.rheem.core.optimizer.costs.LoadProfile;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ExecutionState;
@@ -468,11 +465,11 @@ public abstract class OptimizationContext {
             if (!this.operator.isExecutionOperator()) return;
 
             final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
-            final LoadProfileEstimator loadProfileEstimator = configuration
+            final LoadProfileEstimator<ExecutionOperator> loadProfileEstimator = configuration
                     .getOperatorLoadProfileEstimatorProvider()
                     .provideFor(executionOperator);
             try {
-                this.loadProfile = loadProfileEstimator.estimate(this);
+                this.loadProfile = LoadProfileEstimators.estimateLoadProfile(this, loadProfileEstimator);
             } catch (Exception e) {
                 throw new RheemException(String.format("Load profile estimation for %s failed.", this.operator), e);
             }

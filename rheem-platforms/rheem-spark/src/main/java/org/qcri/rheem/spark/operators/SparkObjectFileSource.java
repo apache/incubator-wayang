@@ -3,7 +3,9 @@ package org.qcri.rheem.spark.operators;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
@@ -69,7 +71,7 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
         // NB: Not measured, instead adapted from SparkTextFileSource.
 //        final OptionalLong optionalFileSize;
 //        if (this.sourcePath == null) {
@@ -82,7 +84,8 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
 //        }
 
         final String specification = configuration.getStringProperty("rheem.spark.objectfilesource.load");
-        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
+        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator =
+                LoadProfileEstimators.createFromJuelSpecification(specification);
         return Optional.of(mainEstimator);
     }
 
