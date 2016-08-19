@@ -32,7 +32,9 @@ public class JavaMapOperator<InputType, OutputType>
     /**
      * Creates a new instance.
      */
-    public JavaMapOperator(DataSetType inputType, DataSetType outputType, TransformationDescriptor<InputType, OutputType> functionDescriptor) {
+    public JavaMapOperator(DataSetType<InputType> inputType,
+                           DataSetType<OutputType> outputType,
+                           TransformationDescriptor<InputType, OutputType> functionDescriptor) {
         super(functionDescriptor, inputType, outputType);
     }
 

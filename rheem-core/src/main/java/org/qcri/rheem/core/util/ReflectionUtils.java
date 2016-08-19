@@ -37,10 +37,23 @@ public class ReflectionUtils {
     );
 
     private static final List<Tuple<Class<?>, Supplier<?>>> defaultParameterSuppliers = Arrays.asList(
+            new Tuple<>(byte.class, () -> (byte) 0),
+            new Tuple<>(Integer.class, () -> (byte) 0),
+            new Tuple<>(short.class, () -> (short) 0),
+            new Tuple<>(Short.class, () -> (short) 0),
             new Tuple<>(int.class, () -> 0),
             new Tuple<>(Integer.class, () -> 0),
             new Tuple<>(long.class, () -> 0L),
-            new Tuple<>(Long.class, () -> 0L)
+            new Tuple<>(Long.class, () -> 0L),
+            new Tuple<>(boolean.class, () -> false),
+            new Tuple<>(Boolean.class, () -> false),
+            new Tuple<>(float.class, () -> 0f),
+            new Tuple<>(Float.class, () -> 0f),
+            new Tuple<>(double.class, () -> 0d),
+            new Tuple<>(Double.class, () -> 0d),
+            new Tuple<>(char.class, () -> '\0'),
+            new Tuple<>(Character.class, () -> '\0'),
+            new Tuple<>(String.class, () -> "")
     );
 
     /**

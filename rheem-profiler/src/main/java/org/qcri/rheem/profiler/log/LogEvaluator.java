@@ -56,7 +56,7 @@ public class LogEvaluator {
 
     private static Collection<PartialExecution> loadLog(Configuration configuration) {
         try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
-            return executionLog.stream(configuration).collect(Collectors.toList());
+            return executionLog.stream().collect(Collectors.toList());
         } catch (Exception e) {
             throw new RheemException("Could not evaluate execution log.", e);
         }
@@ -207,7 +207,6 @@ public class LogEvaluator {
         }
         return stream;
     }
-
 
 
     public static void main(String[] args) throws IOException {

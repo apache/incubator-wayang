@@ -1,7 +1,5 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
@@ -11,9 +9,6 @@ import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.util.JsonSerializable;
-import org.qcri.rheem.core.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -264,50 +259,11 @@ public abstract class OptimizationContext {
      */
     public abstract Collection<DefaultOptimizationContext> getDefaultOptimizationContexts();
 
-    @SuppressWarnings("unchecked")
-    public OperatorContext addOperatorContextFromJson(JSONObject json) {
-        Operator operator;
-        try {
-            String operatorClassName = json.getString("operator");
-            Class<Operator> operatorClass = (Class<Operator>) Class.forName(operatorClassName);
-            operator = ReflectionUtils.instantiateSomehow(
-                    operatorClass,
-                    OperatorBase.STANDARD_OPERATOR_ARGS
-            );
-        } catch (Throwable t) {
-            throw new RheemException(String.format("Could not instantiate %s.", json.getString("operator")), t);
-        }
-
-        final JSONArray input = json.getJSONArray("input");
-        for (int inputIndex = 0; inputIndex < input.length(); inputIndex++) {
-            final JSONObject jsonInput = input.getJSONObject(inputIndex);
-            if (jsonInput.getBoolean("isBroadcast")) {
-                operator.addBroadcastInput(new InputSlot<>(
-                        jsonInput.getString("name"), operator, true, DataSetType.none()
-                ));
-            }
-        }
-
-        final OperatorContext operatorContext = new OperatorContext(operator);
-        for (int inputIndex = 0; inputIndex < input.length(); inputIndex++) {
-            final JSONObject jsonInput = input.getJSONObject(inputIndex);
-            operatorContext.setInputCardinality(inputIndex, CardinalityEstimate.fromJson(jsonInput));
-        }
-
-        JSONArray output = json.getJSONArray("output");
-        for (int outputIndex = 0; outputIndex < output.length(); outputIndex++) {
-            final JSONObject jsonOutput = output.getJSONObject(outputIndex);
-            operatorContext.setOutputCardinality(outputIndex, CardinalityEstimate.fromJson(jsonOutput));
-        }
-
-        return operatorContext;
-    }
-
     /**
      * Represents a single optimization context of an {@link Operator}. This can be thought of as a single, virtual
      * execution of the {@link Operator}.
      */
-    public class OperatorContext implements JsonSerializable {
+    public class OperatorContext {
 
         /**
          * The {@link Operator} that is being decorated with this instance.
@@ -538,46 +494,6 @@ public abstract class OptimizationContext {
             return String.format("%s[%s]", this.getClass().getSimpleName(), this.getOperator());
         }
 
-        @Override
-        public JSONObject toJson() {
-            JSONObject jsonThis = new JSONObject();
-            jsonThis.put("operator", this.operator.getClass().getCanonicalName());
-            jsonThis.put("executions", this.numExecutions);
-            JSONArray jsonInputCardinalities = new JSONArray();
-            for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
-                InputSlot<?> input = this.operator.getInput(inputIndex);
-                CardinalityEstimate inputCardinality = inputCardinalities[inputIndex];
-                if (inputCardinality != null) {
-                    final JSONObject jsonInputCardinality = this.convertToJson(input);
-                    inputCardinality.toJson(jsonInputCardinality);
-                    jsonInputCardinalities.put(jsonInputCardinality);
-                }
-            }
-            jsonThis.put("input", jsonInputCardinalities);
-            JSONArray jsonOutputCardinalities = new JSONArray();
-            for (int outputIndex = 0; outputIndex < outputCardinalities.length; outputIndex++) {
-                OutputSlot<?> output = this.operator.getOutput(outputIndex);
-                CardinalityEstimate outputCardinality = outputCardinalities[outputIndex];
-                if (outputCardinality != null) {
-                    final JSONObject jsonOutputCardinality = this.convertToJson(output);
-                    outputCardinality.toJson(jsonOutputCardinality);
-                    jsonOutputCardinalities.put(jsonOutputCardinality);
-                }
-            }
-            jsonThis.put("output", jsonOutputCardinalities);
-
-            return jsonThis;
-        }
-
-        private JSONObject convertToJson(Slot<?> slot) {
-            JSONObject json = new JSONObject();
-            json.put("name", slot.getName());
-            json.put("index", slot.getIndex());
-            if (slot instanceof InputSlot<?>) {
-                json.put("isBroadcast", ((InputSlot<?>) slot).isBroadcast());
-            }
-            return json;
-        }
     }
 
     /**
