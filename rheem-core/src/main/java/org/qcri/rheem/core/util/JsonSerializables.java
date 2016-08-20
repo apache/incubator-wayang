@@ -78,6 +78,7 @@ public class JsonSerializables {
 
     @SuppressWarnings("unchecked")
     public static <T> T deserializeAtLeastClass(JSONObject jsonObject, List<Tuple<Class<?>, Supplier<?>>> argSuppliers) {
+        if (jsonObject == null || jsonObject.equals(JSONObject.NULL)) return null;
         try {
             return deserialize(jsonObject);
         } catch (Exception e) {
@@ -93,6 +94,7 @@ public class JsonSerializables {
     }
 
     public static Object deserialize(Object o) {
+        if (o == null || o.equals(JSONObject.NULL)) return null;
         if (o instanceof JSONObject) {
             return deserialize((JSONObject) o);
         } else if (o instanceof JSONArray) {
@@ -103,6 +105,7 @@ public class JsonSerializables {
 
     @SuppressWarnings("unchecked")
     public static <T> T deserialize(JSONObject jsonObject) {
+        if (jsonObject == null || jsonObject.equals(JSONObject.NULL)) return null;
         final String className = jsonObject.getString("_class");
         final Class cls;
         try {
@@ -114,7 +117,8 @@ public class JsonSerializables {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T deserialize(JSONObject jsonObject, Class<T> cls) {
+    public static <T> T deserialize(Object jsonObject, Class<T> cls) {
+        if (jsonObject == null || jsonObject.equals(JSONObject.NULL)) return null;
         try {
             final Method fromJsonMethod = cls.getMethod("fromJson", JSONObject.class);
             return (T) fromJsonMethod.invoke(null, jsonObject);
@@ -136,7 +140,7 @@ public class JsonSerializables {
     public static <T> List<T> deserializeAllAsList(JSONArray jsonArray, Class<T> cls) {
         List<T> result = new ArrayList<>(jsonArray.length());
         for (Object jsonElement : jsonArray) {
-            result.add(deserialize((JSONObject) jsonElement, cls));
+            result.add(deserialize(jsonElement, cls));
         }
         return result;
     }
@@ -156,7 +160,7 @@ public class JsonSerializables {
         T[] result = (T[]) Array.newInstance(cls, jsonArray.length());
         int i = 0;
         for (Object jsonElement : jsonArray) {
-            result[i++] = deserialize((JSONObject) jsonElement, cls);
+            result[i++] = deserialize(jsonElement, cls);
         }
         return result;
     }
