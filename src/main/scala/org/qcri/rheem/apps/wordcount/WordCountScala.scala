@@ -28,15 +28,16 @@ class WordCountScala(plugin: Plugin*) {
     plugin.foreach(rheemCtx.register)
 
     rheemCtx
+      .withJobName(s"WordCount ($inputUrl)")
+      .withExperiment(experiment)
+      .withUdfJarsOf(this.getClass)
       .readTextFile(inputUrl).withName("Load file")
       .flatMap(_.split("\\W+"), selectivity = wordsPerLine).withName("Split words")
       .filter(_.nonEmpty, selectivity = 0.99).withName("Filter empty words")
       .map(word => (word.toLowerCase, 1)).withName("To lower case, add counter")
       .reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 + c2._2)).withName("Add counters")
       .withCardinalityEstimator((in: Long) => math.round(in * 0.01))
-      .withUdfJarsOf(classOf[WordCountScala])
-      .withExperiment(experiment)
-      .collect(jobName = s"WordCount ($inputUrl)")
+      .collect()
   }
 
 }

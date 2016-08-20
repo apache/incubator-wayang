@@ -25,6 +25,10 @@ class SimWords(plugins: Plugin*) {
     val rheemCtx = new RheemContext(configuration)
     plugins.foreach(rheemCtx.register)
     val planBuilder = new PlanBuilder(rheemCtx)
+      .withJobName(
+        jobName = s"SimWords ($inputFile, reach=$neighborhoodReach, clusters=$numClusters, $numIterations iterations)"
+      ).withExperiment(experiment)
+      .withUdfJarsOf(this.getClass)
 
     // Create the word dictionary
     val _minWordOccurrences = minWordOccurrences
@@ -94,10 +98,7 @@ class SimWords(plugins: Plugin*) {
       .mapJava(new ResolveClusterFunction("wordIds")).withBroadcast(wordIds, "wordIds").withName("Resolve word IDs")
 
 
-    clusters.withUdfJarsOf(classOf[SimWords]).withExperiment(experiment)
-      .collect(
-      jobName = s"SimWords ($inputFile, reach=$neighborhoodReach, clusters=$numClusters, $numIterations iterations)"
-    )
+    clusters.collect()
   }
 
 }

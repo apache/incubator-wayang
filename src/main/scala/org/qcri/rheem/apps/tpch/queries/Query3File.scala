@@ -47,6 +47,10 @@ class Query3File(plugins: Plugin*) extends ExperimentDescriptor {
 
     val rheemCtx = new RheemContext(configuration)
     plugins.foreach(rheemCtx.register)
+    val planBuilder = new PlanBuilder(rheemCtx)
+      .withUdfJarsOf(classOf[Query3Sqlite])
+      .withExperiment(experiment)
+      .withJobName(s"TPC-H (${this.getClass.getSimpleName})")
 
     val customerFile = configuration.getStringProperty("rheem.apps.tpch.csv.customer")
     val ordersFile = configuration.getStringProperty("rheem.apps.tpch.csv.orders")
@@ -60,7 +64,7 @@ class Query3File(plugins: Plugin*) extends ExperimentDescriptor {
 
     // Read, filter, and project the customer data.
     val _segment = segment
-    val customerKeys = rheemCtx
+    val customerKeys = planBuilder
       .readTextFile(customerFile)
       .withName("Read customers")
       .map(Customer.parseCsv)
@@ -74,7 +78,7 @@ class Query3File(plugins: Plugin*) extends ExperimentDescriptor {
 
     // Read, filter, and project the order data.
     val _date = CsvUtils.parseDate(date)
-    val orders = rheemCtx
+    val orders = planBuilder
       .readTextFile(ordersFile)
       .withName("Read orders")
       .map(Order.parseCsv)
@@ -87,7 +91,7 @@ class Query3File(plugins: Plugin*) extends ExperimentDescriptor {
       .withName("Project orders")
 
     // Read, filter, and project the line item data.
-    val lineItems = rheemCtx
+    val lineItems = planBuilder
       .readTextFile(lineitemFile)
       .withName("Read line items")
       .map(LineItem.parseCsv)
@@ -124,9 +128,7 @@ class Query3File(plugins: Plugin*) extends ExperimentDescriptor {
         }
       )
       .withName("Aggregate revenue")
-      .withUdfJarsOf(classOf[Query3Sqlite])
-      .withExperiment(experiment)
-      .collect(s"TPC-H (${this.getClass.getSimpleName})")
+      .collect()
   }
 
 }

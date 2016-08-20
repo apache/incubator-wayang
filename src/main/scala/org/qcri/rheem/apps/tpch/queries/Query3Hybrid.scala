@@ -48,6 +48,10 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
 
     val rheemCtx = new RheemContext(configuration)
     plugins.foreach(rheemCtx.register)
+    val planBuilder = new PlanBuilder(rheemCtx)
+      .withJobName(s"TPC-H (${this.getClass.getSimpleName})")
+      .withUdfJarsOf(classOf[Query3Hybrid])
+      .withExperiment(experiment)
 
     val lineitemFile = configuration.getStringProperty("rheem.apps.tpch.csv.lineitem")
 
@@ -58,7 +62,7 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
 
     // Read, filter, and project the customer data.
     val _segment = segment
-    val customerKeys = rheemCtx
+    val customerKeys = planBuilder
       .readTable(new Sqlite3TableSource("CUSTOMER", Customer.fields: _*))
       .withName("Load CUSTOMER table")
 
@@ -73,7 +77,7 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
 
     // Read, filter, and project the order data.
     val _date = CsvUtils.parseDate(date)
-    val orders = rheemCtx
+    val orders = planBuilder
       .load(new Sqlite3TableSource("ORDERS", Order.fields: _*))
       .withName("Load ORDERS table")
 
@@ -91,7 +95,7 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
       .withName("Unpack orders")
 
     // Read, filter, and project the line item data.
-    val lineItems = rheemCtx
+    val lineItems = planBuilder
       .readTextFile(lineitemFile)
       .withName("Read line items")
       .map(LineItem.parseCsv)
@@ -128,9 +132,7 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
         }
       )
       .withName("Aggregate revenue")
-      .withUdfJarsOf(classOf[Query3Hybrid])
-      .withExperiment(experiment)
-      .collect(s"TPC-H (${this.getClass.getSimpleName})")
+      .collect()
   }
 
 }

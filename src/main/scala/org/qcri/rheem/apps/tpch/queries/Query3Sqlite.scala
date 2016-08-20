@@ -48,6 +48,10 @@ class Query3Sqlite(plugins: Plugin*) extends ExperimentDescriptor {
 
     val rheemCtx = new RheemContext(configuration)
     plugins.foreach(rheemCtx.register)
+    val planBuilder = new PlanBuilder(rheemCtx)
+      .withJobName(s"TPC-H (${this.getClass.getSimpleName})")
+      .withUdfJarsOf(classOf[Query3Sqlite])
+      .withExperiment(experiment)
 
     experiment.getSubject.addConfiguration("jdbcUrl", configuration.getStringProperty("rheem.sqlite3.jdbc.url"))
     experiment.getSubject.addConfiguration("segment", segment)
@@ -55,7 +59,7 @@ class Query3Sqlite(plugins: Plugin*) extends ExperimentDescriptor {
 
     // Read, filter, and project the customer data.
     val _segment = segment
-    val customerKeys = rheemCtx
+    val customerKeys = planBuilder
       .readTable(new Sqlite3TableSource("CUSTOMER", Customer.fields: _*))
       .withName("Load CUSTOMER table")
 
@@ -70,7 +74,7 @@ class Query3Sqlite(plugins: Plugin*) extends ExperimentDescriptor {
 
     // Read, filter, and project the order data.
     val _date = CsvUtils.parseDate(date)
-    val orders = rheemCtx
+    val orders = planBuilder
       .load(new Sqlite3TableSource("ORDERS", Order.fields: _*))
       .withName("Load ORDERS table")
 
@@ -88,7 +92,7 @@ class Query3Sqlite(plugins: Plugin*) extends ExperimentDescriptor {
       .withName("Unpack orders")
 
     // Read, filter, and project the line item data.
-    val lineItems = rheemCtx
+    val lineItems = planBuilder
       .readTable(new Sqlite3TableSource("LINEITEM", LineItem.fields: _*))
       .withName("Load LINEITEM table")
 
@@ -108,11 +112,13 @@ class Query3Sqlite(plugins: Plugin*) extends ExperimentDescriptor {
     customerKeys
       .join[(Long, Long, Int, Int), Long](identity, orders, _._2)
       .withName("Join customers with orders")
+
       .map(_.field1) // (orderKey, custKey, orderDate, shipPriority)
       .withName("Project customer-order join product")
 
       .join[(Long, Double), Long](_._1, lineItems, _._1)
       .withName("Join CO with line items")
+
       .map(coli => Query3Result(
         orderKey = coli.field1._1,
         revenue = coli.field1._2,
@@ -129,9 +135,7 @@ class Query3Sqlite(plugins: Plugin*) extends ExperimentDescriptor {
         }
       )
       .withName("Aggregate revenue")
-      .withUdfJarsOf(classOf[Query3Sqlite])
-      .withExperiment(experiment)
-      .collect(s"TPC-H (${this.getClass.getSimpleName})")
+      .collect()
   }
 
 }

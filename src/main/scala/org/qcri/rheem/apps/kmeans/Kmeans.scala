@@ -23,6 +23,10 @@ class Kmeans(plugin: Plugin*) {
     // Set up the RheemContext.
     implicit val rheemCtx = new RheemContext(configuration)
     plugin.foreach(rheemCtx.register)
+    val planBuilder = new PlanBuilder(rheemCtx)
+      .withJobName(s"k-means ($inputFile, k=$k, $iterations iterations)")
+      .withExperiment(experiment)
+      .withUdfJarsOf(this.getClass)
 
     // Read and parse the input file(s).
     val points = rheemCtx
@@ -66,9 +70,7 @@ class Kmeans(plugin: Plugin*) {
     // Collect the result.
     finalCentroids
       .map(_.toPoint).withName("Strip centroid names")
-      .withUdfJarsOf(classOf[Kmeans])
-      .withExperiment(experiment)
-      .collect(jobName = s"k-means ($inputFile, k=$k, $iterations iterations)")
+      .collect()
   }
 
 

@@ -26,6 +26,9 @@ class CrocoPR(plugins: Plugin*) {
     val rheemCtx = new RheemContext(configuration)
     plugins.foreach(rheemCtx.register)
     implicit val planBuilder = new PlanBuilder(rheemCtx)
+      .withExperiment(experiment)
+      .withJobName(s"CrocoPR ($inputUrl1, $inputUrl2, $numIterations iterations)")
+      .withUdfJarsOf(this.getClass)
 
     // Read the input files.
     val links1 = readLinks(inputUrl1)
@@ -60,9 +63,7 @@ class CrocoPR(plugins: Plugin*) {
       .map(identity).withName("Hotfix")
       .join[VertexId, Long](_.field0, vertexIds, _.field0).withName("Join page ranks with vertex IDs")
       .map(joinTuple => (joinTuple.field1.field1, joinTuple.field0.field1)).withName("Make page ranks readable")
-      .withUdfJarsOf(this.getClass)
-      .withExperiment(experiment)
-      .collect(jobName = s"CrocoPR ($inputUrl1, $inputUrl2, $numIterations iterations)")
+      .collect()
 
   }
 
@@ -123,7 +124,7 @@ object CrocoPR extends ExperimentDescriptor {
 
     // Print the result.
     println(s"Calculated ${pageRanks.size} page ranks:")
-    StdOut.printLimited(pageRanks, formatter = (pr: (String, Float)) => s"${pr._1} has a page rank of ${pr._2}")
+    StdOut.printLimited(pageRanks, formatter = (pr: (String, java.lang.Float)) => s"${pr._1} has a page rank of ${pr._2}")
   }
 
 }
