@@ -29,7 +29,7 @@ class Kmeans(plugin: Plugin*) {
       .withUdfJarsOf(this.getClass)
 
     // Read and parse the input file(s).
-    val points = rheemCtx
+    val points = planBuilder
       .readTextFile(inputFile).withName("Read file")
       .map { line =>
         val fields = line.split(",")
@@ -37,7 +37,7 @@ class Kmeans(plugin: Plugin*) {
       }.withName("Create points")
 
     // Create initial centroids.
-    val initialCentroids = rheemCtx
+    val initialCentroids = planBuilder
       .loadCollection(Kmeans.createRandomCentroids(k)).withName("Load random centroids")
 
     // Do the k-means loop.
