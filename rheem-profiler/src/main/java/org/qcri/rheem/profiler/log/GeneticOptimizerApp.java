@@ -52,33 +52,33 @@ public class GeneticOptimizerApp {
                 );
             }
         }
-        System.out.printf("Found %d execution operator types.\n", estimators.size());
+        System.out.printf("Found %d execution operator types in %d partial executions.\n", estimators.size(), this.partialExecutions.size());
 
-        // Create a random individual and calculate its fitness.
-        Random random = new Random();
-        Individual bestIndividual = this.optimizationSpace.createRandomIndividual(random);
-        double bestFitness = bestIndividual.calculateFitness(this.partialExecutions, estimators, this.configuration);
-        int generation = 0;
-        while (generation++ < 20000) {
-            final Individual individual = bestIndividual.mutate(random, this.optimizationSpace, 0.2d, 0.05d);
-            final double fitness = individual.calculateFitness(this.partialExecutions, estimators, this.configuration);
-            if (fitness > bestFitness) {
-                System.out.println("Fitness of best individual: " + fitness);
-                bestFitness = fitness;
-                bestIndividual = individual;
+        GeneticOptimizer optimizer = new GeneticOptimizer(
+                this.optimizationSpace, this.partialExecutions, estimators, this.configuration
+        );
+
+        List<Individual> population = optimizer.createInitialPopulation();
+        for (int i = 1; i <= 100000; i++) {
+            population = optimizer.evolve(population);
+            if (i % 10 == 0) {
+                System.out.printf("Fittest individual of generation %d: %.4f\n", i, population.get(0).getFitness());
             }
         }
+        final Individual fittestIndividual = population.get(0);
+
 
         // Print the variable values.
         for (Variable variable : this.optimizationSpace.getVariables()) {
-            System.out.printf("%s -> %.2f\n", variable.getId(), variable.getValue(bestIndividual));
+            System.out.printf("%s -> %.2f\n", variable.getId(), variable.getValue(fittestIndividual));
         }
 
+        this.partialExecutions.sort((e1, e2) -> Long.compare(e2.getMeasuredExecutionTime(), e1.getMeasuredExecutionTime()));
         for (PartialExecution partialExecution : this.partialExecutions) {
-            final TimeEstimate timeEstimate = bestIndividual.estimateTime(partialExecution, estimators, this.configuration);
-            System.out.printf("Estimated: %s, actual %s (%d operators)\n",
-                    timeEstimate,
+            final TimeEstimate timeEstimate = fittestIndividual.estimateTime(partialExecution, estimators, this.configuration);
+            System.out.printf("Actual %s; estimated: %s (%d operators)\n",
                     Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
+                    timeEstimate,
                     partialExecution.getOperatorExecutions().size());
         }
     }

@@ -712,7 +712,7 @@ public class Configuration {
         return this.getOptionalDoubleProperty(key).getAsDouble();
     }
 
-    public double getDoubleProperty(String key, long fallback) {
+    public double getDoubleProperty(String key, double fallback) {
         return this.getOptionalDoubleProperty(key).orElse(fallback);
     }
 

@@ -39,6 +39,7 @@ public class Variable {
     }
 
     public double mutate(double currentValue, Random random) {
+        final double deltaSmoothing = 10;
         if (!Double.isFinite(this.minValue)) {
             if (!Double.isInfinite(this.maxValue)) {
                 return currentValue + random.nextGaussian() * Math.abs(currentValue);
@@ -47,8 +48,8 @@ public class Variable {
                 return this.maxValue - Math.abs(random.nextGaussian()) * delta;
             }
         } else if (!Double.isFinite(this.maxValue)) {
-            double delta = currentValue - this.minValue;
-            return this.minValue + Math.abs(random.nextGaussian()) * delta;
+            double delta = currentValue - this.minValue + deltaSmoothing;
+            return Math.max(this.minValue, currentValue + random.nextGaussian() * delta / 10);
         }
         return random.nextDouble() * (this.maxValue - this.minValue) + this.minValue;
     }
