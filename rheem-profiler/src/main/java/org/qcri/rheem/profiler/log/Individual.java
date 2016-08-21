@@ -36,10 +36,10 @@ public class Individual {
         return this.genome;
     }
 
-    public Individual mutate(Random random, OptimizationSpace optimizationSpace, double mutationProb, double resetProb) {
+    public Individual mutate(Random random, int[] activatedGenes, OptimizationSpace optimizationSpace, double mutationProb, double resetProb) {
         Individual mutant = new Individual(this.genome.length);
         double[] genome = mutant.getGenome();
-        for (int i = 0; i < genome.length; i++) {
+        for (int i : activatedGenes) {
             final double uniform = random.nextDouble();
             if (uniform <= mutationProb) {
                 final double mutatedGene = optimizationSpace.getVariable(i).mutate(this.genome[i], random);
@@ -66,24 +66,22 @@ public class Individual {
     }
 
     /**
-     * Calculates the fitness of this instance, which should be a positive value.
-     * @param partialExecutions
-     * @param estimators
-     * @param configuration
-     * @return
+     * Calculate and cache the fitness of this instance, which should be a positive value.
+     *
+     * @param partialExecutions on which this instance should be evaluated
+     * @param estimators        the {@link LoadProfileEstimator}s being configured by this instance
+     * @param configuration     the {@link Configuration}
+     * @see #getFitness()
      */
-    public double calculateFitness(List<PartialExecution> partialExecutions,
-                             Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
-                             Configuration configuration) {
-        if (Double.isNaN(this.fitness)) {
-            this.fitness = 0d;
-            for (PartialExecution partialExecution : partialExecutions) {
-                TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, configuration);
-                double partialFitness = this.calculateAbsolutePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
-                this.fitness += partialFitness;
-            }
+    public void calculateFitness(List<PartialExecution> partialExecutions,
+                                 Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+                                 Configuration configuration) {
+        this.fitness = 0d;
+        for (PartialExecution partialExecution : partialExecutions) {
+            TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, configuration);
+            double partialFitness = this.calculateAbsolutePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
+            this.fitness += partialFitness;
         }
-        return this.fitness;
     }
 
     public double getFitness() {

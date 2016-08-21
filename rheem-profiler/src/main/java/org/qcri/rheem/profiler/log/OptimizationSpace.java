@@ -42,4 +42,8 @@ public class OptimizationSpace {
     public List<Variable> getVariables() {
         return this.variableVector;
     }
+
+    public int getNumDimensions() {
+        return numDimensions;
+    }
 }

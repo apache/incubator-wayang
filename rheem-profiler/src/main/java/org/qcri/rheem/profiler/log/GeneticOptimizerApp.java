@@ -9,10 +9,7 @@ import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.util.Formats;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -54,17 +51,31 @@ public class GeneticOptimizerApp {
         }
         System.out.printf("Found %d execution operator types in %d partial executions.\n", estimators.size(), this.partialExecutions.size());
 
-        GeneticOptimizer optimizer = new GeneticOptimizer(
+        GeneticOptimizer generalOptimizer = new GeneticOptimizer(
                 this.optimizationSpace, this.partialExecutions, estimators, this.configuration
         );
-
-        List<Individual> population = optimizer.createInitialPopulation();
-        for (int i = 1; i <= 100000; i++) {
-            population = optimizer.evolve(population);
-            if (i % 10 == 0) {
-                System.out.printf("Fittest individual of generation %d: %.4f\n", i, population.get(0).getFitness());
+        List<Individual> population = generalOptimizer.createInitialPopulation();
+        Random random = new Random();
+        for (int i = 0; i < 10; i++) {
+            List<PartialExecution> partialExecutionSample = this.partialExecutions.stream()
+                    .filter(pe -> random.nextDouble() < 0.01)
+                    .collect(Collectors.toList());
+            GeneticOptimizer optimizer = new GeneticOptimizer(
+                    this.optimizationSpace, partialExecutionSample, estimators, this.configuration
+            );
+            optimizer.updateFitness(population);
+            for (int j = 0; j < 10000; j++) {
+                population = optimizer.evolve(population);
             }
+            System.out.printf("Fittest individual of generation %,d: %,.4f\n", i, population.get(0).getFitness());
         }
+
+        generalOptimizer.updateFitness(population);
+        System.out.printf("Fittest individual: %,.4f\n", population.get(0).getFitness());
+        for (int i = 1; i <= 100; i++) {
+            population = generalOptimizer.evolve(population);
+        }
+        System.out.printf("Fittest individual: %,.4f\n", population.get(0).getFitness());
         final Individual fittestIndividual = population.get(0);
 
 
@@ -96,26 +107,33 @@ public class GeneticOptimizerApp {
                     operator.getClass().getSimpleName() + "->" + operator.getOutput(i).getName()
             );
         }
-        switch (10 *operator.getNumInputs() + operator.getNumOutputs()) {
+        Collection<Variable> employedVariables = new LinkedList<>();
+        employedVariables.addAll(Arrays.asList(inVars));
+        employedVariables.addAll(Arrays.asList(outVars));
+        switch (10 * operator.getNumInputs() + operator.getNumOutputs()) {
             case 10:
                 // unary sink
                 return new DynamicLoadProfileEstimator(
-                        (ind, in, out) -> in[0] * inVars[0].getValue(ind)
+                        (ind, in, out) -> in[0] * inVars[0].getValue(ind),
+                        employedVariables
                 );
             case 1:
                 // unary source
                 return new DynamicLoadProfileEstimator(
-                        (ind, in, out) -> out[0] * outVars[0].getValue(ind)
+                        (ind, in, out) -> out[0] * outVars[0].getValue(ind),
+                        employedVariables
                 );
             case 11:
                 // one-to-one
                 return new DynamicLoadProfileEstimator(
-                        (ind, in, out) -> in[0] * inVars[0].getValue(ind) + out[0] * outVars[0].getValue(ind)
+                        (ind, in, out) -> in[0] * inVars[0].getValue(ind) + out[0] * outVars[0].getValue(ind),
+                        employedVariables
                 );
             case 21:
                 // two-to-one
                 return new DynamicLoadProfileEstimator(
-                        (ind, in, out) -> in[0] * inVars[0].getValue(ind) + out[0] * outVars[0].getValue(ind)
+                        (ind, in, out) -> in[0] * inVars[0].getValue(ind) + out[0] * outVars[0].getValue(ind),
+                        employedVariables
                 );
             case 32:
                 // do-while loop
@@ -124,7 +142,8 @@ public class GeneticOptimizerApp {
                                 + in[1] * inVars[1].getValue(ind)
                                 + in[2] * inVars[2].getValue(ind)
                                 + out[0] * outVars[0].getValue(ind)
-                                + out[1] * outVars[1].getValue(ind)
+                                + out[1] * outVars[1].getValue(ind),
+                        employedVariables
                 );
             case 22:
                 // repeat loop
@@ -132,7 +151,8 @@ public class GeneticOptimizerApp {
                         (ind, in, out) -> in[0] * inVars[0].getValue(ind)
                                 + in[1] * inVars[1].getValue(ind)
                                 + out[0] * outVars[0].getValue(ind)
-                                + out[1] * outVars[1].getValue(ind)
+                                + out[1] * outVars[1].getValue(ind),
+                        employedVariables
                 );
             case 43:
                 // loop
@@ -143,7 +163,8 @@ public class GeneticOptimizerApp {
                                 + in[3] * inVars[3].getValue(ind)
                                 + out[0] * outVars[0].getValue(ind)
                                 + out[1] * outVars[1].getValue(ind)
-                                + out[2] * outVars[2].getValue(ind)
+                                + out[2] * outVars[2].getValue(ind),
+                        employedVariables
                 );
             default:
                 throw new RuntimeException("Cannot create estimator for " + operator);
