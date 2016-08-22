@@ -61,6 +61,9 @@ public class Individual {
                              double mutationProb,
                              double resetProb) {
 
+        // Make at least one mutation more likely.
+        if (mutationProb > 0d) mutationProb = Math.max(mutationProb, 1 / activatedGenes.cardinality());
+
         final double smoothing = 1d;
         int numActivatedGenes = activatedGenes.cardinality();
         double logGainProduct = 0d;
