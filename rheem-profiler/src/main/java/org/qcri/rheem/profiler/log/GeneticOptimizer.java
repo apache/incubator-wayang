@@ -192,4 +192,8 @@ public class GeneticOptimizer {
     public Bitmask getActivatedGenes() {
         return activatedGenes;
     }
+
+    public Collection<PartialExecution> getData() {
+        return this.observations;
+    }
 }

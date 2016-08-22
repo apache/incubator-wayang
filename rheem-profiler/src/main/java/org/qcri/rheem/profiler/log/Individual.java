@@ -45,6 +45,7 @@ public class Individual {
     }
 
     private void updateMaturity(int index, double maturity) {
+        maturity = 1d;
         this.maturity[index] = maturity;
         if (Double.isNaN(this.minMaturity) || this.minMaturity > maturity) {
             this.minMaturity = maturity;
@@ -115,10 +116,13 @@ public class Individual {
     public void calculateFitness(Collection<PartialExecution> partialExecutions,
                                  Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
                                  Configuration configuration) {
+        boolean isAbsolute = configuration.getStringProperty("rheem.profiler.ga.fitness", "relative").equals("absolute");
         this.fitness = 0d;
         for (PartialExecution partialExecution : partialExecutions) {
             TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, configuration);
-            double partialFitness = this.calculateAbsolutePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
+            double partialFitness = isAbsolute ?
+                    this.calculateAbsolutePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime()) :
+                    this.calculateRelativePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
             this.fitness += partialFitness;
         }
         this.fitness /= partialExecutions.size();
@@ -144,7 +148,7 @@ public class Individual {
     }
 
     private double calculateRelativePartialFitness(TimeEstimate timeEstimate, long actualTime) {
-        final long smoothing = 1000L;
+        final long smoothing = 1L;
         final long meanEstimate = timeEstimate.getGeometricMeanEstimate() + smoothing;
         actualTime = actualTime + smoothing;
         if (meanEstimate > actualTime) {

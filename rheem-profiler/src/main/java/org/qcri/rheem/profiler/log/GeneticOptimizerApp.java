@@ -98,11 +98,11 @@ public class GeneticOptimizerApp {
 
         int maxGen = 100000;
         int maxStableGen = 100;
-        double minFitness = -100000d;
+        double minFitness = .5;
 
         // Optimize on samples.
         for (List<PartialExecution> group : executionGroups) {
-            final Tuple<Integer, List<Individual>> newGeneration = this.optimize(population, group, generation, maxGen, maxStableGen, minFitness);
+            final Tuple<Integer, List<Individual>> newGeneration = this.superOptimize(10, population, group, generation, maxGen, maxStableGen, minFitness);
             generation = newGeneration.getField0();
             population = newGeneration.getField1();
         }
@@ -136,6 +136,29 @@ public class GeneticOptimizerApp {
         }
     }
 
+    private Tuple<Integer, List<Individual>> superOptimize(
+            int numTribes,
+            List<Individual> individuals,
+            Collection<PartialExecution> partialExecutions,
+            int currentGeneration,
+            int maxGenerations,
+            int maxStableGenerations,
+            double minFitness) {
+
+        int individualsPerTribe = (individuals.size() + numTribes - 1) / numTribes;
+        List<Individual> superpopulation = new ArrayList<>(individuals.size() * numTribes);
+        int maxGeneration = 0;
+        for (int i = 0; i < numTribes; i++) {
+            final Tuple<Integer, List<Individual>> population = this.optimize(
+                    individuals, partialExecutions, currentGeneration, maxGenerations, maxStableGenerations, minFitness
+            );
+            maxGeneration = Math.max(maxGeneration, population.getField0());
+            superpopulation.addAll(population.getField1().subList(0, individualsPerTribe));
+        }
+        superpopulation.sort(Individual.fitnessComparator);
+        return new Tuple<>(maxGeneration, superpopulation.subList(0, individuals.size()));
+    }
+
     private Tuple<Integer, List<Individual>> optimize(
             List<Individual> individuals,
             Collection<PartialExecution> partialExecutions,
@@ -158,8 +181,8 @@ public class GeneticOptimizerApp {
             double minFitness) {
         System.out.printf("Optimizing %d variables on %d partial executions (e.g., %s).\n",
                 optimizer.getActivatedGenes().cardinality(),
-                partialExecutions.size(),
-                RheemCollections.getAny(partialExecutions).getOperatorExecutions()
+                optimizer.getData().size(),
+                RheemCollections.getAny(optimizer.getData()).getOperatorExecutions()
         );
 
         optimizer.updateFitness(individuals);
