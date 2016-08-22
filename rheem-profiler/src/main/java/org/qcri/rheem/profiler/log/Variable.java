@@ -50,7 +50,7 @@ public class Variable {
         } else if (!Double.isFinite(this.maxValue)) {
             double delta = currentValue - this.minValue + deltaSmoothing;
             final double max = Math.max(this.minValue, currentValue + random.nextGaussian() * delta / 10);
-            System.out.printf("Mutating %,.1f to %,.1f.\n", currentValue, max);
+//            System.out.printf("Mutating %,.1f to %,.1f.\n", currentValue, max);
             return max;
         }
         return random.nextDouble() * (this.maxValue - this.minValue) + this.minValue;

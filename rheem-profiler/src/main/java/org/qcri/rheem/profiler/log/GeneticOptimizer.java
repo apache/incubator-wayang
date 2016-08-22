@@ -6,10 +6,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.util.Bitmask;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Implementation of the genetic optimization technique for finding good {@link LoadProfileEstimator}s.
@@ -29,7 +26,7 @@ public class GeneticOptimizer {
     /**
      * Observations to assess the fitness of the to-be-learnt function.
      */
-    private final List<PartialExecution> observations;
+    private final Collection<PartialExecution> observations;
 
     /**
      * {@link LoadProfileEstimator}s that are relevant to calculate the fitness of {@link Individual}s.
@@ -75,7 +72,7 @@ public class GeneticOptimizer {
      * Creates a new instance.
      */
     public GeneticOptimizer(OptimizationSpace optimizationSpace,
-                            List<PartialExecution> observations,
+                            Collection<PartialExecution> observations,
                             Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
                             Configuration configuration) {
         this.configuration = configuration;
@@ -190,5 +187,9 @@ public class GeneticOptimizer {
         score1 = minScore - score1;
         score2 = minScore - score2;
         return score1 / (score1 + score2);
+    }
+
+    public Bitmask getActivatedGenes() {
+        return activatedGenes;
     }
 }

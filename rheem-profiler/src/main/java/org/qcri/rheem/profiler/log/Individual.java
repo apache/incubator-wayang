@@ -9,10 +9,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.util.Bitmask;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Context for the optimization of {@link LoadProfileEstimator}s.
@@ -115,7 +112,7 @@ public class Individual {
      * @param configuration     the {@link Configuration}
      * @see #getFitness()
      */
-    public void calculateFitness(List<PartialExecution> partialExecutions,
+    public void calculateFitness(Collection<PartialExecution> partialExecutions,
                                  Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
                                  Configuration configuration) {
         this.fitness = 0d;
@@ -124,6 +121,7 @@ public class Individual {
             double partialFitness = this.calculateAbsolutePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
             this.fitness += partialFitness;
         }
+        this.fitness /= partialExecutions.size();
     }
 
     public void updateMaturity(Bitmask activatedGenes) {

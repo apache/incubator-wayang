@@ -9,6 +9,7 @@ import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.core.util.Tuple;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,38 +20,48 @@ import java.util.stream.Collectors;
  */
 public class GeneticOptimizerApp {
 
+    /**
+     * {@link Configuration} to be used.
+     */
     private final Configuration configuration;
 
+    /**
+     * Maintains {@link Variable}s to be optimized.
+     */
     private OptimizationSpace optimizationSpace;
 
+    /**
+     * Maintains {@link PartialExecution}s as training data.
+     */
     private List<PartialExecution> partialExecutions;
+
+    /**
+     * Maintains a {@link LoadProfileEstimator} for every type of {@link ExecutionOperator} in the
+     * {@link #partialExecutions}.
+     */
+    private Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators;
 
     public GeneticOptimizerApp(Configuration configuration) {
         this.configuration = configuration;
-    }
 
-    private void run() {
-        // Load the execution log.
+        // Load the ExecutionLog.
+        final double samplingFactor = .1d;
         try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
-            this.partialExecutions = executionLog.stream().collect(Collectors.toList());
+            this.partialExecutions = executionLog.stream()
+                    .filter(x -> new Random().nextDouble() < samplingFactor)
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             throw new RheemException("Could not evaluate execution log.", e);
         }
 
-        // Initialize the optimization space.
+        // Initialize the optimization space with its LoadProfileEstimators and associated Variables.
         this.optimizationSpace = new OptimizationSpace();
-
-        // Gather operator types present in the execution log.
-        Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators = new HashMap<>();
+        this.estimators = new HashMap<>();
         Map<Set<Class<? extends ExecutionOperator>>, List<PartialExecution>> partialExecutionClasses = new HashMap<>();
         for (PartialExecution partialExecution : this.partialExecutions) {
 
             // Index the PartialExecution by its ExecutionOperators.
-            final Set<Class<? extends ExecutionOperator>> execOpClasses =
-                    partialExecution.getOperatorExecutions().stream()
-                            .map(PartialExecution.OperatorExecution::getOperator)
-                            .map(ExecutionOperator::getClass)
-                            .collect(Collectors.toSet());
+            final Set<Class<? extends ExecutionOperator>> execOpClasses = getExecutionOperatorClasses(partialExecution);
             partialExecutionClasses
                     .computeIfAbsent(execOpClasses, key -> new LinkedList<>())
                     .add(partialExecution);
@@ -59,168 +70,167 @@ public class GeneticOptimizerApp {
             for (PartialExecution.OperatorExecution execution : partialExecution.getOperatorExecutions()) {
                 estimators.computeIfAbsent(
                         execution.getOperator().getClass(),
-                        key -> this.createEstimator(execution.getOperator())
+                        key -> DynamicLoadProfileEstimators.createLinearEstimator(execution.getOperator(), this.optimizationSpace)
                 );
             }
         }
-        System.out.printf(
-                "Found %d execution operator types in %d partial executions of %d classes.\n",
-                estimators.size(), this.partialExecutions.size(), partialExecutionClasses.size()
-        );
-        System.out.printf("Going to optimize %d variables.\n", this.optimizationSpace.getNumDimensions());
 
-        List<List<PartialExecution>> samples;
-//        samples = new ArrayList<>();
-//        for (int i = 0; i < 10; i++) {
-//            List<PartialExecution> partialExecutionSample = this.partialExecutions.stream()
-//                    .filter(pe -> random.nextDouble() < 0.01)
-//                    .collect(Collectors.toList());
-//            GeneticOptimizer optimizer = new GeneticOptimizer(
-//                    this.optimizationSpace, partialExecutionSample, estimators, this.configuration
-//            );
-//            optimizer.updateFitness(population);
-//            for (int j = 0; j < 10000; j++) {
-//                population = optimizer.evolve(population);
-//            }
-//            System.out.printf("Fittest individual of generation %,d: %,.4f\n", i, population.get(0).getFitness());
-//        }
-        samples = partialExecutionClasses.entrySet().stream()
+        System.out.printf(
+                "Loaded %d execution records with %d execution operator types.\n",
+                this.partialExecutions.size(), estimators.keySet().size()
+        );
+    }
+
+    private void run() {
+        // Get execution groups.
+        List<List<PartialExecution>> executionGroups = this.groupPartialExecutions(this.partialExecutions).entrySet().stream()
                 .sorted((e1, e2) -> Integer.compare(e1.getKey().size(), e2.getKey().size()))
                 .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
 
 
-        int overallGen = 0;
+        // Create the root optimizer and an initial population.
         GeneticOptimizer generalOptimizer = new GeneticOptimizer(
                 this.optimizationSpace, this.partialExecutions, estimators, this.configuration
         );
         List<Individual> population = generalOptimizer.createInitialPopulation();
-        for (List<PartialExecution> partialExecutionSample : samples) {
-            System.out.printf("Processing sample of %d partial executions (e.g., %s).\n",
-                    partialExecutionSample.size(),
-                    RheemCollections.getAny(partialExecutionSample).getOperatorExecutions());
+        int generation = 0;
 
-            GeneticOptimizer optimizer = new GeneticOptimizer(
-                    this.optimizationSpace, partialExecutionSample, estimators, this.configuration
-            );
-            optimizer.updateFitness(population);
-            double checkpointFitness = Double.NEGATIVE_INFINITY;
-            for (int j = 0; j < 1000; j++) {
-                population = optimizer.evolve(population);
-                if (j % 1000 == 0) {
-                    System.out.printf("Fittest individual of generation: %,.4f\n", population.get(0).getFitness());
-                }
-                if (j % 1000 == 0) {
-                    final double bestFitness = population.get(0).getFitness();
-                    if (checkpointFitness >= bestFitness) {
-                        break;
-                    } else {
-                        checkpointFitness = bestFitness;
-                    }
-                }
-            }
-            System.out.printf("Fittest individual of generation: %,.4f\n", population.get(0).getFitness());
+        int maxGen = 100000;
+        int maxStableGen = 100;
+        double minFitness = -100000d;
+
+        // Optimize on samples.
+        for (List<PartialExecution> group : executionGroups) {
+            final Tuple<Integer, List<Individual>> newGeneration = this.optimize(population, group, generation, maxGen, maxStableGen, minFitness);
+            generation = newGeneration.getField0();
+            population = newGeneration.getField1();
         }
 
-        generalOptimizer.updateFitness(population);
-        System.out.printf("Fittest individual: %,.4f\n", population.get(0).getFitness());
-        for (int i = 1; i <= 100; i++) {
-            population = generalOptimizer.evolve(population);
-        }
-        System.out.printf("Fittest individual: %,.4f\n", population.get(0).getFitness());
-        final Individual fittestIndividual = population.get(0);
+        // Optimize on the complete training data.
+        final Tuple<Integer, List<Individual>> newGeneration = this.optimize(population, generalOptimizer, generation, maxGen, maxStableGen, minFitness);
+        generation = newGeneration.getField0();
+        population = newGeneration.getField1();
+        Individual fittestIndividual = population.get(0);
 
-
-        // Print the variable values.
-        for (Variable variable : this.optimizationSpace.getVariables()) {
-            System.out.printf("%s -> %.2f\n", variable.getId(), variable.getValue(fittestIndividual));
-        }
-
+        // Print the training data vs. the estimates.
+        System.out.println();
+        System.out.println("Training data vs. measured");
+        System.out.println("==========================");
         this.partialExecutions.sort((e1, e2) -> Long.compare(e2.getMeasuredExecutionTime(), e1.getMeasuredExecutionTime()));
         for (PartialExecution partialExecution : this.partialExecutions) {
             final TimeEstimate timeEstimate = fittestIndividual.estimateTime(partialExecution, estimators, this.configuration);
-            System.out.printf("Actual %s; estimated: %s (%d operators)\n",
+            System.out.printf("Actual %s;\testimated: %s (%d operators)\n",
                     Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
                     timeEstimate,
                     partialExecution.getOperatorExecutions().size());
         }
+
+        System.out.println();
+        System.out.println("Configuration file");
+        System.out.println("==================");
+        for (LoadProfileEstimator<Individual> estimator : estimators.values()) {
+            if (estimator instanceof DynamicLoadProfileEstimator) {
+                System.out.println(((DynamicLoadProfileEstimator) estimator).toJsonConfig(fittestIndividual));
+            }
+        }
     }
 
-    private LoadProfileEstimator<Individual> createEstimator(ExecutionOperator operator) {
-        Variable[] inVars = new Variable[operator.getNumInputs()];
-        for (int i = 0; i < inVars.length; i++) {
-            inVars[i] = this.optimizationSpace.getOrCreateVariable(
-                    operator.getClass().getSimpleName() + "->" + operator.getInput(i).getName()
-            );
+    private Tuple<Integer, List<Individual>> optimize(
+            List<Individual> individuals,
+            Collection<PartialExecution> partialExecutions,
+            int currentGeneration,
+            int maxGenerations,
+            int maxStableGenerations,
+            double minFitness) {
+        GeneticOptimizer optimizer = new GeneticOptimizer(
+                this.optimizationSpace, partialExecutions, this.estimators, this.configuration
+        );
+        return this.optimize(individuals, optimizer, currentGeneration, maxGenerations, maxStableGenerations, minFitness);
+    }
+
+    private Tuple<Integer, List<Individual>> optimize(
+            List<Individual> individuals,
+            GeneticOptimizer optimizer,
+            int currentGeneration,
+            int maxGenerations,
+            int maxStableGenerations,
+            double minFitness) {
+        System.out.printf("Optimizing %d variables on %d partial executions (e.g., %s).\n",
+                optimizer.getActivatedGenes().cardinality(),
+                partialExecutions.size(),
+                RheemCollections.getAny(partialExecutions).getOperatorExecutions()
+        );
+
+        optimizer.updateFitness(individuals);
+        double checkpointFitness = Double.NEGATIVE_INFINITY;
+        int i;
+        for (i = 0; i < maxGenerations; i++, currentGeneration++) {
+            individuals = optimizer.evolve(individuals);
+
+            if (i % maxStableGenerations == 0) {
+                System.out.printf(
+                        "Fittest individual of generation %,d (%,d): %,.4f\n",
+                        i,
+                        currentGeneration,
+                        individuals.get(0).getFitness()
+                );
+            }
+
+            // Check whether we seem to be stuck in a (local) optimum.
+            if (i % maxStableGenerations == 0) {
+                final double bestFitness = individuals.get(0).getFitness();
+                if (checkpointFitness >= bestFitness && bestFitness >= minFitness) {
+                    break;
+                } else {
+                    checkpointFitness = bestFitness;
+                }
+            }
         }
-        Variable[] outVars = new Variable[operator.getNumOutputs()];
-        for (int i = 0; i < outVars.length; i++) {
-            outVars[i] = this.optimizationSpace.getOrCreateVariable(
-                    operator.getClass().getSimpleName() + "->" + operator.getOutput(i).getName()
-            );
+
+        System.out.printf(
+                "Final fittest individual of generation %,d (%,d): %,.4f\n",
+                i,
+                currentGeneration,
+                individuals.get(0).getFitness()
+        );
+
+        return new Tuple<>(currentGeneration, individuals);
+    }
+
+    /**
+     * Group {@link PartialExecution}s by their comprised {@link ExecutionOperator}s.
+     *
+     * @param partialExecutions the {@link PartialExecution}s
+     * @return the grouping of the {@link #partialExecutions}
+     */
+    private Map<Set<Class<? extends ExecutionOperator>>, List<PartialExecution>> groupPartialExecutions(
+            Collection<PartialExecution> partialExecutions) {
+        Map<Set<Class<? extends ExecutionOperator>>, List<PartialExecution>> groups = new HashMap<>();
+        for (PartialExecution partialExecution : partialExecutions) {
+
+            // Determine the ExecutionOperator classes in the partialExecution.
+            final Set<Class<? extends ExecutionOperator>> execOpClasses = getExecutionOperatorClasses(partialExecution);
+
+            // Index the partialExecution.
+            groups.computeIfAbsent(execOpClasses, key -> new LinkedList<>())
+                    .add(partialExecution);
         }
-        Collection<Variable> employedVariables = new LinkedList<>();
-        employedVariables.addAll(Arrays.asList(inVars));
-        employedVariables.addAll(Arrays.asList(outVars));
-        switch (10 * operator.getNumInputs() + operator.getNumOutputs()) {
-            case 10:
-                // unary sink
-                return new DynamicLoadProfileEstimator(
-                        (ind, in, out) -> in[0] * inVars[0].getValue(ind),
-                        employedVariables
-                );
-            case 1:
-                // unary source
-                return new DynamicLoadProfileEstimator(
-                        (ind, in, out) -> out[0] * outVars[0].getValue(ind),
-                        employedVariables
-                );
-            case 11:
-                // one-to-one
-                return new DynamicLoadProfileEstimator(
-                        (ind, in, out) -> in[0] * inVars[0].getValue(ind) + out[0] * outVars[0].getValue(ind),
-                        employedVariables
-                );
-            case 21:
-                // two-to-one
-                return new DynamicLoadProfileEstimator(
-                        (ind, in, out) -> in[0] * inVars[0].getValue(ind) + out[0] * outVars[0].getValue(ind),
-                        employedVariables
-                );
-            case 32:
-                // do-while loop
-                return new DynamicLoadProfileEstimator(
-                        (ind, in, out) -> in[0] * inVars[0].getValue(ind)
-                                + in[1] * inVars[1].getValue(ind)
-                                + in[2] * inVars[2].getValue(ind)
-                                + out[0] * outVars[0].getValue(ind)
-                                + out[1] * outVars[1].getValue(ind),
-                        employedVariables
-                );
-            case 22:
-                // repeat loop
-                return new DynamicLoadProfileEstimator(
-                        (ind, in, out) -> in[0] * inVars[0].getValue(ind)
-                                + in[1] * inVars[1].getValue(ind)
-                                + out[0] * outVars[0].getValue(ind)
-                                + out[1] * outVars[1].getValue(ind),
-                        employedVariables
-                );
-            case 43:
-                // loop
-                return new DynamicLoadProfileEstimator(
-                        (ind, in, out) -> in[0] * inVars[0].getValue(ind)
-                                + in[1] * inVars[1].getValue(ind)
-                                + in[2] * inVars[2].getValue(ind)
-                                + in[3] * inVars[3].getValue(ind)
-                                + out[0] * outVars[0].getValue(ind)
-                                + out[1] * outVars[1].getValue(ind)
-                                + out[2] * outVars[2].getValue(ind),
-                        employedVariables
-                );
-            default:
-                throw new RuntimeException("Cannot create estimator for " + operator);
-        }
+
+        return groups;
+    }
+
+    /**
+     * Extract the {@link ExecutionOperator} {@link Class}es in the given {@link PartialExecution}.
+     *
+     * @param partialExecution the {@link PartialExecution}
+     * @return the {@link ExecutionOperator} {@link Class}es
+     */
+    private Set<Class<? extends ExecutionOperator>> getExecutionOperatorClasses(PartialExecution partialExecution) {
+        return partialExecution.getOperatorExecutions().stream()
+                .map(PartialExecution.OperatorExecution::getOperator)
+                .map(ExecutionOperator::getClass)
+                .collect(Collectors.toSet());
     }
 
     public static void main(String[] args) {
