@@ -49,14 +49,16 @@ public class Variable {
             }
         } else if (!Double.isFinite(this.maxValue)) {
             double delta = currentValue - this.minValue + deltaSmoothing;
-            return Math.max(this.minValue, currentValue + random.nextGaussian() * delta / 10);
+            final double max = Math.max(this.minValue, currentValue + random.nextGaussian() * delta / 10);
+            System.out.printf("Mutating %,.1f to %,.1f.\n", currentValue, max);
+            return max;
         }
         return random.nextDouble() * (this.maxValue - this.minValue) + this.minValue;
     }
 
     public void setRandomValue(Individual individual, Random random) {
         double randomValue = this.createRandomValue(random);
-        individual.getGenome()[this.index] = randomValue;
+        individual.setGene(this.index, randomValue, Double.NaN);
     }
 
     public int getIndex() {

@@ -130,6 +130,7 @@ public class GeneticOptimizer {
 
     private void updateFitnessOf(Individual individual) {
         individual.calculateFitness(this.observations, this.estimators, this.configuration);
+        individual.updateMaturity(this.activatedGenes);
     }
 
     public List<Individual> evolve(List<Individual> population) {
@@ -142,10 +143,9 @@ public class GeneticOptimizer {
         List<Individual> selectedIndividuals = new ArrayList<>(selectionSize);
         for (int i = 0; i < selectionSize; i++) {
             Individual individual1 = population.get(i);
-            double points1 = individual1.getFitness() - minFitness;
             Individual individual2 = population.get(this.random.nextInt(this.populationSize));
-            double points2 = individual2.getFitness() - minFitness;
-            Individual choice = this.random.nextDouble() <= points1 / (points1 + points2) ?
+            double probIndividual1 = getSelectionProbability(individual1.getFitness(), individual2.getFitness(), minFitness);
+            Individual choice = this.random.nextDouble() <= probIndividual1 ?
                     individual1 :
                     individual2;
             selectedIndividuals.add(choice);
@@ -183,5 +183,12 @@ public class GeneticOptimizer {
 
         assert nextGeneration.size() == this.populationSize;
         return nextGeneration;
+    }
+
+    public static double getSelectionProbability(double score1, double score2, double minScore) {
+        if (score1 == score2) return 0.5d;
+        score1 = minScore - score1;
+        score2 = minScore - score2;
+        return score1 / (score1 + score2);
     }
 }

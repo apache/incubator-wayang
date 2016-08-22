@@ -105,7 +105,7 @@ public class GeneticOptimizerApp {
             );
             optimizer.updateFitness(population);
             double checkpointFitness = Double.NEGATIVE_INFINITY;
-            for (int j = 0; j < 100000; j++) {
+            for (int j = 0; j < 1000; j++) {
                 population = optimizer.evolve(population);
                 if (j % 1000 == 0) {
                     System.out.printf("Fittest individual of generation: %,.4f\n", population.get(0).getFitness());
