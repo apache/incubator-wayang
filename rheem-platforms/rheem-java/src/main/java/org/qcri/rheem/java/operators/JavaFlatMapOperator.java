@@ -6,7 +6,6 @@ import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -75,16 +74,18 @@ public class JavaFlatMapOperator<InputType, OutputType>
         return new JavaFlatMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
     }
 
+
+    @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.flatmap.load";
+    }
+
     @Override
     public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator<ExecutionOperator> estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.flatmap.load")
-        );
-        final LoadProfileEstimator<?> udfEstimator = configuration
-                .getFunctionLoadProfileEstimatorProvider()
-                .provideFor(this.functionDescriptor);
-        estimator.nest(udfEstimator);
-        return Optional.of(estimator);
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.functionDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override

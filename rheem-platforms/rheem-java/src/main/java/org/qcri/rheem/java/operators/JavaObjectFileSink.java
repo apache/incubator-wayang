@@ -31,7 +31,6 @@ import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -92,13 +91,9 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
         }
     }
 
-
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final NestableLoadProfileEstimator<ExecutionOperator> estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.objectfilesink.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.objectfilesink.load";
     }
 
     @Override

@@ -1,7 +1,9 @@
 package org.qcri.rheem.core.optimizer.costs;
 
 import org.json.JSONObject;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator.EstimationFunction;
@@ -208,6 +210,25 @@ public class LoadProfileEstimators {
         @SuppressWarnings("unchecked")
         final LoadProfile baseProfile = estimator.estimate((T) operatorContext.getOperator(), normalizedInputEstimates, normalizedOutputEstimates);
         return baseProfile.timesSequential(operatorContext.getNumExecutions());
+    }
+
+    /**
+     * Utility to nest the {@link LoadProfileEstimator} of a {@link FunctionDescriptor}.
+     *
+     * @param mainEstimator      an optional {@link LoadProfileEstimator}; should be a {@link NestableLoadProfileEstimator}
+     * @param functionDescriptor whose {@link LoadProfileEstimator} should be nested
+     * @param configuration      provides the UDF {@link LoadProfileEstimator}
+     */
+    public static void nestUdfEstimator(Optional<LoadProfileEstimator<ExecutionOperator>> mainEstimator,
+                                        FunctionDescriptor functionDescriptor,
+                                        Configuration configuration) {
+        if (!mainEstimator.isPresent() || !(mainEstimator.get() instanceof NestableLoadProfileEstimator<?>)) return;
+        mainEstimator.ifPresent(estimator -> {
+            final LoadProfileEstimator<?> subestimator = configuration
+                    .getFunctionLoadProfileEstimatorProvider()
+                    .provideFor(functionDescriptor);
+            ((NestableLoadProfileEstimator<?>) estimator).nest(subestimator);
+        });
     }
 
     /**

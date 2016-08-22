@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a sequence file.
@@ -71,22 +70,8 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        // NB: Not measured, instead adapted from SparkTextFileSource.
-//        final OptionalLong optionalFileSize;
-//        if (this.sourcePath == null) {
-//            optionalFileSize = OptionalLong.empty();
-//        } else {
-//            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
-//            if (!optionalFileSize.isPresent()) {
-//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
-//            }
-//        }
-
-        final String specification = configuration.getStringProperty("rheem.spark.objectfilesource.load");
-        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator =
-                LoadProfileEstimators.createFromJuelSpecification(specification);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.objectfilesource.load";
     }
 
     @Override

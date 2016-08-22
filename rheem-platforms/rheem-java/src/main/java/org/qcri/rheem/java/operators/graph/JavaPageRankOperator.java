@@ -113,6 +113,12 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
     }
 
+
+    @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.pagerank.load";
+    }
+
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         assert index == 0;

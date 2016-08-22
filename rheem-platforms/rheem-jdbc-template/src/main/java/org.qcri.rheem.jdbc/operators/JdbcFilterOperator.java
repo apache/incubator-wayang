@@ -6,7 +6,6 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
 
@@ -33,15 +32,15 @@ public abstract class JdbcFilterOperator extends FilterOperator<Record> implemen
     }
 
     @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return String.format("rheem.%s.filter.load", this.getPlatform().getPlatformId());
+    }
+
+    @Override
     public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final String estimatorKey = String.format("rheem.%s.filter.load", this.getPlatform().getPlatformId());
-        final NestableLoadProfileEstimator<ExecutionOperator> operatorEstimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty(estimatorKey)
-        );
-        final LoadProfileEstimator udfEstimator = configuration
-                .getFunctionLoadProfileEstimatorProvider()
-                .provideFor(this.predicateDescriptor);
-        operatorEstimator.nest(udfEstimator);
-        return Optional.of(operatorEstimator);
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JdbcExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.predicateDescriptor, configuration);
+        return optEstimator;
     }
 }

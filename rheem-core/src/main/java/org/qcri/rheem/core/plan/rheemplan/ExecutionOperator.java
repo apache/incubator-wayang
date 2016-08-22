@@ -3,6 +3,7 @@ package org.qcri.rheem.core.plan.rheemplan;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -40,7 +41,27 @@ public interface ExecutionOperator extends ElementaryOperator {
      * by default)
      */
     default Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        return Optional.empty();
+        String configurationKey = this.getLoadProfileEstimatorConfigurationKey();
+        if (configurationKey == null) {
+            return Optional.empty();
+        }
+        final Optional<String> optSpecification = configuration.getOptionalStringProperty(configurationKey);
+        if (!optSpecification.isPresent()) {
+            LoggerFactory
+                    .getLogger(this.getClass())
+                    .warn("Could not find an estimator specification associated with '{}'.", configuration);
+            return Optional.empty();
+        }
+        return Optional.of(LoadProfileEstimators.createFromJuelSpecification(optSpecification.get()));
+    }
+
+    /**
+     * Provide the {@link Configuration} key for the {@link LoadProfileEstimator} specification of this instance.
+     *
+     * @return the {@link Configuration} key or {@code null} if none
+     */
+    default String getLoadProfileEstimatorConfigurationKey() {
+        return null;
     }
 
     /**

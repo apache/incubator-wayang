@@ -16,7 +16,10 @@ import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -85,11 +88,8 @@ public class JavaCartesianOperator<InputType0, InputType1>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.cartesian.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.cartesian.load";
     }
 
     @Override

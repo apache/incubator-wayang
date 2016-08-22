@@ -9,6 +9,7 @@ import org.apache.spark.graphx.lib.PageRank
 import org.qcri.rheem.basic.data.{Tuple2 => T2}
 import org.qcri.rheem.basic.operators.PageRankOperator
 import org.qcri.rheem.core.optimizer.{OptimizationContext, ProbabilisticDoubleInterval}
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.platform.{ChannelDescriptor, ChannelInstance}
 import org.qcri.rheem.spark.channels.RddChannel
 import org.qcri.rheem.spark.execution.SparkExecutor
@@ -41,6 +42,8 @@ class SparkPageRankOperator(_numIterations: Int,
 
     output.accept(resultRdd, sparkExecutor)
   }
+
+  override def getLoadProfileEstimatorConfigurationKey: String = "rheem.spark.pagerank.load"
 
   override def getSupportedInputChannels(index: Int): util.List[ChannelDescriptor] = {
     assert(index == 0)

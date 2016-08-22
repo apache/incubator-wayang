@@ -12,7 +12,6 @@ import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -101,15 +100,17 @@ public class SparkReduceByOperator<Type, KeyType>
     }
 
     @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.reduceby.load";
+    }
+
+    @Override
     public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.reduceby.load");
-        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator =
-                LoadProfileEstimators.createFromJuelSpecification(specification);
-        final LoadProfileEstimator udfEstimator = configuration
-                .getFunctionLoadProfileEstimatorProvider()
-                .provideFor(this.reduceDescriptor);
-        mainEstimator.nest(udfEstimator);
-        return Optional.of(mainEstimator);
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                SparkExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.keyDescriptor, configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.reduceDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override

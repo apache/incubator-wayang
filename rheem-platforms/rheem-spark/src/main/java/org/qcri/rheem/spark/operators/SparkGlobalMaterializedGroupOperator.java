@@ -75,11 +75,8 @@ public class SparkGlobalMaterializedGroupOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.globalgroup.load");
-        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator =
-                LoadProfileEstimators.createFromJuelSpecification(specification);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.globalgroup.load";
     }
 
     @Override

@@ -18,7 +18,10 @@ import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Provides a {@link Collection} to a Spark job. Can also be used to convert {@link CollectionChannel}s of the
@@ -79,11 +82,8 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.collectionsource.load");
-        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator =
-                LoadProfileEstimators.createFromJuelSpecification(specification);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.collectionsource.load";
     }
 
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {

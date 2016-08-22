@@ -4,17 +4,12 @@ import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Optional;
 
 /**
  * PostgreSQL implementation for the {@link TableSource}.
@@ -44,13 +39,10 @@ public abstract class JdbcTableSource extends TableSource implements JdbcExecuti
         return this.getTableName();
     }
 
+
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final String estimatorKey = String.format("rheem.%s.tablesource.load", this.getPlatform().getPlatformId());
-        final NestableLoadProfileEstimator<ExecutionOperator> operatorEstimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty(estimatorKey)
-        );
-        return Optional.of(operatorEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return String.format("rheem.%s.tablesource.load", this.getPlatform().getPlatformId());
     }
 
     @Override

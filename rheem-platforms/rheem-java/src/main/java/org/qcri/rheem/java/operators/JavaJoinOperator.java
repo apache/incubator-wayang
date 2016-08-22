@@ -8,7 +8,6 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -109,11 +108,17 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.join.load";
+    }
+
+    @Override
     public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.join.load")
-        );
-        return Optional.of(estimator);
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.keyDescriptor0, configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.keyDescriptor1, configuration);
+        return optEstimator;
     }
 
     @Override

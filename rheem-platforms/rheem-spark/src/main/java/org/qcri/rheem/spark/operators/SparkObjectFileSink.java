@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a sequence file.
@@ -63,11 +62,8 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.objectfilesink.load");
-        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator =
-                LoadProfileEstimators.createFromJuelSpecification(specification);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.objectfilesink.load";
     }
 
     @Override

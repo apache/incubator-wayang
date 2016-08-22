@@ -4,7 +4,6 @@ import org.apache.commons.io.IOUtils;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -26,7 +25,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Spliterators;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -161,21 +163,8 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-//        final OptionalLong optionalFileSize;
-//        if (this.sourcePath == null) {
-//            optionalFileSize = OptionalLong.empty();
-//        } else {
-//            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
-//            if (!optionalFileSize.isPresent()) {
-//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
-//            }
-//        }
-
-        final NestableLoadProfileEstimator estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.tsvfilesource.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.tsvfilesource.load";
     }
 
     @Override

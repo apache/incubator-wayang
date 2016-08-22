@@ -17,7 +17,6 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * This is execution operator implements the {@link TextFileSource}.
@@ -48,12 +47,10 @@ public class JavaCollectionSource<T> extends CollectionSource<T> implements Java
         ((CollectionChannel.Instance) outputs[0]).accept(this.getCollection());
     }
 
+
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator<ExecutionOperator> estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.collectionsource.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.collectionsource.load";
     }
 
     @Override

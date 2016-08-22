@@ -60,21 +60,8 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-//        final OptionalLong optionalFileSize;
-//        if (this.getInputUrl() == null) {
-//            optionalFileSize = OptionalLong.empty();
-//        } else {
-//            optionalFileSize = FileSystems.getFileSize(this.getInputUrl());
-//            if (!optionalFileSize.isPresent()) {
-//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.getInputUrl());
-//            }
-//        }
-
-        final String specification = configuration.getStringProperty("rheem.spark.textfilesource.load");
-        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator =
-                LoadProfileEstimators.createFromJuelSpecification(specification);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.textfilesource.load";
     }
 
     @Override

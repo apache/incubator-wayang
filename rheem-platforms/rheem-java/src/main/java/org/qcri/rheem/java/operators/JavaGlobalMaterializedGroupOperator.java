@@ -13,7 +13,10 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Java implementation of the {@link GlobalMaterializedGroupOperator}.
@@ -68,11 +71,8 @@ public class JavaGlobalMaterializedGroupOperator<Type>
 
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator<ExecutionOperator> estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.globalgroup.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.globalgroup.load";
     }
 
     @Override

@@ -16,7 +16,6 @@ import org.qcri.rheem.spark.execution.SparkExecutor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Spark implementation of the {@link RepeatOperator}.
@@ -85,11 +84,8 @@ public class SparkRepeatOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.repeat.load");
-        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator =
-                LoadProfileEstimators.createFromJuelSpecification(specification);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.repeat.load";
     }
 
     @Override

@@ -2,7 +2,6 @@ package org.qcri.rheem.jdbc.operators;
 
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.types.RecordType;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -18,8 +17,8 @@ import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
-import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
+import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
@@ -93,12 +92,8 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final String estimatorKey = String.format("rheem.%s.sqltostream.load", this.jdbcPlatform.getPlatformId());
-        final NestableLoadProfileEstimator<ExecutionOperator> operatorEstimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty(estimatorKey)
-        );
-        return Optional.of(operatorEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return String.format("rheem.%s.sqltostream.load", this.jdbcPlatform.getPlatformId());
     }
 
     /**

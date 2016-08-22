@@ -29,7 +29,10 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -79,20 +82,8 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-//        final OptionalLong optionalFileSize;
-//        if (this.sourcePath == null) {
-//            optionalFileSize = OptionalLong.empty();
-//        } else {
-//            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
-//            if (!optionalFileSize.isPresent()) {
-//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
-//            }
-//        }
-        final NestableLoadProfileEstimator<ExecutionOperator> estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.objectfilesource.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.objectfilesource.load";
     }
 
     @Override

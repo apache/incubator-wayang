@@ -8,7 +8,6 @@ import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -79,16 +78,16 @@ public class SparkMapPartitionsOperator<InputType, OutputType>
     }
 
     @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.mappartitions.load";
+    }
+
+    @Override
     public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator =
-                LoadProfileEstimators.createFromJuelSpecification(
-                        configuration.getStringProperty("rheem.spark.mappartitions.load")
-                );
-        final LoadProfileEstimator udfEstimator = configuration
-                .getFunctionLoadProfileEstimatorProvider()
-                .provideFor(this.functionDescriptor);
-        mainEstimator.nest(udfEstimator);
-        return Optional.of(mainEstimator);
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                SparkExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.functionDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override

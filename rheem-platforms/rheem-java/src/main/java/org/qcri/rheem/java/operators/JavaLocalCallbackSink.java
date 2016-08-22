@@ -19,7 +19,6 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -61,13 +60,9 @@ public class JavaLocalCallbackSink<T extends Serializable> extends LocalCallback
         return new JavaLocalCallbackSink<>(this.callback, this.getType());
     }
 
-
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator<ExecutionOperator> estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.localcallbacksink.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.localcallbacksink.load";
     }
 
     @Override

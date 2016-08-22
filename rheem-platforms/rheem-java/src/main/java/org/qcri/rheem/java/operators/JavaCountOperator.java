@@ -18,7 +18,6 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Java implementation of the {@link CountOperator}.
@@ -65,11 +64,8 @@ public class JavaCountOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator<ExecutionOperator> estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.count.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.count.load";
     }
 
     @Override

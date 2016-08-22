@@ -62,11 +62,16 @@ public class JavaMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.groupby.load";
+    }
+
+    @Override
     public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.groupby.load")
-        );
-        return Optional.of(estimator);
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.keyDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override

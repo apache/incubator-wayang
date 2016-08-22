@@ -1,7 +1,6 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.TextFileSource;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -23,7 +22,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
@@ -73,22 +71,9 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
     }
 
-
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-//        final OptionalLong optionalFileSize;
-//        if (this.getInputUrl() == null) {
-//            optionalFileSize = OptionalLong.empty();
-//        } else {
-//            optionalFileSize = FileSystems.getFileSize(this.getInputUrl());
-//            if (!optionalFileSize.isPresent()) {
-//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.getInputUrl());
-//            }
-//        }
-        final NestableLoadProfileEstimator<ExecutionOperator> estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.textfilesource.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.textfilesource.load";
     }
 
     @Override

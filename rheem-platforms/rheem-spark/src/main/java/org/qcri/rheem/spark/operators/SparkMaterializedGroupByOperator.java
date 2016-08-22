@@ -85,11 +85,16 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.groupby.load";
+    }
+
+    @Override
     public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.groupby.load");
-        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator =
-                LoadProfileEstimators.createFromJuelSpecification(specification);
-        return Optional.of(mainEstimator);
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                SparkExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.keyDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override

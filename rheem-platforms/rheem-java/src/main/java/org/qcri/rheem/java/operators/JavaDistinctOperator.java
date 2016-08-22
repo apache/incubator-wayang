@@ -18,7 +18,6 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Java implementation of the {@link DistinctOperator}.
@@ -58,11 +57,8 @@ public class JavaDistinctOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator<ExecutionOperator> estimator = LoadProfileEstimators.createFromJuelSpecification(
-                configuration.getStringProperty("rheem.java.distinct.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.distinct.load";
     }
 
     @Override
