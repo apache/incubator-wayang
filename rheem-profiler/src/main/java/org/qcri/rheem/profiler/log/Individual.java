@@ -7,6 +7,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.PartialExecution;
+import org.qcri.rheem.core.util.Bitmask;
 
 import java.util.Comparator;
 import java.util.List;
@@ -36,10 +37,14 @@ public class Individual {
         return this.genome;
     }
 
-    public Individual mutate(Random random, int[] activatedGenes, OptimizationSpace optimizationSpace, double mutationProb, double resetProb) {
+    public Individual mutate(Random random, Bitmask activatedGenes, OptimizationSpace optimizationSpace, double mutationProb, double resetProb) {
         Individual mutant = new Individual(this.genome.length);
         double[] genome = mutant.getGenome();
-        for (int i : activatedGenes) {
+        for (int i = 0; i < this.genome.length; i++) {
+            if (!activatedGenes.get(i)) {
+                genome[i] = this.genome[i];
+                continue;
+            }
             final double uniform = random.nextDouble();
             if (uniform <= mutationProb) {
                 final double mutatedGene = optimizationSpace.getVariable(i).mutate(this.genome[i], random);

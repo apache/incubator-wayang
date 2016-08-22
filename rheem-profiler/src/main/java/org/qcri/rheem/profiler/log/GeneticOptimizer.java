@@ -4,8 +4,12 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.PartialExecution;
+import org.qcri.rheem.core.util.Bitmask;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Implementation of the genetic optimization technique for finding good {@link LoadProfileEstimator}s.
@@ -57,7 +61,10 @@ public class GeneticOptimizer {
      */
     private final double mutationResetRatio;
 
-    private final int[] activatedGenes;
+    /**
+     * Indices into the genome of {@link Individual}s that should be optimized.
+     */
+    private final Bitmask activatedGenes;
 
     /**
      * Provides randomness to the optimization.
@@ -75,23 +82,17 @@ public class GeneticOptimizer {
         this.optimizationSpace = optimizationSpace;
         this.observations = observations;
         this.estimators = estimators;
-        Set<Integer> activatedGeneIndices = new HashSet<>();
+        this.activatedGenes = new Bitmask(this.optimizationSpace.getNumDimensions());
         for (PartialExecution observation : observations) {
             for (PartialExecution.OperatorExecution opExec : observation.getOperatorExecutions()) {
                 final LoadProfileEstimator<Individual> estimator = estimators.get(opExec.getOperator().getClass());
                 if (estimator instanceof DynamicLoadProfileEstimator) {
                     for (Variable variable : ((DynamicLoadProfileEstimator) estimator).getEmployedVariables()) {
-                        activatedGeneIndices.add(variable.getIndex());
+                        this.activatedGenes.set(variable.getIndex());
                     }
                 }
             }
         }
-        this.activatedGenes = new int[activatedGeneIndices.size()];
-        int i = 0;
-        for (Integer activatedGeneIndex : activatedGeneIndices) {
-            this.activatedGenes[i] = activatedGeneIndex;
-        }
-        Arrays.sort(this.activatedGenes);
 
         this.populationSize = ((int) this.configuration.getLongProperty("rheem.profiler.ga.population.size", 10));
         this.eliteSize = ((int) this.configuration.getLongProperty("rheem.profiler.ga.population.elite", 1));

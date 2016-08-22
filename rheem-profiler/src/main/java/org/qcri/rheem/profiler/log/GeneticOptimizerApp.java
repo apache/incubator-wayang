@@ -8,6 +8,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.util.Formats;
+import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,7 +42,20 @@ public class GeneticOptimizerApp {
 
         // Gather operator types present in the execution log.
         Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators = new HashMap<>();
+        Map<Set<Class<? extends ExecutionOperator>>, List<PartialExecution>> partialExecutionClasses = new HashMap<>();
         for (PartialExecution partialExecution : this.partialExecutions) {
+
+            // Index the PartialExecution by its ExecutionOperators.
+            final Set<Class<? extends ExecutionOperator>> execOpClasses =
+                    partialExecution.getOperatorExecutions().stream()
+                            .map(PartialExecution.OperatorExecution::getOperator)
+                            .map(ExecutionOperator::getClass)
+                            .collect(Collectors.toSet());
+            partialExecutionClasses
+                    .computeIfAbsent(execOpClasses, key -> new LinkedList<>())
+                    .add(partialExecution);
+
+            // Initialize an LoadProfileEstimator for each of the ExecutionOperators.
             for (PartialExecution.OperatorExecution execution : partialExecution.getOperatorExecutions()) {
                 estimators.computeIfAbsent(
                         execution.getOperator().getClass(),
@@ -49,25 +63,63 @@ public class GeneticOptimizerApp {
                 );
             }
         }
-        System.out.printf("Found %d execution operator types in %d partial executions.\n", estimators.size(), this.partialExecutions.size());
+        System.out.printf(
+                "Found %d execution operator types in %d partial executions of %d classes.\n",
+                estimators.size(), this.partialExecutions.size(), partialExecutionClasses.size()
+        );
+        System.out.printf("Going to optimize %d variables.\n", this.optimizationSpace.getNumDimensions());
 
+        List<List<PartialExecution>> samples;
+//        samples = new ArrayList<>();
+//        for (int i = 0; i < 10; i++) {
+//            List<PartialExecution> partialExecutionSample = this.partialExecutions.stream()
+//                    .filter(pe -> random.nextDouble() < 0.01)
+//                    .collect(Collectors.toList());
+//            GeneticOptimizer optimizer = new GeneticOptimizer(
+//                    this.optimizationSpace, partialExecutionSample, estimators, this.configuration
+//            );
+//            optimizer.updateFitness(population);
+//            for (int j = 0; j < 10000; j++) {
+//                population = optimizer.evolve(population);
+//            }
+//            System.out.printf("Fittest individual of generation %,d: %,.4f\n", i, population.get(0).getFitness());
+//        }
+        samples = partialExecutionClasses.entrySet().stream()
+                .sorted((e1, e2) -> Integer.compare(e1.getKey().size(), e2.getKey().size()))
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+
+
+        int overallGen = 0;
         GeneticOptimizer generalOptimizer = new GeneticOptimizer(
                 this.optimizationSpace, this.partialExecutions, estimators, this.configuration
         );
         List<Individual> population = generalOptimizer.createInitialPopulation();
-        Random random = new Random();
-        for (int i = 0; i < 10; i++) {
-            List<PartialExecution> partialExecutionSample = this.partialExecutions.stream()
-                    .filter(pe -> random.nextDouble() < 0.01)
-                    .collect(Collectors.toList());
+        for (List<PartialExecution> partialExecutionSample : samples) {
+            System.out.printf("Processing sample of %d partial executions (e.g., %s).\n",
+                    partialExecutionSample.size(),
+                    RheemCollections.getAny(partialExecutionSample).getOperatorExecutions());
+
             GeneticOptimizer optimizer = new GeneticOptimizer(
                     this.optimizationSpace, partialExecutionSample, estimators, this.configuration
             );
             optimizer.updateFitness(population);
-            for (int j = 0; j < 10000; j++) {
+            double checkpointFitness = Double.NEGATIVE_INFINITY;
+            for (int j = 0; j < 100000; j++) {
                 population = optimizer.evolve(population);
+                if (j % 1000 == 0) {
+                    System.out.printf("Fittest individual of generation: %,.4f\n", population.get(0).getFitness());
+                }
+                if (j % 1000 == 0) {
+                    final double bestFitness = population.get(0).getFitness();
+                    if (checkpointFitness >= bestFitness) {
+                        break;
+                    } else {
+                        checkpointFitness = bestFitness;
+                    }
+                }
             }
-            System.out.printf("Fittest individual of generation %,d: %,.4f\n", i, population.get(0).getFitness());
+            System.out.printf("Fittest individual of generation: %,.4f\n", population.get(0).getFitness());
         }
 
         generalOptimizer.updateFitness(population);

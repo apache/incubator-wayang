@@ -175,5 +175,10 @@ public class PartialExecution implements JsonSerializable {
             }
             return operatorExecution;
         }
+
+        @Override
+        public String toString() {
+            return "OperatorExecution[" + operator + ']';
+        }
     }
 }
