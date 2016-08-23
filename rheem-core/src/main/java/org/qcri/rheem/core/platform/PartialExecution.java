@@ -11,6 +11,7 @@ import org.qcri.rheem.core.util.JsonSerializable;
 import org.qcri.rheem.core.util.JsonSerializables;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -108,7 +109,9 @@ public class PartialExecution implements JsonSerializable {
             this.outputCardinalities = opCtx.getOutputCardinalities();
             this.numExecutions = opCtx.getNumExecutions();
             final LoadProfile loadProfile = opCtx.getLoadProfile();
-            final Collection<LoadProfile> subprofiles = loadProfile.getSubprofiles();
+            final Collection<LoadProfile> subprofiles = loadProfile == null ?
+                    Collections.emptyList() :
+                    loadProfile.getSubprofiles();
             this.nestedLoadProfile = subprofiles.isEmpty() ?
                     null :
                     subprofiles.stream().reduce(LoadProfile.emptyLoadProfile, LoadProfile::plus);
