@@ -4,7 +4,6 @@ import org.qcri.rheem.core.api.exception.RheemException;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.SQLException;
 
 /**
  * This class describes a database.
@@ -37,14 +36,16 @@ public class DatabaseDescriptor {
     public Connection createJdbcConnection() {
         try {
             Class.forName(this.jdbcDriverClassName);
-        } catch (ClassNotFoundException e) {
-            throw new RheemException("Could not load JDBC driver.", e);
+        } catch (Exception e) {
+            throw new RheemException(String.format("Could not load JDBC driver (%s).", this.jdbcDriverClassName), e);
         }
 
         try {
             return DriverManager.getConnection(this.jdbcUrl, this.user, this.password);
-        } catch (SQLException e) {
-            throw new RheemException("Could not connect to database.", e);
+        } catch (Throwable e) {
+            throw new RheemException(String.format(
+                    "Could not connect to database (%s) as %s with driver %s.", this.jdbcUrl, this.user, this.jdbcDriverClassName
+            ), e);
         }
     }
 }
