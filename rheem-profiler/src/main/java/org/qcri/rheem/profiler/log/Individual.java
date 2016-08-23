@@ -183,6 +183,9 @@ public class Individual {
         final LoadProfile loadProfile = estimator.estimate(
                 this, operatorExecution.getInputCardinalities(), operatorExecution.getOutputCardinalities()
         );
+        if (operatorExecution.getNestedLoadProfile() != null) {
+            loadProfile.nest(operatorExecution.getNestedLoadProfile());
+        }
         final LoadProfileToTimeConverter timeConverter = configuration
                 .getLoadProfileToTimeConverterProvider()
                 .provideFor(operator.getPlatform());
