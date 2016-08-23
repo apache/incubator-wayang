@@ -38,6 +38,11 @@
             <version>0.2.0-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-sqlite3</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_${scala.compat.version}</artifactId>
         </dependency>

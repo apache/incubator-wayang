@@ -106,8 +106,12 @@ public class PartialExecution implements JsonSerializable {
             this.operator = (ExecutionOperator) opCtx.getOperator();
             this.inputCardinalities = opCtx.getInputCardinalities();
             this.outputCardinalities = opCtx.getOutputCardinalities();
-            this.nestedLoadProfile = null;
             this.numExecutions = opCtx.getNumExecutions();
+            final LoadProfile loadProfile = opCtx.getLoadProfile();
+            final Collection<LoadProfile> subprofiles = loadProfile.getSubprofiles();
+            this.nestedLoadProfile = subprofiles.isEmpty() ?
+                    null :
+                    subprofiles.stream().reduce(LoadProfile.emptyLoadProfile, LoadProfile::plus);
         }
 
         private OperatorExecution() {
@@ -173,6 +177,9 @@ public class PartialExecution implements JsonSerializable {
                         jsonObject.getJSONObject("nestedLoadProfile"), LoadProfile.class
                 );
             }
+            operatorExecution.nestedLoadProfile = JsonSerializables.deserialize(
+                    jsonObject.optJSONObject("nestedLoadProfile"), LoadProfile.class
+            );
             return operatorExecution;
         }
 

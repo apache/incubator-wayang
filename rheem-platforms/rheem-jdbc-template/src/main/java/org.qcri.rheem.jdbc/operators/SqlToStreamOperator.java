@@ -1,5 +1,6 @@
 package org.qcri.rheem.jdbc.operators;
 
+import org.json.JSONObject;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.types.RecordType;
 import org.qcri.rheem.core.api.exception.RheemException;
@@ -13,6 +14,8 @@ import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.JsonSerializable;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
@@ -31,7 +34,7 @@ import java.util.stream.StreamSupport;
 /**
  * This {@link Operator} converts {@link SqlQueryChannel}s to {@link StreamChannel}s.
  */
-public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator {
+public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator, JsonSerializable {
 
     private final JdbcPlatformTemplate jdbcPlatform;
 
@@ -181,4 +184,15 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
         return false;
     }
 
+    @Override
+    public JSONObject toJson() {
+        return new JSONObject().put("platform", this.jdbcPlatform.getClass().getCanonicalName());
+    }
+
+    @SuppressWarnings("unused")
+    public static SqlToStreamOperator fromJson(JSONObject jsonObject) {
+        final String platformClassName = jsonObject.getString("platform");
+        JdbcPlatformTemplate jdbcPlatform = ReflectionUtils.evaluate(platformClassName + ".getInstance()");
+        return new SqlToStreamOperator(jdbcPlatform);
+    }
 }

@@ -482,6 +482,13 @@ public abstract class OptimizationContext {
             return this.numExecutions;
         }
 
+        public LoadProfile getLoadProfile() {
+            if (this.loadProfile == null) {
+                this.updateTimeEstimate();
+            }
+            return this.loadProfile;
+        }
+
         public TimeEstimate getTimeEstimate() {
             if (this.timeEstimate == null) {
                 this.updateTimeEstimate();
