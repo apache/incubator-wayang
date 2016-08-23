@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.platform;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
@@ -12,6 +13,7 @@ import org.qcri.rheem.core.util.JsonSerializables;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,11 +22,25 @@ import java.util.stream.Collectors;
  */
 public class PartialExecution implements JsonSerializable {
 
+    /**
+     * The measured execution time of this instance in milliseconds.
+     */
     private final long measuredExecutionTime;
 
+    /**
+     * {@link OptimizationContext.OperatorContext}s captured by this instance.
+     */
     transient private final Collection<OptimizationContext.OperatorContext> operatorContexts;
 
+    /**
+     * Persistent reflection of the {@link #operatorContexts}.
+     */
     private Collection<OperatorExecution> operatorExecutions;
+
+    /**
+     * Platforms initialized in this instance.
+     */
+    private Collection<Platform> initializedPlatforms = new LinkedList<>();
 
     /**
      * Creates a new instance.
@@ -72,10 +88,17 @@ public class PartialExecution implements JsonSerializable {
      * @return the new instance
      */
     public static PartialExecution fromJson(JSONObject jsonObject) {
-        return new PartialExecution(
+        final PartialExecution partialExecution = new PartialExecution(
                 jsonObject.getLong("millis"),
                 JsonSerializables.deserializeAllAsList(jsonObject.getJSONArray("executions"), OperatorExecution.class)
         );
+        final JSONArray platforms = jsonObject.optJSONArray("initPlatforms");
+        if (platforms != null) {
+            for (Object platform : platforms) {
+                partialExecution.addInitializedPlatform(Platform.load((String) platform));
+            }
+        }
+        return partialExecution;
     }
 
     public Collection<OperatorExecution> getOperatorExecutions() {
@@ -85,6 +108,14 @@ public class PartialExecution implements JsonSerializable {
         return this.operatorExecutions;
     }
 
+    public Collection<Platform> getInitializedPlatforms() {
+        return this.initializedPlatforms;
+    }
+
+    public void addInitializedPlatform(Platform platform) {
+        this.initializedPlatforms.add(platform);
+    }
+
     /**
      * Converts this instance into a {@link JSONObject}.
      *
@@ -92,10 +123,14 @@ public class PartialExecution implements JsonSerializable {
      */
     @Override
     public JSONObject toJson() {
-        final JSONObject jsonThis = new JSONObject();
-        jsonThis.put("millis", this.measuredExecutionTime);
-        jsonThis.put("executions", JsonSerializables.serializeAll(this.getOperatorExecutions()));
-        return jsonThis;
+        return new JSONObject()
+                .put("millis", this.measuredExecutionTime)
+                .put("executions", JsonSerializables.serializeAll(this.getOperatorExecutions()))
+                .putOpt("initPlatforms", JsonSerializables.serializeAll(
+                        this.getInitializedPlatforms().stream()
+                                .map(platform -> platform.getClass().getCanonicalName())
+                                .collect(Collectors.toList())
+                ));
     }
 
     /**

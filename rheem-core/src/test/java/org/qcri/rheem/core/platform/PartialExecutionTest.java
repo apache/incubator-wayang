@@ -6,8 +6,10 @@ import org.junit.Test;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.test.DummyExecutionOperator;
+import org.qcri.rheem.core.test.DummyPlatform;
 import org.qcri.rheem.core.test.SerializableDummyExecutionOperator;
 import org.qcri.rheem.core.util.JsonSerializables;
+import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.Arrays;
 
@@ -37,12 +39,15 @@ public class PartialExecutionTest {
 
 
         PartialExecution original = new PartialExecution(12345L, Arrays.asList(operatorContext1, operatorContext2));
+        original.addInitializedPlatform(DummyPlatform.getInstance());
 
         final JSONObject jsonObject = JsonSerializables.serialize(original);
         final PartialExecution loaded = JsonSerializables.deserialize(jsonObject, PartialExecution.class);
 
         Assert.assertEquals(original.getMeasuredExecutionTime(), loaded.getMeasuredExecutionTime());
         Assert.assertEquals(2, loaded.getOperatorExecutions().size());
+        Assert.assertEquals(1, loaded.getInitializedPlatforms().size());
+        Assert.assertSame(DummyPlatform.getInstance(), RheemCollections.getAny(loaded.getInitializedPlatforms()));
     }
 
 }
