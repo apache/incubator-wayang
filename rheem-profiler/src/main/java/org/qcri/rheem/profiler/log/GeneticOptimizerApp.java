@@ -45,7 +45,7 @@ public class GeneticOptimizerApp {
         this.configuration = configuration;
 
         // Load the ExecutionLog.
-        final double samplingFactor = .1d;
+        final double samplingFactor = 1d;
         try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
             this.partialExecutions = executionLog.stream()
                     .filter(x -> new Random().nextDouble() < samplingFactor)
@@ -70,7 +70,7 @@ public class GeneticOptimizerApp {
             for (PartialExecution.OperatorExecution execution : partialExecution.getOperatorExecutions()) {
                 estimators.computeIfAbsent(
                         execution.getOperator().getClass(),
-                        key -> DynamicLoadProfileEstimators.createLinearEstimator(execution.getOperator(), this.optimizationSpace)
+                        key -> DynamicLoadProfileEstimators.createSuitableEstimator(execution.getOperator(), this.optimizationSpace)
                 );
             }
         }
@@ -97,15 +97,15 @@ public class GeneticOptimizerApp {
         int generation = 0;
 
         int maxGen = 100000;
-        int maxStableGen = 100;
-        double minFitness = .5;
+        int maxStableGen = 500;
+        double minFitness = .1;
 
         // Optimize on samples.
-        for (List<PartialExecution> group : executionGroups) {
-            final Tuple<Integer, List<Individual>> newGeneration = this.superOptimize(10, population, group, generation, maxGen, maxStableGen, minFitness);
-            generation = newGeneration.getField0();
-            population = newGeneration.getField1();
-        }
+//        for (List<PartialExecution> group : executionGroups) {
+//            final Tuple<Integer, List<Individual>> newGeneration = this.superOptimize(3, population, group, generation, maxGen, maxStableGen, minFitness);
+//            generation = newGeneration.getField0();
+//            population = newGeneration.getField1();
+//        }
 
         // Optimize on the complete training data.
         final Tuple<Integer, List<Individual>> newGeneration = this.optimize(population, generalOptimizer, generation, maxGen, maxStableGen, minFitness);

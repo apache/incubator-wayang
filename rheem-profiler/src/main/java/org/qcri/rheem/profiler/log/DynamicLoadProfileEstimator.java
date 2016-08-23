@@ -100,10 +100,13 @@ public class DynamicLoadProfileEstimator implements LoadProfileEstimator<Individ
     public String toJsonConfig(Individual individual) {
         StringBuilder sb = new StringBuilder();
         sb.append(this.configKey).append(" = {\\\n");
+        sb.append(" \"in\":").append(this.numInputs).append(",\\\n");
+        sb.append(" \"out\":").append(this.numOutputs).append(",\\\n");
         sb.append(" \"cpu\":\"").append(this.cpuEstimator.toJuel(individual)).append("\",\\\n");
         sb.append(" \"ram\":\"").append(this.ramEstimator.toJuel(individual)).append("\",\\\n");
-        sb.append(" \"disk\"").append(this.diskEstimator.toJuel(individual)).append("\",\\\n");
-        sb.append(" \"net\":\"").append(this.networkEstimator.toJuel(individual)).append("\"\\\n");
+        sb.append(" \"disk\":\"").append(this.diskEstimator.toJuel(individual)).append("\",\\\n");
+        sb.append(" \"net\":\"").append(this.networkEstimator.toJuel(individual)).append("\",\\\n");
+        sb.append(" \"p\":0.9\\\n");
         sb.append("}");
         return sb.toString();
     }

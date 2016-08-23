@@ -120,15 +120,15 @@ public class Individual {
                                  Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
                                  Configuration configuration) {
         boolean isAbsolute = configuration.getStringProperty("rheem.profiler.ga.fitness", "relative").equals("absolute");
-        this.fitness = 0d;
+        this.fitness = Double.POSITIVE_INFINITY;
         for (PartialExecution partialExecution : partialExecutions) {
             TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, configuration);
             double partialFitness = isAbsolute ?
                     this.calculateAbsolutePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime()) :
                     this.calculateRelativePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
-            this.fitness += partialFitness;
+            this.fitness = Math.min(partialFitness, this.fitness);
         }
-        this.fitness /= partialExecutions.size();
+//        this.fitness /= partialExecutions.size();
     }
 
     public void updateMaturity(Bitmask activatedGenes) {
