@@ -65,7 +65,7 @@ public abstract class JdbcTableSource extends TableSource implements JdbcExecuti
                     long cardinality = resultSet.getLong(1);
                     return new CardinalityEstimate(cardinality, cardinality, 1d);
 
-                } catch (SQLException e) {
+                } catch (Exception e) {
                     LoggerFactory.getLogger(this.getClass()).error(
                             "Could not estimate cardinality for {}.", JdbcTableSource.this, e
                     );
