@@ -6,9 +6,12 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
@@ -113,7 +116,10 @@ public class SparkRepeatOperator<Type>
     }
 
     @Override
-    public boolean isEvaluatingEagerly(int inputIndex) {
-        return false;
+    public ChannelInstance[] createOutputChannelInstances(Executor executor, ExecutionTask task,
+                                                          OptimizationContext.OperatorContext producerOperatorContext,
+                                                          List<ChannelInstance> inputChannelInstances) {
+        return super.createOutputChannelInstances(executor, task, producerOperatorContext, inputChannelInstances);
     }
+
 }

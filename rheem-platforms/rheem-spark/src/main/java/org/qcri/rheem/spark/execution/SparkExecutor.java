@@ -71,8 +71,8 @@ public class SparkExecutor extends PushExecutorTemplate {
                                                                      OptimizationContext.OperatorContext producerOperatorContext,
                                                                      boolean isForceExecution) {
         // Provide the ChannelInstances for the output of the task.
-        final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(
-                task, producerOperatorContext, inputChannelInstances
+        final ChannelInstance[] outputChannelInstances = task.getOperator().createOutputChannelInstances(
+                this, task, producerOperatorContext, inputChannelInstances
         );
 
         // Execute.

@@ -9,6 +9,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
@@ -114,24 +115,51 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                                                         ChannelInstance[] outputChannelInstances,
                                                         long executionDuration) {
 
-        // Mark and collect all unproduced ChannelInstances that have been produced.
+        final ExecutionOperator operator = task.getOperator();
+        if (!operator.isExecutedEagerly()) {
+            // If the operator is evaluated lazily, there is nothing to do here.
+            assert !operator.isLoopHead() : String.format("Expect loop head %s to be evaluated eagerly.", operator);
+            return null;
+        }
+
+        // Otherwise, create a PartialExecution from the LazyChannelLineage.
         Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
-        if (task.getOperator().isExecutedEagerly()) {
+        if (!operator.isLoopHead()) {
+            // If we are not dealing with a LoopHeadOperator, we evaluate the complete lineage.
             if (outputChannelInstances.length == 0) {
+                // Process sinks by adding the sink and then pull all of its inputs.
                 executedOperatorContexts.add(producerOperatorContext);
+                for (ChannelInstance inputChannelInstance : inputChannelInstances) {
+                    if (inputChannelInstance == null) continue;
+                    this.markAndAddUnproducedChannelInstances(inputChannelInstance, executedOperatorContexts);
+                }
             } else {
+                // Process non-sink operators by pulling all of its outputs.
                 for (ChannelInstance outputChannelInstance : outputChannelInstances) {
                     if (outputChannelInstance == null) continue;
                     this.markAndAddUnproducedChannelInstances(outputChannelInstance, executedOperatorContexts);
                 }
             }
+
         } else {
-            int inputIndex = 0;
-            for (ChannelInstance inputChannelInstance : inputChannelInstances) {
-                if (inputChannelInstance != null && task.getOperator().isEvaluatingEagerly(inputIndex)) {
+            // LoopHeadOperators need special treatment in the sense that they are evaluated eagerly, but forward
+            // some of their inputs.
+            LoopHeadOperator loopHeadOperator = (LoopHeadOperator) operator;
+            if (loopHeadOperator.getConditionOutputSlots().isEmpty()) {
+                // Process heads without condition datasets by adding the them and then pull all of its condition inputs.
+                executedOperatorContexts.add(producerOperatorContext);
+                for (InputSlot<?> input : loopHeadOperator.getConditionInputSlots()) {
+                    final ChannelInstance inputChannelInstance = inputChannelInstances.get(input.getIndex());
+                    if (inputChannelInstance == null) continue;
                     this.markAndAddUnproducedChannelInstances(inputChannelInstance, executedOperatorContexts);
                 }
-                inputIndex++;
+            } else {
+                // Process heads with condition datasets by pulling them.
+                for (OutputSlot<?> output : loopHeadOperator.getConditionOutputSlots()) {
+                    final ChannelInstance outputChannelInstance = outputChannelInstances[output.getIndex()];
+                    if (outputChannelInstance == null) continue;
+                    this.markAndAddUnproducedChannelInstances(outputChannelInstance, executedOperatorContexts);
+                }
             }
         }
 
@@ -172,7 +200,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                 .getLazyChannelLineage()
                 .traverseAndMark(
                         collector,
-                        (accu, node) -> RheemCollections.add(accu, node.getProducerOperatorContext())
+                        (accu, channelInst, producerCtx) -> RheemCollections.add(accu, producerCtx)
                 );
     }
 

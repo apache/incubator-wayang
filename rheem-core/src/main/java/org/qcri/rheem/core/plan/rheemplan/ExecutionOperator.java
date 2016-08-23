@@ -1,12 +1,15 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.LoggerFactory;
 
@@ -110,13 +113,31 @@ public interface ExecutionOperator extends ElementaryOperator {
     boolean isExecutedEagerly();
 
     /**
-     * Tells whether this instance will evaluate a certain input {@link ChannelInstance} eagerly.
+     * Create output {@link ChannelInstance}s for this instance.
      *
-     * @param inputIndex the index of an input {@link ChannelInstance}
-     * @return whether the {@link OutputSlot} is executed eagerly
+     * @param task                    the {@link ExecutionTask} in which this instance is being wrapped
+     * @param producerOperatorContext the {@link OptimizationContext.OperatorContext} for this instance
+     * @param inputChannelInstances   the input {@link ChannelInstance}s for the {@code task}
+     * @return
      */
-    default boolean isEvaluatingEagerly(int inputIndex) {
-        return this.isExecutedEagerly();
+    default ChannelInstance[] createOutputChannelInstances(Executor executor,
+                                                             ExecutionTask task,
+                                                             OptimizationContext.OperatorContext producerOperatorContext,
+                                                             List<ChannelInstance> inputChannelInstances) {
+
+        assert task.getOperator() == this;
+        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
+        for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
+            final Channel outputChannel = task.getOutputChannel(outputIndex);
+            final ChannelInstance outputChannelInstance = outputChannel.createInstance(executor, producerOperatorContext, outputIndex);
+            channelInstances[outputIndex] = outputChannelInstance;
+            for (ChannelInstance inputChannelInstance : inputChannelInstances) {
+                if (inputChannelInstance != null) {
+                    outputChannelInstance.addPredecessor(inputChannelInstance);
+                }
+            }
+        }
+        return channelInstances;
     }
 
 }

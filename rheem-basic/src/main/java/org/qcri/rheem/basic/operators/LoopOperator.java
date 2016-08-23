@@ -2,16 +2,18 @@ package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.SwitchForwardCardinalityEstimator;
+import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * This operator has three inputs and three outputs.
@@ -210,10 +212,17 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
 
     @Override
     public Collection<InputSlot<?>> getLoopInitializationInputs() {
-        return Arrays.asList(
-                this.getInput(INITIAL_INPUT_INDEX),
-                this.getInput(INITIAL_CONVERGENCE_INPUT_INDEX)
-        );
+        return Arrays.asList(this.getInput(INITIAL_INPUT_INDEX), this.getInput(INITIAL_CONVERGENCE_INPUT_INDEX));
+    }
+
+    @Override
+    public Collection<InputSlot<?>> getConditionInputSlots() {
+        return Arrays.asList(this.getInput(INITIAL_CONVERGENCE_INPUT_INDEX), this.getInput(ITERATION_CONVERGENCE_INPUT_INDEX));
+    }
+
+    @Override
+    public Collection<OutputSlot<?>> getConditionOutputSlots() {
+        return Collections.singletonList(this.getOutput(ITERATION_CONVERGENCE_OUTPUT_INDEX));
     }
 
     public void setNumExpectedIterations(int numExpectedIterations) {
