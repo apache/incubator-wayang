@@ -11,6 +11,7 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Bitmask;
 
 import java.util.*;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Stream;
 
 /**
@@ -111,44 +112,17 @@ public class Individual {
     }
 
     /**
-     * Calculate and cache the fitness of this instance, which should be a positive value.
+     * Calculate the fitness as the arithmetic mean the individual fitnesses of the estimation subjects.
      *
      * @param partialExecutions on which this instance should be evaluated
      * @param estimators        the {@link LoadProfileEstimator}s being configured by this instance
      * @param platformOverheads
      * @param configuration     the {@link Configuration}  @see #getFitness()
      */
-    public void calculateFitness(Collection<PartialExecution> partialExecutions,
-                                 Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
-                                 Map<Platform, Variable> platformOverheads,
-                                 Configuration configuration) {
-//        this.fitness = 0d;
-//        double harmonicSmoothing = .1d;
-//        double weightSmoothing = 2d;
-//        double weightSum = 0d;
-//        double fitnessSum = 0d;
-//        for (PartialExecution partialExecution : partialExecutions) {
-//            TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, platformOverheads, configuration);
-//
-//
-//            boolean isAbsolute = false;
-//            double weight = Math.log(partialExecution.getMeasuredExecutionTime() + 2d) / Math.log(2);
-//            double partialFitness = isAbsolute ?
-//                    this.calculateAbsolutePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime()) :
-//                    this.calculateRelativePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
-//
-//            fitnessSum += weight / (partialFitness + harmonicSmoothing);
-//            weightSum += weight;
-//        }
-//        this.fitness = (weightSum / fitnessSum) - harmonicSmoothing;
-//        this.fitness /= partialExecutions.size();
-        this.fitness = this.calcluateSubjectbasedFitness(partialExecutions, estimators, platformOverheads, configuration);
-    }
-
-    private double calcluateSubjectbasedFitness(Collection<PartialExecution> partialExecutions,
-                                                Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
-                                                Map<Platform, Variable> platformOverheads,
-                                                Configuration configuration) {
+    double calcluateSubjectbasedFitness(Collection<PartialExecution> partialExecutions,
+                                        Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+                                        Map<Platform, Variable> platformOverheads,
+                                        Configuration configuration) {
 
         Map<Object, FitnessAggregator> subjectAggregators = new HashMap<>();
         for (PartialExecution partialExecution : partialExecutions) {
@@ -214,11 +188,47 @@ public class Individual {
         }
     }
 
+    /**
+     * Update the fitness of this instance.
+     *
+     * @param fitnessFunction calculates the fitness for this instance
+     * @return the new fitness
+     */
+    public double updateFitness(ToDoubleFunction<Individual> fitnessFunction) {
+        return this.fitness = fitnessFunction.applyAsDouble(this);
+    }
+
     public double getFitness() {
         if (Double.isNaN(this.fitness)) {
             throw new IllegalStateException("The fitness of the individual has not yet been calculated.");
         }
         return this.fitness;
+    }
+
+    /**
+     * Calculate the fitness as weighted harmonic mean of the relative prediction accuracies.
+     *
+     * @param partialExecutions on which this instance should be evaluated
+     * @param estimators        the {@link LoadProfileEstimator}s being configured by this instance
+     * @param platformOverheads
+     * @param configuration     the {@link Configuration}  @see #getFitness()
+     */
+    double calculateRelativeFitness(Collection<PartialExecution> partialExecutions,
+                                    Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+                                    Map<Platform, Variable> platformOverheads,
+                                    Configuration configuration) {
+        double harmonicSmoothing = .1d;
+        double weightSum = 0d;
+        double fitnessSum = 0d;
+        for (PartialExecution partialExecution : partialExecutions) {
+            TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, platformOverheads, configuration);
+            double weight = Math.log(partialExecution.getMeasuredExecutionTime() + 2d) / Math.log(2);
+            double partialFitness = this.calculateRelativePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
+
+            fitnessSum += weight / (partialFitness + harmonicSmoothing);
+            weightSum += weight;
+        }
+        return (weightSum / fitnessSum) - harmonicSmoothing;
     }
 
     private double calculateRelativePartialFitness(TimeEstimate timeEstimate, long actualTime) {
@@ -231,6 +241,31 @@ public class Individual {
             return meanEstimate / (double) actualTime;
         }
     }
+
+    /**
+     * Calculate the fitness as weighted arithmetic mean of the absolute prediction accuracies.
+     *
+     * @param partialExecutions on which this instance should be evaluated
+     * @param estimators        the {@link LoadProfileEstimator}s being configured by this instance
+     * @param platformOverheads
+     * @param configuration     the {@link Configuration}  @see #getFitness()
+     */
+    double calculateAbsoluteFitness(Collection<PartialExecution> partialExecutions,
+                                    Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+                                    Map<Platform, Variable> platformOverheads,
+                                    Configuration configuration) {
+        double weightSum = 0d;
+        double fitnessSum = 0d;
+        for (PartialExecution partialExecution : partialExecutions) {
+            TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, platformOverheads, configuration);
+            double weight = Math.log(partialExecution.getMeasuredExecutionTime() + 2d) / Math.log(2);
+            double partialFitness = this.calculateAbsolutePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
+            weightSum += weight;
+            fitnessSum += weight * partialFitness;
+        }
+        return fitnessSum;
+    }
+
 
     private double calculateAbsolutePartialFitness(TimeEstimate timeEstimate, long actualTime) {
         final long meanEstimate = timeEstimate.getGeometricMeanEstimate();

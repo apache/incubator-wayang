@@ -10,6 +10,7 @@ import org.qcri.rheem.profiler.log.sampling.Sampler;
 import org.qcri.rheem.profiler.log.sampling.TournamentSampler;
 
 import java.util.*;
+import java.util.function.ToDoubleFunction;
 
 /**
  * Implementation of the genetic optimization technique for finding good {@link LoadProfileEstimator}s.
@@ -71,11 +72,15 @@ public class GeneticOptimizer {
      */
     private final Bitmask activatedGenes;
 
-
     /**
      * Provides randomness to the optimization.
      */
     private final Random random = new Random();
+
+    /**
+     * Fitness function for assessing {@link Individual}s.
+     */
+    private final ToDoubleFunction<Individual> fitnessFunction;
 
     /**
      * Creates a new instance.
@@ -111,6 +116,27 @@ public class GeneticOptimizer {
         this.mutationRatio = this.configuration.getDoubleProperty("rheem.profiler.ga.mutation.ratio", 0.5d);
         this.mutationAlterationRatio = this.configuration.getDoubleProperty("rheem.profiler.ga.mutation.alteration", 0.5d);
         this.mutationResetRatio = this.configuration.getDoubleProperty("rheem.profiler.ga.mutation.reset", 0.01d);
+        switch (this.configuration.getStringProperty("rheem.profiler.ga.fitness.type", "relative")) {
+            case "relative":
+                this.fitnessFunction = individual -> individual.calculateRelativeFitness(
+                        this.observations, this.estimators, this.platformOverheads, this.configuration
+                );
+                break;
+            case "absolute":
+                this.fitnessFunction = individual -> individual.calculateAbsoluteFitness(
+                        this.observations, this.estimators, this.platformOverheads, this.configuration
+                );
+                break;
+            case "subject":
+                this.fitnessFunction = individual -> individual.calcluateSubjectbasedFitness(
+                        this.observations, this.estimators, this.platformOverheads, this.configuration
+                );
+                break;
+            default:
+                throw new IllegalStateException(
+                        "Unknown fitness function: "+ this.configuration.getStringProperty("rheem.profiler.ga.fitness.type")
+                );
+        }
     }
 
     /**
@@ -140,7 +166,7 @@ public class GeneticOptimizer {
     }
 
     private void updateFitnessOf(Individual individual) {
-        individual.calculateFitness(this.observations, this.estimators, this.platformOverheads, this.configuration);
+        individual.updateFitness(this.fitnessFunction);
         individual.updateMaturity(this.activatedGenes);
     }
 
@@ -150,26 +176,6 @@ public class GeneticOptimizer {
 
         // Select individuals that should be able to propagate.
         double maxFitness = population.get(0).getFitness(), minFitness = population.get(this.populationSize - 1).getFitness();
-//        int selectionSize = ((int) Math.ceil(this.populationSize * this.selectionRatio));
-//        List<Individual> selectedIndividuals = new ArrayList<>(selectionSize);
-//        Bitmask selectedIndices = new Bitmask(this.populationSize);
-//        for (int i = 0; i < selectionSize; i++) {
-//            if (selectedIndices.get(i)) continue;
-//            Individual individual1 = population.get(i);
-//            int j;
-//            do {
-//                j = this.random.nextInt(this.populationSize);
-//            } while (!selectedIndices.get(j));
-//            Individual individual2 = population.get(this.random.nextInt(this.populationSize));
-//            double probIndividual1 = getSelectionProbability(individual1.getFitness(), individual2.getFitness(), minFitness);
-//            if (this.random.nextDouble() <= probIndividual1) {
-//                selectedIndividuals.add(individual1);
-//                selectedIndices.set(i);
-//            } else {
-//                selectedIndividuals.add(individual2);
-//                selectedIndices.set(j);
-//            }
-//        }
         Sampler<Individual> selector = new TournamentSampler<>();
         final List<Individual> selectedIndividuals = selector.sample(
                 population,

@@ -120,49 +120,53 @@ public class GeneticOptimizerApp {
         List<Individual> population = generalOptimizer.createInitialPopulation();
         int generation = 0;
 
-        int maxGen = 5000;
-        int maxStableGen = 1000;
-        double minFitness = .9;
+        int maxGen = (int) this.configuration.getLongProperty("rheem.profiler.ga.maxgenerations", 5000);
+        int maxStableGen = (int) this.configuration.getLongProperty("rheem.profiler.ga.maxstablegenerations", 2000);
+        double minFitness = this.configuration.getDoubleProperty("rheem.profiler.ga.minfitness", .9d);
+        int superOptimizations = (int) this.configuration.getLongProperty("rheem.profiler.ga.superoptimizations", 3);
 
         // Optimize on blocks.
-//        for (List<PartialExecution> group : executionGroups) {
-//            final Collection<PartialExecution> reducedGroup = this.reduceByExecutionTime(group, 1.5);
-//            final PartialExecution representative = RheemCollections.getAny(reducedGroup);
-//            final List<String> subjects = Stream.concat(
-//                    representative.getOperatorExecutions().stream().map(operatorExecution -> operatorExecution.getOperator().getClass().getSimpleName()),
-//                    representative.getInitializedPlatforms().stream().map(Platform::getName)
-//            ).collect(Collectors.toList());
-//            if (reducedGroup.size() < 2) {
-//                System.out.printf("Too few measurement points: skipping %s\n", subjects);
-//                continue;
-//            } else if (representative.getOperatorExecutions().size() > 3) {
-//                System.out.printf("Too many subjects: skipping %s\n", subjects);
-//                continue;
-//            } else {
-//                long minExecTime = reducedGroup.stream().mapToLong(PartialExecution::getMeasuredExecutionTime).min().getAsLong();
-//                long maxExecTime = reducedGroup.stream().mapToLong(PartialExecution::getMeasuredExecutionTime).max().getAsLong();
-//                if (maxExecTime - minExecTime < 1000) {
-//                    System.out.printf("Too narrow training data: skipping %s\n", subjects);
-//                    continue;
-//                }
-//            }
-//
-//            final Tuple<Integer, List<Individual>> newGeneration = this.superOptimize(3, population, reducedGroup, generation, maxGen, maxStableGen, minFitness);
-//            generation = newGeneration.getField0();
-//            population = newGeneration.getField1();
-//
-//            final GeneticOptimizer tempOptimizer = this.createOptimizer(reducedGroup);
-//            this.printResults(tempOptimizer, population.get(0));
-//        }
+        if (this.configuration.getBooleanProperty("rheem.profiler.ga.block", false)) {
+            for (List<PartialExecution> group : executionGroups) {
+                final Collection<PartialExecution> reducedGroup = this.reduceByExecutionTime(group, 1.5);
+                final PartialExecution representative = RheemCollections.getAny(reducedGroup);
+                final List<String> subjects = Stream.concat(
+                        representative.getOperatorExecutions().stream().map(operatorExecution -> operatorExecution.getOperator().getClass().getSimpleName()),
+                        representative.getInitializedPlatforms().stream().map(Platform::getName)
+                ).collect(Collectors.toList());
+                if (reducedGroup.size() < 2) {
+                    System.out.printf("Few measurement points for %s\n", subjects);
+                }
+                if (representative.getOperatorExecutions().size() > 3) {
+                    System.out.printf("Many subjects for %s\n", subjects);
+                }
+
+                long minExecTime = reducedGroup.stream().mapToLong(PartialExecution::getMeasuredExecutionTime).min().getAsLong();
+                long maxExecTime = reducedGroup.stream().mapToLong(PartialExecution::getMeasuredExecutionTime).max().getAsLong();
+                if (maxExecTime - minExecTime < 1000) {
+                    System.out.printf("Narrow training data for %s\n", subjects);
+                    continue;
+                }
+
+                final Tuple<Integer, List<Individual>> newGeneration = this.superOptimize(
+                        superOptimizations, population, reducedGroup, generation, maxGen, maxStableGen, minFitness
+                );
+                generation = newGeneration.getField0();
+                population = newGeneration.getField1();
+
+                final GeneticOptimizer tempOptimizer = this.createOptimizer(reducedGroup);
+                this.printResults(tempOptimizer, population.get(0));
+            }
+        }
 
         // Optimize on the complete training data.
-        final Tuple<Integer, List<Individual>> newGeneration = this.optimize(population, generalOptimizer, generation, maxGen, maxStableGen, minFitness);
+        final Tuple<Integer, List<Individual>> newGeneration = this.optimize(
+                population, generalOptimizer, generation, maxGen, maxStableGen, minFitness
+        );
         generation = newGeneration.getField0();
         population = newGeneration.getField1();
         Individual fittestIndividual = population.get(0);
         printResults(generalOptimizer, fittestIndividual);
-
-
     }
 
     private void printResults(GeneticOptimizer optimizer, Individual individual) {
