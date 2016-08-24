@@ -4,6 +4,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.PartialExecution;
+import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Bitmask;
 
 import java.util.*;
@@ -32,6 +33,11 @@ public class GeneticOptimizer {
      * {@link LoadProfileEstimator}s that are relevant to calculate the fitness of {@link Individual}s.
      */
     private final Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators;
+
+    /**
+     * {@link Variable}s to learn the overhead of {@link Platform} initialization.
+     */
+    private final Map<Platform, Variable> platformOverheads;
 
     /**
      * Size of the population and its elite.
@@ -63,6 +69,7 @@ public class GeneticOptimizer {
      */
     private final Bitmask activatedGenes;
 
+
     /**
      * Provides randomness to the optimization.
      */
@@ -74,11 +81,13 @@ public class GeneticOptimizer {
     public GeneticOptimizer(OptimizationSpace optimizationSpace,
                             Collection<PartialExecution> observations,
                             Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+                            Map<Platform, Variable> platformOverheads,
                             Configuration configuration) {
         this.configuration = configuration;
         this.optimizationSpace = optimizationSpace;
         this.observations = observations;
         this.estimators = estimators;
+        this.platformOverheads = platformOverheads;
         this.activatedGenes = new Bitmask(this.optimizationSpace.getNumDimensions());
         for (PartialExecution observation : observations) {
             for (PartialExecution.OperatorExecution opExec : observation.getOperatorExecutions()) {
@@ -88,6 +97,9 @@ public class GeneticOptimizer {
                         this.activatedGenes.set(variable.getIndex());
                     }
                 }
+            }
+            for (Variable platformOverhead : this.platformOverheads.values()) {
+                this.activatedGenes.set(platformOverhead.getIndex());
             }
         }
 
@@ -126,7 +138,7 @@ public class GeneticOptimizer {
     }
 
     private void updateFitnessOf(Individual individual) {
-        individual.calculateFitness(this.observations, this.estimators, this.configuration);
+        individual.calculateFitness(this.observations, this.estimators, this.platformOverheads, this.configuration);
         individual.updateMaturity(this.activatedGenes);
     }
 
@@ -196,4 +208,6 @@ public class GeneticOptimizer {
     public Collection<PartialExecution> getData() {
         return this.observations;
     }
+
+
 }

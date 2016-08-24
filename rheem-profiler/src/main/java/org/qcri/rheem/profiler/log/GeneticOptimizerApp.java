@@ -6,13 +6,16 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.PartialExecution;
+import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.profiling.ExecutionLog;
+import org.qcri.rheem.core.util.Bitmask;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This app tries to infer good {@link LoadProfileEstimator}s for {@link ExecutionOperator}s using data from an
@@ -23,24 +26,34 @@ public class GeneticOptimizerApp {
     /**
      * {@link Configuration} to be used.
      */
-    private final Configuration configuration;
+    final Configuration configuration;
 
     /**
      * Maintains {@link Variable}s to be optimized.
      */
-    private OptimizationSpace optimizationSpace;
+    OptimizationSpace optimizationSpace;
 
     /**
      * Maintains {@link PartialExecution}s as training data.
      */
-    private List<PartialExecution> partialExecutions;
+    List<PartialExecution> partialExecutions;
 
     /**
      * Maintains a {@link LoadProfileEstimator} for every type of {@link ExecutionOperator} in the
      * {@link #partialExecutions}.
      */
-    private Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators;
+    Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators;
 
+    /**
+     * Maintains variables that quantify the overhead for initializing a {@link Platform}.
+     */
+    Map<Platform, Variable> platformOverheads = new HashMap<>();
+
+    /**
+     * Creates a new instance.
+     *
+     * @param configuration provides, amongst others, platform specifications
+     */
     public GeneticOptimizerApp(Configuration configuration) {
         this.configuration = configuration;
 
@@ -57,6 +70,7 @@ public class GeneticOptimizerApp {
         // Initialize the optimization space with its LoadProfileEstimators and associated Variables.
         this.optimizationSpace = new OptimizationSpace();
         this.estimators = new HashMap<>();
+        this.platformOverheads = new HashMap<>();
         Map<Set<Class<? extends ExecutionOperator>>, List<PartialExecution>> partialExecutionClasses = new HashMap<>();
         for (PartialExecution partialExecution : this.partialExecutions) {
 
@@ -73,11 +87,18 @@ public class GeneticOptimizerApp {
                         key -> DynamicLoadProfileEstimators.createSuitableEstimator(execution.getOperator(), this.optimizationSpace)
                 );
             }
+
+            for (Platform platform : partialExecution.getInitializedPlatforms()) {
+                this.platformOverheads.computeIfAbsent(
+                        platform,
+                        key -> this.optimizationSpace.getOrCreateVariable(key.getClass().getCanonicalName() + "->overhead")
+                );
+            }
         }
 
         System.out.printf(
-                "Loaded %d execution records with %d execution operator types.\n",
-                this.partialExecutions.size(), estimators.keySet().size()
+                "Loaded %d execution records with %d execution operator types and %d platform overheads.\n",
+                this.partialExecutions.size(), estimators.keySet().size(), this.platformOverheads.size()
         );
     }
 
@@ -90,21 +111,22 @@ public class GeneticOptimizerApp {
 
 
         // Create the root optimizer and an initial population.
-        GeneticOptimizer generalOptimizer = new GeneticOptimizer(
-                this.optimizationSpace, this.partialExecutions, estimators, this.configuration
-        );
+        GeneticOptimizer generalOptimizer = this.createOptimizer(this.partialExecutions);
         List<Individual> population = generalOptimizer.createInitialPopulation();
         int generation = 0;
 
-        int maxGen = 100000;
+        int maxGen = 20000;
         int maxStableGen = 500;
-        double minFitness = .1;
+        double minFitness = .5;
 
         // Optimize on samples.
 //        for (List<PartialExecution> group : executionGroups) {
 //            final Tuple<Integer, List<Individual>> newGeneration = this.superOptimize(3, population, group, generation, maxGen, maxStableGen, minFitness);
 //            generation = newGeneration.getField0();
 //            population = newGeneration.getField1();
+//
+//            final GeneticOptimizer tempOptimizer = this.createOptimizer(group);
+//            this.printResults(tempOptimizer, population.get(0));
 //        }
 
         // Optimize on the complete training data.
@@ -112,28 +134,65 @@ public class GeneticOptimizerApp {
         generation = newGeneration.getField0();
         population = newGeneration.getField1();
         Individual fittestIndividual = population.get(0);
+        printResults(generalOptimizer, fittestIndividual);
 
+
+    }
+
+    private void printResults(GeneticOptimizer optimizer, Individual individual) {
         // Print the training data vs. the estimates.
         System.out.println();
         System.out.println("Training data vs. measured");
         System.out.println("==========================");
-        this.partialExecutions.sort((e1, e2) -> Long.compare(e2.getMeasuredExecutionTime(), e1.getMeasuredExecutionTime()));
-        for (PartialExecution partialExecution : this.partialExecutions) {
-            final TimeEstimate timeEstimate = fittestIndividual.estimateTime(partialExecution, estimators, this.configuration);
-            System.out.printf("Actual %s;\testimated: %s (%d operators)\n",
+        List<PartialExecution> data = new ArrayList<>(optimizer.getData());
+        data.sort((e1, e2) -> Long.compare(e2.getMeasuredExecutionTime(), e1.getMeasuredExecutionTime()));
+        for (PartialExecution partialExecution : data) {
+            final TimeEstimate timeEstimate = individual.estimateTime(partialExecution, this.estimators, this.platformOverheads, this.configuration);
+            System.out.printf("Actual %13s | Estimated: %72s | %3d operators | %s\n",
                     Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
                     timeEstimate,
-                    partialExecution.getOperatorExecutions().size());
+                    partialExecution.getOperatorExecutions().size(),
+                    Stream.concat(
+                            partialExecution.getOperatorExecutions().stream().map(operatorExecution -> operatorExecution.getOperator().getClass().getSimpleName()),
+                            partialExecution.getInitializedPlatforms().stream().map(Platform::getName)
+                    ).collect(Collectors.toList())
+            );
         }
 
         System.out.println();
         System.out.println("Configuration file");
         System.out.println("==================");
+        final Bitmask genes = optimizer.getActivatedGenes();
+        Set<Variable> optimizedVariables = new HashSet<>(genes.cardinality());
+        for (int gene = genes.nextSetBit(0); gene != -1; gene = genes.nextSetBit(gene + 1)) {
+            optimizedVariables.add(this.optimizationSpace.getVariable(gene));
+        }
+        for (Map.Entry<Platform, Variable> entry : this.platformOverheads.entrySet()) {
+            final Platform platform = entry.getKey();
+            final Variable overhead = entry.getValue();
+            if (!optimizedVariables.contains(overhead)) continue;
+            System.out.printf("(overhead of %s) = %d\n",
+                    platform.getName(),
+                    Math.round(overhead.getValue(individual))
+            );
+        }
         for (LoadProfileEstimator<Individual> estimator : estimators.values()) {
             if (estimator instanceof DynamicLoadProfileEstimator) {
-                System.out.println(((DynamicLoadProfileEstimator) estimator).toJsonConfig(fittestIndividual));
+                final DynamicLoadProfileEstimator dynamicLoadProfileEstimator = (DynamicLoadProfileEstimator) estimator;
+                if (!optimizedVariables.containsAll(dynamicLoadProfileEstimator.getEmployedVariables())) continue;
+                System.out.println(dynamicLoadProfileEstimator.toJsonConfig(individual));
             }
         }
+    }
+
+    /**
+     * Creates a new {@link GeneticOptimizer} that used the given {@link PartialExecution}s as training data.
+     *
+     * @param partialExecutions the training data
+     * @return the {@link GeneticOptimizer}
+     */
+    private GeneticOptimizer createOptimizer(Collection<PartialExecution> partialExecutions) {
+        return new GeneticOptimizer(this.optimizationSpace, partialExecutions, this.estimators, this.platformOverheads, this.configuration);
     }
 
     private Tuple<Integer, List<Individual>> superOptimize(
@@ -166,9 +225,7 @@ public class GeneticOptimizerApp {
             int maxGenerations,
             int maxStableGenerations,
             double minFitness) {
-        GeneticOptimizer optimizer = new GeneticOptimizer(
-                this.optimizationSpace, partialExecutions, this.estimators, this.configuration
-        );
+        GeneticOptimizer optimizer = this.createOptimizer(partialExecutions);
         return this.optimize(individuals, optimizer, currentGeneration, maxGenerations, maxStableGenerations, minFitness);
     }
 
@@ -208,6 +265,10 @@ public class GeneticOptimizerApp {
                 } else {
                     checkpointFitness = bestFitness;
                 }
+            }
+
+            if (i % 2000 == 0) {
+                this.printResults(optimizer, individuals.get(0));
             }
         }
 
@@ -258,7 +319,6 @@ public class GeneticOptimizerApp {
 
     public static void main(String[] args) {
         Configuration configuration = new Configuration();
-
         new GeneticOptimizerApp(configuration).run();
     }
 }

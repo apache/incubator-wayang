@@ -7,9 +7,11 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.PartialExecution;
+import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Bitmask;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Context for the optimization of {@link LoadProfileEstimator}s.
@@ -113,22 +115,91 @@ public class Individual {
      *
      * @param partialExecutions on which this instance should be evaluated
      * @param estimators        the {@link LoadProfileEstimator}s being configured by this instance
-     * @param configuration     the {@link Configuration}
-     * @see #getFitness()
+     * @param platformOverheads
+     * @param configuration     the {@link Configuration}  @see #getFitness()
      */
     public void calculateFitness(Collection<PartialExecution> partialExecutions,
                                  Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+                                 Map<Platform, Variable> platformOverheads,
                                  Configuration configuration) {
-        boolean isAbsolute = configuration.getStringProperty("rheem.profiler.ga.fitness", "relative").equals("absolute");
-        this.fitness = Double.POSITIVE_INFINITY;
-        for (PartialExecution partialExecution : partialExecutions) {
-            TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, configuration);
-            double partialFitness = isAbsolute ?
-                    this.calculateAbsolutePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime()) :
-                    this.calculateRelativePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
-            this.fitness = Math.min(partialFitness, this.fitness);
-        }
+//        this.fitness = 0d;
+//        double harmonicSmoothing = .1d;
+//        double weightSmoothing = 2d;
+//        double weightSum = 0d;
+//        double fitnessSum = 0d;
+//        for (PartialExecution partialExecution : partialExecutions) {
+//            TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, platformOverheads, configuration);
+//
+//
+//            boolean isAbsolute = false;
+//            double weight = Math.log(partialExecution.getMeasuredExecutionTime() + 2d) / Math.log(2);
+//            double partialFitness = isAbsolute ?
+//                    this.calculateAbsolutePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime()) :
+//                    this.calculateRelativePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
+//
+//            fitnessSum += weight / (partialFitness + harmonicSmoothing);
+//            weightSum += weight;
+//        }
+//        this.fitness = (weightSum / fitnessSum) - harmonicSmoothing;
 //        this.fitness /= partialExecutions.size();
+        this.fitness = this.calcluateSubjectbasedFitness(partialExecutions, estimators, platformOverheads, configuration);
+    }
+
+    private double calcluateSubjectbasedFitness(Collection<PartialExecution> partialExecutions,
+                                                Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+                                                Map<Platform, Variable> platformOverheads,
+                                                Configuration configuration) {
+
+        Map<Object, FitnessAggregator> subjectAggregators = new HashMap<>();
+        for (PartialExecution partialExecution : partialExecutions) {
+            // Calculate values for the given partialExecution
+            TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, platformOverheads, configuration);
+            double partialFitness = this.calculateRelativePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
+            double weight = Math.log(Math.max(timeEstimate.getGeometricMeanEstimate(), partialExecution.getMeasuredExecutionTime()) + 2d) / Math.log(2);
+//            double weight = Math.max(timeEstimate.getGeometricMeanEstimate(), partialExecution.getMeasuredExecutionTime()) + 1;
+
+            // Attribute the fitness to all involved subjects.
+            for (PartialExecution.OperatorExecution operatorExecution : partialExecution.getOperatorExecutions()) {
+                Object subject = operatorExecution.getOperator().getClass();
+                final FitnessAggregator aggregator = subjectAggregators.computeIfAbsent(subject, k -> new FitnessAggregator(0, 0));
+                aggregator.fitnessAccumulator += weight * partialFitness;
+                aggregator.weightAccumulator += weight;
+                aggregator.numObservations++;
+            }
+            for (Platform subject : partialExecution.getInitializedPlatforms()) {
+                final FitnessAggregator aggregator = subjectAggregators.computeIfAbsent(subject, k -> new FitnessAggregator(0, 0));
+                aggregator.fitnessAccumulator += weight * partialFitness;
+                aggregator.weightAccumulator += weight;
+                aggregator.numObservations++;
+            }
+        }
+
+        // Aggregate the fitness values of the different subjects.
+        FitnessAggregator aggregator = new FitnessAggregator(0, 0);
+        for (FitnessAggregator subjectAggregator : subjectAggregators.values()) {
+            double subjectFitness = subjectAggregator.fitnessAccumulator / subjectAggregator.weightAccumulator;
+            double subjectWeight = 1;//Math.log(1 + subjectAggregator.numObservations);
+            aggregator.fitnessAccumulator += subjectWeight * subjectFitness;
+            aggregator.weightAccumulator += subjectWeight;
+            aggregator.numObservations++;
+        }
+
+        return aggregator.fitnessAccumulator / aggregator.weightAccumulator;
+
+    }
+
+    private static class FitnessAggregator {
+
+        private double fitnessAccumulator;
+
+        private double weightAccumulator;
+
+        private int numObservations = 0;
+
+        public FitnessAggregator(double fitnessAccumulator, double weightAccumulator) {
+            this.fitnessAccumulator = fitnessAccumulator;
+            this.weightAccumulator = weightAccumulator;
+        }
     }
 
     public void updateMaturity(Bitmask activatedGenes) {
@@ -151,7 +222,7 @@ public class Individual {
     }
 
     private double calculateRelativePartialFitness(TimeEstimate timeEstimate, long actualTime) {
-        final long smoothing = 1L;
+        final long smoothing = 10L;
         final long meanEstimate = timeEstimate.getGeometricMeanEstimate() + smoothing;
         actualTime = actualTime + smoothing;
         if (meanEstimate > actualTime) {
@@ -169,9 +240,16 @@ public class Individual {
 
     TimeEstimate estimateTime(PartialExecution partialExecution,
                               Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+                              Map<Platform, Variable> platformOverheads,
                               Configuration configuration) {
-        return partialExecution.getOperatorExecutions().stream()
-                .map(operatorExecution -> this.estimateTime(operatorExecution, estimators, configuration))
+        final Stream<TimeEstimate> operatorEstimates = partialExecution.getOperatorExecutions().stream()
+                .map(operatorExecution -> this.estimateTime(operatorExecution, estimators, configuration));
+        final Stream<TimeEstimate> platformEstimates = partialExecution.getInitializedPlatforms().stream()
+                .map(p -> {
+                    final Variable variable = platformOverheads.get(p);
+                    return variable == null ? TimeEstimate.ZERO : new TimeEstimate(Math.round(variable.getValue(this)));
+                });
+        return Stream.concat(operatorEstimates, platformEstimates)
                 .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
     }
 
