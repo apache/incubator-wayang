@@ -71,6 +71,7 @@ public class GeneticOptimizerApp {
         this.optimizationSpace = new OptimizationSpace();
         this.estimators = new HashMap<>();
         this.platformOverheads = new HashMap<>();
+
         Map<Set<Class<? extends ExecutionOperator>>, List<PartialExecution>> partialExecutionClasses = new HashMap<>();
         for (PartialExecution partialExecution : this.partialExecutions) {
 
@@ -82,9 +83,13 @@ public class GeneticOptimizerApp {
 
             // Initialize an LoadProfileEstimator for each of the ExecutionOperators.
             for (PartialExecution.OperatorExecution execution : partialExecution.getOperatorExecutions()) {
-                estimators.computeIfAbsent(
+                this.estimators.computeIfAbsent(
                         execution.getOperator().getClass(),
-                        key -> DynamicLoadProfileEstimators.createSuitableEstimator(execution.getOperator(), this.optimizationSpace)
+                        key -> DynamicLoadProfileEstimators.createSuitableEstimator(
+                                execution.getOperator(),
+                                this.optimizationSpace,
+                                this.configuration
+                        )
                 );
             }
 
@@ -115,17 +120,38 @@ public class GeneticOptimizerApp {
         List<Individual> population = generalOptimizer.createInitialPopulation();
         int generation = 0;
 
-        int maxGen = 20000;
-        int maxStableGen = 500;
-        double minFitness = .5;
+        int maxGen = 5000;
+        int maxStableGen = 1000;
+        double minFitness = .9;
 
-        // Optimize on samples.
+        // Optimize on blocks.
 //        for (List<PartialExecution> group : executionGroups) {
-//            final Tuple<Integer, List<Individual>> newGeneration = this.superOptimize(3, population, group, generation, maxGen, maxStableGen, minFitness);
+//            final Collection<PartialExecution> reducedGroup = this.reduceByExecutionTime(group, 1.5);
+//            final PartialExecution representative = RheemCollections.getAny(reducedGroup);
+//            final List<String> subjects = Stream.concat(
+//                    representative.getOperatorExecutions().stream().map(operatorExecution -> operatorExecution.getOperator().getClass().getSimpleName()),
+//                    representative.getInitializedPlatforms().stream().map(Platform::getName)
+//            ).collect(Collectors.toList());
+//            if (reducedGroup.size() < 2) {
+//                System.out.printf("Too few measurement points: skipping %s\n", subjects);
+//                continue;
+//            } else if (representative.getOperatorExecutions().size() > 3) {
+//                System.out.printf("Too many subjects: skipping %s\n", subjects);
+//                continue;
+//            } else {
+//                long minExecTime = reducedGroup.stream().mapToLong(PartialExecution::getMeasuredExecutionTime).min().getAsLong();
+//                long maxExecTime = reducedGroup.stream().mapToLong(PartialExecution::getMeasuredExecutionTime).max().getAsLong();
+//                if (maxExecTime - minExecTime < 1000) {
+//                    System.out.printf("Too narrow training data: skipping %s\n", subjects);
+//                    continue;
+//                }
+//            }
+//
+//            final Tuple<Integer, List<Individual>> newGeneration = this.superOptimize(3, population, reducedGroup, generation, maxGen, maxStableGen, minFitness);
 //            generation = newGeneration.getField0();
 //            population = newGeneration.getField1();
 //
-//            final GeneticOptimizer tempOptimizer = this.createOptimizer(group);
+//            final GeneticOptimizer tempOptimizer = this.createOptimizer(reducedGroup);
 //            this.printResults(tempOptimizer, population.get(0));
 //        }
 
@@ -141,6 +167,8 @@ public class GeneticOptimizerApp {
 
     private void printResults(GeneticOptimizer optimizer, Individual individual) {
         // Print the training data vs. the estimates.
+        System.out.println();
+        System.out.printf("=== Stats for fittest individual (fitness=%,.4f)\n", individual.getFitness());
         System.out.println();
         System.out.println("Training data vs. measured");
         System.out.println("==========================");
@@ -246,8 +274,7 @@ public class GeneticOptimizerApp {
         double checkpointFitness = Double.NEGATIVE_INFINITY;
         int i;
         for (i = 0; i < maxGenerations; i++, currentGeneration++) {
-            individuals = optimizer.evolve(individuals);
-
+            // Print status.
             if (i % maxStableGenerations == 0) {
                 System.out.printf(
                         "Fittest individual of generation %,d (%,d): %,.4f\n",
@@ -257,18 +284,16 @@ public class GeneticOptimizerApp {
                 );
             }
 
+            individuals = optimizer.evolve(individuals);
+
             // Check whether we seem to be stuck in a (local) optimum.
             if (i % maxStableGenerations == 0) {
                 final double bestFitness = individuals.get(0).getFitness();
-                if (checkpointFitness >= bestFitness && bestFitness >= minFitness) {
+                if (checkpointFitness >= bestFitness && bestFitness >= minFitness && i > 0) {
                     break;
                 } else {
                     checkpointFitness = bestFitness;
                 }
-            }
-
-            if (i % 2000 == 0) {
-                this.printResults(optimizer, individuals.get(0));
             }
         }
 
@@ -317,8 +342,17 @@ public class GeneticOptimizerApp {
                 .collect(Collectors.toSet());
     }
 
+    private Collection<PartialExecution> reduceByExecutionTime(Collection<PartialExecution> partialExecutions, double densityFactor) {
+        Map<Integer, PartialExecution> resultBins = new HashMap<>();
+        for (PartialExecution partialExecution : partialExecutions) {
+            int key = (int) Math.round(Math.log1p(partialExecution.getMeasuredExecutionTime()) / Math.log(densityFactor));
+            resultBins.put(key, partialExecution);
+        }
+        return resultBins.values();
+    }
+
     public static void main(String[] args) {
-        Configuration configuration = new Configuration();
+        Configuration configuration = args.length == 0 ? new Configuration() : new Configuration(args[0]);
         new GeneticOptimizerApp(configuration).run();
     }
 }

@@ -1,6 +1,9 @@
 package org.qcri.rheem.profiler.log;
 
 import org.qcri.rheem.basic.operators.*;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
@@ -14,6 +17,7 @@ import org.qcri.rheem.spark.operators.SparkCollectOperator;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 
 /**
@@ -26,10 +30,19 @@ public class DynamicLoadProfileEstimators {
      *
      * @param operator          the {@link ExecutionOperator} for that should be estimated
      * @param optimizationSpace context for {@link Variable}s
+     * @param configuration     provides configuration values
      * @return the {@link DynamicLoadProfileEstimator}
      */
     public static DynamicLoadProfileEstimator createSuitableEstimator(ExecutionOperator operator,
-                                                                      OptimizationSpace optimizationSpace) {
+                                                                      OptimizationSpace optimizationSpace,
+                                                                      Configuration configuration) {
+
+        // First check if the configuration already provides an estimator.
+        final String key = operator.getLoadProfileEstimatorConfigurationKey();
+        final String juelSpec = configuration.getProperties().provideLocally(key);
+        if (juelSpec != null) {
+            return wrap(LoadProfileEstimators.createFromJuelSpecification(juelSpec));
+        }
 
         // Special treatment of such unary operators that have a static number of output data quanta.
         boolean isMapLike = (operator.getNumInputs() == 1 && operator.getNumOutputs() == 1) &&
@@ -230,5 +243,46 @@ public class DynamicLoadProfileEstimators {
                 new DynamicLoadEstimator(singlePointEstimator, juelTemplate, employedVariables)
         );
     }
+
+    /**
+     * Exposes a {@link LoadProfileEstimator} for {@link ExecutionOperator}s as a {@link DynamicLoadProfileEstimator} with the
+     * caveat that the {@link ExecutionOperator} will not be available in the estimation process.
+     *
+     * @param loadProfileEstimator the {@link LoadProfileEstimator} or {@code null}
+     * @return the {@link DynamicLoadProfileEstimator} or {@code null} if {@code loadProfileEstimator} is {@code null}
+     */
+    public static DynamicLoadProfileEstimator wrap(LoadProfileEstimator<ExecutionOperator> loadProfileEstimator) {
+        return new DynamicLoadProfileEstimator(null, -1, -1, null) {
+            @Override
+            public LoadProfile estimate(Individual individual, CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
+                return loadProfileEstimator.estimate(null, inputEstimates, outputEstimates);
+            }
+
+            @Override
+            public Collection<Variable> getEmployedVariables() {
+                return Collections.emptyList();
+            }
+        };
+    }
+
+    /**
+     * Exposes a {@link LoadEstimator} for {@link ExecutionOperator}s as a {@link DynamicLoadEstimator} with the
+     * caveat that the {@link ExecutionOperator} will not be available in the estimation process.
+     *
+     * @param loadEstimator the {@link LoadEstimator} or {@code null}
+     * @return the {@link DynamicLoadEstimator} or {@code null} if {@code loadEstimator} is {@code null}
+     */
+    public static DynamicLoadEstimator wrap(LoadEstimator<ExecutionOperator> loadEstimator) {
+        if (loadEstimator == null) return null;
+        return new DynamicLoadEstimator(null, null, Collections.emptySet()) {
+            @Override
+            public LoadEstimate calculate(Individual individual,
+                                          CardinalityEstimate[] inputEstimates,
+                                          CardinalityEstimate[] outputEstimates) {
+                return loadEstimator.calculate(null, inputEstimates, outputEstimates);
+            }
+        };
+    }
+
 
 }

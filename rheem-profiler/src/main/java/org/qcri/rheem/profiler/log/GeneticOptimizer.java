@@ -6,6 +6,8 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Bitmask;
+import org.qcri.rheem.profiler.log.sampling.Sampler;
+import org.qcri.rheem.profiler.log.sampling.TournamentSampler;
 
 import java.util.*;
 
@@ -148,17 +150,33 @@ public class GeneticOptimizer {
 
         // Select individuals that should be able to propagate.
         double maxFitness = population.get(0).getFitness(), minFitness = population.get(this.populationSize - 1).getFitness();
-        int selectionSize = ((int) Math.ceil(this.populationSize * this.selectionRatio));
-        List<Individual> selectedIndividuals = new ArrayList<>(selectionSize);
-        for (int i = 0; i < selectionSize; i++) {
-            Individual individual1 = population.get(i);
-            Individual individual2 = population.get(this.random.nextInt(this.populationSize));
-            double probIndividual1 = getSelectionProbability(individual1.getFitness(), individual2.getFitness(), minFitness);
-            Individual choice = this.random.nextDouble() <= probIndividual1 ?
-                    individual1 :
-                    individual2;
-            selectedIndividuals.add(choice);
-        }
+//        int selectionSize = ((int) Math.ceil(this.populationSize * this.selectionRatio));
+//        List<Individual> selectedIndividuals = new ArrayList<>(selectionSize);
+//        Bitmask selectedIndices = new Bitmask(this.populationSize);
+//        for (int i = 0; i < selectionSize; i++) {
+//            if (selectedIndices.get(i)) continue;
+//            Individual individual1 = population.get(i);
+//            int j;
+//            do {
+//                j = this.random.nextInt(this.populationSize);
+//            } while (!selectedIndices.get(j));
+//            Individual individual2 = population.get(this.random.nextInt(this.populationSize));
+//            double probIndividual1 = getSelectionProbability(individual1.getFitness(), individual2.getFitness(), minFitness);
+//            if (this.random.nextDouble() <= probIndividual1) {
+//                selectedIndividuals.add(individual1);
+//                selectedIndices.set(i);
+//            } else {
+//                selectedIndividuals.add(individual2);
+//                selectedIndices.set(j);
+//            }
+//        }
+        Sampler<Individual> selector = new TournamentSampler<>();
+        final List<Individual> selectedIndividuals = selector.sample(
+                population,
+                (i1, i2) -> (this.random.nextDouble() < getSelectionProbability(i1.getFitness(), i2.getFitness(), minFitness)) ? i1 : i2,
+                this.selectionRatio
+        );
+        int selectionSize = selectedIndividuals.size();
 
         // Create mutations.
         int numMutations = (int) Math.round(this.mutationRatio * this.populationSize);
@@ -196,8 +214,8 @@ public class GeneticOptimizer {
 
     public static double getSelectionProbability(double score1, double score2, double minScore) {
         if (score1 == score2) return 0.5d;
-        score1 = minScore - score1;
-        score2 = minScore - score2;
+        score1 -= minScore;
+        score2 -= minScore;
         return score1 / (score1 + score2);
     }
 
