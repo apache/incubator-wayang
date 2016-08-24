@@ -292,7 +292,7 @@ public class GeneticOptimizerApp {
 
             individuals = optimizer.evolve(individuals);
 
-            if (updateFrequency > 0 && i > 0 && updateFrequency % i == 0) {
+            if (updateFrequency > 0 && i > 0 && i % updateFrequency == 0) {
                 this.printResults(optimizer, individuals.get(0));
             }
 

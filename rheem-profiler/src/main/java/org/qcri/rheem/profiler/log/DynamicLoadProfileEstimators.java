@@ -252,7 +252,7 @@ public class DynamicLoadProfileEstimators {
      * @return the {@link DynamicLoadProfileEstimator} or {@code null} if {@code loadProfileEstimator} is {@code null}
      */
     public static DynamicLoadProfileEstimator wrap(LoadProfileEstimator<ExecutionOperator> loadProfileEstimator) {
-        return new DynamicLoadProfileEstimator(null, -1, -1, null) {
+        return new DynamicLoadProfileEstimator("(none)", -1, -1, DynamicLoadEstimator.zeroLoad) {
             @Override
             public LoadProfile estimate(Individual individual, CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
                 return loadProfileEstimator.estimate(null, inputEstimates, outputEstimates);
