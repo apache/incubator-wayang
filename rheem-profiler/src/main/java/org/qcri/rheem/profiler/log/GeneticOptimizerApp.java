@@ -268,6 +268,8 @@ public class GeneticOptimizerApp {
             int maxGenerations,
             int maxStableGenerations,
             double minFitness) {
+
+        int updateFrequency = (int) this.configuration.getLongProperty("rheem.profiler.ga.intermediateupate", -1);
         System.out.printf("Optimizing %d variables on %d partial executions (e.g., %s).\n",
                 optimizer.getActivatedGenes().cardinality(),
                 optimizer.getData().size(),
@@ -289,6 +291,10 @@ public class GeneticOptimizerApp {
             }
 
             individuals = optimizer.evolve(individuals);
+
+            if (updateFrequency > 0 && i > 0 && updateFrequency % i == 0) {
+                this.printResults(optimizer, individuals.get(0));
+            }
 
             // Check whether we seem to be stuck in a (local) optimum.
             if (i % maxStableGenerations == 0) {
