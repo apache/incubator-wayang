@@ -49,9 +49,10 @@ public class Variable {
             }
         } else if (!Double.isFinite(this.maxValue)) {
             double delta = currentValue - this.minValue + deltaSmoothing;
-            final double max = Math.max(this.minValue, currentValue + random.nextGaussian() * delta / 2);
-//            System.out.printf("Mutating %,.1f to %,.1f.\n", currentValue, max);
-            return max;
+            final double randomGene = currentValue + random.nextGaussian() * delta / 2;
+            return randomGene < this.minValue ?
+                    2 * this.minValue - randomGene :
+                    randomGene;
         }
         return random.nextDouble() * (this.maxValue - this.minValue) + this.minValue;
     }
