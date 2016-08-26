@@ -3,7 +3,6 @@ package org.qcri.rheem.profiler.java;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.ArrayList;
@@ -41,10 +40,9 @@ public class UnaryOperatorProfiler extends OperatorProfiler {
 
 
     public long executeOperator() {
-        this.operator.evaluate(
+        this.evaluate(
                 new JavaChannelInstance[]{this.inputChannelInstance},
-                new JavaChannelInstance[]{this.outputChannelInstance},
-                new FunctionCompiler(null)
+                new JavaChannelInstance[]{this.outputChannelInstance}
         );
         return this.outputChannelInstance.provideStream().count();
     }
