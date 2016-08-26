@@ -13,12 +13,12 @@ public class DataSetType<T> {
     /**
      * Stands for the absence of an actual instance.
      */
-    private static final DataSetType<Void> NONE = DataSetType.createDefault(Void.class);
+    public static final DataSetType<Void> NONE = DataSetType.createDefault(Void.class);
 
     /**
      * Stands for the absence of an actual instance.
      */
-    private static final DataSetType<Iterable<Void>> GROUPED_NONE = DataSetType.createGrouped(Void.class);
+    public static final DataSetType<Iterable<Void>> GROUPED_NONE = DataSetType.createGrouped(Void.class);
 
     /**
      * Type of the data units within the data set.
