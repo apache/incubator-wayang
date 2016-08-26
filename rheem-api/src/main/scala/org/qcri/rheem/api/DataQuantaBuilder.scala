@@ -1309,6 +1309,29 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
     this
   }
 
+  /**
+    * Explicitly set the [[DataSetType]] for the condition [[DataQuanta]]. Note that it is not
+    * always necessary to set it and that it can be inferred in some situations.
+    *
+    * @param outputType the output [[DataSetType]]
+    * @return this instance
+    */
+  def withConditionType(outputType: DataSetType[ConvOut]) = {
+    this.convOutClassTag = ClassTag(outputType.getDataUnitType.getTypeClass)
+    this
+  }
+
+  /**
+    * Explicitly set the [[Class]] for the condition [[DataQuanta]]. Note that it is not
+    * always necessary to set it and that it can be inferred in some situations.
+    *
+    * @param cls the output [[Class]]
+    * @return this instance
+    */
+  def withConditionClass(cls: Class[ConvOut]) = {
+    this.convOutClassTag = ClassTag(cls)
+    this
+  }
 
   /**
     * Set the number of expected iterations for the built [[org.qcri.rheem.basic.operators.DoWhileOperator]].
