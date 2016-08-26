@@ -13,9 +13,9 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.profiling.FullInstrumentationStrategy;
-import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
 import org.qcri.rheem.jdbc.test.HsqldbFilterOperator;
 import org.qcri.rheem.jdbc.test.HsqldbPlatform;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
 /**
  * Test suite for {@link SqlToStreamOperator}.
  */
-public class SqlToStreamOperatorTest {
+public class SqlToStreamOperatorTest extends OperatorTestBase {
 
     @Test
     public void testWithHsqldb() throws SQLException {
@@ -81,10 +81,10 @@ public class SqlToStreamOperatorTest {
                 );
 
         SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(HsqldbPlatform.getInstance());
-        sqlToStreamOperator.evaluate(
-                new ChannelInstance[] { sqlQueryChannelInstance },
-                new ChannelInstance[] { streamChannelInstance },
-                javaExecutor
+        evaluate(
+                sqlToStreamOperator,
+                new ChannelInstance[]{sqlQueryChannelInstance},
+                new ChannelInstance[]{streamChannelInstance}
         );
 
         List<Record> output = streamChannelInstance.<Record>provideStream().collect(Collectors.toList());
@@ -140,10 +140,10 @@ public class SqlToStreamOperatorTest {
                 );
 
         SqlToStreamOperator sqlToStreamOperator = new SqlToStreamOperator(HsqldbPlatform.getInstance());
-        sqlToStreamOperator.evaluate(
-                new ChannelInstance[] { sqlQueryChannelInstance },
-                new ChannelInstance[] { streamChannelInstance },
-                javaExecutor
+        evaluate(
+                sqlToStreamOperator,
+                new ChannelInstance[]{sqlQueryChannelInstance},
+                new ChannelInstance[]{streamChannelInstance}
         );
 
         List<Record> output = streamChannelInstance.<Record>provideStream().collect(Collectors.toList());
