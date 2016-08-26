@@ -16,6 +16,13 @@ public class Record extends copyable implements Serializable {
     }
 
     @Override
+    public Record copy(){
+        Object[] values2 = new Object[values.length];
+        System.arraycopy( values, 0, values2, 0, values.length );
+        return new Record(values.clone());
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || this.getClass() != o.getClass()) return false;

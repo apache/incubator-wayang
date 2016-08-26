@@ -30,7 +30,7 @@ public class IESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
                               TransformationDescriptor<Input,Type1> get0Ref, JoinCondition cond1) {
         super(DataSetType.createDefault(inputTypeClass),
                 DataSetType.createDefaultUnchecked(Tuple2.class),
-                false, null);
+                false);
         this.get0Pivot = get0Pivot;
         this.cond0 = cond0;
         this.get0Ref = get0Ref;
@@ -41,7 +41,7 @@ public class IESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
     public IESelfJoinOperator(DataSetType<Input> inputType,
                               TransformationDescriptor<Input,Type0> get0Pivot, JoinCondition cond0,
                               TransformationDescriptor<Input,Type1> get0Ref, JoinCondition cond1) {
-        super(inputType, DataSetType.createDefaultUnchecked(Tuple2.class), false, null);
+        super(inputType, DataSetType.createDefaultUnchecked(Tuple2.class), false);
         this.get0Pivot = get0Pivot;
         this.cond0 = cond0;
         this.get0Ref = get0Ref;

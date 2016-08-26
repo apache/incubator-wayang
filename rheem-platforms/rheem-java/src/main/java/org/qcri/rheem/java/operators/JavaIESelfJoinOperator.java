@@ -90,14 +90,6 @@ public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exten
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        return Optional.of(new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> outCards[0] * 21 + 900000),
-                LoadEstimator.createFallback(1, 1)
-        ));
-    }
-
-    @Override
     protected ExecutionOperator createCopy() {
         return new JavaIESelfJoinOperator<Type0, Type1,Input>(this.getInputType(),
                 get0Pivot, cond0, get0Ref, cond1);
@@ -113,5 +105,10 @@ public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exten
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
+    }
+    //TODO: what is isExecutedEagerly?
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
     }
 }

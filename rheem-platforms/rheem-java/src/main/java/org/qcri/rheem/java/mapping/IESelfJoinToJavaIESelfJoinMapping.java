@@ -4,7 +4,7 @@ import org.qcri.rheem.basic.data.JoinCondition;
 import org.qcri.rheem.basic.operators.IESelfJoinOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaIESelfJoinOperator;
 
 import java.util.Collection;

@@ -17,8 +17,9 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.operators.subOperators.*;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import scala.Tuple2;
 import scala.Tuple5;
 
@@ -40,7 +41,6 @@ public class SparkIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends 
                                TransformationDescriptor<Input,Type1> get0Ref, TransformationDescriptor<Input,Type1> get1Ref, JoinCondition cond1) {
         super(inputType0, inputType1, get0Pivot, get1Pivot, cond0, get0Ref, get1Ref, cond1);
     }
-
     @Override
     public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
         assert inputs.length == this.getNumInputs();
@@ -192,22 +192,6 @@ public class SparkIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends 
     //TODO:
     //A copy from SparkCartesianOperator.. Need checking
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 20000000 * inputCards[0] + 10000000 * inputCards[1] + 100 * outputCards[0] + 5500000000L),
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(2, 1, .9d, (inputCards, outputCards) -> 20000 * (inputCards[0] + inputCards[1]) + 1700000),
-                0.1d,
-                1000
-        );
-
-        return Optional.of(mainEstimator);
-    }
-
-    //TODO:
-    //A copy from SparkCartesianOperator.. Need checking
-    @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
         return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
@@ -219,5 +203,10 @@ public class SparkIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends 
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
+    }
+    //TODO: What is this?
+    @Override
+    public boolean isExecutedEagerly() {
+        return false;
     }
 }
