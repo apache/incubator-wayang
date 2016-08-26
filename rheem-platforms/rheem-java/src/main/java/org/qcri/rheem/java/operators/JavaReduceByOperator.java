@@ -14,11 +14,13 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -49,14 +51,6 @@ public class JavaReduceByOperator<Type, KeyType>
      */
     public JavaReduceByOperator(ReduceByOperator<Type, KeyType> that) {
         super(that);
-    }
-
-    @Override
-    public void open(ChannelInstance[] inputs,
-                     OptimizationContext.OperatorContext operatorContext,
-                     FunctionCompiler compiler) {
-        final BiFunction<Type, Type, Type> udf = compiler.compile(this.reduceDescriptor);
-        JavaExecutor.openFunction(this, udf, inputs, operatorContext);
     }
 
     @Override

@@ -13,7 +13,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Arrays;
@@ -46,14 +45,6 @@ public class JavaMapOperator<InputType, OutputType>
     }
 
     @Override
-    public void open(ChannelInstance[] inputs,
-                     OptimizationContext.OperatorContext operatorContext,
-                     FunctionCompiler compiler) {
-        final Function<InputType, OutputType> udf = compiler.compile(this.functionDescriptor);
-        JavaExecutor.openFunction(this, udf, inputs, operatorContext);
-    }
-
-    @Override
     public void evaluate(ChannelInstance[] inputs,
                          ChannelInstance[] outputs,
                          JavaExecutor javaExecutor,
@@ -63,7 +54,6 @@ public class JavaMapOperator<InputType, OutputType>
 
         final Function<InputType, OutputType> function = javaExecutor.getCompiler().compile(this.functionDescriptor);
         JavaExecutor.openFunction(this, function, inputs, operatorContext);
-
         ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<InputType>provideStream().map(function));
     }
 

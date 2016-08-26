@@ -3,8 +3,6 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.platform.JavaPlatform;
 
@@ -18,19 +16,6 @@ public interface JavaExecutionOperator extends ExecutionOperator {
     @Override
     default JavaPlatform getPlatform() {
         return JavaPlatform.getInstance();
-    }
-
-    /**
-     * When this instance is not yet initialized, this method is called.
-     *
-     * @param inputs          {@link JavaChannelInstance}s that satisfy the inputs of this operator
-     * @param operatorContext contains optimization information for this instance
-     * @param compiler        compiles functions used by this instance
-     */
-    default void open(ChannelInstance[] inputs,
-                      OptimizationContext.OperatorContext operatorContext,
-                      FunctionCompiler compiler) {
-        // Do nothing by default.
     }
 
     /**

@@ -13,7 +13,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Arrays;
@@ -39,14 +38,6 @@ public class JavaFilterOperator<Type>
         super(predicateDescriptor, type);
     }
 
-    @Override
-    public void open(ChannelInstance[] inputs,
-                     OptimizationContext.OperatorContext operatorContext,
-                     FunctionCompiler compiler) {
-        final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
-        JavaExecutor.openFunction(this, filterFunction, inputs, operatorContext);
-    }
-
     public JavaFilterOperator(DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
         super(type, predicateDescriptor);
     }
@@ -70,6 +61,7 @@ public class JavaFilterOperator<Type>
         assert outputs.length == this.getNumOutputs();
 
         final Predicate<Type> filterFunction = javaExecutor.getCompiler().compile(this.predicateDescriptor);
+        JavaExecutor.openFunction(this, filterFunction, inputs, operatorContext);
         ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<Type>provideStream().filter(filterFunction));
     }
 

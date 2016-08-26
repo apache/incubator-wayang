@@ -13,7 +13,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
@@ -44,14 +43,6 @@ public class JavaFlatMapOperator<InputType, OutputType>
      */
     public JavaFlatMapOperator(FlatMapOperator<InputType, OutputType> that) {
         super(that);
-    }
-
-    @Override
-    public void open(ChannelInstance[] inputs,
-                     OptimizationContext.OperatorContext operatorContext,
-                     FunctionCompiler compiler) {
-        final Function<InputType, Iterable<OutputType>> udf = compiler.compile(this.functionDescriptor);
-        JavaExecutor.openFunction(this, udf, inputs, operatorContext);
     }
 
     @Override

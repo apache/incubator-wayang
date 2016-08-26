@@ -13,7 +13,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
@@ -52,14 +51,6 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public void open(ChannelInstance[] inputs,
-                     OptimizationContext.OperatorContext operatorContext,
-                     FunctionCompiler compiler) {
-        final Predicate<Collection<ConvergenceType>> udf = compiler.compile(this.criterionDescriptor);
-        JavaExecutor.openFunction(this, udf, inputs, operatorContext);
-    }
-
-    @Override
     @SuppressWarnings("unchecked")
     public void evaluate(ChannelInstance[] inputs,
                          ChannelInstance[] outputs,
@@ -70,6 +61,8 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
         final Predicate<Collection<ConvergenceType>> stoppingCondition =
                 javaExecutor.getCompiler().compile(this.criterionDescriptor);
+        JavaExecutor.openFunction(this, stoppingCondition, inputs, operatorContext);
+
         boolean endloop = false;
 
         final Collection<ConvergenceType> convergenceCollection;

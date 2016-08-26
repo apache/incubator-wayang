@@ -13,14 +13,12 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 
 /**
@@ -49,14 +47,6 @@ public class JavaGlobalReduceOperator<Type>
      */
     public JavaGlobalReduceOperator(GlobalReduceOperator<Type> that) {
         super(that);
-    }
-
-    @Override
-    public void open(ChannelInstance[] inputs,
-                     OptimizationContext.OperatorContext operatorContext,
-                     FunctionCompiler compiler) {
-        final BiFunction<Type, Type, Type> udf = compiler.compile(this.reduceDescriptor);
-        JavaExecutor.openFunction(this, udf, inputs, operatorContext);
     }
 
     @Override
