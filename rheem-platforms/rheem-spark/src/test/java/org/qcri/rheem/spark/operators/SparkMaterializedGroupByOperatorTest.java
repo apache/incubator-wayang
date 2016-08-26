@@ -8,7 +8,6 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -48,7 +47,7 @@ public class SparkMaterializedGroupByOperatorTest extends SparkOperatorTestBase 
         final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        collocateByOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+        this.evaluate(collocateByOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Iterable<Tuple2<String, Integer>>> originalResult =

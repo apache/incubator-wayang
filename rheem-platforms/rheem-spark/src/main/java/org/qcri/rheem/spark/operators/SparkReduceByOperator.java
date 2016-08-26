@@ -8,6 +8,7 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -16,7 +17,6 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.Arrays;
@@ -54,7 +54,10 @@ public class SparkReduceByOperator<Type, KeyType>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         SparkExecutor sparkExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -62,11 +65,14 @@ public class SparkReduceByOperator<Type, KeyType>
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
         final JavaRDD<Type> inputStream = input.provideRdd();
-        final PairFunction<Type, KeyType, Type> keyExtractor = compiler.compileToKeyExtractor(this.keyDescriptor);
-        Function2<Type, Type, Type> reduceFunc = compiler.compile(this.reduceDescriptor, this, inputs);
+        final PairFunction<Type, KeyType, Type> keyExtractor =
+                sparkExecutor.getCompiler().compileToKeyExtractor(this.keyDescriptor);
+        Function2<Type, Type, Type> reduceFunc =
+                sparkExecutor.getCompiler().compile(this.reduceDescriptor, this, operatorContext, inputs);
         final JavaPairRDD<KeyType, Type> pairRdd = inputStream.mapToPair(keyExtractor);
         this.name(pairRdd);
-        final JavaPairRDD<KeyType, Type> reducedPairRdd = pairRdd.reduceByKey(reduceFunc, sparkExecutor.getNumDefaultPartitions());
+        final JavaPairRDD<KeyType, Type> reducedPairRdd =
+                pairRdd.reduceByKey(reduceFunc, sparkExecutor.getNumDefaultPartitions());
         this.name(reducedPairRdd);
         final JavaRDD<Type> outputRdd = reducedPairRdd.map(new TupleConverter<>());
         this.name(outputRdd);

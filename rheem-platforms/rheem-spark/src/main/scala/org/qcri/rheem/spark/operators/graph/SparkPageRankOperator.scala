@@ -1,23 +1,21 @@
 package org.qcri.rheem.spark.operators.graph
 
-import java.util
-
-import org.qcri.rheem.basic.operators.PageRankOperator
-import org.qcri.rheem.core.platform.{ChannelDescriptor, ChannelInstance}
-import org.qcri.rheem.spark.channels.RddChannel
-import org.qcri.rheem.spark.compiler.FunctionCompiler
-import org.qcri.rheem.spark.execution.SparkExecutor
-import org.qcri.rheem.spark.operators.SparkExecutionOperator
-import org.qcri.rheem.basic.data.{Tuple2 => T2}
 import java.lang.{Long => JavaLong}
+import java.util
 import java.util.Collections
 
 import org.apache.spark.graphx.Graph
 import org.apache.spark.graphx.lib.PageRank
-import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
+import org.qcri.rheem.basic.data.{Tuple2 => T2}
+import org.qcri.rheem.basic.operators.PageRankOperator
+import org.qcri.rheem.core.optimizer.{OptimizationContext, ProbabilisticDoubleInterval}
+import org.qcri.rheem.core.platform.{ChannelDescriptor, ChannelInstance}
+import org.qcri.rheem.spark.channels.RddChannel
+import org.qcri.rheem.spark.execution.SparkExecutor
+import org.qcri.rheem.spark.operators.SparkExecutionOperator
 
 /**
-  *
+  * GraphX-based implementation of the [[PageRankOperator]].
   */
 class SparkPageRankOperator(_numIterations: Int,
                             _dampingFactor: Float,
@@ -26,7 +24,10 @@ class SparkPageRankOperator(_numIterations: Int,
 
   def this(that: PageRankOperator) = this(that.getNumIterations, that.getDampingFactor, that.getGraphDensity)
 
-  override def evaluate(inputs: Array[ChannelInstance], outputs: Array[ChannelInstance], compiler: FunctionCompiler, sparkExecutor: SparkExecutor): Unit = {
+  override def evaluate(inputs: Array[ChannelInstance],
+                        outputs: Array[ChannelInstance],
+                        sparkExecutor: SparkExecutor,
+                        operatorContext: OptimizationContext#OperatorContext): Unit = {
     val input = inputs(0).asInstanceOf[RddChannel#Instance]
     val output = outputs(0).asInstanceOf[RddChannel#Instance]
 
@@ -35,7 +36,7 @@ class SparkPageRankOperator(_numIterations: Int,
     val graph = Graph.fromEdgeTuples(edgeRdd, null)
     val prGraph = PageRank.run(graph, this.numIterations, 1d - this.dampingFactor)
     val resultRdd = prGraph.vertices
-      .map { case (vertexId, pageRank) => new T2(vertexId, pageRank.toFloat)}
+      .map { case (vertexId, pageRank) => new T2(vertexId, pageRank.toFloat) }
       .toJavaRDD
 
     output.accept(resultRdd, sparkExecutor)
