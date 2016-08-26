@@ -8,7 +8,6 @@ import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -46,7 +45,7 @@ public class JavaReduceByOperatorTest extends JavaExecutionOperatorTestBase {
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
 
         // Execute the reduce operator.
-        reduceByOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(reduceByOperator, inputs, outputs);
 
         // Verify the outcome.
         final Set<Tuple2<String, Integer>> result =

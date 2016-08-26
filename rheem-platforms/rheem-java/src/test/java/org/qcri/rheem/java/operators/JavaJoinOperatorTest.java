@@ -7,7 +7,6 @@ import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,7 +49,7 @@ public class JavaJoinOperatorTest extends JavaExecutionOperatorTestBase {
                 createStreamChannelInstance(inputStream1)
         };
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-        join.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(join, inputs, outputs);
 
         // Verify the outcome.
         final List<Tuple2<Tuple2<Integer, String>, Tuple2<String, Integer>>> result =

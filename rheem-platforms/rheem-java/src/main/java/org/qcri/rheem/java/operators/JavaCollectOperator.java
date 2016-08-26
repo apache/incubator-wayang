@@ -2,6 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -12,7 +13,7 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +30,10 @@ public class JavaCollectOperator<Type> extends UnaryToUnaryOperator<Type, Type> 
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         final StreamChannel.Instance streamChannelInstance = (StreamChannel.Instance) inputs[0];
         final CollectionChannel.Instance collectionChannelInstance = (CollectionChannel.Instance) outputs[0];
 

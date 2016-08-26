@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,7 +30,7 @@ public class JavaGlobalMaterializedGroupOperatorTest extends JavaExecutionOperat
         // Execute.
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createCollectionChannelInstance(inputCollection)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
-        globalGroup.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(globalGroup, inputs, outputs);
 
         // Verify the outcome.
         final Collection<Collection<Integer>> result = ((CollectionChannel.Instance) outputs[0]).provideCollection();
@@ -55,7 +54,7 @@ public class JavaGlobalMaterializedGroupOperatorTest extends JavaExecutionOperat
         // Execute.
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createCollectionChannelInstance(inputCollection)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
-        globalGroup.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(globalGroup, inputs, outputs);
 
         // Verify the outcome.
         final Collection<Collection<Integer>> result = ((CollectionChannel.Instance) outputs[0]).provideCollection();

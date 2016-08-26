@@ -2,6 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.IntersectOperator;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
@@ -12,7 +13,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -43,7 +44,10 @@ public class JavaIntersectOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -76,6 +80,7 @@ public class JavaIntersectOperator<Type>
 
     /**
      * Creates a new probing table. The can be altered then.
+     *
      * @param stream for that the probing table should be created
      * @return the probing table
      */

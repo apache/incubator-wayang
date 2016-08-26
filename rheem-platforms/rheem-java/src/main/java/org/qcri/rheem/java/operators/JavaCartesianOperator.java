@@ -3,6 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CartesianOperator;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -12,7 +13,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -43,7 +44,10 @@ public class JavaCartesianOperator<InputType0, InputType1>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         if (inputs.length != 2) {
             throw new IllegalArgumentException("Cannot evaluate: Illegal number of input streams.");
         }

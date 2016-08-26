@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 /**
  * Test suite for {@link JavaTextFileSink}.
  */
-public class JavaTextFileSinkTest {
+public class JavaTextFileSinkTest extends JavaExecutionOperatorTestBase {
 
     @Test
     public void testWritingLocalFile() throws IOException, URISyntaxException {
@@ -54,11 +54,8 @@ public class JavaTextFileSinkTest {
                 .createChannel(mock(OutputSlot.class), configuration)
                 .createInstance(javaExecutor, mock(OptimizationContext.OperatorContext.class), 0);
         inputChannelInstance.accept(Stream.of(1.123f, -0.1f, 3f));
-        sink.evaluate(
-                new ChannelInstance[]{inputChannelInstance},
-                new ChannelInstance[]{},
-                javaExecutor
-        );
+        evaluate(sink, new ChannelInstance[]{inputChannelInstance}, new ChannelInstance[0]);
+
 
         final List<String> lines = Files.lines(Paths.get(new URI(targetUrl))).collect(Collectors.toList());
         Assert.assertEquals(

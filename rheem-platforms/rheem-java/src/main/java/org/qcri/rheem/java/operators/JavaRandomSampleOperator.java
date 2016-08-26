@@ -2,6 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -13,7 +14,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -57,7 +58,10 @@ public class JavaRandomSampleOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 

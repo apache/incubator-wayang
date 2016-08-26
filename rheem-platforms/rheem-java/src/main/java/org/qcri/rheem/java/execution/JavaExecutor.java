@@ -39,8 +39,10 @@ public class JavaExecutor extends PushExecutorTemplate {
     }
 
     @Override
-    protected void open(ExecutionTask task, List<ChannelInstance> inputChannelInstances) {
-        cast(task.getOperator()).open(toArray(inputChannelInstances), this.compiler);
+    protected void open(ExecutionTask task,
+                                 List<ChannelInstance> inputChannelInstances,
+                                 OptimizationContext.OperatorContext operatorContext) {
+        cast(task.getOperator()).open(toArray(inputChannelInstances), operatorContext, this.compiler);
     }
 
     @Override
@@ -58,7 +60,12 @@ public class JavaExecutor extends PushExecutorTemplate {
         // Execute.
         long startTime = System.currentTimeMillis();
         try {
-            cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this);
+            cast(task.getOperator()).evaluate(
+                    toArray(inputChannelInstances),
+                    outputChannelInstances,
+                    this,
+                    producerOperatorContext
+            );
         } catch (Exception e) {
             throw new RheemException(String.format("Executing %s failed.", task), e);
         }
@@ -94,10 +101,14 @@ public class JavaExecutor extends PushExecutorTemplate {
         return channelInstances.toArray(array);
     }
 
-    public static void openFunction(JavaExecutionOperator operator, Object function, ChannelInstance[] inputs) {
+    public static void openFunction(JavaExecutionOperator operator,
+                                    Object function,
+                                    ChannelInstance[] inputs,
+                                    OptimizationContext.OperatorContext operatorContext) {
         if (function instanceof ExtendedFunction) {
             ExtendedFunction extendedFunction = (ExtendedFunction) function;
-            extendedFunction.open(new JavaExecutionContext(operator, inputs));
+            int iterationNumber = operatorContext.getOptimizationContext().getIterationNumber();
+            extendedFunction.open(new JavaExecutionContext(operator, inputs, iterationNumber));
         }
     }
 

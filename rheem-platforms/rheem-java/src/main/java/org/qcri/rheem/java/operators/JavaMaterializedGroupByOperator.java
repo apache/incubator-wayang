@@ -3,6 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -13,6 +14,7 @@ import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
 import java.util.function.Function;
@@ -42,11 +44,14 @@ public class JavaMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor);
+        final Function<Type, KeyType> keyExtractor = javaExecutor.getCompiler().compile(this.keyDescriptor);
         final Map<KeyType, List<Type>> collocation = ((JavaChannelInstance) inputs[0]).<Type>provideStream().collect(
                 Collectors.groupingBy(
                         keyExtractor,

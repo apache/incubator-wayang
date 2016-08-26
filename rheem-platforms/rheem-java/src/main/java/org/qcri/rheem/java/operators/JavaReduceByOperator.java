@@ -4,6 +4,7 @@ import org.qcri.rheem.basic.operators.ReduceByOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -51,19 +52,24 @@ public class JavaReduceByOperator<Type, KeyType>
     }
 
     @Override
-    public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
+    public void open(ChannelInstance[] inputs,
+                     OptimizationContext.OperatorContext operatorContext,
+                     FunctionCompiler compiler) {
         final BiFunction<Type, Type, Type> udf = compiler.compile(this.reduceDescriptor);
-        JavaExecutor.openFunction(this, udf, inputs);
+        JavaExecutor.openFunction(this, udf, inputs, operatorContext);
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final Function<Type, KeyType> keyExtractor = compiler.compile(this.keyDescriptor);
-        final BinaryOperator<Type> reduceFunction = compiler.compile(this.reduceDescriptor);
-        JavaExecutor.openFunction(this, reduceFunction, inputs);
+        final Function<Type, KeyType> keyExtractor = javaExecutor.getCompiler().compile(this.keyDescriptor);
+        final BinaryOperator<Type> reduceFunction = javaExecutor.getCompiler().compile(this.reduceDescriptor);
+        JavaExecutor.openFunction(this, reduceFunction, inputs, operatorContext);
 
         final Map<KeyType, Type> reductionResult = ((JavaChannelInstance) inputs[0]).<Type>provideStream().collect(
                 Collectors.groupingBy(keyExtractor, new ReducingCollector<>(reduceFunction))

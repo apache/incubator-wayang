@@ -3,6 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -46,18 +47,24 @@ public class JavaFlatMapOperator<InputType, OutputType>
     }
 
     @Override
-    public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
+    public void open(ChannelInstance[] inputs,
+                     OptimizationContext.OperatorContext operatorContext,
+                     FunctionCompiler compiler) {
         final Function<InputType, Iterable<OutputType>> udf = compiler.compile(this.functionDescriptor);
-        JavaExecutor.openFunction(this, udf, inputs);
+        JavaExecutor.openFunction(this, udf, inputs, operatorContext);
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final Function<InputType, Iterable<OutputType>> flatmapFunction = compiler.compile(this.functionDescriptor);
-        JavaExecutor.openFunction(this, flatmapFunction, inputs);
+        final Function<InputType, Iterable<OutputType>> flatmapFunction =
+                javaExecutor.getCompiler().compile(this.functionDescriptor);
+        JavaExecutor.openFunction(this, flatmapFunction, inputs, operatorContext);
 
         ((StreamChannel.Instance) outputs[0]).accept(
                 ((JavaChannelInstance) inputs[0]).<InputType>provideStream().flatMap(dataQuantum ->

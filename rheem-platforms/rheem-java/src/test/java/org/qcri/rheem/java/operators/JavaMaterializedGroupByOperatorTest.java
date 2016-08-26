@@ -7,7 +7,6 @@ import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -41,7 +40,7 @@ public class JavaMaterializedGroupByOperatorTest extends JavaExecutionOperatorTe
         // Execute.
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
-        collocateByOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(collocateByOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Tuple2<String, Integer>> result = outputs[0].<Tuple2<String, Integer>>provideStream()

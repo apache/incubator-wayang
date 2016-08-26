@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,7 +30,7 @@ public class JavaFilterOperatorTest extends JavaExecutionOperatorTestBase {
 
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-        filterOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(filterOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());

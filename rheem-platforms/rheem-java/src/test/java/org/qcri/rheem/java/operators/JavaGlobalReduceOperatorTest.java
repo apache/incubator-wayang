@@ -7,7 +7,6 @@ import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +36,7 @@ public class JavaGlobalReduceOperatorTest extends JavaExecutionOperatorTestBase 
         // Execute.
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
-        globalReduce.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(globalReduce, inputs, outputs);
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());
@@ -64,7 +63,7 @@ public class JavaGlobalReduceOperatorTest extends JavaExecutionOperatorTestBase 
         // Execute the reduce operator.
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
-        globalReduce.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(globalReduce, inputs, outputs);
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());

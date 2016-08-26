@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +33,7 @@ public class JavaReservoirSampleOperatorTest extends JavaExecutionOperatorTestBa
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
 
         // Execute.
-        sampleOperator.evaluate(inputs, outputs, (FunctionCompiler) null);
+        evaluate(sampleOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());

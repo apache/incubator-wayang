@@ -9,6 +9,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -19,7 +20,7 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.platform.JavaPlatform;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +51,10 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert outputs.length == this.getNumOutputs();
 
         SequenceFileIterator sequenceFileIterator;

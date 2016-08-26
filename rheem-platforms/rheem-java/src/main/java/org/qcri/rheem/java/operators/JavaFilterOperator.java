@@ -3,6 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -39,9 +40,11 @@ public class JavaFilterOperator<Type>
     }
 
     @Override
-    public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
+    public void open(ChannelInstance[] inputs,
+                     OptimizationContext.OperatorContext operatorContext,
+                     FunctionCompiler compiler) {
         final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
-        JavaExecutor.openFunction(this, filterFunction, inputs);
+        JavaExecutor.openFunction(this, filterFunction, inputs, operatorContext);
     }
 
     public JavaFilterOperator(DataSetType<Type> type, PredicateDescriptor.SerializablePredicate<Type> predicateDescriptor) {
@@ -59,11 +62,14 @@ public class JavaFilterOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final Predicate<Type> filterFunction = compiler.compile(this.predicateDescriptor);
+        final Predicate<Type> filterFunction = javaExecutor.getCompiler().compile(this.predicateDescriptor);
         ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<Type>provideStream().filter(filterFunction));
     }
 
