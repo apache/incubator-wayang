@@ -11,9 +11,9 @@ import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
 import org.qcri.rheem.core.util.Tuple;
-import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
+import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Arrays;
 import java.util.List;
@@ -36,13 +36,6 @@ public class JavaExecutor extends PushExecutorTemplate {
     @Override
     public JavaPlatform getPlatform() {
         return this.platform;
-    }
-
-    @Override
-    protected void open(ExecutionTask task,
-                                 List<ChannelInstance> inputChannelInstances,
-                                 OptimizationContext.OperatorContext operatorContext) {
-        cast(task.getOperator()).open(toArray(inputChannelInstances), operatorContext, this.compiler);
     }
 
     @Override
@@ -101,6 +94,14 @@ public class JavaExecutor extends PushExecutorTemplate {
         return channelInstances.toArray(array);
     }
 
+    /**
+     * Utility function to open an {@link ExtendedFunction}.
+     *
+     * @param operator        the {@link JavaExecutionOperator} containing the function
+     * @param function        the {@link ExtendedFunction}; if it is of a different type, nothing happens
+     * @param inputs          the input {@link ChannelInstance}s for the {@code operator}
+     * @param operatorContext context information for the {@code operator}
+     */
     public static void openFunction(JavaExecutionOperator operator,
                                     Object function,
                                     ChannelInstance[] inputs,

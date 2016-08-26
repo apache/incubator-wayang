@@ -66,13 +66,6 @@ public class SparkExecutor extends PushExecutorTemplate {
     }
 
     @Override
-    protected void open(ExecutionTask task,
-                        List<ChannelInstance> inputChannelInstances,
-                        OptimizationContext.OperatorContext operatorContext) {
-        // Nothing to do. Opening is handled in #execute(...).
-    }
-
-    @Override
     protected Tuple<List<ChannelInstance>, PartialExecution> execute(ExecutionTask task,
                                                                      List<ChannelInstance> inputChannelInstances,
                                                                      OptimizationContext.OperatorContext producerOperatorContext,
