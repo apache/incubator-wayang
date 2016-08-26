@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.function;
 
+import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
 import org.qcri.rheem.core.platform.Platform;
 
 import java.util.Collection;
@@ -18,5 +19,13 @@ public interface ExecutionContext {
      * @return the broadcast
      */
     <T> Collection<T> getBroadcast(String name);
+
+    /**
+     * If this instance reflects the state of execution inside of a {@link LoopSubplan}, then retrieve the
+     * number of the current iteration.
+     *
+     * @return the iteration number, start at {@code 0}, or {@code -1} if there is no surrounding {@link LoopSubplan}
+     */
+    int getCurrentIteration();
 
 }

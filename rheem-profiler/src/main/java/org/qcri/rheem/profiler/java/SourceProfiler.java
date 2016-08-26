@@ -2,7 +2,6 @@ package org.qcri.rheem.profiler.java;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.slf4j.LoggerFactory;
 
@@ -41,10 +40,9 @@ public abstract class SourceProfiler extends OperatorProfiler {
 
     @Override
     protected long executeOperator() {
-        this.operator.evaluate(
+        this.evaluate(
                 new JavaChannelInstance[]{},
-                new JavaChannelInstance[]{this.outputChannelInstance},
-                new FunctionCompiler(null)
+                new JavaChannelInstance[]{this.outputChannelInstance}
         );
         return this.outputChannelInstance.provideStream().count();
     }

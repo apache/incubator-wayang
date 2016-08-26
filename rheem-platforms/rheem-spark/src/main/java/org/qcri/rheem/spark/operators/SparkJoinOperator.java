@@ -7,6 +7,7 @@ import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -50,7 +51,10 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         SparkExecutor sparkExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -61,6 +65,7 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
         final JavaRDD<InputType0> inputRdd0 = input0.provideRdd();
         final JavaRDD<InputType1> inputRdd1 = input1.provideRdd();
 
+        FunctionCompiler compiler = sparkExecutor.getCompiler();
         final PairFunction<InputType0, KeyType, InputType0> keyExtractor0 = compiler.compileToKeyExtractor(this.keyDescriptor0);
         final PairFunction<InputType1, KeyType, InputType1> keyExtractor1 = compiler.compileToKeyExtractor(this.keyDescriptor1);
         JavaPairRDD<KeyType, InputType0> pairStream0 = inputRdd0.mapToPair(keyExtractor0);

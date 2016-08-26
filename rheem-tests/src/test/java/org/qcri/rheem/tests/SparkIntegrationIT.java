@@ -354,6 +354,17 @@ public class SparkIntegrationIT {
     }
 
     @Test
+    public void testCurrentIterationNumber() {
+        RheemContext rheemContext = new RheemContext().with(Spark.basicPlugin());
+        final Collection<Integer> result = RheemPlans.loopWithIterationNumber(rheemContext, 15, -1, 1, 5);
+        int expectedOffset = 10;
+        Assert.assertEquals(
+                RheemCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
+                RheemCollections.asSet(result)
+        );
+    }
+
+    @Test
     public void testBroadcasts() {
         Collection<Integer> broadcastedValues = Arrays.asList(1, 2, 3, 4);
         Collection<Integer> mainValues = Arrays.asList(2, 4, 6, 2);

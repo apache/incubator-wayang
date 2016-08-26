@@ -1,11 +1,15 @@
 package org.qcri.rheem.profiler.java;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.slf4j.Logger;
@@ -31,6 +35,8 @@ public abstract class OperatorProfiler {
 
     protected JavaExecutionOperator operator;
 
+    protected JavaExecutor executor;
+
     protected final List<Supplier<?>> dataQuantumGenerators;
 
     private List<Long> inputCardinalities;
@@ -39,6 +45,7 @@ public abstract class OperatorProfiler {
                             Supplier<?>... dataQuantumGenerators) {
         this.operatorGenerator = operatorGenerator;
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
+        this.executor = ProfilingUtils.fakeJavaExecutor();
         this.cpuMhz = Integer.parseInt(System.getProperty("rheem.java.cpu.mhz", "2700"));
     }
 
@@ -103,6 +110,17 @@ public abstract class OperatorProfiler {
 
     public JavaExecutionOperator getOperator() {
         return this.operator;
+    }
+
+    /**
+     * Utility method to invoke
+     * {@link JavaExecutionOperator#evaluate(ChannelInstance[], ChannelInstance[], JavaExecutor, OptimizationContext.OperatorContext)}.
+     */
+    protected void evaluate(ChannelInstance[] inputs,
+                            ChannelInstance[] outputs) {
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.executor.getConfiguration());
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(operator);
+        operator.evaluate(inputs, outputs, this.executor, operatorContext);
     }
 
     /**

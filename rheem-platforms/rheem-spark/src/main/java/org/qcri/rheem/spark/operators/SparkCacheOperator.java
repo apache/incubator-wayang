@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.operators;
 import org.apache.commons.lang3.Validate;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -12,7 +13,6 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.Collections;
@@ -31,7 +31,10 @@ public class SparkCacheOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         SparkExecutor sparkExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
         final JavaRDD<Object> rdd = input.provideRdd();
         final JavaRDD<Object> cachedRdd = rdd.cache();

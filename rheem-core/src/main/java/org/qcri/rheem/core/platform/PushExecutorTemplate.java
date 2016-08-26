@@ -51,9 +51,6 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
      * @return the output {@link ChannelInstance}s of the {@link ExecutionTask}
      */
     private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator taskActivator, boolean isForceExecution) {
-        // Execute the ExecutionTask.
-        this.open(taskActivator.getTask(), taskActivator.getInputChannelInstances());
-
         return this.execute(
                 taskActivator.getTask(),
                 taskActivator.getInputChannelInstances(),
@@ -86,15 +83,6 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
         }
         return channelInstances;
     }
-
-    /**
-     * Prepares the given {@code task} for execution.
-     *
-     * @param task                  that should be executed
-     * @param inputChannelInstances inputs into the {@code task}
-     * @return the {@link ChannelInstance}s created as output of {@code task}
-     */
-    protected abstract void open(ExecutionTask task, List<ChannelInstance> inputChannelInstances);
 
     /**
      * Executes the given {@code task} and return the output {@link ChannelInstance}s.
@@ -173,8 +161,9 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
     /**
      * Marks all unproduced {@link ChannelInstance}s in a lineage and collects them in a {@link Collection}.
+     *
      * @param channelInstance that should be marked and collected - including its predecessors
-     * @param collector collects the marked {@link ChannelInstance}s
+     * @param collector       collects the marked {@link ChannelInstance}s
      */
     private void markAndAddUnproducedChannelInstances(
             ChannelInstance channelInstance,

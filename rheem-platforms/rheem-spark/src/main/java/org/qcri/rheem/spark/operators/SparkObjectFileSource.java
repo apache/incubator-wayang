@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.channels.FileChannel;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -12,7 +13,6 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.slf4j.Logger;
@@ -43,7 +43,10 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         SparkExecutor sparkExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         final String sourcePath;
         if (this.sourcePath != null) {
             assert inputs.length == 0;

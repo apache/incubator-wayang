@@ -19,6 +19,14 @@ import java.util.Map;
  */
 public class SparkExecutionContext implements ExecutionContext, Serializable {
 
+    /**
+     * Iteration number of the execution.
+     */
+    private int iterationNumber;
+
+    /**
+     * Mapping of broadcast name to {@link Broadcast} references.
+     */
     private Map<String, Broadcast<?>> broadcasts;
 
     /**
@@ -27,7 +35,7 @@ public class SparkExecutionContext implements ExecutionContext, Serializable {
      * @param operator {@link SparkExecutionOperator} for that the instance should be created
      * @param inputs   {@link ChannelInstance} inputs for the {@code operator}
      */
-    public SparkExecutionContext(SparkExecutionOperator operator, ChannelInstance[] inputs) {
+    public SparkExecutionContext(SparkExecutionOperator operator, ChannelInstance[] inputs, int iterationNumber) {
         this.broadcasts = new HashMap<>();
         for (int inputIndex = 0; inputIndex < operator.getNumInputs(); inputIndex++) {
             InputSlot<?> inputSlot = operator.getInput(inputIndex);
@@ -36,6 +44,7 @@ public class SparkExecutionContext implements ExecutionContext, Serializable {
                 this.broadcasts.put(inputSlot.getName(), broadcastChannelInstance.provideBroadcast());
             }
         }
+        this.iterationNumber = iterationNumber;
     }
 
     /**
@@ -54,5 +63,10 @@ public class SparkExecutionContext implements ExecutionContext, Serializable {
         }
 
         return (Collection<T>) broadcast.getValue();
+    }
+
+    @Override
+    public int getCurrentIteration() {
+        return this.iterationNumber;
     }
 }

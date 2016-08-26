@@ -4,7 +4,6 @@ import org.junit.Test;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,7 +35,7 @@ public class SparkTextFileSinkTest extends SparkOperatorTestBase {
         final ChannelInstance[] outputs = new ChannelInstance[]{};
 
         // Execute.
-        sink.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+        this.evaluate(sink, inputs, outputs);
     }
 
 }

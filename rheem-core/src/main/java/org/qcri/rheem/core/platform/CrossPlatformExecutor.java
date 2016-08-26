@@ -363,7 +363,7 @@ public class CrossPlatformExecutor implements ExecutionState {
         final ExecutionStage processedStage = processedStageActivator.getStage();
         if (processedStage.getLoop() == successorStage.getLoop()) {
             if (successorStage.isLoopHead()) {
-                prevOptimizationContext.getNextIterationContext(); // TODO: Make up new contexts if needed.
+                return prevOptimizationContext.getNextIterationContext(); // TODO: Make up new contexts if needed.
             } else {
                 return prevOptimizationContext;
             }

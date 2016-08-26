@@ -4,6 +4,7 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
@@ -14,7 +15,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
 import java.util.function.Function;
@@ -48,12 +49,15 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final Function<InputType0, KeyType> keyExtractor0 = compiler.compile(this.keyDescriptor0);
-        final Function<InputType1, KeyType> keyExtractor1 = compiler.compile(this.keyDescriptor1);
+        final Function<InputType0, KeyType> keyExtractor0 = javaExecutor.getCompiler().compile(this.keyDescriptor0);
+        final Function<InputType1, KeyType> keyExtractor1 = javaExecutor.getCompiler().compile(this.keyDescriptor1);
 
         final CardinalityEstimate cardinalityEstimate0 = this.getInput(0).getCardinalityEstimate();
         final CardinalityEstimate cardinalityEstimate1 = this.getInput(0).getCardinalityEstimate();

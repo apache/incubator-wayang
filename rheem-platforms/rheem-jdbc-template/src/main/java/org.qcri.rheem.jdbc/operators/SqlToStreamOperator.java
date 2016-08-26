@@ -4,6 +4,7 @@ import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.types.RecordType;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
@@ -59,7 +60,10 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, JavaExecutor executor) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor executor,
+                         OptimizationContext.OperatorContext operatorContext) {
         // Cast the inputs and outputs.
         final SqlQueryChannel.Instance input = (SqlQueryChannel.Instance) inputs[0];
         final StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
@@ -74,11 +78,6 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
         Stream<Record> resultSetStream = StreamSupport.stream(resultSetSpliterator, false);
 
         output.accept(resultSetStream);
-    }
-
-    @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
-        throw new RheemException("This method should not be called.");
     }
 
     @Override

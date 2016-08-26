@@ -1,16 +1,20 @@
 package org.qcri.rheem.tests;
 
+import org.qcri.rheem.api.DataQuantaBuilder;
+import org.qcri.rheem.api.JavaPlanBuilder;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.basic.types.RecordType;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.sqlite3.Sqlite3;
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource;
 
@@ -255,6 +259,53 @@ public class RheemPlans {
 
         // Create the RheemPlan.
         return new RheemPlan(sink);
+    }
+
+    /**
+     * Creates a {@link RheemPlan} that goes through a loop thereby incorporating the iteration number.
+     */
+    public static Collection<Integer> loopWithIterationNumber(RheemContext rheemContext,
+                                                              final int maxValue,
+                                                              final int... values) {
+        return new JavaPlanBuilder(rheemContext)
+                .loadCollection(RheemArrays.asList(values)).withName("Load values")
+                .doWhile(
+                        vals -> {
+                            for (Integer val : vals) {
+                                if (val >= maxValue) return true;
+                            }
+                            return false;
+                        },
+                        loopHead -> {
+                            DataQuantaBuilder<?, Integer> newVals = loopHead
+                                    .map(new IncreaseByIterationNumber())
+                                    .withName("Increase by iteration number");
+                            return new Tuple<>(
+                                    newVals.map(x -> x).withName("Identity 1").withOutputClass(Integer.class),
+                                    newVals.map(x -> x).withName("Identity 2").withOutputClass(Integer.class)
+                            );
+                        }
+                ).withConditionClass(Integer.class)
+                .collect();
+    }
+
+    /**
+     * Increases all incoming {@link Integer}s by the current iteration number.
+     */
+    public static class IncreaseByIterationNumber
+            implements FunctionDescriptor.ExtendedSerializableFunction<Integer, Integer> {
+
+        private int increment;
+
+        @Override
+        public void open(ExecutionContext ctx) {
+            this.increment = ctx.getCurrentIteration();
+        }
+
+        @Override
+        public Integer apply(Integer integer) {
+            return integer + this.increment;
+        }
     }
 
     /**

@@ -3,8 +3,7 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -14,14 +13,12 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 
 /**
@@ -53,18 +50,15 @@ public class JavaGlobalReduceOperator<Type>
     }
 
     @Override
-    public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
-        final BiFunction<Type, Type, Type> udf = compiler.compile(this.reduceDescriptor);
-        JavaExecutor.openFunction(this, udf, inputs);
-    }
-
-    @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final BinaryOperator<Type> reduceFunction = compiler.compile(this.reduceDescriptor);
-        JavaExecutor.openFunction(this, reduceFunction, inputs);
+        final BinaryOperator<Type> reduceFunction = javaExecutor.getCompiler().compile(this.reduceDescriptor);
+        JavaExecutor.openFunction(this, reduceFunction, inputs, operatorContext);
 
         final Optional<Type> reduction = ((JavaChannelInstance) inputs[0]).<Type>provideStream().reduce(reduceFunction);
         ((CollectionChannel.Instance) outputs[0]).accept(reduction.isPresent() ?

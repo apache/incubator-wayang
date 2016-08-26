@@ -6,7 +6,6 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +33,7 @@ public class SparkCartesianOperatorTest extends SparkOperatorTestBase {
         final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        cartesianOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+        this.evaluate(cartesianOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Tuple2<Integer, String>> result = output.<Tuple2<Integer, String>>provideRdd().collect();

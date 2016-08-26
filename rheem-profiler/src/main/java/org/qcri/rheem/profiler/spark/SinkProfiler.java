@@ -34,11 +34,10 @@ public class SinkProfiler extends SparkOperatorProfiler {
         // Let the operator execute.
         ProfilingUtils.sleep(this.executionPaddingTime); // Pad measurement with some idle time.
         final long startTime = System.currentTimeMillis();
-        this.operator.evaluate(
+        this.evaluate(
+                this.operator,
                 new ChannelInstance[]{inputChannelInstance},
-                new ChannelInstance[]{},
-                this.functionCompiler,
-                this.sparkExecutor
+                new ChannelInstance[]{}
         );
 
         // Complete the measurement.

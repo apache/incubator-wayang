@@ -7,11 +7,12 @@ import gnu.trove.map.hash.TLongFloatHashMap;
 import gnu.trove.map.hash.TLongIntHashMap;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.PageRankOperator;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.*;
@@ -32,7 +33,10 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         CollectionChannel.Instance input = (CollectionChannel.Instance) inputs[0];
         StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 

@@ -8,6 +8,7 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -16,11 +17,11 @@ import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -45,18 +46,22 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
     public JavaObjectFileSink(DataSetType<T> type) {
         this(null, type);
     }
+
     public JavaObjectFileSink(String targetPath, DataSetType<T> type) {
         super(type);
         this.targetPath = targetPath;
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
 
         // Prepare Hadoop's SequenceFile.Writer.
         FileChannel.Instance output = (FileChannel.Instance) outputs[0];
-        final String path = output.addGivenOrTempPath(this.targetPath, compiler.getConfiguration());
+        final String path = output.addGivenOrTempPath(this.targetPath, javaExecutor.getCompiler().getConfiguration());
 
         final SequenceFile.Writer.Option fileOption = SequenceFile.Writer.file(new Path(path));
         final SequenceFile.Writer.Option keyClassOption = SequenceFile.Writer.keyClass(NullWritable.class);

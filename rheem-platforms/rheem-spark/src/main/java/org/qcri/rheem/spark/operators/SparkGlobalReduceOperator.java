@@ -4,6 +4,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.qcri.rheem.basic.operators.GlobalReduceOperator;
 import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -13,7 +14,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.Arrays;
@@ -50,7 +50,10 @@ public class SparkGlobalReduceOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         SparkExecutor sparkExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -58,7 +61,8 @@ public class SparkGlobalReduceOperator<Type>
         final CollectionChannel.Instance output = (CollectionChannel.Instance) outputs[0];
 
 
-        final Function2<Type, Type, Type> reduceFunction = compiler.compile(this.reduceDescriptor, this, inputs);
+        final Function2<Type, Type, Type> reduceFunction =
+                sparkExecutor.getCompiler().compile(this.reduceDescriptor, this, operatorContext, inputs);
 
         final JavaRDD<Type> inputRdd = input.provideRdd();
         List<Type> outputList = Collections.singletonList(inputRdd.reduce(reduceFunction));

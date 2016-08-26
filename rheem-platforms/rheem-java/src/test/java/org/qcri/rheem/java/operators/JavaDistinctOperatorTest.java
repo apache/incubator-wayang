@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,7 +29,7 @@ public class JavaDistinctOperatorTest extends JavaExecutionOperatorTestBase {
         // Execute.
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-        distinctOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(distinctOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());

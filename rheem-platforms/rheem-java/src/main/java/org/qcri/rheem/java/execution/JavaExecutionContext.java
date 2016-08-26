@@ -19,9 +19,12 @@ public class JavaExecutionContext implements ExecutionContext {
 
     private final ChannelInstance[] inputs;
 
-    public JavaExecutionContext(JavaExecutionOperator operator, ChannelInstance[] inputs) {
+    private final int iterationNumber;
+
+    public JavaExecutionContext(JavaExecutionOperator operator, ChannelInstance[] inputs, int iterationNumber) {
         this.operator = operator;
         this.inputs = inputs;
+        this.iterationNumber = iterationNumber;
     }
 
     @Override
@@ -36,5 +39,10 @@ public class JavaExecutionContext implements ExecutionContext {
         }
 
         throw new RheemException("No such broadcast found: " + name);
+    }
+
+    @Override
+    public int getCurrentIteration() {
+        return this.iterationNumber;
     }
 }

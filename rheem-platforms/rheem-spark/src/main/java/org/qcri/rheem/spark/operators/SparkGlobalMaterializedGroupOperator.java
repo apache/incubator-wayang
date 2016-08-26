@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -10,7 +11,6 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.*;
@@ -41,7 +41,10 @@ public class SparkGlobalMaterializedGroupOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         SparkExecutor sparkExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 

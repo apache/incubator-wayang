@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -29,7 +28,7 @@ public class SparkCollectionSourceTest extends SparkOperatorTestBase {
         final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        collectionSource.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+        this.evaluate(collectionSource, inputs, outputs);
 
         final Set<Integer> outputValues = new HashSet<>(output.<Integer>provideRdd().collect());
         Assert.assertEquals(outputValues, inputValues);

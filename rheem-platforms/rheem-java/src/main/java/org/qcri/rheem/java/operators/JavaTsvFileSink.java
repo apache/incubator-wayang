@@ -4,6 +4,7 @@ import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -18,6 +19,7 @@ import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.io.BufferedWriter;
@@ -51,12 +53,15 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
 
         // Prepare Hadoop's SequenceFile.Writer.
         FileChannel.Instance output = (FileChannel.Instance) outputs[0];
-        final String path = output.addGivenOrTempPath(this.targetPath, compiler.getConfiguration());
+        final String path = output.addGivenOrTempPath(this.targetPath, javaExecutor.getCompiler().getConfiguration());
         final FileSystem fileSystem = FileSystems.getFileSystem(path).orElseThrow(
                 () -> new IllegalStateException(String.format("No file system found for \"%s\".", this.targetPath))
         );

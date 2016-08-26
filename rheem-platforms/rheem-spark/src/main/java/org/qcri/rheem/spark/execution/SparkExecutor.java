@@ -3,7 +3,6 @@ package org.qcri.rheem.spark.execution;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -67,11 +66,6 @@ public class SparkExecutor extends PushExecutorTemplate {
     }
 
     @Override
-    protected void open(ExecutionTask task, List<ChannelInstance> inputChannelInstances) {
-        // Nothing to do. Opening is handled in #execute(...).
-    }
-
-    @Override
     protected Tuple<List<ChannelInstance>, PartialExecution> execute(ExecutionTask task,
                                                                      List<ChannelInstance> inputChannelInstances,
                                                                      OptimizationContext.OperatorContext producerOperatorContext,
@@ -84,7 +78,12 @@ public class SparkExecutor extends PushExecutorTemplate {
         // Execute.
         long startTime = System.currentTimeMillis();
         try {
-            cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this.compiler, this);
+            cast(task.getOperator()).evaluate(
+                    toArray(inputChannelInstances),
+                    outputChannelInstances,
+                    this,
+                    producerOperatorContext
+            );
         } catch (Exception e) {
             throw new RheemException(String.format("Executing %s failed.", task), e);
         }
@@ -119,13 +118,6 @@ public class SparkExecutor extends PushExecutorTemplate {
         return channelInstances.toArray(array);
     }
 
-    public static void openFunction(SparkExecutionOperator operator, Object function, ChannelInstance[] inputs) {
-        if (function instanceof ExtendedFunction) {
-            ExtendedFunction extendedFunction = (ExtendedFunction) function;
-            extendedFunction.open(new SparkExecutionContext(operator, inputs));
-        }
-    }
-
     @Override
     public SparkPlatform getPlatform() {
         return this.platform;
@@ -144,5 +136,14 @@ public class SparkExecutor extends PushExecutorTemplate {
     public void dispose() {
         super.dispose();
         this.sparkContextReference.noteDiscardedReference(true);
+    }
+
+    /**
+     * Provide a {@link FunctionCompiler}.
+     *
+     * @return the {@link FunctionCompiler}
+     */
+    public FunctionCompiler getCompiler() {
+        return this.compiler;
     }
 }
