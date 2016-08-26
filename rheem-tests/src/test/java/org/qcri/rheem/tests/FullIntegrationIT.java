@@ -400,6 +400,17 @@ public class FullIntegrationIT {
     }
 
     @Test
+    public void testCurrentIterationNumber() {
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+        final Collection<Integer> result = RheemPlans.loopWithIterationNumber(rheemContext, 15, -1, 1, 5);
+        int expectedOffset = 10;
+        Assert.assertEquals(
+                RheemCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
+                RheemCollections.asSet(result)
+        );
+    }
+
+    @Test
     public void testGroupByOperator() {
         final CollectionSource<String> source = new CollectionSource<>(
                 Arrays.asList("a", "b", "a", "ab", "aa", "bb"),
