@@ -9,6 +9,7 @@ import org.qcri.rheem.basic.data.Record
 import org.qcri.rheem.basic.operators.{TableSource, TextFileSource}
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.plan.rheemplan._
+import org.qcri.rheem.core.types.DataSetType
 
 import scala.reflect.ClassTag
 
@@ -39,7 +40,7 @@ class JavaPlanBuilder(rheemCtx: RheemContext, jobName: String) {
     * @return [[DataQuantaBuilder]] for the file
     */
   def readTextFile(url: String): UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, String], String] =
-  load(new TextFileSource(url))
+  createSourceBuilder(new TextFileSource(url))(ClassTag(classOf[String]))
 
   /**
     * Reads a database table and provides them as a dataset of [[Record]]s.
@@ -47,7 +48,7 @@ class JavaPlanBuilder(rheemCtx: RheemContext, jobName: String) {
     * @param source from that the [[Record]]s should be read
     * @return [[DataQuantaBuilder]] for the [[Record]]s in the table
     */
-  def readTable(source: TableSource) = load(source).asRecords
+  def readTable(source: TableSource) = createSourceBuilder(source)(ClassTag(classOf[Record])).asRecords
 
 
   /**
@@ -56,7 +57,14 @@ class JavaPlanBuilder(rheemCtx: RheemContext, jobName: String) {
     * @param source that should be loaded from
     * @return the [[DataQuanta]]
     */
-  def load[T: ClassTag](source: UnarySource[T]) = new UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, T], T](source)(this)
+  private def createSourceBuilder[T: ClassTag](source: UnarySource[T]) = {
+    val builder = new UnarySourceDataQuantaBuilder[UnarySourceDataQuantaBuilder[_, T], T](source)(this)
+    dataSetType[T] match {
+      case DataSetType.NONE =>
+      case other: DataSetType[_] => builder withOutputType other
+    }
+    builder
+  }
 
   /**
     * Execute a custom [[Operator]].
@@ -77,13 +85,13 @@ class JavaPlanBuilder(rheemCtx: RheemContext, jobName: String) {
   }
 
   /**
-    * Defines user-code JAR files that might be needed to transfer to execution platforms.
+    * Defines user-code JAR file that might be needed to transfer to execution platforms.
     *
-    * @param paths paths to JAR files that should be transferred
+    * @param path path to JAR file that should be transferred
     * @return this instance
     */
-  def withUdfJars(paths: String*) = {
-    this.planBuilder withUdfJars (paths: _*)
+  def withUdfJar(path: String) = {
+    this.planBuilder withUdfJars path
     this
   }
 
@@ -102,11 +110,11 @@ class JavaPlanBuilder(rheemCtx: RheemContext, jobName: String) {
   /**
     * Defines user-code JAR files that might be needed to transfer to execution platforms.
     *
-    * @param classes whose JAR files should be transferred
+    * @param cls [[Class]] whose JAR file should be transferred
     * @return this instance
     */
-  def withUdfJarsOf(classes: Class[_]*) = {
-    this.planBuilder withUdfJarsOf (classes: _*)
+  def withUdfJarOf(cls: Class[_]) = {
+    this.planBuilder withUdfJarsOf cls
     this
   }
 
