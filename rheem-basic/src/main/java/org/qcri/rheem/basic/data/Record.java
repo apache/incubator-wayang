@@ -94,4 +94,13 @@ public class Record implements Serializable {
         return field == null ? null : field.toString();
     }
 
+    /**
+     * Retrieve the size of this instance.
+     *
+     * @return the number of fields in this instance
+     */
+    public int size() {
+        return this.values.length;
+    }
+
 }
