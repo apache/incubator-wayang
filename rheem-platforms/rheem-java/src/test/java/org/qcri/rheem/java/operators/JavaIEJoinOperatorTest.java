@@ -5,21 +5,10 @@ import org.junit.Test;
 import org.qcri.rheem.basic.data.JoinCondition;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.junit.Assert;
-import org.junit.Test;
-import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.basic.function.ProjectionDescriptor;
-import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.types.DataUnitType;
-import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,25 +32,25 @@ public class JavaIEJoinOperatorTest extends JavaExecutionOperatorTestBase {
         Stream<Record> inputStream1 = Arrays.asList(r1, r2, r3).stream();
 
         // Build the Cartesian operator.
-       JavaIEJoinOperator<Integer, Integer,Record> IEJoinOperator =
-                new JavaIEJoinOperator<Integer, Integer,Record>(
+        JavaIEJoinOperator<Integer, Integer, Record> IEJoinOperator =
+                new JavaIEJoinOperator<Integer, Integer, Record>(
                         DataSetType.createDefaultUnchecked(Record.class),
                         DataSetType.createDefaultUnchecked(Record.class),
                         //0, 0, JoinCondition.GreaterThan, 1, 1, JoinCondition.LessThan
-                        new TransformationDescriptor<Record,Integer>(word -> (Integer)word.getField(0),
+                        new TransformationDescriptor<Record, Integer>(word -> (Integer) word.getField(0),
                                 DataUnitType.<Record>createBasic(Record.class),
                                 DataUnitType.<Integer>createBasicUnchecked(Integer.class)
                         ),
-                        new TransformationDescriptor<Record,Integer>(word -> (Integer)word.getField(0),
+                        new TransformationDescriptor<Record, Integer>(word -> (Integer) word.getField(0),
                                 DataUnitType.<Record>createBasic(Record.class),
                                 DataUnitType.<Integer>createBasicUnchecked(Integer.class)
                         ),
                         JoinCondition.GreaterThan,
-                        new TransformationDescriptor<Record,Integer>(word -> (Integer)word.getField(1),
+                        new TransformationDescriptor<Record, Integer>(word -> (Integer) word.getField(1),
                                 DataUnitType.<Record>createBasic(Record.class),
                                 DataUnitType.<Integer>createBasicUnchecked(Integer.class)
                         ),
-                        new TransformationDescriptor<Record,Integer>(word -> (Integer)word.getField(1),
+                        new TransformationDescriptor<Record, Integer>(word -> (Integer) word.getField(1),
                                 DataUnitType.<Record>createBasic(Record.class),
                                 DataUnitType.<Integer>createBasicUnchecked(Integer.class)
                         ),
@@ -74,7 +63,7 @@ public class JavaIEJoinOperatorTest extends JavaExecutionOperatorTestBase {
                 createStreamChannelInstance(inputStream1)
         };
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-        IEJoinOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(IEJoinOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Tuple2<Record, Record>> result = outputs[0].<Tuple2<Record, Record>>provideStream().collect(Collectors.toList());

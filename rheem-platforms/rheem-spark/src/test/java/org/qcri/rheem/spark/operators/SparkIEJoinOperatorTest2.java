@@ -5,13 +5,11 @@ import org.junit.Test;
 import org.qcri.rheem.basic.data.JoinCondition;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,27 +36,27 @@ public class SparkIEJoinOperatorTest2 extends SparkOperatorTestBase {
         RddChannel.Instance output = this.createRddChannelInstance();
 
         // Build the Cartesian operator.
-        SparkIEJoinOperator<Integer, Integer,Record> IEJoinOperator =
-                new SparkIEJoinOperator<Integer, Integer,Record>(
+        SparkIEJoinOperator<Integer, Integer, Record> IEJoinOperator =
+                new SparkIEJoinOperator<Integer, Integer, Record>(
                         DataSetType.createDefaultUnchecked(Record.class),
                         DataSetType.createDefaultUnchecked(Record.class),
                         //0, 0, JoinCondition.GreaterThan, 1, 1, JoinCondition.LessThan
-                        new TransformationDescriptor<Record,Integer>(word -> (Integer)word.getField(0),
+                        new TransformationDescriptor<Record, Integer>(word -> (Integer) word.getField(0),
                                 DataUnitType.<Record>createBasic(Record.class),
                                 DataUnitType.<Integer>createBasicUnchecked(Integer.class)
                         ),
-                        new TransformationDescriptor<Record,Integer>(word -> (Integer)word.getField(0),
+                        new TransformationDescriptor<Record, Integer>(word -> (Integer) word.getField(0),
                                 DataUnitType.<Record>createBasic(Record.class),
                                 DataUnitType.<Integer>createBasicUnchecked(Integer.class)
-                        ),JoinCondition.GreaterThan,
-                        new TransformationDescriptor<Record,Integer>(word -> (Integer)word.getField(1),
+                        ), JoinCondition.GreaterThan,
+                        new TransformationDescriptor<Record, Integer>(word -> (Integer) word.getField(1),
                                 DataUnitType.<Record>createBasic(Record.class),
                                 DataUnitType.<Integer>createBasicUnchecked(Integer.class)
                         ),
-                        new TransformationDescriptor<Record,Integer>(word -> (Integer)word.getField(1),
+                        new TransformationDescriptor<Record, Integer>(word -> (Integer) word.getField(1),
                                 DataUnitType.<Record>createBasic(Record.class),
                                 DataUnitType.<Integer>createBasicUnchecked(Integer.class)
-                        ),JoinCondition.LessThan
+                        ), JoinCondition.LessThan
                 );
 
         // Set up the ChannelInstances.
@@ -66,7 +64,7 @@ public class SparkIEJoinOperatorTest2 extends SparkOperatorTestBase {
         final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        IEJoinOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+        evaluate(IEJoinOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Tuple2<Record, Record>> result = output.<Tuple2<Record, Record>>provideRdd().collect();

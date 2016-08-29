@@ -5,21 +5,17 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.basic.data.Data;
 import org.qcri.rheem.basic.data.JoinCondition;
-import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.copyable;
 import org.qcri.rheem.basic.operators.IESelfJoinOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
-import org.qcri.rheem.spark.operators.subOperators.*;
 import org.qcri.rheem.spark.execution.SparkExecutor;
+import org.qcri.rheem.spark.operators.subOperators.*;
 import scala.Tuple2;
 import scala.Tuple5;
 
@@ -28,20 +24,23 @@ import java.util.*;
 /**
  * Spark implementation of the {@link   IESelfJoinOperator}.
  */
-public class SparkIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 extends Comparable<Type1>,Input extends copyable>
-        extends IESelfJoinOperator<Type0, Type1,Input>
+public class SparkIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 extends Comparable<Type1>, Input extends copyable>
+        extends IESelfJoinOperator<Type0, Type1, Input>
         implements SparkExecutionOperator {
 
     /**
      * Creates a new instance.
      */
     public SparkIESelfJoinOperator(DataSetType<Input> inputType,
-                                   TransformationDescriptor<Input,Type0> get0Pivot, JoinCondition cond0, TransformationDescriptor<Input,Type1> get0Ref, JoinCondition cond1) {
+                                   TransformationDescriptor<Input, Type0> get0Pivot, JoinCondition cond0, TransformationDescriptor<Input, Type1> get0Ref, JoinCondition cond1) {
         super(inputType, get0Pivot, cond0, get0Ref, cond1);
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         SparkExecutor sparkExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -66,8 +65,8 @@ public class SparkIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exte
         boolean list2ASCSec = false;
         boolean equalReverse = false;*/
 
-        final Function<Input, Type0> get0Pivot_ = compiler.compile(this.get0Pivot,this,inputs);
-        final Function<Input, Type1> get0Ref_ = compiler.compile(this.get0Ref,this,inputs);
+        final Function<Input, Type0> get0Pivot_ = sparkExecutor.getCompiler().compile(this.get0Pivot, this, operatorContext, inputs);
+        final Function<Input, Type1> get0Ref_ = sparkExecutor.getCompiler().compile(this.get0Ref, this, operatorContext, inputs);
         // count larger partition size in rdd1 & rdd2
         int partCount = rdd0.mapPartitions(
                 input -> {
@@ -89,12 +88,12 @@ public class SparkIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exte
 
         // extract pivot attribute and sort
         JavaPairRDD<Data<Type0, Type1>, Tuple2<Long, Input>> keyedDataRDD1 = inputRDD1UID
-                .keyBy(new extractData<Type0, Type1,Input>(get0Pivot_, get0Ref_)).sortByKey(new DataComparator<Type0, Type1>(list1ASC, list1ASCSec));
+                .keyBy(new extractData<Type0, Type1, Input>(get0Pivot_, get0Ref_)).sortByKey(new DataComparator<Type0, Type1>(list1ASC, list1ASCSec));
 
         // convert each partition to List2AttributesObjectSkinny
         JavaRDD<List2AttributesObjectSkinny<Type0, Type1>> listObjectDataRDD1 = keyedDataRDD1
                 .values().mapPartitionsWithIndex(
-                        new build2ListObject<Type0, Type1,Input>(list1ASC, list1ASCSec, get0Pivot_, get0Ref_), true);
+                        new build2ListObject<Type0, Type1, Input>(list1ASC, list1ASCSec, get0Pivot_, get0Ref_), true);
 
         // get partition ID for each List2AttributesObjectSkinny object
         JavaPairRDD<Long, List2AttributesObjectSkinny<Type0, Type1>> listObjectDataRDD1Indexd = listObjectDataRDD1
@@ -140,7 +139,7 @@ public class SparkIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exte
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkIESelfJoinOperator<Type0, Type1,Input>(this.getInputType(), this.get0Pivot, cond0, this.get0Ref, cond1);
+        return new SparkIESelfJoinOperator<Type0, Type1, Input>(this.getInputType(), this.get0Pivot, cond0, this.get0Ref, cond1);
     }
 
     //TODO:

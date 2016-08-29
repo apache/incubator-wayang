@@ -66,7 +66,7 @@ public class SparkIEJoinOperatorTest3 extends SparkOperatorTestBase {
         final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        IEJoinOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+        evaluate(IEJoinOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Tuple2<Record, Record>> result = output.<Tuple2<Record, Record>>provideRdd().collect();

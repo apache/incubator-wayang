@@ -6,6 +6,7 @@ import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.IEJoinOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -18,6 +19,7 @@ import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.subOperator.BitSetJoin;
 import org.qcri.rheem.java.operators.subOperator.DataComparator;
 import org.qcri.rheem.java.operators.subOperator.extractData;
@@ -45,7 +47,10 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public void evaluate(ChannelInstance[] inputs,
+                         ChannelInstance[] outputs,
+                         JavaExecutor javaExecutor,
+                         OptimizationContext.OperatorContext operatorContext) {
         StreamChannel.Instance outputChannel = (StreamChannel.Instance) outputs[0];
 
         Stream<Input> stream0;
@@ -65,10 +70,10 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
             stream1 = ((JavaChannelInstance) inputs[1]).provideStream();
         }
 
-        final Function<Input, Type0> get0Pivot_ = compiler.compile(this.get0Pivot);
-        final Function<Input, Type0> get1Pivot_ = compiler.compile(this.get1Pivot);
-        final Function<Input, Type1> get0Ref_ = compiler.compile(this.get0Ref);
-        final Function<Input, Type1> get1Ref_ = compiler.compile(this.get1Ref);
+        final Function<Input, Type0> get0Pivot_ = javaExecutor.getCompiler().compile(this.get0Pivot);
+        final Function<Input, Type0> get1Pivot_ = javaExecutor.getCompiler().compile(this.get1Pivot);
+        final Function<Input, Type1> get0Ref_ = javaExecutor.getCompiler().compile(this.get0Ref);
+        final Function<Input, Type1> get1Ref_ = javaExecutor.getCompiler().compile(this.get1Ref);
 
         Object[] stream0R = stream0.toArray();
         Object[] stream1R = stream1.toArray();

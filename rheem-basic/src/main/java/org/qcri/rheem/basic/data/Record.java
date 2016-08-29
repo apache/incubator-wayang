@@ -17,9 +17,7 @@ public class Record extends copyable implements Serializable {
 
     @Override
     public Record copy(){
-        Object[] values2 = new Object[values.length];
-        System.arraycopy( values, 0, values2, 0, values.length );
-        return new Record(values.clone());
+        return new Record(this.values.clone());
     }
 
     @Override
@@ -73,7 +71,7 @@ public class Record extends copyable implements Serializable {
         else if (field instanceof Long) return (Long) field;
         else if (field instanceof Short) return (Short) field;
         else if (field instanceof Byte) return (Byte) field;
-        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", field));
+        throw new IllegalStateException(String.format("%s cannot be retrieved as long.", field));
     }
 
     /**
@@ -87,7 +85,7 @@ public class Record extends copyable implements Serializable {
         if (field instanceof Integer) return (Integer) field;
         else if (field instanceof Short) return (Short) field;
         else if (field instanceof Byte) return (Byte) field;
-        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", field));
+        throw new IllegalStateException(String.format("%s cannot be retrieved as int.", field));
     }
 
     /**

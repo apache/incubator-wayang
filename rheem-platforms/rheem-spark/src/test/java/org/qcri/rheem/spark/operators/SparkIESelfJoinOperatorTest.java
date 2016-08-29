@@ -54,7 +54,7 @@ public class SparkIESelfJoinOperatorTest extends SparkOperatorTestBase {
         final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        IESelfJoinOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+        evaluate(IESelfJoinOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Tuple2<Record, Record>> result = output.<Tuple2<Record, Record>>provideRdd().collect();
