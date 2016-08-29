@@ -266,6 +266,7 @@ public class RheemPlans {
      */
     public static Collection<Integer> loopWithIterationNumber(RheemContext rheemContext,
                                                               final int maxValue,
+                                                              final int expectedNumIterations,
                                                               final int... values) {
         return new JavaPlanBuilder(rheemContext)
                 .loadCollection(RheemArrays.asList(values)).withName("Load values")
@@ -285,7 +286,7 @@ public class RheemPlans {
                                     newVals.map(x -> x).withName("Identity 2").withOutputClass(Integer.class)
                             );
                         }
-                ).withConditionClass(Integer.class)
+                ).withExpectedNumberOfIterations(expectedNumIterations).withConditionClass(Integer.class)
                 .collect();
     }
 

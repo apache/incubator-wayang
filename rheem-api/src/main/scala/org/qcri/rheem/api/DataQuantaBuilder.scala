@@ -1339,7 +1339,7 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
     * @param numExpectedIterations the expected number of iterations
     * @return this instance
     */
-  def withExpectedNumberOfiterations(numExpectedIterations: Int) = {
+  def withExpectedNumberOfIterations(numExpectedIterations: Int) = {
     this.numExpectedIterations = numExpectedIterations
     this
   }

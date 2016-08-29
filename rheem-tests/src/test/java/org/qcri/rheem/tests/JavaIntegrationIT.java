@@ -360,13 +360,25 @@ public class JavaIntegrationIT {
     @Test
     public void testCurrentIterationNumber() {
         RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        final Collection<Integer> result = RheemPlans.loopWithIterationNumber(rheemContext, 15, -1, 1, 5);
+        final Collection<Integer> result = RheemPlans.loopWithIterationNumber(rheemContext, 15, 5, -1, 1, 5);
         int expectedOffset = 5 * 4 / 2;
         Assert.assertEquals(
                 RheemCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
                 RheemCollections.asSet(result)
         );
     }
+
+    @Test
+    public void testCurrentIterationNumberWithTooFewExpectedIterations() {
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        final Collection<Integer> result = RheemPlans.loopWithIterationNumber(rheemContext, 15, 2, -1, 1, 5);
+        int expectedOffset = 5 * 4 / 2;
+        Assert.assertEquals(
+                RheemCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
+                RheemCollections.asSet(result)
+        );
+    }
+
 
     @Test
     public void testBroadcasts() {
