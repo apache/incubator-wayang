@@ -5,17 +5,17 @@ import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.iejoin.operators.IEJoinMasterOperator;
-import org.qcri.rheem.iejoin.operators.IEJoinOperator;
-import org.qcri.rheem.iejoin.operators.SparkIEJoinOperator;
+import org.qcri.rheem.iejoin.operators.IESelfJoinOperator;
+import org.qcri.rheem.iejoin.operators.SparkIESelfJoinOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link IEJoinOperator} to {@link SparkIEJoinOperator}.
+ * Mapping from {@link IESelfJoinOperator} to {@link SparkIESelfJoinOperator}.
  */
-public class IEJoinToSparkIEJoinMapping implements Mapping {
+public class IESelfJoinMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -25,7 +25,7 @@ public class IEJoinToSparkIEJoinMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "iejoin", new IEJoinOperator<>(DataSetType.none(), DataSetType.none(), null, null, IEJoinMasterOperator.JoinCondition.GreaterThan, null, null, IEJoinMasterOperator.JoinCondition.GreaterThan), false);
+                "ieselfjoin", new IESelfJoinOperator<>(DataSetType.none(), null, IEJoinMasterOperator.JoinCondition.GreaterThan, null, IEJoinMasterOperator.JoinCondition.GreaterThan), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
@@ -34,9 +34,8 @@ public class IEJoinToSparkIEJoinMapping implements Mapping {
 
         @Override
         protected Operator translate(SubplanMatch subplanMatch, int epoch) {
-            final IEJoinOperator<?, ?, ?> originalOperator = (IEJoinOperator<?, ?, ?>) subplanMatch.getMatch("iejoin").getOperator();
-            return new SparkIEJoinOperator(originalOperator.getInputType0(),
-                    originalOperator.getInputType1(), originalOperator.getGet0Pivot(), originalOperator.getGet1Pivot(), originalOperator.getCond0(), originalOperator.getGet0Ref(), originalOperator.getGet1Ref(), originalOperator.getCond1()).at(epoch);
+            final IESelfJoinOperator<?, ?, ?> originalOperator = (IESelfJoinOperator<?, ?, ?>) subplanMatch.getMatch("ieselfjoin").getOperator();
+            return new SparkIESelfJoinOperator(originalOperator.getInputType(), originalOperator.getGet0Pivot(), originalOperator.getCond0(), originalOperator.getGet0Ref(), originalOperator.getCond1()).at(epoch);
         }
     }
 }

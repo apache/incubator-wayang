@@ -13,7 +13,7 @@ import java.util.Collections;
 /**
  * Mapping from {@link IESelfJoinOperator} to {@link JavaIESelfJoinOperator}.
  */
-public class IESelfJoinToJavaIESelfJoinMapping implements Mapping {
+public class IESelfJoinMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {

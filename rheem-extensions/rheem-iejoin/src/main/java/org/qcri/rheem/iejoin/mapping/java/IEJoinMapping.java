@@ -13,7 +13,7 @@ import java.util.Collections;
 /**
  * Mapping from {@link IEJoinOperator} to {@link JavaIEJoinOperator}.
  */
-public class IEJoinToJavaIEJoinMapping implements Mapping {
+public class IEJoinMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
