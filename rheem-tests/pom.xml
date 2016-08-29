@@ -64,6 +64,11 @@
             <version>0.1-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.qcri.rheem</groupId>
+            <artifactId>rheem-iejoin</artifactId>
+            <version>0.1-SNAPSHOT</version>
+        </dependency>
 
         <!-- Spark is a provided dependency and thus not transitively injected via rheem-spark. -->
         <dependency>

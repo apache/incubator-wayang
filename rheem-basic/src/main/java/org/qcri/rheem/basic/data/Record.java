@@ -1,5 +1,7 @@
 package org.qcri.rheem.basic.data;
 
+import org.qcri.rheem.core.util.Copyable;
+
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
@@ -7,12 +9,17 @@ import java.util.Objects;
 /**
  * A Type that represents a record with a schema, might be replaced with something standard like JPA entity.
  */
-public class Record implements Serializable {
+public class Record implements Serializable, Copyable<Record> {
 
     private Object[] values;
 
     public Record(Object... values) {
         this.values = values;
+    }
+
+    @Override
+    public Record copy() {
+        return new Record(this.values.clone());
     }
 
     @Override
@@ -66,7 +73,7 @@ public class Record implements Serializable {
         else if (field instanceof Long) return (Long) field;
         else if (field instanceof Short) return (Short) field;
         else if (field instanceof Byte) return (Byte) field;
-        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", field));
+        throw new IllegalStateException(String.format("%s cannot be retrieved as long.", field));
     }
 
     /**
@@ -80,7 +87,7 @@ public class Record implements Serializable {
         if (field instanceof Integer) return (Integer) field;
         else if (field instanceof Short) return (Short) field;
         else if (field instanceof Byte) return (Byte) field;
-        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", field));
+        throw new IllegalStateException(String.format("%s cannot be retrieved as int.", field));
     }
 
     /**

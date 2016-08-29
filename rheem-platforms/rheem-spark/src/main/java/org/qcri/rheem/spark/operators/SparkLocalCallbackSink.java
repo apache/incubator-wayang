@@ -12,6 +12,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +21,7 @@ import java.util.function.Consumer;
 /**
  * Implementation of the {@link LocalCallbackSink} operator for the Spark platform.
  */
-public class SparkLocalCallbackSink<T> extends LocalCallbackSink<T> implements SparkExecutionOperator {
+public class SparkLocalCallbackSink<T extends Serializable> extends LocalCallbackSink<T> implements SparkExecutionOperator {
     /**
      * Creates a new instance.
      *
