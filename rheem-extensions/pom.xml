@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>rheem</artifactId>
+        <groupId>org.qcri.rheem</groupId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>rheem-extensions</artifactId>
+    <packaging>pom</packaging>
+
+    <description>This module aggregates extensions of Rheem.</description>
+    <modules>
+        <module>rheem-iejoin</module>
+    </modules>
+
+
+</project>
