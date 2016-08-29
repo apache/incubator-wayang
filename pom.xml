@@ -400,7 +400,6 @@
         <module>rheem-api</module>
         <module>rheem-profiler</module>
         <module>rheem-distro</module>
-        <module>../rheem-extensions</module>
         <module>rheem-extensions</module>
     </modules>
 </project>

@@ -33,6 +33,10 @@
             <artifactId>rheem-spark</artifactId>
             <version>0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-core_${scala.compat.version}</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
