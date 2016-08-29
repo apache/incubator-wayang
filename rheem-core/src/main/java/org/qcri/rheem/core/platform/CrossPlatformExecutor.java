@@ -354,18 +354,26 @@ public class CrossPlatformExecutor implements ExecutionState {
     ) {
         final OptimizationContext prevOptimizationContext = processedStageActivator.getOptimizationContext();
 
-        // Check if the next stage is in a loop.
+        // If the sucessor is not in a loop, we go to the root OptimizationContext.
         if (successorStage.getLoop() == null) {
             return prevOptimizationContext.getRootParent();
         }
 
-        // Check if we stay within the same loop.
         final ExecutionStage processedStage = processedStageActivator.getStage();
         if (processedStage.getLoop() == successorStage.getLoop()) {
+            // If we stay in the very same loop...
             if (successorStage.isLoopHead()) {
-                return prevOptimizationContext.getNextIterationContext(); // TODO: Make up new contexts if needed.
+                // ...and the next stage is a loop head, then we need to switch to the next iteration context.
+                return prevOptimizationContext.getNextIterationContext();
             } else {
-                return prevOptimizationContext;
+                // We need to check, that we do not run into the last iteration context, where there is no more
+                // information for the loop body.
+                if (!prevOptimizationContext.isFinalIteration()) {
+                    return prevOptimizationContext;
+                }
+                // Sneak in a new OptimizationContext for the new iteration.
+                return prevOptimizationContext.getLoopContext().appendIterationContext();
+
             }
         }
 

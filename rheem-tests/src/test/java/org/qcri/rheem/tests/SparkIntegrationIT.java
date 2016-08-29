@@ -367,7 +367,7 @@ public class SparkIntegrationIT {
     @Test
     public void testCurrentIterationNumberWithTooFewExpectedIterations() {
         RheemContext rheemContext = new RheemContext().with(Spark.basicPlugin());
-        final Collection<Integer> result = RheemPlans.loopWithIterationNumber(rheemContext, 15, 2 -1, 1, 5);
+        final Collection<Integer> result = RheemPlans.loopWithIterationNumber(rheemContext, 15, 2, -1, 1, 5);
         int expectedOffset = 10;
         Assert.assertEquals(
                 RheemCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),

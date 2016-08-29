@@ -1,6 +1,8 @@
 package org.qcri.rheem.core.optimizer;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
+import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.util.RheemArrays;
 
@@ -75,6 +77,23 @@ public class DefaultOptimizationContext extends OptimizationContext {
                 hostLoopContext.getOptimizationContext().getChannelConversionGraph(),
                 hostLoopContext.getOptimizationContext().getPruningStrategies());
         this.addOneTimeOperators(loop);
+    }
+
+    /**
+     * Base constructor.
+     */
+    private DefaultOptimizationContext(Configuration configuration,
+                                       OptimizationContext base,
+                                       LoopContext hostLoopContext,
+                                       int iterationNumber,
+                                       ChannelConversionGraph channelConversionGraph,
+                                       List<PlanEnumerationPruningStrategy> pruningStrategies,
+                                       Map<Operator, OperatorContext> operatorContexts,
+                                       Map<LoopSubplan, LoopContext> loopContexts) {
+        super(configuration, base, hostLoopContext, iterationNumber, channelConversionGraph, pruningStrategies);
+        this.operatorContexts.putAll(operatorContexts);
+        this.loopContexts.putAll(loopContexts);
+
     }
 
     @Override
@@ -187,5 +206,23 @@ public class DefaultOptimizationContext extends OptimizationContext {
     @Override
     public Collection<DefaultOptimizationContext> getDefaultOptimizationContexts() {
         return Collections.singleton(this);
+    }
+
+    /**
+     * Create a shallow copy of this instance.
+     *
+     * @return the shallow copy
+     */
+    public DefaultOptimizationContext copy() {
+        return new DefaultOptimizationContext(
+                this.getConfiguration(),
+                this.getBase(),
+                this.getLoopContext(),
+                this.getIterationNumber(),
+                this.getChannelConversionGraph(),
+                this.getPruningStrategies(),
+                this.operatorContexts,
+                this.loopContexts
+        );
     }
 }

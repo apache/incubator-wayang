@@ -42,7 +42,7 @@ public abstract class OptimizationContext {
      * The iteration number of this instance within its {@link #hostLoopContext} (starting from {@code 0}) - or {@code -1}
      * if there is no {@link #hostLoopContext}.
      */
-    private final int iterationNumber;
+    private int iterationNumber;
 
     /**
      * Forked {@link OptimizationContext}s can have a base.
@@ -188,6 +188,15 @@ public abstract class OptimizationContext {
     public boolean isFinalIteration() {
         assert this.hostLoopContext != null;
         return this.iterationNumber == this.hostLoopContext.getIterationContexts().size() - 1;
+    }
+
+    /**
+     * Retrieve the {@link LoopContext} in which this instance resides.
+     *
+     * @return the {@link LoopContext} or {@code null} if none
+     */
+    public LoopContext getLoopContext() {
+        return this.hostLoopContext;
     }
 
     /**
@@ -632,6 +641,30 @@ public abstract class OptimizationContext {
 
         public OptimizationContext getFinalIterationContext() {
             return this.iterationContexts.get(this.iterationContexts.size() - 1);
+        }
+
+        /**
+         * Add a new iteration {@link OptimizationContext} between second-to-last and final iteration.
+         *
+         * @return the added {@link OptimizationContext}
+         */
+        public OptimizationContext appendIterationContext() {
+            // Shift the final iteration context by one.
+            final OptimizationContext finalIterationContext = this.getFinalIterationContext();
+            this.iterationContexts.add(finalIterationContext);
+            finalIterationContext.iterationNumber++;
+
+            // Copy the second-to-last iteration context.
+            OptimizationContext oldSecondToLastIterationContext = this.getIterationContext(this.iterationContexts.size() - 3);
+            OptimizationContext newSecondToLastIterationContext = ((DefaultOptimizationContext) oldSecondToLastIterationContext).copy();
+            newSecondToLastIterationContext.iterationNumber++;
+
+            // Insert and return the copied iteration context.
+            this.iterationContexts.set(
+                    iterationContexts.size() - 2,
+                    newSecondToLastIterationContext
+            );
+            return newSecondToLastIterationContext;
         }
 
         public LoopSubplan getLoop() {
