@@ -27,7 +27,13 @@ public class HadoopFileSystem implements FileSystem {
     static {
         // Add handler for HDFS URL for java.net.URL
         LoggerFactory.getLogger(HadoopFileSystem.class).info("Adding handler for HDFS URLs.");
-        URL.setURLStreamHandlerFactory(new FsUrlStreamHandlerFactory());
+        try {
+            URL.setURLStreamHandlerFactory(new FsUrlStreamHandlerFactory());
+        } catch (Throwable t) {
+            LoggerFactory.getLogger(HadoopFileSystem.class).error(
+                    "Could not set URL stream handler factory.", t
+            );
+        }
     }
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
