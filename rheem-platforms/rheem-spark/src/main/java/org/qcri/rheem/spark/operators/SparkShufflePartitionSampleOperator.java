@@ -71,8 +71,9 @@ public class SparkShufflePartitionSampleOperator<Type>
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
 
         JavaRDD<Type> inputRdd = input.provideRdd();
-        if (datasetSize == 0) //total size of input dataset was not given
-            datasetSize = inputRdd.cache().count();
+        long datasetSize = this.isDataSetSizeKnown() ?
+                this.getDatasetSize() :
+                inputRdd.cache().count();
 
         if (sampleSize >= datasetSize) { //return all and return
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());

@@ -77,10 +77,9 @@ public class SparkRandomPartitionSampleOperator<Type>
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
 
         final JavaRDD<Object> inputRdd = input.provideRdd();
-        if (datasetSize == 0) //total size of input dataset was not given
-        {
-            datasetSize = inputRdd.cache().count();
-        }
+        long datasetSize = this.isDataSetSizeKnown() ?
+                this.getDatasetSize() :
+                inputRdd.cache().count();
 
         if (sampleSize >= datasetSize) { //return whole dataset
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
@@ -166,7 +165,9 @@ public class SparkRandomPartitionSampleOperator<Type>
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
-        return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+        return this.isDataSetSizeKnown() ?
+                Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR) :
+                Collections.singletonList(RddChannel.CACHED_DESCRIPTOR);
     }
 
     @Override

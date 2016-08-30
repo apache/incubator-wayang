@@ -65,9 +65,8 @@ public class JavaRandomSampleOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        // FIXME: If the dataset size is unknown, we execute the Stream twice, which should not happen.
-        if (datasetSize == 0) //total size of input dataset was not given
-            datasetSize = ((JavaChannelInstance) inputs[0]).provideStream().count();
+        long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() :
+            ((CollectionChannel.Instance) inputs[0]).provideCollection().size();
 
         if (sampleSize >= datasetSize) { //return all
             ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).provideStream());
@@ -121,7 +120,10 @@ public class JavaRandomSampleOperator<Type>
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
-        return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
+        return this.isDataSetSizeKnown() ?
+            Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR) :
+            Collections.singletonList(CollectionChannel.DESCRIPTOR);
+
     }
 
     @Override

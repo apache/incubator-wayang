@@ -68,13 +68,10 @@ public class SparkBernoulliSampleOperator<Type>
         final RddChannel.Instance input = (RddChannel.Instance) inputs[0];
         final RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
-        double sampleFraction;
 
         final JavaRDD<Type> inputRdd = input.provideRdd();
-        if (datasetSize > 0) //sample size was given as input
-            sampleFraction = ((double) sampleSize) / datasetSize;
-        else
-            sampleFraction = ((double) sampleSize) / inputRdd.cache().count();
+        long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() : inputRdd.count();
+        double sampleFraction = ((double) this.sampleSize) / datasetSize;
         final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction);
         this.name(outputRdd);
 
@@ -104,7 +101,9 @@ public class SparkBernoulliSampleOperator<Type>
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         if (index == 0) {
-            return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+            return this.isDataSetSizeKnown() ?
+                    Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR) :
+                    Collections.singletonList(RddChannel.CACHED_DESCRIPTOR);
         } else {
             return Collections.singletonList(BroadcastChannel.DESCRIPTOR);
         }

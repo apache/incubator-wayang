@@ -100,6 +100,15 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         return this.datasetSize;
     }
 
+    /**
+     * Find out whether this instance knows about the size of the incoming dataset.
+     *
+     * @return whether it knows the dataset size
+     */
+    protected boolean isDataSetSizeKnown() {
+        return this.datasetSize > 0;
+    }
+
     public Methods getSampleMethod() {
         return this.sampleMethod;
     }
