@@ -363,6 +363,9 @@ public class GeneticOptimizerApp {
 
     public static void main(String[] args) {
         Configuration configuration = args.length == 0 ? new Configuration() : new Configuration(args[0]);
+        if (args.length >= 2) {
+            configuration.setProperty("rheem.core.log.executions", args[1]);
+        }
         new GeneticOptimizerApp(configuration).run();
     }
 }
