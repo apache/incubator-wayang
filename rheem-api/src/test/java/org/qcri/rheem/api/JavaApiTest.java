@@ -185,6 +185,26 @@ public class JavaApiTest {
     }
 
     @Test
+    public void testSample() {
+        // Set up RheemContext.
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+
+        // Create some input values.
+        final List<Integer> inputValues = RheemArrays.asList(RheemArrays.range(100));
+
+        // Build and execute a Rheem plan.
+        final Collection<Integer> outputValues = new JavaPlanBuilder(rheemContext)
+                .loadCollection(inputValues).withName("Load input values")
+                .sample(10).withName("Sample")
+                .collect();
+
+        // Check the outcome.
+        Assert.assertEquals(10, outputValues.size());
+        Assert.assertEquals(10, RheemCollections.asSet(outputValues).size());
+
+    }
+
+    @Test
     public void testDoWhile() {
         // Set up RheemContext.
         RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());

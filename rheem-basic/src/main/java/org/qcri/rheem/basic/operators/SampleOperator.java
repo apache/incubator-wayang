@@ -37,12 +37,17 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         RESERVOIR
     }
 
+    /**
+     * Special dataset size that represents "unknown".
+     */
+    // TODO: With 0 being a legal dataset size, it would be nice to use a different "null" value, e.g., -1.
+    public static final long UNKNOWN_DATASET_SIZE = 0L;
+
     protected int sampleSize;
 
     /**
      * Size of the dataset to be sampled or {@code 0} if a dataset size is not known.
      */
-    // TODO: With 0 being a legal dataset size, it would be nice to use a different "null" value, e.g., -1.
     protected long datasetSize;
 
     private Methods sampleMethod;
@@ -61,18 +66,17 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * Creates a new instance given the sample size.
      */
     public SampleOperator(int sampleSize, DataSetType<Type> type, Methods sampleMethod) {
-        super(type, type,
-                true);
-        this.sampleSize = sampleSize;
-        this.sampleMethod = sampleMethod;
+        this(sampleSize, UNKNOWN_DATASET_SIZE, type, sampleMethod);
     }
 
     /**
      * Creates a new instance given the sample size and total dataset size.
      */
     public SampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type, Methods sampleMethod) {
-        this(sampleSize, type, sampleMethod);
+        super(type, type, true);
+        this.sampleSize = sampleSize;
         this.datasetSize = datasetSize;
+        this.sampleMethod = sampleMethod;
     }
 
     /**
