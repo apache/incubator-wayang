@@ -4,9 +4,9 @@ import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.operators.JavaRandomSampleOperator;
 import org.qcri.rheem.java.operators.JavaReservoirSampleOperator;
+import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +32,7 @@ public class SampleMapping implements Mapping {
         ).withAdditionalTest(op ->
                 op.getSampleMethod() == SampleOperator.Methods.RANDOM
                         || op.getSampleMethod() == SampleOperator.Methods.RESERVOIR
+                        || op.getSampleMethod() == SampleOperator.Methods.ANY
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }
@@ -40,6 +41,7 @@ public class SampleMapping implements Mapping {
         return new ReplacementSubplanFactory.OfSingleOperators<SampleOperator>(
                 (matchedOperator, epoch) -> {
                     switch (matchedOperator.getSampleMethod()) {
+                        case ANY:
                         case RANDOM:
                             return new JavaRandomSampleOperator<>(matchedOperator).at(epoch);
                         case RESERVOIR:

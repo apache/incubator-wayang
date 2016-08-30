@@ -30,26 +30,23 @@ public class SparkShufflePartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
-    protected Random rand = new Random();
-    int partitionID = 0;
-    int tupleID = 0;
-    int threshold = 5000;
+    private final Random rand = new Random();
+
+    private int partitionID = 0;
+
+    private int tupleID = 0;
 
     /**
      * Creates a new instance.
-     *
-     * @param sampleSize
      */
-    public SparkShufflePartitionSampleOperator(int sampleSize, DataSetType type) {
+    public SparkShufflePartitionSampleOperator(int sampleSize, DataSetType<Type> type) {
         super(sampleSize, type, Methods.SHUFFLE_FIRST);
     }
 
     /**
      * Creates a new instance.
-     *
-     * @param sampleSize
      */
-    public SparkShufflePartitionSampleOperator(int sampleSize, long datasetSize, DataSetType type) {
+    public SparkShufflePartitionSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
         super(sampleSize, datasetSize, type, Methods.SHUFFLE_FIRST);
     }
 
@@ -60,9 +57,8 @@ public class SparkShufflePartitionSampleOperator<Type>
      */
     public SparkShufflePartitionSampleOperator(SampleOperator<Type> that) {
         super(that);
+        assert that.getSampleMethod() == Methods.SHUFFLE_FIRST || that.getSampleMethod() == Methods.ANY;
     }
-
-    int nb_partitions = 0;
 
     @Override
     public void evaluate(ChannelInstance[] inputs,
@@ -89,7 +85,7 @@ public class SparkShufflePartitionSampleOperator<Type>
         boolean miscalculated = false;
         do {
             if (tupleID == 0) {
-                nb_partitions = inputRdd.partitions().size();
+                int nb_partitions = inputRdd.partitions().size();
                 //choose a random partition
                 partitionID = rand.nextInt(nb_partitions);
                 inputRdd = inputRdd.<Type>mapPartitionsWithIndex(new ShufflePartition<>(partitionID), true).cache();
@@ -156,9 +152,9 @@ public class SparkShufflePartitionSampleOperator<Type>
 
 class ShufflePartition<V, T, R> implements Function2<V, T, R> {
 
-    int partitionID;
+    private int partitionID;
 
-    public ShufflePartition(int partitionID) {
+    ShufflePartition(int partitionID) {
         this.partitionID = partitionID;
     }
 
@@ -179,8 +175,9 @@ class ShufflePartition<V, T, R> implements Function2<V, T, R> {
 
 class TakeSampleFunction<V> extends AbstractFunction1<scala.collection.Iterator<V>, List<V>> implements Serializable {
 
-    int start_id;
-    int end_id;
+    private int start_id;
+
+    private int end_id;
 
     TakeSampleFunction(int start_id, int end_id) {
         this.start_id = start_id;
