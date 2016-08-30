@@ -8,7 +8,7 @@ import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaBuilderDecorator}
 import org.qcri.rheem.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.qcri.rheem.basic.data.{Record, Tuple2 => RT2}
-import org.qcri.rheem.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator}
+import org.qcri.rheem.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator}
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator
@@ -153,6 +153,14 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   def flatMap[NewOut](udf: SerializableFunction[Out, java.lang.Iterable[NewOut]]) = new FlatMapDataQuantaBuilder(this, udf)
 
   /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.SampleOperator]].
+    *
+    * @param sampleSize the absolute size of the sample
+    * @return a [[SampleDataQuantaBuilder]]
+    */
+  def sample(sampleSize: Int) = new SampleDataQuantaBuilder(this, sampleSize)
+
+  /**
     * Feed the built [[DataQuanta]] into a [[GlobalReduceOperator]].
     *
     * @param udf the UDF for the [[GlobalReduceOperator]]
@@ -293,7 +301,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * Feed the built [[DataQuanta]] into a [[JavaFunction]] that runs locally. This triggers
     * execution of the constructed [[RheemPlan]].
     *
-    * @param f       the [[JavaFunction]]
+    * @param f the [[JavaFunction]]
     * @return the collected data quanta
     */
   def forEach(f: Consumer[Out]): Unit = this.dataQuanta().foreachJava(f)
@@ -313,7 +321,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.TextFileSink]]. This triggers
     * execution of the constructed [[RheemPlan]].
     *
-    * @param url     the URL of the file to be written
+    * @param url the URL of the file to be written
     * @return the collected data quanta
     */
   def writeTextFile(url: String,
@@ -772,6 +780,57 @@ class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In
 
   override protected def build = inputDataQuanta.dataQuanta().flatMapJava(
     udf, this.selectivity, this.udfCpuEstimator, this.udfRamEstimator
+  )
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.SampleOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param sampleSize      the absolute size of the sample
+  */
+class SampleDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], sampleSize: Int)
+                                (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[SampleDataQuantaBuilder[T], T] {
+
+  /**
+    * Size of the dataset to be sampled.
+    */
+  private var datasetSize = SampleOperator.UNKNOWN_DATASET_SIZE
+
+  /**
+    * Sampling method to use.
+    */
+  private var sampleMethod = SampleOperator.Methods.ANY
+
+  // Reuse the input TypeTrap to enforce type equality between input and output.
+  override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
+
+  /**
+    * Set the size of the dataset that should be sampled.
+    *
+    * @param datasetSize the size of the dataset
+    * @return this instance
+    */
+  def withDatasetSize(datasetSize: Long) = {
+    this.datasetSize = datasetSize
+    this
+  }
+
+  /**
+    * Set the sample method to be used.
+    *
+    * @param sampleMethod the sample method
+    * @return this instance
+    */
+  def withSampleMethod(sampleMethod: SampleOperator.Methods) = {
+    this.sampleMethod = sampleMethod
+    this
+  }
+
+  override protected def build = inputDataQuanta.dataQuanta().sample(
+    sampleSize, this.datasetSize, this.sampleMethod
   )
 
 }

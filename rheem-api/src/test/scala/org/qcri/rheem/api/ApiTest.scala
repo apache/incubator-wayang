@@ -143,6 +143,25 @@ class ApiTest {
   }
 
   @Test
+  def testSample(): Unit = {
+    // Set up RheemContext.
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+
+    // Generate some test data.
+    val inputValues = for (i <- 0 until 100) yield i
+
+    // Build and execute the RheemPlan.
+    val sample = rheem
+      .loadCollection(inputValues)
+      .sample(10)
+      .collect()
+
+    // Check the result.
+    Assert.assertEquals(10, sample.size)
+    Assert.assertEquals(10, sample.toSet.size)
+  }
+
+  @Test
   def testDoWhile(): Unit = {
     // Set up RheemContext.
     val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)

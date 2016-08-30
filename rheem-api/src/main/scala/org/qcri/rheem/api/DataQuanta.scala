@@ -172,6 +172,28 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   }
 
   /**
+    * Feed this instance into a [[SampleOperator]].
+    *
+    * @param sampleSize   absolute size of the sample
+    * @param datasetSize  optional size of the dataset to be sampled
+    * @param sampleMethod the [[SampleOperator.Methods]] to use for sampling
+    * @return a new instance representing the [[FlatMapOperator]]'s output
+    */
+  def sample(sampleSize: Int,
+             datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
+             sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] = {
+    val sampleOperator = new SampleOperator(
+      sampleSize,
+      datasetSize,
+      dataSetType[Out],
+      sampleMethod
+    )
+    this.connectTo(sampleOperator, 0)
+    sampleOperator
+  }
+
+
+  /**
     * Feed this instance into a [[ReduceByOperator]].
     *
     * @param keyUdf     UDF to extract the grouping key from the data quanta

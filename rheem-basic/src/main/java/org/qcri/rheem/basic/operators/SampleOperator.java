@@ -15,33 +15,68 @@ import java.util.Optional;
 public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
     public enum Methods {
-        BERNOULLI, //Bernoulli sampling
-        RANDOM, // Randomly pick a sample
-        SHUFFLE_FIRST, // shuffle data first and then take sequentially the sample
-        RESERVOIR //reservoir sampling
+        /**
+         * Represents an arbitrary sampling method.
+         */
+        ANY,
+        /**
+         * Bernoulli sampling.
+         */
+        BERNOULLI,
+        /**
+         * Randomly pick a sample.
+         */
+        RANDOM,
+        /**
+         * Shuffle the data first, then sequentially take the sample.
+         */
+        SHUFFLE_FIRST,
+        /**
+         * Reservoir sampling.
+         */
+        RESERVOIR
     }
 
+    /**
+     * Special dataset size that represents "unknown".
+     */
+    // TODO: With 0 being a legal dataset size, it would be nice to use a different "null" value, e.g., -1.
+    public static final long UNKNOWN_DATASET_SIZE = 0L;
+
     protected int sampleSize;
+
+    /**
+     * Size of the dataset to be sampled or {@code 0} if a dataset size is not known.
+     */
     protected long datasetSize;
 
-    protected Methods sampleMethod;
+    private Methods sampleMethod;
+
+    /**
+     * Creates a new instance with any sampling method.
+     *
+     * @param sampleSize size of the sample
+     * @param type       {@link DataSetType} of the sampled dataset
+     */
+    public SampleOperator(int sampleSize, DataSetType<Type> type) {
+        this(sampleSize, type, Methods.ANY);
+    }
 
     /**
      * Creates a new instance given the sample size.
      */
     public SampleOperator(int sampleSize, DataSetType<Type> type, Methods sampleMethod) {
-        super(type, type,
-                true);
-        this.sampleSize = sampleSize;
-        this.sampleMethod = sampleMethod;
+        this(sampleSize, UNKNOWN_DATASET_SIZE, type, sampleMethod);
     }
 
     /**
-     *  Creates a new instance given the sample size and total dataset size.
+     * Creates a new instance given the sample size and total dataset size.
      */
     public SampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type, Methods sampleMethod) {
-        this(sampleSize, type, sampleMethod);
+        super(type, type, true);
+        this.sampleSize = sampleSize;
         this.datasetSize = datasetSize;
+        this.sampleMethod = sampleMethod;
     }
 
     /**
@@ -57,13 +92,30 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     }
 
 
-    public DataSetType getType() { return this.getInputType(); }
+    public DataSetType<Type> getType() {
+        return this.getInputType();
+    }
 
-    public int getSampleSize() { return this.sampleSize; }
+    public int getSampleSize() {
+        return this.sampleSize;
+    }
 
-    public long getDatasetSize() { return this.datasetSize; }
+    public long getDatasetSize() {
+        return this.datasetSize;
+    }
 
-    public Methods getSampleMethod() { return this.sampleMethod; }
+    /**
+     * Find out whether this instance knows about the size of the incoming dataset.
+     *
+     * @return whether it knows the dataset size
+     */
+    protected boolean isDataSetSizeKnown() {
+        return this.datasetSize > 0;
+    }
+
+    public Methods getSampleMethod() {
+        return this.sampleMethod;
+    }
 
     @Override
     public Optional<CardinalityEstimator> createCardinalityEstimator(

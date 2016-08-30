@@ -34,6 +34,7 @@ public class SampleMapping implements Mapping {
                 op.getSampleMethod() == SampleOperator.Methods.RANDOM
                         || op.getSampleMethod() == SampleOperator.Methods.SHUFFLE_FIRST
                         || op.getSampleMethod() == SampleOperator.Methods.BERNOULLI
+                        || op.getSampleMethod() == SampleOperator.Methods.ANY
         ); //TODO: check if the zero here affects execution
         return SubplanPattern.createSingleton(operatorPattern);
     }
@@ -42,6 +43,7 @@ public class SampleMapping implements Mapping {
         return new ReplacementSubplanFactory.OfSingleOperators<SampleOperator>(
                 (matchedOperator, epoch) -> {
                     switch (matchedOperator.getSampleMethod()) {
+                        case ANY:
                         case RANDOM:
                             return new SparkRandomPartitionSampleOperator<>(matchedOperator);
                         case SHUFFLE_FIRST:
