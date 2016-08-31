@@ -24,7 +24,20 @@ import java.util.stream.Collectors;
  */
 public class HadoopFileSystem implements FileSystem {
 
-    static {
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    /**
+     * Tells whether the necessary setup for this {@link FileSystem} has been performed.
+     */
+    private boolean isInitialized = false;
+
+    /**
+     * Make sure that this instance is initialized. This is particularly required to use HDFS {@link URL}s.
+     * @return
+     */
+    public void ensureInitialized() {
+        if (this.isInitialized) return;
+
         // Add handler for HDFS URL for java.net.URL
         LoggerFactory.getLogger(HadoopFileSystem.class).info("Adding handler for HDFS URLs.");
         try {
@@ -33,12 +46,13 @@ public class HadoopFileSystem implements FileSystem {
             LoggerFactory.getLogger(HadoopFileSystem.class).error(
                     "Could not set URL stream handler factory.", t
             );
+        } finally {
+            this.isInitialized = true;
         }
     }
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
     private org.apache.hadoop.fs.FileSystem getHdfs(String uri) {
+        this.ensureInitialized();
         try {
             Configuration conf = new Configuration(true);
             return org.apache.hadoop.fs.FileSystem.get(new URI(uri), conf);
@@ -59,13 +73,7 @@ public class HadoopFileSystem implements FileSystem {
 
     @Override
     public boolean canHandle(String url) {
-        try {
-            final URI uri = new URI(url);
-            return uri.getScheme().equalsIgnoreCase("hdfs");
-        } catch (URISyntaxException e) {
-            this.logger.warn(url + " seems to be invalid.", e);
-            return false;
-        }
+        return url.startsWith("hdfs:/");
     }
 
     @Override
