@@ -32,6 +32,9 @@ class Sindy(plugins: Plugin*) {
     val rheemContext = new RheemContext(configuration)
     plugins.foreach(rheemContext.register)
     val planBuilder = new PlanBuilder(rheemContext)
+      .withJobName(s"Sindy ($paths)")
+      .withExperiment(experiment)
+      .withUdfJarsOf(classOf[Sindy])
 
     val fileColumnIdOffsets = paths.flatMap(resolveDirs).zipWithIndex.map { case (url, index) => (url, index * 1000) }
     val allCells = fileColumnIdOffsets
@@ -70,7 +73,8 @@ class Sindy(plugins: Plugin*) {
   def resolveDirs(url: String): scala.Iterable[String] = {
     import scala.collection.JavaConversions._
     val fs = FileSystems.requireFileSystem(url)
-    if (fs.isDirectory(url)) fs.listChildren(url).flatMap(resolveDirs) else Seq(url) }
+    if (fs.isDirectory(url)) fs.listChildren(url).flatMap(resolveDirs) else Seq(url)
+  }
 
 }
 
