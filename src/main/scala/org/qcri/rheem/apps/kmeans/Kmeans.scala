@@ -214,7 +214,7 @@ case class TaggedPoint(x: Double, y: Double, centroidId: Int) extends PointLike 
   */
 case class TaggedPointCounter(x: Double, y: Double, centroidId: Int, count: Int = 1) extends PointLike {
 
-  def this(point: PointLike, centroidId: Int, count: Int = 1) = this(point.x, point.y, centroidId, count)
+  def this(point: PointLike, centroidId: Int, count: Int) = this(point.x, point.y, centroidId, count)
 
   /**
     * Adds coordinates and counts of two instances.

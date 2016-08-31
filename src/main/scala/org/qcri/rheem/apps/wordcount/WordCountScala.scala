@@ -26,8 +26,9 @@ class WordCountScala(plugin: Plugin*) {
            (implicit configuration: Configuration, experiment: Experiment) = {
     val rheemCtx = new RheemContext(configuration)
     plugin.foreach(rheemCtx.register)
+    val planBuilder = new PlanBuilder(rheemCtx)
 
-    rheemCtx
+    planBuilder
       .withJobName(s"WordCount ($inputUrl)")
       .withExperiment(experiment)
       .withUdfJarsOf(this.getClass)
