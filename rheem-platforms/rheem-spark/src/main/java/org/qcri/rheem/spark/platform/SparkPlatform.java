@@ -56,7 +56,8 @@ public class SparkPlatform extends Platform {
             "spark.driver.host",
             "spark.driver.port",
             "spark.driver.maxResultSize",
-            "spark.ui.showConsoleProgress"
+            "spark.ui.showConsoleProgress",
+            "spark.io.compression.codec"
     };
 
     /**
