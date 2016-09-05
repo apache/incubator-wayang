@@ -94,6 +94,7 @@ public class SparkExecutor extends PushExecutorTemplate {
         PartialExecution partialExecution = this.handleLazyChannelLineage(
                 task, inputChannelInstances, producerOperatorContext, outputChannelInstances, executionDuration
         );
+        if (partialExecution != null) this.job.addPartialExecutionMeasurement(partialExecution);
 
         // Force execution if necessary.
         if (isForceExecution) {

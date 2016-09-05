@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import com.google.gson.*;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -10,6 +11,7 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -302,6 +304,29 @@ public abstract class OperatorBase implements Operator {
     public void setCardinalityEstimator(int outputIndex, CardinalityEstimator cardinalityEstimator) {
         Validate.isAssignableFrom(ElementaryOperator.class, this.getClass());
         this.cardinalityEstimators[outputIndex] = cardinalityEstimator;
+    }
+
+    /**
+     * Utility to de/serialize {@link Operator}s.
+     */
+    public static class GsonSerializer implements JsonSerializer<Operator>, JsonDeserializer<Operator> {
+
+        @Override
+        public JsonElement serialize(Operator src, Type typeOfSrc, JsonSerializationContext context) {
+            if (src == null) {
+                return JsonNull.INSTANCE;
+            }
+            final JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("_class", src.getClass().getName());
+            jsonObject.addProperty("name", src.getName());
+            return jsonObject;
+        }
+
+        @Override
+        public Operator deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            if (JsonNull.INSTANCE.equals(json)) return null;
+            throw new UnsupportedOperationException("Deserializing operators is not yet supported.");
+        }
     }
 
 }

@@ -424,12 +424,17 @@
             <dependency>
                 <groupId>de.hpi.isg</groupId>
                 <artifactId>profiledb-instrumentation</artifactId>
-                <version>0.1.0</version>
+                <version>0.1.1-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>de.odysseus.juel</groupId>
                 <artifactId>juel-impl</artifactId>
                 <version>2.2.7</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.2.4</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
