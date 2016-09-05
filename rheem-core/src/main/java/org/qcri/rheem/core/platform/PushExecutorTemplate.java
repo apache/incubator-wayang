@@ -368,7 +368,8 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
         private void updateExecutionState() {
             for (final ChannelInstance channelInstance : this.allChannelInstances) {
                 // Capture outbound ChannelInstances.
-                if (channelInstance.getChannel().isBetweenStages() || channelInstance.getChannel().isStageExecutionBarrier()) {
+                if (channelInstance.getChannel().isBetweenStages() || channelInstance.getChannel().getConsumers().stream()
+                        .anyMatch(consumer -> consumer.getOperator().isLoopHead())) {
                     this.executionState.register(channelInstance);
                 }
 
