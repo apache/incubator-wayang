@@ -22,8 +22,8 @@ class RecordDataQuanta(dataQuanta: DataQuanta[Record]) {
     * @return a new instance representing the [[MapOperator]]'s output
     */
   def projectRecords(fieldNames: Seq[String],
-                     udfCpuLoad: LoadEstimator = null,
-                     udfRamLoad: LoadEstimator = null): DataQuanta[Record] = {
+                     udfCpuLoad: LoadEstimator[AnyRef] = null,
+                     udfRamLoad: LoadEstimator[AnyRef] = null): DataQuanta[Record] = {
     val mapOperator = MapOperator.createProjection(
       dataQuanta.output.getType.getDataUnitType.asInstanceOf[RecordType],
       fieldNames: _*

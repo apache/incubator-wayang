@@ -1,10 +1,15 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
+import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  * Head of a {@link LoopSubplan}.
@@ -42,6 +47,22 @@ public interface LoopHeadOperator extends Operator {
      * @return the initialization {@link InputSlot}s
      */
     Collection<InputSlot<?>> getLoopInitializationInputs();
+
+    /**
+     * Retrieve those {@link InputSlot}s that are required to evaluate the loop condition.
+     *
+     * @return the condition {@link InputSlot}s
+     */
+    Collection<InputSlot<?>> getConditionInputSlots();
+
+    /**
+     * Retrieve those {@link OutputSlot}s that forward the {@link #getConditionInputSlots()}.
+     *
+     * @return the condition {@link OutputSlot}s
+     */
+    Collection<OutputSlot<?>> getConditionOutputSlots();
+
+
 
     /**
      * @return a number of expected iterations; not necessarily the actual value
@@ -116,4 +137,63 @@ public interface LoopHeadOperator extends Operator {
          */
         FINISHED
     }
+
+    /**
+     * Create output {@link ChannelInstance}s for this instance.
+     *
+     * @param task                    the {@link ExecutionTask} in which this instance is being wrapped
+     * @param producerOperatorContext the {@link OptimizationContext.OperatorContext} for this instance
+     * @param inputChannelInstances   the input {@link ChannelInstance}s for the {@code task}
+     * @return
+     */
+    default ChannelInstance[] createOutputChannelInstances(Executor executor,
+                                                             ExecutionTask task,
+                                                             OptimizationContext.OperatorContext producerOperatorContext,
+                                                             List<ChannelInstance> inputChannelInstances) {
+
+        assert task.getOperator() == this;
+
+        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
+        final Collection<OutputSlot<?>> conditionOutputs = this.getConditionOutputSlots();
+        @SuppressWarnings("unchecked")
+        final Collection<OutputSlot<?>> regularOutputs  = new ArrayList(Arrays.asList(this.getAllOutputs()));
+        regularOutputs.removeAll(conditionOutputs);
+
+        final Collection<InputSlot<?>> conditionInputs = this.getConditionInputSlots();
+        @SuppressWarnings("unchecked")
+        final Collection<InputSlot<?>> regularInputs  = new ArrayList(Arrays.asList(this.getAllInputs()));
+        regularInputs.removeAll(conditionInputs);
+
+        // Create ChannelInstances for the condition OutputSlots.
+        for (OutputSlot<?> output : conditionOutputs) {
+            final Channel outputChannel = task.getOutputChannel(output.getIndex());
+            final ChannelInstance outputChannelInstance = outputChannel.createInstance(executor, producerOperatorContext, output.getIndex());
+            channelInstances[output.getIndex()] = outputChannelInstance;
+            // Link only with condition InputSlots.
+            for (InputSlot<?> input : conditionInputs) {
+                ChannelInstance inputChannelInstance = inputChannelInstances.get(input.getIndex());
+                if (inputChannelInstance != null) {
+                    outputChannelInstance.addPredecessor(inputChannelInstance);
+                }
+            }
+        }
+
+        // Create ChannelInstances for the regular OutputSlots.
+        for (OutputSlot<?> output : regularOutputs) {
+            final Channel outputChannel = task.getOutputChannel(output.getIndex());
+            // We assume that the ChannelInstances are just forwarded, so don't schedule the execution of this instance.
+            final ChannelInstance outputChannelInstance = outputChannel.createInstance(executor, null, -1);
+            channelInstances[output.getIndex()] = outputChannelInstance;
+            // Link only with regular InputSlots.
+            for (InputSlot<?> input : regularInputs) {
+                ChannelInstance inputChannelInstance = inputChannelInstances.get(input.getIndex());
+                if (inputChannelInstance != null) {
+                    outputChannelInstance.addPredecessor(inputChannelInstance);
+                }
+            }
+        }
+
+        return channelInstances;
+    }
+
 }

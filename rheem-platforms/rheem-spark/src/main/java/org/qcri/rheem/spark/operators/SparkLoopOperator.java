@@ -7,10 +7,12 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
@@ -124,14 +126,16 @@ public class SparkLoopOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.loop.load");
-        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
-        final LoadProfileEstimator udfEstimator = configuration
-                .getFunctionLoadProfileEstimatorProvider()
-                .provideFor(this.criterionDescriptor);
-        mainEstimator.nest(udfEstimator);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.loop.load";
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                SparkExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.criterionDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override
@@ -171,7 +175,9 @@ public class SparkLoopOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public boolean isEvaluatingEagerly(int inputIndex) {
-        return inputIndex == INITIAL_CONVERGENCE_INPUT_INDEX || inputIndex == ITERATION_CONVERGENCE_INPUT_INDEX;
+    public ChannelInstance[] createOutputChannelInstances(Executor executor, ExecutionTask task,
+                                                          OptimizationContext.OperatorContext producerOperatorContext,
+                                                          List<ChannelInstance> inputChannelInstances) {
+        return super.createOutputChannelInstances(executor, task, producerOperatorContext, inputChannelInstances);
     }
 }

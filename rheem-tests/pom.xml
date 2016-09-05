@@ -55,7 +55,7 @@
         </dependency>
         <dependency>
             <groupId>org.graphchi</groupId>
-            <artifactId>graphchi-java_2.10</artifactId>
+            <artifactId>graphchi-java_${scala.compat.version}</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

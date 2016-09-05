@@ -1,9 +1,13 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.TextFileSink;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.fs.FileSystem;
@@ -18,6 +22,7 @@ import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -60,6 +65,20 @@ public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutio
         } catch (IOException e) {
             throw new RheemException("Writing failed.", e);
         }
+    }
+
+
+    @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.textfilesink.load";
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.formattingDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override

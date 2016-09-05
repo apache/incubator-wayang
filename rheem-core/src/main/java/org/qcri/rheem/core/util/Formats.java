@@ -63,6 +63,8 @@ public class Formats {
             sb.append(val / 1000000L).append("M");
         } else if (val >= 1000L) {
             sb.append(val / 1000L).append("K");
+        } else {
+            sb.append(val);
         }
         return sb.toString();
     }

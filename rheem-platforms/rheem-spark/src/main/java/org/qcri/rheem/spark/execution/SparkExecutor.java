@@ -50,6 +50,11 @@ public class SparkExecutor extends PushExecutorTemplate {
      */
     private final int numDefaultPartitions;
 
+    /**
+     * Counts the number of issued Spark actions.
+     */
+    private int numActions = 0;
+
     public SparkExecutor(SparkPlatform platform, Job job) {
         super(job);
         this.platform = platform;
@@ -71,8 +76,8 @@ public class SparkExecutor extends PushExecutorTemplate {
                                                                      OptimizationContext.OperatorContext producerOperatorContext,
                                                                      boolean isForceExecution) {
         // Provide the ChannelInstances for the output of the task.
-        final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(
-                task, producerOperatorContext, inputChannelInstances
+        final ChannelInstance[] outputChannelInstances = task.getOperator().createOutputChannelInstances(
+                this, task, producerOperatorContext, inputChannelInstances
         );
 
         // Execute.
@@ -96,14 +101,17 @@ public class SparkExecutor extends PushExecutorTemplate {
         );
         if (partialExecution != null) this.job.addPartialExecutionMeasurement(partialExecution);
 
+        if (task.getOperator().isExecutedEagerly()) {
+            if (this.numActions == 0) partialExecution.addInitializedPlatform(SparkPlatform.getInstance());
+            this.numActions++;
+        }
+
         // Force execution if necessary.
         if (isForceExecution) {
-            for (ChannelInstance outputChannelInstance : outputChannelInstances) {
-                if (outputChannelInstance == null || !outputChannelInstance.getChannel().isReusable()) {
-                    this.logger.warn("Execution of {} might not have been enforced properly. " +
-                                    "This might break the execution or cause side-effects with the re-optimization.",
-                            task);
-                }
+            if (!task.getOperator().isExecutedEagerly()) {
+                this.logger.warn("Execution of {} might not have been enforced properly. " +
+                                "This might break the execution or cause side-effects with the re-optimization.",
+                        task);
             }
         }
 

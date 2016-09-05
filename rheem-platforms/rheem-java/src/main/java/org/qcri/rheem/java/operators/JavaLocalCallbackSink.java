@@ -4,6 +4,7 @@ import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -18,7 +19,6 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -60,13 +60,9 @@ public class JavaLocalCallbackSink<T extends Serializable> extends LocalCallback
         return new JavaLocalCallbackSink<>(this.callback, this.getType());
     }
 
-
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.localcallbacksink.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.localcallbacksink.load";
     }
 
     @Override

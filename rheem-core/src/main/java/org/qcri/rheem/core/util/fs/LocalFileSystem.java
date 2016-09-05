@@ -100,6 +100,7 @@ public class LocalFileSystem implements FileSystem {
 
     @Override
     public boolean canHandle(String urlAsString) {
+        if (!urlAsString.startsWith("file:")) return false;
         try {
             URL url = new URL(urlAsString);
             return url.getProtocol().equals("file") &&

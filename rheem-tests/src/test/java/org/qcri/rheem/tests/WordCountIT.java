@@ -53,7 +53,7 @@ public class WordCountIT {
                 )
         );
         flatMapOperator.getFunctionDescriptor().setLoadEstimators(
-                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 670),
+                new DefaultLoadEstimator<>(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 670),
                 LoadEstimator.createFallback(1, 1)
         );
 
@@ -67,7 +67,7 @@ public class WordCountIT {
                 DataSetType.createDefaultUnchecked(Tuple2.class)
         );
         mapOperator.getFunctionDescriptor().setLoadEstimators(
-                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 245),
+                new DefaultLoadEstimator<>(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 245),
                 LoadEstimator.createFallback(1, 1)
         );
 
@@ -85,11 +85,11 @@ public class WordCountIT {
         ), DataSetType.createDefaultUnchecked(Tuple2.class)
         );
         reduceByOperator.getKeyDescriptor().setLoadEstimators(
-                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 50),
+                new DefaultLoadEstimator<>(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 50),
                 LoadEstimator.createFallback(1, 1)
         );
         reduceByOperator.getReduceDescriptor().setLoadEstimators(
-                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 350 + 500000),
+                new DefaultLoadEstimator<>(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 350 + 500000),
                 LoadEstimator.createFallback(1, 1)
         );
 

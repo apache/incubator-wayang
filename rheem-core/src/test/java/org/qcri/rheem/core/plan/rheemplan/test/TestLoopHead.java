@@ -1,7 +1,8 @@
 package org.qcri.rheem.core.plan.rheemplan.test;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.*;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
+import org.qcri.rheem.core.optimizer.cardinality.SwitchForwardCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
@@ -45,6 +46,16 @@ public class TestLoopHead<T> extends OperatorBase implements LoopHeadOperator, E
     @Override
     public Collection<InputSlot<?>> getLoopInitializationInputs() {
         return Collections.singleton(this.getInput("initialInput"));
+    }
+
+    @Override
+    public Collection<InputSlot<?>> getConditionInputSlots() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Collection<OutputSlot<?>> getConditionOutputSlots() {
+        return Collections.emptyList();
     }
 
     @Override

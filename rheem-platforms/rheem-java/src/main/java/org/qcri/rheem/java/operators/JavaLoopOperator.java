@@ -5,10 +5,12 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -109,17 +111,17 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         ((StreamChannel.Instance) output).accept(input.provideStream());
     }
 
+    @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.loop.load";
+    }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.loop.load")
-        );
-        final LoadProfileEstimator udfEstimator = configuration
-                .getFunctionLoadProfileEstimatorProvider()
-                .provideFor(this.criterionDescriptor);
-        estimator.nest(udfEstimator);
-        return Optional.of(estimator);
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.criterionDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override
@@ -167,7 +169,10 @@ public class JavaLoopOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public boolean isEvaluatingEagerly(int inputIndex) {
-        return inputIndex == INITIAL_CONVERGENCE_INPUT_INDEX || inputIndex == ITERATION_CONVERGENCE_INPUT_INDEX;
+    public ChannelInstance[] createOutputChannelInstances(Executor executor, ExecutionTask task,
+                                                          OptimizationContext.OperatorContext producerOperatorContext,
+                                                          List<ChannelInstance> inputChannelInstances) {
+        return super.createOutputChannelInstances(executor, task, producerOperatorContext, inputChannelInstances);
     }
+
 }

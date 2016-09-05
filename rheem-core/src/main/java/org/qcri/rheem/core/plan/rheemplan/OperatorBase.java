@@ -28,7 +28,9 @@ public abstract class OperatorBase implements Operator {
             new Tuple<>(PredicateDescriptor.class, () -> new PredicateDescriptor<>(o -> true, Object.class)),
             new Tuple<>(ReduceDescriptor.class, () -> new ReduceDescriptor<>((a, b) -> a, Object.class)),
             new Tuple<>(FunctionDescriptor.SerializableFunction.class, () -> (FunctionDescriptor.SerializableFunction) o -> o),
-            new Tuple<>(FunctionDescriptor.SerializableBinaryOperator.class, () -> (FunctionDescriptor.SerializableBinaryOperator) (a, b) -> a)
+            new Tuple<>(FunctionDescriptor.SerializableBinaryOperator.class, () -> (FunctionDescriptor.SerializableBinaryOperator) (a, b) -> a),
+            new Tuple<>(Object[].class, () -> new Object[0]),
+            new Tuple<>(String[].class, () -> new String[0])
     );
 
     private final boolean isSupportingBroadcastInputs;

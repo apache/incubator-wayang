@@ -50,13 +50,13 @@ public class ChannelConversions {
     public static final ChannelConversion CACHED_RDD_TO_HDFS_TSV = new DefaultChannelConversion(
             RddChannel.CACHED_DESCRIPTOR,
             FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new SparkTsvFileSink<>(DataSetType.createDefault(Tuple2.class))
+            () -> new SparkTsvFileSink<>(DataSetType.createDefaultUnchecked(Tuple2.class))
     );
 
     public static final ChannelConversion UNCACHED_RDD_TO_HDFS_TSV = new DefaultChannelConversion(
             RddChannel.UNCACHED_DESCRIPTOR,
             FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new SparkTsvFileSink<>(DataSetType.createDefault(Tuple2.class))
+            () -> new SparkTsvFileSink<>(DataSetType.createDefaultUnchecked(Tuple2.class))
     );
 
     public static final ChannelConversion HDFS_TSV_TO_UNCACHED_RDD = new DefaultChannelConversion(

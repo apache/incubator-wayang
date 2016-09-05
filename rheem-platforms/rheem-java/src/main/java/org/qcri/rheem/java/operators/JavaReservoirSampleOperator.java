@@ -86,9 +86,9 @@ public class JavaReservoirSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        return Optional.of(new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(this.getNumInputs(), 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        return Optional.of(new NestableLoadProfileEstimator<>(
+                new DefaultLoadEstimator<>(this.getNumInputs(), 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
                 LoadEstimator.createFallback(this.getNumInputs(), 1)
         ));
     }

@@ -5,10 +5,14 @@ import org.qcri.rheem.basic.operators.RepeatOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -18,7 +22,6 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Java implementation of the {@link DoWhileOperator}.
@@ -86,11 +89,8 @@ public class JavaRepeatOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.repeat.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.repeat.load";
     }
 
     @Override
@@ -123,7 +123,10 @@ public class JavaRepeatOperator<Type>
     }
 
     @Override
-    public boolean isEvaluatingEagerly(int inputIndex) {
-        return false;
+    public ChannelInstance[] createOutputChannelInstances(Executor executor, ExecutionTask task,
+                                                          OptimizationContext.OperatorContext producerOperatorContext,
+                                                          List<ChannelInstance> inputChannelInstances) {
+        return super.createOutputChannelInstances(executor, task, producerOperatorContext, inputChannelInstances);
     }
+
 }

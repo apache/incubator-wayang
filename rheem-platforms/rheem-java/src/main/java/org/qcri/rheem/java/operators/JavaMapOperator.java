@@ -5,7 +5,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -31,7 +31,9 @@ public class JavaMapOperator<InputType, OutputType>
     /**
      * Creates a new instance.
      */
-    public JavaMapOperator(DataSetType inputType, DataSetType outputType, TransformationDescriptor<InputType, OutputType> functionDescriptor) {
+    public JavaMapOperator(DataSetType<InputType> inputType,
+                           DataSetType<OutputType> outputType,
+                           TransformationDescriptor<InputType, OutputType> functionDescriptor) {
         super(functionDescriptor, inputType, outputType);
     }
 
@@ -62,15 +64,18 @@ public class JavaMapOperator<InputType, OutputType>
         return new JavaMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
     }
 
+
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator operatorEstimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.map.load")
-        );
-        final LoadProfileEstimator functionEstimator =
-                configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getFunctionDescriptor());
-        operatorEstimator.nest(functionEstimator);
-        return Optional.of(operatorEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.map.load";
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.functionDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override

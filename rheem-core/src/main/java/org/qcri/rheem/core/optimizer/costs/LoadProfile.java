@@ -1,7 +1,10 @@
 package org.qcri.rheem.core.optimizer.costs;
 
+import org.json.JSONObject;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.util.JsonSerializable;
+import org.qcri.rheem.core.util.JsonSerializables;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -9,7 +12,17 @@ import java.util.LinkedList;
 /**
  * Reflects the (estimated) required resources of an {@link Operator} or {@link FunctionDescriptor}.
  */
-public class LoadProfile {
+public class LoadProfile implements JsonSerializable {
+
+    /**
+     * Instance with all values set to {@code 0}.
+     */
+    public static final LoadProfile emptyLoadProfile = new LoadProfile(
+            new LoadEstimate(0),
+            new LoadEstimate(0),
+            new LoadEstimate(0),
+            new LoadEstimate(0)
+    );
 
     private final LoadEstimate cpuUsage, ramUsage, networkUsage, diskUsage;
 
@@ -137,5 +150,46 @@ public class LoadProfile {
             product.nest(subprofile.timesSequential(n));
         }
         return product;
+    }
+
+    /**
+     * Adds a this and the given instance.
+     *
+     * @param that the other summand
+     * @return a new instance representing the sum
+     */
+    public LoadProfile plus(LoadProfile that) {
+        return new LoadProfile(
+                LoadEstimate.add(this.cpuUsage, that.cpuUsage),
+                LoadEstimate.add(this.ramUsage, that.ramUsage),
+                LoadEstimate.add(this.networkUsage, that.networkUsage),
+                LoadEstimate.add(this.diskUsage, that.diskUsage),
+                (this.resourceUtilization + that.resourceUtilization) / 2,
+                this.overheadMillis + that.overheadMillis
+        );
+    }
+
+    @Override
+    public JSONObject toJson() {
+        JSONObject json = new JSONObject();
+        json.put("cpu", JsonSerializables.serialize(this.cpuUsage));
+        json.put("ram", JsonSerializables.serialize(this.ramUsage));
+        json.putOpt("network", JsonSerializables.serialize(this.networkUsage));
+        json.putOpt("disk", JsonSerializables.serialize(this.diskUsage));
+        json.put("utilization", this.resourceUtilization);
+        json.put("overhead", this.overheadMillis);
+        return json;
+    }
+
+    @SuppressWarnings("unused")
+    public static LoadProfile fromJson(JSONObject jsonObject) {
+        return new LoadProfile(
+                JsonSerializables.deserialize(jsonObject.getJSONObject("cpu"), LoadEstimate.class),
+                JsonSerializables.deserialize(jsonObject.getJSONObject("ram"), LoadEstimate.class),
+                JsonSerializables.deserialize(jsonObject.getJSONObject("network"), LoadEstimate.class),
+                JsonSerializables.deserialize(jsonObject.getJSONObject("disk"), LoadEstimate.class),
+                jsonObject.getDouble("utilization"),
+                jsonObject.getLong("overhead")
+        );
     }
 }

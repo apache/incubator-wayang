@@ -4,7 +4,9 @@ import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.IntersectOperator;
 import org.qcri.rheem.basic.operators.JoinOperator;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -16,7 +18,6 @@ import org.qcri.rheem.spark.execution.SparkExecutor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Spark implementation of the {@link JoinOperator}.
@@ -63,10 +64,8 @@ public class SparkIntersectOperator<Type> extends IntersectOperator<Type> implem
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.intersect.load");
-        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.intersect.load";
     }
 
     @Override

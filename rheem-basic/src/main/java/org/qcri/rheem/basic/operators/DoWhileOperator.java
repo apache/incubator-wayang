@@ -181,6 +181,16 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
         return Collections.singletonList(this.getInput(INITIAL_INPUT_INDEX));
     }
 
+    @Override
+    public Collection<InputSlot<?>> getConditionInputSlots() {
+        return Collections.singletonList(this.getInput(CONVERGENCE_INPUT_INDEX));
+    }
+
+    @Override
+    public Collection<OutputSlot<?>> getConditionOutputSlots() {
+        return Collections.emptyList();
+    }
+
     public void setNumExpectedIterations(int numExpectedIterations) {
         this.numExpectedIterations = numExpectedIterations;
     }

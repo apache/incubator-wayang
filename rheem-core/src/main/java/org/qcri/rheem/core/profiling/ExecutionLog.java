@@ -4,8 +4,6 @@ import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
-import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.slf4j.Logger;
@@ -92,18 +90,16 @@ public class ExecutionLog implements AutoCloseable {
     /**
      * Streams the contents of this instance.
      *
-     * @param configuration needed to properly initialize
      * @return a {@link Stream} of the contained {@link PartialExecution}s
      * @throws IOException
      */
-    public Stream<PartialExecution> stream(Configuration configuration) throws IOException {
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
+    public Stream<PartialExecution> stream() throws IOException {
         IOUtils.closeQuietly(this.writer);
         this.writer = null;
         return Files.lines(Paths.get(this.repositoryPath), Charset.forName("UTF-8"))
                 .map(line -> {
                     try {
-                        return PartialExecution.fromJson(new JSONObject(line), optimizationContext);
+                        return PartialExecution.fromJson(new JSONObject(line));
                     } catch (Exception e) {
                         throw new RheemException(String.format("Could not parse \"%s\".", line), e);
                     }
