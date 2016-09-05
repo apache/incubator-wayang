@@ -427,6 +427,11 @@
                 <version>0.1.1-SNAPSHOT</version>
             </dependency>
             <dependency>
+                <groupId>de.hpi.isg</groupId>
+                <artifactId>profiledb-store</artifactId>
+                <version>0.1.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
                 <groupId>de.odysseus.juel</groupId>
                 <artifactId>juel-impl</artifactId>
                 <version>2.2.7</version>
