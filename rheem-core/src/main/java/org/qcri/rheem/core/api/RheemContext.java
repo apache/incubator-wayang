@@ -34,7 +34,7 @@ public class RheemContext {
     }
 
     public RheemContext(Configuration configuration) {
-        this.configuration = configuration;
+        this.configuration = configuration.fork(String.format("RheemContext(%s)", configuration.getName()));
     }
 
     /**

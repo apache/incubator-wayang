@@ -736,4 +736,8 @@ public class Configuration {
     public String toString() {
         return String.format("%s[%s]", this.getClass().getSimpleName(), this.name);
     }
+
+    public String getName() {
+        return this.name;
+    }
 }
