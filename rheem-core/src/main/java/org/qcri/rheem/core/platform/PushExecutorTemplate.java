@@ -339,7 +339,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                 final Channel channel = outputChannelInstance.getChannel();
                 for (ExecutionTask consumer : channel.getConsumers()) {
                     // Stay within ExecutionStage.
-                    if (consumer.getStage() != task.getStage() || channel.isStageExecutionBarrier()) continue;
+                    if (consumer.getStage() != task.getStage() || consumer.getOperator().isLoopHead()) continue;
 
                     // Get or create the TaskActivator.
                     final TaskActivator consumerActivator = this.stagedActivators.computeIfAbsent(

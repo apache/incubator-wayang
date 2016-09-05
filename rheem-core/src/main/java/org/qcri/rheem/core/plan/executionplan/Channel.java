@@ -62,13 +62,6 @@ public abstract class Channel {
     private boolean isBreakingProhibited = false;
 
     /**
-     * This flag indicates whether the {@link #producer} and the {@link #consumers} of this instance should never be
-     * executed in the same {@link ExecutionStage} instance.
-     */
-    private boolean isStageExecutionBarrier = false;
-
-
-    /**
      * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}.
      *
      * @param descriptor used to create this instance
@@ -469,23 +462,4 @@ public abstract class Channel {
         this.isBreakingProhibited = breakingProhibited;
     }
 
-    /**
-     * This flag indicates whether the {@link #producer} and the {@link #consumers} of this instance should never be
-     * executed in the same {@link ExecutionStage} instance.
-     *
-     * @return the flag value
-     */
-    public boolean isStageExecutionBarrier() {
-        return this.isStageExecutionBarrier;
-    }
-
-    /**
-     * This flag indicates whether the {@link #producer} and the {@link #consumers} of this instance should never be
-     * executed in the same {@link ExecutionStage} instance.
-     *
-     * @param stageExecutionBarrier the new flag value
-     */
-    public void setStageExecutionBarrier(boolean stageExecutionBarrier) {
-        this.isStageExecutionBarrier = stageExecutionBarrier;
-    }
 }

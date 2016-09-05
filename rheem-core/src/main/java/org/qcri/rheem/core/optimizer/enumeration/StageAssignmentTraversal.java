@@ -491,19 +491,6 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
             new ArrayList<>(this.allStages).forEach(this::partitionStage);
         }
 
-        // Put barriers between iterations.
-        for (InterimStage stage : this.allStages) {
-            for (ExecutionTask task : stage.getTasks()) {
-                final ExecutionOperator operator = task.getOperator();
-                if (operator.isLoopHead()) {
-                    final Collection<InputSlot<?>> loopBodyInputs = ((LoopHeadOperator) operator).getLoopBodyInputs();
-                    for (InputSlot<?> loopBodyInput : loopBodyInputs) {
-                        final Channel loopBodyInputChannel = task.getInputChannel(loopBodyInput.getIndex());
-                        loopBodyInputChannel.setStageExecutionBarrier(true);
-                    }
-                }
-            }
-        }
     }
 
     /**

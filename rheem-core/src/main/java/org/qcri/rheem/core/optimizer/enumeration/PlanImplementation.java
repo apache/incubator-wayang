@@ -572,8 +572,12 @@ public class PlanImplementation {
     }
 
     public void putJunction(OutputSlot<?> output, Junction junction) {
-        final Junction oldValue = this.junctions.put(output, junction);
-        assert oldValue == null : String.format("Replaced %s with %s.", oldValue, junction);
+        final Junction oldValue = junction == null ?
+                this.junctions.remove(output) :
+                this.junctions.put(output, junction);
+        if (oldValue != null) {
+            logger.warn("Replaced {} with {}.", oldValue, junction);
+        }
     }
 
     public OptimizationContext getOptimizationContext() {

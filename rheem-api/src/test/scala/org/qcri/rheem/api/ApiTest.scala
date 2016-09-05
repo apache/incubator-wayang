@@ -176,7 +176,7 @@ class ApiTest {
       .doWhile[Int](vals => vals.max > 100, {
       start =>
         val sum = start.reduce(_ + _).withName("Sum")
-        (start.union(sum).withName("Old+new"), sum.map(x => x).withName("Identity (hotfix)"))
+        (start.union(sum).withName("Old+new"), sum)
     }).withName("While <= 100")
       .collect().toSet
 

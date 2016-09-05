@@ -8,6 +8,7 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.Tuple;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -94,11 +95,14 @@ public class LoopEnumerator extends OneTimeExecutable {
         LoopHeadOperator loopHead = this.loopContext.getLoop().getLoopHead();
 
         // Go through all loop body InputSlots.
-        for (InputSlot<?> loopBodyInput : loopHead.getLoopBodyInputs()) {
-            final OutputSlot<?> occupant = loopBodyInput.getOccupant();
-            if (occupant == null) continue;
-            for (PlanImplementation loopImpl : curBodyEnumeration.getPlanImplementations()) {
-                this.addFeedbackConnection(loopImpl, occupant, loopBodyInput, optimizationContext);
+        for (Iterator<PlanImplementation> iterator = curBodyEnumeration.getPlanImplementations().iterator(); iterator.hasNext(); ) {
+            PlanImplementation loopImpl = iterator.next();
+            for (InputSlot<?> loopBodyInput : loopHead.getLoopBodyInputs()) {
+                final OutputSlot<?> occupant = loopBodyInput.getOccupant();
+                if (occupant == null) continue;
+                if (!this.addFeedbackConnection(loopImpl, occupant, loopBodyInput, optimizationContext)) {
+                    iterator.remove();
+                }
             }
         }
     }
@@ -109,25 +113,31 @@ public class LoopEnumerator extends OneTimeExecutable {
      * @param loopImpl      to which the {@link Junction} should be added
      * @param occupant      {@link OutputSlot} (abstract) that provides feedback connections
      * @param loopBodyInput {@link InputSlot} (abstract) which takes the feedback connection
+     * @return whether the adding the feedback connection was successful
      */
-    private void addFeedbackConnection(PlanImplementation loopImpl,
-                                       OutputSlot<?> occupant,
-                                       InputSlot<?> loopBodyInput,
-                                       OptimizationContext optimizationContext) {
+    private boolean addFeedbackConnection(PlanImplementation loopImpl,
+                                          OutputSlot<?> occupant,
+                                          InputSlot<?> loopBodyInput,
+                                          OptimizationContext optimizationContext) {
         final List<InputSlot<?>> execLoopBodyInputs = new ArrayList<>(loopImpl.findExecutionOperatorInputs(loopBodyInput));
         final Collection<OutputSlot<?>> execOutputs = loopImpl.findExecutionOperatorOutput(occupant);
         for (OutputSlot<?> execOutput : execOutputs) {
-            assert loopImpl.getJunction(execOutput) == null
-                    : String.format("There already is %s for %s. Need to implement merging logic.",
-                    loopImpl.getJunction(execOutput), execOutput);
+            final Junction existingJunction = loopImpl.getJunction(execOutput);
+            if (existingJunction != null) {
+                LoggerFactory.getLogger(this.getClass()).debug(
+                        "Need to override existing {} for {} while closing loop.",
+                        existingJunction, execOutput
+                );
+                execLoopBodyInputs.addAll(existingJunction.getTargetInputs());
+            }
             final Junction junction = optimizationContext.getChannelConversionGraph().findMinimumCostJunction(
                     execOutput, execLoopBodyInputs, optimizationContext
             );
-            //Junction.create(execOutput, execLoopBodyInputs, optimizationContext);
-            if (junction != null) {
-                loopImpl.putJunction(execOutput, junction);
-            }
+            if (junction == null) return false;
+
+            loopImpl.putJunction(execOutput, junction);
         }
+        return true;
     }
 
 }
