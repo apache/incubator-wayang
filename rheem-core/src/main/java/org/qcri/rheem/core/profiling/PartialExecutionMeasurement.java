@@ -53,4 +53,23 @@ public class PartialExecutionMeasurement extends Measurement {
         this.estimatedExecutionMillis = partialExecution.getOverallTimeEstimate();
     }
 
+    public List<Operator> getOperators() {
+        return operators;
+    }
+
+    public long getExecutionMillis() {
+        return executionMillis;
+    }
+
+    public void setExecutionMillis(long executionMillis) {
+        this.executionMillis = executionMillis;
+    }
+
+    public TimeEstimate getEstimatedExecutionMillis() {
+        return estimatedExecutionMillis;
+    }
+
+    public void setEstimatedExecutionMillis(TimeEstimate estimatedExecutionMillis) {
+        this.estimatedExecutionMillis = estimatedExecutionMillis;
+    }
 }
