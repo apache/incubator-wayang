@@ -1,137 +1,283 @@
-Rheem
-=====
+# Rheem
 
-### What is Rheem?
+#### Turning the Zoo of Data Processing Systems into a Circus
 
-Rheem is an efficient and scalable distributed data processing framework developed by the [data analytics](http://da.qcri.org) group at [Qatar Computing Research Institute](http://qcri.com/). It has three distinctive features:
+Rheem is an efficient and scalable data processing framework developed by the [data analytics](http://da.qcri.org) group at [Qatar Computing Research Institute](http://qcri.com/) in collaboration with the [information systems group](https://www.hpi.de/naumann) at the Hasso Plattner Institute. In contrast to classical data processing systems that provide one dedicated execution engine, Rheem rather is a *meta processing framework*: You can specify your data processing app via one of Rheem's API and then Rheem will pick an optimal configuration of classical processing frameworks, such as Java Streams or Apache Spark, to run your app on. Finally, Rheem will also perform the execution, thereby hiding the different specific platform APIs and coordinate inter-platform communication.
 
-1. it allows users to easily specify their jobs with easy-to-use interfaces,
-2. it provides developers with opportunities to optimize performance in different ways, and
-3. it can run on any execution platform, such as Spark or MapReduce and combinations of those.
-
-### Download
-- You can download the latest (v0.1) [from here (with spark 1.6 included)](http://rheem-qcri.s3-website-us-east-1.amazonaws.com/rheem-0.1-with-spark-1.6.0.SNAPSHOT.jar), or [here (no spark)](http://rheem-qcri.s3-website-us-east-1.amazonaws.com/rheem-0.1-SNAPSHOT.jar).
-- This version v0.1 provides the platform independence feature (looping and cross-platform optimization features are coming very soon, keep tuned!)
-
-### Prerequisites
-To be able to run a Rheem application, the following software is needed:
-- [Java 1.8](http://www.java.com/en/download/faq/develop.xml)
-- [Apache Maven](http://maven.apache.org)
-- Include the Rheem jar files into your project.
-- In case spark is needed; Spark (v1.6 and over), hadoop (v2.2 to v2.6.2)
-
-### Platforms support (Rheem v0.1)
-- Java (standalone JVM)
+This approach aims at freeing data engineers and software developers from the burden of knowing the zoo of different data processing systems, their APIs, strengths and weakness; the intricacies of coordinating and integrating different processing platforms; and the inflexibility when tying to a fix set of processing platforms. As of now, Rheem has built in support for the following processing platforms:
+- Java 8 Streams
 - [Apache Spark](https://spark.apache.org/)
-- [Graphchi](https://github.com/GraphChi/graphchi-java)
+- [GraphChi](https://github.com/GraphChi/graphchi-java)
 - [Postgres](http://www.postgresql.org)
-- Coming soon: 
-    - [Torch](http://torch.ch/)
-    - [Alluxio](http://www.alluxio.org/)
+- [SQLite](https://www.sqlite.org/)
 
-### Usage
-- Include the Rheem jar as a library in your application.
-- Steps for writing a rheem application:
-    1. Define a [Rheem plan](rheem-resources/docs/org/qcri/rheem/core/plan/rheemplan/RheemPlan.html) using rheem operators. For a list of all currently supported rheem operators check the [api documentation](rheem-resources/docs/org/qcri/rheem/basic/operators/package-summary.html)
-    2. Create a rheem context.
-    3. Register required platforms with rheem context. You might want to include an "app.properties" file in the root directory of your application to set the platform specific properties (see below). 
-    4. Execute Rheem plan.
-``` javascript
-    # app.properties file
-    spark.master = local
-    spark.appName= myapp
+## How to use Rheem
+
+**Requirements.**
+Rheem is built with Java 8 and Scala 2.11. However, to execute Rheem it is sufficient to have Java 8 installed. If you want to build Rheem yourself, you will also need to have [Apache Maven](http://maven.apache.org) installed. Please also consider that processing platforms employed by Rheem might have further requirements.
+
+**Get Rheem.**
+Rheem is available via Maven Central. To use it with Maven, for instance, include the following into you POM file:
+```xml
+<dependency> 
+  <groupId>org.qcri.rheem</groupId>
+  <artifactId>rheem-***</artifactId>
+  <version>0.2.0</version> 
+</dependency>
+```
+Note the `***`: Rheem ships with multiple modules that can be included in your app, depending on how you want to use it:
+* `rheem-core`: provides core data structures and the optimizer (required)
+* `rheem-basic`: provides common operators and data types for your apps (recommended)
+* `rheem-api`: provides an easy-to-use Scala and Java API to assemble Rheem plans (recommended)
+* `rheem-java`, `rheem-spark`, `rheem-graphchi`, `rheem-sqlite3`, `rheem-postgres`: adapters for the various supported processing platforms
+
+For the sake of version flexibility, you still have to include your Hadoop (`hadoop-hdfs` and `hadoop-common`) and Spark (`spark-core` and `spark-graphx`) version of choice.
+
+In addition, you can obtain the most recent snapshot version of Rheem via Sonatype's snapshot repository. Just included
+```xml
+<repositories>
+  <repository>
+    <id>sonatype-snapshots</id>
+    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+  </repository>
+<repositories>
 ```
 
-# Examples
+If you need to rebuild Rheem, e.g., to use a different Scala version, you can simply do so via Maven:
+```shell
+$ mvn clean install
+```
 
-You can download the complete source of the examples from [here](http://rheem-qcri.s3-website-us-east-1.amazonaws.com/examples.zip).
+**Configure Rheem.** In order for Rheem to work properly, it is necessary to tell Rheem about the capacities of your processing platforms and how to reach them. While there is a default configuration that allows to test Rheem right away, we recommend to create a properties file to adapt the configuration where necessary. To have Rheem use that configuration transparently, just run you app via
+```shell
+$ java -Drheem.properties=url://to/my/rheem.properties ...
+```
 
-### (1) UpperCase
-![alt text](images/uppercase.png "UpperCase rheem plan")
+You can find the most relevant settings in the following:
+* General settings
+  * `rheem.core.log.enabled (= true)`: whether to log execution statistics to allow learning better cardinality and cost estimators for the optimizer
+  * `rheem.core.log.executions (= ~/.rheem/executions.json)` where to log execution times of operator groups
+  * `rheem.core.log.cardinalities (= ~/.rheem/cardinalities.json)` where to log cardinality measurements
+  * `rheem.core.optimizer.instrumentation (= org.qcri.rheem.core.profiling.OutboundInstrumentationStrategy)`: where to measure cardinalities in Rheem plans; other options are `org.qcri.rheem.core.profiling.NoInstrumentationStrategy` and `org.qcri.rheem.core.profiling.FullInstrumentationStrategy`
+  * `rheem.core.optimizer.reoptimize (= false)`: whether to progressively optimize Rheem plans
+  * `rheem.basic.tempdir (= file:///tmp)`: where to store temporary files, in particular for inter-platform communication
+* Java Streams
+  * `rheem.java.cpu.mhz (= 2700)`: clock frequency of processor the JVM runs on in MHz
+  * `rheem.java.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to JVM in ms/MB
+* Apache Spark
+  * `spark.master (= local)`: Spark master
+    * various other Spark settings are supported, e.g., `spark.executor.memory`, `spark.serializer`, ...
+  * `rheem.spark.cpu.mhz (= 2700)`: clock frequency of processor the Spark workers run on in MHz
+  * `rheem.spark.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to the Spark workers in ms/MB
+  * `rheem.spark.network.ms-per-mb (= 8.6)`: average network throughput of the Spark workers in ms/MB
+  * `rheem.spark.init.ms (= 4500)`: time it takes Spark to initialize in ms
+* GraphChi
+  * `rheem.graphchi.cpu.mhz (= 2700)`: clock frequency of processor GraphChi runs on in MHz
+  * `rheem.graphchi.cpu.cores (= 2)`: number of cores GraphChi runs on
+  * `rheem.graphchi.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to GraphChi in ms/MB
+* SQLite
+  * `rheem.sqlite3.jdbc.url`: JDBC URL to use SQLite
+  * `rheem.sqlite3.cpu.mhz (= 2700)`: clock frequency of processor SQLite runs on in MHz
+  * `rheem.sqlite3.cpu.cores (= 2)`: number of cores SQLite runs on
+* PostgreSQL
+  * `rheem.postgres.jdbc.url`: JDBC URL to use PostgreSQL
+  * `rheem.postgres.cpu.mhz (= 2700)`: clock frequency of processor PostgreSQL runs on in MHz
+  * `rheem.postgres.cpu.cores (= 2)`: number of cores PostgreSQL runs on
 
-In this simple example, we take a text file iterate through its stream of lines, perform a String UpperCase operation on each line, and output the result to standard Java output. To define a Rheem plan for this example, we (i) instantiate a new RheemPlan, (ii) create new operators instances (lines 4 to 11), (iii) connect operators together (lines 13-15), and (iv) add a sink to the RheemPlan instance. Additionally, we create a Rheem context and register the required platforms (lines 21 and 22). Notice that for this simple example we only registered the Standalone JVM platform. Finally, we execute the RheemPlan instance via the RheemContext (line 25).
+**Code with Rheem.** The recommended way to specify your apps with Rheem is via its Scala or Java API from the `rheem-api` module. You can find examples below.
 
+## Examples
 
+For some executable examples, have a look at [this repository](https://www.github.com/sekruse/rheem-examples).
+
+### WordCount
+
+The "Hello World!" of data processing systems is the wordcount.
+
+#### Java API
 ```java
-        // Build the RheemPlan that reads from a text file as source,
-        // performs an uppercase on all characters and output to a localcallback sink
+import org.qcri.rheem.api.JavaPlanBuilder;
+import org.qcri.rheem.basic.data.Tuple2;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.RheemContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
+import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
+import org.qcri.rheem.core.plugin.Plugin;
+import org.qcri.rheem.java.Java;
+import org.qcri.rheem.spark.Spark;
+import java.util.Collection;
+import java.util.Arrays;
 
-        // Create a plan
-        RheemPlan rheemPlan = new RheemPlan();
-        // Define the operators.
-        TextFileSource textFileSource = new TextFileSource(inputFileUrl);
-        MapOperator<String, String> upperOperator = new MapOperator<>(
-                String::toUpperCase, String.class, String.class
-        );
-        LocalCallbackSink<String> stdoutSink =  LocalCallbackSink.createStdoutSink(String.class);
+// Settings
+String inputUrl = "hdfs://my/file.txt";
 
-        // Connect the operators together.
-        textFileSource.connectTo(0, upperOperator, 0);
-        upperOperator.connectTo(0, stdoutSink, 0);
+// Get a plan builder.
+RheemContext rheemContext = new RheemContext(new Configuration())
+	.withPlugin(Java.basicPlugin())
+	.withPlugin(Spark.basicPlugin());
+JavaPlanBuilder planBuilder = new JavaPlanBuilder(rheemContext)
+	.withJobName(String.format("WordCount (%s)", inputUrl))
+	.withUdfJarOf(this.getClass());
 
-        // Add a sink to the rheem plan.
-        rheemPlan.addSink(stdoutSink);
+// Start building the RheemPlan.
+Collection<Tuple2<String, Integer>> wordcounts = planBuilder
+	// Read the text file.
+	.readTextFile(inputUrl).withName("Load file")
 
-        // Instantiate Rheem context and register the backends.
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+	// Split each line by non-word characters.
+	.flatMap(line -> Arrays.asList(line.split("\\W+")))
+	.withSelectivity(10, 100, 0.9)
+	.withName("Split words")
 
-        //Execute the plan
-        rheemContext.execute(rheemPlan);
+	// Filter empty tokens.
+	.filter(token -> !token.isEmpty())
+	.withSelectivity(0.99, 0.99, 0.99)
+	.withName("Filter empty words")
+
+	// Attach counter to each word.
+	.map(word -> new Tuple2<>(word.toLowerCase(), 1)).withName("To lower case, add counter")
+
+	// Sum up counters for every word.
+	.reduceByKey(
+			Tuple2::getField0,
+			(t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1())
+	)
+	.withCardinalityEstimator(new DefaultCardinalityEstimator(0.9, 1, false, in -> Math.round(0.01 * in[0])))
+	.withName("Add counters")
+
+	// Execute the plan and collect the results.
+	.collect();
 ```
 
-### (2) WordCount
-![alt text](images/wordcount.png "WordCount rheem plan")
+#### Scala API
 
-In this WordCount example, we first use a FlatMap operator to split each line to a set of words and then a Map operator to transform each word into lowercase and output a pair of the form (word, 1). Then, we use a ReduceBy operator to group the pairs using the word as the key and add their occurences. The operators are then connected via the connectTo() function to form a Rheem plan and the plan is executed.
-Note that the same example could be done without the Map operator, however, we show here the use of the Map operator.
-Also note that in this example we registered 2 platforms (lines 3-4), which means that for an optimal execution time, the Rheem optimizer will choose between the 2 platforms when executing each operator.
+```scala
+import org.qcri.rheem.api._
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.java.Java
+import org.qcri.rheem.spark.Spark
 
-```java
+// Settings
+val inputUrl = "hdfs://my/file.txt"
 
-        // Instantiate Rheem and activate the backend.
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
-        rheemContext.register(SparkPlatform.getInstance());
+// Get a plan builder.
+val rheemContext = new RheemContext(new Configuration)
+	.withPlugin(Java.basicPlugin)
+	.withPlugin(Spark.basicPlugin)
+val planBuilder = new PlanBuilder(rheemContext)
+	.withJobName(s"WordCount ($inputUrl)")
+	.withUdfJarsOf(this.getClass)
 
-        TextFileSource textFileSource = new TextFileSource(inputFileUrl);
+val wordcounts = planBuilder
+	// Read the text file.
+	.readTextFile(inputUrl).withName("Load file")
 
-        // for each line (input) output an iterator of the words
-        FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
-                new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")), String.class, String.class));
+	// Split each line by non-word characters.
+	.flatMap(_.split("\\W+"), selectivity = 10).withName("Split words")
 
-        // for each word transform it to lowercase and output a key-value pair (word, 1)
-        MapOperator<String, Tuple2> mapOperator = new MapOperator<>(
-                new TransformationDescriptor<>(word -> new Tuple2<>(word.toLowerCase(), 1),
-                        String.class,
-                        Tuple2.class));
+	// Filter empty tokens.
+	.filter(_.nonEmpty, selectivity = 0.99).withName("Filter empty words")
 
-        // groupby the key (word) and add up the values (frequency)
-        ReduceByOperator<Tuple2, String> reduceByOperator = new ReduceByOperator<>(
-                new TransformationDescriptor<>(pair -> ((Tuple2<String, Integer>)pair).field0, Tuple2.class, String.class),
-                new ReduceDescriptor<>(
-                        ((a, b) -> {
-                            ((Tuple2<String, Integer>)a).field1 += ((Tuple2<String, Integer>)b).field1;
-                            return a;
-                        }), Tuple2.class));
+	// Attach counter to each word.
+	.map(word => (word.toLowerCase, 1)).withName("To lower case, add counter")
 
-        // write results to a sink
-        List<Tuple2> results = new ArrayList<>();
-        LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, Tuple2.class);
+	// Sum up counters for every word.
+	.reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 + c2._2)).withName("Add counters")
+	.withCardinalityEstimator((in: Long) => math.round(in * 0.01))
 
-        // Build Rheem plan by connecting operators
-        textFileSource.connectTo(OUTPUT0, flatMapOperator, INPUT0);
-        flatMapOperator.connectTo(OUTPUT0, mapOperator, INPUT0);
-        mapOperator.connectTo(OUTPUT0, reduceByOperator, INPUT0);
-        reduceByOperator.connectTo(OUTPUT0, sink, INPUT0);
-
-        // Have Rheem execute the plan and print results.
-        rheemContext.execute(new RheemPlan(sink));
-        System.out.println("results:" + results);
+	// Execute the plan and collect the results.
+	.collect()
 ```
 
+### k-means
 
-### License
+Rheem is also capable of iterative processing, which is, e.g., very important for machine learning algorithms, such as k-means.
+
+#### Scala API
+
+```scala
+
+import org.qcri.rheem.api._
+import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.java.Java
+import org.qcri.rheem.spark.Spark
+import scala.util.Random
+import scala.collections.JavaConversions._
+
+// Settings
+val inputUrl = "hdfs://my/file.txt"
+val iterations = 20
+
+// Get a plan builder.
+val rheemContext = new RheemContext(new Configuration)
+	.withPlugin(Java.basicPlugin)
+	.withPlugin(Spark.basicPlugin)
+val planBuilder = new PlanBuilder(rheemContext)
+  .withJobName(s"k-means ($inputFile, k=$k, $iterations iterations)")
+  .withUdfJarsOf(this.getClass)
+
+// Read and parse the input file(s).
+val points = planBuilder
+  .readTextFile(inputUrl).withName("Read file")
+  .map { line =>
+	val fields = line.split(",")
+	Point(fields(0).toDouble, fields(1).toDouble)
+  }.withName("Create points")
+
+case class Point(x: Double, y: Double)
+case class TaggedPoint(x: Double, y: Double, cluster: Int)
+case class TaggedPointCounter(x: Double, y: Double, cluster: Int, count: Long) {
+  def +(that: TaggedPointCounter) = TaggedPointCounter(this.x + that.x, this.y + that.y, this.cluster, this.count + that.count)
+  def average = TaggedPoint(x / count, y / count, cluster)
+}
+
+// Create initial centroids.
+val random = new Random
+val initialCentroids = planBuilder
+  .loadCollection(for (i <- 1 to n) yield TaggedPoint(random.nextGaussian(), random.nextGaussian(), i)).withName("Load random centroids")
+
+// Declare UDF to select centroid for each data point.
+class SelectNearestCentroid extends ExtendedSerializableFunction[Point, TaggedPoint] {
+
+  /** Keeps the broadcasted centroids. */
+  var centroids: Iterable[TaggedPoint] = _
+
+  override def open(executionCtx: ExecutionContext) = {
+    centroids = executionCtx.getBroadcast[TaggedPoint]("centroids")
+  }
+
+  override def apply(point: Point): TaggedPointCounter = {
+    var minDistance = Double.PositiveInfinity
+    var nearestCentroidId = -1
+    for (centroid <- centroids) {
+      val distance = point.distanceTo(centroid)
+      if (distance < minDistance) {
+        minDistance = distance
+        nearestCentroidId = centroid.centroidId
+      }
+    }
+    new TaggedPointCounter(point.x, point.y, nearestCentroidId, 1)
+  }
+}
+
+// Do the k-means loop.
+val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
+  points
+	.mapJava(
+	  new SelectNearestCentroid,
+	  udfCpuLoad = (in1: Long, in2: Long, out: Long) => in1 * in2 * 100L
+	)
+	.withBroadcast(currentCentroids, "centroids").withName("Find nearest centroid")
+	.reduceByKey(_.cluster, _ + _).withName("Add up points")
+	.withCardinalityEstimator(k)
+	.map(_.average).withName("Average points")
+}).withName("Loop")
+
+// Collect the results.
+.collect()
+```
+
+## License
 
 Unless explicitly stated otherwise all files in this repository are licensed under the Apache Software License 2.0
 
