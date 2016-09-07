@@ -61,4 +61,6 @@ public interface SparkExecutionOperator extends ExecutionOperator {
         }
     }
 
+    default boolean isExecutedEagerly() { return true; }
+
 }

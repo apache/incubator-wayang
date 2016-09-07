@@ -151,11 +151,4 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
         return true;
     }
 
-    @Override
-    public ChannelInstance[] createOutputChannelInstances(Executor executor, ExecutionTask task,
-                                                          OptimizationContext.OperatorContext producerOperatorContext,
-                                                          List<ChannelInstance> inputChannelInstances) {
-        return super.createOutputChannelInstances(executor, task, producerOperatorContext, inputChannelInstances);
-    }
-
 }

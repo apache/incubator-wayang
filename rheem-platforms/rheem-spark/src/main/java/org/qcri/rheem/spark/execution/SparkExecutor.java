@@ -16,6 +16,8 @@ import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -81,6 +83,8 @@ public class SparkExecutor extends PushExecutorTemplate {
         );
 
         // Execute.
+        // todo
+        final Collection<OptimizationContext.OperatorContext> operatorContexts = Collections.emptyList();
         long startTime = System.currentTimeMillis();
         try {
             cast(task.getOperator()).evaluate(
@@ -96,19 +100,17 @@ public class SparkExecutor extends PushExecutorTemplate {
         long executionDuration = endTime - startTime;
 
         // Check how much we executed.
-        PartialExecution partialExecution = this.handleLazyChannelLineage(
-                task, inputChannelInstances, producerOperatorContext, outputChannelInstances, executionDuration
-        );
-        if (partialExecution != null) this.job.addPartialExecutionMeasurement(partialExecution);
-
-        if (task.getOperator().isExecutedEagerly()) {
+        PartialExecution partialExecution = this.createPartialExecution(operatorContexts, executionDuration);
+        if (partialExecution != null) {
             if (this.numActions == 0) partialExecution.addInitializedPlatform(SparkPlatform.getInstance());
             this.numActions++;
+            this.job.addPartialExecutionMeasurement(partialExecution);
         }
+
 
         // Force execution if necessary.
         if (isForceExecution) {
-            if (!task.getOperator().isExecutedEagerly()) {
+            if (partialExecution == null) {
                 this.logger.warn("Execution of {} might not have been enforced properly. " +
                                 "This might break the execution or cause side-effects with the re-optimization.",
                         task);

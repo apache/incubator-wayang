@@ -7,14 +7,10 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.*;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * An execution operator is handled by a certain platform.
@@ -104,16 +100,8 @@ public interface ExecutionOperator extends ElementaryOperator {
     }
 
     /**
-     * Tells whether this instance is executed eagerly, i.e., it will do its work right away and not wait for combination
-     * with down-stream instances. Note that this does not imply that all input {@link ExecutionOperator}s are evaluated
-     * right away.
-     *
-     * @return whether this instance is executed eagerly
-     */
-    boolean isExecutedEagerly();
-
-    /**
-     * Create output {@link ChannelInstance}s for this instance.
+     * Create output {@link ChannelInstance}s for this instance, thereby also setting up the
+     * {@link org.qcri.rheem.core.platform.LazyChannelLineage} properly.
      *
      * @param task                    the {@link ExecutionTask} in which this instance is being wrapped
      * @param producerOperatorContext the {@link OptimizationContext.OperatorContext} for this instance
@@ -121,9 +109,9 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @return
      */
     default ChannelInstance[] createOutputChannelInstances(Executor executor,
-                                                             ExecutionTask task,
-                                                             OptimizationContext.OperatorContext producerOperatorContext,
-                                                             List<ChannelInstance> inputChannelInstances) {
+                                                           ExecutionTask task,
+                                                           OptimizationContext.OperatorContext producerOperatorContext,
+                                                           List<ChannelInstance> inputChannelInstances) {
 
         assert task.getOperator() == this;
         ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
@@ -131,13 +119,32 @@ public interface ExecutionOperator extends ElementaryOperator {
             final Channel outputChannel = task.getOutputChannel(outputIndex);
             final ChannelInstance outputChannelInstance = outputChannel.createInstance(executor, producerOperatorContext, outputIndex);
             channelInstances[outputIndex] = outputChannelInstance;
-            for (ChannelInstance inputChannelInstance : inputChannelInstances) {
-                if (inputChannelInstance != null) {
-                    outputChannelInstance.addPredecessor(inputChannelInstance);
-                }
-            }
         }
         return channelInstances;
+    }
+
+    static Collection<OptimizationContext.OperatorContext> modelEagerExecution(ChannelInstance[] inputs,
+                                                                               ChannelInstance[] outputs,
+                                                                               OptimizationContext.OperatorContext operatorContext) {
+        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts;
+        if (outputs.length == 0) {
+            executedOperatorContexts = inputs[0].getLazyChannelLineage().collectAndMark();
+            executedOperatorContexts.add(operatorContext);
+        } else {
+            executedOperatorContexts = new LinkedList<>();
+            LazyChannelLineage.addAllPredecessors(inputs, outputs);
+            for (ChannelInstance output : outputs) {
+                output.getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+            }
+        }
+        return executedOperatorContexts;
+    }
+
+    static Collection<OptimizationContext.OperatorContext> modelLazyExecution(ChannelInstance[] inputs,
+                                                                              ChannelInstance[] outputs,
+                                                                              OptimizationContext.OperatorContext operatorContext) {
+        LazyChannelLineage.addAllPredecessors(inputs, outputs);
+        return Collections.emptyList();
     }
 
 }

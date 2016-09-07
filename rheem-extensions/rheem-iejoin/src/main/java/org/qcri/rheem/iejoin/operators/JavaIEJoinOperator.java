@@ -39,10 +39,10 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         StreamChannel.Instance outputChannel = (StreamChannel.Instance) outputs[0];
 
         Stream<Input> stream0;
@@ -105,7 +105,7 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
             result2.add(new org.qcri.rheem.basic.data.Tuple2<Input, Input>(t._1(), t._2()));
         }
 
-        outputChannel.<org.qcri.rheem.basic.data.Tuple2<Input, Input>>accept(result2.stream());
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -126,9 +126,4 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-    //TODO: what is isExecutedEagerly?
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }

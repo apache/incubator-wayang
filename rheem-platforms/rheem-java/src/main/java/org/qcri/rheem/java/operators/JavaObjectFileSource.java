@@ -10,9 +10,6 @@ import org.apache.hadoop.io.SequenceFile;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
@@ -29,10 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -55,10 +49,10 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert outputs.length == this.getNumOutputs();
 
         SequenceFileIterator sequenceFileIterator;
@@ -79,6 +73,8 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
         } catch (IOException e) {
             throw new RheemException(String.format("%s failed to read from %s.", this, path), e);
         }
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -166,8 +162,4 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
         }
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }

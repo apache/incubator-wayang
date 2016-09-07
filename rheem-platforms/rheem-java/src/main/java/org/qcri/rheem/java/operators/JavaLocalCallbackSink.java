@@ -1,11 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -13,11 +9,11 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -45,14 +41,16 @@ public class JavaLocalCallbackSink<T extends Serializable> extends LocalCallback
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor executor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor executor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
         ((JavaChannelInstance) inputs[0]).<T>provideStream().forEach(this.callback);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -76,8 +74,4 @@ public class JavaLocalCallbackSink<T extends Serializable> extends LocalCallback
         throw new UnsupportedOperationException(String.format("%s does not have outputs.", this));
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

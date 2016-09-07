@@ -3,6 +3,7 @@ package org.qcri.rheem.core.platform;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -13,7 +14,7 @@ import java.util.LinkedList;
  */
 public class LazyChannelLineage {
 
-    private final Node root;
+    private Node root;
 
     /**
      * Creates a new instance.
@@ -58,12 +59,62 @@ public class LazyChannelLineage {
         this.root.add(that.root);
     }
 
-    public <T> T traverseAndMark(T identity, Aggregator<T> aggregator) {
-        return this.root.traverse(identity, aggregator, true);
+    public <T> T traverseAndMark(T accumulator, Aggregator<T> aggregator) {
+        return this.root.traverse(accumulator, aggregator, true);
     }
 
-    public <T> T traverse(T identity, Aggregator<T> aggregator) {
-        return this.root.traverse(identity, aggregator, false);
+    public <T> T traverse(T accumulator, Aggregator<T> aggregator) {
+        return this.root.traverse(accumulator, aggregator, false);
+    }
+
+    /**
+     * Exchange the current root {@link Node} with that from a second instance. This procedure can be useful
+     * to skip elements in the lineage.
+     *
+     * @param that the other {@link LazyChannelLineage}
+     */
+    public void copyRootFrom(LazyChannelLineage that) {
+        this.root = that.root;
+    }
+
+    /**
+     * Set all of the {@code inputs} as predecessors of each of the {@code outputs}.
+     *
+     * @param inputs  input {@link ChannelInstance}s
+     * @param outputs output {@link ChannelInstance}s
+     * @see ChannelInstance#addPredecessor(ChannelInstance)
+     */
+    public static void addAllPredecessors(ChannelInstance[] inputs, ChannelInstance[] outputs) {
+        for (int outputIndex = 0; outputIndex < outputs.length; outputIndex++) {
+            for (int inputIndex = 0; inputIndex < inputs.length; inputIndex++) {
+                outputs[outputIndex].addPredecessor(inputs[inputIndex]);
+            }
+        }
+    }
+
+    /**
+     * Collect and mark all unmarked {@link Node}s in this instance.
+     *
+     * @return the collected {@link OptimizationContext.OperatorContext}s
+     */
+    public Collection<OptimizationContext.OperatorContext> collectAndMark() {
+        return this.traverseAndMark(
+                new LinkedList<>(),
+                (accumulator, channelInstance, operatorContext) -> RheemCollections.add(accumulator, operatorContext)
+        );
+    }
+
+    /**
+     * Collect and mark all unmarked {@link Node}s in this instance.
+     *
+     * @param collector collects the {@link OptimizationContext.OperatorContext} in the unmarked {@link Node}s.
+     * @return the {@code collector}
+     */
+    public Collection<OptimizationContext.OperatorContext> collectAndMark(Collection<OptimizationContext.OperatorContext> collector) {
+        return this.traverseAndMark(
+                collector,
+                (accumulator, channelInstance, operatorContext) -> RheemCollections.add(accumulator, operatorContext)
+        );
     }
 
     /**

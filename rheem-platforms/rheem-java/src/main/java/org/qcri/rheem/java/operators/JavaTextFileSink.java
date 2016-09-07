@@ -20,6 +20,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -39,10 +40,10 @@ public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutio
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == 1;
         assert outputs.length == 0;
 
@@ -65,6 +66,8 @@ public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutio
         } catch (IOException e) {
             throw new RheemException("Writing failed.", e);
         }
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
 
@@ -91,8 +94,4 @@ public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutio
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

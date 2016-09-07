@@ -3,7 +3,6 @@ package org.qcri.rheem.postgres.operators;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.jdbc.operators.JdbcFilterOperator;
 
 

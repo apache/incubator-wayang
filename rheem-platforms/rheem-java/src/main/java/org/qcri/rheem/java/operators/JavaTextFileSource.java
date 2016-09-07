@@ -3,9 +3,6 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -20,6 +17,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
@@ -43,10 +41,10 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -69,6 +67,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
             throw new RheemException(String.format("Reading %s failed.", url), e);
         }
 
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -92,8 +91,4 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }

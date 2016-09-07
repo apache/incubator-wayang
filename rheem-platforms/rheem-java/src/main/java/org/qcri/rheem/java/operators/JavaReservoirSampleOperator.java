@@ -58,14 +58,16 @@ public class JavaReservoirSampleOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
         ((CollectionChannel.Instance) outputs[0]).accept(reservoirSample(rand, ((JavaChannelInstance) inputs[0]).<Type>provideStream().iterator(), sampleSize));
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     private static <T> List<T> reservoirSample(Random rand, Iterator<T> items, long m) {
@@ -110,8 +112,4 @@ public class JavaReservoirSampleOperator<Type>
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

@@ -5,9 +5,6 @@ import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.types.RecordType;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
@@ -17,7 +14,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.JsonSerializable;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
@@ -64,10 +60,10 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor executor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor executor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         // Cast the inputs and outputs.
         final SqlQueryChannel.Instance input = (SqlQueryChannel.Instance) inputs[0];
         final StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
@@ -82,6 +78,8 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
         Stream<Record> resultSetStream = StreamSupport.stream(resultSetSpliterator, false);
 
         output.accept(resultSetStream);
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -177,11 +175,6 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
                 }
             }
         }
-    }
-
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
     }
 
     @Override

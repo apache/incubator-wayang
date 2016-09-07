@@ -4,9 +4,6 @@ import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
@@ -18,7 +15,6 @@ import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.platform.JavaPlatform;
 
@@ -27,6 +23,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,10 +49,10 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
 
         // Prepare Hadoop's SequenceFile.Writer.
@@ -92,6 +89,8 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
         } catch (IOException e) {
             throw new RheemException(String.format("%s failed on writing to %s.", this, this.targetPath), e);
         }
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -114,11 +113,6 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
         return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
-    }
-
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
     }
 
 }

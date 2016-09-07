@@ -15,10 +15,7 @@ import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -47,16 +44,20 @@ public class JavaMapOperator<InputType, OutputType>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+        final JavaChannelInstance input = (JavaChannelInstance) inputs[0];
+        final StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 
         final Function<InputType, OutputType> function = javaExecutor.getCompiler().compile(this.functionDescriptor);
         JavaExecutor.openFunction(this, function, inputs, operatorContext);
-        ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<InputType>provideStream().map(function));
+        output.accept(input.<InputType>provideStream().map(function));
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -91,8 +92,4 @@ public class JavaMapOperator<InputType, OutputType>
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }

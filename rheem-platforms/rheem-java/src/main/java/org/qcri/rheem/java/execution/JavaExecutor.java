@@ -16,6 +16,7 @@ import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -51,9 +52,10 @@ public class JavaExecutor extends PushExecutorTemplate {
         );
 
         // Execute.
+        final Collection<OptimizationContext.OperatorContext> operatorContexts;
         long startTime = System.currentTimeMillis();
         try {
-            cast(task.getOperator()).evaluate(
+            operatorContexts = cast(task.getOperator()).evaluate(
                     toArray(inputChannelInstances),
                     outputChannelInstances,
                     this,
@@ -66,19 +68,15 @@ public class JavaExecutor extends PushExecutorTemplate {
         long executionDuration = endTime - startTime;
 
         // Check how much we executed.
-        PartialExecution partialExecution = this.handleLazyChannelLineage(
-                task, inputChannelInstances, producerOperatorContext, outputChannelInstances, executionDuration
-        );
+        PartialExecution partialExecution = this.createPartialExecution(operatorContexts, executionDuration);
         if (partialExecution != null) this.job.addPartialExecutionMeasurement(partialExecution);
 
         // Force execution if necessary.
         if (isForceExecution) {
-            for (ChannelInstance outputChannelInstance : outputChannelInstances) {
-                if (outputChannelInstance == null || !outputChannelInstance.getChannel().isReusable()) {
-                    this.logger.warn("Execution of {} might not have been enforced properly. " +
-                                    "This might break the execution or cause side-effects with the re-optimization.",
-                            task);
-                }
+            if (partialExecution == null) {
+                this.logger.warn("Execution of {} might not have been enforced properly. " +
+                                "This might break the execution or cause side-effects with the re-optimization.",
+                        task);
             }
         }
 

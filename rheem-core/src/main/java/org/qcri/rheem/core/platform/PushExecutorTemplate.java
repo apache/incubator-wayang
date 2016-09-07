@@ -9,7 +9,6 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
@@ -98,75 +97,20 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                                                                               OptimizationContext.OperatorContext producerOperatorContext,
                                                                               boolean isForceExecution);
 
+
     /**
-     * If the {@link ExecutionTask} is not executed lazily, then gather all pending executions in a
-     * {@link PartialExecution}.
+     * Create a {@link PartialExecution} according to the given parameters.
      *
-     * @param task                    that was just executed
-     * @param inputChannelInstances   that feed the {@code task}
-     * @param producerOperatorContext that contains estimates for the {@code task}'s {@link ExecutionOperator}
-     * @param outputChannelInstances  that were produces by the {@code task}
-     * @param executionDuration       that was measured for the {@link PartialExecution}
-     * @return the {@link PartialExecution} or {@code null} if nothing has been executed
+     * @param executedOperatorContexts {@link ExecutionOperator}s' {@link OptimizationContext.OperatorContext}s that
+     *                                 have been executed
+     * @param executionDuration        the measured execution duration in milliseconds
+     * @return the {@link PartialExecution} or {@link null} if nothing has been executed
      */
-    protected PartialExecution handleLazyChannelLineage(ExecutionTask task,
-                                                        List<ChannelInstance> inputChannelInstances,
-                                                        OptimizationContext.OperatorContext producerOperatorContext,
-                                                        ChannelInstance[] outputChannelInstances,
-                                                        long executionDuration) {
+    protected PartialExecution createPartialExecution(
+            Collection<OptimizationContext.OperatorContext> executedOperatorContexts,
+            long executionDuration) {
 
-        final ExecutionOperator operator = task.getOperator();
-        if (!operator.isExecutedEagerly()) {
-            // If the operator is evaluated lazily, there is nothing to do here.
-            assert !operator.isLoopHead() : String.format("Expect loop head %s to be evaluated eagerly.", operator);
-            return null;
-        }
-
-        // Otherwise, create a PartialExecution from the LazyChannelLineage.
-        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
-        if (!operator.isLoopHead()) {
-            // If we are not dealing with a LoopHeadOperator, we evaluate the complete lineage.
-            if (outputChannelInstances.length == 0) {
-                // Process sinks by adding the sink and then pull all of its inputs.
-                executedOperatorContexts.add(producerOperatorContext);
-                for (ChannelInstance inputChannelInstance : inputChannelInstances) {
-                    if (inputChannelInstance == null) continue;
-                    this.markAndAddUnproducedChannelInstances(inputChannelInstance, executedOperatorContexts);
-                }
-            } else {
-                // Process non-sink operators by pulling all of its outputs.
-                for (ChannelInstance outputChannelInstance : outputChannelInstances) {
-                    if (outputChannelInstance == null) continue;
-                    this.markAndAddUnproducedChannelInstances(outputChannelInstance, executedOperatorContexts);
-                }
-            }
-
-        } else {
-            // LoopHeadOperators need special treatment in the sense that they are evaluated eagerly, but forward
-            // some of their inputs.
-            LoopHeadOperator loopHeadOperator = (LoopHeadOperator) operator;
-            if (loopHeadOperator.getConditionOutputSlots().isEmpty()) {
-                // Process heads without condition datasets by adding the them and then pull all of its condition inputs.
-                executedOperatorContexts.add(producerOperatorContext);
-                for (InputSlot<?> input : loopHeadOperator.getConditionInputSlots()) {
-                    final ChannelInstance inputChannelInstance = inputChannelInstances.get(input.getIndex());
-                    if (inputChannelInstance == null) continue;
-                    this.markAndAddUnproducedChannelInstances(inputChannelInstance, executedOperatorContexts);
-                }
-            } else {
-                // Process heads with condition datasets by pulling them.
-                for (OutputSlot<?> output : loopHeadOperator.getConditionOutputSlots()) {
-                    final ChannelInstance outputChannelInstance = outputChannelInstances[output.getIndex()];
-                    if (outputChannelInstance == null) continue;
-                    this.markAndAddUnproducedChannelInstances(outputChannelInstance, executedOperatorContexts);
-                }
-            }
-        }
-
-        // When no ExecutionOperators have been executed, we should not produce a PartialExecution.
-        if (executedOperatorContexts.isEmpty()) {
-            return null;
-        }
+        if (executedOperatorContexts.isEmpty()) return null;
 
         final PartialExecution partialExecution = new PartialExecution(executionDuration, executedOperatorContexts);
         if (this.logger.isInfoEnabled()) {
@@ -185,23 +129,6 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
         }
 
         return partialExecution;
-    }
-
-    /**
-     * Marks all unproduced {@link ChannelInstance}s in a lineage and collects them in a {@link Collection}.
-     *
-     * @param channelInstance that should be marked and collected - including its predecessors
-     * @param collector       collects the marked {@link ChannelInstance}s
-     */
-    private void markAndAddUnproducedChannelInstances(
-            ChannelInstance channelInstance,
-            Collection<OptimizationContext.OperatorContext> collector) {
-        channelInstance
-                .getLazyChannelLineage()
-                .traverseAndMark(
-                        collector,
-                        (accu, channelInst, producerCtx) -> RheemCollections.add(accu, producerCtx)
-                );
     }
 
     private static String formatCardinalities(OptimizationContext.OperatorContext opCtx) {

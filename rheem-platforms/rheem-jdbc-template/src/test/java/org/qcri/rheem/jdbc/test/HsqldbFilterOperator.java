@@ -2,7 +2,6 @@ package org.qcri.rheem.jdbc.test;
 
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.jdbc.operators.JdbcFilterOperator;
 
 import java.util.List;

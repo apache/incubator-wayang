@@ -6,9 +6,6 @@ import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
@@ -25,10 +22,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Spliterators;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -52,10 +46,10 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert outputs.length == this.getNumOutputs();
 
         final String path;
@@ -69,6 +63,8 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
         final String actualInputPath = FileSystems.findActualSingleInputPath(path);
         Stream<T> stream = this.createStream(actualInputPath);
         ((StreamChannel.Instance) outputs[0]).accept(stream);
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     private Stream<T> createStream(String path) {
@@ -183,8 +179,4 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }

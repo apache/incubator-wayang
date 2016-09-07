@@ -8,6 +8,7 @@ import gnu.trove.map.hash.TLongIntHashMap;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.PageRankOperator;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.java.channels.CollectionChannel;
@@ -33,10 +34,10 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         CollectionChannel.Instance input = (CollectionChannel.Instance) inputs[0];
         StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 
@@ -45,6 +46,8 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
         final Stream<Tuple2<Long, Float>> pageRankStream = this.stream(pageRanks);
 
         output.accept(pageRankStream);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     /**
@@ -131,8 +134,4 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

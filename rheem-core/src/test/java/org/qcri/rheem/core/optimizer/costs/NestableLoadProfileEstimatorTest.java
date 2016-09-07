@@ -109,9 +109,5 @@ public class NestableLoadProfileEstimatorTest {
             return null;
         }
 
-        @Override
-        public boolean isExecutedEagerly() {
-            return false;
-        }
     }
 }

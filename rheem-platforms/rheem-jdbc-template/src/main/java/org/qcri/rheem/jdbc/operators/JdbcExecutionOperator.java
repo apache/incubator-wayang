@@ -36,8 +36,4 @@ public interface JdbcExecutionOperator extends ExecutionOperator {
         return Collections.singletonList(this.getPlatform().getSqlQueryChannelDescriptor());
     }
 
-    @Override
-    default boolean isExecutedEagerly() {
-        return false;
-    }
 }

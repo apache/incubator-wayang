@@ -58,10 +58,10 @@ public class JavaRandomSampleOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -70,7 +70,7 @@ public class JavaRandomSampleOperator<Type>
 
         if (sampleSize >= datasetSize) { //return all
             ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).provideStream());
-            return;
+            return null;
         }
 
         final int[] sampleIndices = new int[sampleSize];
@@ -101,6 +101,8 @@ public class JavaRandomSampleOperator<Type>
                     }
                 })
         );
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -132,8 +134,4 @@ public class JavaRandomSampleOperator<Type>
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

@@ -9,9 +9,6 @@ import org.apache.hadoop.io.SequenceFile;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
@@ -29,6 +26,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -53,10 +51,10 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
 
         // Prepare Hadoop's SequenceFile.Writer.
@@ -89,6 +87,8 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
         } catch (IOException | UncheckedIOException e) {
             throw new RheemException("Could not write stream to sequence file.", e);
         }
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -111,11 +111,6 @@ public class JavaObjectFileSink<T> extends UnarySink<T> implements JavaExecution
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
         return Collections.singletonList(FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR);
-    }
-
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
     }
 
     /**

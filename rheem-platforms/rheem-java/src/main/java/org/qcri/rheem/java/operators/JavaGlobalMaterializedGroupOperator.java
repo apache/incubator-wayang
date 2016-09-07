@@ -1,11 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -43,10 +39,10 @@ public class JavaGlobalMaterializedGroupOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == 1;
         assert outputs.length == 1;
 
@@ -57,6 +53,8 @@ public class JavaGlobalMaterializedGroupOperator<Type>
 
         CollectionChannel.Instance outputChannelInstance = (CollectionChannel.Instance) outputs[0];
         outputChannelInstance.accept(dataQuantaGroup);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -80,8 +78,4 @@ public class JavaGlobalMaterializedGroupOperator<Type>
         return new JavaGlobalMaterializedGroupOperator<>(this.getInputType(), this.getOutputType());
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

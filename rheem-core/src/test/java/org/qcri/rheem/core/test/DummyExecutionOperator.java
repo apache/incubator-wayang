@@ -58,9 +58,5 @@ public class DummyExecutionOperator extends OperatorBase implements ExecutionOpe
         return this.supportedOutputChannelDescriptors.get(index);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 
 }

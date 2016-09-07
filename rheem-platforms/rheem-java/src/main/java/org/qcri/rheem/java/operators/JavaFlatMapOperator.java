@@ -46,10 +46,10 @@ public class JavaFlatMapOperator<InputType, OutputType>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -67,6 +67,8 @@ public class JavaFlatMapOperator<InputType, OutputType>
                         )
                 )
         );
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -101,8 +103,4 @@ public class JavaFlatMapOperator<InputType, OutputType>
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }

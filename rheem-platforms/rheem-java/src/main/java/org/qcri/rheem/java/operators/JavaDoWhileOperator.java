@@ -6,11 +6,9 @@ import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
@@ -54,10 +52,10 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -67,6 +65,8 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
         boolean endloop = false;
 
+        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
+        executedOperatorContexts.add(operatorContext);
         final Collection<ConvergenceType> convergenceCollection;
         final JavaChannelInstance input;
         switch (this.getState()) {
@@ -82,6 +82,7 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
                 convergenceCollection = ((CollectionChannel.Instance) inputs[CONVERGENCE_INPUT_INDEX]).provideCollection();
                 endloop = stoppingCondition.test(convergenceCollection);
                 input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
+                inputs[CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -90,18 +91,16 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            this.forward(input, (JavaChannelInstance) outputs[FINAL_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, (JavaChannelInstance) outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            this.forward(input, (JavaChannelInstance) outputs[ITERATION_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, (JavaChannelInstance) outputs[ITERATION_OUTPUT_INDEX]);
             this.setState(State.RUNNING);
         }
-    }
 
-    private void forward(JavaChannelInstance input, JavaChannelInstance output) {
-        ((StreamChannel.Instance) output).accept(input.provideStream());
+        return executedOperatorContexts;
     }
 
     @Override
@@ -146,18 +145,6 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
         // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
-    }
-
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
-
-    @Override
-    public ChannelInstance[] createOutputChannelInstances(Executor executor, ExecutionTask task,
-                                                          OptimizationContext.OperatorContext producerOperatorContext,
-                                                          List<ChannelInstance> inputChannelInstances) {
-        return super.createOutputChannelInstances(executor, task, producerOperatorContext, inputChannelInstances);
     }
 
 }
