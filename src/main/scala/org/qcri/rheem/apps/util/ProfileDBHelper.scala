@@ -5,6 +5,7 @@ import java.io.File
 import de.hpi.isg.profiledb.ProfileDB
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.core.api.Configuration
+import org.qcri.rheem.core.profiling.ProfileDBs
 
 /**
   * Helper utility to employ with [[ProfileDB]].
@@ -21,7 +22,7 @@ object ProfileDBHelper {
     configuration.getStringProperty("rheem.apps.profiledb", null) match {
       case path: String => {
         println(s"Storing experiment '${experiment.getId}' to $path.")
-        val profileDB = new ProfileDB
+        val profileDB = ProfileDBs.createProfileDB
         profileDB.append(new File(path), experiment)
       }
       case _ =>
