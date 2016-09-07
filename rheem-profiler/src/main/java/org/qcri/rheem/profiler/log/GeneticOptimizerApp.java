@@ -107,7 +107,12 @@ public class GeneticOptimizerApp {
         );
     }
 
-    private void run() {
+    public void run() {
+        if (this.optimizationSpace.getNumDimensions() == 0) {
+            System.out.println("There is nothing to optimize - all estimators are specified in the configuration.");
+            System.exit(0);
+        }
+
         // Get execution groups.
         List<List<PartialExecution>> executionGroups = this.groupPartialExecutions(this.partialExecutions).entrySet().stream()
                 .sorted((e1, e2) -> Integer.compare(e1.getKey().size(), e2.getKey().size()))
@@ -268,6 +273,11 @@ public class GeneticOptimizerApp {
             int maxGenerations,
             int maxStableGenerations,
             double minFitness) {
+
+        if (optimizer.getActivatedGenes().isEmpty()) {
+            System.out.println("There is an optimization task without optimizable genes. It will be skipped");
+            return new Tuple<>(currentGeneration, individuals);
+        }
 
         int updateFrequency = (int) this.configuration.getLongProperty("rheem.profiler.ga.intermediateupate", -1);
         System.out.printf("Optimizing %d variables on %d partial executions (e.g., %s).\n",

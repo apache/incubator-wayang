@@ -134,7 +134,7 @@ public class GeneticOptimizer {
                 break;
             default:
                 throw new IllegalStateException(
-                        "Unknown fitness function: "+ this.configuration.getStringProperty("rheem.profiler.ga.fitness.type")
+                        "Unknown fitness function: " + this.configuration.getStringProperty("rheem.profiler.ga.fitness.type")
                 );
         }
     }
