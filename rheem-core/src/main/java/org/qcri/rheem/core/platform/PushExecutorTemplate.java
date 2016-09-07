@@ -97,48 +97,20 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                                                                               OptimizationContext.OperatorContext producerOperatorContext,
                                                                               boolean isForceExecution);
 
+
     /**
-     * If the {@link ExecutionTask} is not executed lazily, then gather all pending executions in a
-     * {@link PartialExecution}.
+     * Create a {@link PartialExecution} according to the given parameters.
      *
-     * @param task                    that was just executed
-     * @param inputChannelInstances   that feed the {@code task}
-     * @param producerOperatorContext that contains estimates for the {@code task}'s {@link ExecutionOperator}
-     * @param outputChannelInstances  that were produces by the {@code task}
-     * @param executionDuration       that was measured for the {@link PartialExecution}
-     * @return the {@link PartialExecution} or {@code null} if nothing has been executed
+     * @param executedOperatorContexts {@link ExecutionOperator}s' {@link OptimizationContext.OperatorContext}s that
+     *                                 have been executed
+     * @param executionDuration        the measured execution duration in milliseconds
+     * @return the {@link PartialExecution} or {@link null} if nothing has been executed
      */
-    protected PartialExecution handleLazyChannelLineage(ExecutionTask task,
-                                                        List<ChannelInstance> inputChannelInstances,
-                                                        OptimizationContext.OperatorContext producerOperatorContext,
-                                                        ChannelInstance[] outputChannelInstances,
-                                                        long executionDuration) {
+    protected PartialExecution createPartialExecution(
+            Collection<OptimizationContext.OperatorContext> executedOperatorContexts,
+            long executionDuration) {
 
-        // Mark and collect all unproduced ChannelInstances that have been produced.
-        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
-        if (task.getOperator().isExecutedEagerly()) {
-            if (outputChannelInstances.length == 0) {
-                executedOperatorContexts.add(producerOperatorContext);
-            } else {
-                for (ChannelInstance outputChannelInstance : outputChannelInstances) {
-                    if (outputChannelInstance == null) continue;
-                    this.markAndAddUnproducedChannelInstances(outputChannelInstance, executedOperatorContexts);
-                }
-            }
-        } else {
-            int inputIndex = 0;
-            for (ChannelInstance inputChannelInstance : inputChannelInstances) {
-                if (inputChannelInstance != null && task.getOperator().isEvaluatingEagerly(inputIndex)) {
-                    this.markAndAddUnproducedChannelInstances(inputChannelInstance, executedOperatorContexts);
-                }
-                inputIndex++;
-            }
-        }
-
-        // When no ExecutionOperators have been executed, we should not produce a PartialExecution.
-        if (executedOperatorContexts.isEmpty()) {
-            return null;
-        }
+        if (executedOperatorContexts.isEmpty()) return null;
 
         final PartialExecution partialExecution = new PartialExecution(executionDuration, executedOperatorContexts);
         if (this.logger.isInfoEnabled()) {
@@ -157,23 +129,6 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
         }
 
         return partialExecution;
-    }
-
-    /**
-     * Marks all unproduced {@link ChannelInstance}s in a lineage and collects them in a {@link Collection}.
-     *
-     * @param channelInstance that should be marked and collected - including its predecessors
-     * @param collector       collects the marked {@link ChannelInstance}s
-     */
-    private void markAndAddUnproducedChannelInstances(
-            ChannelInstance channelInstance,
-            Collection<OptimizationContext.OperatorContext> collector) {
-        channelInstance
-                .getLazyChannelLineage()
-                .traverseAndMark(
-                        collector,
-                        (accu, node) -> RheemCollections.add(accu, node.getProducerOperatorContext())
-                );
     }
 
     private static String formatCardinalities(OptimizationContext.OperatorContext opCtx) {
@@ -311,7 +266,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                 final Channel channel = outputChannelInstance.getChannel();
                 for (ExecutionTask consumer : channel.getConsumers()) {
                     // Stay within ExecutionStage.
-                    if (consumer.getStage() != task.getStage() || channel.isStageExecutionBarrier()) continue;
+                    if (consumer.getStage() != task.getStage() || consumer.getOperator().isLoopHead()) continue;
 
                     // Get or create the TaskActivator.
                     final TaskActivator consumerActivator = this.stagedActivators.computeIfAbsent(
@@ -340,7 +295,8 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
         private void updateExecutionState() {
             for (final ChannelInstance channelInstance : this.allChannelInstances) {
                 // Capture outbound ChannelInstances.
-                if (channelInstance.getChannel().isBetweenStages() || channelInstance.getChannel().isStageExecutionBarrier()) {
+                if (channelInstance.getChannel().isBetweenStages() || channelInstance.getChannel().getConsumers().stream()
+                        .anyMatch(consumer -> consumer.getOperator().isLoopHead())) {
                     this.executionState.register(channelInstance);
                 }
 

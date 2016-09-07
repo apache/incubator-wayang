@@ -5,8 +5,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -15,6 +14,7 @@ import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -30,15 +30,17 @@ public class JavaCollectOperator<Type> extends UnaryToUnaryOperator<Type, Type> 
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         final StreamChannel.Instance streamChannelInstance = (StreamChannel.Instance) inputs[0];
         final CollectionChannel.Instance collectionChannelInstance = (CollectionChannel.Instance) outputs[0];
 
         final List<?> collection = streamChannelInstance.provideStream().collect(Collectors.toList());
         collectionChannelInstance.accept(collection);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -61,15 +63,8 @@ public class JavaCollectOperator<Type> extends UnaryToUnaryOperator<Type, Type> 
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.collect.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.collect.load";
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

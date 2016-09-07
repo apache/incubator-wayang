@@ -5,7 +5,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -15,10 +15,7 @@ import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -31,7 +28,9 @@ public class JavaMapOperator<InputType, OutputType>
     /**
      * Creates a new instance.
      */
-    public JavaMapOperator(DataSetType inputType, DataSetType outputType, TransformationDescriptor<InputType, OutputType> functionDescriptor) {
+    public JavaMapOperator(DataSetType<InputType> inputType,
+                           DataSetType<OutputType> outputType,
+                           TransformationDescriptor<InputType, OutputType> functionDescriptor) {
         super(functionDescriptor, inputType, outputType);
     }
 
@@ -45,16 +44,20 @@ public class JavaMapOperator<InputType, OutputType>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+        final JavaChannelInstance input = (JavaChannelInstance) inputs[0];
+        final StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 
         final Function<InputType, OutputType> function = javaExecutor.getCompiler().compile(this.functionDescriptor);
         JavaExecutor.openFunction(this, function, inputs, operatorContext);
-        ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<InputType>provideStream().map(function));
+        output.accept(input.<InputType>provideStream().map(function));
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -62,15 +65,18 @@ public class JavaMapOperator<InputType, OutputType>
         return new JavaMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
     }
 
+
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator operatorEstimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.map.load")
-        );
-        final LoadProfileEstimator functionEstimator =
-                configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getFunctionDescriptor());
-        operatorEstimator.nest(functionEstimator);
-        return Optional.of(operatorEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.map.load";
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.functionDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override
@@ -86,8 +92,4 @@ public class JavaMapOperator<InputType, OutputType>
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }

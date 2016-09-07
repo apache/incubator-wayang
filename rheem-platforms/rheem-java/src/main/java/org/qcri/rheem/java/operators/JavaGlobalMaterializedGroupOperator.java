@@ -1,10 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -12,7 +9,10 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Java implementation of the {@link GlobalMaterializedGroupOperator}.
@@ -39,10 +39,10 @@ public class JavaGlobalMaterializedGroupOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == 1;
         assert outputs.length == 1;
 
@@ -53,6 +53,8 @@ public class JavaGlobalMaterializedGroupOperator<Type>
 
         CollectionChannel.Instance outputChannelInstance = (CollectionChannel.Instance) outputs[0];
         outputChannelInstance.accept(dataQuantaGroup);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -67,11 +69,8 @@ public class JavaGlobalMaterializedGroupOperator<Type>
 
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.globalgroup.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.globalgroup.load";
     }
 
     @Override
@@ -79,8 +78,4 @@ public class JavaGlobalMaterializedGroupOperator<Type>
         return new JavaGlobalMaterializedGroupOperator<>(this.getInputType(), this.getOutputType());
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

@@ -1,23 +1,23 @@
 package org.qcri.rheem.jdbc.operators;
 
+import org.json.JSONObject;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.types.RecordType;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.JsonSerializable;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
-import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
+import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
@@ -30,7 +30,7 @@ import java.util.stream.StreamSupport;
 /**
  * This {@link Operator} converts {@link SqlQueryChannel}s to {@link StreamChannel}s.
  */
-public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator {
+public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> implements JavaExecutionOperator, JsonSerializable {
 
     private final JdbcPlatformTemplate jdbcPlatform;
 
@@ -60,10 +60,10 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor executor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor executor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         // Cast the inputs and outputs.
         final SqlQueryChannel.Instance input = (SqlQueryChannel.Instance) inputs[0];
         final StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
@@ -78,6 +78,8 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
         Stream<Record> resultSetStream = StreamSupport.stream(resultSetSpliterator, false);
 
         output.accept(resultSetStream);
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -91,12 +93,8 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final String estimatorKey = String.format("rheem.%s.sqltostream.load", this.jdbcPlatform.getPlatformId());
-        final NestableLoadProfileEstimator operatorEstimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty(estimatorKey)
-        );
-        return Optional.of(operatorEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return String.format("rheem.%s.sqltostream.load", this.jdbcPlatform.getPlatformId());
     }
 
     /**
@@ -180,8 +178,14 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     }
 
     @Override
-    public boolean isExecutedEagerly() {
-        return false;
+    public JSONObject toJson() {
+        return new JSONObject().put("platform", this.jdbcPlatform.getClass().getCanonicalName());
     }
 
+    @SuppressWarnings("unused")
+    public static SqlToStreamOperator fromJson(JSONObject jsonObject) {
+        final String platformClassName = jsonObject.getString("platform");
+        JdbcPlatformTemplate jdbcPlatform = ReflectionUtils.evaluate(platformClassName + ".getInstance()");
+        return new SqlToStreamOperator(jdbcPlatform);
+    }
 }

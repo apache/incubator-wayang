@@ -1,10 +1,15 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
+import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 
-import java.util.Collection;
+import java.util.*;
 
 /**
  * Head of a {@link LoopSubplan}.
@@ -42,6 +47,22 @@ public interface LoopHeadOperator extends Operator {
      * @return the initialization {@link InputSlot}s
      */
     Collection<InputSlot<?>> getLoopInitializationInputs();
+
+    /**
+     * Retrieve those {@link InputSlot}s that are required to evaluate the loop condition.
+     *
+     * @return the condition {@link InputSlot}s
+     */
+    Collection<InputSlot<?>> getConditionInputSlots();
+
+    /**
+     * Retrieve those {@link OutputSlot}s that forward the {@link #getConditionInputSlots()}.
+     *
+     * @return the condition {@link OutputSlot}s
+     */
+    Collection<OutputSlot<?>> getConditionOutputSlots();
+
+
 
     /**
      * @return a number of expected iterations; not necessarily the actual value

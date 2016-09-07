@@ -39,10 +39,10 @@ public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exten
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         StreamChannel.Instance outputChannel = (StreamChannel.Instance) outputs[0];
 
         Stream<Input> stream0;
@@ -84,6 +84,8 @@ public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exten
         }
 
         outputChannel.<org.qcri.rheem.basic.data.Tuple2<Input, Input>>accept(result2.stream());
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -102,10 +104,5 @@ public class JavaIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exten
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
-    }
-
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
     }
 }

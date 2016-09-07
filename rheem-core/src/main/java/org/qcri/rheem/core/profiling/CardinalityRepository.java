@@ -3,6 +3,7 @@ package org.qcri.rheem.core.profiling;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationUtils;
@@ -36,8 +37,8 @@ public class CardinalityRepository {
      */
     private BufferedWriter writer;
 
-    public CardinalityRepository(String repositoryPath) {
-        this.repositoryPath = repositoryPath;
+    public CardinalityRepository(Configuration configuration) {
+        this.repositoryPath = configuration.getStringProperty("rheem.core.log.cardinalities");
         this.logger.info("Storing cardinalities at {}.", repositoryPath);
     }
 

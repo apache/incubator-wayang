@@ -10,8 +10,6 @@ import org.apache.hadoop.io.SequenceFile;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
@@ -51,10 +49,10 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert outputs.length == this.getNumOutputs();
 
         SequenceFileIterator sequenceFileIterator;
@@ -75,23 +73,13 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
         } catch (IOException e) {
             throw new RheemException(String.format("%s failed to read from %s.", this, path), e);
         }
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-//        final OptionalLong optionalFileSize;
-//        if (this.sourcePath == null) {
-//            optionalFileSize = OptionalLong.empty();
-//        } else {
-//            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
-//            if (!optionalFileSize.isPresent()) {
-//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
-//            }
-//        }
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.objectfilesource.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.objectfilesource.load";
     }
 
     @Override
@@ -174,8 +162,4 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
         }
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }

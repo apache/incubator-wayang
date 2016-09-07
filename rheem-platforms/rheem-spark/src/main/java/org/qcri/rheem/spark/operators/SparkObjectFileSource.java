@@ -3,8 +3,6 @@ package org.qcri.rheem.spark.operators;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
@@ -18,9 +16,9 @@ import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a sequence file.
@@ -43,10 +41,10 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         final String sourcePath;
         if (this.sourcePath != null) {
             assert inputs.length == 0;
@@ -61,6 +59,8 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
         final JavaRDD<Object> rdd = sparkExecutor.sc.objectFile(actualInputPath);
         this.name(rdd);
         output.accept(rdd, sparkExecutor);
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -69,21 +69,8 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        // NB: Not measured, instead adapted from SparkTextFileSource.
-//        final OptionalLong optionalFileSize;
-//        if (this.sourcePath == null) {
-//            optionalFileSize = OptionalLong.empty();
-//        } else {
-//            optionalFileSize = FileSystems.getFileSize(this.sourcePath);
-//            if (!optionalFileSize.isPresent()) {
-//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.sourcePath);
-//            }
-//        }
-
-        final String specification = configuration.getStringProperty("rheem.spark.objectfilesource.load");
-        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.objectfilesource.load";
     }
 
     @Override
@@ -96,8 +83,4 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }

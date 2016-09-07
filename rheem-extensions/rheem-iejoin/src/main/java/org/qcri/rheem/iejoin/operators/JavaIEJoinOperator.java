@@ -39,10 +39,10 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         StreamChannel.Instance outputChannel = (StreamChannel.Instance) outputs[0];
 
         Stream<Input> stream0;
@@ -102,15 +102,17 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
 
         ArrayList<org.qcri.rheem.basic.data.Tuple2<Input, Input>> result2 = new ArrayList<>();
         for (Tuple2<Input, Input> t : result) {
-            result2.add(new org.qcri.rheem.basic.data.Tuple2<Input, Input>(t._1(), t._2()));
+            result2.add(new org.qcri.rheem.basic.data.Tuple2<>(t._1(), t._2()));
         }
 
-        outputChannel.<org.qcri.rheem.basic.data.Tuple2<Input, Input>>accept(result2.stream());
+        outputChannel.accept(result2);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaIEJoinOperator<Type0, Type1, Input>(this.getInputType0(), this.getInputType1(),
+        return new JavaIEJoinOperator<>(this.getInputType0(), this.getInputType1(),
                 get0Pivot, get1Pivot, cond0, get0Ref, get1Ref, cond1);
     }
 
@@ -126,9 +128,4 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-    //TODO: what is isExecutedEagerly?
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }

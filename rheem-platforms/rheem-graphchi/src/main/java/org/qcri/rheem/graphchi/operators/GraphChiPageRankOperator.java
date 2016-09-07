@@ -156,6 +156,11 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
     }
 
     @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.graphchi.pagerank.load";
+    }
+
+    @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
     }
@@ -163,11 +168,6 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
-    }
-
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
     }
 
 }

@@ -223,10 +223,10 @@ public class JavaApiTest {
                                     start.reduce((a, b) -> a + b).withName("sum");
                             return new Tuple<>(
                                     start.union(sum).withName("Old+new"),
-                                    sum.map(x -> x).withName("Identity (hotfix)")
+                                    sum
                             );
                         }
-                ).withName("While <= 100")
+                ).withConditionClass(Integer.class).withName("While <= 100")
                 .collect();
 
         Set<Integer> expectedValues = RheemCollections.asSet(1, 2, 3, 6, 12, 24, 48, 96, 192);

@@ -2,10 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.DoWhileOperator;
 import org.qcri.rheem.basic.operators.RepeatOperator;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -16,9 +13,9 @@ import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Java implementation of the {@link DoWhileOperator}.
@@ -45,10 +42,10 @@ public class JavaRepeatOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -71,26 +68,21 @@ public class JavaRepeatOperator<Type>
 
         if (this.iterationCounter >= this.getNumIterations()) {
             // final loop output
-            this.forward(input, (JavaChannelInstance) outputs[FINAL_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            this.forward(input, (JavaChannelInstance) outputs[ITERATION_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, outputs[ITERATION_OUTPUT_INDEX]);
             this.setState(State.RUNNING);
         }
-    }
 
-    private void forward(JavaChannelInstance input, JavaChannelInstance output) {
-        ((StreamChannel.Instance) output).accept(input.provideStream());
+        return Collections.singletonList(operatorContext);
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.repeat.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.repeat.load";
     }
 
     @Override
@@ -111,19 +103,11 @@ public class JavaRepeatOperator<Type>
         }
     }
 
+
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
-
-    @Override
-    public boolean isEvaluatingEagerly(int inputIndex) {
-        return false;
-    }
 }

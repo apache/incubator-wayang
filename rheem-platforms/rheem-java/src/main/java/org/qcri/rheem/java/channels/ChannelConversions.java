@@ -27,13 +27,13 @@ public class ChannelConversions {
     public static final ChannelConversion STREAM_TO_HDFS_TSV = new DefaultChannelConversion(
             StreamChannel.DESCRIPTOR,
             FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new JavaTsvFileSink<>(DataSetType.createDefault(Tuple2.class))
+            () -> new JavaTsvFileSink<>(DataSetType.createDefaultUnchecked(Tuple2.class))
     );
 
     public static final ChannelConversion COLLECTION_TO_HDFS_TSV = new DefaultChannelConversion(
             CollectionChannel.DESCRIPTOR,
             FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new JavaTsvFileSink<>(DataSetType.createDefault(Tuple2.class))
+            () -> new JavaTsvFileSink<>(DataSetType.createDefaultUnchecked(Tuple2.class))
     );
 
     public static final ChannelConversion HDFS_TSV_TO_STREAM = new DefaultChannelConversion(

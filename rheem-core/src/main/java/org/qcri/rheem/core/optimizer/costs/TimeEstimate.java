@@ -71,20 +71,20 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
 
     @Override
     public String toString() {
-        return this.toIntervalString();
+        return this.toIntervalString(false);
 //        return toGMeanString();
     }
 
     @SuppressWarnings("unused")
-    private String toIntervalString() {
+    public String toIntervalString(boolean isProvideRaw) {
         return String.format("(%s .. %s, p=%s)",
-                Formats.formatDuration(this.getLowerEstimate(), true),
-                Formats.formatDuration(this.getUpperEstimate(), true),
+                Formats.formatDuration(this.getLowerEstimate(), isProvideRaw),
+                Formats.formatDuration(this.getUpperEstimate(), isProvideRaw),
                 Formats.formatPercentage(this.getCorrectnessProbability()));
     }
 
     @SuppressWarnings("unused")
-    private String toGMeanString() {
+    public String toGMeanString() {
         final long geometricMeanEstimate = this.getGeometricMeanEstimate();
         final double dev = geometricMeanEstimate == 0 ? 0d : this.getUpperEstimate() / (double) geometricMeanEstimate;
         return String.format("(%s, d=%.1f, p=%s)",

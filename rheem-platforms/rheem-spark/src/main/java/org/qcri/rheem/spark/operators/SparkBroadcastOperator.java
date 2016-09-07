@@ -2,8 +2,6 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.broadcast.Broadcast;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -16,7 +14,6 @@ import org.qcri.rheem.spark.execution.SparkExecutor;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Takes care of creating a {@link Broadcast} that can be used later on.
@@ -32,10 +29,10 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -45,6 +42,8 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
         final Collection<?> collection = input.provideCollection();
         final Broadcast<?> broadcast = sparkExecutor.sc.broadcast(collection);
         output.accept(broadcast);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @SuppressWarnings("unchecked")
@@ -57,11 +56,10 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
         return new SparkBroadcastOperator<>(this);
     }
 
+
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.broadcast.load");
-        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.broadcast.load";
     }
 
     @Override
@@ -75,8 +73,4 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
         return Collections.singletonList(BroadcastChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

@@ -10,6 +10,7 @@ import java.lang.reflect.*;
 import java.net.URI;
 import java.net.URL;
 import java.util.*;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,10 +37,23 @@ public class ReflectionUtils {
     );
 
     private static final List<Tuple<Class<?>, Supplier<?>>> defaultParameterSuppliers = Arrays.asList(
+            new Tuple<>(byte.class, () -> (byte) 0),
+            new Tuple<>(Integer.class, () -> (byte) 0),
+            new Tuple<>(short.class, () -> (short) 0),
+            new Tuple<>(Short.class, () -> (short) 0),
             new Tuple<>(int.class, () -> 0),
             new Tuple<>(Integer.class, () -> 0),
             new Tuple<>(long.class, () -> 0L),
-            new Tuple<>(Long.class, () -> 0L)
+            new Tuple<>(Long.class, () -> 0L),
+            new Tuple<>(boolean.class, () -> false),
+            new Tuple<>(Boolean.class, () -> false),
+            new Tuple<>(float.class, () -> 0f),
+            new Tuple<>(Float.class, () -> 0f),
+            new Tuple<>(double.class, () -> 0d),
+            new Tuple<>(Double.class, () -> 0d),
+            new Tuple<>(char.class, () -> '\0'),
+            new Tuple<>(Character.class, () -> '\0'),
+            new Tuple<>(String.class, () -> "")
     );
 
     /**
@@ -368,4 +382,31 @@ public class ReflectionUtils {
         return result;
     }
 
+    /**
+     * Retrieve a property from an object.
+     *
+     * @param obj      from which the property should be retrieved
+     * @param property the property
+     * @param <T>      the return type
+     * @return the property
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T getProperty(Object obj, String property) {
+        Class<?> artifactClass = obj.getClass();
+        String accessorName = "get" + Character.toUpperCase(property.charAt(0)) + property.substring(1);
+        try {
+            do {
+                final Optional<Method> optMethod = Arrays.stream(artifactClass.getMethods())
+                        .filter(method -> method.getName().equals(accessorName))
+                        .findAny();
+                if (optMethod.isPresent()) {
+                    return (T) artifactClass.getMethod(accessorName).invoke(obj);
+                }
+                artifactClass = artifactClass.getSuperclass();
+            } while (artifactClass != null);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(String.format("Could not execute %s() on %s.", accessorName, obj), e);
+        }
+        throw new IllegalArgumentException(String.format("Did not find method %s() for %s.", accessorName, obj));
+    }
 }

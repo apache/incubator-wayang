@@ -7,7 +7,7 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -52,10 +52,10 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -63,6 +63,7 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
         final Function<Collection<ConvergenceType>, Boolean> stoppingCondition =
                 sparkExecutor.getCompiler().compile(this.criterionDescriptor, this, operatorContext, inputs);
         boolean endloop = false;
+        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
         switch (this.getState()) {
             case NOT_STARTED:
                 assert inputs[INITIAL_INPUT_INDEX] != null;
@@ -81,6 +82,8 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
                 } catch (Exception e) {
                     throw new RheemException(String.format("Could not evaluate stopping condition for %s.", this), e);
                 }
+                executedOperatorContexts.add(operatorContext);
+                convergenceInput.getLazyChannelLineage().collectAndMark(executedOperatorContexts);
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -89,15 +92,16 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            ((RddChannel.Instance) outputs[FINAL_OUTPUT_INDEX]).accept(iterationInput.provideRdd(), sparkExecutor);
+            sparkExecutor.forward(iterationInput, outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            ((RddChannel.Instance) outputs[ITERATION_OUTPUT_INDEX]).accept(iterationInput.provideRdd(), sparkExecutor);
+            sparkExecutor.forward(iterationInput, outputs[ITERATION_OUTPUT_INDEX]);
             this.setState(State.RUNNING);
         }
 
+        return executedOperatorContexts;
     }
 
     @Override
@@ -111,14 +115,16 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.while.load");
-        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
-        final LoadProfileEstimator udfEstimator = configuration
-                .getFunctionLoadProfileEstimatorProvider()
-                .provideFor(this.criterionDescriptor);
-        mainEstimator.nest(udfEstimator);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.while.load";
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                SparkExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.criterionDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override
@@ -142,13 +148,4 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
         // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
-
-    @Override
-    public boolean isEvaluatingEagerly(int inputIndex) {
-        return inputIndex == CONVERGENCE_INPUT_INDEX;
-    }
 }

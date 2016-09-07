@@ -1,6 +1,9 @@
 package org.qcri.rheem.core.test;
 
-import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
@@ -10,13 +13,23 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * TODO
+ * Dummy {@link ExecutionOperator} for test purposes.
  */
 public class DummyExecutionOperator extends OperatorBase implements ExecutionOperator {
 
     public List<List<ChannelDescriptor>> supportedInputChannelDescriptors = new ArrayList<>();
 
     public List<List<ChannelDescriptor>> supportedOutputChannelDescriptors = new ArrayList<>();
+
+    private int someProperty;
+
+    public int getSomeProperty() {
+        return someProperty;
+    }
+
+    public void setSomeProperty(int someProperty) {
+        this.someProperty = someProperty;
+    }
 
     public DummyExecutionOperator(int numInputs, int numOutputs, boolean isSupportingBroadcastInputs) {
         super(numInputs, numOutputs, isSupportingBroadcastInputs);
@@ -45,8 +58,5 @@ public class DummyExecutionOperator extends OperatorBase implements ExecutionOpe
         return this.supportedOutputChannelDescriptors.get(index);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
+
 }

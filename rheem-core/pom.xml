@@ -46,17 +46,20 @@
             <artifactId>juel-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>de.hpi.isg</groupId>
-            <artifactId>profiledb-instrumentation</artifactId>
-        </dependency>
-        <dependency>
             <groupId>de.odysseus.juel</groupId>
             <artifactId>juel-impl</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>de.hpi.isg</groupId>
+            <artifactId>profiledb-instrumentation</artifactId>
+        </dependency>
+        <dependency>
             <groupId>de.hpi.isg</groupId>
             <artifactId>profiledb-store</artifactId>
-            <version>0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

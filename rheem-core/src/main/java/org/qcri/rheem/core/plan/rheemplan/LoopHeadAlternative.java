@@ -78,6 +78,16 @@ public class LoopHeadAlternative extends OperatorAlternative implements LoopHead
     }
 
     @Override
+    public Collection<InputSlot<?>> getConditionInputSlots() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Collection<OutputSlot<?>> getConditionOutputSlots() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public int getNumExpectedIterations() {
         return this.originalLoopHead.getNumExpectedIterations();
     }

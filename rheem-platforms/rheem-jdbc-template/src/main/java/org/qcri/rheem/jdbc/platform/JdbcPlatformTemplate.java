@@ -22,8 +22,6 @@ public abstract class JdbcPlatformTemplate extends Platform {
 
     public final String coresProperty = String.format("rheem.%s.cores", this.getPlatformId());
 
-    public final String hdfsMsPerMbProperty = String.format("rheem.%s.hdfs.ms-per-mb", this.getPlatformId());
-
     public final String jdbcUrlProperty = String.format("rheem.%s.jdbc.url", this.getPlatformId());
 
     public final String jdbcUserProperty = String.format("rheem.%s.jdbc.user", this.getPlatformId());
@@ -63,10 +61,9 @@ public abstract class JdbcPlatformTemplate extends Platform {
     public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
         int cpuMhz = (int) configuration.getLongProperty(this.cpuMhzProperty);
         int numCores = (int) configuration.getLongProperty(this.coresProperty);
-        double hdfsMsPerMb = configuration.getDoubleProperty(this.hdfsMsPerMbProperty);
         return LoadProfileToTimeConverter.createDefault(
                 LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000.)),
-                LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000),
+                LoadToTimeConverter.createLinearCoverter(0),
                 LoadToTimeConverter.createLinearCoverter(0),
                 (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
         );

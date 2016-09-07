@@ -154,6 +154,16 @@ public class RepeatOperator<Type> extends OperatorBase implements ElementaryOper
         return Collections.singletonList(this.getInput(INITIAL_INPUT_INDEX));
     }
 
+    @Override
+    public Collection<InputSlot<?>> getConditionInputSlots() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Collection<OutputSlot<?>> getConditionOutputSlots() {
+        return Collections.emptyList();
+    }
+
     public int getNumIterations() {
         return this.numIterations;
     }
@@ -162,4 +172,5 @@ public class RepeatOperator<Type> extends OperatorBase implements ElementaryOper
     public int getNumExpectedIterations() {
         return this.getNumIterations();
     }
+
 }

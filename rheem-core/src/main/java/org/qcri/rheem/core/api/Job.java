@@ -22,6 +22,7 @@ import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
+import org.qcri.rheem.core.profiling.PartialExecutionMeasurement;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -76,9 +77,19 @@ public class Job extends OneTimeExecutable {
     private CardinalityEstimatorManager cardinalityEstimatorManager;
 
     /**
-     * {@link StopWatch} to measure some key figures.
+     * Collects metadata w.r.t. the processing of this instance.
+     */
+    private final Experiment experiment;
+
+    /**
+     * {@link StopWatch} to measure some key figures for the {@link #experiment}.
      */
     private final StopWatch stopWatch;
+
+    /**
+     * Provides IDs for {@link PartialExecutionMeasurement}s.
+     */
+    private int nextPartialExecutionMeasurementId = 0;
 
     /**
      * {@link TimeMeasurement}s for the optimization and the execution phases.
@@ -123,6 +134,7 @@ public class Job extends OneTimeExecutable {
         }
 
         // Prepare instrumentation.
+        this.experiment = experiment;
         this.stopWatch = new StopWatch(experiment);
         this.optimizationRound = this.stopWatch.getOrCreateRound("Optimization");
         this.executionRound = this.stopWatch.getOrCreateRound("Execution");
@@ -585,5 +597,27 @@ public class Job extends OneTimeExecutable {
     @Override
     public String toString() {
         return String.format("%s[%s]", this.getClass().getSimpleName(), this.name);
+    }
+
+    /**
+     * Provide the {@link Experiment} being recorded with the execution of this instance.
+     *
+     * @return the {@link Experiment}
+     */
+    public Experiment getExperiment() {
+        return this.experiment;
+    }
+
+    /**
+     * Adds a new {@link PartialExecutionMeasurement} to the {@link Experiment} of this instance.
+     *
+     * @param partialExecution provided data for the {@link PartialExecutionMeasurement}
+     * @return the {@link PartialExecutionMeasurement}
+     */
+    public PartialExecutionMeasurement addPartialExecutionMeasurement(PartialExecution partialExecution) {
+        String id = String.format("par-ex-%03d", this.nextPartialExecutionMeasurementId++);
+        final PartialExecutionMeasurement measurement = new PartialExecutionMeasurement(id, partialExecution);
+        this.experiment.addMeasurement(measurement);
+        return measurement;
     }
 }

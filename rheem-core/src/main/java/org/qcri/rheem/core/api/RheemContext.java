@@ -34,7 +34,7 @@ public class RheemContext {
     }
 
     public RheemContext(Configuration configuration) {
-        this.configuration = configuration;
+        this.configuration = configuration.fork(String.format("RheemContext(%s)", configuration.getName()));
     }
 
     /**
@@ -130,11 +130,7 @@ public class RheemContext {
 
     public CardinalityRepository getCardinalityRepository() {
         if (this.cardinalityRepository == null) {
-            final File repoFile = new File(StringUtils.join(
-                    Arrays.asList(System.getProperty("user.home"), ".rheem", "cardinality-repository.json"),
-                    File.separator
-            ));
-            this.cardinalityRepository = new CardinalityRepository(repoFile.getPath());
+            this.cardinalityRepository = new CardinalityRepository(this.configuration);
         }
         return this.cardinalityRepository;
     }

@@ -1,11 +1,8 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.IntersectOperator;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -44,10 +41,10 @@ public class JavaIntersectOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -55,27 +52,32 @@ public class JavaIntersectOperator<Type>
         // 1) Create a probing table for the smaller input. This must be a set to deal with duplicates there.
         // 2) Probe the greater input against the table. Remove on probing to deal with duplicates there.
 
-        final CardinalityEstimate cardinalityEstimate0 = this.getInput(0).getCardinalityEstimate();
-        final CardinalityEstimate cardinalityEstimate1 = this.getInput(0).getCardinalityEstimate();
+        final CardinalityEstimate cardinalityEstimate0 = operatorContext.getInputCardinality(0);
+        final CardinalityEstimate cardinalityEstimate1 = operatorContext.getOutputCardinality(0);
 
         boolean isMaterialize0 = cardinalityEstimate0 != null &&
                 cardinalityEstimate1 != null &&
                 cardinalityEstimate0.getUpperEstimate() <= cardinalityEstimate1.getUpperEstimate();
 
+        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
         final Stream<Type> candidateStream;
         final Set<Type> probingTable;
         if (isMaterialize0) {
             candidateStream = ((JavaChannelInstance) inputs[0]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[1]).provideStream());
+            inputs[0].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+            outputs[0].addPredecessor(inputs[1]);
         } else {
             candidateStream = ((JavaChannelInstance) inputs[1]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[0]).provideStream());
+            inputs[1].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+            outputs[0].addPredecessor(inputs[0]);
         }
 
         Stream<Type> intersectStream = candidateStream.filter(probingTable::remove);
-
-
         ((StreamChannel.Instance) outputs[0]).accept(intersectStream);
+
+        return executedOperatorContexts;
     }
 
     /**
@@ -89,11 +91,8 @@ public class JavaIntersectOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.intersect.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.intersect.load";
     }
 
     @Override
@@ -113,8 +112,4 @@ public class JavaIntersectOperator<Type>
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

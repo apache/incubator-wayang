@@ -1,13 +1,19 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.TextFileSink;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.platform.JavaPlatform;
@@ -16,8 +22,10 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -34,14 +42,14 @@ public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutio
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         JavaExecutor javaExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == 1;
         assert outputs.length == 0;
 
-        StreamChannel.Instance input = (StreamChannel.Instance) inputs[0];
+        JavaChannelInstance input = (JavaChannelInstance) inputs[0];
         final FileSystem fs = FileSystems.requireFileSystem(this.textFileUrl);
         final Function<T, String> formatter = javaExecutor.getCompiler().compile(this.formattingDescriptor);
 
@@ -60,11 +68,27 @@ public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutio
         } catch (IOException e) {
             throw new RheemException("Writing failed.", e);
         }
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
+    }
+
+
+    @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.textfilesink.load";
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.formattingDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        return Collections.singletonList(StreamChannel.DESCRIPTOR);
+        return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
     }
 
     @Override
@@ -72,8 +96,4 @@ public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutio
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

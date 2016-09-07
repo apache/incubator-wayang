@@ -5,6 +5,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
@@ -61,10 +62,10 @@ public class SparkShufflePartitionSampleOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -77,7 +78,7 @@ public class SparkShufflePartitionSampleOperator<Type>
 
         if (sampleSize >= datasetSize) { //return all and return
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
-            return;
+            return null;
         }
 
         List<Type> result;
@@ -111,6 +112,7 @@ public class SparkShufflePartitionSampleOperator<Type>
         // assuming the sample is small better use a collection instance, the optimizer can transform the output if necessary
         ((CollectionChannel.Instance) outputs[0]).accept(result);
 
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -119,13 +121,13 @@ public class SparkShufflePartitionSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
         // NB: This was not measured but is guesswork, adapted from SparkFilterOperator.
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator = new NestableLoadProfileEstimator<ExecutionOperator>(
+                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
+                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 10000),
+                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 0),
                 (in, out) -> 0.23d,
                 550
         );
@@ -145,10 +147,6 @@ public class SparkShufflePartitionSampleOperator<Type>
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }
 
 class ShufflePartition<V, T, R> implements Function2<V, T, R> {

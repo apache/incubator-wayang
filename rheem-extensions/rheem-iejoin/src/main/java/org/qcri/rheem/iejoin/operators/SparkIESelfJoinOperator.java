@@ -36,10 +36,10 @@ public class SparkIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exte
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -134,6 +134,8 @@ public class SparkIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exte
         outRDD = tmpOut2.join(r2RowIDS).map(in -> new org.qcri.rheem.basic.data.Tuple2<Input, Input>(in._2()._1(), in._2()._2()._2()));
 
         output.accept(outRDD, sparkExecutor);
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -157,10 +159,5 @@ public class SparkIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exte
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
-    //TODO: What is this?
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }
 

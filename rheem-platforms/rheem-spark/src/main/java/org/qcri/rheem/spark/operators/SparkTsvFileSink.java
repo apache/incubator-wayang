@@ -4,8 +4,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
@@ -17,9 +15,9 @@ import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * {@link Operator} for the {@link SparkPlatform} that creates a TSV file.
@@ -43,10 +41,10 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
 
         final FileChannel.Instance output = (FileChannel.Instance) outputs[0];
@@ -67,6 +65,7 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
                 .saveAsTextFile(targetPath);
 
 
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -75,11 +74,8 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.tsvfilesink.load");
-        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
-        return Optional.of(mainEstimator);
-
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.tsvfilesink.load";
     }
 
     @Override
@@ -90,11 +86,6 @@ public class SparkTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> imple
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
-    }
-
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
     }
 
 }

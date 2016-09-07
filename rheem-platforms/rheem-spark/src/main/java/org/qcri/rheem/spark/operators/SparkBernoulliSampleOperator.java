@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.SampleOperator;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -14,10 +15,7 @@ import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 
 /**
@@ -58,10 +56,10 @@ public class SparkBernoulliSampleOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -76,6 +74,8 @@ public class SparkBernoulliSampleOperator<Type>
         this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -84,13 +84,13 @@ public class SparkBernoulliSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
         // NB: This was not measured but is guesswork, adapted from SparkFilterOperator.
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+        final LoadProfileEstimator<ExecutionOperator> mainEstimator = new NestableLoadProfileEstimator<>(
+                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
+                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 10000),
+                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 0),
                 (in, out) -> 0.23d,
                 550
         );
@@ -114,8 +114,4 @@ public class SparkBernoulliSampleOperator<Type>
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }
