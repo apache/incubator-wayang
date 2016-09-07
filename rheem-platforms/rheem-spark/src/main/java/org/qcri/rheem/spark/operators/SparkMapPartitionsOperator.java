@@ -53,10 +53,10 @@ public class SparkMapPartitionsOperator<InputType, OutputType>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -70,6 +70,8 @@ public class SparkMapPartitionsOperator<InputType, OutputType>
         final JavaRDD<OutputType> outputRdd = inputRdd.mapPartitions(mapFunction);
         this.name(outputRdd);
         output.accept(outputRdd, sparkExecutor);
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -104,9 +106,5 @@ public class SparkMapPartitionsOperator<InputType, OutputType>
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }
 

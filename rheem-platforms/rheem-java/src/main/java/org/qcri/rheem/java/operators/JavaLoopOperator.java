@@ -64,10 +64,9 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         final Predicate<Collection<ConvergenceType>> stoppingCondition =
                 javaExecutor.getCompiler().compile(this.criterionDescriptor);
         JavaExecutor.openFunction(this, stoppingCondition, inputs, operatorContext);
-        boolean endloop = false;
 
+        boolean endloop = false;
         Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
-        executedOperatorContexts.add(operatorContext);
         final Collection<ConvergenceType> convergenceCollection;
         final JavaChannelInstance input;
         switch (this.getState()) {
@@ -76,8 +75,7 @@ public class JavaLoopOperator<InputType, ConvergenceType>
                 assert inputs[INITIAL_CONVERGENCE_INPUT_INDEX] != null;
 
                 input = (JavaChannelInstance) inputs[INITIAL_INPUT_INDEX];
-                convergenceCollection = ((CollectionChannel.Instance) inputs[INITIAL_CONVERGENCE_INPUT_INDEX]).provideCollection();
-                inputs[INITIAL_CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+                JavaExecutionOperator.forward(inputs[INITIAL_CONVERGENCE_INPUT_INDEX], outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]);
                 break;
             case RUNNING:
                 assert inputs[ITERATION_INPUT_INDEX] != null;
@@ -85,8 +83,12 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
                 input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
                 convergenceCollection = ((CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX]).provideCollection();
-                inputs[INITIAL_CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+                inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+
                 endloop = stoppingCondition.test(convergenceCollection);
+                executedOperatorContexts.add(operatorContext);
+
+                JavaExecutionOperator.forward(inputs[ITERATION_CONVERGENCE_INPUT_INDEX], outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]);
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -95,15 +97,13 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            JavaExecutionOperator.forward(input, (JavaChannelInstance) outputs[FINAL_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            JavaExecutionOperator.forward(input, (JavaChannelInstance) outputs[ITERATION_OUTPUT_INDEX]);
-            // We do not use forward(...) because we might not be able to consume the input JavaChannelInstance twice.
-            ((CollectionChannel.Instance) outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]).accept(convergenceCollection);
+            JavaExecutionOperator.forward(input, outputs[ITERATION_OUTPUT_INDEX]);
             this.setState(State.RUNNING);
         }
 

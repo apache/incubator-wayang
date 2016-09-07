@@ -67,10 +67,10 @@ public class SparkRandomPartitionSampleOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -83,7 +83,7 @@ public class SparkRandomPartitionSampleOperator<Type>
 
         if (sampleSize >= datasetSize) { //return whole dataset
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
-            return;
+            return null;
         }
 
         List<Type> result;
@@ -155,6 +155,8 @@ public class SparkRandomPartitionSampleOperator<Type>
 
         // assuming the sample is small better use a collection instance, the optimizer can transform the output if necessary
         ((CollectionChannel.Instance) outputs[0]).accept(result);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -176,10 +178,6 @@ public class SparkRandomPartitionSampleOperator<Type>
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }
 
 class PartitionSampleFunction<V> extends AbstractFunction1<scala.collection.Iterator<V>, List<V>> implements Serializable {

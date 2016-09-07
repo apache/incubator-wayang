@@ -4,10 +4,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
@@ -19,6 +15,7 @@ import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -41,10 +38,10 @@ public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecut
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         final String sourcePath;
         if (this.sourcePath != null) {
             assert inputs.length == 0;
@@ -69,6 +66,8 @@ public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecut
         this.name(dataQuantaRdd);
 
         output.accept(dataQuantaRdd, sparkExecutor);
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
 
@@ -90,11 +89,6 @@ public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecut
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
-    }
-
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
     }
 
 }

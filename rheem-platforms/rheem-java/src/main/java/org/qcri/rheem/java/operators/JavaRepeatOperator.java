@@ -68,12 +68,12 @@ public class JavaRepeatOperator<Type>
 
         if (this.iterationCounter >= this.getNumIterations()) {
             // final loop output
-            JavaExecutionOperator.forward(input, (JavaChannelInstance) outputs[FINAL_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            JavaExecutionOperator.forward(input, (JavaChannelInstance) outputs[ITERATION_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, outputs[ITERATION_OUTPUT_INDEX]);
             this.setState(State.RUNNING);
         }
 

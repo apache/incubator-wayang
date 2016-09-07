@@ -66,7 +66,6 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
         boolean endloop = false;
 
         Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
-        executedOperatorContexts.add(operatorContext);
         final Collection<ConvergenceType> convergenceCollection;
         final JavaChannelInstance input;
         switch (this.getState()) {
@@ -81,8 +80,9 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
                 convergenceCollection = ((CollectionChannel.Instance) inputs[CONVERGENCE_INPUT_INDEX]).provideCollection();
                 endloop = stoppingCondition.test(convergenceCollection);
-                input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
+                executedOperatorContexts.add(operatorContext);
                 inputs[CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+                input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -91,12 +91,12 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            JavaExecutionOperator.forward(input, (JavaChannelInstance) outputs[FINAL_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            JavaExecutionOperator.forward(input, (JavaChannelInstance) outputs[ITERATION_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, outputs[ITERATION_OUTPUT_INDEX]);
             this.setState(State.RUNNING);
         }
 

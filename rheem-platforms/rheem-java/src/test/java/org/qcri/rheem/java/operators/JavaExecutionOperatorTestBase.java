@@ -5,6 +5,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.java.channels.CollectionChannel;
@@ -39,7 +40,14 @@ public class JavaExecutionOperatorTestBase {
 
     protected static OptimizationContext.OperatorContext createOperatorContext(Operator operator) {
         OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
-        return optimizationContext.addOneTimeOperator(operator);
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(operator);
+        for (int i = 0; i < operator.getNumInputs(); i++) {
+            operatorContext.setInputCardinality(i, new CardinalityEstimate(100, 10000, 0.1));
+        }
+        for (int i = 0; i < operator.getNumOutputs(); i++) {
+            operatorContext.setOutputCardinality(i, new CardinalityEstimate(100, 10000, 0.1));
+        }
+        return operatorContext;
     }
 
     protected static void evaluate(JavaExecutionOperator operator,

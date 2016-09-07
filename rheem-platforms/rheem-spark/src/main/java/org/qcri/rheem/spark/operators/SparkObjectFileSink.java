@@ -2,10 +2,6 @@ package org.qcri.rheem.spark.operators;
 
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
@@ -17,6 +13,7 @@ import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,10 +36,10 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length <= 1;
 
@@ -54,6 +51,8 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
                 .coalesce(1) // TODO: Remove. This only hotfixes the issue that JavaObjectFileSource reads only a single file.
                 .saveAsObjectFile(targetPath);
         LoggerFactory.getLogger(this.getClass()).info("Writing dataset to {}.", targetPath);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -76,8 +75,4 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
         return Collections.singletonList(FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

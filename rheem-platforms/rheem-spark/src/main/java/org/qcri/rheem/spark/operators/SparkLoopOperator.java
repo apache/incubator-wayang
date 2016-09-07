@@ -8,13 +8,12 @@ import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
@@ -56,10 +55,10 @@ public class SparkLoopOperator<InputType, ConvergenceType>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -68,31 +67,34 @@ public class SparkLoopOperator<InputType, ConvergenceType>
 
         final Function<Collection<ConvergenceType>, Boolean> stoppingCondition =
                 sparkExecutor.getCompiler().compile(this.criterionDescriptor, this, operatorContext, inputs);
-        boolean endloop = false;
 
+        boolean endloop = false;
+        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
+        final Collection<ConvergenceType> convergenceCollection;
+        final RddChannel.Instance input;
         switch (this.getState()) {
             case NOT_STARTED:
                 assert inputs[INITIAL_INPUT_INDEX] != null;
                 assert inputs[INITIAL_CONVERGENCE_INPUT_INDEX] != null;
 
-                iterationInput = (RddChannel.Instance) inputs[INITIAL_INPUT_INDEX];
-                convergenceInput = (CollectionChannel.Instance) inputs[INITIAL_CONVERGENCE_INPUT_INDEX];
+                input = (RddChannel.Instance) inputs[INITIAL_INPUT_INDEX];
+                JavaExecutionOperator.forward(inputs[INITIAL_CONVERGENCE_INPUT_INDEX], outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]);
                 break;
             case RUNNING:
                 assert inputs[ITERATION_INPUT_INDEX] != null;
                 assert inputs[ITERATION_CONVERGENCE_INPUT_INDEX] != null;
 
-                iterationInput = (RddChannel.Instance) inputs[ITERATION_INPUT_INDEX];
-                convergenceInput = (CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX];
-                Collection<ConvergenceType> convergenceCollection = convergenceInput.provideCollection();
+                input = (RddChannel.Instance) inputs[ITERATION_INPUT_INDEX];
+                convergenceCollection = ((CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX]).provideCollection();
+                inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+
                 try {
                     endloop = stoppingCondition.call(convergenceCollection);
                 } catch (Exception e) {
-                    throw new RheemException(
-                            String.format("Could not evaluate stopping condition for %s.", this),
-                            e
-                    );
+                    throw new RheemException(String.format("Executing %s's condition failed.", this), e);
                 }
+                executedOperatorContexts.add(operatorContext);
+                JavaExecutionOperator.forward(inputs[ITERATION_CONVERGENCE_INPUT_INDEX], outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]);
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -101,18 +103,17 @@ public class SparkLoopOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            ((RddChannel.Instance) outputs[FINAL_OUTPUT_INDEX]).accept(iterationInput.provideRdd(), sparkExecutor);
+            SparkExecutionOperator.forward(input, outputs[FINAL_OUTPUT_INDEX], sparkExecutor);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            ((RddChannel.Instance) outputs[ITERATION_OUTPUT_INDEX]).accept(iterationInput.provideRdd(), sparkExecutor);
-            // We do not use forward(...) because we might not be able to consume the input JavaChannelInstance twice.
-            ((CollectionChannel.Instance) outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]).accept(convergenceInput.provideCollection());
+            SparkExecutionOperator.forward(input, outputs[ITERATION_OUTPUT_INDEX], sparkExecutor);
             this.setState(State.RUNNING);
         }
 
+        return executedOperatorContexts;
     }
 
     @Override
@@ -167,11 +168,6 @@ public class SparkLoopOperator<InputType, ConvergenceType>
             default:
                 throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
         }
-    }
-
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
     }
 
 }

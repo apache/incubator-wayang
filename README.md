@@ -38,6 +38,7 @@ In addition, you can obtain the most recent snapshot version of Rheem via Sonaty
 <repositories>
   <repository>
     <id>sonatype-snapshots</id>
+    <name>Sonatype Snapshot Repository</name>
     <url>https://oss.sonatype.org/content/repositories/snapshots</url>
   </repository>
 <repositories>

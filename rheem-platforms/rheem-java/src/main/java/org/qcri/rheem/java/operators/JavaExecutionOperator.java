@@ -1,8 +1,10 @@
 package org.qcri.rheem.java.operators;
 
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
@@ -45,9 +47,15 @@ public interface JavaExecutionOperator extends ExecutionOperator {
      * @param input that should be forwarded
      * @param output to that should be forwarded
      */
-    static void forward(JavaChannelInstance input, JavaChannelInstance output) {
+    static void forward(ChannelInstance input, ChannelInstance output) {
         // Do the forward.
-        ((StreamChannel.Instance) output).accept(input.provideStream());
+        if (output instanceof CollectionChannel.Instance) {
+            ((CollectionChannel.Instance) output).accept(((CollectionChannel.Instance) input).provideCollection());
+        } else if (output instanceof  StreamChannel.Instance) {
+            ((StreamChannel.Instance) output).accept(((JavaChannelInstance) input).provideStream());
+        } else {
+            throw new RheemException(String.format("Cannot forward %s to %s.", input, output));
+        }
 
         // Manipulate the lineage.
         output.getLazyChannelLineage().copyRootFrom(input.getLazyChannelLineage());

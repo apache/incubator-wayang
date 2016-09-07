@@ -17,7 +17,6 @@ import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -83,11 +82,10 @@ public class SparkExecutor extends PushExecutorTemplate {
         );
 
         // Execute.
-        // todo
-        final Collection<OptimizationContext.OperatorContext> operatorContexts = Collections.emptyList();
+        final Collection<OptimizationContext.OperatorContext> operatorContexts;
         long startTime = System.currentTimeMillis();
         try {
-            cast(task.getOperator()).evaluate(
+            operatorContexts = cast(task.getOperator()).evaluate(
                     toArray(inputChannelInstances),
                     outputChannelInstances,
                     this,

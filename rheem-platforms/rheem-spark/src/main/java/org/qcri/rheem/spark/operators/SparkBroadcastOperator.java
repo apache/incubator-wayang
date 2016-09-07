@@ -1,11 +1,7 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.broadcast.Broadcast;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -33,10 +29,10 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -46,6 +42,8 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
         final Collection<?> collection = input.provideCollection();
         final Broadcast<?> broadcast = sparkExecutor.sc.broadcast(collection);
         output.accept(broadcast);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @SuppressWarnings("unchecked")
@@ -75,8 +73,4 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
         return Collections.singletonList(BroadcastChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
-    }
 }

@@ -12,6 +12,8 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.platform.JavaPlatform;
@@ -20,8 +22,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UncheckedIOException;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -47,7 +49,7 @@ public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutio
         assert inputs.length == 1;
         assert outputs.length == 0;
 
-        StreamChannel.Instance input = (StreamChannel.Instance) inputs[0];
+        JavaChannelInstance input = (JavaChannelInstance) inputs[0];
         final FileSystem fs = FileSystems.requireFileSystem(this.textFileUrl);
         final Function<T, String> formatter = javaExecutor.getCompiler().compile(this.formattingDescriptor);
 
@@ -86,7 +88,7 @@ public class JavaTextFileSink<T> extends TextFileSink<T> implements JavaExecutio
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        return Collections.singletonList(StreamChannel.DESCRIPTOR);
+        return Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR);
     }
 
     @Override

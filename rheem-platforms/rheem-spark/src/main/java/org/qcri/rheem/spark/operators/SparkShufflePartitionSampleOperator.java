@@ -62,10 +62,10 @@ public class SparkShufflePartitionSampleOperator<Type>
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -78,7 +78,7 @@ public class SparkShufflePartitionSampleOperator<Type>
 
         if (sampleSize >= datasetSize) { //return all and return
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
-            return;
+            return null;
         }
 
         List<Type> result;
@@ -112,6 +112,7 @@ public class SparkShufflePartitionSampleOperator<Type>
         // assuming the sample is small better use a collection instance, the optimizer can transform the output if necessary
         ((CollectionChannel.Instance) outputs[0]).accept(result);
 
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -146,10 +147,6 @@ public class SparkShufflePartitionSampleOperator<Type>
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
-    @Override
-    public boolean isExecutedEagerly() {
-        return false;
-    }
 }
 
 class ShufflePartition<V, T, R> implements Function2<V, T, R> {

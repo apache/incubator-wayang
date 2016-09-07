@@ -1,22 +1,16 @@
 package org.qcri.rheem.spark.operators;
 
 import org.qcri.rheem.basic.operators.RepeatOperator;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -43,10 +37,10 @@ public class SparkRepeatOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs,
-                         ChannelInstance[] outputs,
-                         SparkExecutor sparkExecutor,
-                         OptimizationContext.OperatorContext operatorContext) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -70,15 +64,16 @@ public class SparkRepeatOperator<Type>
 
         if (this.iterationCounter >= this.getNumIterations()) {
             // final loop output
-            ((RddChannel.Instance) outputs[FINAL_OUTPUT_INDEX]).accept(iterationInput.provideRdd(), sparkExecutor);
+            SparkExecutionOperator.forward(iterationInput, outputs[FINAL_OUTPUT_INDEX], sparkExecutor);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            ((RddChannel.Instance) outputs[ITERATION_OUTPUT_INDEX]).accept(iterationInput.provideRdd(), sparkExecutor);
+            SparkExecutionOperator.forward(iterationInput, outputs[ITERATION_OUTPUT_INDEX], sparkExecutor);
             this.setState(State.RUNNING);
         }
 
+        return Collections.singletonList(operatorContext);
     }
 
     @Override
@@ -108,11 +103,6 @@ public class SparkRepeatOperator<Type>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
         // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
-    }
-
-    @Override
-    public boolean isExecutedEagerly() {
-        return true;
     }
 
 }

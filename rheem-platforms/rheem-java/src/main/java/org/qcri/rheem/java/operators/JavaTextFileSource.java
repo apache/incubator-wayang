@@ -15,8 +15,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -48,13 +46,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        String url;
-        try {
-            url = new URL(this.getInputUrl()).toString();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Could not parse input URL.", e);
-        }
-
+        String url = this.getInputUrl().trim();
         FileSystem fs = FileSystems.getFileSystem(url).orElseThrow(
                 () -> new RheemException(String.format("Cannot access file system of %s.", url))
         );
