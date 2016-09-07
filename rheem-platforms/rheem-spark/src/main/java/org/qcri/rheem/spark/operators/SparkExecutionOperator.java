@@ -68,23 +68,4 @@ public interface SparkExecutionOperator extends ExecutionOperator {
         }
     }
 
-    /**
-     * Utility method to forward a {@link RddChannel.Instance} to another.
-     *
-     * @param input  that should be forwarded
-     * @param output to that should be forwarded
-     */
-    static void forward(ChannelInstance input, ChannelInstance output, SparkExecutor sparkExecutor) {
-        final RddChannel.Instance rddInput = (RddChannel.Instance) input;
-        final RddChannel.Instance rddOutput = (RddChannel.Instance) output;
-
-        // Do the forward.
-        assert rddInput.getChannel().getDescriptor() != RddChannel.CACHED_DESCRIPTOR ||
-                rddOutput.getChannel().getDescriptor() == RddChannel.CACHED_DESCRIPTOR;
-        rddOutput.accept(rddInput.provideRdd(), sparkExecutor);
-
-        // Manipulate the lineage.
-        output.getLazyChannelLineage().copyRootFrom(input.getLazyChannelLineage());
-    }
-
 }

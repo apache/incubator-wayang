@@ -103,13 +103,13 @@ public class SparkLoopOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            SparkExecutionOperator.forward(input, outputs[FINAL_OUTPUT_INDEX], sparkExecutor);
+            sparkExecutor.forward(input, outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            SparkExecutionOperator.forward(input, outputs[ITERATION_OUTPUT_INDEX], sparkExecutor);
+            sparkExecutor.forward(input, outputs[ITERATION_OUTPUT_INDEX]);
             this.setState(State.RUNNING);
         }
 

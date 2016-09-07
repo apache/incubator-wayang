@@ -92,12 +92,12 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            SparkExecutionOperator.forward(iterationInput, outputs[FINAL_OUTPUT_INDEX], sparkExecutor);
+            sparkExecutor.forward(iterationInput, outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            SparkExecutionOperator.forward(iterationInput, outputs[ITERATION_OUTPUT_INDEX], sparkExecutor);
+            sparkExecutor.forward(iterationInput, outputs[ITERATION_OUTPUT_INDEX]);
             this.setState(State.RUNNING);
         }
 
