@@ -61,7 +61,7 @@ public class GeneticOptimizerApp {
         final double samplingFactor = 1d;
         try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
             this.partialExecutions = executionLog.stream()
-                    .filter(x -> new Random().nextDouble() < samplingFactor)
+                    .filter(partialExecution -> new Random().nextDouble() < samplingFactor)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             throw new RheemException("Could not evaluate execution log.", e);
