@@ -279,7 +279,7 @@ public class GeneticOptimizerApp {
             return new Tuple<>(currentGeneration, individuals);
         }
 
-        int updateFrequency = (int) this.configuration.getLongProperty("rheem.profiler.ga.intermediateupate", -1);
+        int updateFrequency = (int) this.configuration.getLongProperty("rheem.profiler.ga.intermediateupdate", -1);
         System.out.printf("Optimizing %d variables on %d partial executions (e.g., %s).\n",
                 optimizer.getActivatedGenes().cardinality(),
                 optimizer.getData().size(),
