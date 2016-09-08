@@ -97,11 +97,11 @@ public class SparkShufflePartitionSampleOperator<Type>
             List<Integer> pars = new ArrayList<>(1);
             pars.add(partitionID);
             Object samples = sparkContext.runJob(inputRdd.rdd(),
-                    new TakeSampleFunction(tupleID, ((int) (tupleID + sampleSize))),
+                    new TakeSampleFunction(tupleID, tupleID + sampleSize),
                     (scala.collection.Seq) JavaConversions.asScalaBuffer(pars),
                     true, scala.reflect.ClassTag$.MODULE$.apply(List.class));
 
-            tupleID++;
+            tupleID += sampleSize;
             result = ((List<Type>[]) samples)[0];
             if (result == null) { //we reached end of partition, start again
                 miscalculated = true;
