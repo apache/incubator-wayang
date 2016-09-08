@@ -5,7 +5,7 @@
     <parent>
         <artifactId>rheem</artifactId>
         <groupId>org.qcri.rheem</groupId>
-        <version>0.2.0-SNAPSHOT</version>
+        <version>0.2.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -14,43 +14,43 @@
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-core</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-basic</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-java</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-spark</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-sqlite3</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-postgres</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-graphchi</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -61,13 +61,13 @@
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-api</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-iejoin</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
         </dependency>
 
         <!-- Spark is a provided dependency and thus not transitively injected via rheem-spark. -->

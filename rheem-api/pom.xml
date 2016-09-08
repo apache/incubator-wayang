@@ -5,7 +5,7 @@
     <parent>
         <artifactId>rheem</artifactId>
         <groupId>org.qcri.rheem</groupId>
-        <version>0.2.0-SNAPSHOT</version>
+        <version>0.2.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -17,6 +17,25 @@
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>fake-artifacts</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <echo message="Generating fake ${project.build.directory}/${project.artifactId}-${project.version}-sources/javadoc.jar"/>
+                                <!--<touch file="${project.build.directory}/target/${project.artifactId}-${project.version}-sources.jar"/>-->
+                                <touch file="${project.build.directory}/${project.artifactId}-${project.version}-javadoc.jar"/>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -24,35 +43,35 @@
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-core</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-basic</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-java</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-spark</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-sqlite3</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-jdbc-template</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -62,7 +81,7 @@
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-graphchi</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
