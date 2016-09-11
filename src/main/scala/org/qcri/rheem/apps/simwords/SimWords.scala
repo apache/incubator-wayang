@@ -6,6 +6,7 @@ import org.qcri.rheem.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelp
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.plugin.Plugin
+import org.qcri.rheem.core.util.fs.FileSystems
 
 /**
   * This app clusters words by their word neighborhoods in a corpus.
@@ -137,6 +138,8 @@ object SimWords extends ExperimentDescriptor {
     val result = simWords(inputFile, minWordOccurrences, neighborhoodRead, numClusters, numIterations, wordsPerLine)
 
     // Store experiment data.
+    val inputFileSize = FileSystems.getFileSize(inputFile)
+    experiment.getSubject.addConfiguration("inputSize", inputFileSize)
     ProfileDBHelper.store(experiment, configuration)
 
     // Print the results.

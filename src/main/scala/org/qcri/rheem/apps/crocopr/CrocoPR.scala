@@ -7,6 +7,7 @@ import org.qcri.rheem.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelp
 import org.qcri.rheem.core.api.exception.RheemException
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.plugin.Plugin
+import org.qcri.rheem.core.util.fs.FileSystems
 
 /**
   * Rheem implementation of the cross-community PageRank.
@@ -120,6 +121,8 @@ object CrocoPR extends ExperimentDescriptor {
     val pageRanks = pageRank(inputUrl1, inputUrl2, numIterations).toSeq.sortBy(-_._2)
 
     // Store experiment data.
+    val inputFileSize = FileSystems.getFileSize(inputFile)
+    experiment.getSubject.addConfiguration("inputSize", inputFileSize)
     ProfileDBHelper.store(experiment, configuration)
 
     // Print the result.

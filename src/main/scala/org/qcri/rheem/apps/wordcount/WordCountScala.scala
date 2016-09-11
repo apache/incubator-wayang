@@ -6,6 +6,7 @@ import org.qcri.rheem.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelp
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.plugin.Plugin
+import org.qcri.rheem.core.util.fs.FileSystems
 
 /**
   * This is app counts words in a file.
@@ -78,6 +79,8 @@ object WordCountScala extends ExperimentDescriptor {
       }).toSeq.sortBy(-_._2)
 
     // Store experiment data.
+    val inputFileSize = FileSystems.getFileSize(inputFile)
+    experiment.getSubject.addConfiguration("inputSize", inputFileSize)
     ProfileDBHelper.store(experiment, configuration)
 
     // Print results.
