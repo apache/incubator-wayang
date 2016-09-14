@@ -121,8 +121,10 @@ object CrocoPR extends ExperimentDescriptor {
     val pageRanks = pageRank(inputUrl1, inputUrl2, numIterations).toSeq.sortBy(-_._2)
 
     // Store experiment data.
-    val inputFileSize = FileSystems.getFileSize(inputFile)
-    experiment.getSubject.addConfiguration("inputSize", inputFileSize)
+    val inputFileSize1 = FileSystems.getFileSize(inputUrl1)
+    experiment.getSubject.addConfiguration("inputSize1", inputFileSize1)
+    val inputFileSize2 = FileSystems.getFileSize(inputUrl2)
+    experiment.getSubject.addConfiguration("inputSize1", inputFileSize2)
     ProfileDBHelper.store(experiment, configuration)
 
     // Print the result.
