@@ -650,6 +650,35 @@ public class RheemPlans {
     }
 
     /**
+     * Creates and executed a {@link RheemPlan} that counts the number of even and odd numbers using a
+     * {@link MapPartitionsOperator} to pre-aggregate partitions.
+     *
+     * @param rheemContext provide the execution environment
+     * @param inputValues  that should be dissected and counted
+     */
+    public static Collection<Tuple2<String, Integer>> mapPartitions(RheemContext rheemContext, int... inputValues) {
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+
+        // Execute the job.
+        return builder
+                .loadCollection(RheemArrays.asList(inputValues))
+                .mapPartitions(partition -> {
+                    int numEvens = 0, numOdds = 0;
+                    for (Integer value : partition) {
+                        if ((value & 1) == 0) numEvens++;
+                        else numOdds++;
+                    }
+                    return Arrays.asList(
+                            new Tuple2<>("odd", numOdds),
+                            new Tuple2<>("even", numEvens)
+                    );
+                })
+                .reduceByKey(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1()))
+                .collect();
+
+    }
+
+    /**
      * Same as scenarion2 but repeat 10 times before output.
      */
     public static RheemPlan diverseScenario3(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
