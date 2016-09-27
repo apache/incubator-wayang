@@ -438,6 +438,36 @@ public class JavaApiTest {
     }
 
     @Test
+    public void testMapPartitions() {
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+
+        // Generate test data.
+        List<Integer> inputValues = RheemArrays.asList(0, 1, 2, 3, 4, 6, 8);
+
+        // Execute the job.
+        Collection<Tuple2<String, Integer>> outputValues = builder.loadCollection(inputValues)
+                .mapPartitions(partition -> {
+                    int numEvens = 0, numOdds = 0;
+                    for (Integer value : partition) {
+                        if ((value & 1) == 0) numEvens++; else numOdds++;
+                    }
+                    return Arrays.asList(
+                            new Tuple2<>("odd", numOdds),
+                            new Tuple2<>("even", numEvens)
+                    );
+                })
+                .reduceByKey(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1()))
+                .collect();
+
+        // Check the output.
+        Set<Tuple2<String, Integer>> expectedOutput = RheemCollections.asSet(
+                new Tuple2<>("even", 5), new Tuple2<>("odd", 2)
+        );
+        Assert.assertEquals(expectedOutput, RheemCollections.asSet(outputValues));
+    }
+
+    @Test
     public void testZipWithId() {
         RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
         JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);

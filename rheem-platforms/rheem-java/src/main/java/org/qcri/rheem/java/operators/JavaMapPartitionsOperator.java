@@ -1,8 +1,8 @@
 package org.qcri.rheem.java.operators;
 
-import org.qcri.rheem.basic.operators.FlatMapOperator;
+import org.qcri.rheem.basic.operators.MapPartitionsOperator;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.function.FlatMapDescriptor;
+import org.qcri.rheem.core.function.MapPartitionsDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
@@ -10,6 +10,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Iterators;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
@@ -20,19 +21,17 @@ import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 /**
- * Java implementation of the {@link FlatMapOperator}.
+ * Java implementation of the {@link MapPartitionsOperator}.
  */
-public class JavaFlatMapOperator<InputType, OutputType>
-        extends FlatMapOperator<InputType, OutputType>
+public class JavaMapPartitionsOperator<InputType, OutputType>
+        extends MapPartitionsOperator<InputType, OutputType>
         implements JavaExecutionOperator {
 
     /**
      * Creates a new instance.
-     *
-     * @param functionDescriptor
      */
-    public JavaFlatMapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType,
-                               FlatMapDescriptor<InputType, OutputType> functionDescriptor) {
+    public JavaMapPartitionsOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType,
+                                     MapPartitionsDescriptor<InputType, OutputType> functionDescriptor) {
         super(functionDescriptor, inputType, outputType);
     }
 
@@ -41,7 +40,7 @@ public class JavaFlatMapOperator<InputType, OutputType>
      *
      * @param that that should be copied
      */
-    public JavaFlatMapOperator(FlatMapOperator<InputType, OutputType> that) {
+    public JavaMapPartitionsOperator(MapPartitionsOperator<InputType, OutputType> that) {
         super(that);
     }
 
@@ -53,33 +52,31 @@ public class JavaFlatMapOperator<InputType, OutputType>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final Function<InputType, Iterable<OutputType>> flatmapFunction =
+        final Function<Iterable<InputType>, Iterable<OutputType>> function =
                 javaExecutor.getCompiler().compile(this.functionDescriptor);
-        JavaExecutor.openFunction(this, flatmapFunction, inputs, operatorContext);
+        JavaExecutor.openFunction(this, function, inputs, operatorContext);
+        final Iterable<OutputType> outputDataQuanta =
+                function.apply(Iterators.wrapWithIterable(((JavaChannelInstance) inputs[0]).<InputType>provideStream().iterator()));
 
-        ((StreamChannel.Instance) outputs[0]).accept(
-                ((JavaChannelInstance) inputs[0]).<InputType>provideStream().flatMap(dataQuantum ->
-                        StreamSupport.stream(
-                                Spliterators.spliteratorUnknownSize(
-                                        flatmapFunction.apply(dataQuantum).iterator(),
-                                        Spliterator.ORDERED),
-                                false
-                        )
-                )
-        );
+        ((StreamChannel.Instance) outputs[0]).accept(StreamSupport.stream(
+                Spliterators.spliteratorUnknownSize(
+                        outputDataQuanta.iterator(),
+                        Spliterator.ORDERED),
+                false
+        ));
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaFlatMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
+        return new JavaMapPartitionsOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
     }
 
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.java.flatmap.load";
+        return "rheem.java.mappartitions.load";
     }
 
     @Override

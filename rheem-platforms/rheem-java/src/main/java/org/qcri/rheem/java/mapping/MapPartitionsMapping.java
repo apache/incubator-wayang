@@ -1,21 +1,19 @@
 package org.qcri.rheem.java.mapping;
 
-import org.qcri.rheem.basic.operators.MapOperator;
-import org.qcri.rheem.basic.operators.TextFileSource;
+import org.qcri.rheem.basic.operators.MapPartitionsOperator;
 import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.operators.JavaMapOperator;
-import org.qcri.rheem.java.operators.JavaTextFileSource;
+import org.qcri.rheem.java.operators.JavaMapPartitionsOperator;
 import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link MapOperator} to {@link JavaMapOperator}.
+ * Mapping from {@link MapPartitionsOperator} to {@link JavaMapPartitionsOperator}.
  */
 @SuppressWarnings("unchecked")
-public class MapMapping implements Mapping {
+public class MapPartitionsMapping implements Mapping {
 
     @Override
     public Collection<PlanTransformation> getTransformations() {
@@ -28,14 +26,14 @@ public class MapMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "map", new MapOperator<>(null, DataSetType.none(), DataSetType.none()), false);
+                "mappartitions", new MapPartitionsOperator<>(null, DataSetType.none(), DataSetType.none()), false);
         return SubplanPattern.createSingleton(operatorPattern);
     }
 
 
     private ReplacementSubplanFactory createReplacementSubplanFactory() {
-        return new ReplacementSubplanFactory.OfSingleOperators<MapOperator>(
-                (matchedOperator, epoch) -> new JavaMapOperator<>(matchedOperator).at(epoch)
+        return new ReplacementSubplanFactory.OfSingleOperators<MapPartitionsOperator>(
+                (matchedOperator, epoch) -> new JavaMapPartitionsOperator<>(matchedOperator).at(epoch)
         );
     }
 }

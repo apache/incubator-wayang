@@ -9,43 +9,43 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * This descriptor pertains to functions that consume a single data unit and output a group of data units.
+ * This descriptor pertains to functions that consume and output multiple data quanta.
  *
  * @param <Input>  input type of the transformation function
  * @param <Output> output type of the transformation function
  */
-public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
+public class MapPartitionsDescriptor<Input, Output> extends FunctionDescriptor {
 
     protected final BasicDataUnitType<Input> inputType;
 
     protected final BasicDataUnitType<Output> outputType;
 
-    private final SerializableFunction<Input, Iterable<Output>> javaImplementation;
+    private final SerializableFunction<Iterable<Input>, Iterable<Output>> javaImplementation;
 
     /**
      * The selectivity ({code 0..*}) of this instance or {@code null} if unspecified.
      */
     private ProbabilisticDoubleInterval selectivity;
 
-    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
-                             Class<Input> inputTypeClass,
-                             Class<Output> outputTypeClass) {
+    public MapPartitionsDescriptor(SerializableFunction<Iterable<Input>, Iterable<Output>> javaImplementation,
+                                   Class<Input> inputTypeClass,
+                                   Class<Output> outputTypeClass) {
         this(javaImplementation, inputTypeClass, outputTypeClass, null);
     }
 
-    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
-                             Class<Input> inputTypeClass,
-                             Class<Output> outputTypeClass,
-                             ProbabilisticDoubleInterval selectivity) {
+    public MapPartitionsDescriptor(SerializableFunction<Iterable<Input>, Iterable<Output>> javaImplementation,
+                                   Class<Input> inputTypeClass,
+                                   Class<Output> outputTypeClass,
+                                   ProbabilisticDoubleInterval selectivity) {
         this(javaImplementation, inputTypeClass, outputTypeClass, selectivity, null, null);
     }
 
 
-    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
-                             Class<Input> inputTypeClass,
-                             Class<Output> outputTypeClass,
-                             LoadEstimator cpuLoadEstimator,
-                             LoadEstimator ramLoadEstimator) {
+    public MapPartitionsDescriptor(SerializableFunction<Iterable<Input>, Iterable<Output>> javaImplementation,
+                                   Class<Input> inputTypeClass,
+                                   Class<Output> outputTypeClass,
+                                   LoadEstimator cpuLoadEstimator,
+                                   LoadEstimator ramLoadEstimator) {
         this(javaImplementation,
                 inputTypeClass,
                 outputTypeClass,
@@ -53,12 +53,12 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
                 cpuLoadEstimator,
                 ramLoadEstimator);
     }
-    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
-                             Class<Input> inputTypeClass,
-                             Class<Output> outputTypeClass,
-                             ProbabilisticDoubleInterval selectivity,
-                             LoadEstimator cpuLoadEstimator,
-                             LoadEstimator ramLoadEstimator) {
+    public MapPartitionsDescriptor(SerializableFunction<Iterable<Input>, Iterable<Output>> javaImplementation,
+                                   Class<Input> inputTypeClass,
+                                   Class<Output> outputTypeClass,
+                                   ProbabilisticDoubleInterval selectivity,
+                                   LoadEstimator cpuLoadEstimator,
+                                   LoadEstimator ramLoadEstimator) {
         this(javaImplementation,
                 DataUnitType.createBasic(inputTypeClass),
                 DataUnitType.createBasic(outputTypeClass),
@@ -67,12 +67,12 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
                 ramLoadEstimator);
     }
 
-    public FlatMapDescriptor(SerializableFunction<Input, Iterable<Output>> javaImplementation,
-                             BasicDataUnitType<Input> inputType,
-                             BasicDataUnitType<Output> outputType,
-                             ProbabilisticDoubleInterval selectivity,
-                             LoadEstimator cpuLoadEstimator,
-                             LoadEstimator ramLoadEstimator) {
+    public MapPartitionsDescriptor(SerializableFunction<Iterable<Input>, Iterable<Output>> javaImplementation,
+                                   BasicDataUnitType<Input> inputType,
+                                   BasicDataUnitType<Output> outputType,
+                                   ProbabilisticDoubleInterval selectivity,
+                                   LoadEstimator cpuLoadEstimator,
+                                   LoadEstimator ramLoadEstimator) {
         super(cpuLoadEstimator, ramLoadEstimator);
         this.javaImplementation = javaImplementation;
         this.inputType = inputType;
@@ -86,7 +86,7 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
      *
      * @return a function that can perform the reduce
      */
-    public Function<Input, Iterable<Output>> getJavaImplementation() {
+    public Function<Iterable<Input>, Iterable<Output>> getJavaImplementation() {
         return this.javaImplementation;
     }
 
@@ -96,8 +96,8 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
      * @return this instance with type parameters set to {@link Object}
      */
     @SuppressWarnings("unchecked")
-    public FlatMapDescriptor<Object, Object> unchecked() {
-        return (FlatMapDescriptor<Object, Object>) this;
+    public MapPartitionsDescriptor<Object, Object> unchecked() {
+        return (MapPartitionsDescriptor<Object, Object>) this;
     }
 
     public BasicDataUnitType<Input> getInputType() {

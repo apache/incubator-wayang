@@ -29,4 +29,13 @@ public class Iterators {
         return result;
     }
 
+    /**
+     * Wrap the given {@link Iterator} in an {@link Iterable}.
+     *
+     * @param iterator the {@link Iterator}
+     * @return the {@link Iterable}
+     */
+    public static <T> Iterable<T> wrapWithIterable(Iterator<T> iterator) {
+        return () -> iterator;
+    }
 }

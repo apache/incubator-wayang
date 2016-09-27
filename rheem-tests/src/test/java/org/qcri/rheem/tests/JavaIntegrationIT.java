@@ -272,6 +272,20 @@ public class JavaIntegrationIT {
     }
 
     @Test
+    public void testMapPartitions() throws URISyntaxException {
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+
+        // Execute the Rheem plan.
+        final Collection<Tuple2<String, Integer>> result = RheemPlans.mapPartitions(rheemContext, 0, 1, 1, 3, 3, 4, 4, 5, 5, 6);
+
+        Assert.assertEquals(
+                RheemCollections.asSet(new Tuple2<>("even", 4), new Tuple2<>("odd", 6)),
+                RheemCollections.asSet(result)
+        );
+    }
+
+    @Test
     public void testZipWithId() throws URISyntaxException {
         // Build the RheemPlan.
         List<Long> collector = new LinkedList<>();
