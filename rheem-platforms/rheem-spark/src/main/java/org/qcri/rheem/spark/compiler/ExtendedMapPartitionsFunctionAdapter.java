@@ -2,7 +2,7 @@ package org.qcri.rheem.spark.compiler;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.qcri.rheem.core.function.FunctionDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.util.Iterators;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 
 import java.util.ArrayList;
@@ -13,14 +13,16 @@ import java.util.function.Function;
 /**
  * Wraps a {@link Function} as a {@link FlatMapFunction}.
  */
-public class ExtendedMapFunctionToMapPartitionFunctionAdapter<InputType, OutputType> implements FlatMapFunction<Iterator<InputType>, OutputType> {
+public class ExtendedMapPartitionsFunctionAdapter<InputType, OutputType>
+        implements FlatMapFunction<Iterator<InputType>, OutputType> {
 
-    private final FunctionDescriptor.ExtendedSerializableFunction<InputType, OutputType> impl;
+    private final FunctionDescriptor.ExtendedSerializableFunction<Iterable<InputType>, Iterable<OutputType>> impl;
 
     private final SparkExecutionContext executionContext;
 
-    public ExtendedMapFunctionToMapPartitionFunctionAdapter(FunctionDescriptor.ExtendedSerializableFunction<InputType, OutputType> extendedFunction,
-                                                            SparkExecutionContext sparkExecutionContext) {
+    public ExtendedMapPartitionsFunctionAdapter(
+            FunctionDescriptor.ExtendedSerializableFunction<Iterable<InputType>, Iterable<OutputType>> extendedFunction,
+            SparkExecutionContext sparkExecutionContext) {
         this.impl = extendedFunction;
         this.executionContext = sparkExecutionContext;
     }
@@ -30,7 +32,10 @@ public class ExtendedMapFunctionToMapPartitionFunctionAdapter<InputType, OutputT
         this.impl.open(executionContext);
         List<OutputType> out = new ArrayList<>();
         while (it.hasNext()) {
-            out.add(this.impl.apply(it.next()));
+            final Iterable<OutputType> mappedPartition = this.impl.apply(Iterators.wrapWithIterable(it));
+            for (OutputType dataQuantum : mappedPartition) {
+                out.add(dataQuantum);
+            }
         }
         return out;
     }

@@ -45,26 +45,26 @@ public class FunctionCompiler {
     }
 
     /**
-     * Create an appropriate {@link Function} for deploying the given {@link TransformationDescriptor}
+     * Create an appropriate {@link Function} for deploying the given {@link MapPartitionsDescriptor}
      * on Apache Spark's {@link JavaRDD#mapPartitions(FlatMapFunction)}.
      *
-     * @param descriptor describes the transformation function
-     * @param operator   that executes the {@link Function}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
+     * @param descriptor      describes the function
+     * @param operator        that executes the {@link Function}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
      * @param operatorContext contains optimization information for the {@code operator}
-     * @param inputs     that feed the {@code operator}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
+     * @param inputs          that feed the {@code operator}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
      */
-    public <I, O> FlatMapFunction<Iterator<I>, O> compileForMapPartitions(TransformationDescriptor<I, O> descriptor,
-                                                                          SparkExecutionOperator operator,
-                                                                          OptimizationContext.OperatorContext operatorContext,
-                                                                          ChannelInstance[] inputs) {
-        final java.util.function.Function<I, O> javaImplementation = descriptor.getJavaImplementation();
+    public <I, O> FlatMapFunction<Iterator<I>, O> compile(MapPartitionsDescriptor<I, O> descriptor,
+                                                          SparkExecutionOperator operator,
+                                                          OptimizationContext.OperatorContext operatorContext,
+                                                          ChannelInstance[] inputs) {
+        final java.util.function.Function<Iterable<I>, Iterable<O>> javaImplementation = descriptor.getJavaImplementation();
         if (javaImplementation instanceof FunctionDescriptor.ExtendedSerializableFunction) {
-            return new ExtendedMapFunctionToMapPartitionFunctionAdapter<>(
-                    (FunctionDescriptor.ExtendedSerializableFunction<I, O>) javaImplementation,
+            return new ExtendedMapPartitionsFunctionAdapter<>(
+                    (FunctionDescriptor.ExtendedSerializableFunction<Iterable<I>, Iterable<O>>) javaImplementation,
                     new SparkExecutionContext(operator, inputs, operatorContext.getOptimizationContext().getIterationNumber())
             );
         } else {
-            return new MapFunctionToMapPartitionFunctionAdapter<>(javaImplementation);
+            return new MapPartitionsFunctionAdapter<>(javaImplementation);
         }
     }
 
@@ -82,10 +82,10 @@ public class FunctionCompiler {
      * Create an appropriate {@link FlatMapFunction} for deploying the given {@link FlatMapDescriptor}
      * on Apache Spark.
      *
-     * @param descriptor describes the function
-     * @param operator   that executes the {@link Function}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
+     * @param descriptor      describes the function
+     * @param operator        that executes the {@link Function}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
      * @param operatorContext contains optimization information for the {@code operator}
-     * @param inputs     that feed the {@code operator}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
+     * @param inputs          that feed the {@code operator}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
      */
     public <I, O> FlatMapFunction<I, O> compile(FlatMapDescriptor<I, O> descriptor,
                                                 SparkExecutionOperator operator,
@@ -127,7 +127,7 @@ public class FunctionCompiler {
      *
      * @param predicateDescriptor describes the function
      * @param operator            that executes the {@link Function}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
-     * @param operatorContext contains optimization information for the {@code operator}
+     * @param operatorContext     contains optimization information for the {@code operator}
      * @param inputs              that feed the {@code operator}; only required if the {@code descriptor} describes an {@link ExtendedFunction}
      */
     public <Type> Function<Type, Boolean> compile(

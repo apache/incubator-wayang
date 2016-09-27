@@ -2,9 +2,9 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.qcri.rheem.basic.operators.MapOperator;
+import org.qcri.rheem.basic.operators.MapPartitionsOperator;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.function.MapPartitionsDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
@@ -23,13 +23,13 @@ import java.util.*;
  * Spark implementation of the {@link SparkMapPartitionsOperator}.
  */
 public class SparkMapPartitionsOperator<InputType, OutputType>
-        extends MapOperator<InputType, OutputType>
+        extends MapPartitionsOperator<InputType, OutputType>
         implements SparkExecutionOperator {
 
     /**
      * Creates a new instance.
      */
-    public SparkMapPartitionsOperator(TransformationDescriptor<InputType, OutputType> functionDescriptor,
+    public SparkMapPartitionsOperator(MapPartitionsDescriptor<InputType, OutputType> functionDescriptor,
                                       DataSetType<InputType> inputType, DataSetType<OutputType> outputType) {
         super(functionDescriptor, inputType, outputType);
     }
@@ -37,7 +37,7 @@ public class SparkMapPartitionsOperator<InputType, OutputType>
     /**
      * Creates a new instance.
      */
-    public SparkMapPartitionsOperator(TransformationDescriptor<InputType, OutputType> functionDescriptor) {
+    public SparkMapPartitionsOperator(MapPartitionsDescriptor<InputType, OutputType> functionDescriptor) {
         this(functionDescriptor,
                 DataSetType.createDefault(functionDescriptor.getInputType()),
                 DataSetType.createDefault(functionDescriptor.getOutputType()));
@@ -48,7 +48,7 @@ public class SparkMapPartitionsOperator<InputType, OutputType>
      *
      * @param that that should be copied
      */
-    public SparkMapPartitionsOperator(MapOperator<InputType, OutputType> that) {
+    public SparkMapPartitionsOperator(MapPartitionsOperator<InputType, OutputType> that) {
         super(that);
     }
 
@@ -64,7 +64,7 @@ public class SparkMapPartitionsOperator<InputType, OutputType>
         final RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
         final FlatMapFunction<Iterator<InputType>, OutputType> mapFunction =
-                sparkExecutor.getCompiler().compileForMapPartitions(this.functionDescriptor, this, operatorContext, inputs);
+                sparkExecutor.getCompiler().compile(this.functionDescriptor, this, operatorContext, inputs);
 
         final JavaRDD<InputType> inputRdd = input.provideRdd();
         final JavaRDD<OutputType> outputRdd = inputRdd.mapPartitions(mapFunction);
