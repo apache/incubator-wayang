@@ -1,5 +1,6 @@
 package org.qcri.rheem.api
 
+import _root_.java.lang.{Iterable => JavaIterable}
 import _root_.java.util.function.{Consumer, Function => JavaFunction}
 import _root_.java.util.{Collection => JavaCollection}
 
@@ -8,7 +9,7 @@ import org.apache.commons.lang3.Validate
 import org.qcri.rheem.basic.function.ProjectionDescriptor
 import org.qcri.rheem.basic.operators._
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
-import org.qcri.rheem.core.function.{FlatMapDescriptor, PredicateDescriptor, ReduceDescriptor, TransformationDescriptor}
+import org.qcri.rheem.core.function._
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator
@@ -65,6 +66,41 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     val mapOperator = new MapOperator(new TransformationDescriptor(
       udf, basicDataUnitType[Out], basicDataUnitType[NewOut], udfCpuLoad, udfRamLoad
     ))
+    this.connectTo(mapOperator, 0)
+    mapOperator
+  }
+
+  /**
+    * Feed this instance into a [[MapPartitionsOperator]].
+    *
+    * @param udf        UDF for the [[MapPartitionsOperator]]
+    * @param selectivity selectivity of the UDF
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
+    * @return a new instance representing the [[MapPartitionsOperator]]'s output
+    */
+  def mapPartitions[NewOut: ClassTag](udf: Iterable[Out] => Iterable[NewOut],
+                                      selectivity: ProbabilisticDoubleInterval = null,
+                                      udfCpuLoad: LoadEstimator[_] = null,
+                                      udfRamLoad: LoadEstimator[_] = null): DataQuanta[NewOut] =
+  mapPartitionsJava(toSerializablePartitionFunction(udf), selectivity, udfCpuLoad, udfRamLoad)
+
+  /**
+    * Feed this instance into a [[MapPartitionsOperator]].
+    *
+    * @param udf        a Java 8 lambda expression as UDF for the [[MapPartitionsOperator]]
+    * @param selectivity selectivity of the UDF
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
+    * @return a new instance representing the [[MapOperator]]'s output
+    */
+  def mapPartitionsJava[NewOut: ClassTag](udf: SerializableFunction[JavaIterable[Out], JavaIterable[NewOut]],
+                                          selectivity: ProbabilisticDoubleInterval = null,
+                                          udfCpuLoad: LoadEstimator[_] = null,
+                                          udfRamLoad: LoadEstimator[_] = null): DataQuanta[NewOut] = {
+    val mapOperator = new MapPartitionsOperator(
+      new MapPartitionsDescriptor(udf, basicDataUnitType[Out], basicDataUnitType[NewOut], selectivity, udfCpuLoad, udfRamLoad)
+    )
     this.connectTo(mapOperator, 0)
     mapOperator
   }
@@ -160,7 +196,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param udfRamLoad  optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the [[FlatMapOperator]]'s output
     */
-  def flatMapJava[NewOut: ClassTag](udf: SerializableFunction[Out, java.lang.Iterable[NewOut]],
+  def flatMapJava[NewOut: ClassTag](udf: SerializableFunction[Out, JavaIterable[NewOut]],
                                     selectivity: ProbabilisticDoubleInterval = null,
                                     udfCpuLoad: LoadEstimator[_] = null,
                                     udfRamLoad: LoadEstimator[_] = null): DataQuanta[NewOut] = {

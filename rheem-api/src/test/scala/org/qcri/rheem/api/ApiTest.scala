@@ -354,6 +354,26 @@ class ApiTest {
   }
 
   @Test
+  def testMapPartitions() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext()
+      .withPlugin(Java.basicPlugin())
+      .withPlugin(Spark.basicPlugin)
+
+    val typeCounts = rheem
+      .loadCollection(Seq(0, 1, 2, 3, 4, 6, 8))
+        .mapPartitions { ints =>
+          var (numOdds, numEvens) = (0, 0)
+          ints.foreach(i => if ((i & 1) == 0) numEvens += 1 else numOdds += 1)
+          Seq(("odd", numOdds), ("even", numEvens))
+        }
+      .reduceByKey(_._1, { case ((kind1, count1), (kind2, count2)) => (kind1, count1 + count2) })
+      .collect()
+
+    Assert.assertEquals(Set(("odd", 2), ("even", 5)), typeCounts.toSet)
+  }
+
+  @Test
   def testZipWithId() = {
     // Set up RheemContext.
     val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)

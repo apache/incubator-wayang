@@ -43,6 +43,12 @@ package object api {
       override def apply(t: In) = scalaFunc(t)
     }
 
+  implicit def toSerializablePartitionFunction[In, Out](scalaFunc: Iterable[In] => Iterable[Out]):
+  SerializableFunction[JavaIterable[In], JavaIterable[Out]] =
+    new SerializableFunction[JavaIterable[In], JavaIterable[Out]] {
+      override def apply(t: JavaIterable[In]) = JavaConversions.asJavaIterable(scalaFunc(JavaConversions.iterableAsScalaIterable(t)))
+    }
+
   implicit def toSerializablePredicate[T](scalaFunc: T => Boolean): SerializablePredicate[T] =
     new SerializablePredicate[T] {
       override def test(t: T) = scalaFunc(t)
