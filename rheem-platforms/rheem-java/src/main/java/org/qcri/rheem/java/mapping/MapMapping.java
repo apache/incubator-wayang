@@ -12,7 +12,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link TextFileSource} to {@link JavaTextFileSource}.
+ * Mapping from {@link MapOperator} to {@link JavaMapOperator}.
  */
 @SuppressWarnings("unchecked")
 public class MapMapping implements Mapping {

@@ -31,7 +31,7 @@ public class JavaFlatMapOperator<InputType, OutputType>
      *
      * @param functionDescriptor
      */
-    public JavaFlatMapOperator(DataSetType inputType, DataSetType outputType,
+    public JavaFlatMapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType,
                                FlatMapDescriptor<InputType, OutputType> functionDescriptor) {
         super(functionDescriptor, inputType, outputType);
     }

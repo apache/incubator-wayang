@@ -15,6 +15,7 @@ public class Mappings {
             new TextFileSourceMapping(),
             new TextFileSinkMapping(),
             new MapMapping(),
+            new MapPartitionsMapping(),
             new ReduceByMapping(),
             new CollectionSourceMapping(),
             new LocalCallbackSinkMapping(),

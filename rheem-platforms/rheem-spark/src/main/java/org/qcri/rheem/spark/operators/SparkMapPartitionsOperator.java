@@ -20,7 +20,7 @@ import java.util.*;
 
 
 /**
- * Spark implementation of the {@link SparkMapPartitionsOperator}.
+ * Spark implementation of the {@link MapPartitionsOperator}.
  */
 public class SparkMapPartitionsOperator<InputType, OutputType>
         extends MapPartitionsOperator<InputType, OutputType>
