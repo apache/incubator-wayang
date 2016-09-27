@@ -153,6 +153,15 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   def flatMap[NewOut](udf: SerializableFunction[Out, java.lang.Iterable[NewOut]]) = new FlatMapDataQuantaBuilder(this, udf)
 
   /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.MapPartitionsOperator]].
+    *
+    * @param udf the UDF for the [[org.qcri.rheem.basic.operators.MapPartitionsOperator]]
+    * @return a [[MapPartitionsDataQuantaBuilder]]
+    */
+  def mapPartitions[NewOut](udf: SerializableFunction[java.lang.Iterable[Out], java.lang.Iterable[NewOut]]) =
+  new MapPartitionsDataQuantaBuilder(this, udf)
+
+  /**
     * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.SampleOperator]].
     *
     * @param sampleSize the absolute size of the sample
@@ -711,7 +720,6 @@ class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: 
 
 }
 
-
 /**
   * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.FlatMapOperator]]s.
   *
@@ -779,6 +787,69 @@ class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In
   }
 
   override protected def build = inputDataQuanta.dataQuanta().flatMapJava(
+    udf, this.selectivity, this.udfCpuEstimator, this.udfRamEstimator
+  )
+
+}
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.MapPartitionsOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param udf             UDF for the [[org.qcri.rheem.basic.operators.MapPartitionsOperator]]
+  */
+class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
+                                              udf: SerializableFunction[java.lang.Iterable[In], java.lang.Iterable[Out]])
+                                             (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[MapPartitionsDataQuantaBuilder[In, Out], Out] {
+
+  /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
+  private var udfCpuEstimator: LoadEstimator[AnyRef] = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the [[udf]]. */
+  private var udfRamEstimator: LoadEstimator[AnyRef] = _
+
+  /** Selectivity of the filter predicate. */
+  private var selectivity: ProbabilisticDoubleInterval = _
+
+  // TODO: Try to infer the type classes from the udf.
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the UDF.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator[AnyRef]) = {
+    this.udfCpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of the UDF.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withUdfRamEstimator(udfRamEstimator: LoadEstimator[AnyRef]) = {
+    this.udfRamEstimator = udfRamEstimator
+    this
+  }
+
+  /**
+    * Specify the selectivity of the UDF.
+    *
+    * @param lowerEstimate the lower bound of the expected selectivity
+    * @param upperEstimate the upper bound of the expected selectivity
+    * @param confidence    the probability of the actual selectivity being within these bounds
+    * @return this instance
+    */
+  def withSelectivity(lowerEstimate: Double, upperEstimate: Double, confidence: Double) = {
+    this.selectivity = new ProbabilisticDoubleInterval(lowerEstimate, upperEstimate, confidence)
+    this
+  }
+
+  override protected def build = inputDataQuanta.dataQuanta().mapPartitionsJava(
     udf, this.selectivity, this.udfCpuEstimator, this.udfRamEstimator
   )
 
