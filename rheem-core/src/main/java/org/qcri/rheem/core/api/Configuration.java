@@ -66,9 +66,7 @@ public class Configuration {
 
     private KeyValueProvider<OutputSlot<?>, CardinalityEstimator> cardinalityEstimatorProvider;
 
-    private KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> predicateSelectivityProvider;
-
-    private KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> multimapSelectivityProvider;
+    private KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> udfSelectivityProvider;
 
     private KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> operatorLoadProfileEstimatorProvider;
 
@@ -132,10 +130,8 @@ public class Configuration {
             // Providers for cardinality estimation.
             this.cardinalityEstimatorProvider =
                     new MapBasedKeyValueProvider<>(this.parent.cardinalityEstimatorProvider, this);
-            this.predicateSelectivityProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.predicateSelectivityProvider, this);
-            this.multimapSelectivityProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.multimapSelectivityProvider, this);
+            this.udfSelectivityProvider =
+                    new MapBasedKeyValueProvider<>(this.parent.udfSelectivityProvider, this);
 
             // Providers for cost functions.
             this.operatorLoadProfileEstimatorProvider =
@@ -281,48 +277,35 @@ public class Configuration {
     }
 
     private static void bootstrapSelectivityProviders(Configuration configuration) {
-        // Selectivity of PredicateDescriptors
+        // Selectivity of UDFs
         {
             // Safety net: provide a fallback selectivity.
-            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> fallbackProvider =
-                    new FunctionalKeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval>(
-                            predicateClass -> new ProbabilisticDoubleInterval(0.1, 1, 0.9d),
+            KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> fallbackProvider =
+                    new FunctionalKeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval>(
+                            functionDescriptor -> {
+                                if (functionDescriptor instanceof PredicateDescriptor) {
+                                    return new ProbabilisticDoubleInterval(0.1, 1, 0.9d);
+                                } else if (functionDescriptor instanceof FlatMapDescriptor) {
+                                    return new ProbabilisticDoubleInterval(0.1, 1, 0.9d);
+                                } else {
+                                    throw new RheemException("Cannot provide fallback selectivity for " + functionDescriptor);
+                                }
+                            },
                             configuration
                     ).withSlf4jWarning("Using fallback selectivity for {}.");
 
             // Built-in option: Let the PredicateDescriptor provide its selectivity.
-            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> builtInProvider =
+            KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> builtInProvider =
                     new FunctionalKeyValueProvider<>(
                             fallbackProvider,
-                            predicateDescriptor -> predicateDescriptor.getSelectivity().orElse(null)
+                            functionDescriptor -> FunctionDescriptor.getSelectivity(functionDescriptor).orElse(null)
                     );
 
             // Customizable layer: Users can override manually.
-            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> overrideProvider =
+            KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> overrideProvider =
                     new MapBasedKeyValueProvider<>(builtInProvider);
 
-            configuration.setPredicateSelectivityProvider(overrideProvider);
-        }
-        {
-            // Safety net: provide a fallback selectivity.
-            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> fallbackProvider =
-                    new FunctionalKeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval>(
-                            flatMapDescriptor -> new ProbabilisticDoubleInterval(0.1, 100, 0.9d),
-                            configuration
-                    ).withSlf4jWarning("Using fallback selectivity for {}.");
-
-            // Built-in option: Let the FlatMapDescriptor provide its selectivity.
-            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> builtInProvider =
-                    new FunctionalKeyValueProvider<>(
-                            fallbackProvider,
-                            flatMapDescriptor -> flatMapDescriptor.getSelectivity().orElse(null)
-                    );
-
-            // Customizable layer: Users can override manually.
-            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> overrideProvider =
-                    new MapBasedKeyValueProvider<>(builtInProvider, false);
-
-            configuration.setMultimapSelectivityProvider(overrideProvider);
+            configuration.setUdfSelectivityProvider(overrideProvider);
         }
     }
 
@@ -555,22 +538,13 @@ public class Configuration {
         this.cardinalityEstimatorProvider = cardinalityEstimatorProvider;
     }
 
-    public KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> getPredicateSelectivityProvider() {
-        return this.predicateSelectivityProvider;
+    public KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> getUdfSelectivityProvider() {
+        return this.udfSelectivityProvider;
     }
 
-    public void setPredicateSelectivityProvider(
-            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> predicateSelectivityProvider) {
-        this.predicateSelectivityProvider = predicateSelectivityProvider;
-    }
-
-    public KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> getMultimapSelectivityProvider() {
-        return this.multimapSelectivityProvider;
-    }
-
-    public void setMultimapSelectivityProvider(
-            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> multimapSelectivityProvider) {
-        this.multimapSelectivityProvider = multimapSelectivityProvider;
+    public void setUdfSelectivityProvider(
+            KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> udfSelectivityProvider) {
+        this.udfSelectivityProvider = udfSelectivityProvider;
     }
 
     public KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> getOperatorLoadProfileEstimatorProvider() {

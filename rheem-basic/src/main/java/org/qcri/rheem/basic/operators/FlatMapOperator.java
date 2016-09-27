@@ -86,7 +86,7 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
 
         private CardinalityEstimator(Configuration configuration) {
             this.selectivity = configuration
-                    .getMultimapSelectivityProvider()
+                    .getUdfSelectivityProvider()
                     .provideFor(FlatMapOperator.this.functionDescriptor);
         }
 

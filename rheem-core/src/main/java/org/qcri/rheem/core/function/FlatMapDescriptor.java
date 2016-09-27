@@ -23,7 +23,7 @@ public class FlatMapDescriptor<Input, Output> extends FunctionDescriptor {
     private final SerializableFunction<Input, Iterable<Output>> javaImplementation;
 
     /**
-     * The selectivity ({code 0..1}) of this instance or {@code null} if unspecified.
+     * The selectivity ({code 0..*}) of this instance or {@code null} if unspecified.
      */
     private ProbabilisticDoubleInterval selectivity;
 

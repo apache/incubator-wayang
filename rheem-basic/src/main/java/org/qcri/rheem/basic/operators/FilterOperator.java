@@ -94,7 +94,7 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         private final ProbabilisticDoubleInterval selectivity;
 
         public CardinalityEstimator(PredicateDescriptor<?> predicateDescriptor, Configuration configuration) {
-            this.selectivity = configuration.getPredicateSelectivityProvider().provideFor(predicateDescriptor);
+            this.selectivity = configuration.getUdfSelectivityProvider().provideFor(predicateDescriptor);
         }
 
         @Override
