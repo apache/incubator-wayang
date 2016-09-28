@@ -131,7 +131,7 @@ public class DefaultChannelConversion extends ChannelConversion {
             operatorContext.setOutputCardinality(0, cardinality);
         }
 
-        operatorContext.updateTimeEstimate();
+        operatorContext.updateCostEstimate();
     }
 
     @Override
@@ -145,7 +145,7 @@ public class DefaultChannelConversion extends ChannelConversion {
         this.setCardinality(operatorContext, cardinality);
 
         // Estimate time.
-        operatorContext.updateTimeEstimate();
+        operatorContext.updateCostEstimate();
         return operatorContext.getTimeEstimate();
     }
 

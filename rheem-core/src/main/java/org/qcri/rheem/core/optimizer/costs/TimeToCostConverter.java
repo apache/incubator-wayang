@@ -39,4 +39,35 @@ public class TimeToCostConverter {
         double upperBound = this.fixCosts + this.costsPerMilli * timeEstimate.getUpperEstimate();
         return new ProbabilisticDoubleInterval(lowerBound, upperBound, timeEstimate.getCorrectnessProbability());
     }
+
+
+    /**
+     * Convert the given {@link TimeEstimate} into a cost estimate without considering the fix costs.
+     *
+     * @param timeEstimate the {@link TimeEstimate}
+     * @return the cost estimate
+     */
+    public ProbabilisticDoubleInterval convertWithoutFixCosts(TimeEstimate timeEstimate) {
+        double lowerBound = this.costsPerMilli * timeEstimate.getLowerEstimate();
+        double upperBound = this.costsPerMilli * timeEstimate.getUpperEstimate();
+        return new ProbabilisticDoubleInterval(lowerBound, upperBound, timeEstimate.getCorrectnessProbability());
+    }
+
+    /**
+     * Get the fix costs, i.e., the overhead, that incur according to this instance.
+     *
+     * @return the fix costs
+     */
+    public double getFixCosts() {
+        return this.fixCosts;
+    }
+
+    /**
+     * Get the costs that incur per millisecond according to this instance.
+     *
+     * @return the costs per milliseond
+     */
+    public double getCostsPerMillisecond() {
+        return this.costsPerMilli;
+    }
 }
