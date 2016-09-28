@@ -75,6 +75,8 @@ public class Configuration {
 
     private KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider;
 
+    private KeyValueProvider<Platform, TimeToCostConverter> timeToCostConverterProvider;
+
     private KeyValueProvider<Platform, Long> platformStartUpTimeProvider;
 
     private ExplicitCollectionProvider<Platform> platformProvider;
@@ -141,6 +143,8 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider, this);
             this.loadProfileToTimeConverterProvider =
                     new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider, this);
+            this.timeToCostConverterProvider =
+                    new MapBasedKeyValueProvider<>(this.parent.timeToCostConverterProvider);
             this.platformStartUpTimeProvider =
                     new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider, this);
 
@@ -427,6 +431,24 @@ public class Configuration {
             configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
         }
         {
+            // Safety net: provide a fallback start up costs.
+            final KeyValueProvider<Platform, TimeToCostConverter> fallbackProvider =
+                    new FunctionalKeyValueProvider<Platform, TimeToCostConverter>(
+                            platform -> new TimeToCostConverter(0d, 1d),
+                            configuration
+                    ).withSlf4jWarning("Using fallback time-to-cost converter for {}.");
+            final KeyValueProvider<Platform, TimeToCostConverter> builtInProvider =
+                    new FunctionalKeyValueProvider<>(
+                            fallbackProvider,
+                            (platform, requestee) -> platform.createTimeToCostConverter(
+                                    requestee.getConfiguration()
+                            )
+                    );
+            final KeyValueProvider<Platform, TimeToCostConverter> overrideProvider =
+                    new MapBasedKeyValueProvider<>(builtInProvider, false);
+            configuration.setTimeToCostConverterProvider(overrideProvider);
+        }
+        {
             ValueProvider<Comparator<TimeEstimate>> defaultProvider =
                     new ConstantValueProvider<>(TimeEstimate.expectationValueComparator(), configuration);
             ValueProvider<Comparator<TimeEstimate>> overrideProvider =
@@ -653,6 +675,14 @@ public class Configuration {
 
     public void setLoadProfileToTimeConverterProvider(KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider) {
         this.loadProfileToTimeConverterProvider = loadProfileToTimeConverterProvider;
+    }
+
+    public KeyValueProvider<Platform, TimeToCostConverter> getTimeToCostConverterProvider() {
+        return timeToCostConverterProvider;
+    }
+
+    public void setTimeToCostConverterProvider(KeyValueProvider<Platform, TimeToCostConverter> timeToCostConverterProvider) {
+        this.timeToCostConverterProvider = timeToCostConverterProvider;
     }
 
     public OptionalLong getOptionalLongProperty(String key) {

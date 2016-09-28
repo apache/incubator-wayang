@@ -3,6 +3,7 @@ package org.qcri.rheem.java.platform;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -52,6 +53,14 @@ public class JavaPlatform extends Platform {
                 LoadToTimeConverter.createLinearCoverter(0),
                 (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate),
                 stretch
+        );
+    }
+
+    @Override
+    public TimeToCostConverter createTimeToCostConverter(Configuration configuration) {
+        return new TimeToCostConverter(
+                configuration.getDoubleProperty("rheem.java.costs.fix"),
+                configuration.getDoubleProperty("rheem.java.costs.per-ms")
         );
     }
 }

@@ -45,4 +45,9 @@ public class DummyPlatform extends Platform {
             }
         };
     }
+
+    @Override
+    public TimeToCostConverter createTimeToCostConverter(Configuration configuration) {
+        return new TimeToCostConverter(0d, 1d);
+    }
 }
