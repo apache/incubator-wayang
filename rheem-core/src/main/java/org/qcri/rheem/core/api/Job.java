@@ -7,6 +7,7 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
@@ -279,7 +280,8 @@ public class Job extends OneTimeExecutable {
         this.optimizationRound.start("Create Initial Execution Plan");
 
         // Defines the plan that we want to use in the end.
-        final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
+        final Comparator<ProbabilisticDoubleInterval> costEstimateComparator =
+                this.configuration.getCostEstimateComparatorProvider().provide();
 
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator();
@@ -297,7 +299,7 @@ public class Job extends OneTimeExecutable {
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
         this.optimizationRound.start("Create Initial Execution Plan", "Pick Best Plan");
-        final PlanImplementation planImplementation = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
+        final PlanImplementation planImplementation = this.pickBestExecutionPlan(costEstimateComparator, executionPlans, null, null, null);
         this.timeEstimates.add(planImplementation.getTimeEstimate());
         this.optimizationRound.stop("Create Initial Execution Plan", "Pick Best Plan");
 
@@ -318,7 +320,7 @@ public class Job extends OneTimeExecutable {
     }
 
 
-    private PlanImplementation pickBestExecutionPlan(Comparator<TimeEstimate> timeEstimateComparator,
+    private PlanImplementation pickBestExecutionPlan(Comparator<ProbabilisticDoubleInterval> costEstimateComparator,
                                                      Collection<PlanImplementation> executionPlans,
                                                      ExecutionPlan existingPlan,
                                                      Set<Channel> openChannels,
@@ -326,9 +328,9 @@ public class Job extends OneTimeExecutable {
 
         final PlanImplementation bestPlanImplementation = executionPlans.stream()
                 .reduce((p1, p2) -> {
-                    final TimeEstimate t1 = p1.getTimeEstimate();
-                    final TimeEstimate t2 = p2.getTimeEstimate();
-                    return timeEstimateComparator.compare(t1, t2) < 0 ? p1 : p2;
+                    final ProbabilisticDoubleInterval t1 = p1.getCostEstimate();
+                    final ProbabilisticDoubleInterval t2 = p2.getCostEstimate();
+                    return costEstimateComparator.compare(t1, t2) < 0 ? p1 : p2;
                 })
                 .orElseThrow(() -> new RheemException("Could not find an execution plan."));
         this.logger.info("Picked {} as best plan.", bestPlanImplementation);
@@ -467,7 +469,8 @@ public class Job extends OneTimeExecutable {
      */
     private void updateExecutionPlan(ExecutionPlan executionPlan) {
         // Defines the plan that we want to use in the end.
-        final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
+        final Comparator<ProbabilisticDoubleInterval> costEstimateComparator =
+                this.configuration.getCostEstimateComparatorProvider().provide();
 
         // Find and copy the open Channels.
         final Set<ExecutionStage> completedStages = this.crossPlatformExecutor.getCompletedStages();
@@ -496,8 +499,9 @@ public class Job extends OneTimeExecutable {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        final PlanImplementation planImplementation = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, executionPlan,
-                openChannels, completedStages);
+        final PlanImplementation planImplementation = this.pickBestExecutionPlan(
+                costEstimateComparator, executionPlans, executionPlan, openChannels, completedStages
+        );
 
         ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.recreateFrom(
                 planImplementation, executionPlan, openChannels, completedStages

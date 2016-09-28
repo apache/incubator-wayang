@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
@@ -53,6 +54,22 @@ public class LoopImplementation {
             timeEstimate = timeEstimate.plus(this.iterationImplementations.get(i).getTimeEstimate());
         }
         return timeEstimate;
+    }
+
+    /**
+     * Retrieve the cost estimate for this instance. Fix costs are not excluded.
+     *
+     * @return the cost estimate
+     */
+    public ProbabilisticDoubleInterval getCostEstimate() {
+        // What about the Junctions? Are they already included?
+        // Yes, in-loop Junctions are contained in the body implementations and the surrounding Junctions are
+        // contained in the top-level PlanImplementation.
+        ProbabilisticDoubleInterval costEstimate = ProbabilisticDoubleInterval.zero;
+        for (int i = 0; i < this.iterationImplementations.size(); i++) {
+            costEstimate = costEstimate.plus(this.iterationImplementations.get(i).getCostEstimate());
+        }
+        return costEstimate;
     }
 
     public List<IterationImplementation> getIterationImplementations() {
@@ -171,6 +188,15 @@ public class LoopImplementation {
          */
         public TimeEstimate getTimeEstimate() {
             return this.bodyImplementation.getTimeEstimate(false);
+        }
+
+        /**
+         * Retrieve the cost estimate for this instance. Global overhead is not included.
+         *
+         * @return the cost estimate
+         */
+        public ProbabilisticDoubleInterval getCostEstimate() {
+            return this.bodyImplementation.getCostEstimate(false);
         }
 
         /**

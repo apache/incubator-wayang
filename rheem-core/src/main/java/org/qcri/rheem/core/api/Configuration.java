@@ -85,7 +85,7 @@ public class Configuration {
 
     private ExplicitCollectionProvider<ChannelConversion> channelConversionProvider;
 
-    private ValueProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
+    private ValueProvider<Comparator<ProbabilisticDoubleInterval>> costEstimateComparatorProvider;
 
     private CollectionProvider<Class<PlanEnumerationPruningStrategy>> pruningStrategyClassProvider;
 
@@ -150,7 +150,7 @@ public class Configuration {
 
             // Providers for plan enumeration.
             this.pruningStrategyClassProvider = new ExplicitCollectionProvider<>(this, this.parent.pruningStrategyClassProvider);
-            this.timeEstimateComparatorProvider = new ConstantValueProvider<>(this, this.parent.timeEstimateComparatorProvider);
+            this.costEstimateComparatorProvider = new ConstantValueProvider<>(this, this.parent.costEstimateComparatorProvider);
             this.instrumentationStrategyProvider = new ConstantValueProvider<>(this, this.parent.instrumentationStrategyProvider);
 
             // Properties.
@@ -448,13 +448,6 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(builtInProvider, false);
             configuration.setTimeToCostConverterProvider(overrideProvider);
         }
-        {
-            ValueProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantValueProvider<>(TimeEstimate.expectationValueComparator(), configuration);
-            ValueProvider<Comparator<TimeEstimate>> overrideProvider =
-                    new ConstantValueProvider<>(defaultProvider);
-            configuration.setTimeEstimateComparatorProvider(overrideProvider);
-        }
     }
 
     private static void bootstrapPruningProviders(Configuration configuration) {
@@ -486,11 +479,11 @@ public class Configuration {
             configuration.setPruningStrategyClassProvider(overrideProvider);
         }
         {
-            ValueProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantValueProvider<>(TimeEstimate.expectationValueComparator(), configuration);
-            ValueProvider<Comparator<TimeEstimate>> overrideProvider =
+            ValueProvider<Comparator<ProbabilisticDoubleInterval>> defaultProvider =
+                    new ConstantValueProvider<>(ProbabilisticDoubleInterval.expectationValueComparator(), configuration);
+            ValueProvider<Comparator<ProbabilisticDoubleInterval>> overrideProvider =
                     new ConstantValueProvider<>(defaultProvider);
-            configuration.setTimeEstimateComparatorProvider(overrideProvider);
+            configuration.setCostEstimateComparatorProvider(overrideProvider);
         }
         {
             ValueProvider<InstrumentationStrategy> defaultProvider =
@@ -612,12 +605,12 @@ public class Configuration {
         this.channelConversionProvider = channelConversionProvider;
     }
 
-    public ValueProvider<Comparator<TimeEstimate>> getTimeEstimateComparatorProvider() {
-        return this.timeEstimateComparatorProvider;
+    public ValueProvider<Comparator<ProbabilisticDoubleInterval>> getCostEstimateComparatorProvider() {
+        return this.costEstimateComparatorProvider;
     }
 
-    public void setTimeEstimateComparatorProvider(ValueProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider) {
-        this.timeEstimateComparatorProvider = timeEstimateComparatorProvider;
+    public void setCostEstimateComparatorProvider(ValueProvider<Comparator<ProbabilisticDoubleInterval>> costEstimateComparatorProvider) {
+        this.costEstimateComparatorProvider = costEstimateComparatorProvider;
     }
 
     public CollectionProvider<Class<PlanEnumerationPruningStrategy>> getPruningStrategyClassProvider() {
