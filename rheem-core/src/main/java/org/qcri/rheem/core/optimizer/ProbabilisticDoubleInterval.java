@@ -156,7 +156,7 @@ public class ProbabilisticDoubleInterval {
 
     @Override
     public String toString() {
-        return String.format("%s[%,.2f..%,.2f, %.1f%%]", this.getClass().getSimpleName(),
+        return String.format("(%,.2f..%,.2f ~ %.1f%%)",
                 this.lowerEstimate, this.upperEstimate, this.correctnessProb * 100d);
     }
 

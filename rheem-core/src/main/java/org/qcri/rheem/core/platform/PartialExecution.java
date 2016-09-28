@@ -28,6 +28,11 @@ public class PartialExecution implements JsonSerializable {
     private final long measuredExecutionTime;
 
     /**
+     * Cost bounds for this instance.
+     */
+    private final double lowerCost, upperCost;
+
+    /**
      * {@link OptimizationContext.OperatorContext}s captured by this instance.
      */
     transient private final Collection<OptimizationContext.OperatorContext> operatorContexts;
@@ -46,11 +51,15 @@ public class PartialExecution implements JsonSerializable {
      * Creates a new instance.
      *
      * @param measuredExecutionTime the time measured for the partial execution
+     * @param lowerCost             the lower possible costs for the new instance
+     * @param upperCost             the upper possible costs for the new instance
      * @param operatorContexts      for all executed {@link ExecutionOperator}s
      */
-    public PartialExecution(long measuredExecutionTime, Collection<OptimizationContext.OperatorContext> operatorContexts) {
+    public PartialExecution(long measuredExecutionTime, double lowerCost, double upperCost, Collection<OptimizationContext.OperatorContext> operatorContexts) {
         this.measuredExecutionTime = measuredExecutionTime;
         this.operatorContexts = operatorContexts;
+        this.lowerCost = lowerCost;
+        this.upperCost = upperCost;
     }
 
     /**
@@ -60,10 +69,20 @@ public class PartialExecution implements JsonSerializable {
         this.measuredExecutionTime = measuredExecutionTime;
         this.operatorContexts = null;
         this.operatorExecutions = executions;
+        this.lowerCost = Double.NaN;
+        this.upperCost = Double.NaN;
     }
 
     public long getMeasuredExecutionTime() {
         return measuredExecutionTime;
+    }
+
+    public double getMeasuredLowerCost() {
+        return this.lowerCost;
+    }
+
+    public double getMeasuredUpperCost() {
+        return this.upperCost;
     }
 
     public Collection<OptimizationContext.OperatorContext> getOperatorContexts() {

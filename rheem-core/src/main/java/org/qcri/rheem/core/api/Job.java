@@ -103,6 +103,11 @@ public class Job extends OneTimeExecutable {
     private List<TimeEstimate> timeEstimates = new LinkedList<>();
 
     /**
+     * Collects the cost estimates of all (partially) executed {@link PlanImplementation}s.
+     */
+    private List<ProbabilisticDoubleInterval> costEstimates = new LinkedList<>();
+
+    /**
      * JAR files that are needed to execute the UDFs.
      */
     private final Set<String> udfJarPaths = new HashSet<>();
@@ -301,6 +306,7 @@ public class Job extends OneTimeExecutable {
         this.optimizationRound.start("Create Initial Execution Plan", "Pick Best Plan");
         final PlanImplementation planImplementation = this.pickBestExecutionPlan(costEstimateComparator, executionPlans, null, null, null);
         this.timeEstimates.add(planImplementation.getTimeEstimate());
+        this.costEstimates.add(planImplementation.getCostEstimate());
         this.optimizationRound.stop("Create Initial Execution Plan", "Pick Best Plan");
 
         this.optimizationRound.start("Create Initial Execution Plan", "Split Stages");
@@ -561,6 +567,33 @@ public class Job extends OneTimeExecutable {
             TimeMeasurement upperEstimate = new TimeMeasurement(String.format("Estimate %d (upper)", i));
             upperEstimate.setMillis(timeEstimate.getUpperEstimate());
             this.stopWatch.getExperiment().addMeasurement(upperEstimate);
+            i++;
+        }
+
+        double fixCosts = partialExecutions.stream()
+                .flatMap(partialExecution -> partialExecution.getInitializedPlatforms().stream())
+                .map(platform -> this.configuration.getTimeToCostConverterProvider().provideFor(platform).getFixCosts())
+                .reduce(0d, (a, b) -> a + b);
+        double effectiveLowerCosts = fixCosts + partialExecutions.stream()
+                .map(PartialExecution::getMeasuredLowerCost)
+                .reduce(0d, (a, b) -> a + b);
+        double effectiveUpperCosts = fixCosts + partialExecutions.stream()
+                .map(PartialExecution::getMeasuredUpperCost)
+                .reduce(0d, (a, b) -> a + b);
+        this.logger.info("Accumulated costs: {} .. {}",
+                String.format("%,.2f", effectiveLowerCosts),
+                String.format("%,.2f", effectiveUpperCosts)
+        );
+        i = 1;
+        for (ProbabilisticDoubleInterval costEstimate : this.costEstimates) {
+            this.logger.info("Estimated costs (plan {}): {}", i, costEstimate);
+            // TODO
+//            TimeMeasurement lowerEstimate = new TimeMeasurement(String.format("Estimate %d (lower)", i));
+//            lowerEstimate.setMillis(timeEstimate.getLowerEstimate());
+//            this.stopWatch.getExperiment().addMeasurement(lowerEstimate);
+//            TimeMeasurement upperEstimate = new TimeMeasurement(String.format("Estimate %d (upper)", i));
+//            upperEstimate.setMillis(timeEstimate.getUpperEstimate());
+//            this.stopWatch.getExperiment().addMeasurement(upperEstimate);
             i++;
         }
     }

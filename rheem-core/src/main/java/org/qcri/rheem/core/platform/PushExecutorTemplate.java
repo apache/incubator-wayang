@@ -1,8 +1,12 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -112,7 +116,23 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
         if (executedOperatorContexts.isEmpty()) return null;
 
-        final PartialExecution partialExecution = new PartialExecution(executionDuration, executedOperatorContexts);
+        // Calculate possible costs.
+        final Configuration configuration = this.getConfiguration();
+        double lowerCost = Double.POSITIVE_INFINITY, upperCost = Double.NEGATIVE_INFINITY;
+        final Set<Platform> platforms = executedOperatorContexts.stream()
+                .map(operatorContext -> ((ExecutionOperator) operatorContext.getOperator()).getPlatform())
+                .collect(Collectors.toSet());
+        for (Platform platform : platforms) {
+            final TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
+            final ProbabilisticDoubleInterval costs =
+                    timeToCostConverter.convertWithoutFixCosts(TimeEstimate.ZERO.plus(executionDuration));
+            lowerCost = Math.min(lowerCost, costs.getLowerEstimate());
+            upperCost = Math.max(upperCost, costs.getUpperEstimate());
+        }
+
+        final PartialExecution partialExecution = new PartialExecution(
+                executionDuration, lowerCost, upperCost, executedOperatorContexts
+        );
         if (this.logger.isInfoEnabled()) {
             this.logger.info(
                     "Executed {} operator(s) in {} (estimated {}): {}",
