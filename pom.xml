@@ -13,7 +13,7 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <rheem.version>0.2.0-SNAPSHOT</rheem.version>
+        <rheem.version>0.2.1-SNAPSHOT</rheem.version>
         <scala.version>2.11.8</scala.version>
         <scala.compat.version>2.11</scala.compat.version>
         <spark.version>1.6.0</spark.version>
