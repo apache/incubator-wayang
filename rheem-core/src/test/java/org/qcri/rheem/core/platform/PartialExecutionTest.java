@@ -38,7 +38,7 @@ public class PartialExecutionTest {
         when(operatorContext2.getNumExecutions()).thenReturn(1);
 
 
-        PartialExecution original = new PartialExecution(12345L, Arrays.asList(operatorContext1, operatorContext2));
+        PartialExecution original = new PartialExecution(12345L, 12, 13, Arrays.asList(operatorContext1, operatorContext2));
         original.addInitializedPlatform(DummyPlatform.getInstance());
 
         final JSONObject jsonObject = JsonSerializables.serialize(original);

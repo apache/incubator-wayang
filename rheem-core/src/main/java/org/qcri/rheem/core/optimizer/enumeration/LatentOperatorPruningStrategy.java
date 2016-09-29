@@ -1,7 +1,7 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.platform.Platform;
@@ -24,11 +24,11 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
 
     private static final Logger logger = LoggerFactory.getLogger(LatentOperatorPruningStrategy.class);
 
-    private Comparator<TimeEstimate> timeEstimateComparator;
+    private Comparator<ProbabilisticDoubleInterval> costEstimateComparator;
 
     @Override
     public void configure(Configuration configuration) {
-        this.timeEstimateComparator = configuration.getTimeEstimateComparatorProvider().provide();
+        this.costEstimateComparator = configuration.getCostEstimateComparatorProvider().provide();
     }
 
     @Override
@@ -39,7 +39,7 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
                         .collect(Collectors.groupingBy(LatentOperatorPruningStrategy::getInterestingProperties))
                         .values();
         final List<PlanImplementation> bestPlans = competingPlans.stream()
-                .map(plans -> this.selectBestPlanNary(plans, this.timeEstimateComparator))
+                .map(plans -> this.selectBestPlanNary(plans, this.costEstimateComparator))
                 .collect(Collectors.toList());
         planEnumeration.getPlanImplementations().retainAll(bestPlans);
     }
@@ -58,19 +58,19 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
     }
 
     private PlanImplementation selectBestPlanNary(List<PlanImplementation> planImplementation,
-                                                  Comparator<TimeEstimate> timeEstimateComparator) {
+                                                  Comparator<ProbabilisticDoubleInterval> costEstimateComparator) {
         assert !planImplementation.isEmpty();
         return planImplementation.stream()
-                .reduce((plan1, plan2) -> this.selectBestPlanBinary(plan1, plan2, timeEstimateComparator))
+                .reduce((plan1, plan2) -> this.selectBestPlanBinary(plan1, plan2, costEstimateComparator))
                 .get();
     }
 
     private PlanImplementation selectBestPlanBinary(PlanImplementation p1,
                                                     PlanImplementation p2,
-                                                    Comparator<TimeEstimate> timeEstimateComparator) {
-        final TimeEstimate t1 = p1.getTimeEstimate();
-        final TimeEstimate t2 = p2.getTimeEstimate();
-        final boolean isPickP1 = timeEstimateComparator.compare(t1, t2) <= 0;
+                                                    Comparator<ProbabilisticDoubleInterval> costEstimateComparator) {
+        final ProbabilisticDoubleInterval t1 = p1.getCostEstimate(true);
+        final ProbabilisticDoubleInterval t2 = p2.getCostEstimate(true);
+        final boolean isPickP1 = costEstimateComparator.compare(t1, t2) <= 0;
         if (logger.isDebugEnabled()) {
             if (isPickP1) {
                 LoggerFactory.getLogger(LatentOperatorPruningStrategy.class).debug(

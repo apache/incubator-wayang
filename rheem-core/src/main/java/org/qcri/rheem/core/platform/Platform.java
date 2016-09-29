@@ -4,6 +4,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
@@ -89,6 +90,14 @@ public abstract class Platform {
      * @return a default {@link LoadProfileToTimeConverter}
      */
     public abstract LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration);
+
+    /**
+     * Creates a {@link TimeToCostConverter} for this instance.
+     *
+     * @param configuration configures the {@link TimeToCostConverter}
+     * @return the {@link TimeToCostConverter}
+     */
+    public abstract TimeToCostConverter createTimeToCostConverter(Configuration configuration);
 
     /**
      * Warm up this instance.

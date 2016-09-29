@@ -2,8 +2,8 @@ package org.qcri.rheem.core.optimizer.channels;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -116,8 +116,8 @@ public class DefaultChannelConversion extends ChannelConversion {
      * @param cardinality         the {@link CardinalityEstimate}
      */
     private void setCardinalityAndTimeEstimate(ExecutionTask conversionTask,
-                                OptimizationContext optimizationContext,
-                                CardinalityEstimate cardinality) {
+                                               OptimizationContext optimizationContext,
+                                               CardinalityEstimate cardinality) {
         final ExecutionOperator operator = conversionTask.getOperator();
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(operator);
 
@@ -131,11 +131,13 @@ public class DefaultChannelConversion extends ChannelConversion {
             operatorContext.setOutputCardinality(0, cardinality);
         }
 
-        operatorContext.updateTimeEstimate();
+        operatorContext.updateCostEstimate();
     }
 
     @Override
-    public TimeEstimate estimateConversionTime(CardinalityEstimate cardinality, int numExecutions, OptimizationContext optimizationContext) {
+    public ProbabilisticDoubleInterval estimateConversionCost(CardinalityEstimate cardinality,
+                                                              int numExecutions,
+                                                              OptimizationContext optimizationContext) {
         // Create OperatorContext.
         final ExecutionOperator executionOperator = this.executionOperatorFactory.apply(null, optimizationContext.getConfiguration());
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(executionOperator);
@@ -145,8 +147,8 @@ public class DefaultChannelConversion extends ChannelConversion {
         this.setCardinality(operatorContext, cardinality);
 
         // Estimate time.
-        operatorContext.updateTimeEstimate();
-        return operatorContext.getTimeEstimate();
+        operatorContext.updateCostEstimate();
+        return operatorContext.getCostEstimate();
     }
 
     private void setCardinality(OptimizationContext.OperatorContext operatorContext, CardinalityEstimate cardinality) {

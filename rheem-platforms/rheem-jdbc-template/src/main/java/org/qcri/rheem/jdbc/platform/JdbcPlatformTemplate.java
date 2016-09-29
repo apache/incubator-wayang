@@ -3,6 +3,7 @@ package org.qcri.rheem.jdbc.platform;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
@@ -66,6 +67,14 @@ public abstract class JdbcPlatformTemplate extends Platform {
                 LoadToTimeConverter.createLinearCoverter(0),
                 LoadToTimeConverter.createLinearCoverter(0),
                 (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+        );
+    }
+
+    @Override
+    public TimeToCostConverter createTimeToCostConverter(Configuration configuration) {
+        return new TimeToCostConverter(
+                configuration.getDoubleProperty(String.format("rheem.%s.costs.fix", this.getPlatformId())),
+                configuration.getDoubleProperty(String.format("rheem.%s.costs.per-ms", this.getPlatformId()))
         );
     }
 

@@ -4,6 +4,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationUtils;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
@@ -32,9 +33,9 @@ public class ChannelConversionGraph {
     private final Map<ChannelDescriptor, List<ChannelConversion>> conversions = new HashMap<>();
 
     /**
-     * Caches the {@link Comparator} for {@link TimeEstimate}s.
+     * Caches the {@link Comparator} for {@link ProbabilisticDoubleInterval}s.
      */
-    private final Comparator<TimeEstimate> timeEstimateComparator;
+    private final Comparator<ProbabilisticDoubleInterval> costEstimateComparator;
 
     private static final Logger logger = LoggerFactory.getLogger(ChannelConversionGraph.class);
 
@@ -44,7 +45,7 @@ public class ChannelConversionGraph {
      * @param configuration describes how to configure the new instance
      */
     public ChannelConversionGraph(Configuration configuration) {
-        this.timeEstimateComparator = configuration.getTimeEstimateComparatorProvider().provide();
+        this.costEstimateComparator = configuration.getCostEstimateComparatorProvider().provide();
         configuration.getChannelConversionProvider().provideAll().forEach(this::add);
     }
 
@@ -102,7 +103,7 @@ public class ChannelConversionGraph {
      * Given two {@link Tree}s, choose the one with lower costs.
      */
     private Tree selectCheaperTree(Tree t1, Tree t2) {
-        return this.timeEstimateComparator.compare(t1.costs, t2.costs) <= 0 ? t1 : t2;
+        return this.costEstimateComparator.compare(t1.costs, t2.costs) <= 0 ? t1 : t2;
     }
 
     /**
@@ -121,7 +122,7 @@ public class ChannelConversionGraph {
         int maxSettledIndices = combinationSettledIndices.cardinality();
         final HashSet<ChannelDescriptor> employedChannelDescriptors = new HashSet<>(firstTree.employedChannelDescriptors);
         int maxVisitedChannelDescriptors = employedChannelDescriptors.size();
-        TimeEstimate costs = firstTree.costs;
+        ProbabilisticDoubleInterval costs = firstTree.costs;
         TreeVertex newRoot = new TreeVertex(firstTree.root.channelDescriptor, firstTree.root.settledIndices);
         newRoot.copyEdgesFrom(firstTree.root);
 
@@ -218,9 +219,9 @@ public class ChannelConversionGraph {
         private Map<ChannelDescriptor, Bitmask> kernelDestChannelDescriptorsToIndices;
 
         /**
-         * Caches {@link TimeEstimate}s for {@link ChannelConversion}s.
+         * Caches cost estimates for {@link ChannelConversion}s.
          */
-        private Map<ChannelConversion, TimeEstimate> conversionTimeCache = new HashMap<>();
+        private Map<ChannelConversion, ProbabilisticDoubleInterval> conversionCostCache = new HashMap<>();
 
         /**
          * Caches the result of {@link #getJunction()}.
@@ -456,7 +457,7 @@ public class ChannelConversionGraph {
                                     channelDescriptor,
                                     channelDescriptor.isReusable() ? newSettledIndices : Bitmask.EMPTY_BITMASK,
                                     channelConversion,
-                                    this.getTimeEstimate(channelConversion)
+                                    this.getCostEstimate(channelConversion)
                             )
                     );
                     childSolutionSets.add(childSolutions.values());
@@ -511,16 +512,16 @@ public class ChannelConversionGraph {
         }
 
         /**
-         * Retrieve a cached or calculate and cache the {@link TimeEstimate} for a given {@link ChannelConversion}
+         * Retrieve a cached or calculate and cache the cost estimate for a given {@link ChannelConversion}
          * w.r.t. the {@link #cardinality}.
          *
-         * @param channelConversion whose {@link TimeEstimate} is requested
-         * @return the {@link TimeEstimate}
+         * @param channelConversion whose cost estimate is requested
+         * @return the cost estimate
          */
-        private TimeEstimate getTimeEstimate(ChannelConversion channelConversion) {
-            return this.conversionTimeCache.computeIfAbsent(
+        private ProbabilisticDoubleInterval getCostEstimate(ChannelConversion channelConversion) {
+            return this.conversionCostCache.computeIfAbsent(
                     channelConversion,
-                    key -> key.estimateConversionTime(this.cardinality, this.numExecutions, this.optimizationContext.getConfiguration())
+                    key -> key.estimateConversionCost(this.cardinality, this.numExecutions, this.optimizationContext.getConfiguration())
             );
         }
 
@@ -672,7 +673,7 @@ public class ChannelConversionGraph {
         /**
          * The sum of {@link TimeEstimate}s of all {@link TreeEdge}s of this instance.
          */
-        private TimeEstimate costs = TimeEstimate.ZERO;
+        private ProbabilisticDoubleInterval costs = ProbabilisticDoubleInterval.zero;
 
         /**
          * Creates a new instance with a single {@link TreeVertex}.
@@ -698,20 +699,20 @@ public class ChannelConversionGraph {
          * @param newRootChannelDescriptor    will be wrapped in the new {@link #root}
          * @param newRootSettledIndices       destination indices settled by the {@code newRootChannelDescriptor}
          * @param newToObsoleteRootConversion used to establish the {@link TreeEdge} between the old and new {@link #root}
-         * @param costs                       of the {@code newToObsoleteRootConversion}
+         * @param costEstimate                of the {@code newToObsoleteRootConversion}
          */
         void reroot(ChannelDescriptor newRootChannelDescriptor,
                     Bitmask newRootSettledIndices,
                     ChannelConversion newToObsoleteRootConversion,
-                    TimeEstimate costs) {
+                    ProbabilisticDoubleInterval costEstimate) {
             // Exchange the root.
             final TreeVertex newRoot = new TreeVertex(newRootChannelDescriptor, newRootSettledIndices);
-            final TreeEdge edge = newRoot.linkTo(newToObsoleteRootConversion, this.root, costs);
+            final TreeEdge edge = newRoot.linkTo(newToObsoleteRootConversion, this.root, costEstimate);
             this.root = newRoot;
             // Update metadata.
             this.employedChannelDescriptors.add(newRootChannelDescriptor);
             this.settledDestinationIndices.orInPlace(newRootSettledIndices);
-            this.costs = this.costs.plus(edge.timeEstimate);
+            this.costs = this.costs.plus(edge.costEstimate);
         }
 
         @Override
@@ -752,8 +753,8 @@ public class ChannelConversionGraph {
             this.outEdges = new ArrayList<>(4);
         }
 
-        private TreeEdge linkTo(ChannelConversion channelConversion, TreeVertex destination, TimeEstimate timeEstimate) {
-            final TreeEdge edge = new TreeEdge(channelConversion, destination, timeEstimate);
+        private TreeEdge linkTo(ChannelConversion channelConversion, TreeVertex destination, ProbabilisticDoubleInterval costEstimate) {
+            final TreeEdge edge = new TreeEdge(channelConversion, destination, costEstimate);
             this.outEdges.add(edge);
             return edge;
         }
@@ -788,21 +789,30 @@ public class ChannelConversionGraph {
      */
     private static class TreeEdge {
 
+        /**
+         * The target {@link TreeVertex}.
+         */
         private final TreeVertex destination;
 
+        /**
+         * The {@link ChannelConversion} represented by this instance.
+         */
         private final ChannelConversion channelConversion;
 
-        private final TimeEstimate timeEstimate;
+        /**
+         * The cost estimate of the {@link #channelConversion}.
+         */
+        private final ProbabilisticDoubleInterval costEstimate;
 
-        private TreeEdge(ChannelConversion channelConversion, TreeVertex destination, TimeEstimate timeEstimate) {
+        private TreeEdge(ChannelConversion channelConversion, TreeVertex destination, ProbabilisticDoubleInterval costEstimate) {
             this.channelConversion = channelConversion;
             this.destination = destination;
-            this.timeEstimate = timeEstimate;
+            this.costEstimate = costEstimate;
         }
 
         @Override
         public String toString() {
-            return String.format("%s[%s, %s]", this.getClass().getSimpleName(), this.channelConversion, this.timeEstimate);
+            return String.format("%s[%s, %s]", this.getClass().getSimpleName(), this.channelConversion, this.costEstimate);
         }
     }
 }

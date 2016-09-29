@@ -54,8 +54,8 @@ public abstract class CardinalityPusher {
             this.doPush(opCtx, configuration);
         }
 
-        if (opCtx.getTimeEstimate() == null) {
-            opCtx.updateTimeEstimate();
+        if (opCtx.getCostEstimate() == null) {
+            opCtx.updateCostEstimate();
         }
     }
 

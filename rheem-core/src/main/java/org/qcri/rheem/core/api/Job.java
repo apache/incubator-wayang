@@ -7,6 +7,7 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
@@ -19,10 +20,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.*;
-import org.qcri.rheem.core.profiling.CardinalityRepository;
-import org.qcri.rheem.core.profiling.ExecutionLog;
-import org.qcri.rheem.core.profiling.InstrumentationStrategy;
-import org.qcri.rheem.core.profiling.PartialExecutionMeasurement;
+import org.qcri.rheem.core.profiling.*;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -100,6 +98,11 @@ public class Job extends OneTimeExecutable {
      * Collects the {@link TimeEstimate}s of all (partially) executed {@link PlanImplementation}s.
      */
     private List<TimeEstimate> timeEstimates = new LinkedList<>();
+
+    /**
+     * Collects the cost estimates of all (partially) executed {@link PlanImplementation}s.
+     */
+    private List<ProbabilisticDoubleInterval> costEstimates = new LinkedList<>();
 
     /**
      * JAR files that are needed to execute the UDFs.
@@ -279,7 +282,8 @@ public class Job extends OneTimeExecutable {
         this.optimizationRound.start("Create Initial Execution Plan");
 
         // Defines the plan that we want to use in the end.
-        final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
+        final Comparator<ProbabilisticDoubleInterval> costEstimateComparator =
+                this.configuration.getCostEstimateComparatorProvider().provide();
 
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator();
@@ -297,8 +301,9 @@ public class Job extends OneTimeExecutable {
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
         this.optimizationRound.start("Create Initial Execution Plan", "Pick Best Plan");
-        final PlanImplementation planImplementation = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
+        final PlanImplementation planImplementation = this.pickBestExecutionPlan(costEstimateComparator, executionPlans, null, null, null);
         this.timeEstimates.add(planImplementation.getTimeEstimate());
+        this.costEstimates.add(planImplementation.getCostEstimate());
         this.optimizationRound.stop("Create Initial Execution Plan", "Pick Best Plan");
 
         this.optimizationRound.start("Create Initial Execution Plan", "Split Stages");
@@ -318,7 +323,7 @@ public class Job extends OneTimeExecutable {
     }
 
 
-    private PlanImplementation pickBestExecutionPlan(Comparator<TimeEstimate> timeEstimateComparator,
+    private PlanImplementation pickBestExecutionPlan(Comparator<ProbabilisticDoubleInterval> costEstimateComparator,
                                                      Collection<PlanImplementation> executionPlans,
                                                      ExecutionPlan existingPlan,
                                                      Set<Channel> openChannels,
@@ -326,9 +331,9 @@ public class Job extends OneTimeExecutable {
 
         final PlanImplementation bestPlanImplementation = executionPlans.stream()
                 .reduce((p1, p2) -> {
-                    final TimeEstimate t1 = p1.getTimeEstimate();
-                    final TimeEstimate t2 = p2.getTimeEstimate();
-                    return timeEstimateComparator.compare(t1, t2) < 0 ? p1 : p2;
+                    final ProbabilisticDoubleInterval t1 = p1.getCostEstimate();
+                    final ProbabilisticDoubleInterval t2 = p2.getCostEstimate();
+                    return costEstimateComparator.compare(t1, t2) < 0 ? p1 : p2;
                 })
                 .orElseThrow(() -> new RheemException("Could not find an execution plan."));
         this.logger.info("Picked {} as best plan.", bestPlanImplementation);
@@ -467,7 +472,8 @@ public class Job extends OneTimeExecutable {
      */
     private void updateExecutionPlan(ExecutionPlan executionPlan) {
         // Defines the plan that we want to use in the end.
-        final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
+        final Comparator<ProbabilisticDoubleInterval> costEstimateComparator =
+                this.configuration.getCostEstimateComparatorProvider().provide();
 
         // Find and copy the open Channels.
         final Set<ExecutionStage> completedStages = this.crossPlatformExecutor.getCompletedStages();
@@ -496,8 +502,9 @@ public class Job extends OneTimeExecutable {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        final PlanImplementation planImplementation = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, executionPlan,
-                openChannels, completedStages);
+        final PlanImplementation planImplementation = this.pickBestExecutionPlan(
+                costEstimateComparator, executionPlans, executionPlan, openChannels, completedStages
+        );
 
         ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.recreateFrom(
                 planImplementation, executionPlan, openChannels, completedStages
@@ -538,6 +545,7 @@ public class Job extends OneTimeExecutable {
         }
         this.optimizationRound.stop("Post-processing", "Log measurements");
 
+        // Log the execution time.
         long effectiveExecutionMillis = partialExecutions.stream()
                 .map(PartialExecution::getMeasuredExecutionTime)
                 .reduce(0L, (a, b) -> a + b);
@@ -557,6 +565,36 @@ public class Job extends OneTimeExecutable {
             TimeMeasurement upperEstimate = new TimeMeasurement(String.format("Estimate %d (upper)", i));
             upperEstimate.setMillis(timeEstimate.getUpperEstimate());
             this.stopWatch.getExperiment().addMeasurement(upperEstimate);
+            i++;
+        }
+
+        // Log the execution costs.
+        double fixCosts = partialExecutions.stream()
+                .flatMap(partialExecution -> partialExecution.getInitializedPlatforms().stream())
+                .map(platform -> this.configuration.getTimeToCostConverterProvider().provideFor(platform).getFixCosts())
+                .reduce(0d, (a, b) -> a + b);
+        double effectiveLowerCosts = fixCosts + partialExecutions.stream()
+                .map(PartialExecution::getMeasuredLowerCost)
+                .reduce(0d, (a, b) -> a + b);
+        double effectiveUpperCosts = fixCosts + partialExecutions.stream()
+                .map(PartialExecution::getMeasuredUpperCost)
+                .reduce(0d, (a, b) -> a + b);
+        this.logger.info("Accumulated costs: {} .. {}",
+                String.format("%,.2f", effectiveLowerCosts),
+                String.format("%,.2f", effectiveUpperCosts)
+        );
+        this.experiment.addMeasurement(
+                new CostMeasurement("Measured cost", effectiveLowerCosts, effectiveUpperCosts, 1d)
+        );
+        i = 1;
+        for (ProbabilisticDoubleInterval costEstimate : this.costEstimates) {
+            this.logger.info("Estimated costs (plan {}): {}", i, costEstimate);
+            this.experiment.addMeasurement(new CostMeasurement(
+                    String.format("Estimated costs (%d)", i),
+                    costEstimate.getLowerEstimate(),
+                    costEstimate.getUpperEstimate(),
+                    costEstimate.getCorrectnessProbability()
+            ));
             i++;
         }
     }

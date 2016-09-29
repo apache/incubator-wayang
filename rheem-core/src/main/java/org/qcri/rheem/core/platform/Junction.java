@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
@@ -123,6 +124,23 @@ public class Junction {
                 .map(localMatchingOptCtx::getOperatorContext)
                 .map(OptimizationContext.OperatorContext::getTimeEstimate)
                 .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+    }
+
+    /**
+     * Calculates the cost estimate for all {@link ExecutionOperator}s in this instance for a given
+     * {@link OptimizationContext} that should be known itself (or as a fork) to this instance.
+     *
+     * @param optimizationContext the {@link OptimizationContext}
+     * @return the aggregate cost estimate
+     */
+    public ProbabilisticDoubleInterval getCostEstimate(OptimizationContext optimizationContext) {
+        final OptimizationContext localMatchingOptCtx = this.findMatchingOptimizationContext(optimizationContext);
+        assert localMatchingOptCtx != null : "No matching OptimizationContext for in Junction.";
+        return this.conversionTasks.stream()
+                .map(ExecutionTask::getOperator)
+                .map(localMatchingOptCtx::getOperatorContext)
+                .map(OptimizationContext.OperatorContext::getCostEstimate)
+                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
     }
 
     /**

@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 /***
@@ -7,6 +8,35 @@ import java.util.Objects;
  * It addresses uncertainty by expressing estimates as intervals and assigning a probability of correctness (in [0, 1]).
  */
 public class ProbabilisticDoubleInterval {
+
+    /**
+     * Instance that basically represents the value {@code 0d}.
+     */
+    public static final ProbabilisticDoubleInterval zero = ProbabilisticDoubleInterval.ofExactly(0d);
+
+    /**
+     * Provides a {@link Comparator} for {@link ProbabilisticDoubleInterval}s.
+     * For two {@link ProbabilisticDoubleInterval}s {@code t1} and {@code t2}, it works as follows:
+     * <ol>
+     * <li>If a either of the {@link ProbabilisticDoubleInterval}s has a correctness probability of 0, we consider it to be greater.</li>
+     * <li>Otherwise, we compare the two {@link ProbabilisticDoubleInterval}s by their average estimation value.</li>
+     * </ol>
+     *
+     * @return
+     */
+    public static Comparator<ProbabilisticDoubleInterval> expectationValueComparator() {
+        return (t1, t2) -> {
+            if (t1.getCorrectnessProbability() == 0d) {
+                if (t2.getCorrectnessProbability() != 0d) {
+                    return 1;
+                }
+            } else if (t2.getCorrectnessProbability() == 0d) {
+                return -1;
+            }
+            // NB: We do not assume a uniform distribution of the estimates within the instances.
+            return Long.compare(t1.getGeometricMeanEstimate(), t2.getGeometricMeanEstimate());
+        };
+    }
 
     /**
      * Probability of correctness between in the interval [0, 1]. This helps
@@ -79,6 +109,20 @@ public class ProbabilisticDoubleInterval {
         return this.correctnessProb == 1d && this.lowerEstimate == this.upperEstimate && this.upperEstimate == exactEstimate;
     }
 
+    /**
+     * Creates a new instance that represents the sum of the {@code this} and {@code that} instance.
+     *
+     * @param that the other summand
+     * @return the sum
+     */
+    public ProbabilisticDoubleInterval plus(ProbabilisticDoubleInterval that) {
+        return new ProbabilisticDoubleInterval(
+                this.getLowerEstimate() + that.getLowerEstimate(),
+                this.getUpperEstimate() + that.getUpperEstimate(),
+                Math.min(this.getCorrectnessProbability(), that.getCorrectnessProbability())
+        );
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -112,7 +156,8 @@ public class ProbabilisticDoubleInterval {
 
     @Override
     public String toString() {
-        return String.format("%s[%.2f..%.2f, %.1f%%]", this.getClass().getSimpleName(),
+        return String.format("(%,.2f..%,.2f ~ %.1f%%)",
                 this.lowerEstimate, this.upperEstimate, this.correctnessProb * 100d);
     }
+
 }

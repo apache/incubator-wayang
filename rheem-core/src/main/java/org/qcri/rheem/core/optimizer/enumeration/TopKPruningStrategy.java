@@ -1,7 +1,7 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -11,13 +11,13 @@ import java.util.Comparator;
  */
 public class TopKPruningStrategy implements PlanEnumerationPruningStrategy {
 
-    private Comparator<TimeEstimate> timeEstimateComparator;
+    private Comparator<ProbabilisticDoubleInterval> costEstimateComparator;
 
     private int k;
 
     @Override
     public void configure(Configuration configuration) {
-        this.timeEstimateComparator = configuration.getTimeEstimateComparatorProvider().provide();
+        this.costEstimateComparator = configuration.getCostEstimateComparatorProvider().provide();
         this.k = (int) configuration.getLongProperty("rheem.core.optimizer.pruning.topk", 5);
     }
 
@@ -33,9 +33,9 @@ public class TopKPruningStrategy implements PlanEnumerationPruningStrategy {
 
     private int comparePlanImplementations(PlanImplementation p1,
                                            PlanImplementation p2) {
-        final TimeEstimate t1 = p1.getTimeEstimate();
-        final TimeEstimate t2 = p2.getTimeEstimate();
-        return this.timeEstimateComparator.compare(t1, t2);
+        final ProbabilisticDoubleInterval t1 = p1.getCostEstimate(true);
+        final ProbabilisticDoubleInterval t2 = p2.getCostEstimate(true);
+        return this.costEstimateComparator.compare(t1, t2);
     }
 
 }

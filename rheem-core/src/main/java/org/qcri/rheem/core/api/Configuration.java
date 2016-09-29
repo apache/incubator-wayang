@@ -75,6 +75,8 @@ public class Configuration {
 
     private KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider;
 
+    private KeyValueProvider<Platform, TimeToCostConverter> timeToCostConverterProvider;
+
     private KeyValueProvider<Platform, Long> platformStartUpTimeProvider;
 
     private ExplicitCollectionProvider<Platform> platformProvider;
@@ -83,7 +85,7 @@ public class Configuration {
 
     private ExplicitCollectionProvider<ChannelConversion> channelConversionProvider;
 
-    private ValueProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
+    private ValueProvider<Comparator<ProbabilisticDoubleInterval>> costEstimateComparatorProvider;
 
     private CollectionProvider<Class<PlanEnumerationPruningStrategy>> pruningStrategyClassProvider;
 
@@ -141,12 +143,14 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider, this);
             this.loadProfileToTimeConverterProvider =
                     new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider, this);
+            this.timeToCostConverterProvider =
+                    new MapBasedKeyValueProvider<>(this.parent.timeToCostConverterProvider);
             this.platformStartUpTimeProvider =
                     new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider, this);
 
             // Providers for plan enumeration.
             this.pruningStrategyClassProvider = new ExplicitCollectionProvider<>(this, this.parent.pruningStrategyClassProvider);
-            this.timeEstimateComparatorProvider = new ConstantValueProvider<>(this, this.parent.timeEstimateComparatorProvider);
+            this.costEstimateComparatorProvider = new ConstantValueProvider<>(this, this.parent.costEstimateComparatorProvider);
             this.instrumentationStrategyProvider = new ConstantValueProvider<>(this, this.parent.instrumentationStrategyProvider);
 
             // Properties.
@@ -427,11 +431,22 @@ public class Configuration {
             configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
         }
         {
-            ValueProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantValueProvider<>(TimeEstimate.expectationValueComparator(), configuration);
-            ValueProvider<Comparator<TimeEstimate>> overrideProvider =
-                    new ConstantValueProvider<>(defaultProvider);
-            configuration.setTimeEstimateComparatorProvider(overrideProvider);
+            // Safety net: provide a fallback start up costs.
+            final KeyValueProvider<Platform, TimeToCostConverter> fallbackProvider =
+                    new FunctionalKeyValueProvider<Platform, TimeToCostConverter>(
+                            platform -> new TimeToCostConverter(0d, 1d),
+                            configuration
+                    ).withSlf4jWarning("Using fallback time-to-cost converter for {}.");
+            final KeyValueProvider<Platform, TimeToCostConverter> builtInProvider =
+                    new FunctionalKeyValueProvider<>(
+                            fallbackProvider,
+                            (platform, requestee) -> platform.createTimeToCostConverter(
+                                    requestee.getConfiguration()
+                            )
+                    );
+            final KeyValueProvider<Platform, TimeToCostConverter> overrideProvider =
+                    new MapBasedKeyValueProvider<>(builtInProvider, false);
+            configuration.setTimeToCostConverterProvider(overrideProvider);
         }
     }
 
@@ -464,11 +479,11 @@ public class Configuration {
             configuration.setPruningStrategyClassProvider(overrideProvider);
         }
         {
-            ValueProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantValueProvider<>(TimeEstimate.expectationValueComparator(), configuration);
-            ValueProvider<Comparator<TimeEstimate>> overrideProvider =
+            ValueProvider<Comparator<ProbabilisticDoubleInterval>> defaultProvider =
+                    new ConstantValueProvider<>(ProbabilisticDoubleInterval.expectationValueComparator(), configuration);
+            ValueProvider<Comparator<ProbabilisticDoubleInterval>> overrideProvider =
                     new ConstantValueProvider<>(defaultProvider);
-            configuration.setTimeEstimateComparatorProvider(overrideProvider);
+            configuration.setCostEstimateComparatorProvider(overrideProvider);
         }
         {
             ValueProvider<InstrumentationStrategy> defaultProvider =
@@ -590,12 +605,12 @@ public class Configuration {
         this.channelConversionProvider = channelConversionProvider;
     }
 
-    public ValueProvider<Comparator<TimeEstimate>> getTimeEstimateComparatorProvider() {
-        return this.timeEstimateComparatorProvider;
+    public ValueProvider<Comparator<ProbabilisticDoubleInterval>> getCostEstimateComparatorProvider() {
+        return this.costEstimateComparatorProvider;
     }
 
-    public void setTimeEstimateComparatorProvider(ValueProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider) {
-        this.timeEstimateComparatorProvider = timeEstimateComparatorProvider;
+    public void setCostEstimateComparatorProvider(ValueProvider<Comparator<ProbabilisticDoubleInterval>> costEstimateComparatorProvider) {
+        this.costEstimateComparatorProvider = costEstimateComparatorProvider;
     }
 
     public CollectionProvider<Class<PlanEnumerationPruningStrategy>> getPruningStrategyClassProvider() {
@@ -653,6 +668,14 @@ public class Configuration {
 
     public void setLoadProfileToTimeConverterProvider(KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider) {
         this.loadProfileToTimeConverterProvider = loadProfileToTimeConverterProvider;
+    }
+
+    public KeyValueProvider<Platform, TimeToCostConverter> getTimeToCostConverterProvider() {
+        return timeToCostConverterProvider;
+    }
+
+    public void setTimeToCostConverterProvider(KeyValueProvider<Platform, TimeToCostConverter> timeToCostConverterProvider) {
+        this.timeToCostConverterProvider = timeToCostConverterProvider;
     }
 
     public OptionalLong getOptionalLongProperty(String key) {

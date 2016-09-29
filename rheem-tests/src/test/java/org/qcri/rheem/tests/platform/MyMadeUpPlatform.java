@@ -4,6 +4,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.plugin.Plugin;
@@ -61,6 +62,11 @@ public class MyMadeUpPlatform extends Platform implements Plugin {
 
     @Override
     public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
+        throw new RuntimeException("Not yet implemented.");
+    }
+
+    @Override
+    public TimeToCostConverter createTimeToCostConverter(Configuration configuration) {
         throw new RuntimeException("Not yet implemented.");
     }
 }

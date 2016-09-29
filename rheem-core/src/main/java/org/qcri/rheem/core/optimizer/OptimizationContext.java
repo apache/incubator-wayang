@@ -7,7 +7,6 @@ import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -287,9 +286,14 @@ public abstract class OptimizationContext {
         private LoadProfile loadProfile;
 
         /**
-         * {@link TimeEstimate} for the {@link ExecutionState}.
+         * {@link TimeEstimate} for the {@link ExecutionOperator}.
          */
         protected TimeEstimate timeEstimate;
+
+        /**
+         * Cost estimate for the {@link ExecutionOperator}.
+         */
+        private ProbabilisticDoubleInterval costEstimate;
 
         /**
          * Reflects the number of executions of the {@link #operator}. This, e.g., relevant in {@link LoopContext}s.
@@ -408,8 +412,8 @@ public abstract class OptimizationContext {
         /**
          * Update the {@link LoadProfile} and {@link TimeEstimate} of this instance.
          */
-        public void updateTimeEstimate() {
-            this.updateTimeEstimate(this.getOptimizationContext().getConfiguration());
+        public void updateCostEstimate() {
+            this.updateCostEstimate(this.getOptimizationContext().getConfiguration());
         }
 
         /**
@@ -417,9 +421,10 @@ public abstract class OptimizationContext {
          *
          * @param configuration provides the necessary functions
          */
-        private void updateTimeEstimate(Configuration configuration) {
+        private void updateCostEstimate(Configuration configuration) {
             if (!this.operator.isExecutionOperator()) return;
 
+            // Estimate the LoadProfile.
             final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
             final LoadProfileEstimator<ExecutionOperator> loadProfileEstimator = configuration
                     .getOperatorLoadProfileEstimatorProvider()
@@ -430,6 +435,7 @@ public abstract class OptimizationContext {
                 throw new RheemException(String.format("Load profile estimation for %s failed.", this.operator), e);
             }
 
+            // Calculate the TimeEstimate.
             final Platform platform = executionOperator.getPlatform();
             final LoadProfileToTimeConverter timeConverter = configuration.getLoadProfileToTimeConverterProvider().provideFor(platform);
             this.timeEstimate = TimeEstimate.MINIMUM.plus(timeConverter.convert(this.loadProfile));
@@ -438,6 +444,10 @@ public abstract class OptimizationContext {
                         "Setting time estimate of {} to {}.", this.operator, this.timeEstimate
                 );
             }
+
+            // Calculate the cost estimate.
+            final TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
+            this.costEstimate = timeToCostConverter.convertWithoutFixCosts(this.timeEstimate);
         }
 
         public void increaseBy(OperatorContext that) {
@@ -484,16 +494,28 @@ public abstract class OptimizationContext {
 
         public LoadProfile getLoadProfile() {
             if (this.loadProfile == null) {
-                this.updateTimeEstimate();
+                this.updateCostEstimate();
             }
             return this.loadProfile;
         }
 
         public TimeEstimate getTimeEstimate() {
             if (this.timeEstimate == null) {
-                this.updateTimeEstimate();
+                this.updateCostEstimate();
             }
             return this.timeEstimate;
+        }
+
+        /**
+         * Get the estimated costs incurred by this instance (without fix costs).
+         *
+         * @return the cost estimate
+         */
+        public ProbabilisticDoubleInterval getCostEstimate() {
+            if (this.costEstimate == null) {
+                this.updateCostEstimate();
+            }
+            return this.costEstimate;
         }
 
         @Override
