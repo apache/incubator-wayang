@@ -11,6 +11,7 @@ import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.optimizer.enumeration.*;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
@@ -568,9 +569,26 @@ public class Job extends OneTimeExecutable {
             i++;
         }
 
+        // Log the cost settings.
+        final Collection<Platform> consideredPlatforms = this.configuration.getPlatformProvider().provideAll();
+        for (Platform consideredPlatform : consideredPlatforms) {
+            final TimeToCostConverter timeToCostConverter = this.configuration
+                    .getTimeToCostConverterProvider()
+                    .provideFor(consideredPlatform);
+            this.experiment.getSubject().addConfiguration(
+                    String.format("Costs per ms (%s)", consideredPlatform.getName()),
+                    timeToCostConverter.getCostsPerMillisecond()
+            );
+            this.experiment.getSubject().addConfiguration(
+                    String.format("Fix costs (%s)", consideredPlatform.getName()),
+                    timeToCostConverter.getFixCosts()
+            );
+        }
+
+
         // Log the execution costs.
         double fixCosts = partialExecutions.stream()
-                .flatMap(partialExecution -> partialExecution.getInitializedPlatforms().stream())
+                .flatMap(partialExecution -> partialExecution.getInvolvedPlatforms().stream())
                 .map(platform -> this.configuration.getTimeToCostConverterProvider().provideFor(platform).getFixCosts())
                 .reduce(0d, (a, b) -> a + b);
         double effectiveLowerCosts = fixCosts + partialExecutions.stream()

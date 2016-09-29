@@ -129,6 +129,17 @@ public class PartialExecution implements JsonSerializable {
     }
 
     /**
+     * Retrieve the {@link Platform}s involved in this instance.
+     *
+     * @return the {@link Platform}s
+     */
+    public Collection<Platform> getInvolvedPlatforms() {
+        return this.operatorContexts.stream()
+                .map(operatorContext -> ((ExecutionOperator) operatorContext.getOperator()).getPlatform())
+                .collect(Collectors.toSet());
+    }
+
+    /**
      * Calculates the overall {@link TimeEstimate} of this instance.
      *
      * @return the overall {@link TimeEstimate}
