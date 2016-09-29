@@ -2,19 +2,19 @@ package org.qcri.rheem.core.platform;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
 import org.qcri.rheem.core.util.JsonSerializable;
 import org.qcri.rheem.core.util.JsonSerializables;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,11 +48,40 @@ public class PartialExecution implements JsonSerializable {
     private Collection<Platform> initializedPlatforms = new LinkedList<>();
 
     /**
+     * Creates a new instance according to the measurement data.
+     *
+     * @param measuredExecutionTime    the measured execution time
+     * @param executedOperatorContexts the {@link OptimizationContext.OperatorContext} of exected {@link ExecutionOperator}s
+     * @param configuration            the execution {@link Configuration}
+     * @return the new instance
+     */
+    public static PartialExecution createFromMeasurement(
+            long measuredExecutionTime,
+            Collection<OptimizationContext.OperatorContext> executedOperatorContexts,
+            Configuration configuration) {
+
+        // Calculate possible costs.
+        double lowerCost = Double.POSITIVE_INFINITY, upperCost = Double.NEGATIVE_INFINITY;
+        final Set<Platform> platforms = executedOperatorContexts.stream()
+                .map(operatorContext -> ((ExecutionOperator) operatorContext.getOperator()).getPlatform())
+                .collect(Collectors.toSet());
+        for (Platform platform : platforms) {
+            final TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
+            final ProbabilisticDoubleInterval costs =
+                    timeToCostConverter.convertWithoutFixCosts(TimeEstimate.ZERO.plus(measuredExecutionTime));
+            lowerCost = Math.min(lowerCost, costs.getLowerEstimate());
+            upperCost = Math.max(upperCost, costs.getUpperEstimate());
+        }
+
+        return new PartialExecution(measuredExecutionTime, lowerCost, upperCost, executedOperatorContexts);
+    }
+
+    /**
      * Creates a new instance.
      *
      * @param measuredExecutionTime the time measured for the partial execution
-     * @param lowerCost             the lower possible costs for the new instance
-     * @param upperCost             the upper possible costs for the new instance
+     * @param lowerCost             the lower possible costs for the new instance (excluding fix costs)
+     * @param upperCost             the upper possible costs for the new instance (excluding fix costs)
      * @param operatorContexts      for all executed {@link ExecutionOperator}s
      */
     public PartialExecution(long measuredExecutionTime, double lowerCost, double upperCost, Collection<OptimizationContext.OperatorContext> operatorContexts) {
@@ -65,22 +94,32 @@ public class PartialExecution implements JsonSerializable {
     /**
      * Deserialization constructor.
      */
-    private PartialExecution(long measuredExecutionTime, List<OperatorExecution> executions) {
+    private PartialExecution(long measuredExecutionTime, double lowerCost, double upperCost, List<OperatorExecution> executions) {
         this.measuredExecutionTime = measuredExecutionTime;
         this.operatorContexts = null;
         this.operatorExecutions = executions;
-        this.lowerCost = Double.NaN;
-        this.upperCost = Double.NaN;
+        this.lowerCost = lowerCost;
+        this.upperCost = upperCost;
     }
 
     public long getMeasuredExecutionTime() {
         return measuredExecutionTime;
     }
 
+    /**
+     * The lower cost for this instance (without fix costs).
+     *
+     * @return the lower execution costs
+     */
     public double getMeasuredLowerCost() {
         return this.lowerCost;
     }
 
+    /**
+     * The upper cost for this instance (without fix costs).
+     *
+     * @return the upper execution costs
+     */
     public double getMeasuredUpperCost() {
         return this.upperCost;
     }
@@ -109,6 +148,8 @@ public class PartialExecution implements JsonSerializable {
     public static PartialExecution fromJson(JSONObject jsonObject) {
         final PartialExecution partialExecution = new PartialExecution(
                 jsonObject.getLong("millis"),
+                jsonObject.optLong("lowerCost", -1L), // Default value for backwards compatibility.
+                jsonObject.optLong("upperCost", -1L), // Default value for backwards compatibility.
                 JsonSerializables.deserializeAllAsList(jsonObject.getJSONArray("executions"), OperatorExecution.class)
         );
         final JSONArray platforms = jsonObject.optJSONArray("initPlatforms");
@@ -144,6 +185,8 @@ public class PartialExecution implements JsonSerializable {
     public JSONObject toJson() {
         return new JSONObject()
                 .put("millis", this.measuredExecutionTime)
+                .put("lowerCost", this.lowerCost)
+                .put("upperCost", this.upperCost)
                 .put("executions", JsonSerializables.serializeAll(this.getOperatorExecutions()))
                 .putOpt("initPlatforms", JsonSerializables.serializeAll(
                         this.getInitializedPlatforms().stream()

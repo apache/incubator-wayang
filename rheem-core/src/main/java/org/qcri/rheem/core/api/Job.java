@@ -20,10 +20,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.*;
-import org.qcri.rheem.core.profiling.CardinalityRepository;
-import org.qcri.rheem.core.profiling.ExecutionLog;
-import org.qcri.rheem.core.profiling.InstrumentationStrategy;
-import org.qcri.rheem.core.profiling.PartialExecutionMeasurement;
+import org.qcri.rheem.core.profiling.*;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -548,6 +545,7 @@ public class Job extends OneTimeExecutable {
         }
         this.optimizationRound.stop("Post-processing", "Log measurements");
 
+        // Log the execution time.
         long effectiveExecutionMillis = partialExecutions.stream()
                 .map(PartialExecution::getMeasuredExecutionTime)
                 .reduce(0L, (a, b) -> a + b);
@@ -570,6 +568,7 @@ public class Job extends OneTimeExecutable {
             i++;
         }
 
+        // Log the execution costs.
         double fixCosts = partialExecutions.stream()
                 .flatMap(partialExecution -> partialExecution.getInitializedPlatforms().stream())
                 .map(platform -> this.configuration.getTimeToCostConverterProvider().provideFor(platform).getFixCosts())
@@ -584,16 +583,18 @@ public class Job extends OneTimeExecutable {
                 String.format("%,.2f", effectiveLowerCosts),
                 String.format("%,.2f", effectiveUpperCosts)
         );
+        this.experiment.addMeasurement(
+                new CostMeasurement("Measured cost", effectiveLowerCosts, effectiveUpperCosts, 1d)
+        );
         i = 1;
         for (ProbabilisticDoubleInterval costEstimate : this.costEstimates) {
             this.logger.info("Estimated costs (plan {}): {}", i, costEstimate);
-            // TODO
-//            TimeMeasurement lowerEstimate = new TimeMeasurement(String.format("Estimate %d (lower)", i));
-//            lowerEstimate.setMillis(timeEstimate.getLowerEstimate());
-//            this.stopWatch.getExperiment().addMeasurement(lowerEstimate);
-//            TimeMeasurement upperEstimate = new TimeMeasurement(String.format("Estimate %d (upper)", i));
-//            upperEstimate.setMillis(timeEstimate.getUpperEstimate());
-//            this.stopWatch.getExperiment().addMeasurement(upperEstimate);
+            this.experiment.addMeasurement(new CostMeasurement(
+                    String.format("Estimated costs (%d)", i),
+                    costEstimate.getLowerEstimate(),
+                    costEstimate.getUpperEstimate(),
+                    costEstimate.getCorrectnessProbability()
+            ));
             i++;
         }
     }
