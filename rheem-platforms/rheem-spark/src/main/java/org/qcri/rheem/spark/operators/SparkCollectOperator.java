@@ -40,7 +40,7 @@ public class SparkCollectOperator<Type>
         final List<Type> collectedRdd = (List<Type>) input.provideRdd().collect();
         output.accept(collectedRdd);
 
-        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override

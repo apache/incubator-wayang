@@ -5,6 +5,7 @@ import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
 import org.qcri.rheem.graphchi.operators.GraphChiExecutionOperator;
@@ -20,8 +21,11 @@ public class GraphChiExecutor extends ExecutorTemplate {
 
     private final Configuration configuration;
 
+    private final Job job;
+
     public GraphChiExecutor(GraphChiPlatform platform, Job job) {
-        super(job == null ? null : job.getCrossPlatformExecutor());
+        super(job.getCrossPlatformExecutor());
+        this.job = job;
         this.platform = platform;
         this.configuration = job.getConfiguration();
     }
@@ -53,18 +57,27 @@ public class GraphChiExecutor extends ExecutorTemplate {
         for (int i = 0; i < inputChannelInstances.length; i++) {
             inputChannelInstances[i] = executionState.getChannelInstance(task.getInputChannel(i));
         }
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(graphChiExecutionOperator);
         ChannelInstance[] outputChannelInstances = new ChannelInstance[task.getNumOuputChannels()];
         for (int i = 0; i < outputChannelInstances.length; i++) {
-            outputChannelInstances[i] = task
-                    .getOutputChannel(i)
-                    .createInstance(this, optimizationContext.getOperatorContext(graphChiExecutionOperator), i);
+            outputChannelInstances[i] = task.getOutputChannel(i).createInstance(this, operatorContext, i);
         }
+
+        long startTime = System.currentTimeMillis();
         graphChiExecutionOperator.execute(inputChannelInstances, outputChannelInstances, this.configuration);
+        long endTime = System.currentTimeMillis();
+
+        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts =
+                ExecutionOperator.modelEagerExecution(inputChannelInstances, outputChannelInstances, operatorContext);
+
         for (ChannelInstance outputChannelInstance : outputChannelInstances) {
             if (outputChannelInstance != null) {
                 executionState.register(outputChannelInstance);
             }
         }
+
+        final PartialExecution partialExecution = this.createPartialExecution(executedOperatorContexts, endTime - startTime);
+        this.job.addPartialExecutionMeasurement(partialExecution);
     }
 
     @Override

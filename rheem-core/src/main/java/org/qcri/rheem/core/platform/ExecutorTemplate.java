@@ -1,17 +1,19 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStageLoop;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
+import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.OptionalLong;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Implements the {@link ExecutionResource} handling as defined by {@link Executor}.
@@ -107,6 +109,57 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
         return producerLoop != null && channel.getConsumers().stream().anyMatch(
                 consumer -> consumer.getStage().getLoop() == producerLoop
         );
+    }
+
+    /**
+     * Create a {@link PartialExecution} according to the given parameters.
+     *
+     * @param executedOperatorContexts {@link ExecutionOperator}s' {@link OptimizationContext.OperatorContext}s that
+     *                                 have been executed
+     * @param executionDuration        the measured execution duration in milliseconds
+     * @return the {@link PartialExecution} or {@link null} if nothing has been executed
+     */
+    protected PartialExecution createPartialExecution(
+            Collection<OptimizationContext.OperatorContext> executedOperatorContexts,
+            long executionDuration) {
+
+        if (executedOperatorContexts.isEmpty()) return null;
+
+        final PartialExecution partialExecution = PartialExecution.createFromMeasurement(
+                executionDuration, executedOperatorContexts, this.getConfiguration()
+        );
+        if (this.logger.isInfoEnabled()) {
+            this.logger.info(
+                    "Executed {} operator(s) in {} (estimated {}): {}",
+                    executedOperatorContexts.size(),
+                    Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
+                    partialExecution.getOverallTimeEstimate(),
+                    partialExecution.getOperatorContexts().stream()
+                            .map(opCtx -> String.format(
+                                    "%s(time=%s, cards=%s)",
+                                    opCtx.getOperator(), opCtx.getTimeEstimate(), formatCardinalities(opCtx)
+                            ))
+                            .collect(Collectors.toList())
+            );
+        }
+
+        return partialExecution;
+    }
+
+    private static String formatCardinalities(OptimizationContext.OperatorContext opCtx) {
+        StringBuilder sb = new StringBuilder().append('[');
+        String separator = "";
+        final CardinalityEstimate[] inputCardinalities = opCtx.getInputCardinalities();
+        for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
+            if (inputCardinalities[inputIndex] != null) {
+                String slotName = opCtx.getOperator().getNumInputs() > inputIndex ?
+                        opCtx.getOperator().getInput(inputIndex).getName() :
+                        "(none)";
+                sb.append(separator).append(slotName).append(": ").append(inputCardinalities[inputIndex]);
+                separator = ", ";
+            }
+        }
+        return sb.append(']').toString();
     }
 
     @Override

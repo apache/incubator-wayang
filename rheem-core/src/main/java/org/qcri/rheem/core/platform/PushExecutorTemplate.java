@@ -1,19 +1,13 @@
 package org.qcri.rheem.core.platform;
 
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
-import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
@@ -21,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * {@link Executor} implementation that employs a push model, i.e., data quanta are "pushed"
@@ -100,58 +93,6 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                                                                               List<ChannelInstance> inputChannelInstances,
                                                                               OptimizationContext.OperatorContext producerOperatorContext,
                                                                               boolean isForceExecution);
-
-
-    /**
-     * Create a {@link PartialExecution} according to the given parameters.
-     *
-     * @param executedOperatorContexts {@link ExecutionOperator}s' {@link OptimizationContext.OperatorContext}s that
-     *                                 have been executed
-     * @param executionDuration        the measured execution duration in milliseconds
-     * @return the {@link PartialExecution} or {@link null} if nothing has been executed
-     */
-    protected PartialExecution createPartialExecution(
-            Collection<OptimizationContext.OperatorContext> executedOperatorContexts,
-            long executionDuration) {
-
-        if (executedOperatorContexts.isEmpty()) return null;
-
-        final PartialExecution partialExecution = PartialExecution.createFromMeasurement(
-                executionDuration, executedOperatorContexts, this.getConfiguration()
-        );
-        if (this.logger.isInfoEnabled()) {
-            this.logger.info(
-                    "Executed {} operator(s) in {} (estimated {}): {}",
-                    executedOperatorContexts.size(),
-                    Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
-                    partialExecution.getOverallTimeEstimate(),
-                    partialExecution.getOperatorContexts().stream()
-                            .map(opCtx -> String.format(
-                                    "%s(time=%s, cards=%s)",
-                                    opCtx.getOperator(), opCtx.getTimeEstimate(), formatCardinalities(opCtx)
-                            ))
-                            .collect(Collectors.toList())
-            );
-        }
-
-        return partialExecution;
-    }
-
-    private static String formatCardinalities(OptimizationContext.OperatorContext opCtx) {
-        StringBuilder sb = new StringBuilder().append('[');
-        String separator = "";
-        final CardinalityEstimate[] inputCardinalities = opCtx.getInputCardinalities();
-        for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
-            if (inputCardinalities[inputIndex] != null) {
-                String slotName = opCtx.getOperator().getNumInputs() > inputIndex ?
-                        opCtx.getOperator().getInput(inputIndex).getName() :
-                        "(none)";
-                sb.append(separator).append(slotName).append(": ").append(inputCardinalities[inputIndex]);
-                separator = ", ";
-            }
-        }
-        return sb.append(']').toString();
-    }
 
     /**
      * Keeps track of state that is required within the execution of a single {@link ExecutionStage}. Specifically,
