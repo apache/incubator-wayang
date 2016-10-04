@@ -144,7 +144,7 @@ public class Configuration {
             this.loadProfileToTimeConverterProvider =
                     new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider, this);
             this.timeToCostConverterProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.timeToCostConverterProvider);
+                    new MapBasedKeyValueProvider<>(this.parent.timeToCostConverterProvider, this);
             this.platformStartUpTimeProvider =
                     new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider, this);
 
