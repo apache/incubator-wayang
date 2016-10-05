@@ -18,7 +18,8 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Created by zoi on 10/5/16.
+ * This class executes a stochastic gradient descent optimization on Rheem, just like {@link SGDImpl}. However,
+ * it used the {@link org.qcri.rheem.basic.operators.MapPartitionsOperator} for performance improvements.
  */
 public class SGDImprovedImpl {
     private final Configuration configuration;
@@ -74,7 +75,7 @@ public class SGDImprovedImpl {
                 weightsBuilder.doWhile(new LoopCondition(accuracy, maxIterations), w -> {
                     // Sample the data and update the weights.
                     DataQuantaBuilder<?, double[]> newWeightsDataset = transformBuilder
-                        .sample(sampleSize)
+                        .sample(sampleSize).withDatasetSize(datasetSize).withBroadcast(w, "weights")
                         .mapPartitions(new ComputeLogisticGradientPerPartition(features)).withBroadcast(w, "weights").withName("compute")
                         .reduce(new Sum()).withName("reduce")
                         .map(new WeightsUpdate()).withBroadcast(w, "weights").withName("update");

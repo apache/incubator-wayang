@@ -73,7 +73,7 @@ public class SGDImpl {
                 weightsBuilder.doWhile(new LoopCondition(accuracy, maxIterations), w -> {
                     // Sample the data and update the weights.
                     DataQuantaBuilder<?, double[]> newWeightsDataset = transformBuilder
-                            .sample(sampleSize).withOutputClass(double[].class).withBroadcast(w, "weights")
+                            .sample(sampleSize).withDatasetSize(datasetSize).withBroadcast(w, "weights")
                             .map(new ComputeLogisticGradient()).withBroadcast(w, "weights").withName("compute")
                             .reduce(new Sum()).withName("reduce")
                             .map(new WeightsUpdate()).withBroadcast(w, "weights").withName("update");
