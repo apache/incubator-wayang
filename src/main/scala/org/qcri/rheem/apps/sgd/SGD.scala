@@ -14,7 +14,7 @@ object SGD extends ExperimentDescriptor {
     // Parse args.
     if (args.isEmpty) {
       println(s"Usage: scala <main class> ${Parameters.experimentHelp} <plugin(,plugin)*> " +
-        s"<dataset URL> <dataset size> <#features> <max iterations> <accuracy> <sample size>")
+        s"<aggregation (regular|preaggregation)> <dataset URL> <dataset size> <#features> <max iterations> <accuracy> <sample size>")
       sys.exit(1)
     }
 
@@ -22,24 +22,35 @@ object SGD extends ExperimentDescriptor {
     implicit val configuration = new Configuration
     val plugins = Parameters.loadPlugins(args(1))
     experiment.getSubject.addConfiguration("plugins", args(1))
-    val datasetUrl = args(2)
+    val aggregationType = args(2)
+    experiment.getSubject.addConfiguration("aggregationType", aggregationType)
+    val datasetUrl = args(3)
     experiment.getSubject.addConfiguration("input", datasetUrl)
-    val datasetSize = args(3).toInt
+    val datasetSize = args(4).toInt
     experiment.getSubject.addConfiguration("inputSize", datasetSize)
-    val numFeatures = args(4).toInt
+    val numFeatures = args(5).toInt
     experiment.getSubject.addConfiguration("features", numFeatures)
-    val maxIterations = args(5).toInt
+    val maxIterations = args(6).toInt
     experiment.getSubject.addConfiguration("maxIterations", maxIterations)
-    val accuracy = args(6).toDouble
+    val accuracy = args(7).toDouble
     experiment.getSubject.addConfiguration("accuracy", accuracy)
-    val sampleSize = args(7).toInt
+    val sampleSize = args(8).toInt
     experiment.getSubject.addConfiguration("sampleSize", sampleSize)
 
-    // Initialize the SGD algorithm.
-    val sgd = new SGDImpl(configuration, plugins.toArray)
-
-    // Run the SGD.
-    val weights = sgd(datasetUrl, datasetSize, numFeatures, maxIterations, accuracy, sampleSize)
+    var weights: Array[Double] = null
+    aggregationType match {
+      case "regular" =>
+        // Initialize the SGD algorithm.
+        val sgd = new SGDImpl(configuration, plugins.toArray)
+        // Run the SGD.
+        weights = sgd(datasetUrl, datasetSize, numFeatures, maxIterations, accuracy, sampleSize)
+      case "preaggregation" =>
+        // Initialize the SGD algorithm.
+        val sgd = new SGDImprovedImpl(configuration, plugins.toArray)
+        // Run the SGD.
+        weights = sgd(datasetUrl, datasetSize, numFeatures, maxIterations, accuracy, sampleSize)
+      case other => sys.error("Unknown aggregation type: " + other)
+    }
 
     // Store experiment data.
     ProfileDBHelper.store(experiment, configuration)
