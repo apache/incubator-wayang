@@ -28,6 +28,10 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, T
 
     protected final ProbabilisticDoubleInterval graphDensity;
 
+    protected final float dampingFactor;
+
+    protected final ProbabilisticDoubleInterval graphDensity;
+
     /**
      * Creates a new instance.
      *
@@ -42,7 +46,7 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, T
      *
      * @param numIterations the number of PageRank iterations that this instance should perform
      */
-    public PageRankOperator(Integer numIterations, double dampingFactor, ProbabilisticDoubleInterval graphDensitiy) {
+    public PageRankOperator(Integer numIterations, Double dampingFactor, ProbabilisticDoubleInterval graphDensitiy) {
         super(DataSetType.createDefaultUnchecked(Tuple2.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class),
                 false);
