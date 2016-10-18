@@ -28,10 +28,6 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, T
 
     protected final ProbabilisticDoubleInterval graphDensity;
 
-    protected final float dampingFactor;
-
-    protected final ProbabilisticDoubleInterval graphDensity;
-
     /**
      * Creates a new instance.
      *
@@ -51,7 +47,7 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, T
                 DataSetType.createDefaultUnchecked(Tuple2.class),
                 false);
         this.numIterations = numIterations;
-        this.dampingFactor = (float) dampingFactor;
+        this.dampingFactor = dampingFactor.floatValue();
         this.graphDensity = graphDensitiy;
     }
 

@@ -65,7 +65,6 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     /**
      * Creates a new instance given the sample size.
      */
-<<<<<<< HEAD
     public SampleOperator(Integer sampleSize, DataSetType<Type> type, Methods sampleMethod) {
         this(sampleSize, UNKNOWN_DATASET_SIZE, type, sampleMethod);
     }
