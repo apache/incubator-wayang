@@ -65,7 +65,7 @@ public class JavaRandomSampleOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() :
+        Long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() :
             ((CollectionChannel.Instance) inputs[0]).provideCollection().size();
 
         if (sampleSize >= datasetSize) { //return all

@@ -122,8 +122,8 @@ public class RheemContext {
      * @param udfJars   JARs that declare the code for the UDFs
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
-    public ExecutionPlan buildInitialExecutionPlan(RheemPlan rheemPlan, String... udfJars) {
-        return this.createJob(rheemPlan, udfJars).buildInitialExecutionPlan();
+    public ExecutionPlan buildInitialExecutionPlan(String jobName, RheemPlan rheemPlan, String... udfJars) {
+        return this.createJob(jobName, rheemPlan, udfJars).buildInitialExecutionPlan();
     }
 
     /**
