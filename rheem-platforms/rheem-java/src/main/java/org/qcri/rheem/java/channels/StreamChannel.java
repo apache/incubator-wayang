@@ -1,12 +1,12 @@
 package org.qcri.rheem.java.channels;
 
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.java.execution.JavaExecutor;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
@@ -79,8 +79,10 @@ public class StreamChannel extends Channel {
 //    }
 
     @Override
-    public Instance createInstance(Executor executor) {
-        return new Instance((JavaExecutor) executor);
+    public Instance createInstance(Executor executor,
+                                   OptimizationContext.OperatorContext producerOperatorContext,
+                                   int producerOutputIndex) {
+        return new Instance(executor, producerOperatorContext, producerOutputIndex);
     }
 
 //    public static class Initializer implements JavaChannelInitializer {
@@ -116,8 +118,8 @@ public class StreamChannel extends Channel {
         // However, this would require to call Stream#close() on all methods.
         private long cardinality = 0;
 
-        public Instance(JavaExecutor executor) {
-            super(executor);
+        public Instance(Executor executor, OptimizationContext.OperatorContext producerOperatorContext, int producerOutputIndex) {
+            super(executor, producerOperatorContext, producerOutputIndex);
         }
 
 

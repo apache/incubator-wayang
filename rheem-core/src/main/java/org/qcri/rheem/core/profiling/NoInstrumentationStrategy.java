@@ -6,6 +6,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 /**
  * Instruments only outbound {@link Channel}s.
  */
+@SuppressWarnings("unused") // Can be activated via Configuration.
 public class NoInstrumentationStrategy implements InstrumentationStrategy {
 
     @Override

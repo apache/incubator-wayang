@@ -3,6 +3,8 @@ package org.qcri.rheem.core.optimizer.enumeration;
 import org.qcri.rheem.core.plan.executionplan.*;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -47,15 +49,19 @@ public class ExecutionTaskFlow {
     }
 
     public boolean isComplete() {
+        final Logger logger = LoggerFactory.getLogger(this.getClass());
         final Set<ExecutionTask> allTasks = this.collectAllTasks();
         if (allTasks.isEmpty()) {
+            logger.warn("Instance has not tasks.");
             return false;
         }
         for (ExecutionTask task : allTasks) {
             if (Arrays.stream(task.getOutputChannels()).anyMatch(Objects::isNull)) {
+                logger.warn("{} has missing output channels among {}.", task, Arrays.toString(task.getOutputChannels()));
                 return false;
             }
             if (Arrays.stream(task.getInputChannels()).anyMatch(Objects::isNull)) {
+                logger.warn("{} has missing input channels among {}.", task, Arrays.toString(task.getInputChannels()));
                 return false;
             }
         }

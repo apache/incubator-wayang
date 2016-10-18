@@ -21,12 +21,13 @@ public class MaterializedGroupByMapping implements Mapping {
     }
 
     private SubplanPattern createSubplanPattern() {
-        final OperatorPattern groupByPattern = new OperatorPattern(
+        final OperatorPattern groupByPattern = new OperatorPattern<>(
                 "groupBy",
                 new GroupByOperator<>(
                         null,
-                        DataSetType.createDefault(Void.class),
-                        DataSetType.createGrouped(Void.class)),
+                        DataSetType.none(),
+                        DataSetType.groupedNone()
+                ),
                 false);
         return SubplanPattern.createSingleton(groupByPattern);
     }

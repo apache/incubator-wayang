@@ -53,9 +53,20 @@ public class ReduceByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Type
     public ReduceByOperator(TransformationDescriptor<Type, Key> keyDescriptor,
                             ReduceDescriptor<Type> reduceDescriptor,
                             DataSetType<Type> type) {
-        super(type, type, true, null);
+        super(type, type, true);
         this.keyDescriptor = keyDescriptor;
         this.reduceDescriptor = reduceDescriptor;
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public ReduceByOperator(ReduceByOperator<Type, Key> that) {
+        super(that);
+        this.keyDescriptor = that.getKeyDescriptor();
+        this.reduceDescriptor = that.getReduceDescriptor();
     }
 
     public DataSetType<Type> getType() {
@@ -72,7 +83,7 @@ public class ReduceByOperator<Type, Key> extends UnaryToUnaryOperator<Type, Type
 
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

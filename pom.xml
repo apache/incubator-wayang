@@ -8,8 +8,8 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <scala.version>2.10.5</scala.version>
-        <scala.compat.version>2.10</scala.compat.version>
+        <scala.version>2.11.8</scala.version>
+        <scala.compat.version>2.11</scala.compat.version>
         <spark.version>1.6.0</spark.version>
         <!-- This Hadoop version is enforced by Spark in the version that is deployed in the Maven repository via code signing. -->
         <hadoop.version>2.2.0</hadoop.version>
@@ -20,15 +20,57 @@
     <groupId>org.qcri.rheem</groupId>
     <artifactId>rheem</artifactId>
     <packaging>pom</packaging>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.2.1-SNAPSHOT</version>
+
+    <name>Rheem</name>
+    <description>Rheem is a tool to build platform-agnostic data processing apps and have them both optimized for and
+        executed on multiple different execution platforms, such as Java Streams and Apache Spark.
+    </description>
+    <url>http://da.qcri.org/rheem/index.html</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Sebastian Kruse</name>
+            <email>sebastian.kruse@hpi.de</email>
+            <organization>Hasso-Plattner-Institut</organization>
+            <organizationUrl>http://hpi.de/naumann/home.html</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/daqcri/rheem.git</connection>
+        <developerConnection>scm:git:https://github.com/daqcri/rheem.git</developerConnection>
+        <url>https://github.com/daqcri/rheem</url>
+    </scm>
 
     <repositories>
+        <!-- This repository might be needed for Apache Flink's Gelly.
         <repository>
             <id>apache-snapshots</id>
             <name>Apache Snapshot Repository</name>
             <url>http://repository.apache.org/snapshots/</url>
         </repository>
+        -->
     </repositories>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <profiles>
         <profile>
@@ -46,7 +88,6 @@
                     <artifactId>maven-assembly-plugin</artifactId>
                     <version>2.6</version>
                 </plugin>
-
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-failsafe-plugin</artifactId>
@@ -64,25 +105,121 @@
                         <enableAssertions>true</enableAssertions>
                     </configuration>
                 </plugin>
-
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.0.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>2.10.4</version>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <additionalparam>-Xdoclint:none</additionalparam>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.0</version>
+                    <configuration>
+                        <reportPlugins>
+                            <plugin>
+                                <artifactId>maven-project-info-reports-plugin</artifactId>
+                                <version>2.2</version>
+                            </plugin>
+                            <plugin>
+                                <groupId>net.alchim31.maven</groupId>
+                                <artifactId>scala-maven-plugin</artifactId>
+                                <version>3.2.1</version>
+                                <configuration>
+                                    <jvmArgs>
+                                        <jvmArg>-Xms64m</jvmArg>
+                                        <jvmArg>-Xmx1024m</jvmArg>
+                                    </jvmArgs>
+                                </configuration>
+                            </plugin>
+                        </reportPlugins>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
                 <plugin>
                     <groupId>net.alchim31.maven</groupId>
                     <artifactId>scala-maven-plugin</artifactId>
                     <version>3.2.2</version>
                     <executions>
                         <execution>
+                            <id>compile-scala</id>
                             <goals>
                                 <goal>compile</goal>
                                 <goal>testCompile</goal>
                             </goals>
                         </execution>
+                        <execution>
+                            <id>add-scala-src</id>
+                            <phase>prepare-package</phase>
+                            <goals>
+                                <goal>add-source</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>generate-scaladoc</id>
+                            <goals>
+                                <goal>doc-jar</goal>
+                            </goals>
+                        </execution>
                     </executions>
-                    <configuration>
-                        <scalaVersion>${scala.version}</scalaVersion>
-                    </configuration>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>1.8</version>
                 </plugin>
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+            </plugin>
+        </plugins>
     </build>
 
     <dependencies>
@@ -136,6 +273,7 @@
             </dependency>
 
             <!-- Apache Flink -->
+            <!--
             <dependency>
                 <groupId>org.apache.flink</groupId>
                 <artifactId>flink-scala</artifactId>
@@ -154,6 +292,7 @@
                 <version>1.0-SNAPSHOT</version>
                 <scope>${external.platforms.scope}</scope>
             </dependency>
+            -->
 
             <!-- Apache Hadoop -->
             <dependency>
@@ -295,7 +434,6 @@
                 <groupId>org.graphchi</groupId>
                 <artifactId>graphchi-java_${scala.compat.version}</artifactId>
                 <version>${graphchi.version}</version>
-                <scope>${external.platforms.scope}</scope>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.hadoop</groupId>
@@ -304,11 +442,30 @@
                 </exclusions>
             </dependency>
 
+            <!-- SQLite 3 -->
+            <dependency>
+                <groupId>org.xerial</groupId>
+                <artifactId>sqlite-jdbc</artifactId>
+                <version>3.8.11.2</version>
+            </dependency>
+
+            <!-- PostgreSQL -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>9.4.1208</version>
+            </dependency>
+
             <!-- Miscellaneous -->
             <dependency>
                 <groupId>org.json</groupId>
                 <artifactId>json</artifactId>
                 <version>20160212</version>
+            </dependency>
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>1.17</version>
             </dependency>
             <dependency>
                 <groupId>com.beust</groupId>
@@ -361,11 +518,25 @@
                 <artifactId>juel-api</artifactId>
                 <version>2.2.7</version>
             </dependency>
-
+            <dependency>
+                <groupId>de.hpi.isg</groupId>
+                <artifactId>profiledb-instrumentation</artifactId>
+                <version>0.1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>de.hpi.isg</groupId>
+                <artifactId>profiledb-store</artifactId>
+                <version>0.1.1</version>
+            </dependency>
             <dependency>
                 <groupId>de.odysseus.juel</groupId>
                 <artifactId>juel-impl</artifactId>
                 <version>2.2.7</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.2.4</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -377,6 +548,6 @@
         <module>rheem-tests</module>
         <module>rheem-api</module>
         <module>rheem-profiler</module>
-        <module>rheem-distro</module>
+        <module>rheem-extensions</module>
     </modules>
 </project>

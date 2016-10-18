@@ -5,7 +5,7 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.operators.*;
 
@@ -26,7 +26,7 @@ public class ChannelConversions {
     public static final ChannelConversion COLLECTION_TO_BROADCAST = new DefaultChannelConversion(
             CollectionChannel.DESCRIPTOR,
             BroadcastChannel.DESCRIPTOR,
-            () -> new SparkBroadcastOperator<>(DataSetType.createDefault(Void.class), null)
+            () -> new SparkBroadcastOperator<>(DataSetType.createDefault(Void.class))
     );
 
     public static final ChannelConversion COLLECTION_TO_UNCACHED_RDD = new DefaultChannelConversion(
@@ -50,13 +50,13 @@ public class ChannelConversions {
     public static final ChannelConversion CACHED_RDD_TO_HDFS_TSV = new DefaultChannelConversion(
             RddChannel.CACHED_DESCRIPTOR,
             FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new SparkTsvFileSink<>(DataSetType.createDefault(Tuple2.class))
+            () -> new SparkTsvFileSink<>(DataSetType.createDefaultUnchecked(Tuple2.class))
     );
 
     public static final ChannelConversion UNCACHED_RDD_TO_HDFS_TSV = new DefaultChannelConversion(
             RddChannel.UNCACHED_DESCRIPTOR,
             FileChannel.HDFS_TSV_DESCRIPTOR,
-            () -> new SparkTsvFileSink<>(DataSetType.createDefault(Tuple2.class))
+            () -> new SparkTsvFileSink<>(DataSetType.createDefaultUnchecked(Tuple2.class))
     );
 
     public static final ChannelConversion HDFS_TSV_TO_UNCACHED_RDD = new DefaultChannelConversion(

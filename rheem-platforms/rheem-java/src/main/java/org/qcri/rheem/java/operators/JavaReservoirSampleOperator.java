@@ -2,6 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -13,7 +14,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
 
@@ -24,16 +25,15 @@ public class JavaReservoirSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
-    Random rand;
+    private final Random rand = new Random();
 
     /**
      * Creates a new instance.
      *
      * @param sampleSize
      */
-    public JavaReservoirSampleOperator(Integer sampleSize, DataSetType type) {
+    public JavaReservoirSampleOperator(Integer sampleSize, DataSetType<Type> type) {
         super(sampleSize, type, Methods.RESERVOIR);
-        rand = new Random();
     }
 
     /**
@@ -42,22 +42,35 @@ public class JavaReservoirSampleOperator<Type>
      * @param sampleSize
      * @param datasetSize
      */
-    public JavaReservoirSampleOperator(Integer sampleSize, Long datasetSize, DataSetType type) {
+    public JavaReservoirSampleOperator(Integer sampleSize, Long datasetSize, DataSetType<Type> type) {
         super(sampleSize, datasetSize, type, Methods.RESERVOIR);
-        rand = new Random();
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaReservoirSampleOperator(SampleOperator<Type> that) {
+        super(that);
+        assert that.getSampleMethod() == Methods.RESERVOIR || that.getSampleMethod() == Methods.ANY;
+    }
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
         ((CollectionChannel.Instance) outputs[0]).accept(reservoirSample(rand, ((JavaChannelInstance) inputs[0]).<Type>provideStream().iterator(), sampleSize));
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
-    private static <T> List<T> reservoirSample(Random rand, Iterator<T> items, long m){
+    private static <T> List<T> reservoirSample(Random rand, Iterator<T> items, long m) {
         ArrayList<T> res = new ArrayList<T>(Math.toIntExact(m));
         int count = 0;
         while (items.hasNext()) {
@@ -75,9 +88,9 @@ public class JavaReservoirSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        return Optional.of(new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(this.getNumInputs(), 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        return Optional.of(new NestableLoadProfileEstimator<>(
+                new DefaultLoadEstimator<>(this.getNumInputs(), 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
                 LoadEstimator.createFallback(this.getNumInputs(), 1)
         ));
     }
@@ -98,4 +111,5 @@ public class JavaReservoirSampleOperator<Type>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
+
 }

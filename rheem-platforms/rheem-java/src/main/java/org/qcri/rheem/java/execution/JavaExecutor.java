@@ -3,17 +3,20 @@ package org.qcri.rheem.java.execution;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExtendedFunction;
-import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
+import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -37,45 +40,49 @@ public class JavaExecutor extends PushExecutorTemplate {
     }
 
     @Override
-    protected void open(ExecutionTask task, List<ChannelInstance> inputChannelInstances) {
-        cast(task.getOperator()).open(toArray(inputChannelInstances), this.compiler);
-    }
-
-    @Override
-    protected List<ChannelInstance> execute(ExecutionTask task, List<ChannelInstance> inputChannelInstances, boolean isForceExecution) {
+    protected Tuple<List<ChannelInstance>, PartialExecution> execute(
+            ExecutionTask task,
+            List<ChannelInstance> inputChannelInstances,
+            OptimizationContext.OperatorContext producerOperatorContext,
+            boolean isForceExecution
+    ) {
         // Provide the ChannelInstances for the output of the task.
-        final ChannelInstance[] outputChannelInstances = this.createOutputChannelInstances(task);
+        final ChannelInstance[] outputChannelInstances = task.getOperator().createOutputChannelInstances(
+                this, task, producerOperatorContext, inputChannelInstances
+        );
 
         // Execute.
+        final Collection<OptimizationContext.OperatorContext> operatorContexts;
+        long startTime = System.currentTimeMillis();
         try {
-            cast(task.getOperator()).evaluate(toArray(inputChannelInstances), outputChannelInstances, this.compiler);
+            operatorContexts = cast(task.getOperator()).evaluate(
+                    toArray(inputChannelInstances),
+                    outputChannelInstances,
+                    this,
+                    producerOperatorContext
+            );
         } catch (Exception e) {
             throw new RheemException(String.format("Executing %s failed.", task), e);
         }
+        long endTime = System.currentTimeMillis();
+        long executionDuration = endTime - startTime;
+
+        // Check how much we executed.
+        PartialExecution partialExecution = this.createPartialExecution(operatorContexts, executionDuration);
+        if (partialExecution != null) this.job.addPartialExecutionMeasurement(partialExecution);
 
         // Force execution if necessary.
         if (isForceExecution) {
-            for (ChannelInstance outputChannelInstance : outputChannelInstances) {
-                if (outputChannelInstance == null || !outputChannelInstance.getChannel().isReusable()) {
-                    this.logger.warn("Execution of {} might not have been enforced properly. " +
-                                    "This might break the execution or cause side-effects with the re-optimization.",
-                            task);
-                }
+            if (partialExecution == null) {
+                this.logger.warn("Execution of {} might not have been enforced properly. " +
+                                "This might break the execution or cause side-effects with the re-optimization.",
+                        task);
             }
         }
 
-        return Arrays.asList(outputChannelInstances);
+        return new Tuple<>(Arrays.asList(outputChannelInstances), partialExecution);
     }
 
-
-    private ChannelInstance[] createOutputChannelInstances(ExecutionTask task) {
-        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
-        for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
-            final Channel outputChannel = task.getOutputChannel(outputIndex);
-            channelInstances[outputIndex] = outputChannel.createInstance(this);
-        }
-        return channelInstances;
-    }
 
     private static JavaExecutionOperator cast(ExecutionOperator executionOperator) {
         return (JavaExecutionOperator) executionOperator;
@@ -86,10 +93,26 @@ public class JavaExecutor extends PushExecutorTemplate {
         return channelInstances.toArray(array);
     }
 
-    public static void openFunction(JavaExecutionOperator operator, Object function, ChannelInstance[] inputs) {
+    /**
+     * Utility function to open an {@link ExtendedFunction}.
+     *
+     * @param operator        the {@link JavaExecutionOperator} containing the function
+     * @param function        the {@link ExtendedFunction}; if it is of a different type, nothing happens
+     * @param inputs          the input {@link ChannelInstance}s for the {@code operator}
+     * @param operatorContext context information for the {@code operator}
+     */
+    public static void openFunction(JavaExecutionOperator operator,
+                                    Object function,
+                                    ChannelInstance[] inputs,
+                                    OptimizationContext.OperatorContext operatorContext) {
         if (function instanceof ExtendedFunction) {
             ExtendedFunction extendedFunction = (ExtendedFunction) function;
-            extendedFunction.open(new JavaExecutionContext(operator, inputs));
+            int iterationNumber = operatorContext.getOptimizationContext().getIterationNumber();
+            extendedFunction.open(new JavaExecutionContext(operator, inputs, iterationNumber));
         }
+    }
+
+    public FunctionCompiler getCompiler() {
+        return this.compiler;
     }
 }

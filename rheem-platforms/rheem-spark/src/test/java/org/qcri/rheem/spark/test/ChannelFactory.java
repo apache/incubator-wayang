@@ -7,7 +7,7 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.Collection;
 
@@ -26,7 +26,9 @@ public class ChannelFactory {
     }
 
     public static RddChannel.Instance createRddChannelInstance(ChannelDescriptor rddChannelDescriptor, Configuration configuration) {
-        return (RddChannel.Instance) rddChannelDescriptor.createChannel(null, configuration).createInstance(sparkExecutor);
+        return (RddChannel.Instance) rddChannelDescriptor
+                .createChannel(null, configuration)
+                .createInstance(sparkExecutor, null, -1);
     }
 
     public static RddChannel.Instance createRddChannelInstance(Configuration configuration) {
@@ -42,7 +44,9 @@ public class ChannelFactory {
     }
 
     public static CollectionChannel.Instance createCollectionChannelInstance(Configuration configuration) {
-        return (CollectionChannel.Instance) CollectionChannel.DESCRIPTOR.createChannel(null, configuration).createInstance(sparkExecutor);
+        return (CollectionChannel.Instance) CollectionChannel.DESCRIPTOR
+                .createChannel(null, configuration)
+                .createInstance(sparkExecutor, null, -1);
     }
 
     public static CollectionChannel.Instance createCollectionChannelInstance(Collection<?> colleciton, Configuration configuration) {

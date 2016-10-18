@@ -6,8 +6,6 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collector;
-import java.util.stream.StreamSupport;
 
 /**
  * Utilities to operate {@link java.util.Collection}s.
@@ -88,6 +86,36 @@ public class RheemCollections {
      */
     public static <T> T getAny(Iterable<T> iterable) {
         return iterable.iterator().next();
+    }
+
+    /**
+     * Return any element from the {@code iterable} if it exists.
+     */
+    public static <T> java.util.Optional<T> getAnyOptional(Iterable<T> iterable) {
+        final Iterator<T> iterator = iterable.iterator();
+        return iterator.hasNext() ? java.util.Optional.of(iterator.next()) : java.util.Optional.empty();
+    }
+
+    /**
+     * Adds an element to a {@link Collection} and returns the {@link Collection}.
+     * @param collection to which the element should be added
+     * @param element that should be added to the {@code collection}
+     * @return the {@code collection}
+     */
+    public static <C extends Collection<T>, T> C add(C collection, T element) {
+        collection.add(element);
+        return collection;
+    }
+
+    /**
+     * Adds elements to a {@link Collection} and returns the {@link Collection}.
+     * @param collection to which the element should be added
+     * @param elements that should be added to the {@code collection}
+     * @return the {@code collection}
+     */
+    public static <T, C extends Collection<T>> C addAll(C collection, C elements) {
+        collection.addAll(elements);
+        return collection;
     }
 
     /**
@@ -180,4 +208,13 @@ public class RheemCollections {
             }
         }
     }
+
+    public static <K, V> Map<K, V> createMap(Tuple<K, V>... keyValuePairs) {
+        Map<K, V> result = new HashMap<>(keyValuePairs.length);
+        for (Tuple<K, V> keyValuePair : keyValuePairs) {
+            result.put(keyValuePair.getField0(), keyValuePair.getField1());
+        }
+        return result;
+    }
+
 }

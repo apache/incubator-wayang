@@ -35,18 +35,17 @@ public class ReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      */
     public ReduceOperator(ReduceDescriptor<Type> reduceDescriptor,
                           DataSetType<Type> inputType, DataSetType<Type> outputType) {
-        super(inputType, outputType, true, null);
+        super(inputType, outputType, true);
         this.reduceDescriptor = reduceDescriptor;
     }
-
 
     public ReduceDescriptor<Type> getReduceDescriptor() {
         return this.reduceDescriptor;
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
-                                                                  Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex,
+                                                                     Configuration configuration) {
         return Optional.of(new FixedSizeCardinalityEstimator(1L));
     }
 }

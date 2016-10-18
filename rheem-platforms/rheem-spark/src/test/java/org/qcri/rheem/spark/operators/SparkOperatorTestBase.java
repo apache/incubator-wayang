@@ -4,9 +4,15 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.junit.Before;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.CrossPlatformExecutor;
+import org.qcri.rheem.core.profiling.FullInstrumentationStrategy;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.qcri.rheem.spark.test.ChannelFactory;
 
@@ -19,7 +25,6 @@ import static org.mockito.Mockito.when;
  * Test base for {@link SparkExecutionOperator} tests.
  */
 public class SparkOperatorTestBase {
-
 
     protected Configuration configuration;
 
@@ -34,7 +39,19 @@ public class SparkOperatorTestBase {
     Job mockJob() {
         final Job job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(this.configuration);
+        when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new FullInstrumentationStrategy()));
         return job;
+    }
+
+    protected OptimizationContext.OperatorContext createOperatorContext(Operator operator) {
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.configuration);
+        return optimizationContext.addOneTimeOperator(operator);
+    }
+
+    protected void evaluate(SparkExecutionOperator operator,
+                            ChannelInstance[] inputs,
+                            ChannelInstance[] outputs) {
+        operator.evaluate(inputs, outputs, this.sparkExecutor, this.createOperatorContext(operator));
     }
 
     RddChannel.Instance createRddChannelInstance() {

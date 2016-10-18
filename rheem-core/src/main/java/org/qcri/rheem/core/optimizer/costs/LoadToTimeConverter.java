@@ -23,6 +23,11 @@ public abstract class LoadToTimeConverter {
                         loadEstimate.getCorrectnessProbability()
                 );
             }
+
+            @Override
+            public String toString() {
+                return String.format("LoadToTimeConverter[%,.2f units/ms]", 1d / millisPerUnit);
+            }
         };
     }
 

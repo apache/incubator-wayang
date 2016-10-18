@@ -2,10 +2,11 @@ package org.qcri.rheem.tests.platform;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
+import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.plugin.Plugin;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -15,7 +16,7 @@ import static org.mockito.Mockito.mock;
 /**
  * Dummy {@link Platform} that does not provide any {@link Mapping}s.
  */
-public class MyMadeUpPlatform extends Platform {
+public class MyMadeUpPlatform extends Platform implements Plugin {
 
     private static MyMadeUpPlatform instance = null;
 
@@ -36,17 +37,26 @@ public class MyMadeUpPlatform extends Platform {
     }
 
     @Override
+    public void configureDefaults(Configuration configuration) {
+    }
+
+    @Override
     public Collection<Mapping> getMappings() {
         return Collections.emptyList();
     }
 
     @Override
-    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
+    public Collection<Platform> getRequiredPlatforms() {
+        return Collections.singletonList(this);
     }
 
     @Override
-    public boolean isExecutable() {
-        return true;
+    public Collection<ChannelConversion> getChannelConversions() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void setProperties(Configuration configuration) {
     }
 
     @Override

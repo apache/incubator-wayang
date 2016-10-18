@@ -6,8 +6,7 @@ import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,11 +36,13 @@ public class SparkObjectFileSinkTest extends SparkOperatorTestBase {
 
             // Set up the ChannelInstances.
             final ChannelInstance[] inputs = new ChannelInstance[]{input};
-            final ChannelInstance outputChannel = FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR.createChannel(null, configuration).createInstance(sparkExecutor);
+            final ChannelInstance outputChannel = FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR
+                    .createChannel(null, configuration)
+                    .createInstance(sparkExecutor, null, -1);
             final ChannelInstance[] outputs = new ChannelInstance[]{outputChannel};
 
             // Execute.
-            sink.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+            this.evaluate(sink, inputs, outputs);
         } finally {
             if (sparkExecutor != null) sparkExecutor.dispose();
         }

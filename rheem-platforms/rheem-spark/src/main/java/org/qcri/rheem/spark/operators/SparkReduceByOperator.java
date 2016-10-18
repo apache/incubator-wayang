@@ -6,23 +6,21 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.basic.operators.ReduceByOperator;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Spark implementation of the {@link ReduceByOperator}.
@@ -44,8 +42,20 @@ public class SparkReduceByOperator<Type, KeyType>
         super(keyDescriptor, reduceDescriptor, type);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkReduceByOperator(ReduceByOperator<Type, KeyType> that) {
+        super(that);
+    }
+
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -53,16 +63,21 @@ public class SparkReduceByOperator<Type, KeyType>
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
         final JavaRDD<Type> inputStream = input.provideRdd();
-        final PairFunction<Type, KeyType, Type> keyExtractor = compiler.compileToKeyExtractor(this.keyDescriptor);
-        Function2<Type, Type, Type> reduceFunc = compiler.compile(this.reduceDescriptor, this, inputs);
+        final PairFunction<Type, KeyType, Type> keyExtractor =
+                sparkExecutor.getCompiler().compileToKeyExtractor(this.keyDescriptor);
+        Function2<Type, Type, Type> reduceFunc =
+                sparkExecutor.getCompiler().compile(this.reduceDescriptor, this, operatorContext, inputs);
         final JavaPairRDD<KeyType, Type> pairRdd = inputStream.mapToPair(keyExtractor);
         this.name(pairRdd);
-        final JavaPairRDD<KeyType, Type> reducedPairRdd = pairRdd.reduceByKey(reduceFunc);
+        final JavaPairRDD<KeyType, Type> reducedPairRdd =
+                pairRdd.reduceByKey(reduceFunc, sparkExecutor.getNumDefaultPartitions());
         this.name(reducedPairRdd);
         final JavaRDD<Type> outputRdd = reducedPairRdd.map(new TupleConverter<>());
         this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
+
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -84,10 +99,17 @@ public class SparkReduceByOperator<Type, KeyType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.reduceby.load");
-        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.reduceby.load";
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                SparkExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.keyDescriptor, configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.reduceDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override
@@ -104,4 +126,5 @@ public class SparkReduceByOperator<Type, KeyType>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
+
 }

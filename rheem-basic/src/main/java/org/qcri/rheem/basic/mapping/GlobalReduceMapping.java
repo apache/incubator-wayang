@@ -29,8 +29,9 @@ public class GlobalReduceMapping implements Mapping {
                 "reduce",
                 new ReduceOperator<>(
                         null,
-                        DataSetType.createDefault(Void.class),
-                        DataSetType.createDefault(Void.class)),
+                        DataSetType.none(),
+                        DataSetType.none()
+                ),
                 false);
         return SubplanPattern.createSingleton(reducePattern);
     }

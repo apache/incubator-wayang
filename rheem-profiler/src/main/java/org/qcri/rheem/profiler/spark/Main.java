@@ -1,10 +1,14 @@
 package org.qcri.rheem.profiler.spark;
 
+import de.hpi.isg.profiledb.instrumentation.StopWatch;
+import de.hpi.isg.profiledb.store.model.Experiment;
+import de.hpi.isg.profiledb.store.model.Subject;
+import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.core.util.StopWatch;
 import org.qcri.rheem.profiler.data.DataGenerators;
+import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -148,6 +152,11 @@ public class Main {
         results.forEach(result -> System.out.println(result.toCsvString()));
     }
 
+    private static StopWatch createStopWatch() {
+        Experiment experiment = new Experiment("rheem-profiler", new Subject("Rheem", "0.1"));
+        return new StopWatch(experiment);
+    }
+
     /**
      * Run the {@code opProfiler} with all combinations that can be derived from {@code allCardinalities}.
      */
@@ -166,22 +175,23 @@ public class Main {
      */
     private static SparkOperatorProfiler.Result profile(SparkOperatorProfiler opProfiler, long... cardinalities) {
         System.out.printf("Profiling %s with %s data quanta.\n", opProfiler, RheemArrays.asList(cardinalities));
-        final StopWatch stopWatch = new StopWatch();
+        final StopWatch stopWatch = createStopWatch();
         SparkOperatorProfiler.Result result = null;
 
         try {
             System.out.println("Prepare...");
-            final StopWatch.Round preparation = stopWatch.start("Preparation");
+            final TimeMeasurement preparation = stopWatch.start("Preparation");
+            SparkPlatform.getInstance().warmUp(new Configuration());
             opProfiler.prepare(cardinalities);
             preparation.stop();
 
             System.out.println("Execute...");
-            final StopWatch.Round execution = stopWatch.start("Execution");
+            final TimeMeasurement execution = stopWatch.start("Execution");
             result = opProfiler.run();
             execution.stop();
         } finally {
             System.out.println("Clean up...");
-            final StopWatch.Round cleanUp = stopWatch.start("Clean up");
+            final TimeMeasurement cleanUp = stopWatch.start("Clean up");
             opProfiler.cleanUp();
             cleanUp.stop();
 

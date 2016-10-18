@@ -6,8 +6,7 @@ import org.junit.Test;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.io.IOException;
 import java.net.URL;
@@ -37,7 +36,7 @@ public class SparkObjectFileSourceTest extends SparkOperatorTestBase {
             final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
             // Execute.
-            source.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+            this.evaluate(source, inputs, outputs);
 
             // Verify.
             Set<Integer> expectedValues = new HashSet<>(SparkObjectFileSourceTest.enumerateRange(10000));

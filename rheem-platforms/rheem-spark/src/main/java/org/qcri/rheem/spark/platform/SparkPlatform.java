@@ -2,12 +2,10 @@ package org.qcri.rheem.spark.platform;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.qcri.rheem.basic.plugin.RheemBasicPlatform;
+import org.qcri.rheem.basic.plugin.RheemBasic;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.core.mapping.Mapping;
-import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
@@ -16,20 +14,18 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.spark.channels.ChannelConversions;
-import org.qcri.rheem.spark.mapping.*;
+import org.qcri.rheem.spark.execution.SparkContextReference;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.operators.SparkCollectionSource;
 import org.qcri.rheem.spark.operators.SparkLocalCallbackSink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.Set;
 
 /**
- * {@link Platform} for a single JVM executor based on the {@link java.util.stream} library.
+ * {@link Platform} for Apache Spark.
  */
 public class SparkPlatform extends Platform {
 
@@ -37,16 +33,14 @@ public class SparkPlatform extends Platform {
 
     private static final String DEFAULT_CONFIG_FILE = "rheem-spark-defaults.properties";
 
-    private final Collection<Mapping> mappings = new LinkedList<>();
-
     private static SparkPlatform instance = null;
 
     private static final String[] REQUIRED_SPARK_PROPERTIES = {
-            "spark.master",
-            "spark.app.name"
+            "spark.master"
     };
 
     private static final String[] OPTIONAL_SPARK_PROPERTIES = {
+            "spark.app.name",
             "spark.executor.memory",
             "spark.executor.cores",
             "spark.executor.instances",
@@ -60,7 +54,10 @@ public class SparkPlatform extends Platform {
             "spark.local.dir",
             "spark.logConf",
             "spark.driver.host",
-            "spark.driver.port"
+            "spark.driver.port",
+            "spark.driver.maxResultSize",
+            "spark.ui.showConsoleProgress",
+            "spark.io.compression.codec"
     };
 
     /**
@@ -80,13 +77,6 @@ public class SparkPlatform extends Platform {
 
     private SparkPlatform() {
         super(PLATFORM_NAME);
-        this.initializeConfiguration();
-        this.initializeMappings();
-    }
-
-    @Override
-    public void addChannelConversionsTo(ChannelConversionGraph channelConversionGraph) {
-        ChannelConversions.ALL.forEach(channelConversionGraph::add);
     }
 
     /**
@@ -117,6 +107,9 @@ public class SparkPlatform extends Platform {
                     value -> sparkConf.set(property, value)
             );
         }
+        if (job.getName() != null) {
+            sparkConf.set("spark.app.name", job.getName());
+        }
 
         if (this.sparkContextReference == null || this.sparkContextReference.isDisposed()) {
             this.sparkContextReference = new SparkContextReference(job.getCrossPlatformExecutor(), new JavaSparkContext(sparkConf));
@@ -128,7 +121,7 @@ public class SparkPlatform extends Platform {
         if (!sparkContext.isLocal()) {
             // Add Rheem JAR files.
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // rheem-spark
-            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasicPlatform.class)); // rheem-basic
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasic.class)); // rheem-basic
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemContext.class)); // rheem-core
             final Set<String> udfJarPaths = job.getUdfJarPaths();
             if (udfJarPaths.isEmpty()) {
@@ -145,33 +138,9 @@ public class SparkPlatform extends Platform {
         if (path != null) this.sparkContextReference.get().addJar(path);
     }
 
-    private void initializeConfiguration() {
-        Configuration.getDefaultConfiguration().load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
-    }
-
-    private void initializeMappings() {
-        this.mappings.add(new CartesianToSparkCartesianMapping());
-        this.mappings.add(new CollectionSourceMapping());
-        this.mappings.add(new CountToSparkCountMapping());
-        this.mappings.add(new DistinctToSparkDistinctMapping());
-        this.mappings.add(new FilterToSparkFilterMapping());
-        this.mappings.add(new GlobalReduceMapping());
-        this.mappings.add(new GlobalMaterializedGroupToSparkGlobalMaterializedGroupMapping());
-        this.mappings.add(new LocalCallbackSinkMapping());
-        this.mappings.add(new FlatMapToSparkFlatMapMapping());
-        this.mappings.add(new MapOperatorToSparkMapOperatorMapping());
-        this.mappings.add(new MapOperatorToSparkMapPartitionsOperatorMapping());
-        this.mappings.add(new MtrlGroupByToSparkMtrlGroupByMapping());
-        this.mappings.add(new ReduceByToSparkReduceByMapping());
-        this.mappings.add(new SortToSparkSortMapping());
-        this.mappings.add(new TextFileSourceMapping());
-        this.mappings.add(new UnionAllToSparkUnionAllMapping());
-        this.mappings.add(new IntersectToSparkIntersectMapping());
-        this.mappings.add(new JoinToSparkJoinMapping());
-        this.mappings.add(new LoopToSparkLoopMapping());
-        this.mappings.add(new DoWhileMapping());
-        this.mappings.add(new ZipWithIdToSparkZipWithIdMapping());
-        this.mappings.add(new SampleToSparkSampleMapping());
+    @Override
+    public void configureDefaults(Configuration configuration) {
+        configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIG_FILE));
     }
 
     @Override
@@ -181,22 +150,14 @@ public class SparkPlatform extends Platform {
         int numCores = (int) (numMachines * configuration.getLongProperty("rheem.spark.cores-per-machine"));
         double hdfsMsPerMb = configuration.getDoubleProperty("rheem.spark.hdfs.ms-per-mb");
         double networkMsPerMb = configuration.getDoubleProperty("rheem.spark.network.ms-per-mb");
-        return LoadProfileToTimeConverter.createDefault(
+        double stretch = configuration.getDoubleProperty("rheem.spark.stretch");
+        return LoadProfileToTimeConverter.createTopLevelStretching(
                 LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000d)),
                 LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000d),
                 LoadToTimeConverter.createLinearCoverter(networkMsPerMb / 1000000d),
-                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
+                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate),
+                stretch
         );
-    }
-
-    @Override
-    public Collection<Mapping> getMappings() {
-        return this.mappings;
-    }
-
-    @Override
-    public boolean isExecutable() {
-        return true;
     }
 
     @Override
@@ -216,13 +177,22 @@ public class SparkPlatform extends Platform {
                 Collections.singleton(0), DataSetType.createDefault(Integer.class)
         );
         SparkLocalCallbackSink<Integer> sink = new SparkLocalCallbackSink<>(
-                dq -> {},
+                dq -> {
+                },
                 DataSetType.createDefault(Integer.class)
         );
         source.connectTo(0, sink, 0);
-        rheemCtx.execute(new RheemPlan(sink));
+        final Job job = rheemCtx.createJob("Warm up", new RheemPlan(sink));
+        // Make sure not to have the warm-up jobs bloat the execution logs.
+        job.getConfiguration().setProperty("rheem.core.log.enabled", "false");
+        job.execute();
         long stopTime = System.currentTimeMillis();
         this.logger.info("Spark warm-up finished in {}.", Formats.formatDuration(stopTime - startTime, true));
 
+    }
+
+    @Override
+    public long getInitializeMillis(Configuration configuration) {
+        return configuration.getLongProperty("rheem.spark.init.ms");
     }
 }

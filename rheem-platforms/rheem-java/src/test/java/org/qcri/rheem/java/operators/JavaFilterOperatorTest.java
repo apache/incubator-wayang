@@ -4,9 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.List;
@@ -26,13 +24,13 @@ public class JavaFilterOperatorTest extends JavaExecutionOperatorTestBase {
         // Build the distinct operator.
         JavaFilterOperator<Integer> filterOperator =
                 new JavaFilterOperator<>(
-                        DataSetType.createDefaultUnchecked(Integer.class),
-                        new PredicateDescriptor<>(i -> i > 0, DataUnitType.createBasic(Integer.class))
+                        DataSetType.createDefault(Integer.class),
+                        new PredicateDescriptor<>(i -> i > 0, Integer.class)
                 );
 
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-        filterOperator.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(filterOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());

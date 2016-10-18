@@ -3,6 +3,7 @@ package org.qcri.rheem.core.optimizer.channels;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -86,7 +87,7 @@ public class ChannelConversionGraphTest {
         destOperator1.getSupportedInputChannels(0).add(DummyReusableChannel.DESCRIPTOR);
         destOperator1.getSupportedInputChannels(0).add(DummyNonReusableChannel.DESCRIPTOR);
 
-        final OptimizationContext optimizationContext = new OptimizationContext(configuration);
+        final OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
         optimizationContext.addOneTimeOperator(sourceOperator).setOutputCardinality(0, new CardinalityEstimate(1000, 10000, 0.8d));
 
         channelConversionGraph.findMinimumCostJunction(
@@ -114,7 +115,7 @@ public class ChannelConversionGraphTest {
         ExecutionOperator destOperator1 = new DummyExecutionOperator(1, 1, false);
         destOperator1.getSupportedInputChannels(0).add(DummyReusableChannel.DESCRIPTOR);
 
-        final OptimizationContext optimizationContext = new OptimizationContext(configuration);
+        final OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
         optimizationContext.addOneTimeOperator(sourceOperator).setOutputCardinality(0, new CardinalityEstimate(1000, 10000, 0.8d));
 
         Junction junction = channelConversionGraph.findMinimumCostJunction(
@@ -142,7 +143,7 @@ public class ChannelConversionGraphTest {
         ExecutionOperator destOperator1 = new DummyExecutionOperator(1, 1, false);
         destOperator1.getSupportedInputChannels(0).add(DummyExternalReusableChannel.DESCRIPTOR);
 
-        final OptimizationContext optimizationContext = new OptimizationContext(configuration);
+        final OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
         optimizationContext.addOneTimeOperator(sourceOperator).setOutputCardinality(0, new CardinalityEstimate(1000, 10000, 0.8d));
 
         Junction junction = channelConversionGraph.findMinimumCostJunction(

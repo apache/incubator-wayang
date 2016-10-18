@@ -2,6 +2,8 @@ package org.qcri.rheem.profiler.spark;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -11,8 +13,8 @@ import org.qcri.rheem.profiler.util.ProfilingUtils;
 import org.qcri.rheem.profiler.util.RrdAccessor;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
-import org.qcri.rheem.spark.platform.SparkExecutor;
 import org.rrd4j.ConsolFun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +67,7 @@ public abstract class SparkOperatorProfiler {
         this.numPartitions = (int) configuration.getLongProperty("rheem.spark.partitions", -1);
 
         this.gangliaRrdsDir = configuration.getStringProperty("rheem.ganglia.rrds", "/var/lib/ganglia/rrds");
-        this.gangliaClusterName = configuration.getStringProperty("rheem.ganglia.cluster");
+        this.gangliaClusterName = configuration.getStringProperty("rheem.ganglia.cluster", "cluster");
 
         this.dataQuantumGeneratorBatchSize = (int) configuration.getLongProperty("rheem.profiler.datagen.batchsize", 5000000);
         this.dataQuantumGeneratorLocation = configuration.getStringProperty("rheem.profiler.datagen.location", "worker");
@@ -270,6 +272,18 @@ public abstract class SparkOperatorProfiler {
     protected abstract Result executeOperator();
 
     /**
+     * Utility method to invoke
+     * {@link SparkExecutionOperator#evaluate(ChannelInstance[], ChannelInstance[], SparkExecutor, OptimizationContext.OperatorContext)}.
+     */
+    protected void evaluate(SparkExecutionOperator operator,
+                           ChannelInstance[] inputs,
+                           ChannelInstance[] outputs) {
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.sparkExecutor.getConfiguration());
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(operator);
+        operator.evaluate(inputs, outputs, this.sparkExecutor, operatorContext);
+    }
+
+    /**
      * Creates a {@link ChannelInstance} that carries the given {@code rdd}.
      */
     protected static RddChannel.Instance createChannelInstance(final JavaRDD<?> rdd, SparkExecutor sparkExecutor) {
@@ -285,7 +299,7 @@ public abstract class SparkOperatorProfiler {
     protected static RddChannel.Instance createChannelInstance(SparkExecutor sparkExecutor) {
         final ChannelDescriptor channelDescriptor = RddChannel.CACHED_DESCRIPTOR;
         final RddChannel channel = (RddChannel) channelDescriptor.createChannel(null, sparkExecutor.getConfiguration());
-        return (RddChannel.Instance) channel.createInstance(null);
+        return (RddChannel.Instance) channel.createInstance(null, null, -1);
     }
 
     /**

@@ -23,7 +23,7 @@ public abstract class ReplacementSubplanFactory {
             final OperatorMatch operatorMatch = subplanMatch.getOperatorMatches().values().stream().findAny().get();
             final Operator operator = operatorMatch.getOperator();
             String operatorName;
-            if (operator instanceof OperatorBase && (operatorName = ((OperatorBase) operator).getName()) != null) {
+            if ((operatorName = operator.getName()) != null) {
                 this.setNameTo(operatorName, replacementSubplan);
             }
         }

@@ -8,6 +8,7 @@ import edu.cmu.graphchi.preprocessing.FastSharder;
 import edu.cmu.graphchi.preprocessing.VertexIdTranslate;
 import edu.cmu.graphchi.vertexdata.VertexAggregator;
 import org.qcri.rheem.basic.channels.FileChannel;
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.PageRankOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
@@ -15,20 +16,28 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.ConsumerIteratorAdapter;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
-import org.qcri.rheem.graphchi.GraphChiPlatform;
+import org.qcri.rheem.core.util.fs.LocalFileSystem;
+import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
+import org.qcri.rheem.java.channels.StreamChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.util.Collections;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
 
 /**
  * PageRank {@link Operator} implementation for the {@link GraphChiPlatform}.
  */
-public class GraphChiPageRankOperator extends PageRankOperator implements GraphChiOperator {
+public class GraphChiPageRankOperator extends PageRankOperator implements GraphChiExecutionOperator {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -37,7 +46,7 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
     }
 
     public GraphChiPageRankOperator(PageRankOperator pageRankOperator) {
-        super(pageRankOperator.getNumIterations());
+        super(pageRankOperator);
     }
 
     @Override
@@ -46,25 +55,37 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
         assert inputChannelInstances.length == this.getNumInputs();
         assert outputChannelInstances.length == this.getNumOutputs();
 
-        final FileChannel.Instance inputFileChannelInstance = (FileChannel.Instance) inputChannelInstances[0];
-        final FileChannel.Instance outputFileChannelInstance = (FileChannel.Instance) outputChannelInstances[0];
+        final FileChannel.Instance inputChannelInstance = (FileChannel.Instance) inputChannelInstances[0];
+        final StreamChannel.Instance outputChannelInstance = (StreamChannel.Instance) outputChannelInstances[0];
         try {
-            this.runGraphChi(inputFileChannelInstance, outputFileChannelInstance, configuration);
+            this.runGraphChi(inputChannelInstance, outputChannelInstance, configuration);
         } catch (IOException e) {
             throw new RheemException(String.format("Running %s failed.", this), e);
         }
     }
 
-    private void runGraphChi(FileChannel.Instance inputFileChannelInstance, FileChannel.Instance outputFileChannelInstance,
+    private void runGraphChi(FileChannel.Instance inputFileChannelInstance,
+                             StreamChannel.Instance outputChannelInstance,
                              Configuration configuration)
             throws IOException {
 
         final String inputPath = inputFileChannelInstance.getSinglePath();
         final String actualInputPath = FileSystems.findActualSingleInputPath(inputPath);
-        final FileSystem inputFs = FileSystems.getFileSystem(inputPath).get();
+        final FileSystem inputFs = FileSystems.getFileSystem(inputPath).orElseThrow(
+                () -> new RheemException(String.format("Could not identify filesystem for \"%s\".", inputPath))
+        );
 
         // Create shards.
-        final File tempFile = File.createTempFile("rheem-graphchi", "graph");
+        String tempDirPath = configuration.getStringProperty("rheem.graphchi.tempdir");
+        Random random = new Random();
+        String tempFilePath = String.format("%s%s%04x-%04x-%04x-%04x.tmp", tempDirPath, File.separator,
+                random.nextInt() & 0xFFFF,
+                random.nextInt() & 0xFFFF,
+                random.nextInt() & 0xFFFF,
+                random.nextInt() & 0xFFFF
+        );
+        final File tempFile = new File(tempFilePath);
+        LocalFileSystem.touch(tempFile);
         tempFile.deleteOnExit();
         String graphName = tempFile.toString();
         // As suggested by GraphChi, we propose to use approximately 1 shard per 1,000,000 edges.
@@ -84,26 +105,28 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
         engine.setModifiesInedges(false); // Important optimization
         engine.run(new Pagerank(), this.numIterations);
 
-        // Output results.
-        final String path = outputFileChannelInstance.addGivenOrTempPath(null, configuration);
-        final FileSystem outFs = FileSystems.getFileSystem(path).get();
-        try (final OutputStreamWriter writer = new OutputStreamWriter(outFs.create(outputFileChannelInstance.getSinglePath()))) {
-            VertexIdTranslate trans = engine.getVertexIdTranslate();
-            VertexAggregator.foreach(engine.numVertices(), graphName, new FloatConverter(),
-                    (vertexId, vertexValue) -> {
-                        try {
-                            writer.write(String.valueOf(trans.backward(vertexId)));
-                            writer.write('\t');
-                            writer.write(String.valueOf(vertexValue));
-                            writer.write('\n');
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
+        final ConsumerIteratorAdapter<Tuple2<Long, Float>> consumerIteratorAdapter = new ConsumerIteratorAdapter<>();
+        final Consumer<Tuple2<Long, Float>> consumer = consumerIteratorAdapter.getConsumer();
+        final Iterator<Tuple2<Long, Float>> iterator = consumerIteratorAdapter.getIterator();
 
-                    });
-        } catch (UncheckedIOException e) {
-            throw e.getCause();
-        }
+        // Output results.
+        VertexIdTranslate trans = engine.getVertexIdTranslate();
+        new Thread(
+                () -> {
+                    try {
+                        VertexAggregator.foreach(engine.numVertices(), graphName, new FloatConverter(),
+                                (vertexId, vertexValue) -> consumer.accept(new Tuple2<>((long) trans.backward(vertexId), vertexValue)));
+                    } catch (IOException e) {
+                        throw new RheemException(e);
+                    } finally {
+                        consumerIteratorAdapter.declareLastAdd();
+                    }
+                },
+                String.format("%s (output)", this)
+        ).start();
+
+        Stream<Tuple2<Long, Float>> outputStream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
+        outputChannelInstance.accept(outputStream);
     }
 
     /**
@@ -133,13 +156,18 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
     }
 
     @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.graphchi.pagerank.load";
+    }
+
+    @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
+        return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
 
 }

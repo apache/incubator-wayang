@@ -1,19 +1,31 @@
 package org.qcri.rheem.tests;
 
+import org.qcri.rheem.api.DataQuantaBuilder;
+import org.qcri.rheem.api.JavaPlanBuilder;
+import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
+import org.qcri.rheem.basic.types.RecordType;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
-import org.qcri.rheem.postgres.compiler.FunctionCompiler;
+import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.sqlite3.Sqlite3;
+import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Provides plans that can be used for integration testing..
@@ -250,6 +262,54 @@ public class RheemPlans {
     }
 
     /**
+     * Creates a {@link RheemPlan} that goes through a loop thereby incorporating the iteration number.
+     */
+    public static Collection<Integer> loopWithIterationNumber(RheemContext rheemContext,
+                                                              final int maxValue,
+                                                              final int expectedNumIterations,
+                                                              final int... values) {
+        return new JavaPlanBuilder(rheemContext)
+                .loadCollection(RheemArrays.asList(values)).withName("Load values")
+                .doWhile(
+                        vals -> {
+                            for (Integer val : vals) {
+                                if (val >= maxValue) return true;
+                            }
+                            return false;
+                        },
+                        loopHead -> {
+                            DataQuantaBuilder<?, Integer> newVals = loopHead
+                                    .map(new IncreaseByIterationNumber())
+                                    .withName("Increase by iteration number");
+                            return new Tuple<>(
+                                    newVals.map(x -> x).withName("Identity 1").withOutputClass(Integer.class),
+                                    newVals.map(x -> x).withName("Identity 2").withOutputClass(Integer.class)
+                            );
+                        }
+                ).withExpectedNumberOfIterations(expectedNumIterations).withConditionClass(Integer.class)
+                .collect();
+    }
+
+    /**
+     * Increases all incoming {@link Integer}s by the current iteration number.
+     */
+    public static class IncreaseByIterationNumber
+            implements FunctionDescriptor.ExtendedSerializableFunction<Integer, Integer> {
+
+        private int increment;
+
+        @Override
+        public void open(ExecutionContext ctx) {
+            this.increment = ctx.getCurrentIteration();
+        }
+
+        @Override
+        public Integer apply(Integer integer) {
+            return integer + this.increment;
+        }
+    }
+
+    /**
      * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link SampleOperator}. It will
      * then map each value to its double and output the results in the {@code collector}.
      */
@@ -261,14 +321,14 @@ public class RheemPlans {
         SampleOperator<Integer> sampleOperator = new SampleOperator<>(3, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM);
         sampleOperator.setName("sample");
 
-        MapOperator<Integer, Integer> mapOperator = new MapOperator<>(n -> 2*n, Integer.class, Integer.class);
+        MapOperator<Integer, Integer> mapOperator = new MapOperator<>(n -> 2 * n, Integer.class, Integer.class);
         mapOperator.setName("map");
 
         LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(collector, Integer.class);
         sink.setName("sink");
 
         source.connectTo(0, sampleOperator, 0);
-        sampleOperator.connectTo(0, mapOperator,0);
+        sampleOperator.connectTo(0, mapOperator, 0);
         mapOperator.connectTo(0, sink, 0);
 
         // Create the RheemPlan.
@@ -295,11 +355,44 @@ public class RheemPlans {
         sink.setName("sink");
 
         source.connectTo(0, globalMaterializedGroupOperator, 0);
-        globalMaterializedGroupOperator.connectTo(0, sink,0);
+        globalMaterializedGroupOperator.connectTo(0, sink, 0);
 
         // Create the RheemPlan.
         return new RheemPlan(sink);
     }
+
+
+    /**
+     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link RepeatOperator}.
+     * The input values will be incremented by 1 n times.
+     * It will then push the results in the {@code collector}.
+     */
+    public static RheemPlan repeat(Collection<Integer> collector, int numIterations, final int... values) {
+        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        source.setName("source");
+
+        RepeatOperator<Integer> repeat = new RepeatOperator<>(numIterations, Integer.class);
+        repeat.setName("repeat");
+
+        MapOperator<Integer, Integer> increment = new MapOperator<>(
+                i -> i + 1, Integer.class, Integer.class
+        );
+        increment.setName("increment");
+
+        LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(
+                collector,
+                DataSetType.createDefault(Integer.class)
+        );
+        sink.setName("sink");
+
+        repeat.initialize(source, 0);
+        repeat.beginIteration(increment, 0);
+        repeat.endIteration(increment, 0);
+        repeat.connectFinalOutputTo(sink, 0);
+
+        return new RheemPlan(sink);
+    }
+
 
     /**
      * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link ZipWithIdOperator}.
@@ -331,15 +424,14 @@ public class RheemPlans {
         sink.setName("sink");
 
         source.connectTo(0, zipWithId, 0);
-        zipWithId.connectTo(0, stripValue,0);
-        stripValue.connectTo(0, distinctIds,0);
-        distinctIds.connectTo(0, count,0);
-        count.connectTo(0, sink,0);
+        zipWithId.connectTo(0, stripValue, 0);
+        stripValue.connectTo(0, distinctIds, 0);
+        distinctIds.connectTo(0, count, 0);
+        count.connectTo(0, sink, 0);
 
         // Create the RheemPlan.
         return new RheemPlan(sink);
     }
-
 
 
     /**
@@ -388,7 +480,7 @@ public class RheemPlans {
     /**
      * Creates a cross-community PageRank Rheem plan, that incorporates the {@link PageRankOperator}.
      */
-    public static RheemPlan createCrossCommunityPageRank() {
+    public static RheemPlan pageRankWithDictionaryCompression(Collection<Tuple2<Character, Float>> pageRankCollector) {
         // Get some graph data. Use the example from Wikipedia: https://en.wikipedia.org/wiki/PageRank
         Collection<char[]> adjacencies = Arrays.asList(
                 new char[]{'B', 'C'},
@@ -401,19 +493,6 @@ public class RheemPlans {
                 new char[]{'I', 'B', 'E'},
                 new char[]{'J', 'E'},
                 new char[]{'K', 'E'}
-        );
-        Collection<Tuple2<Character, Float>> pageRanks = Arrays.asList(
-                new Tuple2<>('A', 0.033f),
-                new Tuple2<>('B', 0.384f),
-                new Tuple2<>('C', 0.343f),
-                new Tuple2<>('D', 0.039f),
-                new Tuple2<>('E', 0.081f),
-                new Tuple2<>('F', 0.039f),
-                new Tuple2<>('G', 0.016f),
-                new Tuple2<>('H', 0.016f),
-                new Tuple2<>('I', 0.016f),
-                new Tuple2<>('J', 0.016f),
-                new Tuple2<>('K', 0.016f)
         );
 
         // Create a RheemPlan:
@@ -432,8 +511,8 @@ public class RheemPlans {
                             }
                             return result;
                         },
-                        DataUnitType.createBasic(char[].class),
-                        DataUnitType.<Tuple2<Character, Character>>createBasicUnchecked(Tuple2.class))
+                        char[].class,
+                        ReflectionUtils.specify(Tuple2.class))
         );
         adjacencySplitter.setName("adjacency splitter");
         adjacencySource.connectTo(0, adjacencySplitter, 0);
@@ -447,8 +526,8 @@ public class RheemPlans {
                             vertices.add(edge.field1);
                             return vertices;
                         },
-                        DataUnitType.<Tuple2<Character, Character>>createBasicUnchecked(Tuple2.class),
-                        DataUnitType.createBasic(Character.class)
+                        ReflectionUtils.specify(Tuple2.class),
+                        Character.class
                 )
         );
         vertexSplitter.setName("vertex splitter");
@@ -460,37 +539,30 @@ public class RheemPlans {
         vertexSplitter.connectTo(0, vertexCanonicalizer, 0);
 
         // Assign an ID to each distinct vertex.
-        MapOperator<Character, Tuple2<Character, Integer>> zipWithId = new MapOperator<>(
-                new TransformationDescriptor<>(
-                        (vertex) -> new Tuple2<>(vertex, Character.hashCode(vertex)),
-                        DataUnitType.createBasic(Character.class),
-                        DataUnitType.<Tuple2<Character, Integer>>createBasicUnchecked(Tuple2.class)
-                )
-        );
+        ZipWithIdOperator<Character> zipWithId = new ZipWithIdOperator<>(Character.class);
         zipWithId.setName("zip with ID");
         vertexCanonicalizer.connectTo(0, zipWithId, 0);
 
         // Base the edge list on vertex IDs.
-        MapOperator<Tuple2<Character, Character>, Tuple2<Integer, Integer>> translate = new MapOperator<>(
+        MapOperator<Tuple2<Character, Character>, Tuple2<Long, Long>> translate = new MapOperator<>(
                 new TransformationDescriptor<>(
-                        new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Character, Character>, Tuple2<Integer, Integer>>() {
+                        new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Character, Character>, Tuple2<Long, Long>>() {
 
-                            private Map<Character, Integer> dictionary;
+                            private Map<Character, Long> dictionary;
 
                             @Override
                             public void open(ExecutionContext ctx) {
-                                this.dictionary = ctx.<Tuple2<Character, Integer>>getBroadcast("vertex IDs").stream().collect(
-                                        Collectors.toMap(Tuple2::getField0, Tuple2::getField1)
-                                );
+                                this.dictionary = ctx.<Tuple2<Long, Character>>getBroadcast("vertex IDs").stream()
+                                        .collect(Collectors.toMap(Tuple2::getField1, Tuple2::getField0));
                             }
 
                             @Override
-                            public Tuple2<Integer, Integer> apply(Tuple2<Character, Character> in) {
+                            public Tuple2<Long, Long> apply(Tuple2<Character, Character> in) {
                                 return new Tuple2<>(this.dictionary.get(in.field0), this.dictionary.get(in.field1));
                             }
                         },
-                        DataUnitType.<Tuple2<Character, Character>>createBasicUnchecked(Tuple2.class),
-                        DataUnitType.<Tuple2<Integer, Integer>>createBasicUnchecked(Tuple2.class)
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
+                        DataUnitType.createBasicUnchecked(Tuple2.class)
                 )
         );
         translate.setName("translate");
@@ -503,40 +575,78 @@ public class RheemPlans {
         translate.connectTo(0, pageRank, 0);
 
         // Back-translate the page ranks.
-        MapOperator<Tuple2<Integer, Float>, Tuple2<Character, Float>> backtranslate = new MapOperator<>(
+        MapOperator<Tuple2<Long, Float>, Tuple2<Character, Float>> backtranslate = new MapOperator<>(
                 new TransformationDescriptor<>(
-                        new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Integer, Float>, Tuple2<Character, Float>>() {
+                        new FunctionDescriptor.ExtendedSerializableFunction<Tuple2<Long, Float>, Tuple2<Character, Float>>() {
 
-                            private Map<Integer, Character> dictionary;
+                            private Map<Long, Character> dictionary;
 
                             @Override
                             public void open(ExecutionContext ctx) {
-                                this.dictionary = ctx.<Tuple2<Character, Integer>>getBroadcast("vertex IDs").stream()
-                                        .map(Tuple2::swap)
-                                        .collect(
-                                                Collectors.toMap(Tuple2::getField0, Tuple2::getField1)
-                                        );
+                                this.dictionary = ctx.<Tuple2<Long, Character>>getBroadcast("vertex IDs").stream()
+                                        .collect(Collectors.toMap(Tuple2::getField0, Tuple2::getField1));
                             }
 
                             @Override
-                            public Tuple2<Character, Float> apply(Tuple2<Integer, Float> in) {
+                            public Tuple2<Character, Float> apply(Tuple2<Long, Float> in) {
                                 return new Tuple2<>(this.dictionary.get(in.field0), in.field1);
                             }
                         },
-                        DataUnitType.<Tuple2<Integer, Float>>createBasicUnchecked(Tuple2.class),
-                        DataUnitType.<Tuple2<Character, Float>>createBasicUnchecked(Tuple2.class)
+                        DataUnitType.createBasicUnchecked(Tuple2.class),
+                        DataUnitType.createBasicUnchecked(Tuple2.class)
                 )
         );
         backtranslate.setName("bracktranslate");
         pageRank.connectTo(0, backtranslate, 0);
         zipWithId.broadcastTo(0, backtranslate, "vertex IDs");
 
-        LocalCallbackSink callbackSink = LocalCallbackSink.createStdoutSink(
-                DataSetType.<Tuple2<Character, Float>>createDefaultUnchecked(Tuple2.class));
+        LocalCallbackSink callbackSink = LocalCallbackSink.createCollectingSink(
+                pageRankCollector,
+                DataSetType.<Tuple2<Character, Float>>createDefaultUnchecked(Tuple2.class)
+        );
         callbackSink.setName("sink");
         backtranslate.connectTo(0, callbackSink, 0);
 
         return new RheemPlan(callbackSink);
+    }
+
+    public static Map<Character, Float> pageRankWithDictionaryCompressionSolution() {
+        return Stream.of(
+                new Tuple2<>('A', 0.033f),
+                new Tuple2<>('B', 0.384f),
+                new Tuple2<>('C', 0.343f),
+                new Tuple2<>('D', 0.039f),
+                new Tuple2<>('E', 0.081f),
+                new Tuple2<>('F', 0.039f),
+                new Tuple2<>('G', 0.016f),
+                new Tuple2<>('H', 0.016f),
+                new Tuple2<>('I', 0.016f),
+                new Tuple2<>('J', 0.016f),
+                new Tuple2<>('K', 0.016f)
+        ).collect(Collectors.toMap(Tuple2::getField0, Tuple2::getField1));
+    }
+
+    /**
+     * Feeds the {@code edges} into a {@link PageRankOperator} and collects the page ranks in the {@code collector}.
+     *
+     * @return a {@link RheemPlan} implementing the above described
+     */
+    public static RheemPlan pageRank(Collection<Tuple2<Long, Long>> edges,
+                                     Collection<Tuple2<Long, Float>> collector) {
+        CollectionSource<Tuple2<Long, Long>> source = new CollectionSource<>(
+                edges, ReflectionUtils.specify(Tuple2.class)
+        );
+        source.setName("source");
+
+        PageRankOperator pageRank = new PageRankOperator(20);
+        pageRank.setName("pageRank");
+        source.connectTo(0, pageRank, 0);
+
+        final LocalCallbackSink<Tuple2<Long, Float>> sink =
+                LocalCallbackSink.createCollectingSink(collector, ReflectionUtils.specify(Tuple2.class));
+        pageRank.connectTo(0, sink, 0);
+
+        return new RheemPlan(sink);
     }
 
     /**
@@ -589,11 +699,11 @@ public class RheemPlans {
     }
 
     public static Integer increment(Integer k) {
-        if (k==null) {
+        if (k == null) {
             return 1;
+        } else {
+            return k++;
         }
-        else {
-        return k++;}
     }
 
     public static String concat9(String k) {
@@ -637,87 +747,84 @@ public class RheemPlans {
         return new RheemPlan(stdoutSink);
     }
 
-    public static RheemPlan postgresReadStdout() {
-        //Tuple2.class
-        LocalCallbackSink<Tuple2> stdoutSink = LocalCallbackSink.createStdoutSink(Tuple2.class);
-        TableSource table = new TableSource<>("employee", Tuple2.class);
-        table.connectTo(0, stdoutSink, 0);
-        return new RheemPlan(stdoutSink);
+    /**
+     * Prepair a SQLite3 database for the {@code sqlite3Scenario*} methods.
+     *
+     * @param configuration designates the location of the database
+     * @throws SQLException
+     */
+    public static void prepareSqlite3Scenarios(Configuration configuration) throws SQLException {
+        try (Connection connection = Sqlite3.platform()
+                .createDatabaseDescriptor(configuration)
+                .createJdbcConnection()) {
+            final Statement statement = connection.createStatement();
+            statement.addBatch("DROP TABLE IF EXISTS customer;");
+            statement.addBatch("CREATE TABLE customer (name TEXT, age INT);");
+            statement.addBatch("INSERT INTO customer VALUES ('John', 20)");
+            statement.addBatch("INSERT INTO customer VALUES ('Timmy', 16)");
+            statement.addBatch("INSERT INTO customer VALUES ('Evelyn', 35)");
+            statement.executeBatch();
+        }
+    }
+
+    public static List<Record> getSqlite3Customers() {
+        return Arrays.asList(
+                new Record("John", 20),
+                new Record("Timmy", 16),
+                new Record("Evelyn", 35)
+        );
+    }
+
+    public static RheemPlan sqlite3Scenario1(Collection<Record> collector) {
+        Sqlite3TableSource customers = new Sqlite3TableSource("customer");
+        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
+        customers.connectTo(0, sink, 0);
+        return new RheemPlan(sink);
 
     }
 
-    public static RheemPlan postgresScenario2() {
-        //Tuple2.class
-        LocalCallbackSink<Tuple2> stdoutSink = LocalCallbackSink.createStdoutSink(Tuple2.class);
-        ProjectionOperator projectionOperator = new ProjectionOperator<>(Tuple2.class, Tuple2.class, "id", "salary");
-        FilterOperator<Tuple2> filterOp = new FilterOperator<Tuple2>(
-                new PredicateDescriptor.SerializablePredicate<Tuple2>() {
-                    @Override
-                    @FunctionCompiler.SQL("salary>1000")
-                    public boolean test(Tuple2 s) {
-                        return (Float)s.getField1()>1000;
-                    }
-                }, Tuple2.class);
+    public static RheemPlan sqlite3Scenario2(Collection<Record> collector) {
+        Sqlite3TableSource customers = new Sqlite3TableSource("customer", "name", "age");
+        FilterOperator<Record> filter = new FilterOperator<>(
+                new PredicateDescriptor<>(
+                        (PredicateDescriptor.SerializablePredicate<Record>) record -> (Integer) record.getField(1) >= 18,
+                        Record.class
+                ).withSqlImplementation("age >= 18"),
+                DataSetType.createDefault(Record.class)
+        );
+        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
 
-        TableSource table = new TableSource<>("employee", Tuple2.class);
-        table.connectTo(0, projectionOperator, 0);
-        projectionOperator.connectTo(0, filterOp, 0);
-        filterOp.connectTo(0, stdoutSink, 0);
-        //filterOp.addTargetPlatform(JavaPlatform.getInstance());
-        return new RheemPlan(stdoutSink);
+        customers.connectTo(0, filter, 0);
+        filter.connectTo(0, sink, 0);
+
+        return new RheemPlan(sink);
 
     }
 
-    public static RheemPlan postgresScenario3() {
+    public static RheemPlan sqlite3Scenario3(Collection<Record> collector) {
+        Sqlite3TableSource customers = new Sqlite3TableSource("customer", "name", "age");
+        FilterOperator<Record> filter = new FilterOperator<>(
+                new PredicateDescriptor<>(
+                        (PredicateDescriptor.SerializablePredicate<Record>) record -> (Integer) record.getField(1) >= 18,
+                        Record.class
+                ).withSqlImplementation("age >= 18"),
+                customers.getType()
+        );
+        MapOperator<Record, Record> projection = MapOperator.createProjection(
+                (RecordType) filter.getOutputType().getDataUnitType(),
+                "name"
+        );
+        LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
 
-        LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
-        // Select second field.
-        ProjectionOperator projectionOperator = new ProjectionOperator<>(Tuple2.class, Float.class, 1);
+        customers.connectTo(0, filter, 0);
+        filter.connectTo(0, projection, 0);
+        projection.connectTo(0, sink, 0);
 
-        FilterOperator<Float> filterOp = new FilterOperator<Float>(
-                new PredicateDescriptor.SerializablePredicate<Float>() {
-                    @Override
-                    @FunctionCompiler.SQL("salary>1000")
-                    public boolean test(Float s) {
-                        return s>1000;
-                    }
-                }, Float.class);
-
-        TableSource table = new TableSource<>("employee", Tuple2.class);
-        table.connectTo(0, projectionOperator, 0);
-        projectionOperator.connectTo(0, filterOp, 0);
-        filterOp.connectTo(0, stdoutSink, 0);
-        //filterOp.addTargetPlatform(JavaPlatform.getInstance());
-        return new RheemPlan(stdoutSink);
-
-    }
-
-    public static RheemPlan postgresMixedScenario4() {
-
-        LocalCallbackSink<Float> stdoutSink = LocalCallbackSink.createStdoutSink(Float.class);
-        // Select second field.
-        ProjectionOperator projectionOperator = new ProjectionOperator<>(Tuple2.class, Float.class, 1);
-        DistinctOperator<Float> distinctLinesOperator = new DistinctOperator<>(Float.class);
-
-        FilterOperator<Float> filterOp = new FilterOperator<Float>(
-                new PredicateDescriptor.SerializablePredicate<Float>() {
-                    @Override
-                    @FunctionCompiler.SQL("salary>1000")
-                    public boolean test(Float salary) {
-                        return salary>1000;
-                    }
-                }, Float.class);
-
-        //FilterOperator<Float> filterOp = new FilterOperator<Float>(salary-> salary>1000, Float.class);
-
-        TableSource table = new TableSource<>("employee", Tuple2.class);
-        table.connectTo(0, projectionOperator, 0);
-        projectionOperator.connectTo(0, filterOp, 0);
-        filterOp.connectTo(0, distinctLinesOperator, 0);
-        distinctLinesOperator.connectTo(0, stdoutSink, 0);
-        return new RheemPlan(stdoutSink);
+        return new RheemPlan(sink);
 
     }
+
+
 }
 
 

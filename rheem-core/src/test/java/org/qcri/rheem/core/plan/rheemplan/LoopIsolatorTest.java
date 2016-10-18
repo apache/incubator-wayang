@@ -20,23 +20,23 @@ public class LoopIsolatorTest {
         TestSource<Integer> source = new TestSource<>(Integer.class);
 
         TestLoopHead<Integer> loopHead = new TestLoopHead<>(Integer.class);
-        source.connectTo("output", loopHead, "initialInput");
+        source.connectTo("out", loopHead, "initialInput");
 
         TestMapOperator<Integer, Integer> inLoopMap = new TestMapOperator<>(Integer.class, Integer.class);
-        loopHead.connectTo("loopOutput", inLoopMap, "input");
-        inLoopMap.connectTo("output", loopHead, "loopInput");
+        loopHead.connectTo("loopOutput", inLoopMap, "in");
+        inLoopMap.connectTo("out", loopHead, "loopInput");
 
         TestSink<Integer> sink = new TestSink<>(Integer.class);
-        loopHead.connectTo("finalOutput", sink, "input");
+        loopHead.connectTo("finalOutput", sink, "in");
 
         RheemPlan rheemPlan = new RheemPlan(sink);
 
         LoopIsolator.isolateLoops(rheemPlan);
 
         // Check the top-level plan.
-        final Operator allegedLoopSubplan = sink.getInputOperator(0);
+        final Operator allegedLoopSubplan = sink.getEffectiveOccupant(0).getOwner();
         Assert.assertSame(LoopSubplan.class, allegedLoopSubplan.getClass());
-        Assert.assertSame(source, allegedLoopSubplan.getInputOperator(0));
+        Assert.assertSame(source, allegedLoopSubplan.getEffectiveOccupant(0).getOwner());
 
         // Check the Subplan.
         LoopSubplan loopSubplan = (LoopSubplan) allegedLoopSubplan;
@@ -56,24 +56,24 @@ public class LoopIsolatorTest {
         TestSource<Integer> additionalSource = new TestSource<>(Integer.class);
 
         TestLoopHead<Integer> loopHead = new TestLoopHead<>(Integer.class);
-        mainSource.connectTo("output", loopHead, "initialInput");
+        mainSource.connectTo("out", loopHead, "initialInput");
 
         TestMapOperator<Integer, Integer> inLoopMap = new TestMapOperator<>(Integer.class, Integer.class);
         loopHead.broadcastTo("loopOutput", inLoopMap, "broadcast");
-        additionalSource.connectTo("output", inLoopMap, "input");
-        inLoopMap.connectTo("output", loopHead, "loopInput");
+        additionalSource.connectTo("out", inLoopMap, "in");
+        inLoopMap.connectTo("out", loopHead, "loopInput");
 
         TestSink<Integer> sink = new TestSink<>(Integer.class);
-        loopHead.connectTo("finalOutput", sink, "input");
+        loopHead.connectTo("finalOutput", sink, "in");
 
         RheemPlan rheemPlan = new RheemPlan(sink);
 
         LoopIsolator.isolateLoops(rheemPlan);
 
         // Check the top-level plan.
-        final Operator allegedLoopSubplan = sink.getInputOperator(0);
+        final Operator allegedLoopSubplan = sink.getEffectiveOccupant(0).getOwner();
         Assert.assertSame(LoopSubplan.class, allegedLoopSubplan.getClass());
-        Assert.assertSame(mainSource, allegedLoopSubplan.getInputOperator(0));
+        Assert.assertSame(mainSource, allegedLoopSubplan.getEffectiveOccupant(0).getOwner());
 
         // Check the Subplan.
         LoopSubplan loopSubplan = (LoopSubplan) allegedLoopSubplan;
@@ -90,32 +90,39 @@ public class LoopIsolatorTest {
     @Test
     public void testNestedLoops() {
         TestSource<Integer> mainSource = new TestSource<>(Integer.class);
+        mainSource.setName("mainSource");
 
         TestLoopHead<Integer> outerLoopHead = new TestLoopHead<>(Integer.class);
-        mainSource.connectTo("output", outerLoopHead, "initialInput");
+        mainSource.connectTo("out", outerLoopHead, "initialInput");
+        outerLoopHead.setName("outerLoopHead");
 
         TestMapOperator<Integer, Integer> inOuterLoopMap = new TestMapOperator<>(Integer.class, Integer.class);
-        outerLoopHead.connectTo("loopOutput", inOuterLoopMap, "input");
+        outerLoopHead.connectTo("loopOutput", inOuterLoopMap, "in");
+        inOuterLoopMap.setName("inOuterLoopMap");
 
         TestLoopHead<Integer> innerLoopHead = new TestLoopHead<>(Integer.class);
-        inOuterLoopMap.connectTo("output", innerLoopHead, "initialInput");
+        inOuterLoopMap.connectTo("out", innerLoopHead, "initialInput");
+        innerLoopHead.setName("innerLoopHead");
 
         TestMapOperator<Integer, Integer> inInnerLoopMap = new TestMapOperator<>(Integer.class, Integer.class);
-        innerLoopHead.connectTo("loopOutput", inInnerLoopMap, "input");
-        inInnerLoopMap.connectTo("output", innerLoopHead, "loopInput");
+        innerLoopHead.connectTo("loopOutput", inInnerLoopMap, "in");
+        inInnerLoopMap.connectTo("out", innerLoopHead, "loopInput");
         innerLoopHead.connectTo("finalOutput", outerLoopHead, "loopInput");
+        inInnerLoopMap.setName("inInnerLoopMap");
+
 
         TestSink<Integer> sink = new TestSink<>(Integer.class);
-        outerLoopHead.connectTo("finalOutput", sink, "input");
+        outerLoopHead.connectTo("finalOutput", sink, "in");
+        sink.setName("sink");
 
         RheemPlan rheemPlan = new RheemPlan(sink);
 
         LoopIsolator.isolateLoops(rheemPlan);
 
         // Check the top-level plan.
-        final Operator allegedOuterLoopSubplan = sink.getInputOperator(0);
+        final Operator allegedOuterLoopSubplan = sink.getEffectiveOccupant(0).getOwner();
         Assert.assertSame(LoopSubplan.class, allegedOuterLoopSubplan.getClass());
-        Assert.assertSame(mainSource, allegedOuterLoopSubplan.getInputOperator(0));
+        Assert.assertSame(mainSource, allegedOuterLoopSubplan.getEffectiveOccupant(0).getOwner());
 
         // Check the outer Subplan.
         LoopSubplan outerSubplan = (LoopSubplan) allegedOuterLoopSubplan;
@@ -127,7 +134,7 @@ public class LoopIsolatorTest {
         Assert.assertSame(outerLoopHead.getInput("initialInput"), innerInputs.get(0));
         Assert.assertSame(outerSubplan, outerLoopHead.getParent());
         Assert.assertSame(outerSubplan, inOuterLoopMap.getParent());
-        final Operator allegedInnerLoopSubplan = outerLoopHead.getInputOperator(outerLoopHead.getInput("loopInput"));
+        final Operator allegedInnerLoopSubplan = outerLoopHead.getEffectiveOccupant(outerLoopHead.getInput("loopInput")).getOwner();
         Assert.assertSame(LoopSubplan.class, allegedInnerLoopSubplan.getClass());
 
         // Check the inner Subplan.

@@ -9,7 +9,6 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -53,7 +52,7 @@ public class SparkReduceByOperatorTest extends SparkOperatorTestBase {
         final ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        reduceByOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+        this.evaluate(reduceByOperator, inputs, outputs);
 
         // Verify the outcome.
         final Iterable<Tuple2<String, Integer>> result = output.<Tuple2<String, Integer>>provideRdd().collect();

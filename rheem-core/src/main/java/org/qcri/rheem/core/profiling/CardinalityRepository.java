@@ -3,6 +3,7 @@ package org.qcri.rheem.core.profiling;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationUtils;
@@ -36,8 +37,8 @@ public class CardinalityRepository {
      */
     private BufferedWriter writer;
 
-    public CardinalityRepository(String repositoryPath) {
-        this.repositoryPath = repositoryPath;
+    public CardinalityRepository(Configuration configuration) {
+        this.repositoryPath = configuration.getStringProperty("rheem.core.log.cardinalities");
         this.logger.info("Storing cardinalities at {}.", repositoryPath);
     }
 
@@ -83,9 +84,10 @@ public class CardinalityRepository {
      */
     public void store(OutputSlot<?> output, long cardinality, OptimizationContext.OperatorContext operatorContext) {
         assert output.getOwner() == operatorContext.getOperator();
-        assert operatorContext.getOutputCardinality(output.getIndex()).isExactly(cardinality)
-                : String.format("Expected a measured cardinality of %d for %s; found %s.",
-                cardinality, output, operatorContext.getOutputCardinality(output.getIndex()));
+        if (!operatorContext.getOutputCardinality(output.getIndex()).isExactly(cardinality)) {
+            this.logger.error("Expected a measured cardinality of {} for {}; found {}.",
+                    cardinality, output, operatorContext.getOutputCardinality(output.getIndex()));
+        }
 
         this.write(operatorContext, output, cardinality);
     }

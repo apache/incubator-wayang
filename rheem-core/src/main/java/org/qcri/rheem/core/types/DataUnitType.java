@@ -41,5 +41,15 @@ public abstract class DataUnitType<T> {
      */
     public abstract BasicDataUnitType<T> toBasicDataUnitType();
 
-    public abstract Class getTypeClass();
+    /**
+     * Checks whether the given instance is the same as this instance or more specific.
+     *
+     * @param that the other instance
+     * @return whether this instance is a super type of {@code that} instance
+     */
+    public boolean isSupertypeOf(BasicDataUnitType<?> that) {
+        return this.getTypeClass().isAssignableFrom(that.getTypeClass());
+    }
+
+    public abstract Class<T> getTypeClass();
 }

@@ -31,11 +31,20 @@ public class SortOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * @param type type of the dataunit elements
      */
     public SortOperator(DataSetType<Type> type) {
-        super(type, type, false, null);
+        super(type, type, false);
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SortOperator(SortOperator<Type> that) {
+        super(that);
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

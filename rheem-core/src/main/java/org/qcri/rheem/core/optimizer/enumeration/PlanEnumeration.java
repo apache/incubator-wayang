@@ -242,8 +242,6 @@ public class PlanEnumeration {
                     concatenationEnumeration
             );
         }
-
-
     }
 
     /**
@@ -387,7 +385,7 @@ public class PlanEnumeration {
             final Collection<Tuple<OutputSlot<?>, PlanImplementation>> execOpOutputsWithContext =
                     basePlanImplementation.findExecutionOperatorOutputWithContext(output);
             final Tuple<OutputSlot<?>, PlanImplementation> execOpOutputWithCtx =
-                    RheemCollections.getSingle(execOpOutputsWithContext);
+                    RheemCollections.getSingleOrNull(execOpOutputsWithContext);
             assert execOpOutputsWithContext != null && !execOpOutputsWithContext.isEmpty()
                     : String.format("No outputs found for %s.", output);
 
@@ -453,7 +451,10 @@ public class PlanEnumeration {
      */
     private PlanImplementation createSingletonPartialPlan(ExecutionOperator executionOperator, OptimizationContext optimizationContext) {
         return new PlanImplementation(
-                this, new HashMap<>(0), Collections.singletonList(executionOperator), optimizationContext
+                this,
+                new HashMap<>(0),
+                Collections.singletonList(executionOperator),
+                optimizationContext
         );
     }
 
@@ -516,7 +517,6 @@ public class PlanEnumeration {
             }
         }
 
-
         // Escape the PlanImplementation instances.
         for (PlanImplementation planImplementation : this.planImplementations) {
             escapedInstance.planImplementations.add(planImplementation.escape(alternative, escapedInstance));
@@ -547,12 +547,25 @@ public class PlanEnumeration {
 
     @Override
     public String toString() {
+        return this.toIOString();
+    }
+
+    @SuppressWarnings("unused")
+    private String toIOString() {
         return String.format("%s[%dx, inputs=%s, outputs=%s]", this.getClass().getSimpleName(),
                 this.getPlanImplementations().size(),
                 this.requestedInputSlots, this.servingOutputSlots.stream()
                         .map(Tuple::getField0)
                         .distinct()
                         .collect(Collectors.toList())
+        );
+    }
+
+    @SuppressWarnings("unused")
+    private String toScopeString() {
+        return String.format("%s[%dx %s]", this.getClass().getSimpleName(),
+                this.getPlanImplementations().size(),
+                this.scope
         );
     }
 }

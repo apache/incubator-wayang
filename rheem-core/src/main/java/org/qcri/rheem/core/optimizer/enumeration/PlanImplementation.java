@@ -4,8 +4,10 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
+import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Canonicalizer;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
@@ -53,6 +55,11 @@ public class PlanImplementation {
     private PlanEnumeration planEnumeration;
 
     /**
+     * Keep track of the {@link Platform}s of our {@link #operators}.
+     */
+    private Set<Platform> platformCache;
+
+    /**
      * {@link OptimizationContext} that provides estimates for the {@link #operators}.
      */
     private final OptimizationContext optimizationContext;
@@ -60,7 +67,7 @@ public class PlanImplementation {
     /**
      * The {@link TimeEstimate} to execute this instance.
      */
-    private TimeEstimate timeEstimateCache;
+    private TimeEstimate timeEstimateCache, timeEstimateWithOverheadCache;
 
     /**
      * Create a new instance.
@@ -437,6 +444,7 @@ public class PlanImplementation {
         escapedPlanImplementation.settledAlternatives.putAll(this.settledAlternatives);
         assert !escapedPlanImplementation.settledAlternatives.containsKey(alternative.getOperatorAlternative());
         escapedPlanImplementation.settledAlternatives.put(alternative.getOperatorAlternative(), alternative);
+        escapedPlanImplementation.loopImplementations.putAll(this.getLoopImplementations());
         return escapedPlanImplementation;
     }
 
@@ -446,6 +454,16 @@ public class PlanImplementation {
 
     public Map<LoopSubplan, LoopImplementation> getLoopImplementations() {
         return this.loopImplementations;
+    }
+
+    /**
+     * Adds a new {@link LoopImplementation} for a given {@link LoopSubplan}.
+     *
+     * @param loop               the {@link LoopSubplan}
+     * @param loopImplementation the {@link LoopImplementation}
+     */
+    public void addLoopImplementation(LoopSubplan loop, LoopImplementation loopImplementation) {
+        this.loopImplementations.put(loop, loopImplementation);
     }
 
     /**
@@ -518,19 +536,35 @@ public class PlanImplementation {
     }
 
     public TimeEstimate getTimeEstimate() {
+        return this.getTimeEstimate(true);
+    }
+
+    /**
+     * Retrieves the {@link TimeEstimate} for this instance.
+     *
+     * @param isIncludeOverhead whether to include global overhead in the {@link TimeEstimate} (to avoid repeating
+     *                          overhead in nested instances)
+     * @return the {@link TimeEstimate}
+     */
+    TimeEstimate getTimeEstimate(boolean isIncludeOverhead) {
+        assert (this.timeEstimateCache == null) == (this.timeEstimateWithOverheadCache == null);
         if (this.timeEstimateCache == null) {
             final TimeEstimate operatorTimeEstimate = this.operators.stream()
                     .map(op -> this.optimizationContext.getOperatorContext(op).getTimeEstimate())
                     .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
-            final TimeEstimate junctionTimeEstimate = this.junctions.values().stream()
-                    .map(Junction::getTimeEstimate)
+            final TimeEstimate junctionTimeEstimate = this.optimizationContext.getDefaultOptimizationContexts().stream()
+                    .flatMap(optCtx -> this.junctions.values().stream().map(jct -> jct.getTimeEstimate(optCtx)))
                     .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
             final TimeEstimate loopTimeEstimate = this.loopImplementations.values().stream()
                     .map(LoopImplementation::getTimeEstimate)
                     .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
             this.timeEstimateCache = operatorTimeEstimate.plus(junctionTimeEstimate).plus(loopTimeEstimate);
+            final long platformInitializationTime = this.getUtilizedPlatforms().stream()
+                    .map(platform -> this.optimizationContext.getConfiguration().getPlatformStartUpTimeProvider().provideFor(platform))
+                    .reduce(0L, (a, b) -> a + b);
+            this.timeEstimateWithOverheadCache = this.timeEstimateCache.plus(platformInitializationTime);
         }
-        return this.timeEstimateCache;
+        return isIncludeOverhead ? this.timeEstimateWithOverheadCache : this.timeEstimateCache;
     }
 
     public Junction getJunction(OutputSlot<?> output) {
@@ -538,11 +572,91 @@ public class PlanImplementation {
     }
 
     public void putJunction(OutputSlot<?> output, Junction junction) {
-        final Junction oldValue = this.junctions.put(output, junction);
-        assert oldValue == null : String.format("Replaced %s with %s.", oldValue, junction);
+        final Junction oldValue = junction == null ?
+                this.junctions.remove(output) :
+                this.junctions.put(output, junction);
+        if (oldValue != null) {
+            logger.warn("Replaced {} with {}.", oldValue, junction);
+        }
     }
 
     public OptimizationContext getOptimizationContext() {
         return this.optimizationContext;
+    }
+
+    /**
+     * Merges the {@link OptimizationContext}s of the {@link Junction}s in this instance into its main
+     * {@link OptimizationContext}/
+     */
+    public void mergeJunctionOptimizationContexts() {
+        // Merge the top-level Junctions.
+        for (Junction junction : this.junctions.values()) {
+            junction.getOptimizationContexts().forEach(OptimizationContext::mergeToBase);
+        }
+
+        // Descend into loops.
+        this.loopImplementations.values().stream()
+                .flatMap(loopImplementation -> loopImplementation.getIterationImplementations().stream())
+                .map(LoopImplementation.IterationImplementation::getBodyImplementation)
+                .forEach(PlanImplementation::mergeJunctionOptimizationContexts);
+    }
+
+    public void logTimeEstimates() {
+        if (!this.logger.isDebugEnabled()) return;
+
+        this.logger.debug(">>> Regular operators");
+        for (ExecutionOperator operator : this.operators) {
+            this.logger.debug("Estimated execution time of {}: {}",
+                    operator, this.optimizationContext.getOperatorContext(operator).getTimeEstimate()
+            );
+        }
+        this.logger.debug(">>> Glue operators");
+        for (Junction junction : junctions.values()) {
+            for (ExecutionTask task : junction.getConversionTasks()) {
+                final ExecutionOperator operator = task.getOperator();
+                this.logger.debug("Estimated execution time of {}: {}",
+                        operator, this.optimizationContext.getOperatorContext(operator).getTimeEstimate()
+                );
+            }
+        }
+        this.logger.debug(">>> Loops");
+        for (LoopImplementation loopImplementation : this.loopImplementations.values()) {
+            for (LoopImplementation.IterationImplementation iterationImplementation : loopImplementation.getIterationImplementations()) {
+                iterationImplementation.getBodyImplementation().logTimeEstimates();
+            }
+        }
+    }
+
+    public Set<Platform> getUtilizedPlatforms() {
+        if (this.platformCache == null) {
+            this.platformCache = this.streamOperators()
+                    .map(ExecutionOperator::getPlatform)
+                    .collect(Collectors.toSet());
+        }
+        return this.platformCache;
+    }
+
+    /**
+     * Stream all the {@link ExecutionOperator}s in this instance.
+     *
+     * @return a {@link Stream} containing every {@link ExecutionOperator} at least once
+     */
+    Stream<ExecutionOperator> streamOperators() {
+        Stream<ExecutionOperator> operatorStream = Stream.concat(
+                this.operators.stream(),
+                this.junctions.values().stream().flatMap(j -> j.getConversionTasks().stream()).map(ExecutionTask::getOperator)
+        );
+        if (!this.loopImplementations.isEmpty()) {
+            operatorStream = Stream.concat(
+                    operatorStream,
+                    this.loopImplementations.values().stream().flatMap(LoopImplementation::streamOperators)
+            );
+        }
+        return operatorStream;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("PlanImplementation[%s, %s]", this.getUtilizedPlatforms(), this.getTimeEstimate());
     }
 }

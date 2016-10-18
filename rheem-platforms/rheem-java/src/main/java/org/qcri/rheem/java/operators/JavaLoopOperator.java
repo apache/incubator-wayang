@@ -3,8 +3,9 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.LoopOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -12,7 +13,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
@@ -43,21 +43,30 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 
-    @Override
-    public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
-        final Predicate<Collection<ConvergenceType>> udf = compiler.compile(this.criterionDescriptor);
-        JavaExecutor.openFunction(this, udf, inputs);
+    /**
+     * Creates a copy of the given {@link LoopOperator}.
+     *
+     * @param that should be copied
+     */
+    public JavaLoopOperator(LoopOperator<InputType, ConvergenceType> that) {
+        super(that);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final Predicate<Collection<ConvergenceType>> stoppingCondition = compiler.compile(this.criterionDescriptor);
-        boolean endloop = false;
+        final Predicate<Collection<ConvergenceType>> stoppingCondition =
+                javaExecutor.getCompiler().compile(this.criterionDescriptor);
+        JavaExecutor.openFunction(this, stoppingCondition, inputs, operatorContext);
 
+        boolean endloop = false;
+        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
         final Collection<ConvergenceType> convergenceCollection;
         final JavaChannelInstance input;
         switch (this.getState()) {
@@ -66,15 +75,20 @@ public class JavaLoopOperator<InputType, ConvergenceType>
                 assert inputs[INITIAL_CONVERGENCE_INPUT_INDEX] != null;
 
                 input = (JavaChannelInstance) inputs[INITIAL_INPUT_INDEX];
-                convergenceCollection = ((CollectionChannel.Instance) inputs[INITIAL_CONVERGENCE_INPUT_INDEX]).provideCollection();
+                JavaExecutionOperator.forward(inputs[INITIAL_CONVERGENCE_INPUT_INDEX], outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]);
                 break;
             case RUNNING:
                 assert inputs[ITERATION_INPUT_INDEX] != null;
                 assert inputs[ITERATION_CONVERGENCE_INPUT_INDEX] != null;
 
-                convergenceCollection = ((CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX]).provideCollection();
-                endloop = stoppingCondition.test(convergenceCollection);
                 input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
+                convergenceCollection = ((CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX]).provideCollection();
+                inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+
+                endloop = stoppingCondition.test(convergenceCollection);
+                executedOperatorContexts.add(operatorContext);
+
+                JavaExecutionOperator.forward(inputs[ITERATION_CONVERGENCE_INPUT_INDEX], outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]);
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -83,31 +97,30 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            forward(input, (JavaChannelInstance) outputs[FINAL_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            forward(input, (JavaChannelInstance) outputs[ITERATION_OUTPUT_INDEX]);
-            // We do not use forward(...) because we might not be able to consume the input JavaChannelInstance twice.
-            ((CollectionChannel.Instance) outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]).accept(convergenceCollection);
+            JavaExecutionOperator.forward(input, outputs[ITERATION_OUTPUT_INDEX]);
             this.setState(State.RUNNING);
         }
+
+        return executedOperatorContexts;
     }
-
-
-    private void forward(JavaChannelInstance input, JavaChannelInstance output) {
-        ((StreamChannel.Instance) output).accept(input.provideStream());
-    }
-
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.loop.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.loop.load";
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.criterionDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override
@@ -148,4 +161,6 @@ public class JavaLoopOperator<InputType, ConvergenceType>
                 throw new IllegalStateException(String.format("%s has no %d-th input.", this, index));
         }        // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
     }
+
+
 }

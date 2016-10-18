@@ -1,21 +1,36 @@
 package org.qcri.rheem.postgres.operators;
 
 import org.qcri.rheem.basic.operators.TableSource;
-import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.postgres.compiler.FunctionCompiler;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.jdbc.operators.JdbcTableSource;
+
+import java.util.List;
 
 /**
  * PostgreSQL implementation for the {@link TableSource}.
  */
-public class PostgresTableSource extends TableSource implements PostgresExecutionOperator {
+public class PostgresTableSource extends JdbcTableSource implements PostgresExecutionOperator {
 
-    public PostgresTableSource(String tableName, DataSetType type) {
-        super(tableName, type);
+    /**
+     * Creates a new instance.
+     *
+     * @see TableSource#TableSource(String, String...)
+     */
+    public PostgresTableSource(String tableName, String... columnNames) {
+        super(tableName, columnNames);
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public PostgresTableSource(JdbcTableSource that) {
+        super(that);
     }
 
     @Override
-    public String evaluate(ChannelInstance[] inputChannels, ChannelInstance[] outputChannels, FunctionCompiler compiler) {
-        return "select %s from " + this.getTableName();
+    public List<ChannelDescriptor> getSupportedInputChannels(int index) {
+        throw new UnsupportedOperationException("This operator has no input channels.");
     }
 }

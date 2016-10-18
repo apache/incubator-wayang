@@ -1,13 +1,14 @@
 package org.qcri.rheem.spark.channels;
 
 import org.apache.spark.broadcast.Broadcast;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 
 /**
  * {@link Channel} that represents a broadcasted value.
@@ -36,8 +37,10 @@ public class BroadcastChannel extends Channel {
     }
 
     @Override
-    public ChannelInstance createInstance(Executor executor) {
-        return new Instance((SparkExecutor) executor);
+    public Instance createInstance(Executor executor,
+                                   OptimizationContext.OperatorContext producerOperatorContext,
+                                   int producerOutputIndex) {
+        return new Instance((SparkExecutor) executor, producerOperatorContext, producerOutputIndex);
     }
 
     /**
@@ -47,8 +50,8 @@ public class BroadcastChannel extends Channel {
 
         private Broadcast<?> broadcast;
 
-        public Instance(SparkExecutor executor) {
-            super(executor);
+        public Instance(SparkExecutor executor, OptimizationContext.OperatorContext producerOperatorContext, int producerOutputIndex) {
+            super(executor, producerOperatorContext, producerOutputIndex);
         }
 
         public void accept(Broadcast broadcast) {

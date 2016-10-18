@@ -6,6 +6,7 @@ import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.configuration.FunctionalKeyValueProvider;
 import org.qcri.rheem.core.api.configuration.KeyValueProvider;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.plan.rheemplan.test.TestFilterOperator;
@@ -30,7 +31,7 @@ public class LoopSubplanCardinalityPusherTest {
                             assert outputSlot.getOwner().isElementary()
                                     : String.format("Cannot provide estimator for composite %s.", outputSlot.getOwner());
                             return ((ElementaryOperator) outputSlot.getOwner())
-                                    .getCardinalityEstimator(outputSlot.getIndex(), this.configuration)
+                                    .createCardinalityEstimator(outputSlot.getIndex(), this.configuration)
                                     .orElse(null);
                         },
                         this.configuration);
@@ -46,12 +47,12 @@ public class LoopSubplanCardinalityPusherTest {
         TestFilterOperator<Integer> inLoopFilter = new TestFilterOperator<>(Integer.class);
         final double filterSelectivity = 0.7d;
         inLoopFilter.setSelectivity(filterSelectivity);
-        loopHead.connectTo("loopOutput", inLoopFilter, "input");
-        inLoopFilter.connectTo("output", loopHead, "loopInput");
+        loopHead.connectTo("loopOutput", inLoopFilter, "in");
+        inLoopFilter.connectTo("out", loopHead, "loopInput");
 
         final LoopSubplan loop = LoopIsolator.isolate(loopHead);
         Assert.assertNotNull(loop);
-        OptimizationContext optimizationContext = new OptimizationContext(loop, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(loop, this.configuration);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(loop);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(123, 321, 0.123d);
         loopCtx.setInputCardinality(0, inputCardinality);
@@ -78,12 +79,12 @@ public class LoopSubplanCardinalityPusherTest {
         TestFilterOperator<Integer> inLoopFilter = new TestFilterOperator<>(Integer.class);
         final double filterSelectivity = 0.7d;
         inLoopFilter.setSelectivity(filterSelectivity);
-        loopHead.connectTo("loopOutput", inLoopFilter, "input");
-        inLoopFilter.connectTo("output", loopHead, "loopInput");
+        loopHead.connectTo("loopOutput", inLoopFilter, "in");
+        inLoopFilter.connectTo("out", loopHead, "loopInput");
 
         final LoopSubplan loop = LoopIsolator.isolate(loopHead);
         Assert.assertNotNull(loop);
-        OptimizationContext optimizationContext = new OptimizationContext(loop, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(loop, this.configuration);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(loop);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(123, 321, 0.123d);
         loopCtx.setInputCardinality(0, inputCardinality);
@@ -110,26 +111,26 @@ public class LoopSubplanCardinalityPusherTest {
         TestLoopHead<Integer> loopHead = new TestLoopHead<>(Integer.class);
         final int numIterations = 3;
         loopHead.setNumExpectedIterations(numIterations);
-        mainSource.connectTo("output", loopHead, "initialInput");
+        mainSource.connectTo("out", loopHead, "initialInput");
 
         TestJoin<Integer, Integer, Integer> inLoopJoin = new TestJoin<>(Integer.class, Integer.class, Integer.class);
-        loopHead.connectTo("loopOutput", inLoopJoin, "input0");
-        sideSource.connectTo("output", inLoopJoin, "input1");
-        inLoopJoin.connectTo("output", loopHead, "loopInput");
+        loopHead.connectTo("loopOutput", inLoopJoin, "in0");
+        sideSource.connectTo("out", inLoopJoin, "in1");
+        inLoopJoin.connectTo("out", loopHead, "loopInput");
 
         final LoopSubplan loop = LoopIsolator.isolate(loopHead);
         Assert.assertNotNull(loop);
 
-        OptimizationContext optimizationContext = new OptimizationContext(loop, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(loop, this.configuration);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(loop);
 
         final CardinalityEstimate mainInputCardinality = new CardinalityEstimate(123, 321, 0.123d);
-        InputSlot<?> mainLoopInput = RheemCollections.getSingle(mainSource.getOutput("output").getOccupiedSlots());
+        InputSlot<?> mainLoopInput = RheemCollections.getSingle(mainSource.getOutput("out").getOccupiedSlots());
         loopCtx.setInputCardinality(mainLoopInput.getIndex(), mainInputCardinality);
         loop.propagateInputCardinality(mainLoopInput.getIndex(), loopCtx);
 
         final CardinalityEstimate sideInputCardinality = new CardinalityEstimate(5, 10, 0.9d);
-        InputSlot<?> sideLoopInput = RheemCollections.getSingle(sideSource.getOutput("output").getOccupiedSlots());
+        InputSlot<?> sideLoopInput = RheemCollections.getSingle(sideSource.getOutput("out").getOccupiedSlots());
         loopCtx.setInputCardinality(sideLoopInput.getIndex(), sideInputCardinality);
         loop.propagateInputCardinality(sideLoopInput.getIndex(), loopCtx);
 
@@ -155,16 +156,16 @@ public class LoopSubplanCardinalityPusherTest {
         outerLoopHead.setNumExpectedIterations(100);
 
         TestFilterOperator<Integer> inOuterLoopFilter = new TestFilterOperator<>(Integer.class);
-        outerLoopHead.connectTo("loopOutput", inOuterLoopFilter, "input");
+        outerLoopHead.connectTo("loopOutput", inOuterLoopFilter, "in");
         inOuterLoopFilter.setSelectivity(0.9d);
 
         TestLoopHead<Integer> innerLoopHead = new TestLoopHead<>(Integer.class);
-        inOuterLoopFilter.connectTo("output", innerLoopHead, "initialInput");
+        inOuterLoopFilter.connectTo("out", innerLoopHead, "initialInput");
         innerLoopHead.setNumExpectedIterations(100);
 
         TestFilterOperator<Integer> inInnerLoopFilter = new TestFilterOperator<>(Integer.class);
-        innerLoopHead.connectTo("loopOutput", inInnerLoopFilter, "input");
-        inInnerLoopFilter.connectTo("output", innerLoopHead, "loopInput");
+        innerLoopHead.connectTo("loopOutput", inInnerLoopFilter, "in");
+        inInnerLoopFilter.connectTo("out", innerLoopHead, "loopInput");
         innerLoopHead.connectTo("finalOutput", outerLoopHead, "loopInput");
         inInnerLoopFilter.setSelectivity(0.1d);
 
@@ -173,7 +174,7 @@ public class LoopSubplanCardinalityPusherTest {
         LoopSubplan outerLoop = LoopIsolator.isolate(outerLoopHead);
         Assert.assertNotNull(outerLoop);
 
-        OptimizationContext optimizationContext = new OptimizationContext(outerLoop, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(outerLoop, this.configuration);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(outerLoop);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(123, 321, 0.123d);
         loopCtx.setInputCardinality(0, inputCardinality);

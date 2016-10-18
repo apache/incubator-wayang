@@ -33,7 +33,7 @@ public class JavaReservoirSampleOperatorTest extends JavaExecutionOperatorTestBa
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
 
         // Execute.
-        sampleOperator.evaluate(inputs, outputs, null);
+        evaluate(sampleOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());

@@ -39,7 +39,7 @@ public class PlanTransformationTest {
         Assert.assertEquals(1, plan.getSinks().size());
         final Operator replacedSink = plan.getSinks().iterator().next();
         Assert.assertTrue(replacedSink instanceof TestSink2);
-        Assert.assertEquals(source, replacedSink.getInputOperator(0));
+        Assert.assertEquals(source, replacedSink.getEffectiveOccupant(0).getOwner());
     }
 
     @Test
@@ -68,9 +68,9 @@ public class PlanTransformationTest {
         Assert.assertTrue(replacedSink instanceof OperatorAlternative);
         OperatorAlternative operatorAlternative = (OperatorAlternative) replacedSink;
         Assert.assertEquals(2, operatorAlternative.getAlternatives().size());
-        Assert.assertTrue(operatorAlternative.getAlternatives().get(0).getOperator() instanceof TestSink);
-        Assert.assertTrue(operatorAlternative.getAlternatives().get(1).getOperator() instanceof TestSink2);
-        Assert.assertEquals(source, replacedSink.getInputOperator(0));
+        Assert.assertTrue(operatorAlternative.getAlternatives().get(0).getContainedOperator() instanceof TestSink);
+        Assert.assertTrue(operatorAlternative.getAlternatives().get(1).getContainedOperator() instanceof TestSink2);
+        Assert.assertEquals(source, replacedSink.getEffectiveOccupant(0).getOwner());
     }
 
     @Test
@@ -100,10 +100,10 @@ public class PlanTransformationTest {
         Assert.assertTrue(replacedSink instanceof OperatorAlternative);
         OperatorAlternative operatorAlternative = (OperatorAlternative) replacedSink;
         Assert.assertEquals(3, operatorAlternative.getAlternatives().size());
-        Assert.assertTrue(operatorAlternative.getAlternatives().get(0).getOperator() instanceof TestSink);
-        Assert.assertTrue(operatorAlternative.getAlternatives().get(1).getOperator() instanceof TestSink2);
-        Assert.assertTrue(operatorAlternative.getAlternatives().get(2).getOperator() instanceof TestSink2);
-        Assert.assertEquals(source, replacedSink.getInputOperator(0));
+        Assert.assertTrue(operatorAlternative.getAlternatives().get(0).getContainedOperator() instanceof TestSink);
+        Assert.assertTrue(operatorAlternative.getAlternatives().get(1).getContainedOperator() instanceof TestSink2);
+        Assert.assertTrue(operatorAlternative.getAlternatives().get(2).getContainedOperator() instanceof TestSink2);
+        Assert.assertEquals(source, replacedSink.getEffectiveOccupant(0).getOwner());
     }
 
 }

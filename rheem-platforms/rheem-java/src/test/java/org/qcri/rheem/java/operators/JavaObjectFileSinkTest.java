@@ -5,7 +5,6 @@ import org.junit.Test;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,9 +34,9 @@ public class JavaObjectFileSinkTest extends JavaExecutionOperatorTestBase {
         ChannelInstance[] inputs = new ChannelInstance[]{createStreamChannelInstance(integerStream)};
         final ChannelInstance outputChannel = FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR
                 .createChannel(null, configuration)
-                .createInstance(null);
+                .createInstance(null, null, -1);
         ChannelInstance[] outputs = new ChannelInstance[]{outputChannel};
-        sink.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(sink, inputs, outputs);
     }
 
     static List<Integer> enumerateRange(int to) {

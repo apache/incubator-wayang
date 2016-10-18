@@ -1,14 +1,12 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
-import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Describes the enumeration of a {@link LoopSubplan}.
@@ -41,7 +39,15 @@ public class LoopImplementation {
         return iterationImplementation;
     }
 
+    /**
+     * Retrieve the {@link TimeEstimate} for this instance. Global overhead is not included.
+     *
+     * @return the {@link TimeEstimate}
+     */
     public TimeEstimate getTimeEstimate() {
+        // What about the Junctions? Are they already included?
+        // Yes, in-loop Junctions are contained in the body implementations and the surrounding Junctions are
+        // contained in the top-level PlanImplementation.
         TimeEstimate timeEstimate = TimeEstimate.ZERO;
         for (int i = 0; i < this.iterationImplementations.size(); i++) {
             timeEstimate = timeEstimate.plus(this.iterationImplementations.get(i).getTimeEstimate());
@@ -51,6 +57,16 @@ public class LoopImplementation {
 
     public List<IterationImplementation> getIterationImplementations() {
         return this.iterationImplementations;
+    }
+
+    /**
+     * Stream all the {@link ExecutionOperator}s in this instance.
+     *
+     * @return a {@link Stream} containing every iteration-body {@link ExecutionOperator} at least once
+     */
+    Stream<ExecutionOperator> streamOperators() {
+        // It is sufficient to take the first IterationImplementation to see all ExecutionOperators.
+        return this.getIterationImplementations().get(0).streamOperators();
     }
 
     /**
@@ -100,10 +116,11 @@ public class LoopImplementation {
             this.numIterations = originalIteration.getNumIterations();
             this.bodyImplementation = new PlanImplementation(originalIteration.getBodyImplementation());
 
-            this.interBodyJunction = originalIteration.getInterBodyJunction();
-            this.forwardJunction = originalIteration.getForwardJunction();
-            this.enterJunction = originalIteration.getEnterJunction();
-            this.exitJunction = originalIteration.getExitJunction();
+            // Seems like we are not using these fields currently.
+            this.interBodyJunction = originalIteration.interBodyJunction;
+            this.forwardJunction = originalIteration.forwardJunction;
+            this.enterJunction = originalIteration.enterJunction;
+            this.exitJunction = originalIteration.exitJunction;
 
         }
 
@@ -147,9 +164,22 @@ public class LoopImplementation {
             this.exitJunction = exitJunction;
         }
 
+        /**
+         * Retrieve the {@link TimeEstimate} for this instance. Global overhead is not included.
+         *
+         * @return the {@link TimeEstimate}
+         */
         public TimeEstimate getTimeEstimate() {
-            // TODO: Is this enough? Probably not.
-            return this.bodyImplementation.getTimeEstimate();
+            return this.bodyImplementation.getTimeEstimate(false);
+        }
+
+        /**
+         * Stream all the {@link ExecutionOperator}s in this instance.
+         *
+         * @return a {@link Stream} containing every iteration-body {@link ExecutionOperator} at least once
+         */
+        Stream<ExecutionOperator> streamOperators() {
+            return this.bodyImplementation.streamOperators();
         }
 
         /**

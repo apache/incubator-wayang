@@ -1,7 +1,6 @@
 package org.qcri.rheem.core.plan.rheemplan.test;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
@@ -18,7 +17,7 @@ public class TestSource<T> extends UnarySource<T> {
     private CardinalityEstimator cardinalityEstimator = new FixedSizeCardinalityEstimator(100);
 
     public TestSource(DataSetType outputType) {
-        super(outputType, null);
+        super(outputType);
     }
 
     public TestSource(Class<?> dataQuantumClass) {
@@ -26,11 +25,11 @@ public class TestSource<T> extends UnarySource<T> {
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex, Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex, Configuration configuration) {
         return Optional.ofNullable(this.cardinalityEstimator);
     }
 
-    public void setCardinalityEstimator(CardinalityEstimator cardinalityEstimator) {
-        this.cardinalityEstimator = cardinalityEstimator;
+    public void setCardinalityEstimators(CardinalityEstimator cardinalityEstimators) {
+        this.cardinalityEstimator = cardinalityEstimators;
     }
 }

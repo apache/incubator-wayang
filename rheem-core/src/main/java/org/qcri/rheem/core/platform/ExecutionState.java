@@ -3,6 +3,7 @@ package org.qcri.rheem.core.platform;
 import org.qcri.rheem.core.optimizer.enumeration.ExecutionTaskFlow;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.OptionalLong;
 
@@ -51,4 +52,18 @@ public interface ExecutionState {
      * @return all cardinality measurements
      */
     Map<Channel, Long> getCardinalityMeasurements();
+
+    /**
+     * Stores a {@link PartialExecution}.
+     *
+     * @param partialExecution to be stored
+     */
+    void add(PartialExecution partialExecution);
+
+    /**
+     * Retrieves previously stored {@link PartialExecution}s.
+     *
+     * @return the {@link PartialExecution}s
+     */
+    Collection<PartialExecution> getPartialExecutions();
 }

@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -25,7 +24,7 @@ public class JavaCollectionSourceTest extends JavaExecutionOperatorTestBase {
         JavaChannelInstance[] inputs = new JavaChannelInstance[0];
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
 
-        collectionSource.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(collectionSource, inputs, outputs);
 
         final Set<Object> outputValues = outputs[0].provideStream().collect(Collectors.toSet());
         Assert.assertEquals(outputValues, inputValues);

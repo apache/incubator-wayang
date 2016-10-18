@@ -1,6 +1,9 @@
 package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.basic.data.Record;
+import org.qcri.rheem.basic.function.ProjectionDescriptor;
+import org.qcri.rheem.basic.types.RecordType;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
@@ -44,8 +47,43 @@ public class MapOperator<InputType, OutputType> extends UnaryToUnaryOperator<Inp
      * Creates a new instance.
      */
     public MapOperator(TransformationDescriptor<InputType, OutputType> functionDescriptor, DataSetType<InputType> inputType, DataSetType<OutputType> outputType) {
-        super(inputType, outputType, true, null);
+        super(inputType, outputType, true);
         this.functionDescriptor = functionDescriptor;
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public MapOperator(MapOperator<InputType, OutputType> that) {
+        super(that);
+        this.functionDescriptor = that.getFunctionDescriptor();
+    }
+
+    /**
+     * Creates a new instance that projects the given fields.
+     *
+     * @param fieldNames the field names for the projected fields
+     * @return the new instance
+     */
+    public static <Input, Output> MapOperator<Input, Output> createProjection(
+            Class<Input> inputClass,
+            Class<Output> outputClass,
+            String... fieldNames) {
+        return new MapOperator<>(new ProjectionDescriptor<>(inputClass, outputClass, fieldNames));
+    }
+
+    /**
+     * Creates a new instance that projects the given fields of {@link Record}s.
+     *
+     * @param fieldNames the field names for the projected fields
+     * @return the new instance
+     */
+    public static MapOperator<Record, Record> createProjection(
+            RecordType inputType,
+            String... fieldNames) {
+        return new MapOperator<>(ProjectionDescriptor.createForRecords(inputType, fieldNames));
     }
 
     public TransformationDescriptor<InputType, OutputType> getFunctionDescriptor() {
@@ -53,7 +91,7 @@ public class MapOperator<InputType, OutputType> extends UnaryToUnaryOperator<Inp
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

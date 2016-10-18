@@ -51,7 +51,10 @@ public interface Operator {
      * @return the number of broadcast {@link InputSlot}s of this instance
      */
     default int getNumBroadcastInputs() {
-        return (int) Arrays.stream(this.getAllInputs()).filter(InputSlot::isBroadcast).count();
+        return (int) Arrays.stream(this.getAllInputs())
+                .filter(Objects::nonNull)
+                .filter(InputSlot::isBroadcast)
+                .count();
     }
 
     /**
@@ -70,6 +73,32 @@ public interface Operator {
      * @return the {@link OutputSlot}s of this instance
      */
     OutputSlot<?>[] getAllOutputs();
+
+    /**
+     * Sets the {@link InputSlot} of this instance. This method must only be invoked, when the input index is not
+     * yet filled.
+     *
+     * @param index at which the {@link InputSlot} should be placed
+     * @param input the new {@link InputSlot}
+     */
+    default void setInput(int index, InputSlot<?> input) {
+        assert index < this.getNumRegularInputs() && this.getInput(index) == null;
+        assert input.getOwner() == this;
+        ((InputSlot[]) this.getAllInputs())[index] = input;
+    }
+
+    /**
+     * Sets the {@link OutputSlot} of this instance. This method must only be invoked, when the output index is not
+     * yet filled.
+     *
+     * @param index  at which the {@link OutputSlot} should be placed
+     * @param output the new {@link OutputSlot}
+     */
+    default void setOutput(int index, OutputSlot<?> output) {
+        assert index < this.getNumOutputs() && this.getOutput(index) == null;
+        assert output.getOwner() == this;
+        ((OutputSlot[]) this.getAllOutputs())[index] = output;
+    }
 
     /**
      * Retrieve an {@link InputSlot} of this instance using its index.
@@ -147,8 +176,10 @@ public interface Operator {
     default <T> void connectTo(int thisOutputIndex, Operator that, int thatInputIndex) {
         final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputIndex);
         final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputIndex);
-        if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
-            throw new IllegalArgumentException(String.format("Cannot connect %s slot to %s slot.", outputSlot.getType(), inputSlot.getType()));
+        if (!inputSlot.getType().isSupertypeOf(outputSlot.getType())) {
+            throw new IllegalArgumentException(String.format(
+                    "Cannot connect %s of %s to %s of type %s.",
+                    outputSlot, outputSlot.getType(), inputSlot, inputSlot.getType()));
         }
         outputSlot.connectTo(inputSlot);
     }
@@ -164,7 +195,7 @@ public interface Operator {
     default <T> void connectTo(String thisOutputName, Operator that, String thatInputName) {
         final InputSlot<T> inputSlot = (InputSlot<T>) that.getInput(thatInputName);
         final OutputSlot<T> outputSlot = (OutputSlot<T>) this.getOutput(thisOutputName);
-        if (!inputSlot.getType().isCompatibleTo(outputSlot.getType())) {
+        if (!inputSlot.getType().isSupertypeOf(outputSlot.getType())) {
             throw new IllegalArgumentException("Cannot connect slots: mismatching types");
         }
         outputSlot.connectTo(inputSlot);
@@ -200,51 +231,27 @@ public interface Operator {
         this.connectTo(output.getIndex(), that, broadcastIndex);
     }
 
-
     /**
-     * Retrieve the operator that is connected to the input at the given index. If necessary, escape the current
-     * parent.
+     * Retrieves the effective occupant of the given {@link InputSlot}, i.e., the {@link OutputSlot} that is
+     * either connected to the given or an outer-more, mapped {@link InputSlot}.
      *
-     * @param inputIndex the index of the input to consider
-     * @return the input operator or {@code null} if no such operator exists
-     * @see #getParent()
+     * @param inputIndex of the {@link InputSlot} whose effective occupant is requested
+     * @return the effective occupant or {@code null} if none
      */
-    default Operator getInputOperator(int inputIndex) {
-        return this.getInputOperator(this.getInput(inputIndex));
+    @SuppressWarnings("unchecked")
+    default <T> OutputSlot<T> getEffectiveOccupant(int inputIndex) {
+        return this.getOutermostInputSlot((InputSlot<T>) this.getInput(inputIndex)).getOccupant();
     }
 
     /**
-     * Retrieve the operator that is connected to the given input. If necessary, escape the current parent.
+     * Retrieves the effective occupant of the given {@link InputSlot}, i.e., the {@link OutputSlot} that is
+     * either connected to the given or an outer-more, mapped {@link InputSlot}.
      *
-     * @param input the index of the input to consider
-     * @return the input operator or {@code null} if no such operator exists
-     * @see #getParent()
+     * @param input whose effective occupant is requested
+     * @return the effective occupant or {@code null} if none
      */
-    default Operator getInputOperator(InputSlot<?> input) {
-        if (!this.isOwnerOf(input)) {
-            throw new IllegalArgumentException("Slot does not belong to this operator.");
-        }
-
-        // Try to exit through the parent.
-        final OutputSlot occupant = input.getOccupant();
-        final Operator parent = this.getParent();
-        if (occupant == null && parent != null) {
-            if (parent instanceof Subplan) {
-                final InputSlot<?> exitInputSlot = ((Subplan) parent).exit(input);
-                if (exitInputSlot != null) {
-                    return parent.getInputOperator(exitInputSlot);
-                }
-
-            } else if (parent instanceof OperatorAlternative.Alternative) {
-                final InputSlot<?> exitInputSlot = ((OperatorAlternative.Alternative) parent).exit(input);
-                if (exitInputSlot != null) {
-                    return parent.getInputOperator(exitInputSlot);
-                }
-            }
-
-        }
-
-        return occupant == null ? null : occupant.getOwner();
+    default <T> OutputSlot<T> getEffectiveOccupant(InputSlot<T> input) {
+        return this.getOutermostInputSlot(input).getOccupant();
     }
 
     /**
@@ -496,8 +503,7 @@ public interface Operator {
      * @param configuration if the {@link CardinalityPusher} depends on further ones, use this to obtain the latter
      * @return the {@link CardinalityPusher}
      */
-    default CardinalityPusher getCardinalityPusher(
-            final Configuration configuration) {
+    default CardinalityPusher getCardinalityPusher(final Configuration configuration) {
         return new DefaultCardinalityPusher(this, configuration.getCardinalityEstimatorProvider());
     }
 
@@ -559,12 +565,14 @@ public interface Operator {
 
     /**
      * Provides an instance's name.
+     *
      * @return the name of this instance or {@code null} if none
      */
     String getName();
 
     /**
      * Provide a name for this instance.
+     *
      * @param name the name
      */
     void setName(String name);

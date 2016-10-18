@@ -3,14 +3,18 @@ package org.qcri.rheem.api
 import _root_.java.util.function.{Consumer, Function => JavaFunction}
 import _root_.java.util.{Collection => JavaCollection}
 
+import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
+import org.qcri.rheem.basic.function.ProjectionDescriptor
 import org.qcri.rheem.basic.operators._
-import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction}
-import org.qcri.rheem.core.function.PredicateDescriptor.SerializablePredicate
+import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.qcri.rheem.core.function.{FlatMapDescriptor, PredicateDescriptor, ReduceDescriptor, TransformationDescriptor}
-import org.qcri.rheem.core.plan.rheemplan.{InputSlot, Operator, OutputSlot, RheemPlan}
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator
+import org.qcri.rheem.core.plan.rheemplan._
 import org.qcri.rheem.core.platform.Platform
-import org.qcri.rheem.core.util.{ReflectionUtils, RheemCollections, Tuple => RheemTuple}
+import org.qcri.rheem.core.util.{Tuple => RheemTuple}
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
@@ -23,7 +27,7 @@ import scala.reflect._
   * @param ev$1        the data type of the elements in this instance
   * @param planBuilder keeps track of the [[RheemPlan]] being build
   */
-class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(implicit planBuilder: PlanBuilder) {
+class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: Int = 0)(implicit val planBuilder: PlanBuilder) {
 
   Validate.isTrue(operator.getNumOutputs > outputIndex)
 
@@ -32,28 +36,55 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     *
     * @return the said [[OutputSlot]]
     */
-  implicit def output = operator.getOutput(outputIndex)
+  implicit def output = operator.getOutput(outputIndex).asInstanceOf[OutputSlot[Out]]
 
   /**
     * Feed this instance into a [[MapOperator]].
     *
-    * @param udf UDF for the [[MapOperator]]
+    * @param udf        UDF for the [[MapOperator]]
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the [[MapOperator]]'s output
     */
-  def map[NewOut: ClassTag](udf: Out => NewOut): DataQuanta[NewOut] = mapJava(toSerializableFunction(udf))
+  def map[NewOut: ClassTag](udf: Out => NewOut,
+                            udfCpuLoad: LoadEstimator[_] = null,
+                            udfRamLoad: LoadEstimator[_] = null): DataQuanta[NewOut] =
+  mapJava(toSerializableFunction(udf), udfCpuLoad, udfRamLoad)
 
   /**
     * Feed this instance into a [[MapOperator]].
     *
-    * @param udf a Java 8 lambda expression as UDF for the [[MapOperator]]
+    * @param udf        a Java 8 lambda expression as UDF for the [[MapOperator]]
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the [[MapOperator]]'s output
     */
-  def mapJava[NewOut: ClassTag](udf: SerializableFunction[Out, NewOut]): DataQuanta[NewOut] = {
+  def mapJava[NewOut: ClassTag](udf: SerializableFunction[Out, NewOut],
+                                udfCpuLoad: LoadEstimator[_] = null,
+                                udfRamLoad: LoadEstimator[_] = null): DataQuanta[NewOut] = {
     val mapOperator = new MapOperator(new TransformationDescriptor(
-      udf, basicDataUnitType[Out], basicDataUnitType[NewOut]
+      udf, basicDataUnitType[Out], basicDataUnitType[NewOut], udfCpuLoad, udfRamLoad
     ))
     this.connectTo(mapOperator, 0)
     mapOperator
+  }
+
+  /**
+    * Feed this instance into a [[MapOperator]] with a [[ProjectionDescriptor]].
+    *
+    * @param fieldNames names of the fields to be projected
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
+    * @return a new instance representing the [[MapOperator]]'s output
+    */
+  def project[NewOut: ClassTag](fieldNames: Seq[String],
+                                udfCpuLoad: LoadEstimator[_] = null,
+                                udfRamLoad: LoadEstimator[_] = null): DataQuanta[NewOut] = {
+    val projectionOperator = new MapOperator(
+      new ProjectionDescriptor(basicDataUnitType[Out], basicDataUnitType[NewOut], fieldNames: _*)
+    )
+    this.connectTo(projectionOperator, 0)
+    projectionOperator
   }
 
   /**
@@ -63,25 +94,44 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @param inputIndex the input index of the [[Operator]]s [[InputSlot]]
     */
   private[api] def connectTo(operator: Operator, inputIndex: Int): Unit =
-    this.operator.connectTo(outputIndex, operator, inputIndex)
+  this.operator.connectTo(outputIndex, operator, inputIndex)
 
 
   /**
     * Feed this instance into a [[FilterOperator]].
     *
-    * @param udf UDF for the [[FilterOperator]]
+    * @param udf         UDF for the [[FilterOperator]]
+    * @param sqlUdf      UDF as SQL `WHERE` clause
+    * @param udfCpuLoad  optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad  optional [[LoadEstimator]] for the RAM consumption of the `udf`
+    * @param selectivity selectivity of the UDF
     * @return a new instance representing the [[FilterOperator]]'s output
     */
-  def filter(udf: Out => Boolean) = filterJava(toSerializablePredicate(udf))
+  def filter(udf: Out => Boolean,
+             sqlUdf: String = null,
+             selectivity: ProbabilisticDoubleInterval = null,
+             udfCpuLoad: LoadEstimator[_] = null,
+             udfRamLoad: LoadEstimator[_] = null) =
+  filterJava(toSerializablePredicate(udf), sqlUdf, selectivity, udfCpuLoad, udfRamLoad)
 
   /**
     * Feed this instance into a [[FilterOperator]].
     *
-    * @param udf UDF for the [[FilterOperator]]
+    * @param udf         UDF for the [[FilterOperator]]
+    * @param sqlUdf      UDF as SQL `WHERE` clause
+    * @param selectivity selectivity of the UDF
+    * @param udfCpuLoad  optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad  optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the [[FilterOperator]]'s output
     */
-  def filterJava(udf: SerializablePredicate[Out]): DataQuanta[Out] = {
-    val filterOperator = new FilterOperator(new PredicateDescriptor(udf, basicDataUnitType[Out]))
+  def filterJava(udf: SerializablePredicate[Out],
+                 sqlUdf: String = null,
+                 selectivity: ProbabilisticDoubleInterval = null,
+                 udfCpuLoad: LoadEstimator[_] = null,
+                 udfRamLoad: LoadEstimator[_] = null): DataQuanta[Out] = {
+    val filterOperator = new FilterOperator(new PredicateDescriptor(
+      udf, this.output.getType.getDataUnitType.toBasicDataUnitType, selectivity, udfCpuLoad, udfRamLoad
+    ).withSqlImplementation(sqlUdf))
     this.connectTo(filterOperator, 0)
     filterOperator
   }
@@ -89,48 +139,92 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   /**
     * Feed this instance into a [[FlatMapOperator]].
     *
-    * @param udf UDF for the [[FlatMapOperator]]
+    * @param udf         UDF for the [[FlatMapOperator]]
+    * @param selectivity selectivity of the UDF
+    * @param udfCpuLoad  optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad  optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the [[FlatMapOperator]]'s output
     */
-  def flatMap[NewOut: ClassTag](udf: Out => Iterable[NewOut]): DataQuanta[NewOut] =
-    flatMapJava(toSerializableFlatteningFunction(udf))
+  def flatMap[NewOut: ClassTag](udf: Out => Iterable[NewOut],
+                                selectivity: ProbabilisticDoubleInterval = null,
+                                udfCpuLoad: LoadEstimator[_] = null,
+                                udfRamLoad: LoadEstimator[_] = null): DataQuanta[NewOut] =
+  flatMapJava(toSerializableFlatteningFunction(udf), selectivity, udfCpuLoad, udfRamLoad)
 
   /**
     * Feed this instance into a [[FlatMapOperator]].
     *
-    * @param udf a Java 8 lambda expression as UDF for the [[FlatMapOperator]]
+    * @param udf         a Java 8 lambda expression as UDF for the [[FlatMapOperator]]
+    * @param selectivity selectivity of the UDF
+    * @param udfCpuLoad  optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad  optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the [[FlatMapOperator]]'s output
     */
-  def flatMapJava[NewOut: ClassTag](udf: SerializableFunction[Out, java.lang.Iterable[NewOut]]): DataQuanta[NewOut] = {
+  def flatMapJava[NewOut: ClassTag](udf: SerializableFunction[Out, java.lang.Iterable[NewOut]],
+                                    selectivity: ProbabilisticDoubleInterval = null,
+                                    udfCpuLoad: LoadEstimator[_] = null,
+                                    udfRamLoad: LoadEstimator[_] = null): DataQuanta[NewOut] = {
     val flatMapOperator = new FlatMapOperator(new FlatMapDescriptor(
-      udf, basicDataUnitType[Out], basicDataUnitType[NewOut]
+      udf, basicDataUnitType[Out], basicDataUnitType[NewOut], selectivity, udfCpuLoad, udfRamLoad
     ))
     this.connectTo(flatMapOperator, 0)
     flatMapOperator
   }
 
   /**
-    * Feed this instance into a [[ReduceByOperator]].
+    * Feed this instance into a [[SampleOperator]].
     *
-    * @param keyUdf UDF to extract the grouping key from the data quanta
-    * @param udf    aggregation UDF for the [[ReduceByOperator]]
-    * @return a new instance representing the [[ReduceByOperator]]'s output
+    * @param sampleSize   absolute size of the sample
+    * @param datasetSize  optional size of the dataset to be sampled
+    * @param sampleMethod the [[SampleOperator.Methods]] to use for sampling
+    * @return a new instance representing the [[FlatMapOperator]]'s output
     */
-  def reduceByKey[Key: ClassTag](keyUdf: Out => Key, udf: (Out, Out) => Out): DataQuanta[Out] =
-    reduceByKeyJava(toSerializableFunction(keyUdf), toSerializableBinaryOperator(udf))
+  def sample(sampleSize: Int,
+             datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
+             sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] = {
+    val sampleOperator = new SampleOperator(
+      sampleSize,
+      datasetSize,
+      dataSetType[Out],
+      sampleMethod
+    )
+    this.connectTo(sampleOperator, 0)
+    sampleOperator
+  }
+
 
   /**
     * Feed this instance into a [[ReduceByOperator]].
     *
-    * @param keyUdf UDF to extract the grouping key from the data quanta
-    * @param udf    aggregation UDF for the [[ReduceByOperator]]
+    * @param keyUdf     UDF to extract the grouping key from the data quanta
+    * @param udf        aggregation UDF for the [[ReduceByOperator]]
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the [[ReduceByOperator]]'s output
     */
-  def reduceByKeyJava[Key: ClassTag](keyUdf: SerializableFunction[Out, Key], udf: SerializableBinaryOperator[Out])
+  def reduceByKey[Key: ClassTag](keyUdf: Out => Key,
+                                 udf: (Out, Out) => Out,
+                                 udfCpuLoad: LoadEstimator[_] = null,
+                                 udfRamLoad: LoadEstimator[_] = null): DataQuanta[Out] =
+  reduceByKeyJava(toSerializableFunction(keyUdf), toSerializableBinaryOperator(udf), udfCpuLoad, udfRamLoad)
+
+  /**
+    * Feed this instance into a [[ReduceByOperator]].
+    *
+    * @param keyUdf     UDF to extract the grouping key from the data quanta
+    * @param udf        aggregation UDF for the [[ReduceByOperator]]
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
+    * @return a new instance representing the [[ReduceByOperator]]'s output
+    */
+  def reduceByKeyJava[Key: ClassTag](keyUdf: SerializableFunction[Out, Key],
+                                     udf: SerializableBinaryOperator[Out],
+                                     udfCpuLoad: LoadEstimator[_] = null,
+                                     udfRamLoad: LoadEstimator[_] = null)
   : DataQuanta[Out] = {
     val reduceByOperator = new ReduceByOperator(
       new TransformationDescriptor(keyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
-      new ReduceDescriptor(udf, groupedDataUnitType[Out], basicDataUnitType[Out])
+      new ReduceDescriptor(udf, groupedDataUnitType[Out], basicDataUnitType[Out], udfCpuLoad, udfRamLoad)
     )
     this.connectTo(reduceByOperator, 0)
     reduceByOperator
@@ -139,12 +233,29 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   /**
     * Feed this instance into a [[MaterializedGroupByOperator]].
     *
-    * @param keyUdf UDF to extract the grouping key from the data quanta
+    * @param keyUdf     UDF to extract the grouping key from the data quanta
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the [[MaterializedGroupByOperator]]'s output
     */
-  def groupByKey[Key: ClassTag](keyUdf: Out => Key): DataQuanta[java.lang.Iterable[Out]] = {
+  def groupByKey[Key: ClassTag](keyUdf: Out => Key,
+                                udfCpuLoad: LoadEstimator[_] = null,
+                                udfRamLoad: LoadEstimator[_] = null): DataQuanta[java.lang.Iterable[Out]] =
+  groupByKeyJava(toSerializableFunction(keyUdf), udfCpuLoad, udfRamLoad)
+
+  /**
+    * Feed this instance into a [[MaterializedGroupByOperator]].
+    *
+    * @param keyUdf     UDF to extract the grouping key from the data quanta
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
+    * @return a new instance representing the [[MaterializedGroupByOperator]]'s output
+    */
+  def groupByKeyJava[Key: ClassTag](keyUdf: SerializableFunction[Out, Key],
+                                    udfCpuLoad: LoadEstimator[_] = null,
+                                    udfRamLoad: LoadEstimator[_] = null): DataQuanta[java.lang.Iterable[Out]] = {
     val groupByOperator = new MaterializedGroupByOperator(
-      new TransformationDescriptor(toSerializableFunction(keyUdf), basicDataUnitType[Out], basicDataUnitType[Key]),
+      new TransformationDescriptor(keyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
       dataSetType[Out],
       groupedDataSetType[Out]
     )
@@ -155,21 +266,29 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   /**
     * Feed this instance into a [[GlobalReduceOperator]].
     *
-    * @param udf aggregation UDF for the [[GlobalReduceOperator]]
+    * @param udf        aggregation UDF for the [[GlobalReduceOperator]]
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the [[GlobalReduceOperator]]'s output
     */
-  def reduce(udf: (Out, Out) => Out): DataQuanta[Out] =
-    reduceJava(toSerializableBinaryOperator(udf))
+  def reduce(udf: (Out, Out) => Out,
+             udfCpuLoad: LoadEstimator[_] = null,
+             udfRamLoad: LoadEstimator[_] = null): DataQuanta[Out] =
+  reduceJava(toSerializableBinaryOperator(udf), udfCpuLoad, udfRamLoad)
 
   /**
     * Feed this instance into a [[GlobalReduceOperator]].
     *
-    * @param udf aggregation UDF for the [[GlobalReduceOperator]]
+    * @param udf        aggregation UDF for the [[GlobalReduceOperator]]
+    * @param udfCpuLoad optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the [[GlobalReduceOperator]]'s output
     */
-  def reduceJava(udf: SerializableBinaryOperator[Out]): DataQuanta[Out] = {
+  def reduceJava(udf: SerializableBinaryOperator[Out],
+                 udfCpuLoad: LoadEstimator[_] = null,
+                 udfRamLoad: LoadEstimator[_] = null): DataQuanta[Out] = {
     val globalReduceOperator = new GlobalReduceOperator(
-      new ReduceDescriptor(udf, groupedDataUnitType[Out], basicDataUnitType[Out])
+      new ReduceDescriptor(udf, groupedDataUnitType[Out], basicDataUnitType[Out], udfCpuLoad, udfRamLoad)
     )
     this.connectTo(globalReduceOperator, 0)
     globalReduceOperator
@@ -193,6 +312,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @return a new instance representing the [[UnionAllOperator]]'s output
     */
   def union(that: DataQuanta[Out]): DataQuanta[Out] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
     val unionAllOperator = new UnionAllOperator(dataSetType[Out])
     this.connectTo(unionAllOperator, 0)
     that.connectTo(unionAllOperator, 1)
@@ -206,6 +326,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @return a new instance representing the [[IntersectOperator]]'s output
     */
   def intersect(that: DataQuanta[Out]): DataQuanta[Out] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
     val intersectOperator = new IntersectOperator(dataSetType[Out])
     this.connectTo(intersectOperator, 0)
     that.connectTo(intersectOperator, 1)
@@ -225,7 +346,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
    that: DataQuanta[ThatOut],
    thatKeyUdf: ThatOut => Key)
   : DataQuanta[org.qcri.rheem.basic.data.Tuple2[Out, ThatOut]] =
-    joinJava(toSerializableFunction(thisKeyUdf), that, toSerializableFunction(thatKeyUdf))
+  joinJava(toSerializableFunction(thisKeyUdf), that, toSerializableFunction(thatKeyUdf))
 
   /**
     * Feeds this and a further instance into a [[JoinOperator]].
@@ -240,6 +361,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
    that: DataQuanta[ThatOut],
    thatKeyUdf: SerializableFunction[ThatOut, Key])
   : DataQuanta[org.qcri.rheem.basic.data.Tuple2[Out, ThatOut]] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
     val joinOperator = new JoinOperator(
       new TransformationDescriptor(thisKeyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
       new TransformationDescriptor(thatKeyUdf, basicDataUnitType[ThatOut], basicDataUnitType[Key])
@@ -257,6 +379,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     */
   def cartesian[ThatOut: ClassTag](that: DataQuanta[ThatOut])
   : DataQuanta[org.qcri.rheem.basic.data.Tuple2[Out, ThatOut]] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
     val cartesianOperator = new CartesianOperator(dataSetType[Out], dataSetType[ThatOut])
     this.connectTo(cartesianOperator, 0)
     that.connectTo(cartesianOperator, 1)
@@ -268,7 +391,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     *
     * @return a new instance representing the [[ZipWithIdOperator]]'s output
     */
-  def zipWithId: DataQuanta[org.qcri.rheem.basic.data.Tuple2[Long, Out]] = {
+  def zipWithId: DataQuanta[org.qcri.rheem.basic.data.Tuple2[java.lang.Long, Out]] = {
     val zipWithIdOperator = new ZipWithIdOperator(dataSetType[Out])
     this.connectTo(zipWithIdOperator, 0)
     zipWithIdOperator
@@ -290,52 +413,58 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     *
     * @return a new instance representing the [[CountOperator]]'s output
     */
-  def count: DataQuanta[Long] = {
+  def count: DataQuanta[java.lang.Long] = {
     val countOperator = new CountOperator(dataSetType[Out])
     this.connectTo(countOperator, 0)
     countOperator
   }
 
 
-
   /**
     * Feeds this instance into a do-while loop (guarded by a [[DoWhileOperator]].
     *
     * @param udf         condition to be evaluated after each iteration
     * @param bodyBuilder creates the loop body
+    * @param udfCpuLoad  optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad  optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the final output of the [[DoWhileOperator]]
     */
   def doWhile[ConvOut: ClassTag](udf: Iterable[ConvOut] => Boolean,
                                  bodyBuilder: DataQuanta[Out] => (DataQuanta[Out], DataQuanta[ConvOut]),
-                                 numExpectedIterations: Int = 20) =
-    doWhileJava(
-      toSerializablePredicate((in: JavaCollection[ConvOut]) => udf(JavaConversions.collectionAsScalaIterable(in))),
-      new JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]] {
-        override def apply(t: DataQuanta[Out]) = {
-          val result = bodyBuilder(t)
-          new RheemTuple(result._1, result._2)
-        }
-      },
-      numExpectedIterations
-    )
+                                 numExpectedIterations: Int = 20,
+                                 udfCpuLoad: LoadEstimator[_] = null,
+                                 udfRamLoad: LoadEstimator[_] = null) =
+  doWhileJava(
+    toSerializablePredicate((in: JavaCollection[ConvOut]) => udf(JavaConversions.collectionAsScalaIterable(in))),
+    new JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]] {
+      override def apply(t: DataQuanta[Out]) = {
+        val result = bodyBuilder(t)
+        new RheemTuple(result._1, result._2)
+      }
+    },
+    numExpectedIterations, udfCpuLoad, udfRamLoad
+  )
 
   /**
     * Feeds this instance into a do-while loop (guarded by a [[DoWhileOperator]].
     *
     * @param udf         condition to be evaluated after each iteration
     * @param bodyBuilder creates the loop body
+    * @param udfCpuLoad  optional [[LoadEstimator]] for the CPU consumption of the `udf`
+    * @param udfRamLoad  optional [[LoadEstimator]] for the RAM consumption of the `udf`
     * @return a new instance representing the final output of the [[DoWhileOperator]]
     */
   def doWhileJava[ConvOut: ClassTag](
                                       udf: SerializablePredicate[JavaCollection[ConvOut]],
                                       bodyBuilder: JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]],
-                                      numExpectedIterations: Int = 20
-                                    ) = {
+                                      numExpectedIterations: Int = 20,
+                                      udfCpuLoad: LoadEstimator[_] = null,
+                                      udfRamLoad: LoadEstimator[_] = null) = {
     // Create the DoWhileOperator.
     val doWhileOperator = new DoWhileOperator(
       dataSetType[Out],
       dataSetType[ConvOut],
-      new PredicateDescriptor(udf, basicDataUnitType[java.util.Collection[ConvOut]]),
+      new PredicateDescriptor(udf, basicDataUnitType[JavaCollection[ConvOut]], null, udfCpuLoad, udfRamLoad),
       numExpectedIterations
     )
     this.connectTo(doWhileOperator, DoWhileOperator.INITIAL_INPUT_INDEX)
@@ -358,11 +487,11 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @return a new instance representing the final output of the [[LoopOperator]]
     */
   def repeat(n: Int, bodyBuilder: DataQuanta[Out] => DataQuanta[Out]) =
-    repeatJava(n,
-      new JavaFunction[DataQuanta[Out], DataQuanta[Out]] {
-        override def apply(t: DataQuanta[Out]) = bodyBuilder(t)
-      }
-    )
+  repeatJava(n,
+    new JavaFunction[DataQuanta[Out], DataQuanta[Out]] {
+      override def apply(t: DataQuanta[Out]) = bodyBuilder(t)
+    }
+  )
 
   /**
     * Feeds this instance into a for-loop (guarded by a [[LoopOperator]].
@@ -372,29 +501,17 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @return a new instance representing the final output of the [[LoopOperator]]
     */
   def repeatJava(n: Int, bodyBuilder: JavaFunction[DataQuanta[Out], DataQuanta[Out]]) = {
-    // Create the DoWhileOperator.
-    val loopOperator = new LoopOperator(
-      dataSetType[Out],
-      dataSetType[Int],
-      new PredicateDescriptor(
-        toSerializablePredicate[JavaCollection[Int]](i => RheemCollections.getSingle(i) >= n), basicDataUnitType[JavaCollection[Int]]
-      ),
-      n
-    )
-    this.connectTo(loopOperator, LoopOperator.INITIAL_INPUT_INDEX)
-    new DataQuanta(CollectionSource.singleton[Int](0, classOf[Int])).connectTo(loopOperator, LoopOperator.INITIAL_CONVERGENCE_INPUT_INDEX)
+    // Create the RepeatOperator.
+    val repeatOperator = new RepeatOperator(n, dataSetType[Out])
+    this.connectTo(repeatOperator, RepeatOperator.INITIAL_INPUT_INDEX)
 
-    // Create and wire the main loop body.
-    val loopDataQuanta = new DataQuanta[Out](loopOperator, LoopOperator.ITERATION_OUTPUT_INDEX)
+    // Create and wire the loop body.
+    val loopDataQuanta = new DataQuanta[Out](repeatOperator, RepeatOperator.ITERATION_OUTPUT_INDEX)
     val iterationResult = bodyBuilder.apply(loopDataQuanta)
-    iterationResult.connectTo(loopOperator, LoopOperator.ITERATION_INPUT_INDEX)
-
-    // Create and wire the convergence loop body.
-    val convergenceResult = new DataQuanta[Int](loopOperator, LoopOperator.ITERATION_CONVERGENCE_OUTPUT_INDEX).map(_ + 1)
-    convergenceResult.connectTo(loopOperator, LoopOperator.ITERATION_CONVERGENCE_INPUT_INDEX)
+    iterationResult.connectTo(repeatOperator, RepeatOperator.ITERATION_INPUT_INDEX)
 
     // Return the iteration result.
-    new DataQuanta[Out](loopOperator, LoopOperator.FINAL_OUTPUT_INDEX)
+    new DataQuanta[Out](repeatOperator, RepeatOperator.FINAL_OUTPUT_INDEX)
   }
 
   /**
@@ -421,6 +538,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @return this instance
     */
   def withBroadcast(sender: DataQuanta[_], broadcastName: String) = {
+    require(this.planBuilder eq sender.planBuilder, s"$this and $sender must use the same plan builders.")
     sender.broadcast(this, broadcastName)
     this
   }
@@ -432,7 +550,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @param broadcastName the name with that the broadcast will be registered
     */
   private def broadcast(receiver: DataQuanta[_], broadcastName: String) =
-    receiver.registerBroadcast(this.operator, this.outputIndex, broadcastName)
+  receiver.registerBroadcast(this.operator, this.outputIndex, broadcastName)
 
   /**
     * Register a further instance as broadcast.
@@ -442,7 +560,7 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @param broadcastName the name with that the broadcast will be registered
     */
   private def registerBroadcast(sender: Operator, outputIndex: Int, broadcastName: String) =
-    sender.broadcastTo(outputIndex, this.operator, broadcastName)
+  sender.broadcastTo(outputIndex, this.operator, broadcastName)
 
 
   /**
@@ -488,6 +606,46 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   }
 
   /**
+    * Write the data quanta in this instance to a text file. Triggers execution.
+    *
+    * @param url          URL to the text file
+    * @param formatterUdf UDF to format data quanta to [[String]]s
+    * @param udfCpuLoad   optional [[LoadEstimator]] for the CPU consumption of the `formatterUdf`
+    * @param udfRamLoad   optional [[LoadEstimator]] for the RAM consumption of the `formatterUdf`
+    */
+  def writeTextFile(url: String,
+                    formatterUdf: Out => String,
+                    udfCpuLoad: LoadEstimator[_] = null,
+                    udfRamLoad: LoadEstimator[_] = null): Unit = {
+    writeTextFileJava(url, toSerializableFunction(formatterUdf), udfCpuLoad, udfRamLoad)
+  }
+
+  /**
+    * Write the data quanta in this instance to a text file. Triggers execution.
+    *
+    * @param url          URL to the text file
+    * @param formatterUdf UDF to format data quanta to [[String]]s
+    * @param udfCpuLoad   optional [[LoadEstimator]] for the CPU consumption of the `formatterUdf`
+    * @param udfRamLoad   optional [[LoadEstimator]] for the RAM consumption of the `formatterUdf`
+    */
+  def writeTextFileJava(url: String,
+                        formatterUdf: SerializableFunction[Out, String],
+                        udfCpuLoad: LoadEstimator[_] = null,
+                        udfRamLoad: LoadEstimator[_] = null): Unit = {
+    val sink = new TextFileSink[Out](
+      url,
+      new TransformationDescriptor(formatterUdf, basicDataUnitType[Out], basicDataUnitType[String], udfCpuLoad, udfRamLoad)
+    )
+    sink.setName(s"Write to $url")
+    this.connectTo(sink, 0)
+
+    // Do the execution.
+    this.planBuilder.sinks += sink
+    this.planBuilder.buildAndExecute()
+    this.planBuilder.sinks.clear()
+  }
+
+  /**
     * Restrict the producing [[Operator]] to run on certain [[Platform]]s.
     *
     * @param platforms on that the [[Operator]] may be executed
@@ -510,13 +668,36 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
   }
 
   /**
+    * Sets a [[CardinalityEstimator]] for the [[Operator]] that creates this instance.
+    *
+    * @param estimator that should be set
+    * @return this instance
+    */
+  def withCardinalityEstimator(estimator: CardinalityEstimator) = {
+    this.operator.setCardinalityEstimator(outputIndex, estimator)
+    this
+  }
+
+  /**
     * Defines user-code JAR files that might be needed to transfer to execution platforms.
     *
     * @param paths paths to JAR files that should be transferred
     * @return this instance
     */
   def withUdfJars(paths: String*) = {
-    this.planBuilder.udfJars ++= paths
+    this.planBuilder withUdfJars (paths: _*)
+    this
+  }
+
+
+  /**
+    * Defines the [[Experiment]] that should collects metrics of the [[RheemPlan]].
+    *
+    * @param experiment the [[Experiment]]
+    * @return this instance
+    */
+  def withExperiment(experiment: Experiment) = {
+    this.planBuilder withExperiment experiment
     this
   }
 
@@ -526,15 +707,18 @@ class DataQuanta[Out: ClassTag](val operator: Operator, outputIndex: Int = 0)(im
     * @param classes whose JAR files should be transferred
     * @return this instance
     */
-  def withUdfJarsOf(classes: Class[_]*) =
-    withUdfJars(classes.map(ReflectionUtils.getDeclaringJar).filterNot(_ == null): _*)
+  def withUdfJarsOf(classes: Class[_]*) = {
+    this.planBuilder withUdfJarsOf (classes: _*)
+    this
+  }
 
+  override def toString = s"DataQuanta[$output]"
 
 }
 
 object DataQuanta {
 
   def create[T](output: OutputSlot[T])(implicit planBuilder: PlanBuilder): DataQuanta[_] =
-    new DataQuanta(output.getOwner, output.getIndex)(ClassTag(output.getType.getDataUnitType.getTypeClass), planBuilder)
+    new DataQuanta(output.getOwner.asInstanceOf[ElementaryOperator], output.getIndex)(ClassTag(output.getType.getDataUnitType.getTypeClass), planBuilder)
 
 }

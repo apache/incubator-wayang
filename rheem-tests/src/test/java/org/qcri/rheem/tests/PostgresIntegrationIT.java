@@ -1,16 +1,14 @@
 package org.qcri.rheem.tests;
 
-import org.junit.*;
-import org.qcri.rheem.core.api.RheemContext;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.java.JavaPlatform;
-import org.qcri.rheem.postgres.PostgresPlatform;
+import org.qcri.rheem.postgres.platform.PostgresPlatform;
 
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 
 /**
@@ -60,44 +58,6 @@ public class PostgresIntegrationIT {
         } catch (SQLException e) {
             throw new RheemException(e);
         }
-    }
-
-    @Test
-    public void testReadAndWrite() throws URISyntaxException, IOException {
-        // Build a Rheem plan.
-        RheemPlan rheemPlan = RheemPlans.postgresReadStdout();
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(PostgresPlatform.getInstance());
-        rheemContext.register(JavaPlatform.getInstance());
-        rheemContext.execute(rheemPlan);
-    }
-
-    @Test
-    public void testScenario2() throws URISyntaxException, IOException {
-        RheemPlan rheemPlan = RheemPlans.postgresScenario2();
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(PostgresPlatform.getInstance());
-        rheemContext.register(JavaPlatform.getInstance());
-        rheemContext.execute(rheemPlan);
-    }
-
-    @Test
-    public void testScenario3() throws URISyntaxException, IOException {
-        RheemPlan rheemPlan = RheemPlans.postgresScenario3();
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(PostgresPlatform.getInstance());
-        rheemContext.register(JavaPlatform.getInstance());
-        //rheemContext.register(SparkPlatform.getInstance());
-        rheemContext.execute(rheemPlan);
-    }
-
-    @Test
-    public void postgresMixedScenario4() throws URISyntaxException, IOException {
-        RheemPlan rheemPlan = RheemPlans.postgresMixedScenario4();
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(PostgresPlatform.getInstance());
-        rheemContext.register(JavaPlatform.getInstance());
-        rheemContext.execute(rheemPlan);
     }
 
 }

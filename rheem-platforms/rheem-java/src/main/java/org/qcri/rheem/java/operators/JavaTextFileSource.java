@@ -1,29 +1,23 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.TextFileSource;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
-import org.slf4j.LoggerFactory;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.stream.Stream;
 
 /**
@@ -35,18 +29,24 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         super(inputUrl);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaTextFileSource(TextFileSource that) {
+        super(that);
+    }
+
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        String url;
-        try {
-            url = new URL(this.getInputUrl()).toString();
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Could not parse input URL.", e);
-        }
-
+        String url = this.getInputUrl().trim();
         FileSystem fs = FileSystems.getFileSystem(url).orElseThrow(
                 () -> new RheemException(String.format("Cannot access file system of %s.", url))
         );
@@ -59,24 +59,12 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
             throw new RheemException(String.format("Reading %s failed.", url), e);
         }
 
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
-
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-//        final OptionalLong optionalFileSize;
-//        if (this.getInputUrl() == null) {
-//            optionalFileSize = OptionalLong.empty();
-//        } else {
-//            optionalFileSize = FileSystems.getFileSize(this.getInputUrl());
-//            if (!optionalFileSize.isPresent()) {
-//                LoggerFactory.getLogger(this.getClass()).warn("Could not determine file size for {}.", this.getInputUrl());
-//            }
-//        }
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.textfilesource.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.textfilesource.load";
     }
 
     @Override
@@ -94,4 +82,5 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
+
 }

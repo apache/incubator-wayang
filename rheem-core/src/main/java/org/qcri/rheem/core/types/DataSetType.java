@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.types;
 
+import org.qcri.rheem.core.util.ReflectionUtils;
+
 import java.util.Objects;
 
 /**
@@ -7,6 +9,16 @@ import java.util.Objects;
  * keeps track of type and structure of data units being passed between operators.
  */
 public class DataSetType<T> {
+
+    /**
+     * Stands for the absence of an actual instance.
+     */
+    public static final DataSetType<Void> NONE = DataSetType.createDefault(Void.class);
+
+    /**
+     * Stands for the absence of an actual instance.
+     */
+    public static final DataSetType<Iterable<Void>> GROUPED_NONE = DataSetType.createGrouped(Void.class);
 
     /**
      * Type of the data units within the data set.
@@ -17,7 +29,7 @@ public class DataSetType<T> {
      * Creates a flat data set that contains basic data units. This is the normal case.
      */
     public static <T> DataSetType<T> createDefault(Class<? extends T> dataUnitClass) {
-        return new DataSetType<>(new BasicDataUnitType<>(dataUnitClass));
+        return new DataSetType<>(new BasicDataUnitType<>(ReflectionUtils.generalize(dataUnitClass)));
     }
 
     /**
@@ -31,7 +43,7 @@ public class DataSetType<T> {
      * Creates a flat data set that contains basic data units. This is the normal case.
      */
     public static <T> DataSetType<T> createDefaultUnchecked(Class<?> dataUnitClass) {
-        return new DataSetType<>(new BasicDataUnitType<>(dataUnitClass));
+        return new DataSetType<>(new BasicDataUnitType<>(dataUnitClass).unchecked());
     }
 
     /**
@@ -49,7 +61,6 @@ public class DataSetType<T> {
     }
 
     /**
-     *
      * Creates a data set that contains groups of data units.
      */
     public static <T> DataSetType<Iterable<T>> createGroupedUnchecked(Class<?> dataUnitClass) {
@@ -59,11 +70,19 @@ public class DataSetType<T> {
     /**
      * Returns a null type.
      */
-    public static <T> DataSetType<T> none() {
-        return null;
+    public static DataSetType<Void> none() {
+        return NONE;
     }
 
-    protected DataSetType(DataUnitType dataUnitType) {
+    /**
+     * Returns a grouped null type.
+     */
+    public static DataSetType<Iterable<Void>> groupedNone() {
+        return GROUPED_NONE;
+    }
+
+
+    protected DataSetType(DataUnitType<T> dataUnitType) {
         this.dataUnitType = dataUnitType;
     }
 
@@ -91,8 +110,24 @@ public class DataSetType<T> {
         return (DataSetType<Iterable<Object>>) this;
     }
 
-    public boolean isCompatibleTo(DataSetType otherDataSetType) {
-        return this.dataUnitType.toBasicDataUnitType().equals(otherDataSetType.dataUnitType.toBasicDataUnitType());
+    /**
+     * Checks whether this instance is more general that the given one, i.e., it is a valid type of datasets that are
+     * also valid under the given type.
+     *
+     * @param that the other instance
+     * @return whether this instance is a super type of {@code that} instance
+     */
+    public boolean isSupertypeOf(DataSetType that) {
+        return this.dataUnitType.toBasicDataUnitType().isSupertypeOf(that.dataUnitType.toBasicDataUnitType());
+    }
+
+    /**
+     * Find out whether this corresponds to either {@link #none()} or {@link #groupedNone()}.
+     *
+     * @return whether above condition holds
+     */
+    public boolean isNone() {
+        return this.equals(none()) || this.equals(groupedNone());
     }
 
     @Override

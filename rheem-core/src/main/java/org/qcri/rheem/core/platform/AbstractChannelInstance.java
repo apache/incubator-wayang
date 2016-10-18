@@ -1,5 +1,8 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.slf4j.LoggerFactory;
 
 import java.util.OptionalLong;
@@ -11,13 +14,23 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
 
     private OptionalLong measuredCardinality = OptionalLong.empty();
 
+    private boolean wasProduced = false;
+
+    private LazyChannelLineage lazyChannelLineage;
+
     /**
      * Creates a new instance and registers it with its {@link Executor}.
      *
-     * @param executor that maintains this instance
+     * @param executor                that maintains this instance
+     * @param producerOperatorContext the {@link OptimizationContext.OperatorContext} for the producing
+     *                                {@link ExecutionOperator}
+     * @param producerOutputIndex     the output index of the producer {@link ExecutionTask}
      */
-    protected AbstractChannelInstance(Executor executor) {
+    protected AbstractChannelInstance(Executor executor,
+                                      OptimizationContext.OperatorContext producerOperatorContext,
+                                      int producerOutputIndex) {
         super(executor);
+        this.lazyChannelLineage = new LazyChannelLineage(this, producerOperatorContext, producerOutputIndex);
     }
 
     @Override
@@ -36,6 +49,21 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
                 )
         );
         this.measuredCardinality = OptionalLong.of(cardinality);
+    }
+
+    @Override
+    public LazyChannelLineage getLazyChannelLineage() {
+        return this.lazyChannelLineage;
+    }
+
+    @Override
+    public boolean wasProduced() {
+        return this.wasProduced;
+    }
+
+    @Override
+    public void markProduced() {
+        this.wasProduced = true;
     }
 
     @Override

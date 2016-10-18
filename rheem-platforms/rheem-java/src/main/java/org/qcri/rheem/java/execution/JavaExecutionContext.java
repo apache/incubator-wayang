@@ -4,9 +4,8 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
-import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
@@ -20,9 +19,12 @@ public class JavaExecutionContext implements ExecutionContext {
 
     private final ChannelInstance[] inputs;
 
-    public JavaExecutionContext(JavaExecutionOperator operator, ChannelInstance[] inputs) {
+    private final int iterationNumber;
+
+    public JavaExecutionContext(JavaExecutionOperator operator, ChannelInstance[] inputs, int iterationNumber) {
         this.operator = operator;
         this.inputs = inputs;
+        this.iterationNumber = iterationNumber;
     }
 
     @Override
@@ -37,5 +39,10 @@ public class JavaExecutionContext implements ExecutionContext {
         }
 
         throw new RheemException("No such broadcast found: " + name);
+    }
+
+    @Override
+    public int getCurrentIteration() {
+        return this.iterationNumber;
     }
 }

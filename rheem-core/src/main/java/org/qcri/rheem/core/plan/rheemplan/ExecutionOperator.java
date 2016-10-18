@@ -1,15 +1,16 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.platform.ChannelDescriptor;
-import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
+import org.qcri.rheem.core.platform.*;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * An execution operator is handled by a certain platform.
@@ -38,8 +39,28 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @return an {@link Optional} that might contain the {@link LoadProfileEstimator} (but {@link Optional#empty()}
      * by default)
      */
-    default Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        return Optional.empty();
+    default Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        String configurationKey = this.getLoadProfileEstimatorConfigurationKey();
+        if (configurationKey == null) {
+            return Optional.empty();
+        }
+        final Optional<String> optSpecification = configuration.getOptionalStringProperty(configurationKey);
+        if (!optSpecification.isPresent()) {
+            LoggerFactory
+                    .getLogger(this.getClass())
+                    .warn("Could not find an estimator specification associated with '{}'.", configuration);
+            return Optional.empty();
+        }
+        return Optional.of(LoadProfileEstimators.createFromJuelSpecification(optSpecification.get()));
+    }
+
+    /**
+     * Provide the {@link Configuration} key for the {@link LoadProfileEstimator} specification of this instance.
+     *
+     * @return the {@link Configuration} key or {@code null} if none
+     */
+    default String getLoadProfileEstimatorConfigurationKey() {
+        return null;
     }
 
     /**
@@ -76,6 +97,54 @@ public interface ExecutionOperator extends ElementaryOperator {
             );
         }
         return supportedOutputChannels.get(0);
+    }
+
+    /**
+     * Create output {@link ChannelInstance}s for this instance, thereby also setting up the
+     * {@link org.qcri.rheem.core.platform.LazyChannelLineage} properly.
+     *
+     * @param task                    the {@link ExecutionTask} in which this instance is being wrapped
+     * @param producerOperatorContext the {@link OptimizationContext.OperatorContext} for this instance
+     * @param inputChannelInstances   the input {@link ChannelInstance}s for the {@code task}
+     * @return
+     */
+    default ChannelInstance[] createOutputChannelInstances(Executor executor,
+                                                           ExecutionTask task,
+                                                           OptimizationContext.OperatorContext producerOperatorContext,
+                                                           List<ChannelInstance> inputChannelInstances) {
+
+        assert task.getOperator() == this;
+        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
+        for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
+            final Channel outputChannel = task.getOutputChannel(outputIndex);
+            final ChannelInstance outputChannelInstance = outputChannel.createInstance(executor, producerOperatorContext, outputIndex);
+            channelInstances[outputIndex] = outputChannelInstance;
+        }
+        return channelInstances;
+    }
+
+    static Collection<OptimizationContext.OperatorContext> modelEagerExecution(ChannelInstance[] inputs,
+                                                                               ChannelInstance[] outputs,
+                                                                               OptimizationContext.OperatorContext operatorContext) {
+        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts;
+        if (outputs.length == 0) {
+            executedOperatorContexts = inputs[0].getLazyChannelLineage().collectAndMark();
+            executedOperatorContexts.add(operatorContext);
+        } else {
+            executedOperatorContexts = new LinkedList<>();
+            LazyChannelLineage.addAllPredecessors(inputs, outputs);
+            for (ChannelInstance output : outputs) {
+                output.getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+            }
+        }
+        return executedOperatorContexts;
+    }
+
+    static Collection<OptimizationContext.OperatorContext> modelLazyExecution(ChannelInstance[] inputs,
+                                                                              ChannelInstance[] outputs,
+                                                                              OptimizationContext.OperatorContext operatorContext) {
+        LazyChannelLineage.addAllPredecessors(inputs, outputs);
+        return Collections.emptyList();
     }
 
 }

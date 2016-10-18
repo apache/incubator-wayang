@@ -18,6 +18,7 @@ public abstract class KeyValueProvider<Key, Value> {
             super(message);
         }
     }
+
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected KeyValueProvider<Key, Value> parent;
@@ -55,7 +56,7 @@ public abstract class KeyValueProvider<Key, Value> {
             return this.parent.provideFor(key, requestee);
         }
 
-        throw new NoSuchKeyException(String.format("Could not provide value for %s.", key));
+        throw new NoSuchKeyException(String.format("Could not provide value for %s from %s.", key, requestee.getConfiguration()));
     }
 
     public Optional<Value> optionallyProvideFor(Key key) {
@@ -72,6 +73,17 @@ public abstract class KeyValueProvider<Key, Value> {
      * @return the value of {@code null} if none could be provided
      */
     protected abstract Value tryToProvide(Key key, KeyValueProvider<Key, Value> requestee);
+
+    /**
+     * Provide the value associated to the given key from this very instance, i.e., do not relay the request
+     * to parent instances on misses.
+     *
+     * @param key the key
+     * @return the value or {@code null} if this very instance does not associate a value with the key
+     */
+    public Value provideLocally(Key key) {
+        return this.tryToProvide(key, this);
+    }
 
     public void setParent(KeyValueProvider<Key, Value> parent) {
         this.parent = parent;

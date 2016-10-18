@@ -29,11 +29,20 @@ public class GlobalMaterializedGroupOperator<Type> extends UnaryToUnaryOperator<
      * @param outputType the output {@link DataSetType} of the new instance
      */
     public GlobalMaterializedGroupOperator(DataSetType<Type> inputType, DataSetType<Iterable<Type>> outputType) {
-        super(inputType, outputType, false, null);
+        super(inputType, outputType, false);
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public GlobalMaterializedGroupOperator(GlobalMaterializedGroupOperator<Type> that) {
+        super(that);
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(
+    public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         assert outputIndex == 0;

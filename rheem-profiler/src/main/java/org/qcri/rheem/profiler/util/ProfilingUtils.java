@@ -5,7 +5,9 @@ import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.ReflectionUtils;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.java.execution.JavaExecutor;
+import org.qcri.rheem.java.platform.JavaPlatform;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +25,7 @@ public class ProfilingUtils {
      * @param udfJars paths to JAR files needed to run the UDFs (see {@link ReflectionUtils#getDeclaringJar(Class)})
      */
     public static Job fakeJob(String... udfJars) {
-        return new RheemContext().createJob(new RheemPlan(), udfJars);
+        return new RheemContext().createJob("Fake job", new RheemPlan(), udfJars);
     }
 
     /**
@@ -33,6 +35,13 @@ public class ProfilingUtils {
      */
     public static SparkExecutor fakeSparkExecutor(String... udfJars) {
         return (SparkExecutor) SparkPlatform.getInstance().createExecutor(fakeJob(udfJars));
+    }
+
+    /**
+     * Provides a {@link JavaExecutor}.
+     */
+    public static JavaExecutor fakeJavaExecutor() {
+        return (JavaExecutor) JavaPlatform.getInstance().createExecutor(fakeJob());
     }
 
     /**

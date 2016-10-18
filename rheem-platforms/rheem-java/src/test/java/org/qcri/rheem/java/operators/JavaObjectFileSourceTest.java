@@ -5,7 +5,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.io.IOException;
@@ -34,7 +33,7 @@ public class JavaObjectFileSourceTest extends JavaExecutionOperatorTestBase {
             // Execute.
             JavaChannelInstance[] inputs = new JavaChannelInstance[]{};
             JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-            source.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+            evaluate(source, inputs, outputs);
 
             // Verify.
             Set<Integer> expectedValues = new HashSet<>(JavaObjectFileSourceTest.enumerateRange(10000));

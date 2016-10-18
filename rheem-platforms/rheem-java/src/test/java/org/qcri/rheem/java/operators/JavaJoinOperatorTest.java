@@ -7,7 +7,6 @@ import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,7 +30,7 @@ public class JavaJoinOperatorTest extends JavaExecutionOperatorTestBase {
         ).stream();
 
         // Build the Cartesian operator.
-        JavaJoinOperator<Tuple2, Tuple2, Integer> join =
+        JavaJoinOperator<Tuple2<Integer, String>, Tuple2<String, Integer>, Integer> join =
                 new JavaJoinOperator<>(
                         DataSetType.createDefaultUnchecked(Tuple2.class),
                         DataSetType.createDefaultUnchecked(Tuple2.class),
@@ -41,7 +40,7 @@ public class JavaJoinOperatorTest extends JavaExecutionOperatorTestBase {
                                 "field0"),
                         new ProjectionDescriptor<>(
                                 DataUnitType.createBasicUnchecked(Tuple2.class),
-                                DataUnitType.createBasic(String.class),
+                                DataUnitType.createBasic(Integer.class),
                                 "field1"));
 
         // Execute.
@@ -50,7 +49,7 @@ public class JavaJoinOperatorTest extends JavaExecutionOperatorTestBase {
                 createStreamChannelInstance(inputStream1)
         };
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createStreamChannelInstance()};
-        join.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(join, inputs, outputs);
 
         // Verify the outcome.
         final List<Tuple2<Tuple2<Integer, String>, Tuple2<String, Integer>>> result =

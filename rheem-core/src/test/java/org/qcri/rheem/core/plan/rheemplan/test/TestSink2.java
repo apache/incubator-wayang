@@ -9,6 +9,6 @@ import org.qcri.rheem.core.types.DataSetType;
 public class TestSink2<T> extends UnarySink<T> {
 
     public TestSink2(DataSetType<T> inputType) {
-        super(inputType, null);
+        super(inputType);
     }
 }

@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
@@ -13,10 +14,10 @@ public interface Executor extends CompositeExecutionResource {
      * Executes the given {@code stage}.
      *
      * @param stage          should be executed; must be executable by this instance, though
-     * @param executionState provides and accepts execution-related objects
-     * @return collected metadata from instrumentation
+     * @param optimizationContext
+     *@param executionState provides and accepts execution-related objects  @return collected metadata from instrumentation
      */
-    void execute(ExecutionStage stage, ExecutionState executionState);
+    void execute(ExecutionStage stage, OptimizationContext optimizationContext, ExecutionState executionState);
 
     /**
      * Releases any instances acquired by this instance to execute {@link ExecutionStage}s.

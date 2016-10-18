@@ -62,13 +62,6 @@ public abstract class Channel {
     private boolean isBreakingProhibited = false;
 
     /**
-     * This flag indicates whether the {@link #producer} and the {@link #consumers} of this instance should never be
-     * executed in the same {@link ExecutionStage} instance.
-     */
-    private boolean isStageExecutionBarrier = false;
-
-
-    /**
      * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}.
      *
      * @param descriptor used to create this instance
@@ -289,6 +282,7 @@ public abstract class Channel {
     /**
      * Collect the {@link OutputSlot} of the producer and the {@link InputSlot}s of the consumers that are implemented
      * by this instance.
+     *
      * @return a {@link Stream} of said {@link Slot}s
      */
     private Stream<Slot<?>> getCorrespondingSlotsLocal() {
@@ -425,7 +419,9 @@ public abstract class Channel {
      *
      * @param executor that manages the resource or {@code null} if none
      */
-    public abstract ChannelInstance createInstance(Executor executor);
+    public abstract ChannelInstance createInstance(Executor executor,
+                                                   OptimizationContext.OperatorContext producerOperatorContext,
+                                                   int producerOutputIndex);
 
     /**
      * Tests for inter-stage instances.
@@ -466,23 +462,4 @@ public abstract class Channel {
         this.isBreakingProhibited = breakingProhibited;
     }
 
-    /**
-     * This flag indicates whether the {@link #producer} and the {@link #consumers} of this instance should never be
-     * executed in the same {@link ExecutionStage} instance.
-     *
-     * @return the flag value
-     */
-    public boolean isStageExecutionBarrier() {
-        return this.isStageExecutionBarrier;
-    }
-
-    /**
-     * This flag indicates whether the {@link #producer} and the {@link #consumers} of this instance should never be
-     * executed in the same {@link ExecutionStage} instance.
-     *
-     * @param stageExecutionBarrier the new flag value
-     */
-    public void setStageExecutionBarrier(boolean stageExecutionBarrier) {
-        this.isStageExecutionBarrier = stageExecutionBarrier;
-    }
 }

@@ -16,13 +16,13 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.Counter;
-import org.qcri.rheem.java.JavaPlatform;
+import org.qcri.rheem.java.Java;
 import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
 import org.qcri.rheem.java.operators.JavaReduceByOperator;
+import org.qcri.rheem.spark.Spark;
 import org.qcri.rheem.spark.operators.SparkFlatMapOperator;
 import org.qcri.rheem.spark.operators.SparkMapOperator;
 import org.qcri.rheem.spark.operators.SparkTextFileSource;
-import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -42,20 +42,18 @@ public class WordCountIT {
         // Assignment mode: RheemContext.
 
         // Instantiate Rheem and activate the backend.
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
         TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
                 new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(String.class)
-                ), DataSetType.createDefault(String.class),
-                DataSetType.createDefault(String.class)
+                        String.class,
+                        String.class
+                )
         );
         flatMapOperator.getFunctionDescriptor().setLoadEstimators(
-                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 670),
+                new DefaultLoadEstimator<>(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 670),
                 LoadEstimator.createFallback(1, 1)
         );
 
@@ -69,7 +67,7 @@ public class WordCountIT {
                 DataSetType.createDefaultUnchecked(Tuple2.class)
         );
         mapOperator.getFunctionDescriptor().setLoadEstimators(
-                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 245),
+                new DefaultLoadEstimator<>(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 245),
                 LoadEstimator.createFallback(1, 1)
         );
 
@@ -87,11 +85,11 @@ public class WordCountIT {
         ), DataSetType.createDefaultUnchecked(Tuple2.class)
         );
         reduceByOperator.getKeyDescriptor().setLoadEstimators(
-                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 50),
+                new DefaultLoadEstimator<>(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 50),
                 LoadEstimator.createFallback(1, 1)
         );
         reduceByOperator.getReduceDescriptor().setLoadEstimators(
-                new DefaultLoadEstimator(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 350 + 500000),
+                new DefaultLoadEstimator<>(1, 1, 0.9d, (inCards, outCards) -> inCards[0] * 350 + 500000),
                 LoadEstimator.createFallback(1, 1)
         );
 
@@ -133,10 +131,9 @@ public class WordCountIT {
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
                 new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(String.class)
-                ), DataSetType.createDefault(String.class),
-                DataSetType.createDefault(String.class)
+                        String.class,
+                        String.class
+                )
         );
 
 
@@ -177,8 +174,8 @@ public class WordCountIT {
 
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
-        final Job job = rheemContext.createJob(rheemPlan);
-        job.getConfiguration().getPlatformProvider().addToWhitelist(SparkPlatform.getInstance());
+        final Job job = rheemContext.createJob(null, rheemPlan);
+        Spark.basicPlugin().configure(job.getConfiguration());
         job.execute();
 
         // Verify the plan result.
@@ -202,8 +199,8 @@ public class WordCountIT {
 
         // Instantiate Rheem and activate the backend.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(SparkPlatform.getInstance());
-        rheemContext.register(JavaPlatform.getInstance());
+        rheemContext.register(Spark.basicPlugin());
+        rheemContext.register(Java.basicPlugin());
 
         TextFileSource textFileSource = new SparkTextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
 
@@ -212,8 +209,8 @@ public class WordCountIT {
                 DataSetType.createDefault(String.class),
                 DataSetType.createDefault(String.class),
                 new FlatMapDescriptor<>(line -> Arrays.asList(line.split(" ")),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(String.class)
+                        String.class,
+                        String.class
                 ));
 
 
@@ -277,17 +274,16 @@ public class WordCountIT {
         // Assignment mode: Constraints.
 
         TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
-        textFileSource.addTargetPlatform(JavaPlatform.getInstance());
+        textFileSource.addTargetPlatform(Java.platform());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
                 new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(String.class)
-                ), DataSetType.createDefault(String.class),
-                DataSetType.createDefault(String.class)
+                        String.class,
+                        String.class
+                )
         );
-        flatMapOperator.addTargetPlatform(JavaPlatform.getInstance());
+        flatMapOperator.addTargetPlatform(Java.platform());
         flatMapOperator.setName("Split words");
 
 
@@ -299,7 +295,7 @@ public class WordCountIT {
                 ), DataSetType.createDefault(String.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class)
         );
-        mapOperator.addTargetPlatform(SparkPlatform.getInstance());
+        mapOperator.addTargetPlatform(Spark.platform());
         mapOperator.setName("Create counters");
 
 
@@ -315,14 +311,14 @@ public class WordCountIT {
                 DataUnitType.createBasicUnchecked(Tuple2.class)
         ), DataSetType.createDefaultUnchecked(Tuple2.class)
         );
-        reduceByOperator.addTargetPlatform(SparkPlatform.getInstance());
+        reduceByOperator.addTargetPlatform(Spark.platform());
         reduceByOperator.setName("Add counters");
 
 
         // write results to a sink
         List<Tuple2> results = new ArrayList<>();
         LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
-        sink.addTargetPlatform(SparkPlatform.getInstance());
+        sink.addTargetPlatform(Spark.platform());
 
         // Build Rheem plan by connecting operators
         textFileSource.connectTo(0, flatMapOperator, 0);
@@ -333,8 +329,8 @@ public class WordCountIT {
 
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
-        rheemContext.register(SparkPlatform.getInstance());
+        rheemContext.register(Java.basicPlugin());
+        rheemContext.register(Spark.basicPlugin());
         rheemContext.execute(rheemPlan);
 
         // Verify the plan result.
@@ -357,16 +353,15 @@ public class WordCountIT {
         // Assignment mode: none.
 
         TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
-        textFileSource.addTargetPlatform(JavaPlatform.getInstance());
-        textFileSource.addTargetPlatform(SparkPlatform.getInstance());
+        textFileSource.addTargetPlatform(Java.platform());
+        textFileSource.addTargetPlatform(Spark.platform());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
                 new FlatMapDescriptor<>(line -> Arrays.asList((String[]) line.split(" ")),
-                        DataUnitType.createBasic(String.class),
-                        DataUnitType.createBasic(String.class)
-                ), DataSetType.createDefault(String.class),
-                DataSetType.createDefault(String.class)
+                        String.class,
+                        String.class
+                )
         );
 
 
@@ -407,8 +402,8 @@ public class WordCountIT {
 
         // Have Rheem execute the plan.
         RheemContext rheemContext = new RheemContext();
-        rheemContext.register(JavaPlatform.getInstance());
-        rheemContext.register(SparkPlatform.getInstance());
+        rheemContext.register(Java.basicPlugin());
+        rheemContext.register(Spark.basicPlugin());
         rheemContext.execute(rheemPlan);
 
         // Verify the plan result.

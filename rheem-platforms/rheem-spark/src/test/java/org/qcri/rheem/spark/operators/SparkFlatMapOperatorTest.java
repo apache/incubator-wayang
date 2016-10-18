@@ -6,11 +6,8 @@ import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -35,7 +32,7 @@ public class SparkFlatMapOperatorTest extends SparkOperatorTestBase {
         ChannelInstance[] outputs = new ChannelInstance[]{output};
 
         // Execute.
-        flatMapOperator.evaluate(inputs, outputs, new FunctionCompiler(), this.sparkExecutor);
+        this.evaluate(flatMapOperator, inputs, outputs);
 
         // Verify the outcome.
         final List<String> result = output.<String>provideRdd().collect();

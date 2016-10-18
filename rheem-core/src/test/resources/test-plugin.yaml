@@ -1,0 +1,20 @@
+platforms:
+  include:
+    - org.qcri.rheem.core.test.DummyPlatform.getInstance()
+  exclude:
+
+mappings:
+  include:
+    - new org.qcri.rheem.core.mapping.test.TestSinkMapping()
+  exclude:
+
+conversions:
+  include:
+  exclude:
+    - org.qcri.rheem.core.plugin.DynamicPluginTest.CHANNEL_CONVERSIONS
+
+properties:
+  org.qcri.rheem.test.float: 51.3
+  org.qcri.rheem.test.string: abcdef
+  org.qcri.rheem.test.long: 1234567890123456789
+

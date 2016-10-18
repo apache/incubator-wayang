@@ -22,8 +22,11 @@ public class LoopSubplan extends Subplan {
      * Creates a new instance with the given operators. Initializes the {@link InputSlot}s and {@link OutputSlot}s,
      * steals existing connections, initializes the {@link #slotMapping}, and sets as inner {@link Operator}s' parent.
      */
-    public static LoopSubplan wrap(LoopHeadOperator loopHead, List<InputSlot<?>> inputs, List<OutputSlot<?>> outputs, OperatorContainer container) {
-        return new LoopSubplan(loopHead, inputs, outputs, container);
+    public static LoopSubplan wrap(LoopHeadOperator loopHead, List<InputSlot<?>> inputs, List<OutputSlot<?>> outputs) {
+        final OperatorContainer loopHeadContainer = loopHead.getContainer();
+        final LoopSubplan loopSubplan = new LoopSubplan(loopHead, inputs, outputs);
+        loopSubplan.setContainer(loopHeadContainer);
+        return loopSubplan;
     }
 
     /**
@@ -33,8 +36,8 @@ public class LoopSubplan extends Subplan {
      * @see #wrap(Operator, Operator)
      * @see #wrap(List, List, OperatorContainer)
      */
-    private LoopSubplan(LoopHeadOperator loopHead, List<InputSlot<?>> inputs, List<OutputSlot<?>> outputs, OperatorContainer container) {
-        super(inputs, outputs, container);
+    private LoopSubplan(LoopHeadOperator loopHead, List<InputSlot<?>> inputs, List<OutputSlot<?>> outputs) {
+        super(inputs, outputs);
         this.loopHead = loopHead;
     }
 
@@ -78,8 +81,8 @@ public class LoopSubplan extends Subplan {
     }
 
     @Override
-    public void replace(Operator oldOperator, Operator newOperator) {
-        super.replace(oldOperator, newOperator);
+    public void noteReplaced(Operator oldOperator, Operator newOperator) {
+        super.noteReplaced(oldOperator, newOperator);
         if (oldOperator == this.loopHead) {
             this.loopHead = (LoopHeadOperator) newOperator;
         }

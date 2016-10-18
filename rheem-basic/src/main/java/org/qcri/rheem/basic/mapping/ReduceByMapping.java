@@ -28,15 +28,17 @@ public class ReduceByMapping implements Mapping {
                 "groupBy",
                 new GroupByOperator<>(
                         null,
-                        DataSetType.createDefault(Void.class),
-                        DataSetType.createGrouped(Void.class)),
+                        DataSetType.none(),
+                        DataSetType.groupedNone()
+                ),
                 false);
         final OperatorPattern reducePattern = new OperatorPattern(
                 "reduce",
                 ReduceOperator.createGroupedReduce(
                         null,
-                        DataSetType.createGrouped(Void.class),
-                        DataSetType.createDefault(Void.class)),
+                        DataSetType.groupedNone(),
+                        DataSetType.none()
+                ),
                 false);
         groupByPattern.connectTo(0, reducePattern, 0);
         return SubplanPattern.fromOperatorPatterns(groupByPattern, reducePattern);

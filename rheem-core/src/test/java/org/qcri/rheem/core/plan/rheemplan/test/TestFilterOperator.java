@@ -20,7 +20,7 @@ public class TestFilterOperator<InputType> extends UnaryToUnaryOperator<InputTyp
      * Creates a new instance.
      */
     public TestFilterOperator(DataSetType<InputType> inputType) {
-        super(inputType, inputType, true, null);
+        super(inputType, inputType, true);
     }
 
     public TestFilterOperator(Class<InputType> inputTypeClass) {
@@ -29,8 +29,8 @@ public class TestFilterOperator<InputType> extends UnaryToUnaryOperator<InputTyp
 
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
-                                                                  Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex,
+                                                                     Configuration configuration) {
         assert outputIndex == 0;
         return Optional.of(new DefaultCardinalityEstimator(1d, 1, true, cards -> Math.round(this.selectivity * cards[0])));
     }

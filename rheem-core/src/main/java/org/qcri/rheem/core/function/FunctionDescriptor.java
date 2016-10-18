@@ -8,36 +8,40 @@ import java.io.Serializable;
 import java.util.Optional;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * A function operates on single data units or collections of those.
  */
 public abstract class FunctionDescriptor {
 
-    protected LoadEstimator cpuLoadEstimator;
-
-    protected LoadEstimator memoryLoadEstimator;
+    private LoadProfileEstimator loadProfileEstimator;
 
     public FunctionDescriptor() {
         this(null, null);
     }
 
     public FunctionDescriptor(LoadEstimator cpuLoadEstimator, LoadEstimator memoryLoadEstimator) {
-        this.cpuLoadEstimator = cpuLoadEstimator;
-        this.memoryLoadEstimator = memoryLoadEstimator;
+        this.setLoadEstimators(cpuLoadEstimator, memoryLoadEstimator);
     }
 
     public void setLoadEstimators(LoadEstimator cpuLoadEstimator, LoadEstimator memoryLoadEstimator) {
-        this.cpuLoadEstimator = cpuLoadEstimator;
-        this.memoryLoadEstimator = memoryLoadEstimator;
+        if (cpuLoadEstimator == null && memoryLoadEstimator == null) {
+            this.loadProfileEstimator = null;
+        } else {
+            this.loadProfileEstimator = new NestableLoadProfileEstimator(
+                    cpuLoadEstimator == null ?
+                            LoadEstimator.createFallback(LoadEstimator.UNSPECIFIED_NUM_SLOTS, LoadEstimator.UNSPECIFIED_NUM_SLOTS) :
+                            cpuLoadEstimator,
+                    memoryLoadEstimator == null ?
+                            LoadEstimator.createFallback(LoadEstimator.UNSPECIFIED_NUM_SLOTS, LoadEstimator.UNSPECIFIED_NUM_SLOTS) :
+                            memoryLoadEstimator
+            );
+        }
     }
 
     public Optional<LoadProfileEstimator> getLoadProfileEstimator() {
-        if (this.cpuLoadEstimator != null && this.memoryLoadEstimator != null) {
-            return Optional.of(new NestableLoadProfileEstimator(this.cpuLoadEstimator, this.memoryLoadEstimator));
-        } else {
-            return Optional.empty();
-        }
+        return Optional.ofNullable(this.loadProfileEstimator);
     }
 
     /**
@@ -65,5 +69,14 @@ public abstract class FunctionDescriptor {
      * Extends a {@link SerializableBinaryOperator} to an {@link ExtendedFunction}.
      */
     public interface ExtendedSerializableBinaryOperator<Type> extends SerializableBinaryOperator<Type>, ExtendedFunction {
+    }
+
+    @FunctionalInterface
+    public interface SerializablePredicate<T> extends Predicate<T>, Serializable {
+
+    }
+
+    public interface ExtendedSerializablePredicate<T> extends SerializablePredicate<T>, ExtendedFunction {
+
     }
 }

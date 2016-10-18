@@ -71,4 +71,9 @@ public class ReduceDescriptor<Type> extends FunctionDescriptor {
     public BasicDataUnitType<Type> getOutputType() {
         return this.outputType;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s]", this.getClass().getSimpleName(), this.javaImplementation);
+    }
 }

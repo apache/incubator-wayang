@@ -30,8 +30,8 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
     public TransformationDescriptor(FunctionDescriptor.SerializableFunction<Input, Output> javaImplementation,
                                     Class<Input> inputTypeClass,
                                     Class<Output> outputTypeClass,
-                                    LoadEstimator cpuLoadEstimator,
-                                    LoadEstimator ramLoadEstimator) {
+                                    LoadEstimator<?> cpuLoadEstimator,
+                                    LoadEstimator<?> ramLoadEstimator) {
         this(javaImplementation,
                 BasicDataUnitType.createBasic(inputTypeClass),
                 BasicDataUnitType.createBasic(outputTypeClass),
@@ -50,8 +50,8 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
     public TransformationDescriptor(FunctionDescriptor.SerializableFunction<Input, Output> javaImplementation,
                                     BasicDataUnitType<Input> inputType,
                                     BasicDataUnitType<Output> outputType,
-                                    LoadEstimator cpuLoadEstimator,
-                                    LoadEstimator ramLoadEstimator) {
+                                    LoadEstimator<?> cpuLoadEstimator,
+                                    LoadEstimator<?> ramLoadEstimator) {
         super(cpuLoadEstimator, ramLoadEstimator);
         this.javaImplementation = javaImplementation;
         this.inputType = inputType;
@@ -84,5 +84,10 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
 
     public BasicDataUnitType<Output> getOutputType() {
         return this.outputType;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s]", this.getClass().getSimpleName(), this.javaImplementation);
     }
 }

@@ -1,10 +1,8 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.IntersectOperator;
-import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -12,7 +10,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
+import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -33,8 +31,20 @@ public class JavaIntersectOperator<Type>
         super(typeClass);
     }
 
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaIntersectOperator(IntersectOperator<Type> that) {
+        super(that);
+    }
+
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -42,31 +52,37 @@ public class JavaIntersectOperator<Type>
         // 1) Create a probing table for the smaller input. This must be a set to deal with duplicates there.
         // 2) Probe the greater input against the table. Remove on probing to deal with duplicates there.
 
-        final CardinalityEstimate cardinalityEstimate0 = this.getInput(0).getCardinalityEstimate();
-        final CardinalityEstimate cardinalityEstimate1 = this.getInput(0).getCardinalityEstimate();
+        final CardinalityEstimate cardinalityEstimate0 = operatorContext.getInputCardinality(0);
+        final CardinalityEstimate cardinalityEstimate1 = operatorContext.getOutputCardinality(0);
 
         boolean isMaterialize0 = cardinalityEstimate0 != null &&
                 cardinalityEstimate1 != null &&
                 cardinalityEstimate0.getUpperEstimate() <= cardinalityEstimate1.getUpperEstimate();
 
+        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
         final Stream<Type> candidateStream;
         final Set<Type> probingTable;
         if (isMaterialize0) {
             candidateStream = ((JavaChannelInstance) inputs[0]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[1]).provideStream());
+            inputs[0].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+            outputs[0].addPredecessor(inputs[1]);
         } else {
             candidateStream = ((JavaChannelInstance) inputs[1]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[0]).provideStream());
+            inputs[1].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+            outputs[0].addPredecessor(inputs[0]);
         }
 
         Stream<Type> intersectStream = candidateStream.filter(probingTable::remove);
-
-
         ((StreamChannel.Instance) outputs[0]).accept(intersectStream);
+
+        return executedOperatorContexts;
     }
 
     /**
      * Creates a new probing table. The can be altered then.
+     *
      * @param stream for that the probing table should be created
      * @return the probing table
      */
@@ -75,11 +91,8 @@ public class JavaIntersectOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.intersect.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.intersect.load";
     }
 
     @Override
@@ -98,4 +111,5 @@ public class JavaIntersectOperator<Type>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
+
 }

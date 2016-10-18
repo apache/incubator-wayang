@@ -1,35 +1,38 @@
 package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.broadcast.Broadcast;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
-import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Takes care of creating a {@link Broadcast} that can be used later on.
  */
-public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkExecutionOperator {
+public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Type> implements SparkExecutionOperator {
 
-    public SparkBroadcastOperator(DataSetType<Type> type, OperatorContainer operatorContainer) {
-        super(1, 1, false, operatorContainer);
-        this.inputSlots[0] = new InputSlot<>("input", this, type);
-        this.outputSlots[0] = new OutputSlot<>("output", this, type);
+    public SparkBroadcastOperator(DataSetType<Type> type) {
+        super(type, type, false);
+    }
+
+    public SparkBroadcastOperator(SparkBroadcastOperator<Type> that) {
+        super(that);
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -39,6 +42,8 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
         final Collection<?> collection = input.provideCollection();
         final Broadcast<?> broadcast = sparkExecutor.sc.broadcast(collection);
         output.accept(broadcast);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @SuppressWarnings("unchecked")
@@ -48,14 +53,13 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkBroadcastOperator<>(this.getType(), this.getContainer());
+        return new SparkBroadcastOperator<>(this);
     }
 
+
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(org.qcri.rheem.core.api.Configuration configuration) {
-        final String specification = configuration.getStringProperty("rheem.spark.broadcast.load");
-        final NestableLoadProfileEstimator mainEstimator = NestableLoadProfileEstimator.parseSpecification(specification);
-        return Optional.of(mainEstimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.broadcast.load";
     }
 
     @Override
@@ -68,4 +72,5 @@ public class SparkBroadcastOperator<Type> extends OperatorBase implements SparkE
         assert index == 0;
         return Collections.singletonList(BroadcastChannel.DESCRIPTOR);
     }
+
 }

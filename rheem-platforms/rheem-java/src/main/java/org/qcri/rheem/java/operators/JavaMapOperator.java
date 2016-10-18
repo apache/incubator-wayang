@@ -3,9 +3,9 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -13,13 +13,9 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -32,25 +28,36 @@ public class JavaMapOperator<InputType, OutputType>
     /**
      * Creates a new instance.
      */
-    public JavaMapOperator(DataSetType inputType, DataSetType outputType, TransformationDescriptor<InputType, OutputType> functionDescriptor) {
+    public JavaMapOperator(DataSetType<InputType> inputType,
+                           DataSetType<OutputType> outputType,
+                           TransformationDescriptor<InputType, OutputType> functionDescriptor) {
         super(functionDescriptor, inputType, outputType);
     }
 
-    @Override
-    public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
-        final Function<InputType, OutputType> udf = compiler.compile(this.functionDescriptor);
-        JavaExecutor.openFunction(this, udf, inputs);
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public JavaMapOperator(MapOperator<InputType, OutputType> that) {
+        super(that);
     }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+        final JavaChannelInstance input = (JavaChannelInstance) inputs[0];
+        final StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 
-        final Function<InputType, OutputType> function = compiler.compile(this.functionDescriptor);
-        JavaExecutor.openFunction(this, function, inputs);
+        final Function<InputType, OutputType> function = javaExecutor.getCompiler().compile(this.functionDescriptor);
+        JavaExecutor.openFunction(this, function, inputs, operatorContext);
+        output.accept(input.<InputType>provideStream().map(function));
 
-        ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<InputType>provideStream().map(function));
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -58,16 +65,18 @@ public class JavaMapOperator<InputType, OutputType>
         return new JavaMapOperator<>(this.getInputType(), this.getOutputType(), this.getFunctionDescriptor());
     }
 
-    @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator operatorEstimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.map.load")
-        );
-        final LoadProfileEstimator functionEstimator =
-                configuration.getFunctionLoadProfileEstimatorProvider().provideFor(this.getFunctionDescriptor());
-        operatorEstimator.nest(functionEstimator);
 
-        return Optional.of(operatorEstimator);
+    @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.map.load";
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.functionDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override
@@ -82,4 +91,5 @@ public class JavaMapOperator<InputType, OutputType>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
     }
+
 }

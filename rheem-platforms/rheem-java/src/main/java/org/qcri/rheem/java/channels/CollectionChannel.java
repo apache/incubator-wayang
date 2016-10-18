@@ -1,5 +1,6 @@
 package org.qcri.rheem.java.channels;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
@@ -36,8 +37,10 @@ public class CollectionChannel extends Channel {
     }
 
     @Override
-    public Instance createInstance(Executor executor) {
-        return new Instance(executor);
+    public Instance createInstance(Executor executor,
+                                   OptimizationContext.OperatorContext producerOperatorContext,
+                                   int producerOutputIndex) {
+        return new Instance(executor, producerOperatorContext, producerOutputIndex);
     }
 
     /**
@@ -47,8 +50,8 @@ public class CollectionChannel extends Channel {
 
         private Collection<?> collection;
 
-        public Instance(Executor executor) {
-            super(executor);
+        public Instance(Executor executor, OptimizationContext.OperatorContext producerOperatorContext, int producerOutputIndex) {
+            super(executor, producerOperatorContext, producerOutputIndex);
         }
 
         public void accept(Collection<?> collection) {

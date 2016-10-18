@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.test;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -29,7 +30,9 @@ public class DummyExternalReusableChannel extends Channel {
     }
 
     @Override
-    public ChannelInstance createInstance(Executor executor) {
+    public ChannelInstance createInstance(Executor executor,
+                                          OptimizationContext.OperatorContext producerOperatorContext,
+                                          int producerOutputIndex) {
         throw new UnsupportedOperationException();
     }
 }

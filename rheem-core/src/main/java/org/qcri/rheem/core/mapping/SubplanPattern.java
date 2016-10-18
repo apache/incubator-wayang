@@ -44,7 +44,7 @@ public class SubplanPattern extends OperatorBase {
      * Creates a new instance.
      */
     private SubplanPattern(OperatorPattern inputPattern, OperatorPattern outputPattern) {
-        super(inputPattern.getAllInputs(), outputPattern.getAllOutputs(), false, null);
+        super(inputPattern.getAllInputs(), outputPattern.getAllOutputs(), false);
         this.inputPattern = inputPattern;
         this.outputPattern = outputPattern;
     }
@@ -115,10 +115,9 @@ public class SubplanPattern extends OperatorBase {
          */
         public List<SubplanMatch> match(RheemPlan plan) {
             // Start an attempt to match from each operator that is upstream-reachable from one of the RheemPlan sinks.
-            PlanTraversal.upstream()
+            PlanTraversal.upstream().traversingHierarchically()
                     .withCallback(this::attemptMatchFrom)
                     .traverse(plan.getSinks());
-            // TODO: Traverse subplans and alternatives correctly!
             return this.matches;
         }
 
@@ -157,64 +156,39 @@ public class SubplanPattern extends OperatorBase {
                 throw new RheemException("Cannot match pattern: Operator with more than one occupied input not supported, yet.");
             }
 
-            if (operator instanceof Subplan) {
-                // Delegate to the inner part of the Subplan.
-                if (trackedOutputSlot == null) {
-                    PlanTraversal.upstream()
-                            .withCallback(this::attemptMatchFrom)
-                            .traverse(((Subplan) operator).getSink());
-                } else {
-                    final OutputSlot<?> innerOutputSlot = ((Subplan) operator).traceOutput(trackedOutputSlot);
-                    PlanTraversal.upstream()
-                            .withCallback(this::attemptMatchFrom)
-                            .traverse(innerOutputSlot.getOwner(), null, innerOutputSlot);
+
+            // We expect a regular Operator here.
+            // Try to match the co-iterated operator (pattern).
+            assert operator.isElementary();
+            final OperatorMatch operatorMatch = pattern.match(operator);
+            if (operatorMatch == null) {
+                // If match was not successful, abort. NB: This might change if we have, like, real graph patterns.
+                return;
+            }
+
+            subplanMatch.addOperatorMatch(operatorMatch);
+
+            // Now we need to go further upstream and try to match all the input OperatorPatterns.
+            // NB: As of now, that should be exactly one (see top).
+            boolean hasInputOperatorPatterns = false;
+            for (int inputIndex = 0; inputIndex < pattern.getNumInputs(); inputIndex++) {
+                final OutputSlot<?> patternOccupant = pattern.getEffectiveOccupant(pattern.getInput(inputIndex));
+                if (patternOccupant == null) {
+                    continue;
+                }
+                final OperatorPattern inputOperatorPattern = (OperatorPattern) patternOccupant.getOwner();
+
+                hasInputOperatorPatterns = true;
+                final InputSlot<?> outerInputSlot = operator.getOutermostInputSlot(operator.getInput(inputIndex));
+                final OutputSlot<?> occupant = outerInputSlot.getOccupant();
+                if (occupant != null) {
+                    this.match(inputOperatorPattern, occupant.getOwner(), occupant, subplanMatch);
                 }
 
-            } else if (operator instanceof OperatorAlternative) {
-                // Delegate to all Alternatives of the OperatorAlternative.
-                // TODO: This code is different from above. Is it still correct?
-                for (OperatorAlternative.Alternative alternative : ((OperatorAlternative) operator).getAlternatives()) {
-                    SubplanMatch subplanMatchCopy = new SubplanMatch(subplanMatch);
-                    if (trackedOutputSlot == null) {
-                        this.match(pattern, alternative.getSink(), trackedOutputSlot, subplanMatchCopy);
-                    } else {
-                        final OutputSlot<?> innerOutputSlot = alternative.traceOutput(trackedOutputSlot);
-                        this.match(pattern, innerOutputSlot.getOwner(), innerOutputSlot, subplanMatchCopy);
-                    }
-                }
+            }
 
-            } else {
-                // We expect a regular Operator here.
-                // Try to match the co-iterated operator (pattern).
-                if (operator.getEpoch() < this.minEpoch) {
-                    return;
-                }
-                final OperatorMatch operatorMatch = pattern.match(operator);
-                if (operatorMatch == null) {
-                    // If match was not successful, abort. NB: This might change if we have, like, real graph patterns.
-                    return;
-                }
-
-                subplanMatch.addOperatorMatch(operatorMatch);
-
-                // Now we need to go further upstream and try to match all the input OperatorPatterns.
-                // NB: As of now, that should be exactly one (see top).
-                boolean hasInputOperatorPatterns = false;
-                for (int inputIndex = 0; inputIndex < pattern.getNumInputs(); inputIndex++) {
-                    final OperatorPattern inputOperatorPattern = (OperatorPattern) pattern.getInputOperator(inputIndex);
-                    if (inputOperatorPattern == null) {
-                        continue;
-                    }
-                    hasInputOperatorPatterns = true;
-                    final InputSlot<?> outerInputSlot = operator.getOutermostInputSlot(operator.getInput(inputIndex));
-                    final OutputSlot<?> occupant = outerInputSlot.getOccupant();
-                    if (occupant != null) {
-                        this.match(inputOperatorPattern, occupant.getOwner(), occupant, subplanMatch);
-                    }
-
-                }
-
-                if (!hasInputOperatorPatterns) {
+            if (!hasInputOperatorPatterns) {
+                if (subplanMatch.getMaximumEpoch() >= this.minEpoch) {
                     this.matches.add(subplanMatch);
                 }
             }

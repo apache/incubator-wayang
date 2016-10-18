@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.optimizer;
 
+import org.qcri.rheem.core.util.Formats;
+
 import java.util.Objects;
 
 /***
@@ -50,7 +52,11 @@ public class ProbabilisticIntervalEstimate {
     }
 
     public long getAverageEstimate() {
-        return this.getLowerEstimate() + (this.getUpperEstimate() - this.getLowerEstimate()) / 2;
+        return (this.getUpperEstimate() + this.getLowerEstimate()) / 2;
+    }
+
+    public long getGeometricMeanEstimate() {
+        return Math.round(Math.pow((double) this.getLowerEstimate() * (double) this.getUpperEstimate(), 0.5));
     }
 
     public double getCorrectnessProbability() {
@@ -100,7 +106,8 @@ public class ProbabilisticIntervalEstimate {
 
     @Override
     public String toString() {
-        return String.format("%s[%d..%d, %.1f%%]", this.getClass().getSimpleName(),
-                this.lowerEstimate, this.upperEstimate, this.correctnessProb * 100d);
+        return String.format("%s[%s..%s, %s]", this.getClass().getSimpleName(),
+                Formats.formatLarge(this.lowerEstimate), Formats.formatLarge(this.upperEstimate), Formats.formatPercentage(this.correctnessProb)
+        );
     }
 }

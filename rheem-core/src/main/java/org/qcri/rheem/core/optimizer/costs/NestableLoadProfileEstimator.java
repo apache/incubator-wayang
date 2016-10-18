@@ -1,127 +1,39 @@
 package org.qcri.rheem.core.optimizer.costs;
 
-import org.json.JSONObject;
-import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.util.JuelUtils;
+import org.qcri.rheem.core.util.Tuple;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
-import java.util.function.ToLongBiFunction;
+import java.util.function.Function;
+import java.util.function.ToDoubleBiFunction;
 
 /**
  * {@link LoadProfileEstimator} that can host further {@link LoadProfileEstimator}s.
  */
-public class NestableLoadProfileEstimator implements LoadProfileEstimator {
+public class NestableLoadProfileEstimator<Artifact> implements LoadProfileEstimator<Artifact> {
 
-    private final LoadEstimator cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator;
+    /**
+     * {@link LoadEstimator} to estimate a certain aspect of the {@link LoadProfile}s for the {@code Artifact}.
+     */
+    private final LoadEstimator<Artifact> cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator;
 
     /**
      * The degree to which the load profile can utilize available resources.
      */
-    private final double resourceUtilization;
+    private final ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator;
 
     /**
      * Milliseconds overhead that this load profile incurs.
      */
     private final long overheadMillis;
 
-    private Collection<LoadProfileEstimator> nestedLoadEstimators = new LinkedList<>();
-
     /**
-     * Creates a new instance from a specification {@link String}. Valid specifications are as follows:
-     * <pre>
-     *     {"cpu":&lt;JUEL expression&gt;,
-     *      "ram":&lt;JUEL expression&gt;,
-     *      "disk":&lt;JUEL expression&gt;,
-     *      "network":&lt;JUEL expression&gt;,
-     *      "in":&lt;#inputs&gt;,
-     *      "out":&lt;#outputs&gt;,
-     *      "p":&lt;correctness probability&gt;,
-     *      "overhead":&lt;overhead in milliseconds&gt;,
-     *      "ru":&lt;resource utilization&gt;
-     *      }
-     * </pre>
-     * The JUEL expressions accept as parameters {@code in0}, {@code in1} a.s.o. for the input cardinalities and
-     * {@code out0}, {@code out1} a.s.o. for the output cardinalities.
-     *
-     * @param jsonJuelSpec a specification that adheres to above format
-     * @return the new instance
+     * Nested {@link LoadProfileEstimator}s together with a {@link Function} to extract the estimated
+     * {@code Artifact} from the {@code Artifact}s subject to this instance.
      */
-    public static NestableLoadProfileEstimator parseSpecification(String jsonJuelSpec) {
-        try {
-            final JSONObject spec = new JSONObject(jsonJuelSpec);
-            int numInputs = spec.getInt("in");
-            int numOutputs = spec.getInt("out");
-            double correctnessProb = spec.getDouble("p");
+    private Collection<Tuple<Function<Artifact, ?>, LoadProfileEstimator<?>>> nestedEstimators = new LinkedList<>();
 
-            LoadEstimator cpuEstimator = new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseJuel(spec.getString("cpu"), numInputs, numOutputs)
-            );
-            LoadEstimator ramEstimator = new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseJuel(spec.getString("ram"), numInputs, numOutputs)
-            );
-            LoadEstimator diskEstimator = !spec.has("disk") ? null : new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseJuel(spec.getString("disk"), numInputs, numOutputs)
-            );
-            LoadEstimator networkEstimator = !spec.has("network") ? null : new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseJuel(spec.getString("network"), numInputs, numOutputs)
-            );
-
-            long overhead = spec.has("overhead") ? spec.getLong("overhead") : 0L;
-            double resourceUtilization = spec.has("ru") ? spec.getDouble("ru") : 1d;
-            return new NestableLoadProfileEstimator(
-                    cpuEstimator,
-                    ramEstimator,
-                    diskEstimator,
-                    networkEstimator,
-                    resourceUtilization,
-                    overhead
-            );
-        } catch (Exception e) {
-            throw new RheemException(String.format("Could not initialize from specification \"%s\".", jsonJuelSpec), e);
-        }
-    }
-
-    private static ToLongBiFunction<long[], long[]> parseJuel(String juel, int numInputs, int numOutputs) {
-        final Map<String, Class<?>> parameterClasses = new HashMap<>(numOutputs + numOutputs);
-        for (int i = 0; i < numInputs; i++) {
-            parameterClasses.put("in" + i, Long.class);
-        }
-        for (int i = 0; i < numOutputs; i++) {
-            parameterClasses.put("out" + i, Long.class);
-        }
-        final JuelUtils.JuelFunction<Long> juelFunction = new JuelUtils.JuelFunction<>(juel, Long.class, parameterClasses);
-        return (inCards, outCards) -> {
-            final Map<String, Object> parameters = new HashMap<>(numOutputs + numOutputs);
-            for (int i = 0; i < numInputs; i++) {
-                parameters.put("in" + i, inCards[i]);
-            }
-            for (int i = 0; i < numOutputs; i++) {
-                parameters.put("out" + i, outCards[i]);
-            }
-            return juelFunction.apply(parameters);
-        };
-    }
 
     /**
      * Creates an new instance.
@@ -129,7 +41,7 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
      * @param cpuLoadEstimator estimates CPU load in terms of cycles
      * @param ramLoadEstimator estimates RAM load in terms of MB
      */
-    public NestableLoadProfileEstimator(LoadEstimator cpuLoadEstimator, LoadEstimator ramLoadEstimator) {
+    public NestableLoadProfileEstimator(LoadEstimator<Artifact> cpuLoadEstimator, LoadEstimator<Artifact> ramLoadEstimator) {
         this(cpuLoadEstimator, ramLoadEstimator, null, null);
     }
 
@@ -141,109 +53,142 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
      * @param diskLoadEstimator    estimates disk accesses in terms of bytes
      * @param networkLoadEstimator estimates network in terms of bytes
      */
-    public NestableLoadProfileEstimator(LoadEstimator cpuLoadEstimator,
-                                        LoadEstimator ramLoadEstimator,
-                                        LoadEstimator diskLoadEstimator,
-                                        LoadEstimator networkLoadEstimator) {
-        this(cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator, 1d, 0L);
+    public NestableLoadProfileEstimator(LoadEstimator<Artifact> cpuLoadEstimator,
+                                        LoadEstimator<Artifact> ramLoadEstimator,
+                                        LoadEstimator<Artifact> diskLoadEstimator,
+                                        LoadEstimator<Artifact> networkLoadEstimator) {
+        this(cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator, (in, out) -> 1d, 0L);
     }
 
     /**
      * Creates an new instance.
      *
-     * @param cpuLoadEstimator     estimates CPU load in terms of cycles
-     * @param ramLoadEstimator     estimates RAM load in terms of bytes
-     * @param diskLoadEstimator    estimates disk accesses in terms of bytes
-     * @param networkLoadEstimator estimates network in terms of bytes
-     * @param resourceUtilization  degree to which the load profile can utilize available resources
-     * @param overheadMillis       overhead that this load profile incurs
+     * @param cpuLoadEstimator             estimates CPU load in terms of cycles
+     * @param ramLoadEstimator             estimates RAM load in terms of bytes
+     * @param diskLoadEstimator            estimates disk accesses in terms of bytes
+     * @param networkLoadEstimator         estimates network in terms of bytes
+     * @param resourceUtilizationEstimator degree to which the load profile can utilize available resources
+     * @param overheadMillis               overhead that this load profile incurs
      */
-    public NestableLoadProfileEstimator(LoadEstimator cpuLoadEstimator,
-                                        LoadEstimator ramLoadEstimator,
-                                        LoadEstimator diskLoadEstimator,
-                                        LoadEstimator networkLoadEstimator,
-                                        double resourceUtilization,
+    public NestableLoadProfileEstimator(LoadEstimator<Artifact> cpuLoadEstimator,
+                                        LoadEstimator<Artifact> ramLoadEstimator,
+                                        LoadEstimator<Artifact> diskLoadEstimator,
+                                        LoadEstimator<Artifact> networkLoadEstimator,
+                                        ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator,
                                         long overheadMillis) {
         this.cpuLoadEstimator = cpuLoadEstimator;
         this.ramLoadEstimator = ramLoadEstimator;
         this.diskLoadEstimator = diskLoadEstimator;
         this.networkLoadEstimator = networkLoadEstimator;
-        this.resourceUtilization = resourceUtilization;
+        this.resourceUtilizationEstimator = resourceUtilizationEstimator;
         this.overheadMillis = overheadMillis;
     }
 
-    public void nest(LoadProfileEstimator nestedEstimator) {
-        this.nestedLoadEstimators.add(nestedEstimator);
-    }
-
-    @Override
-    public LoadProfile estimate(OptimizationContext.OperatorContext operatorContext) {
-        return this.estimate(
-                operatorContext.getInputCardinalities(),
-                operatorContext.getOutputCardinalities(),
-                operatorContext.getNumExecutions()
-        );
-    }
-
-    @Override
-    public LoadProfile estimate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates, int numExecutions) {
-        CardinalityEstimate[] normalizedInputEstimates = normalize(inputEstimates, numExecutions);
-        CardinalityEstimate[] normalizedOutputEstimates = normalize(outputEstimates, numExecutions);
-        final LoadProfile mainLoadProfile = this.performLocalEstimation(normalizedInputEstimates, normalizedOutputEstimates);
-        this.performNestedEstimations(normalizedInputEstimates, normalizedOutputEstimates, mainLoadProfile);
-        return mainLoadProfile.timesSequential(numExecutions);
+    /**
+     * Nest a {@link LoadProfileEstimator} in this instance. No artifact will be available to it, though.
+     *
+     * @param nestedEstimator  the {@link LoadProfileEstimator} that should be nested
+     * @param <NestedArtifact> the type of sub-artifact
+     * @see #nest(LoadProfileEstimator, Function)
+     */
+    public <NestedArtifact> void nest(LoadProfileEstimator<NestedArtifact> nestedEstimator) {
+        this.nest(nestedEstimator, artifact -> null);
     }
 
     /**
-     * Normalize the given estimates by dividing them by a number of executions.
+     * Nest a {@link LoadProfileEstimator} in this instance. No artifact will be available to it, though.
      *
-     * @param estimates     that should be normalized
-     * @param numExecutions the number execution
-     * @return the normalized estimates (and {@code estimates} if {@code numExecution == 1}
+     * @param nestedEstimator          the {@link LoadProfileEstimator} that should be nested
+     * @param nestedArtifactExtraction from the artifact of this instance, extract the sub-artifact for the {@code nestedEstimator}
+     * @param <NestedArtifact>         the type of sub-artifact
      */
-    private static CardinalityEstimate[] normalize(CardinalityEstimate[] estimates, int numExecutions) {
-        if (numExecutions == 1 || estimates.length == 0) return estimates;
+    public <NestedArtifact> void nest(LoadProfileEstimator<NestedArtifact> nestedEstimator,
+                                      Function<Artifact, NestedArtifact> nestedArtifactExtraction) {
+        this.nestedEstimators.add(new Tuple<>(nestedArtifactExtraction, nestedEstimator));
+    }
 
-        CardinalityEstimate[] normalizedEstimates = new CardinalityEstimate[estimates.length];
+    @Override
+    public LoadProfile estimate(Artifact artifact,
+                                CardinalityEstimate[] inputCardinalities,
+                                CardinalityEstimate[] outputCardinalities) {
+        // Estimate the load for the very artifact.
+        final LoadProfile mainLoadProfile = this.performLocalEstimation(artifact, inputCardinalities, outputCardinalities);
+
+        // Estiamte the load for any nested artifacts.
+        for (Tuple<Function<Artifact, ?>, LoadProfileEstimator<?>> nestedEstimatorDescriptor : this.nestedEstimators) {
+            Object nestedArtifact = nestedEstimatorDescriptor.getField0().apply(artifact);
+            @SuppressWarnings("unchecked")
+            LoadProfileEstimator<Object> nestedEstimator = (LoadProfileEstimator<Object>) nestedEstimatorDescriptor.getField1();
+            LoadProfile nestedProfile = nestedEstimator.estimate(nestedArtifact, inputCardinalities, outputCardinalities);
+            mainLoadProfile.nest(nestedProfile);
+        }
+
+        // Return the complete LoadProfile.
+        return mainLoadProfile;
+    }
+
+    /**
+     * Perform the estimation for the very {@code artifact}, i.e., without any nested artifacts.
+     *
+     * @param artifact        the subject to estimation
+     * @param inputEstimates  input {@link CardinalityEstimate}s for the estimation
+     * @param outputEstimates output {@link CardinalityEstimate}s for the estimation
+     * @return the {@link LoadProfile} for the {@code artifact}
+     */
+    private LoadProfile performLocalEstimation(Artifact artifact,
+                                               CardinalityEstimate[] inputEstimates,
+                                               CardinalityEstimate[] outputEstimates) {
+        final LoadEstimate cpuLoadEstimate = this.cpuLoadEstimator.calculate(artifact, inputEstimates, outputEstimates);
+        final LoadEstimate ramLoadEstimate = this.ramLoadEstimator.calculate(artifact, inputEstimates, outputEstimates);
+        final LoadEstimate diskLoadEstimate = this.diskLoadEstimator == null ?
+                null :
+                this.diskLoadEstimator.calculate(artifact, inputEstimates, outputEstimates);
+        final LoadEstimate networkLoadEstimate = this.networkLoadEstimator == null ?
+                null :
+                this.networkLoadEstimator.calculate(artifact, inputEstimates, outputEstimates);
+        final double resourceUtilization = this.estimateResourceUtilization(inputEstimates, outputEstimates);
+        return new LoadProfile(
+                cpuLoadEstimate,
+                ramLoadEstimate,
+                networkLoadEstimate,
+                diskLoadEstimate,
+                resourceUtilization,
+                this.getOverheadMillis()
+        );
+    }
+
+    /**
+     * Estimates the resource utilization.
+     *
+     * @param inputEstimates  input {@link CardinalityEstimate}s
+     * @param outputEstimates output {@link CardinalityEstimate}s
+     * @return the estimated resource utilization
+     */
+    private double estimateResourceUtilization(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
+        long[] avgInputEstimates = extractMeanValues(inputEstimates);
+        long[] avgOutputEstimates = extractMeanValues(outputEstimates);
+        return this.resourceUtilizationEstimator.applyAsDouble(avgInputEstimates, avgOutputEstimates);
+    }
+
+    /**
+     * Extracts the geometric mean values of the given {@link CardinalityEstimate}s.
+     *
+     * @param estimates the input {@link CardinalityEstimate}s
+     * @return an array containing the average estimates
+     * @see CardinalityEstimate#getGeometricMeanEstimate()
+     */
+    private static long[] extractMeanValues(CardinalityEstimate[] estimates) {
+        long[] averages = new long[estimates.length];
         for (int i = 0; i < estimates.length; i++) {
-            final CardinalityEstimate estimate = estimates[i];
-            if (estimate != null) normalizedEstimates[i] = estimate.divideBy(numExecutions);
+            CardinalityEstimate inputEstimate = estimates[i];
+            if (inputEstimate == null) inputEstimate = CardinalityEstimate.EMPTY_ESTIMATE;
+            averages[i] = inputEstimate.getGeometricMeanEstimate();
         }
-
-        return normalizedEstimates;
+        return averages;
     }
 
-    private LoadProfile performLocalEstimation(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
-        final LoadEstimate cpuLoadEstimate = this.cpuLoadEstimator.calculate(inputEstimates, outputEstimates);
-        final LoadEstimate ramLoadEstimate = this.ramLoadEstimator.calculate(inputEstimates, outputEstimates);
-        final LoadEstimate diskLoadEstimate = this.diskLoadEstimator == null ? null :
-                this.diskLoadEstimator.calculate(inputEstimates, outputEstimates);
-        final LoadEstimate networkLoadEstimate = this.networkLoadEstimator == null ? null :
-                this.networkLoadEstimator.calculate(inputEstimates, outputEstimates);
-        final LoadProfile loadProfile = new LoadProfile(cpuLoadEstimate, ramLoadEstimate, networkLoadEstimate, diskLoadEstimate);
-        if (this.getOverheadMillis() > 0) {
-            loadProfile.setOverheadMillis(this.getOverheadMillis());
-        }
-        if (this.getResourceUtilization() < 1d) {
-            loadProfile.setRatioMachines(this.getResourceUtilization());
-        }
-        return loadProfile;
-    }
-
-    private void performNestedEstimations(CardinalityEstimate[] normalizedInputEstimates,
-                                          CardinalityEstimate[] normalizedOutputEstimates,
-                                          LoadProfile mainLoadProfile) {
-        for (LoadProfileEstimator nestedLoadEstimator : this.nestedLoadEstimators) {
-            final LoadProfile subprofile = nestedLoadEstimator.estimate(normalizedInputEstimates, normalizedOutputEstimates, 1);
-            mainLoadProfile.nest(subprofile);
-        }
-    }
-
-    public long getOverheadMillis() {
+    private long getOverheadMillis() {
         return this.overheadMillis;
     }
 
-    public double getResourceUtilization() {
-        return this.resourceUtilization;
-    }
 }

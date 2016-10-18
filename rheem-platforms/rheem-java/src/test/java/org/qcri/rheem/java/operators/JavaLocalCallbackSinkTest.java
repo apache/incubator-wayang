@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -27,7 +26,7 @@ public class JavaLocalCallbackSinkTest extends JavaExecutionOperatorTestBase {
         // Execute.
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createCollectionChannelInstance(inputValues)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{};
-        sink.evaluate(inputs, outputs, new FunctionCompiler(configuration));
+        evaluate(sink, inputs, outputs);
 
         // Verify the outcome.
         Assert.assertEquals(collector, inputValues);

@@ -4,15 +4,11 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
-import org.qcri.rheem.core.optimizer.costs.LoadProfile;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.util.RheemArrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,31 +21,20 @@ import java.util.stream.Stream;
  * <p>A single {@link Operator} can have multiple contexts in a {@link RheemPlan} - namely if it appears in a loop.
  * We manage these contexts in a hierarchical fashion.</p>
  */
-public class OptimizationContext {
+public abstract class OptimizationContext {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
      * The instance in that this instance is nested - or {@code null} if it is top-level.
      */
-    private final LoopContext hostLoopContext;
+    protected final LoopContext hostLoopContext;
 
     /**
      * The iteration number of this instance within its {@link #hostLoopContext} (starting from {@code 0}) - or {@code -1}
      * if there is no {@link #hostLoopContext}.
      */
-    private final int iterationNumber;
-
-    /**
-     * {@link OperatorContext}s of one-time {@link Operator}s (i.e., that are not nested in a loop).
-     */
-    private final Map<Operator, OperatorContext> operatorContexts = new HashMap<>();
-
-    /**
-     * {@link LoopContext}s of one-time {@link LoopSubplan}s (i.e., that are not
-     * nested in a loop themselves).
-     */
-    private final Map<LoopSubplan, LoopContext> loopContexts = new HashMap<>();
+    private int iterationNumber;
 
     /**
      * Forked {@link OptimizationContext}s can have a base.
@@ -84,25 +69,6 @@ public class OptimizationContext {
     }
 
     /**
-     * Forks an {@link OptimizationContext} by providing a write-layer on top of the {@code base}.
-     */
-    public OptimizationContext(OptimizationContext base) {
-        this(base.configuration, base, base.hostLoopContext, base.iterationNumber, base.channelConversionGraph, base.pruningStrategies);
-    }
-
-    /**
-     * Create a new instance.
-     *
-     * @param rheemPlan that the new instance should describe; loops should already be isolated
-     */
-    public OptimizationContext(RheemPlan rheemPlan, Configuration configuration) {
-        this(configuration, null, null, -1, new ChannelConversionGraph(configuration), initializePruningStrategies(configuration));
-        PlanTraversal.upstream()
-                .withCallback(this::addOneTimeOperator)
-                .traverse(rheemPlan.getSinks());
-    }
-
-    /**
      * Creates a new instance. Useful for testing.
      *
      * @param operator the single {@link Operator} of this instance
@@ -125,9 +91,9 @@ public class OptimizationContext {
     /**
      * Base constructor.
      */
-    private OptimizationContext(Configuration configuration, OptimizationContext base, LoopContext hostLoopContext,
-                                int iterationNumber, ChannelConversionGraph channelConversionGraph,
-                                List<PlanEnumerationPruningStrategy> pruningStrategies) {
+    protected OptimizationContext(Configuration configuration, OptimizationContext base, LoopContext hostLoopContext,
+                                  int iterationNumber, ChannelConversionGraph channelConversionGraph,
+                                  List<PlanEnumerationPruningStrategy> pruningStrategies) {
         this.configuration = configuration;
         this.base = base;
         this.hostLoopContext = hostLoopContext;
@@ -153,22 +119,7 @@ public class OptimizationContext {
      * add its encased {@link Operator}s.
      * Potentially invoke {@link #addOneTimeLoop(OperatorContext)} as well.
      */
-    public OperatorContext addOneTimeOperator(Operator operator) {
-        final OperatorContext operatorContext = new OperatorContext(operator);
-        this.operatorContexts.put(operator, operatorContext);
-        if (!operator.isElementary()) {
-            if (operator.isLoopSubplan()) {
-                this.addOneTimeLoop(operatorContext);
-            } else if (operator.isAlternative()) {
-                final OperatorAlternative operatorAlternative = (OperatorAlternative) operator;
-                operatorAlternative.getAlternatives().forEach(this::addOneTimeOperators);
-            } else {
-                assert operator.isSubplan();
-                this.addOneTimeOperators((Subplan) operator);
-            }
-        }
-        return operatorContext;
-    }
+    public abstract OperatorContext addOneTimeOperator(Operator operator);
 
     /**
      * Add {@link OperatorContext}s for all the contained {@link Operator}s of the {@code container}.
@@ -189,9 +140,7 @@ public class OptimizationContext {
     /**
      * Add {@link OptimizationContext}s for the {@code loop} that is executed once within this instance.
      */
-    public void addOneTimeLoop(OperatorContext operatorContext) {
-        this.loopContexts.put((LoopSubplan) operatorContext.getOperator(), new LoopContext(operatorContext));
-    }
+    public abstract void addOneTimeLoop(OperatorContext operatorContext);
 
     /**
      * Return the {@link OperatorContext} of the {@code operator}.
@@ -199,28 +148,12 @@ public class OptimizationContext {
      * @param operator a one-time {@link Operator} (i.e., not in a nested loop)
      * @return the {@link OperatorContext} for the {@link Operator} or {@code null} if none
      */
-    public OperatorContext getOperatorContext(Operator operator) {
-        OperatorContext operatorContext = this.operatorContexts.get(operator);
-        if (operatorContext == null) {
-            if (this.base != null) {
-                operatorContext = this.base.getOperatorContext(operator);
-            } else if (this.hostLoopContext != null) {
-                operatorContext = this.hostLoopContext.getOptimizationContext().getOperatorContext(operator);
-            }
-        }
-        return operatorContext;
-    }
+    public abstract OperatorContext getOperatorContext(Operator operator);
 
     /**
      * Retrieve the {@link LoopContext} for the {@code loopSubplan}.
      */
-    public LoopContext getNestedLoopContext(LoopSubplan loopSubplan) {
-        LoopContext loopContext = this.loopContexts.get(loopSubplan);
-        if (loopContext == null && this.base != null) {
-            loopContext = this.base.getNestedLoopContext(loopSubplan);
-        }
-        return loopContext;
-    }
+    public abstract LoopContext getNestedLoopContext(LoopSubplan loopSubplan);
 
     /**
      * @return if this instance describes an iteration within a {@link LoopSubplan}, return the number of that iteration
@@ -250,6 +183,15 @@ public class OptimizationContext {
     }
 
     /**
+     * Retrieve the {@link LoopContext} in which this instance resides.
+     *
+     * @return the {@link LoopContext} or {@code null} if none
+     */
+    public LoopContext getLoopContext() {
+        return this.hostLoopContext;
+    }
+
+    /**
      * @return if this instance describes an iteration within a {@link LoopSubplan}, return the instance in which
      * this instance is nested
      */
@@ -258,7 +200,7 @@ public class OptimizationContext {
     }
 
     public OptimizationContext getNextIterationContext() {
-        assert this.hostLoopContext != null;
+        assert this.hostLoopContext != null : String.format("%s is the last iteration.", this);
         assert !this.isFinalIteration();
         return this.hostLoopContext.getIterationContexts().get(this.iterationNumber + 1);
     }
@@ -266,12 +208,7 @@ public class OptimizationContext {
     /**
      * Calls {@link OperatorContext#clearMarks()} for all nested {@link OperatorContext}s.
      */
-    public void clearMarks() {
-        this.operatorContexts.values().forEach(OperatorContext::clearMarks);
-        this.loopContexts.values().stream()
-                .flatMap(loopCtx -> loopCtx.getIterationContexts().stream())
-                .forEach(OptimizationContext::clearMarks);
-    }
+    public abstract void clearMarks();
 
     public Configuration getConfiguration() {
         return this.configuration;
@@ -280,36 +217,12 @@ public class OptimizationContext {
     /**
      * @return the {@link OperatorContext}s of this instance (exclusive of any base instance)
      */
-    public Map<Operator, OperatorContext> getLocalOperatorContexts() {
-        return this.operatorContexts;
-    }
+    public abstract Map<Operator, OperatorContext> getLocalOperatorContexts();
 
     /**
      * @return whether there is {@link TimeEstimate} for each {@link ExecutionOperator}
      */
-    public boolean isTimeEstimatesComplete() {
-        boolean isComplete = true;
-        for (OperatorContext operatorContext : operatorContexts.values()) {
-            if (operatorContext.getOperator().isExecutionOperator()
-                    && operatorContext.getTimeEstimate() == null
-                    && RheemArrays.anyMatch(operatorContext.getOutputCardinalities(), Objects::nonNull)) {
-                this.logger.warn("No TimeEstimate for {}.", operatorContext);
-                isComplete = false;
-            }
-        }
-
-        if (this.base != null) {
-            isComplete &= this.base.isTimeEstimatesComplete();
-        }
-
-        for (LoopContext loopContext : this.loopContexts.values()) {
-            for (OptimizationContext iterationContext : loopContext.getIterationContexts()) {
-                isComplete &= iterationContext.isTimeEstimatesComplete();
-            }
-        }
-
-        return isComplete;
-    }
+    public abstract boolean isTimeEstimatesComplete();
 
     public ChannelConversionGraph getChannelConversionGraph() {
         return this.channelConversionGraph;
@@ -319,9 +232,32 @@ public class OptimizationContext {
         return this.base;
     }
 
+    public abstract void mergeToBase();
+
     public List<PlanEnumerationPruningStrategy> getPruningStrategies() {
         return this.pruningStrategies;
     }
+
+    /**
+     * Get the top-level parent containing this instance.
+     *
+     * @return the top-level parent, which can also be this instance
+     */
+    public OptimizationContext getRootParent() {
+        OptimizationContext optimizationContext = this;
+        while (true) {
+            final OptimizationContext parent = optimizationContext.getParent();
+            if (parent == null) return optimizationContext;
+            optimizationContext = parent;
+        }
+    }
+
+    /**
+     * Get the {@link DefaultOptimizationContext}s represented by this instance.
+     *
+     * @return a {@link Collection} of said {@link DefaultOptimizationContext}s
+     */
+    public abstract Collection<DefaultOptimizationContext> getDefaultOptimizationContexts();
 
     /**
      * Represents a single optimization context of an {@link Operator}. This can be thought of as a single, virtual
@@ -353,7 +289,7 @@ public class OptimizationContext {
         /**
          * {@link TimeEstimate} for the {@link ExecutionState}.
          */
-        private TimeEstimate timeEstimate;
+        protected TimeEstimate timeEstimate;
 
         /**
          * Reflects the number of executions of the {@link #operator}. This, e.g., relevant in {@link LoopContext}s.
@@ -363,7 +299,7 @@ public class OptimizationContext {
         /**
          * Creates a new instance.
          */
-        private OperatorContext(Operator operator) {
+        protected OperatorContext(Operator operator) {
             this.operator = operator;
             this.inputCardinalities = new CardinalityEstimate[this.operator.getNumInputs()];
             this.inputCardinalityMarkers = new boolean[this.inputCardinalities.length];
@@ -413,12 +349,15 @@ public class OptimizationContext {
          */
         public void setInputCardinality(int inputIndex, CardinalityEstimate cardinality) {
             this.inputCardinalityMarkers[inputIndex] |= !Objects.equals(this.inputCardinalities[inputIndex], cardinality);
-            this.inputCardinalities[inputIndex] = cardinality;
-            if (OptimizationContext.this.logger.isDebugEnabled()) {
+            if (OptimizationContext.this.logger.isDebugEnabled() && this.inputCardinalityMarkers[inputIndex]) {
                 OptimizationContext.this.logger.debug(
-                        "Setting cardinality of {} to {}.", this.operator.getInput(inputIndex), cardinality
+                        "Changing cardinality of {} from {} to {}.",
+                        this.operator.getInput(inputIndex),
+                        this.inputCardinalities[inputIndex],
+                        cardinality
                 );
             }
+            this.inputCardinalities[inputIndex] = cardinality;
         }
 
         /**
@@ -427,12 +366,15 @@ public class OptimizationContext {
          */
         public void setOutputCardinality(int outputIndex, CardinalityEstimate cardinality) {
             this.outputCardinalityMarkers[outputIndex] |= !Objects.equals(this.outputCardinalities[outputIndex], cardinality);
-            this.outputCardinalities[outputIndex] = cardinality;
-            if (OptimizationContext.this.logger.isDebugEnabled()) {
+            if (OptimizationContext.this.logger.isDebugEnabled() && this.outputCardinalityMarkers[outputIndex]) {
                 OptimizationContext.this.logger.debug(
-                        "Setting cardinality of {} to {}.", this.operator.getOutput(outputIndex), cardinality
+                        "Changing cardinality of {} from {} to {}.",
+                        this.operator.getOutput(outputIndex),
+                        this.outputCardinalities[outputIndex],
+                        cardinality
                 );
             }
+            this.outputCardinalities[outputIndex] = cardinality;
         }
 
         /**
@@ -479,11 +421,11 @@ public class OptimizationContext {
             if (!this.operator.isExecutionOperator()) return;
 
             final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
-            final LoadProfileEstimator loadProfileEstimator = configuration
+            final LoadProfileEstimator<ExecutionOperator> loadProfileEstimator = configuration
                     .getOperatorLoadProfileEstimatorProvider()
                     .provideFor(executionOperator);
             try {
-                this.loadProfile = loadProfileEstimator.estimate(this);
+                this.loadProfile = LoadProfileEstimators.estimateLoadProfile(this, loadProfileEstimator);
             } catch (Exception e) {
                 throw new RheemException(String.format("Load profile estimation for %s failed.", this.operator), e);
             }
@@ -532,7 +474,25 @@ public class OptimizationContext {
             }
         }
 
+        public void setNumExecutions(int numExecutions) {
+            this.numExecutions = numExecutions;
+        }
+
+        public int getNumExecutions() {
+            return this.numExecutions;
+        }
+
+        public LoadProfile getLoadProfile() {
+            if (this.loadProfile == null) {
+                this.updateTimeEstimate();
+            }
+            return this.loadProfile;
+        }
+
         public TimeEstimate getTimeEstimate() {
+            if (this.timeEstimate == null) {
+                this.updateTimeEstimate();
+            }
             return this.timeEstimate;
         }
 
@@ -541,13 +501,6 @@ public class OptimizationContext {
             return String.format("%s[%s]", this.getClass().getSimpleName(), this.getOperator());
         }
 
-        public void setNumExecutions(int numExecutions) {
-            this.numExecutions = numExecutions;
-        }
-
-        public int getNumExecutions() {
-            return this.numExecutions;
-        }
     }
 
     /**
@@ -559,7 +512,7 @@ public class OptimizationContext {
 
         private final List<OptimizationContext> iterationContexts;
 
-        private LoopContext(OperatorContext loopSubplanContext) {
+        protected LoopContext(OperatorContext loopSubplanContext) {
             assert loopSubplanContext.getOptimizationContext() == OptimizationContext.this;
             assert loopSubplanContext.getOperator() instanceof LoopSubplan;
 
@@ -569,7 +522,7 @@ public class OptimizationContext {
             final int numIterationContexts = loop.getNumExpectedIterations() + 1;
             this.iterationContexts = new ArrayList<>(numIterationContexts);
             for (int iterationNumber = 0; iterationNumber < numIterationContexts; iterationNumber++) {
-                this.iterationContexts.add(new OptimizationContext(loop, this, iterationNumber, OptimizationContext.this.configuration));
+                this.iterationContexts.add(new DefaultOptimizationContext(loop, this, iterationNumber, OptimizationContext.this.configuration));
             }
         }
 
@@ -610,37 +563,45 @@ public class OptimizationContext {
             return this.iterationContexts.get(this.iterationContexts.size() - 1);
         }
 
+        /**
+         * Add a new iteration {@link OptimizationContext} between second-to-last and final iteration.
+         *
+         * @return the added {@link OptimizationContext}
+         */
+        public OptimizationContext appendIterationContext() {
+            // Shift the final iteration context by one.
+            final OptimizationContext finalIterationContext = this.getFinalIterationContext();
+            this.iterationContexts.add(finalIterationContext);
+            finalIterationContext.iterationNumber++;
+
+            // Copy the second-to-last iteration context.
+            OptimizationContext oldSecondToLastIterationContext = this.getIterationContext(this.iterationContexts.size() - 3);
+            OptimizationContext newSecondToLastIterationContext = ((DefaultOptimizationContext) oldSecondToLastIterationContext).copy();
+            newSecondToLastIterationContext.iterationNumber++;
+
+            // Insert and return the copied iteration context.
+            this.iterationContexts.set(
+                    iterationContexts.size() - 2,
+                    newSecondToLastIterationContext
+            );
+            return newSecondToLastIterationContext;
+        }
+
         public LoopSubplan getLoop() {
             return (LoopSubplan) this.loopSubplanContext.getOperator();
         }
 
+        public OptimizationContext createAggregateContext() {
+            return this.createAggregateContext(0, this.iterationContexts.size());
+        }
+
         public OptimizationContext createAggregateContext(int fromIteration, int toIteration) {
-            final OptimizationContext aggregateCtx = new OptimizationContext(this.getLoop(), this, -1, this.getOptimizationContext().getConfiguration());
-            for (int i = fromIteration; i < toIteration; i++) {
-                OptimizationContext iterationContext = this.iterationContexts.get(i);
-                this.addUp(aggregateCtx, iterationContext);
-            }
-
-            return aggregateCtx;
-        }
-
-        private void addUp(OptimizationContext aggregateCtx, OptimizationContext iterationContext) {
-            while (iterationContext != null) {
-                for (OperatorContext operatorCtx : iterationContext.getLocalOperatorContexts().values()) {
-                    this.addUp(aggregateCtx, operatorCtx);
-                }
-                iterationContext = iterationContext.getBase();
-            }
-        }
-
-        private void addUp(OptimizationContext aggregateCtx, OperatorContext operatorCtx) {
-            final Operator operator = operatorCtx.getOperator();
-            OperatorContext aggregateOperatorCtx = aggregateCtx.getOperatorContext(operator);
-            if (aggregateOperatorCtx == null) {
-                aggregateOperatorCtx = aggregateCtx.addOneTimeOperator(operator);
-                aggregateOperatorCtx.setNumExecutions(0);
-            }
-            aggregateOperatorCtx.increaseBy(operatorCtx);
+            return new AggregateOptimizationContext(
+                    this,
+                    fromIteration == 0 && toIteration == this.iterationContexts.size() ?
+                            this.iterationContexts :
+                            this.iterationContexts.subList(fromIteration, toIteration)
+            );
         }
     }
 

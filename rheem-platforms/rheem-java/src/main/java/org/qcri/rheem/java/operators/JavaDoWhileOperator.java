@@ -3,8 +3,9 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.DoWhileOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -12,7 +13,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
@@ -43,21 +43,29 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
         super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 
-    @Override
-    public void open(ChannelInstance[] inputs, FunctionCompiler compiler) {
-        final Predicate<Collection<ConvergenceType>> udf = compiler.compile(this.criterionDescriptor);
-        JavaExecutor.openFunction(this, udf, inputs);
+    /**
+     * Creates a new instance.
+     */
+    public JavaDoWhileOperator(DoWhileOperator<InputType, ConvergenceType> that) {
+        super(that);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    JavaExecutor javaExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final Predicate<Collection<ConvergenceType>> stoppingCondition = compiler.compile(this.criterionDescriptor);
+        final Predicate<Collection<ConvergenceType>> stoppingCondition =
+                javaExecutor.getCompiler().compile(this.criterionDescriptor);
+        JavaExecutor.openFunction(this, stoppingCondition, inputs, operatorContext);
+
         boolean endloop = false;
 
+        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
         final Collection<ConvergenceType> convergenceCollection;
         final JavaChannelInstance input;
         switch (this.getState()) {
@@ -72,6 +80,8 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
                 convergenceCollection = ((CollectionChannel.Instance) inputs[CONVERGENCE_INPUT_INDEX]).provideCollection();
                 endloop = stoppingCondition.test(convergenceCollection);
+                executedOperatorContexts.add(operatorContext);
+                inputs[CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
                 input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
                 break;
             default:
@@ -81,26 +91,29 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
         if (endloop) {
             // final loop output
-            this.forward(input, (JavaChannelInstance) outputs[FINAL_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, outputs[FINAL_OUTPUT_INDEX]);
             outputs[ITERATION_OUTPUT_INDEX] = null;
             this.setState(State.FINISHED);
         } else {
             outputs[FINAL_OUTPUT_INDEX] = null;
-            this.forward(input, (JavaChannelInstance) outputs[ITERATION_OUTPUT_INDEX]);
+            JavaExecutionOperator.forward(input, outputs[ITERATION_OUTPUT_INDEX]);
             this.setState(State.RUNNING);
         }
-    }
 
-    private void forward(JavaChannelInstance input, JavaChannelInstance output) {
-        ((StreamChannel.Instance) output).accept(input.provideStream());
+        return executedOperatorContexts;
     }
 
     @Override
-    public Optional<LoadProfileEstimator> getLoadProfileEstimator(Configuration configuration) {
-        final NestableLoadProfileEstimator estimator = NestableLoadProfileEstimator.parseSpecification(
-                configuration.getStringProperty("rheem.java.while.load")
-        );
-        return Optional.of(estimator);
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.java.while.load";
+    }
+
+    @Override
+    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+                JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
+        LoadProfileEstimators.nestUdfEstimator(optEstimator, this.criterionDescriptor, configuration);
+        return optEstimator;
     }
 
     @Override
@@ -133,4 +146,5 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
         return Collections.singletonList(StreamChannel.DESCRIPTOR);
         // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
     }
+
 }

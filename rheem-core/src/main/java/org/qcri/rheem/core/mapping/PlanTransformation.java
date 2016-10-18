@@ -106,31 +106,18 @@ public class PlanTransformation {
     }
 
     private void introduceAlternative(RheemPlan plan, SubplanMatch match, Operator replacement) {
-
-        // Wrap the match in a subplan.
+        // Wrap the match in an OperatorAlternative.
         final Operator originalOutputOperator = match.getOutputMatch().getOperator();
         boolean wasTopLevel = originalOutputOperator.getParent() == null;
-        Operator originalSubplan = Subplan.wrap(match.getInputMatch().getOperator(), originalOutputOperator);
+        OperatorAlternative operatorAlternative = OperatorAlternative.wrap(match.getInputMatch().getOperator(), originalOutputOperator);
+
+        // Update the plan sinks if necessary.
         if (wasTopLevel && originalOutputOperator.isSink()) {
-            plan.replaceSink(originalOutputOperator, originalSubplan);
+            plan.replaceSink(originalOutputOperator, operatorAlternative);
         }
 
-        // Place an alternative: the original subplan and the replacement.
-        // Either add an alternative to the existing OperatorAlternative or create a new OperatorAlternative.
-        final CompositeOperator originalParent = originalSubplan.getParent();
-        if (originalParent != null && originalParent instanceof OperatorAlternative) {
-            ((OperatorAlternative) originalParent).addAlternative(replacement);
-
-        } else {
-            OperatorAlternative operatorAlternative = OperatorAlternative.wrap(originalSubplan);
-            operatorAlternative.addAlternative(replacement);
-
-            // If the originalOutputOperator was a sink, we need to update the sink in the plan accordingly.
-            if (originalSubplan.isSink()) {
-                plan.replaceSink(originalSubplan, operatorAlternative);
-            }
-        }
-
+        // Add a new alternative to the operatorAlternative.
+        operatorAlternative.addAlternative(replacement);
     }
 
     /**

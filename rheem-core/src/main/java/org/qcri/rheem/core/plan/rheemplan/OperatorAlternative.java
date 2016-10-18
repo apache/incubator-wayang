@@ -2,8 +2,9 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.cardinality.AggregatingCardinalityPusher;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
+import org.qcri.rheem.core.optimizer.cardinality.OperatorAlternativeCardinalityPusher;
+import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -11,7 +12,7 @@ import java.util.stream.Stream;
 
 /**
  * This operator encapsulates operators that are alternative to each other.
- * <p>TODO: Alternatives and their interfaces (i.e., {@link OutputSlot}s and {@link InputSlot}s) are matched via their
+ * <p>Alternatives and their interfaces (i.e., {@link OutputSlot}s and {@link InputSlot}s) are matched via their
  * input/output indices.</p>
  */
 public class OperatorAlternative extends OperatorBase implements CompositeOperator {
@@ -21,6 +22,15 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
      * because this can be achieved with a {@link Subplan}.
      */
     private List<Alternative> alternatives = new LinkedList<>();
+
+    public static OperatorAlternative wrap(Operator startOperator, Operator endOperator) {
+        if (startOperator != endOperator) {
+            // TODO
+            throw new UnsupportedOperationException("Different operators in a match currently not supported.");
+        }
+
+        return wrap(startOperator);
+    }
 
     /**
      * Wraps an {@link Operator}:
@@ -34,19 +44,23 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
      * @param operator operator to wrap
      */
     public static OperatorAlternative wrap(Operator operator) {
-        OperatorAlternative operatorAlternative =
-                operator.isLoopHead() ?
-                        new LoopHeadAlternative((LoopHeadOperator) operator) :
-                        new OperatorAlternative(operator);
+        // Test whether the operator is not already an alternative.
+        final OperatorContainer container = operator.getContainer();
+        if (container != null && container.toOperator().isAlternative() && container.getContainedOperators().size() == 1) {
+            return (OperatorAlternative) container.toOperator();
+        }
 
-        InputSlot.mock(operator, operatorAlternative, false);
-        InputSlot.stealConnections(operator, operatorAlternative);
-
+        OperatorAlternative operatorAlternative = operator.isLoopHead() ?
+                new LoopHeadAlternative((LoopHeadOperator) operator) :
+                new OperatorAlternative(operator);
+        InputSlot.mock(operator, operatorAlternative);
         OutputSlot.mock(operator, operatorAlternative);
-        OutputSlot.stealConnections(operator, operatorAlternative);
 
-        operatorAlternative.addAlternative(operator);
-
+        Alternative alternative = operatorAlternative.addAlternative(operator);
+        if (container != null) {
+            operatorAlternative.setContainer(container);
+            container.noteReplaced(operator, alternative);
+        }
         return operatorAlternative;
     }
 
@@ -54,19 +68,33 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
      * Creates a new instance with the same number of inputs and outputs and the same parent as the given operator.
      */
     protected OperatorAlternative(Operator operator) {
-        super(operator.getNumInputs(), operator.getNumOutputs(), false, operator.getContainer());
+        super(operator.getNumInputs(), operator.getNumOutputs(), false);
     }
 
     public List<Alternative> getAlternatives() {
         return Collections.unmodifiableList(this.alternatives);
     }
 
-    public void addAlternative(Operator alternative) {
-        this.addAlternative(new Alternative(alternative, SlotMapping.wrap(alternative, this)));
+    /**
+     * Adds an {@link Alternative} to this instance.
+     *
+     * @param alternativeOperator either an {@link ElementaryOperator} or a {@link Subplan}; in the latter case, the
+     *                            {@link Subplan} will be "unpacked" into the new {@link Alternative}
+     */
+    public Alternative addAlternative(Operator alternativeOperator) {
+        Alternative alternative = this.createAlternative();
+        if (alternativeOperator.isSubplan()) {
+            OperatorContainers.move((Subplan) alternativeOperator, alternative);
+        } else {
+            assert alternativeOperator.isElementary();
+            OperatorContainers.wrap(alternativeOperator, alternative);
+        }
+        this.alternatives.add(alternative);
+        return alternative;
     }
 
-    private void addAlternative(Alternative alternative) {
-        this.alternatives.add(alternative);
+    protected Alternative createAlternative() {
+        return new Alternative();
     }
 
     @Override
@@ -74,38 +102,8 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
         return visitor.visit(this, outputSlot, payload);
     }
 
-//    @Override
-//    public <Payload, Return> Return accept(BottomUpPlanVisitor<Payload, Return> visitor, InputSlot<?> inputSlot, Payload payload) {
-//        return visitor.visit(this, inputSlot, payload);
-//    }
-
     @Override
-    public SlotMapping getSlotMappingFor(Operator child) {
-        if (child.getParent() != this) {
-            throw new IllegalArgumentException("Given operator is not a child of this alternative.");
-        }
-
-        return this.alternatives.stream()
-                .filter(alternative -> alternative.getOperator() == child)
-                .findFirst()
-                .map(Alternative::getSlotMapping)
-                .orElseThrow(() -> new RuntimeException("Could not find alternative for child."));
-    }
-
-    @Override
-    public void replace(Operator oldOperator, Operator newOperator) {
-        Operators.assertEqualInputs(oldOperator, newOperator);
-        Operators.assertEqualOutputs(oldOperator, newOperator);
-
-        for (int i = 0; i < this.alternatives.size(); i++) {
-            final Alternative alternative = this.alternatives.get(i);
-            if (alternative.getOperator() == oldOperator) {
-                final SlotMapping slotMapping = alternative.getSlotMapping();
-                slotMapping.replaceInputSlotMappings(oldOperator, newOperator);
-                slotMapping.replaceOutputSlotMappings(oldOperator, newOperator);
-                alternative.operator = newOperator;
-            }
-        }
+    public void noteReplaced(Operator oldOperator, Operator newOperator) {
     }
 
     @Override
@@ -158,11 +156,22 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     }
 
     @Override
+    public CardinalityPusher getCardinalityPusher(final Configuration configuration) {
+        return new OperatorAlternativeCardinalityPusher(this, configuration);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Collection<OperatorContainer> getContainers() {
+        return (Collection<OperatorContainer>) (Collection) this.alternatives;
+    }
+
+    @Override
     public String toString() {
         return String.format("%s[%dx ~%s, %x]",
                 this.getSimpleClassName(),
                 this.alternatives.size(),
-                this.alternatives.get(0).getOperator(),
+                RheemCollections.getAnyOptional(this.alternatives).orElse(null),
                 this.hashCode());
     }
 
@@ -172,19 +181,18 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
     public class Alternative implements OperatorContainer {
 
         /**
-         * Maps the slots of the enclosing {@link OperatorAlternative} with the enclosed {@link #operator}.
+         * Maps the slots of the enclosing {@link OperatorAlternative} with this instance.
          */
-        private final SlotMapping slotMapping;
+        private final SlotMapping slotMapping = new SlotMapping();
 
         /**
-         * The operator/subplan encapsulated by this {@link OperatorAlternative.Alternative}.
+         * Source/sink {@link Operator} in this instance. Should only be set if the surrounding {@link OperatorAlternative}
+         * is a source/sink.
          */
-        private Operator operator;
+        private Operator source, sink;
 
-        private Alternative(Operator operator, SlotMapping slotMapping) {
-            this.slotMapping = slotMapping;
-            this.operator = operator;
-            operator.setContainer(this);
+
+        private Alternative() {
         }
 
         @Override
@@ -192,17 +200,14 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             return this.slotMapping;
         }
 
-        public Operator getOperator() {
-            return this.operator;
+        @Override
+        public Operator getSink() {
+            return this.sink;
         }
 
         @Override
-        public Operator getSink() {
-            if (!OperatorAlternative.this.isSink()) {
-                throw new IllegalArgumentException("Cannot enter alternative: no output slot given and alternative is not a sink.");
-            }
-
-            return this.operator;
+        public void setSink(Operator innerSink) {
+            this.sink = innerSink;
         }
 
         @Override
@@ -227,14 +232,14 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             return OperatorAlternative.this;
         }
 
-
         @Override
         public Operator getSource() {
-            if (!OperatorAlternative.this.isSource()) {
-                throw new IllegalStateException("Cannot enter alternative: not a source.");
-            }
+            return this.source;
+        }
 
-            return this.operator;
+        @Override
+        public void setSource(Operator innerSource) {
+            this.source = innerSource;
         }
 
         @Override
@@ -257,15 +262,16 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
 
         @Override
         public <T> InputSlot<T> traceInput(InputSlot<T> inputSlot) {
-            if (inputSlot.getOccupant() != null) {
-                throw new IllegalStateException("Cannot trace an InputSlot that has an occupant.");
-            }
-
             if (inputSlot.getOwner().getContainer() != this) {
                 throw new IllegalArgumentException("Cannot trace input slot: does not belong to this alternative.");
             }
 
-            return this.slotMapping.resolveUpstream(inputSlot);
+            final InputSlot<T> tracedInput = this.slotMapping.resolveUpstream(inputSlot);
+            assert tracedInput == null || inputSlot.getOccupant() == null : String.format(
+                    "%s has both the occupant %s and the outer mapped input %s.",
+                    inputSlot, inputSlot.getOccupant(), tracedInput
+            );
+            return tracedInput;
         }
 
         @Override
@@ -276,29 +282,13 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
             return this.slotMapping.resolveDownstream(outputSlot);
         }
 
-        public <T> InputSlot<T> exit(InputSlot<T> innerInputSlot) {
-            if (innerInputSlot.getOwner().getParent() != OperatorAlternative.this) {
-                throw new IllegalArgumentException("Trying to exit from an input slot that is not within this alternative.");
-            }
-            return this.slotMapping.resolveUpstream(innerInputSlot);
-        }
-
         public OperatorAlternative getOperatorAlternative() {
             return OperatorAlternative.this;
         }
 
-        public OperatorAlternative exit(Operator innerOperator) {
-            if (!OperatorAlternative.this.isSource()) {
-                throw new IllegalArgumentException("Cannot exit alternative: no input slot given and alternative is not a source.");
-            }
-
-            return innerOperator == this.operator ? OperatorAlternative.this : null;
+        @Override
+        public String toString() {
+            return String.format("%s[%s]", this.getClass().getSimpleName(), this.getContainedOperators());
         }
-
-    }
-
-    @Override
-    public CardinalityPusher getCardinalityPusher(final Configuration configuration) {
-        return new AggregatingCardinalityPusher(this, configuration);
     }
 }

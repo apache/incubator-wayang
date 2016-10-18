@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.channels;
 import org.apache.spark.Accumulator;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.AbstractChannelInstance;
@@ -10,7 +11,7 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.util.Actions;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.OptionalLong;
 
@@ -49,8 +50,10 @@ public class RddChannel extends Channel {
     }
 
     @Override
-    public ChannelInstance createInstance(Executor executor) {
-        return new Instance((SparkExecutor) executor);
+    public Instance createInstance(Executor executor,
+                                   OptimizationContext.OperatorContext producerOperatorContext,
+                                   int producerOutputIndex) {
+        return new Instance((SparkExecutor) executor, producerOperatorContext, producerOutputIndex);
     }
 
     /**
@@ -62,8 +65,10 @@ public class RddChannel extends Channel {
 
         private Accumulator<Integer> accumulator;
 
-        public Instance(SparkExecutor executor) {
-            super(executor);
+        public Instance(SparkExecutor executor,
+                        OptimizationContext.OperatorContext producerOperatorContext,
+                        int producerOutputIndex) {
+            super(executor, producerOperatorContext, producerOutputIndex);
         }
 
         public void accept(JavaRDD<?> rdd, SparkExecutor sparkExecutor) throws RheemException {

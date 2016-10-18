@@ -21,7 +21,7 @@ import java.util.OptionalLong;
 /**
  * This source reads a text file and outputs the lines as data units.
  */
-public class TextFileSource extends UnarySource {
+public class TextFileSource extends UnarySource<String> {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -34,9 +34,20 @@ public class TextFileSource extends UnarySource {
     }
 
     public TextFileSource(String inputUrl, String encoding) {
-        super(DataSetType.createDefault(String.class), null);
+        super(DataSetType.createDefault(String.class));
         this.inputUrl = inputUrl;
         this.encoding = encoding;
+    }
+
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public TextFileSource(TextFileSource that) {
+        super(that);
+        this.inputUrl = that.getInputUrl();
+        this.encoding = that.getEncoding();
     }
 
     public String getInputUrl() {
@@ -44,7 +55,7 @@ public class TextFileSource extends UnarySource {
     }
 
     @Override
-    public Optional<org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator> getCardinalityEstimator(
+    public Optional<org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);

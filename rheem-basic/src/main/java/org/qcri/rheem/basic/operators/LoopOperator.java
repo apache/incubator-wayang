@@ -2,16 +2,18 @@ package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.SwitchForwardCardinalityEstimator;
+import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.types.BasicDataUnitType;
+import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.ReflectionUtils;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * This operator has three inputs and three outputs.
@@ -53,7 +55,7 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
                         Integer numExpectedIterations) {
         this(inputType,
                 convergenceType,
-                new PredicateDescriptor<>(criterionPredicate, (BasicDataUnitType) convergenceType.getDataUnitType()),
+                new PredicateDescriptor<>(criterionPredicate, ReflectionUtils.specify(Collection.class)),
                 numExpectedIterations
         );
     }
@@ -65,26 +67,44 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
                         DataSetType<ConvergenceType> convergenceType,
                         PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
                         Integer numExpectedIterations) {
-        super(4, 3, true, null);
+        super(4, 3, true);
         this.criterionDescriptor = criterionDescriptor;
-        this.inputSlots[INITIAL_INPUT_INDEX] = new InputSlot<>("initialInput", this, inputType);
-        this.inputSlots[INITIAL_CONVERGENCE_INPUT_INDEX] = new InputSlot<>("initialConvergenceInput", this, convergenceType);
-        this.inputSlots[ITERATION_INPUT_INDEX] = new InputSlot<>("iterationInput", this, inputType);
-        this.inputSlots[ITERATION_CONVERGENCE_INPUT_INDEX] = new InputSlot<>("convergenceInput", this, convergenceType);
-
-        this.outputSlots[ITERATION_OUTPUT_INDEX] = new OutputSlot<>("iterationOutput", this, inputType);
-        this.outputSlots[ITERATION_CONVERGENCE_OUTPUT_INDEX] = new OutputSlot<>("convergenceOutput", this, convergenceType);
-        this.outputSlots[FINAL_OUTPUT_INDEX] = new OutputSlot<>("output", this, inputType);
-        this.state = State.NOT_STARTED;
-
         this.numExpectedIterations = numExpectedIterations;
+        this.state = State.NOT_STARTED;
+        this.initializeSlots(inputType, convergenceType);
+    }
+
+    /**
+     * Creates a copy of the given {@link LoopOperator}.
+     *
+     * @param that should be copied
+     */
+    public LoopOperator(LoopOperator<InputType, ConvergenceType> that) {
+        super(that);
+        this.criterionDescriptor = that.getCriterionDescriptor();
+        this.numExpectedIterations = that.getNumExpectedIterations();
+        this.state = that.getState();
+        this.initializeSlots(that.getInputType(), that.getConvergenceType());
+    }
+
+    private void initializeSlots(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType) {
+        this.inputSlots[INITIAL_INPUT_INDEX] = new InputSlot<>("initIn", this, inputType);
+        this.inputSlots[INITIAL_CONVERGENCE_INPUT_INDEX] = new InputSlot<>("initConvIn", this, convergenceType);
+        this.inputSlots[ITERATION_INPUT_INDEX] = new InputSlot<>("iterIn", this, inputType);
+        this.inputSlots[ITERATION_CONVERGENCE_INPUT_INDEX] = new InputSlot<>("convIn", this, convergenceType);
+
+        this.outputSlots[ITERATION_OUTPUT_INDEX] = new OutputSlot<>("iterOut", this, inputType);
+        this.outputSlots[ITERATION_CONVERGENCE_OUTPUT_INDEX] = new OutputSlot<>("convOut", this, convergenceType);
+        this.outputSlots[FINAL_OUTPUT_INDEX] = new OutputSlot<>("finOut", this, inputType);
     }
 
 
+    @SuppressWarnings("unchecked")
     public DataSetType<InputType> getInputType() {
         return ((InputSlot<InputType>) this.getInput(INITIAL_INPUT_INDEX)).getType();
     }
 
+    @SuppressWarnings("unchecked")
     public DataSetType<ConvergenceType> getConvergenceType() {
         return ((InputSlot<ConvergenceType>) this.getInput(INITIAL_CONVERGENCE_INPUT_INDEX)).getType();
     }
@@ -160,7 +180,7 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex, Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex, Configuration configuration) {
         switch (outputIndex) {
             case ITERATION_CONVERGENCE_OUTPUT_INDEX:
                 return Optional.of(new SwitchForwardCardinalityEstimator(
@@ -192,10 +212,17 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
 
     @Override
     public Collection<InputSlot<?>> getLoopInitializationInputs() {
-        return Arrays.asList(
-                this.getInput(INITIAL_INPUT_INDEX),
-                this.getInput(INITIAL_CONVERGENCE_INPUT_INDEX)
-        );
+        return Arrays.asList(this.getInput(INITIAL_INPUT_INDEX), this.getInput(INITIAL_CONVERGENCE_INPUT_INDEX));
+    }
+
+    @Override
+    public Collection<InputSlot<?>> getConditionInputSlots() {
+        return Arrays.asList(this.getInput(INITIAL_CONVERGENCE_INPUT_INDEX), this.getInput(ITERATION_CONVERGENCE_INPUT_INDEX));
+    }
+
+    @Override
+    public Collection<OutputSlot<?>> getConditionOutputSlots() {
+        return Collections.singletonList(this.getOutput(ITERATION_CONVERGENCE_OUTPUT_INDEX));
     }
 
     public void setNumExpectedIterations(int numExpectedIterations) {

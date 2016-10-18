@@ -1,20 +1,37 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
+import com.google.gson.*;
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.lang.reflect.Type;
+import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * Helper class for the implementation of the {@link Operator} interface.
  */
 public abstract class OperatorBase implements Operator {
+
+    public static final List<Tuple<Class<?>, Supplier<?>>> STANDARD_OPERATOR_ARGS = Arrays.asList(
+            new Tuple<>(DataSetType.class, DataSetType::none),
+            new Tuple<>(Class.class, () -> Object.class),
+            new Tuple<>(TransformationDescriptor.class, () -> new TransformationDescriptor<>(o -> o, Object.class, Object.class)),
+            new Tuple<>(FlatMapDescriptor.class, () -> new FlatMapDescriptor<>(o -> Collections.emptyList(), Object.class, Object.class)),
+            new Tuple<>(PredicateDescriptor.class, () -> new PredicateDescriptor<>(o -> true, Object.class)),
+            new Tuple<>(ReduceDescriptor.class, () -> new ReduceDescriptor<>((a, b) -> a, Object.class)),
+            new Tuple<>(FunctionDescriptor.SerializableFunction.class, () -> (FunctionDescriptor.SerializableFunction) o -> o),
+            new Tuple<>(FunctionDescriptor.SerializableBinaryOperator.class, () -> (FunctionDescriptor.SerializableBinaryOperator) (a, b) -> a),
+            new Tuple<>(Object[].class, () -> new Object[0]),
+            new Tuple<>(String[].class, () -> new String[0])
+    );
 
     private final boolean isSupportingBroadcastInputs;
 
@@ -31,6 +48,11 @@ public abstract class OperatorBase implements Operator {
     private ExecutionOperator original;
 
     /**
+     * Optional {@link CardinalityEstimator}s for this instance.
+     */
+    private CardinalityEstimator[] cardinalityEstimators;
+
+    /**
      * Optional name. Helpful for debugging.
      */
     private String name;
@@ -40,16 +62,32 @@ public abstract class OperatorBase implements Operator {
      */
     private TimeEstimate timeEstimate;
 
-    public OperatorBase(InputSlot<?>[] inputSlots, OutputSlot<?>[] outputSlots, boolean isSupportingBroadcastInputs,
-                        OperatorContainer container) {
-        this.container = container;
+    public OperatorBase(InputSlot<?>[] inputSlots, OutputSlot<?>[] outputSlots, boolean isSupportingBroadcastInputs) {
+        this.container = null;
         this.isSupportingBroadcastInputs = isSupportingBroadcastInputs;
         this.inputSlots = inputSlots;
         this.outputSlots = outputSlots;
+        this.cardinalityEstimators = new CardinalityEstimator[this.outputSlots.length];
     }
 
-    public OperatorBase(int numInputSlots, int numOutputSlots, boolean isSupportingBroadcastInputs, OperatorContainer container) {
-        this(new InputSlot[numInputSlots], new OutputSlot[numOutputSlots], isSupportingBroadcastInputs, container);
+    public OperatorBase(int numInputSlots, int numOutputSlots, boolean isSupportingBroadcastInputs) {
+        this(new InputSlot[numInputSlots], new OutputSlot[numOutputSlots], isSupportingBroadcastInputs);
+    }
+
+    /**
+     * Creates a plain copy of the given {@link OperatorBase}, including
+     * <ul>
+     * <li>the number of regular {@link InputSlot}s (not the actual {@link InputSlot}s, though)</li>
+     * <li>the number of {@link OutputSlot}s (not the actual {@link OutputSlot}s, though)</li>
+     * <li>whether broadcasts are supported</li>
+     * <li>any specific {@link CardinalityEstimator}s</li>
+     * </ul>
+     *
+     * @param that the {@link OperatorBase} to be copied
+     */
+    protected OperatorBase(OperatorBase that) {
+        this(that.getNumRegularInputs(), that.getNumOutputs(), that.isSupportingBroadcastInputs());
+        System.arraycopy(that.cardinalityEstimators, 0, this.cardinalityEstimators, 0, this.getNumOutputs());
     }
 
     @Override
@@ -95,10 +133,10 @@ public abstract class OperatorBase implements Operator {
 
     @Override
     public void setContainer(OperatorContainer newContainer) {
-        final CompositeOperator oldParent = this.getParent();
+        final OperatorContainer formerContainer = this.getContainer();
         this.container = newContainer;
-        if (oldParent != null) {
-            oldParent.replace(this, newContainer.toOperator());
+        if (formerContainer != null) {
+            formerContainer.noteReplaced(this, newContainer);
         }
     }
 
@@ -245,4 +283,52 @@ public abstract class OperatorBase implements Operator {
     public void setName(String name) {
         this.name = name;
     }
+
+    /**
+     * Retrieve a {@link CardinalityEstimator} tied specifically to this instance. Applicable to
+     * {@link ElementaryOperator}s only.
+     *
+     * @param outputIndex for the output described by the {@code cardinalityEstimator}
+     * @return the {@link CardinalityEstimator} or {@code null} if none exists
+     */
+    public CardinalityEstimator getCardinalityEstimator(int outputIndex) {
+        Validate.isAssignableFrom(ElementaryOperator.class, this.getClass());
+        return this.cardinalityEstimators[outputIndex];
+    }
+
+    /**
+     * Tie a specific {@link CardinalityEstimator} to this instance. Applicable to {@link ElementaryOperator}s
+     * only.
+     *
+     * @param outputIndex          for the output described by the {@code cardinalityEstimator}
+     * @param cardinalityEstimator the {@link CardinalityEstimator}
+     */
+    public void setCardinalityEstimator(int outputIndex, CardinalityEstimator cardinalityEstimator) {
+        Validate.isAssignableFrom(ElementaryOperator.class, this.getClass());
+        this.cardinalityEstimators[outputIndex] = cardinalityEstimator;
+    }
+
+    /**
+     * Utility to de/serialize {@link Operator}s.
+     */
+    public static class GsonSerializer implements JsonSerializer<Operator>, JsonDeserializer<Operator> {
+
+        @Override
+        public JsonElement serialize(Operator src, Type typeOfSrc, JsonSerializationContext context) {
+            if (src == null) {
+                return JsonNull.INSTANCE;
+            }
+            final JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("_class", src.getClass().getName());
+            jsonObject.addProperty("name", src.getName());
+            return jsonObject;
+        }
+
+        @Override
+        public Operator deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            if (JsonNull.INSTANCE.equals(json)) return null;
+            throw new UnsupportedOperationException("Deserializing operators is not yet supported.");
+        }
+    }
+
 }

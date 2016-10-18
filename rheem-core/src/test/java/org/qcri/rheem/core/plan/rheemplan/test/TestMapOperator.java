@@ -18,7 +18,7 @@ public class TestMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
      * Creates a new instance.
      */
     public TestMapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType) {
-        super(inputType, outputType, true, null);
+        super(inputType, outputType, true);
     }
 
     public TestMapOperator(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass) {
@@ -29,8 +29,8 @@ public class TestMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
     }
 
     @Override
-    public Optional<CardinalityEstimator> getCardinalityEstimator(int outputIndex,
-                                                                  Configuration configuration) {
+    public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex,
+                                                                     Configuration configuration) {
         Validate.isTrue(outputIndex == 0);
         return Optional.of(new DefaultCardinalityEstimator(1d, 1, true, cards -> cards[0]));
     }

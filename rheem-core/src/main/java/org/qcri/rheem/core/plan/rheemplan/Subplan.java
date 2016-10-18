@@ -18,7 +18,7 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     /**
      * Maps input and output slots <b>against</b> the direction of the data flow.
      */
-    private final SlotMapping slotMapping;
+    private final SlotMapping slotMapping = new SlotMapping();
 
     /**
      * If this instance is a source or a sink, then the encapsulated source/sink {@link Operator}s are stored here.
@@ -51,7 +51,9 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
      * steals existing connections, initializes the {@link #slotMapping}, and sets as inner {@link Operator}s' parent.
      */
     public static Subplan wrap(List<InputSlot<?>> inputs, List<OutputSlot<?>> outputs, OperatorContainer container) {
-        return new Subplan(inputs, outputs, container);
+        final Subplan subplan = new Subplan(inputs, outputs);
+        subplan.setContainer(container);
+        return subplan;
     }
 
     /**
@@ -61,53 +63,11 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
      * @see #wrap(Operator, Operator)
      * @see #wrap(List, List, OperatorContainer)
      */
-    protected Subplan(List<InputSlot<?>> inputs, List<OutputSlot<?>> outputs, OperatorContainer container) {
-        super(inputs.size(), outputs.size(), false, container);
-        this.slotMapping = new SlotMapping();
-
-        // Copy and steal the inputSlots.
-        for (int inputIndex = 0; inputIndex < inputs.size(); inputIndex++) {
-            InputSlot<?> innerInput = inputs.get(inputIndex);
-            final InputSlot<?> outerInput = innerInput.copyFor(this);
-            this.inputSlots[inputIndex] = outerInput;
-            outerInput.unchecked().stealOccupant(innerInput.unchecked());
-            this.slotMapping.mapUpstream(innerInput, outerInput);
-        }
-
-        // Copy and steal the outputSlots.
-        for (int outputIndex = 0; outputIndex < outputs.size(); outputIndex++) {
-            OutputSlot<?> innerOutput = outputs.get(outputIndex);
-            final OutputSlot<?> outerOutput = innerOutput.copyFor(this);
-            this.outputSlots[outputIndex] = outerOutput;
-            outerOutput.unchecked().stealOccupiedSlots(innerOutput.unchecked());
-            this.slotMapping.mapUpstream(outerOutput, innerOutput);
-        }
-
-
-        // Mark all contained Operators and detect sources and sinks.
-        final Set<InputSlot<?>> inputSet = new HashSet<>(inputs);
-        final Set<OutputSlot<?>> outputSet = new HashSet<>(outputs);
-        PlanTraversal.fanOut()
-                .followingInputsIf(input -> !inputSet.contains(input))
-                .followingOutputsIf(output -> !outputSet.contains(output))
-                .withCallback(operator -> {
-                    operator.setContainer(this);
-                    if (operator.isSink()) {
-                        Validate.isTrue(this.isSink(), "Detected sink %s in non-sink %s.", operator, this);
-                        Validate.isTrue(this.sink == null, "At least two sinks %s and %s in %s.", operator, this.sink, this);
-                        this.sink = operator;
-                    }
-                    if (operator.isSource()) {
-                        Validate.isTrue(this.isSource(), "Detected source %s in non-source %s.", operator, this);
-                        Validate.isTrue(this.source == null, "At least two sources %s and %s in %s.", operator, this.source, this);
-                        this.source = operator;
-                    }
-                })
-                .traverse(Stream.concat(inputSet.stream(), outputSet.stream()).map(Slot::getOwner));
-
-        // Sanity checks.
-        Validate.isTrue((this.source == null) ^ this.isSource());
-        Validate.isTrue((this.sink == null) ^ this.isSink());
+    protected Subplan(List<InputSlot<?>> inputs, List<OutputSlot<?>> outputs) {
+        super(inputs.size(), outputs.size(), false);
+        InputSlot.mock(inputs, this, false); // TODO: This could give use problems with Slot name collisions.
+        OutputSlot.mock(outputs, this);
+        OperatorContainers.wrap(inputs, outputs, this);
     }
 
     @Override
@@ -116,11 +76,12 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     }
 
     @Override
-    public Operator getSource() {
-        if (!this.isSource()) {
-            throw new IllegalArgumentException("Cannot enter subplan: not a source");
-        }
+    public void setSource(Operator source) {
+        this.source = source;
+    }
 
+    @Override
+    public Operator getSource() {
         return this.source;
     }
 
@@ -143,16 +104,22 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     }
 
     @Override
+    public boolean isSource() {
+        return this.getNumInputs() == 0;
+    }
+
+    @Override
     public boolean isSink() {
         return this.getNumOutputs() == 0;
     }
 
     @Override
-    public Operator getSink() {
-        if (!this.isSink()) {
-            throw new IllegalArgumentException("Cannot enter subplan: no output slot given and subplan is not a sink.");
-        }
+    public void setSink(Operator sink) {
+        this.sink = sink;
+    }
 
+    @Override
+    public Operator getSink() {
         return this.sink;
     }
 
@@ -192,27 +159,10 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
         return visitor.visit(this, outputSlot, payload);
     }
 
-//    @Override
-//    public <Payload, Return> Return accept(BottomUpPlanVisitor<Payload, Return> visitor, InputSlot<?> inputSlot, Payload payload) {
-//        return visitor.visit(this, inputSlot, payload);
-//    }
-
     // TODO: develop constructors/factory methods to deal with more than one input and output operator
 
-
     @Override
-    public SlotMapping getSlotMappingFor(Operator child) {
-        if (child.getParent() != this) {
-            throw new IllegalArgumentException("Given operator is not a child of this subplan.");
-        }
-
-        return this.slotMapping;
-    }
-
-    @Override
-    public void replace(Operator oldOperator, Operator newOperator) {
-        this.slotMapping.replaceInputSlotMappings(oldOperator, newOperator);
-        this.slotMapping.replaceOutputSlotMappings(oldOperator, newOperator);
+    public void noteReplaced(Operator oldOperator, Operator newOperator) {
     }
 
     @Override
@@ -293,5 +243,10 @@ public class Subplan extends OperatorBase implements ActualOperator, CompositeOp
     @Override
     public void propagateOutputCardinality(int outputIndex, OptimizationContext.OperatorContext operatorContext) {
         OperatorContainer.super.propagateOutputCardinality(outputIndex, operatorContext);
+    }
+
+    @Override
+    public Collection<OperatorContainer> getContainers() {
+        return Collections.singleton(this);
     }
 }

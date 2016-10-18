@@ -12,66 +12,94 @@ import java.util.stream.LongStream;
 /**
  * Implementation of {@link LoadEstimator} that uses a single-point cost function.
  */
-public class DefaultLoadEstimator extends LoadEstimator {
+public class DefaultLoadEstimator<T> extends LoadEstimator<T> {
 
-    public static final int UNSPECIFIED_NUM_SLOTS = -1;
-
-    private final double correctnessProbablity;
+    private final double correctnessProbability;
 
     private final int numInputs, numOutputs;
 
-    private final ToLongBiFunction<long[], long[]> singlePointEstimator;
+    private final EstimationFunction<T> singlePointEstimator;
 
     public DefaultLoadEstimator(int numInputs,
                                 int numOutputs,
-                                double correctnessProbablity,
+                                double correctnessProbability,
                                 ToLongBiFunction<long[], long[]> singlePointFunction) {
-        this(numInputs, numOutputs, correctnessProbablity, null, singlePointFunction);
+        this(numInputs, numOutputs, correctnessProbability, null, singlePointFunction);
     }
 
     public DefaultLoadEstimator(int numInputs,
                                 int numOutputs,
-                                double correctnessProbablity,
+                                double correctnessProbability,
                                 CardinalityEstimate nullCardinalityReplacement,
                                 ToLongBiFunction<long[], long[]> singlePointFunction) {
+        this(
+                numInputs, numOutputs, correctnessProbability, nullCardinalityReplacement,
+                (artifact, inputEstimates, outputEstimates) -> singlePointFunction.applyAsLong(inputEstimates, outputEstimates)
+        );
+    }
 
+    public DefaultLoadEstimator(int numInputs,
+                                int numOutputs,
+                                double correctnessProbability,
+                                CardinalityEstimate nullCardinalityReplacement,
+                                EstimationFunction<T> singlePointFunction) {
         super(nullCardinalityReplacement);
         this.numInputs = numInputs;
         this.numOutputs = numOutputs;
-        this.correctnessProbablity = correctnessProbablity;
+        this.correctnessProbability = correctnessProbability;
         this.singlePointEstimator = singlePointFunction;
     }
 
     /**
      * Utility to create new instances: Rounds the results of a given estimation function.
      */
+    @SuppressWarnings("unused")
     public static ToLongBiFunction<long[], long[]> rounded(ToDoubleBiFunction<long[], long[]> f) {
         return (inputCards, outputCards) -> Math.round(f.applyAsDouble(inputCards, outputCards));
     }
 
     /**
-     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element. Missing
-     * {@link CardinalityEstimate}s are interpreted as a cardinality of {@code 0}.
+     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element.
+     *
+     * @param loadPerCardinalityUnit expected load units per input and output data quantum
+     * @param confidence             confidence in the new instance
      */
-    public static LoadEstimator createIOLinearEstimator(ExecutionOperator operator, long loadPerCardinalityUnit) {
-        return new DefaultLoadEstimator(operator.getNumInputs(),
-                operator.getNumOutputs(),
-                0.01,
-                CardinalityEstimate.EMPTY_ESTIMATE,
-                (inputCards, outputCards) ->
-                        loadPerCardinalityUnit * LongStream.concat(
-                                Arrays.stream(inputCards),
-                                Arrays.stream(outputCards)
-                        ).sum()
-        );
+    public static LoadEstimator createIOLinearEstimator(long loadPerCardinalityUnit, double confidence) {
+        return createIOLinearEstimator(null, loadPerCardinalityUnit, confidence);
     }
 
     /**
-     * Create a fallback {@link LoadEstimator} that accounts a given load for each input and output element.
+     * Create a {@link LoadEstimator} that accounts a given load for each input and output element. Missing
+     * {@link CardinalityEstimate}s are interpreted as a cardinality of {@code 0}.
+     *
+     * @param operator               an {@link ExecutionOperator} being addressed by the new instance
+     * @param loadPerCardinalityUnit expected load units per input and output data quantum
+     * @param confidence             confidence in the new instance
      */
-    public static LoadEstimator createIOLinearEstimator(long loadPerCardinalityUnit) {
-        return new DefaultLoadEstimator(UNSPECIFIED_NUM_SLOTS, UNSPECIFIED_NUM_SLOTS,
-                0.01,
+    public static LoadEstimator<ExecutionOperator> createIOLinearEstimator(ExecutionOperator operator,
+                                                                           long loadPerCardinalityUnit,
+                                                                           double confidence) {
+        return createIOLinearEstimator(operator, loadPerCardinalityUnit, confidence, CardinalityEstimate.EMPTY_ESTIMATE);
+    }
+
+    /**
+     * Create a {@link LoadEstimator} that accounts a given load for each input and output element. Missing
+     * {@link CardinalityEstimate}s are interpreted as a cardinality of {@code 0}.
+     *
+     * @param operator                   an {@link ExecutionOperator} being addressed by the new instance
+     * @param loadPerCardinalityUnit     expected load units per input and output data quantum
+     * @param confidence                 confidence in the new instance
+     * @param nullCardinalityReplacement replacement for {@code null}s as {@link CardinalityEstimate}s
+     */
+    public static LoadEstimator<ExecutionOperator> createIOLinearEstimator(ExecutionOperator operator,
+                                                                           long loadPerCardinalityUnit,
+                                                                           double confidence,
+                                                                           CardinalityEstimate nullCardinalityReplacement) {
+        return new DefaultLoadEstimator<>(
+                operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumInputs(),
+                operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumOutputs(),
+                confidence,
+                nullCardinalityReplacement,
                 (inputCards, outputCards) ->
                         loadPerCardinalityUnit * LongStream.concat(
                                 Arrays.stream(inputCards),
@@ -81,7 +109,7 @@ public class DefaultLoadEstimator extends LoadEstimator {
     }
 
     @Override
-    public LoadEstimate calculate(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
+    public LoadEstimate calculate(T artifact, CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
         Validate.isTrue(inputEstimates.length >= this.numInputs || this.numInputs == UNSPECIFIED_NUM_SLOTS,
                 "Received %d input estimates, require %d.", inputEstimates.length, this.numInputs);
         Validate.isTrue(outputEstimates.length == this.numOutputs || this.numOutputs == UNSPECIFIED_NUM_SLOTS,
@@ -93,7 +121,8 @@ public class DefaultLoadEstimator extends LoadEstimator {
         long lowerEstimate = -1, upperEstimate = -1;
         for (int inputEstimateId = 0; inputEstimateId < inputEstimateCombinations.length; inputEstimateId++) {
             for (int outputEstimateId = 0; outputEstimateId < outputEstimateCombinations.length; outputEstimateId++) {
-                long estimate = Math.max(this.singlePointEstimator.applyAsLong(
+                long estimate = Math.max(this.singlePointEstimator.estimate(
+                        artifact,
                         inputEstimateCombinations[inputEstimateId],
                         outputEstimateCombinations[outputEstimateId]
                 ), 0);
@@ -107,28 +136,9 @@ public class DefaultLoadEstimator extends LoadEstimator {
         }
 
         double correctnessProbability = this.calculateJointProbability(inputEstimates, outputEstimates)
-                * this.correctnessProbablity;
+                * this.correctnessProbability;
         return new LoadEstimate(lowerEstimate, upperEstimate, correctnessProbability);
     }
 
-    private long[][] enumerateCombinations(CardinalityEstimate[] cardinalityEstimates) {
-        if (cardinalityEstimates.length == 0) {
-            return new long[1][0];
-        }
-
-        int numCombinations = 1 << cardinalityEstimates.length;
-        long[][] combinations = new long[numCombinations][cardinalityEstimates.length];
-        for (int combinationIdentifier = 0; combinationIdentifier < numCombinations; combinationIdentifier++) {
-            for (int pos = 0; pos < cardinalityEstimates.length; pos++) {
-                int bit = (combinationIdentifier >>> pos) & 0x1;
-                final CardinalityEstimate cardinalityEstimate = this.replaceNullCardinality(cardinalityEstimates[pos]);
-                combinations[combinationIdentifier][pos] = bit == 0 ?
-                        cardinalityEstimate.getLowerEstimate() :
-                        cardinalityEstimate.getUpperEstimate();
-            }
-        }
-
-        return combinations;
-    }
 
 }

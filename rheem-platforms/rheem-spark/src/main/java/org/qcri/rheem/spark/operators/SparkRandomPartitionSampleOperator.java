@@ -4,14 +4,14 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.compiler.FunctionCompiler;
-import org.qcri.rheem.spark.platform.SparkExecutor;
+import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
@@ -26,68 +26,72 @@ import java.util.concurrent.Future;
 
 
 /**
- * Spark implementation of the {@link SparkRandomPartitionSampleOperator}. Sampling with replacement (i.e., the sample may contain duplicates)
+ * Spark implementation of the {@link SampleOperator}. Sampling with replacement (i.e., the sample may contain duplicates)
  */
 public class SparkRandomPartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
-    protected Random rand;
+    private final Random rand = new Random();
+
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    private int nb_partitions = 0;
+
+    private int partitionSize = 0;
+
+    private boolean first = true;
+
     /**
      * Creates a new instance.
-     *
-     * @param sampleSize
      */
-    public SparkRandomPartitionSampleOperator(Integer sampleSize, DataSetType type) {
+    public SparkRandomPartitionSampleOperator(Integer sampleSize, DataSetType<Type> type) {
         super(sampleSize, type, Methods.RANDOM);
-        rand = new Random();
     }
 
     /**
      * Creates a new instance.
-     *
-     * @param sampleSize
-     * @param datasetSize
      */
-    public SparkRandomPartitionSampleOperator(Integer sampleSize, Long datasetSize, DataSetType type) {
+    public SparkRandomPartitionSampleOperator(Integer sampleSize, Long datasetSize, DataSetType<Type> type) {
         super(sampleSize, datasetSize, type, Methods.RANDOM);
-        rand = new Random();
     }
 
-    int nb_partitions = 0;
-    int partitionSize = 0;
-    int parallel = 0;
-    boolean first = true;
-    int threshold = 5000;
+    /**
+     * Copies an instance (exclusive of broadcasts).
+     *
+     * @param that that should be copied
+     */
+    public SparkRandomPartitionSampleOperator(SampleOperator<Type> that) {
+        super(that);
+        assert that.getSampleMethod() == Methods.RANDOM || that.getSampleMethod() == Methods.ANY;
+    }
 
     @Override
-    public void evaluate(ChannelInstance[] inputs, ChannelInstance[] outputs, FunctionCompiler compiler, SparkExecutor sparkExecutor) {
+    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
+                                                                    ChannelInstance[] outputs,
+                                                                    SparkExecutor sparkExecutor,
+                                                                    OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
 
         final JavaRDD<Object> inputRdd = input.provideRdd();
-        if (datasetSize == 0) //total size of input dataset was not given
-        {
-            datasetSize = inputRdd.cache().count();
-        }
+        long datasetSize = this.isDataSetSizeKnown() ?
+                this.getDatasetSize() :
+                inputRdd.cache().count();
 
         if (sampleSize >= datasetSize) { //return whole dataset
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
-            return;
+            return null;
         }
 
         List<Type> result;
         final SparkContext sparkContext = inputRdd.context();
 
         if (first) { //first time -> retrieve some statistics for partitions
-            int tasks = sparkContext.defaultParallelism();
             nb_partitions = inputRdd.partitions().size();
             partitionSize = (int) Math.ceil((double) datasetSize / nb_partitions);
-            parallel = Math.min(sampleSize, tasks);
             first = false;
         }
 
@@ -151,6 +155,8 @@ public class SparkRandomPartitionSampleOperator<Type>
 
         // assuming the sample is small better use a collection instance, the optimizer can transform the output if necessary
         ((CollectionChannel.Instance) outputs[0]).accept(result);
+
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -161,7 +167,9 @@ public class SparkRandomPartitionSampleOperator<Type>
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
-        return Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR);
+        return this.isDataSetSizeKnown() ?
+                Arrays.asList(RddChannel.UNCACHED_DESCRIPTOR, RddChannel.CACHED_DESCRIPTOR) :
+                Collections.singletonList(RddChannel.CACHED_DESCRIPTOR);
     }
 
     @Override
@@ -169,12 +177,14 @@ public class SparkRandomPartitionSampleOperator<Type>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
+
 }
 
 class PartitionSampleFunction<V> extends AbstractFunction1<scala.collection.Iterator<V>, List<V>> implements Serializable {
 
-    int start_id;
-    int end_id;
+    private int start_id;
+
+    private int end_id;
 
     PartitionSampleFunction(int start_id, int end_id) {
         this.start_id = start_id;
@@ -206,7 +216,7 @@ class PartitionSampleFunction<V> extends AbstractFunction1<scala.collection.Iter
 
 class PartitionSampleListFunction<V> extends AbstractFunction1<scala.collection.Iterator<V>, List<V>> implements Serializable {
 
-    ArrayList<Integer> ids; //ids should be sorted
+    private ArrayList<Integer> ids; //ids should be sorted
 
     PartitionSampleListFunction(ArrayList<Integer> ids) {
         this.ids = ids;

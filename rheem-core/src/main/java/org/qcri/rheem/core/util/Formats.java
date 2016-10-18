@@ -12,7 +12,7 @@ public class Formats {
      * @return the formatted milliseconds
      */
     public static String formatDuration(long millis) {
-        if (millis < 0) return "-:--:--.---";
+        if (millis < 0) return "-" + formatDuration(-millis);
         long ms = millis % 1000;
         millis /= 1000;
         long s = millis % 60;
@@ -45,5 +45,27 @@ public class Formats {
      */
     public static String formatPercentage(double val) {
         return String.format("%.2f%%", val * 100d);
+    }
+
+    /**
+     * Formats a large number by replacing less significant digits with G, M, or K.
+     *
+     * @param val the value to format
+     * @return the simplified value
+     */
+    public static String formatLarge(long val) {
+        StringBuilder sb = new StringBuilder(10);
+        if (val < 0) sb.append("-");
+        val = Math.abs(val);
+        if (val >= 1000000000L) {
+            sb.append(val / 1000000000L).append("G");
+        } else if (val >= 1000000L) {
+            sb.append(val / 1000000L).append("M");
+        } else if (val >= 1000L) {
+            sb.append(val / 1000L).append("K");
+        } else {
+            sb.append(val);
+        }
+        return sb.toString();
     }
 }

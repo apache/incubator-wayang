@@ -2,13 +2,17 @@ package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
+import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -32,12 +36,25 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
         // Group plans.
         final Collection<List<PlanImplementation>> competingPlans =
                 planEnumeration.getPlanImplementations().stream()
-                        .collect(Collectors.groupingBy(PlanImplementation::getInterfaceOperators))
+                        .collect(Collectors.groupingBy(LatentOperatorPruningStrategy::getInterestingProperties))
                         .values();
         final List<PlanImplementation> bestPlans = competingPlans.stream()
                 .map(plans -> this.selectBestPlanNary(plans, this.timeEstimateComparator))
                 .collect(Collectors.toList());
         planEnumeration.getPlanImplementations().retainAll(bestPlans);
+    }
+
+    /**
+     * Extracts the interesting properties of a {@link PlanImplementation}.
+     *
+     * @param implementation whose interesting properties are requested
+     * @return the interesting properties of the given {@code implementation}
+     */
+    private static Tuple<Set<Platform>, Collection<ExecutionOperator>> getInterestingProperties(PlanImplementation implementation) {
+        return new Tuple<>(
+                implementation.getUtilizedPlatforms(),
+                implementation.getInterfaceOperators()
+        );
     }
 
     private PlanImplementation selectBestPlanNary(List<PlanImplementation> planImplementation,
