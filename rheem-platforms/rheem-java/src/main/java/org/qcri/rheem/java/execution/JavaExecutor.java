@@ -6,6 +6,7 @@ import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PartialExecution;
@@ -53,14 +54,18 @@ public class JavaExecutor extends PushExecutorTemplate {
 
         // Execute.
         final Collection<OptimizationContext.OperatorContext> operatorContexts;
+        final Collection<ChannelInstance> producedChannelInstances;
         long startTime = System.currentTimeMillis();
         try {
-            operatorContexts = cast(task.getOperator()).evaluate(
-                    toArray(inputChannelInstances),
-                    outputChannelInstances,
-                    this,
-                    producerOperatorContext
-            );
+            final Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> results =
+                    cast(task.getOperator()).evaluate(
+                            toArray(inputChannelInstances),
+                            outputChannelInstances,
+                            this,
+                            producerOperatorContext
+                    );
+            operatorContexts = results.getField0();
+            producedChannelInstances = results.getField1();
         } catch (Exception e) {
             throw new RheemException(String.format("Executing %s failed.", task), e);
         }
@@ -70,6 +75,18 @@ public class JavaExecutor extends PushExecutorTemplate {
         // Check how much we executed.
         PartialExecution partialExecution = this.createPartialExecution(operatorContexts, executionDuration);
         if (partialExecution != null) this.job.addPartialExecutionMeasurement(partialExecution);
+
+        // Collect any cardinality updates.
+        for (ChannelInstance producedChannelInstance : producedChannelInstances) {
+            if (!producedChannelInstance.wasProduced()) {
+                this.logger.error("Expected {} to be produced, but is not flagged as such.", producedChannelInstance);
+                continue;
+            }
+
+            if (producedChannelInstance.isMarkedForInstrumentation()) {
+                this.registerMeasuredCardinality(producedChannelInstance);
+            }
+        }
 
         // Force execution if necessary.
         if (isForceExecution) {
