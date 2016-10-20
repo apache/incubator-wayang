@@ -232,7 +232,7 @@ public class Individual {
     }
 
     private double calculateRelativePartialFitness(TimeEstimate timeEstimate, long actualTime) {
-        final long smoothing = 10L;
+        final long smoothing = 500L;
         final long meanEstimate = timeEstimate.getGeometricMeanEstimate() + smoothing;
         actualTime = actualTime + smoothing;
         if (meanEstimate > actualTime) {
