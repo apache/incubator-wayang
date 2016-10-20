@@ -4,8 +4,6 @@ import org.qcri.rheem.core.optimizer.enumeration.ExecutionTaskFlow;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.OptionalLong;
 
 /**
  * Contains a state of the execution of an {@link ExecutionTaskFlow}.
@@ -27,31 +25,20 @@ public interface ExecutionState {
      */
     ChannelInstance getChannelInstance(Channel channel);
 
-    // TODO: Handle cardinalities inside of loops.
-
     /**
      * Registers a measured cardinality.
      *
-     * @param channel     for that the cardinality has been measured
-     * @param cardinality that has been measured
+     * @param channelInstance the {@link ChannelInstance} for that there is a measured cardinality
      */
-    void addCardinalityMeasurement(Channel channel, long cardinality);
+    void addCardinalityMeasurement(ChannelInstance channelInstance);
 
     /**
-     * Obtains a measured cardinality.
+     * Retrieve previously registered cardinality measurements
      *
-     * @param channel whose cardinality measurement is requested
-     * @return an {@link OptionalLong} that contains a value if there is a measurement for the given {@link Channel}
-     * or one of its siblings
+     * @return {@link ChannelInstance}s that contain cardinality measurements
      */
-    OptionalLong getCardinalityMeasurement(Channel channel);
+    Collection<ChannelInstance> getCardinalityMeasurements();
 
-    /**
-     * Get all registered cardinality measurements. Should be used for reading only.
-     *
-     * @return all cardinality measurements
-     */
-    Map<Channel, Long> getCardinalityMeasurements();
 
     /**
      * Stores a {@link PartialExecution}.

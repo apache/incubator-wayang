@@ -247,9 +247,6 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                     this.executionState.register(channelInstance);
                 }
 
-                // Try to store cardinalities.
-                PushExecutorTemplate.this.addCardinalityIfNotInLoop(channelInstance);
-
                 // Release the ChannelInstance.
                 channelInstance.noteDiscardedReference(true);
             }

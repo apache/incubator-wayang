@@ -6,6 +6,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStageLoop;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
@@ -76,7 +77,7 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
      *
      * @param channelInstance the said {@link ChannelInstance}
      */
-    protected void addCardinalityIfNotInLoop(ChannelInstance channelInstance) {
+    protected void registerMeasuredCardinality(ChannelInstance channelInstance) {
         // Check if a cardinality was measured in the first place.
         final OptionalLong optionalCardinality = channelInstance.getMeasuredCardinality();
         if (!optionalCardinality.isPresent()) {
@@ -87,15 +88,7 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
             }
             return;
         }
-        final long cardinality = optionalCardinality.getAsLong();
-
-        // Make sure that the channelInstance is not inside of a loop.
-        final Channel channel = channelInstance.getChannel();
-        channel.withSiblings().forEach(c -> {
-            if (!checkIfIsInLoopChannel(c)) {
-                this.crossPlatformExecutor.addCardinalityMeasurement(c, cardinality);
-            }
-        });
+        this.crossPlatformExecutor.addCardinalityMeasurement(channelInstance);
     }
 
     /**

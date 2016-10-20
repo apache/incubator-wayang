@@ -3,7 +3,7 @@ package org.qcri.rheem.core.platform;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.core.util.Tuple;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -95,25 +95,30 @@ public class LazyChannelLineage {
     /**
      * Collect and mark all unmarked {@link Node}s in this instance.
      *
-     * @return the collected {@link OptimizationContext.OperatorContext}s
+     * @return the collected {@link OptimizationContext.OperatorContext}s and produced {@link ChannelInstance}s
      */
-    public Collection<OptimizationContext.OperatorContext> collectAndMark() {
-        return this.traverseAndMark(
-                new LinkedList<>(),
-                (accumulator, channelInstance, operatorContext) -> RheemCollections.add(accumulator, operatorContext)
-        );
+    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> collectAndMark() {
+        return this.collectAndMark(new LinkedList<>(), new LinkedList<>());
     }
 
     /**
      * Collect and mark all unmarked {@link Node}s in this instance.
      *
-     * @param collector collects the {@link OptimizationContext.OperatorContext} in the unmarked {@link Node}s.
-     * @return the {@code collector}
+     * @param operatorContextCollector collects the {@link OptimizationContext.OperatorContext} in the unmarked {@link Node}s
+     * @param channelInstanceCollector collects the {@link ChannelInstance} in the unmarked {@link Node}s
+     * @return the two collectors
      */
-    public Collection<OptimizationContext.OperatorContext> collectAndMark(Collection<OptimizationContext.OperatorContext> collector) {
+    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> collectAndMark(
+            Collection<OptimizationContext.OperatorContext> operatorContextCollector,
+            Collection<ChannelInstance> channelInstanceCollector
+    ) {
         return this.traverseAndMark(
-                collector,
-                (accumulator, channelInstance, operatorContext) -> RheemCollections.add(accumulator, operatorContext)
+                new Tuple<>(operatorContextCollector, channelInstanceCollector),
+                (accumulator, channelInstance, operatorContext) -> {
+                    accumulator.getField0().add(operatorContext);
+                    accumulator.getField1().add(channelInstance);
+                    return accumulator;
+                }
         );
     }
 
@@ -137,6 +142,9 @@ public class LazyChannelLineage {
 
     }
 
+    /**
+     * A node wraps a {@link ChannelInstance} and keeps track of predecessor nodes.
+     */
     public static abstract class Node {
 
         /**

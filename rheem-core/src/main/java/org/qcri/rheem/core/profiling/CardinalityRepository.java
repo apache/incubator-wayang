@@ -6,7 +6,6 @@ import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
@@ -54,28 +53,29 @@ public class CardinalityRepository {
      *                            possible accurate data
      */
     public void storeAll(ExecutionState executionState, OptimizationContext optimizationContext) {
-        executionState.getCardinalityMeasurements().forEach(
-                (channel, cardinality) -> {
-                    for (Slot<?> correspondingSlot : channel.getCorrespondingSlots()) {
-                        for (Slot<?> slot : OptimizationUtils.collectConnectedSlots(correspondingSlot)) {
-                            if (slot instanceof OutputSlot<?>) {
-                                OutputSlot<Object> outputSlot = ((OutputSlot<?>) slot).unchecked();
-                                final Operator operator = outputSlot.getOwner();
-                                if (!operator.isElementary() || operator.isSource()) {
-                                    continue;
-                                }
-                                final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(operator);
-                                if (operatorContext == null) {
-                                    // TODO: Handle cardinalities inside of loops.
-                                    this.logger.debug("Could not inject measured cardinality for {}: " +
-                                            "It is presumably a glue operator or inside of a loop.", operator);
-                                    continue;
-                                }
-                                this.store(outputSlot, cardinality, operatorContext);
-                            }
-                        }
-                    }
-                });
+//        executionState.getCardinalityMeasurements().forEach(
+//                channelInstance -> {
+//                    for (Slot<?> correspondingSlot : channelInstance.getChannel().getCorrespondingSlots()) {
+//                        for (Slot<?> slot : OptimizationUtils.collectConnectedSlots(correspondingSlot)) {
+//                            if (slot instanceof OutputSlot<?>) {
+//                                OutputSlot<Object> outputSlot = ((OutputSlot<?>) slot).unchecked();
+//                                final Operator operator = outputSlot.getOwner();
+//                                if (!operator.isElementary() || operator.isSource()) {
+//                                    continue;
+//                                }
+//                                final OptimizationContext.OperatorContext operatorContext = channelInstance.getProducerOperatorContext();
+//                                if (operatorContext == null) {
+//                                    // TODO: Handle cardinalities inside of loops.
+//                                    this.logger.debug("Could not inject measured cardinality for {}: " +
+//                                            "It is presumably a glue operator or inside of a loop.", operator);
+//                                    continue;
+//                                }
+//                                this.store(outputSlot, channelInstance.getMeasuredCardinality().getAsLong(), operatorContext);
+//                            }
+//                        }
+//                    }
+//                });
+        this.logger.warn("Cardinality repository currently disabled.");
     }
 
     /**
@@ -83,7 +83,8 @@ public class CardinalityRepository {
      * {@link CardinalityEstimate}s.
      */
     public void store(OutputSlot<?> output, long cardinality, OptimizationContext.OperatorContext operatorContext) {
-        assert output.getOwner() == operatorContext.getOperator();
+        assert output.getOwner() == operatorContext.getOperator() :
+                String.format("Owner of %s is not %s.", output, operatorContext.getOperator());
         if (!operatorContext.getOutputCardinality(output.getIndex()).isExactly(cardinality)) {
             this.logger.error("Expected a measured cardinality of {} for {}; found {}.",
                     cardinality, output, operatorContext.getOutputCardinality(output.getIndex()));

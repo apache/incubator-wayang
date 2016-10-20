@@ -2,13 +2,13 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.ExecutionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -73,64 +73,38 @@ public class CardinalityEstimatorManager {
      * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link RheemPlan}.
      */
     private void injectMeasuredCardinalities(ExecutionState executionState) {
-        executionState.getCardinalityMeasurements().forEach(this::injectMeasureCardinality);
+        executionState.getCardinalityMeasurements().forEach(this::injectMeasuredCardinality);
     }
 
     /**
-     * Injects the measured {@code cardinality} of a {@code channel} into the {@link #optimizationContext}.
+     * Injects the measured cardinality of a {@link ChannelInstance}.
      */
-    private void injectMeasureCardinality(Channel channel, long cardinality) {
+    private void injectMeasuredCardinality(ChannelInstance channelInstance) {
+        assert channelInstance.wasProduced();
+        assert channelInstance.isMarkedForInstrumentation();
+        final long cardinality = channelInstance.getMeasuredCardinality().getAsLong();
+        final OutputSlot<?> producerSlot = channelInstance.getChannel().getProducerSlot();
+        int outputIndex = producerSlot == null ? 0 : producerSlot.getIndex();
+        this.injectMeasuredCardinality(cardinality, channelInstance.getProducerOperatorContext(), outputIndex);
+    }
+
+    /**
+     * Injects the measured {@code cardinality}.
+     */
+    private void injectMeasuredCardinality(long cardinality, OptimizationContext.OperatorContext targetOperatorContext, int outputIndex) {
         // Build the new CardinalityEstimate.
-        final CardinalityEstimate newEstimate = new CardinalityEstimate(cardinality, cardinality, 1d, true);
-
-        // Identify the Slots that correspond to the channel.
-        final Collection<Slot<?>> correspondingSlots = channel.getCorrespondingSlots();
-        for (Slot<?> correspondingSlot : correspondingSlots) {
-
-            // Identify the corresponding OperatorContext.
-            final Operator owner = correspondingSlot.getOwner();
-            if (this.optimizationContext.getOperatorContext(owner) == null) {
-                // TODO: Handle cardinalities inside of loops.
-                this.logger.debug("Could not inject measured cardinality for {}: It is presumably a glue operator or inside of a loop.", owner);
-                continue;
+        final CardinalityEstimate newCardinality = new CardinalityEstimate(cardinality, cardinality, 1d, true);
+        final CardinalityEstimate oldCardinality = targetOperatorContext.getOutputCardinality(outputIndex);
+        if (!newCardinality.equals(oldCardinality)) {
+            if (this.logger.isInfoEnabled()) {
+                this.logger.info("Updating cardinality of {}'s output {} from {} to {}.",
+                        targetOperatorContext.getOperator(),
+                        outputIndex,
+                        oldCardinality,
+                        newCardinality
+                );
             }
-
-            // Update the operatorCtx, then propagate.
-            if (correspondingSlot instanceof InputSlot<?>) {
-                // Find the outermost InputSlot and propagate.
-                final InputSlot<?> outerInput = owner.getOutermostInputSlot((InputSlot<?>) correspondingSlot);
-                final Operator outerOperator = outerInput.getOwner();
-                final OptimizationContext.OperatorContext operatorCtx = this.optimizationContext.getOperatorContext(outerOperator);
-                if (this.logger.isInfoEnabled()) {
-                    this.logger.info("Updating cardinality of {} from {} to {}.",
-                            correspondingSlot,
-                            operatorCtx.getInputCardinality(outerInput.getIndex()),
-                            newEstimate
-                    );
-                }
-                operatorCtx.setInputCardinality(outerInput.getIndex(), newEstimate);
-                outerOperator.propagateInputCardinality(outerInput.getIndex(), operatorCtx);
-
-            } else {
-                // Find the outermost OutputSlot and propagate.
-                assert correspondingSlot instanceof OutputSlot<?>;
-                @SuppressWarnings("unchecked")
-                final Collection<OutputSlot<?>> outerOutputs = owner.getOutermostOutputSlots((OutputSlot) correspondingSlot);
-                for (OutputSlot<?> outerOutput : outerOutputs) {
-                    final Operator outerOperator = outerOutput.getOwner();
-                    final OptimizationContext.OperatorContext operatorCtx =
-                            this.optimizationContext.getOperatorContext(outerOperator);
-                    if (this.logger.isInfoEnabled()) {
-                        this.logger.info("Updating cardinality of {} from {} to {}.",
-                                correspondingSlot,
-                                operatorCtx.getOutputCardinality(outerOutput.getIndex()),
-                                newEstimate
-                        );
-                    }
-                    operatorCtx.setOutputCardinality(outerOutput.getIndex(), newEstimate);
-                    outerOperator.propagateOutputCardinality(outerOutput.getIndex(), operatorCtx);
-                }
-            }
+            targetOperatorContext.setOutputCardinality(outputIndex, newCardinality);
         }
     }
 
