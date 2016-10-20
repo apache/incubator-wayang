@@ -6,7 +6,6 @@ import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PartialExecution;
@@ -74,19 +73,9 @@ public class JavaExecutor extends PushExecutorTemplate {
 
         // Check how much we executed.
         PartialExecution partialExecution = this.createPartialExecution(operatorContexts, executionDuration);
-        if (partialExecution != null) this.job.addPartialExecutionMeasurement(partialExecution);
 
         // Collect any cardinality updates.
-        for (ChannelInstance producedChannelInstance : producedChannelInstances) {
-            if (!producedChannelInstance.wasProduced()) {
-                this.logger.error("Expected {} to be produced, but is not flagged as such.", producedChannelInstance);
-                continue;
-            }
-
-            if (producedChannelInstance.isMarkedForInstrumentation()) {
-                this.registerMeasuredCardinality(producedChannelInstance);
-            }
-        }
+        this.registerMeasuredCardinalities(producedChannelInstances);
 
         // Force execution if necessary.
         if (isForceExecution) {
