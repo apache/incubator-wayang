@@ -26,7 +26,9 @@ public class SwitchForwardCardinalityEstimator implements CardinalityEstimator {
                 if (forwardEstimate != null) {
                     LoggerFactory.getLogger(this.getClass()).error("Conflicting estimates {} and {}.", forwardEstimate, inputEstimate);
                 }
-                forwardEstimate = inputEstimate;
+                if (forwardEstimate == null || forwardEstimate.getCorrectnessProbability() > inputEstimate.getCorrectnessProbability()) {
+                    forwardEstimate = inputEstimate;
+                }
             }
         }
         assert forwardEstimate != null;

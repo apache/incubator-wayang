@@ -11,8 +11,6 @@ import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -21,8 +19,6 @@ import java.util.*;
  * through the {@link ExecutionStage}.
  */
 public abstract class PushExecutorTemplate extends ExecutorTemplate {
-
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected final Job job;
 

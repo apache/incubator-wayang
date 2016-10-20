@@ -6,7 +6,6 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStageLoop;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
@@ -68,6 +67,25 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
     public void unregister(ExecutionResource resource) {
         if (!this.registeredResources.remove(resource)) {
             this.logger.warn("Could not unregister {}, as it was not registered.", resource);
+        }
+    }
+
+    /**
+     * Select the produced {@link ChannelInstance}s that are marked for instrumentation and register them if they
+     * contain a measured cardinality.
+     *
+     * @param producedChannelInstances the {@link ChannelInstance}s
+     */
+    protected void registerMeasuredCardinalities(Collection<ChannelInstance> producedChannelInstances) {
+        for (ChannelInstance producedChannelInstance : producedChannelInstances) {
+            if (!producedChannelInstance.wasProduced()) {
+                this.logger.error("Expected {} to be produced, but is not flagged as such.", producedChannelInstance);
+                continue;
+            }
+
+            if (producedChannelInstance.isMarkedForInstrumentation()) {
+                this.registerMeasuredCardinality(producedChannelInstance);
+            }
         }
     }
 
