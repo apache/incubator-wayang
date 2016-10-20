@@ -5,6 +5,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
@@ -32,12 +33,13 @@ public interface SparkExecutionOperator extends ExecutionOperator {
      * @param outputs         {@link ChannelInstance}s that accept the outputs of this operator
      * @param sparkExecutor   {@link SparkExecutor} that executes this instance
      * @param operatorContext optimization information for this instance
-     * @return a {@link Collection} of what has been executed
+     * @return {@link Collection}s of what has been executed and produced
      */
-    Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                             ChannelInstance[] outputs,
-                                                             SparkExecutor sparkExecutor,
-                                                             OptimizationContext.OperatorContext operatorContext);
+    Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            SparkExecutor sparkExecutor,
+            OptimizationContext.OperatorContext operatorContext);
 
     /**
      * Utility method to name an RDD according to this instance's name.

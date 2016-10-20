@@ -36,7 +36,7 @@ public interface JavaExecutionOperator extends ExecutionOperator {
      * @param outputs         {@link ChannelInstance}s that collect the outputs of this operator
      * @param javaExecutor    that executes this instance
      * @param operatorContext optimization information for this instance
-     * @return a {@link Collection} of what has been executed
+     * @return {@link Collection}s of what has been executed and produced
      */
     Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
             ChannelInstance[] inputs,
