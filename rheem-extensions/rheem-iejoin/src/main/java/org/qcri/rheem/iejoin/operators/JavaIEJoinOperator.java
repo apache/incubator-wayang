@@ -6,6 +6,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.iejoin.data.Data;
 import org.qcri.rheem.iejoin.operators.java_helpers.BitSetJoin;
 import org.qcri.rheem.iejoin.operators.java_helpers.DataComparator;
@@ -39,10 +40,11 @@ public class JavaIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends C
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    JavaExecutor javaExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            JavaExecutor javaExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         StreamChannel.Instance outputChannel = (StreamChannel.Instance) outputs[0];
 
         Stream<Input> stream0;

@@ -10,6 +10,7 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Copyable;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.iejoin.data.Data;
 import org.qcri.rheem.iejoin.operators.spark_helpers.*;
 import org.qcri.rheem.spark.channels.RddChannel;
@@ -37,10 +38,11 @@ public class SparkIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends 
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    SparkExecutor sparkExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            SparkExecutor sparkExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 

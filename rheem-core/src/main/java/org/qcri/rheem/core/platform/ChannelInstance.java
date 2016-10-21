@@ -1,6 +1,8 @@
 package org.qcri.rheem.core.platform;
 
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
+import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 
 import java.util.OptionalLong;
 
@@ -65,5 +67,12 @@ public interface ChannelInstance extends ExecutionResource {
      * Mark this instance as produced.
      */
     void markProduced();
+
+    /**
+     * Retrieve the {@link OptimizationContext.OperatorContext} of the {@link ExecutionOperator} producing this instance.
+     *
+     * @return the {@link OptimizationContext.OperatorContext}
+     */
+    OptimizationContext.OperatorContext getProducerOperatorContext();
 
 }

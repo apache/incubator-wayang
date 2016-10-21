@@ -76,9 +76,9 @@ public class CrossPlatformExecutor implements ExecutionState {
     private Set<ExecutionStage> completedStages = new HashSet<>();
 
     /**
-     * Keeps track of {@link Channel} cardinalities.
+     * Keeps track of {@link ChannelInstance} cardinalities.
      */
-    private final Map<Channel, Long> cardinalities = new HashMap<>();
+    private final Collection<ChannelInstance> cardinalityMeasurements = new LinkedList<>();
 
     /**
      * Maintains {@link ExecutionResource}s that are "global" w.r.t. to this instance, i.e., they will not be
@@ -435,36 +435,16 @@ public class CrossPlatformExecutor implements ExecutionState {
         }
     }
 
+
+
     @Override
-    public void addCardinalityMeasurement(Channel channel, long cardinality) {
-        final Long oldCardinality = this.cardinalities.putIfAbsent(channel, cardinality);
-        // TODO: The cardinality measurements are not very reliable (due to lazy execution mechanisms).
-        // For now, we just take the most "credible" cardinality measurement.
-        if (oldCardinality != null && !oldCardinality.equals(cardinality)) {
-            if (oldCardinality == 0 || cardinality < oldCardinality) {
-                // We take the new cardinality.
-            } else {
-                this.cardinalities.put(channel, oldCardinality);
-            }
-            this.logger.warn("Conflicting cardinality measurements ({} and {}) for {}. Using {}.",
-                    oldCardinality, cardinality, channel, this.cardinalities.get(channel)
-            );
-        }
-//        assert oldCardinality == null || oldCardinality == cardinality : String.format(
-//                "Replacing cardinality measurement of %s with %d (was %d).",
-//                channel, cardinality, oldCardinality
-//        );
+    public void addCardinalityMeasurement(ChannelInstance channelInstance) {
+        this.cardinalityMeasurements.add(channelInstance);
     }
 
     @Override
-    public OptionalLong getCardinalityMeasurement(Channel channel) {
-        final Long cardinality = this.cardinalities.get(channel);
-        return cardinality == null ? OptionalLong.empty() : OptionalLong.of(cardinality);
-    }
-
-    @Override
-    public Map<Channel, Long> getCardinalityMeasurements() {
-        return Collections.unmodifiableMap(this.cardinalities);
+    public Collection<ChannelInstance> getCardinalityMeasurements() {
+        return this.cardinalityMeasurements;
     }
 
     @Override

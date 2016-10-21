@@ -8,6 +8,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.*;
+import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
@@ -123,28 +124,30 @@ public interface ExecutionOperator extends ElementaryOperator {
         return channelInstances;
     }
 
-    static Collection<OptimizationContext.OperatorContext> modelEagerExecution(ChannelInstance[] inputs,
-                                                                               ChannelInstance[] outputs,
-                                                                               OptimizationContext.OperatorContext operatorContext) {
-        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts;
+    static Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> modelEagerExecution(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            OptimizationContext.OperatorContext operatorContext) {
+        final Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> collectors;
         if (outputs.length == 0) {
-            executedOperatorContexts = inputs[0].getLazyChannelLineage().collectAndMark();
-            executedOperatorContexts.add(operatorContext);
+            collectors = inputs[0].getLazyChannelLineage().collectAndMark();
+            collectors.getField0().add(operatorContext);
         } else {
-            executedOperatorContexts = new LinkedList<>();
+            collectors = new Tuple<>(new LinkedList<>(), new LinkedList<>());
             LazyChannelLineage.addAllPredecessors(inputs, outputs);
             for (ChannelInstance output : outputs) {
-                output.getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+                output.getLazyChannelLineage().collectAndMark(collectors.getField0(), collectors.getField1());
             }
         }
-        return executedOperatorContexts;
+        return collectors;
     }
 
-    static Collection<OptimizationContext.OperatorContext> modelLazyExecution(ChannelInstance[] inputs,
-                                                                              ChannelInstance[] outputs,
-                                                                              OptimizationContext.OperatorContext operatorContext) {
+    static Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>>
+    modelLazyExecution(ChannelInstance[] inputs,
+                       ChannelInstance[] outputs,
+                       OptimizationContext.OperatorContext operatorContext) {
         LazyChannelLineage.addAllPredecessors(inputs, outputs);
-        return Collections.emptyList();
+        return new Tuple<>(Collections.emptyList(), Collections.emptyList());
     }
 
 }

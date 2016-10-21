@@ -16,6 +16,12 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
 
     private boolean wasProduced = false;
 
+    /**
+     * The {@link OptimizationContext.OperatorContext} of the {@link ExecutionOperator} that is producing this
+     * instance.
+     */
+    private final OptimizationContext.OperatorContext producerOperatorContext;
+
     private LazyChannelLineage lazyChannelLineage;
 
     /**
@@ -31,6 +37,7 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
                                       int producerOutputIndex) {
         super(executor);
         this.lazyChannelLineage = new LazyChannelLineage(this, producerOperatorContext, producerOutputIndex);
+        this.producerOperatorContext = producerOperatorContext;
     }
 
     @Override
@@ -64,6 +71,11 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
     @Override
     public void markProduced() {
         this.wasProduced = true;
+    }
+
+    @Override
+    public OptimizationContext.OperatorContext getProducerOperatorContext() {
+        return this.producerOperatorContext;
     }
 
     @Override

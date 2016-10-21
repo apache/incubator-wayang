@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
@@ -41,10 +42,11 @@ public class JavaIntersectOperator<Type>
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    JavaExecutor javaExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            JavaExecutor javaExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -60,24 +62,25 @@ public class JavaIntersectOperator<Type>
                 cardinalityEstimate0.getUpperEstimate() <= cardinalityEstimate1.getUpperEstimate();
 
         final Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
+        final Collection<ChannelInstance> producedChannelInstances = new LinkedList<>();
         final Stream<Type> candidateStream;
         final Set<Type> probingTable;
         if (isMaterialize0) {
             candidateStream = ((JavaChannelInstance) inputs[0]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[1]).provideStream());
-            inputs[0].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+            inputs[0].getLazyChannelLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
             outputs[0].addPredecessor(inputs[1]);
         } else {
             candidateStream = ((JavaChannelInstance) inputs[1]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[0]).provideStream());
-            inputs[1].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+            inputs[1].getLazyChannelLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
             outputs[0].addPredecessor(inputs[0]);
         }
 
         Stream<Type> intersectStream = candidateStream.filter(probingTable::remove);
         ((StreamChannel.Instance) outputs[0]).accept(intersectStream);
 
-        return executedOperatorContexts;
+        return new Tuple<>(executedOperatorContexts, producedChannelInstances);
     }
 
     /**

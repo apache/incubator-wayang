@@ -7,8 +7,9 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.*;
-import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.graphchi.operators.GraphChiExecutionOperator;
+import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
 
 import java.util.*;
 
@@ -67,8 +68,10 @@ public class GraphChiExecutor extends ExecutorTemplate {
         graphChiExecutionOperator.execute(inputChannelInstances, outputChannelInstances, this.configuration);
         long endTime = System.currentTimeMillis();
 
-        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts =
+        final Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> results =
                 ExecutionOperator.modelEagerExecution(inputChannelInstances, outputChannelInstances, operatorContext);
+        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts = results.getField0();
+        final Collection<ChannelInstance> producedChannelInstances = results.getField1();
 
         for (ChannelInstance outputChannelInstance : outputChannelInstances) {
             if (outputChannelInstance != null) {
@@ -77,7 +80,8 @@ public class GraphChiExecutor extends ExecutorTemplate {
         }
 
         final PartialExecution partialExecution = this.createPartialExecution(executedOperatorContexts, endTime - startTime);
-        this.job.addPartialExecutionMeasurement(partialExecution);
+        executionState.add(partialExecution);
+        this.registerMeasuredCardinalities(producedChannelInstances);
     }
 
     @Override

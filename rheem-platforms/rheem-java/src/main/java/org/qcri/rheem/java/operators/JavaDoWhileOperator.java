@@ -10,6 +10,7 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
@@ -52,10 +53,11 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     @SuppressWarnings("unchecked")
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    JavaExecutor javaExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            JavaExecutor javaExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -66,6 +68,7 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
         boolean endloop = false;
 
         Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
+        Collection<ChannelInstance> producedChannelInstances = new LinkedList<>();
         final Collection<ConvergenceType> convergenceCollection;
         final JavaChannelInstance input;
         switch (this.getState()) {
@@ -81,7 +84,7 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
                 convergenceCollection = ((CollectionChannel.Instance) inputs[CONVERGENCE_INPUT_INDEX]).provideCollection();
                 endloop = stoppingCondition.test(convergenceCollection);
                 executedOperatorContexts.add(operatorContext);
-                inputs[CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+                inputs[CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
                 input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
                 break;
             default:
@@ -100,7 +103,7 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return executedOperatorContexts;
+        return new Tuple<>(executedOperatorContexts, producedChannelInstances);
     }
 
     @Override
