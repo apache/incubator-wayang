@@ -381,9 +381,9 @@ public class PlanEnumerator {
                 );
                 if (branchEnumeration.getPlanImplementations().isEmpty()) {
                     if (this.isTopLevel()) {
-                        throw new RheemException(String.format("Could not concatenate %s in %s.", operator, branch));
+                        throw new RheemException(String.format("Could not concatenate %s to %s.", lastOperator, operator));
                     } else {
-                        this.logger.warn("Could not concatenate {} in {}.", operator, branch);
+                        this.logger.warn("Could not concatenate {} to {}.", lastOperator, operator);
                     }
                 }
                 this.prune(branchEnumeration);
