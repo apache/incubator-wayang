@@ -677,6 +677,10 @@ public class PlanImplementation {
         }
     }
 
+    /**
+     * Retrieve the {@link Platform}s that are utilized by this instance.
+     * @return the {@link Platform}s
+     */
     public Set<Platform> getUtilizedPlatforms() {
         if (this.platformCache == null) {
             this.platformCache = this.streamOperators()
