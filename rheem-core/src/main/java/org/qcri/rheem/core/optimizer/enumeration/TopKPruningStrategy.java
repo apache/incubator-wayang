@@ -23,6 +23,7 @@ public class TopKPruningStrategy implements PlanEnumerationPruningStrategy {
 
     @Override
     public void prune(PlanEnumeration planEnumeration) {
+        // Skip if there is nothing to do...
         if (planEnumeration.getPlanImplementations().size() <= this.k) return;
 
         ArrayList<PlanImplementation> planImplementations = new ArrayList<>(planEnumeration.getPlanImplementations());
