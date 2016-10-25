@@ -44,9 +44,12 @@ object Parameters {
     case "java-conversions" => Java.channelConversionPlugin
     case "spark" => Spark.basicPlugin
     case "spark-graph" => Spark.graphPlugin
+    case "spark-conversions" => Spark.conversionPlugin
     case "graphchi" => GraphChi.plugin
     case "postgres" => Postgres.plugin
+    case "postgres-conversions" => Postgres.conversionPlugin
     case "sqlite3" => Sqlite3.plugin
+    case "sqlite3-conversions" => Sqlite3.conversionPlugin
     case yamlId(url) => DynamicPlugin.loadYaml(url)
     case other => throw new IllegalArgumentException(s"Could not load platform '$other'.")
   }
