@@ -49,9 +49,9 @@ public class CrossPlatformExecutor implements ExecutionState {
     private final Map<ExecutionStage, StageActivator> pendingStageActivators = new HashMap<>();
 
     /**
-     * Maintains the {@link Executor}s for each {@link PlatformExecution}.
+     * Maintains the {@link Executor}s for each {@link Platform}.
      */
-    private final Map<PlatformExecution, Executor> executors = new HashMap<>();
+    private final Map<Platform, Executor> executors = new HashMap<>();
 
     /**
      * We keep them around if we want to go on without re-optimization.
@@ -294,12 +294,12 @@ public class CrossPlatformExecutor implements ExecutionState {
 
     private Executor getOrCreateExecutorFor(ExecutionStage stage) {
         return this.executors.computeIfAbsent(
-                stage.getPlatformExecution(),
-                pe -> {
+                stage.getPlatformExecution().getPlatform(),
+                platform -> {
                     // It is important to register the Executor. This way, we ensure that it will also not be disposed
                     // among disconnected PlatformExecutions. The downside is, that we only remove it, once the
                     // execution is done.
-                    final Executor executor = pe.getPlatform().getExecutorFactory().create(this.job);
+                    final Executor executor = platform.getExecutorFactory().create(this.job);
                     this.registerGlobal(executor);
                     return executor;
                 }
