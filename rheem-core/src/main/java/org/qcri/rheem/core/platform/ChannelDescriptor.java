@@ -80,7 +80,7 @@ public class ChannelDescriptor {
      * @return whether corresponding {@link Channel}s are suited to be between {@link ExecutionStage}s
      */
     public boolean isSuitableForBreakpoint() {
-        return this.isSuitableForBreakpoint();
+        return this.isSuitableForBreakpoint;
     }
 
     /**

@@ -94,6 +94,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         // Do some initialization.
         this.executionTaskFlow = executionTaskFlow;
         // TODO: The following criterion isolates LoopHeadOperators into own ExecutionStages, so as to avoid problems connected to circular dependencies. But this might not be as performant as it gets.
+        this.splittingCriteria.add(StageAssignmentTraversal::isSuitableForBreakpoint);
         this.splittingCriteria.add(StageAssignmentTraversal::isLoopHeadInvolved);
         this.splittingCriteria.add(StageAssignmentTraversal::isLoopBoarder); // Loop boards need be split always.
         this.splittingCriteria.addAll(Arrays.asList(splittingCriteria));
@@ -110,6 +111,16 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
                                              StageSplittingCriterion... additionalSplittingCriteria) {
         final StageAssignmentTraversal instance = new StageAssignmentTraversal(executionTaskFlow, additionalSplittingCriteria);
         return instance.buildExecutionPlan();
+    }
+
+    /**
+     * Tells whether the given {@link Channel} lends itself to a {@link org.qcri.rheem.core.platform.Breakpoint}. In
+     * that case, we might want to split an {@link ExecutionStage} here.
+     *
+     * @see StageSplittingCriterion#shouldSplit(ExecutionTask, Channel, ExecutionTask)
+     */
+    private static boolean isSuitableForBreakpoint(ExecutionTask producer, Channel channel, ExecutionTask consumer) {
+        return channel.isSuitableForBreakpoint();
     }
 
     /**
