@@ -44,7 +44,7 @@ public class JavaCollectionSource<T> extends CollectionSource<T> implements Java
         assert outputs.length == 1;
         ((CollectionChannel.Instance) outputs[0]).accept(this.getCollection());
 
-        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
 
