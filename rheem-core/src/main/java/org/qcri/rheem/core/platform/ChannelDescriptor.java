@@ -3,7 +3,6 @@ package org.qcri.rheem.core.platform;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
-import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 
 import java.lang.reflect.Constructor;
@@ -19,18 +18,20 @@ public class ChannelDescriptor {
 
     private final boolean isReusable;
 
-    private final boolean isInterStageCable;
-
-    private final boolean isInterPlatformCapable;
+    /**
+     * Tells whether corresponding {@link Channel}s are suited to be between {@link ExecutionStage}s and fit with
+     * {@link Breakpoint}s.
+     *
+     * @see Channel#isSuitableForBreakpoint()
+     */
+    private final boolean isSuitableForBreakpoint;
 
     public ChannelDescriptor(Class<? extends Channel> channelClass,
                              boolean isReusable,
-                             boolean isInterStageCable,
-                             boolean isInterPlatformCapable) {
+                             boolean isSuitableForBreakpoint) {
         this.channelClass = channelClass;
         this.isReusable = isReusable;
-        this.isInterStageCable = isInterStageCable;
-        this.isInterPlatformCapable = isInterPlatformCapable;
+        this.isSuitableForBreakpoint = isSuitableForBreakpoint;
     }
 
     public Class<? extends Channel> getChannelClass() {
@@ -43,24 +44,22 @@ public class ChannelDescriptor {
         if (o == null || this.getClass() != o.getClass()) return false;
         ChannelDescriptor that = (ChannelDescriptor) o;
         return this.isReusable == that.isReusable &&
-                this.isInterStageCable == that.isInterStageCable &&
-                this.isInterPlatformCapable == that.isInterPlatformCapable &&
+                this.isSuitableForBreakpoint == that.isSuitableForBreakpoint &&
                 Objects.equals(this.channelClass, that.channelClass);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.channelClass, this.isReusable, this.isInterStageCable, this.isInterPlatformCapable);
+        return Objects.hash(this.channelClass, this.isReusable, this.isSuitableForBreakpoint);
     }
 
     @Override
     public String toString() {
-        return String.format("%s[%s,%s%s%s]",
+        return String.format("%s[%s,%s%s]",
                 this.getClass().getSimpleName(),
                 this.getChannelClass().getSimpleName(),
                 this.isReusable() ? "r" : "-",
-                this.isInterStageCapable() ? "s" : "-",
-                this.isInterPlatformCapable() ? "p" : "-"
+                this.isSuitableForBreakpoint() ? "b" : "-"
         );
     }
 
@@ -75,25 +74,13 @@ public class ChannelDescriptor {
     }
 
     /**
-     * Declares whether this instance can be shared among two different {@link ExecutionStage}s (of the same
-     * {@link PlatformExecution}, though).
+     * Tells whether corresponding {@link Channel}s are suited to be between {@link ExecutionStage}s and fit with
+     * {@link Breakpoint}s.
+     *
+     * @return whether corresponding {@link Channel}s are suited to be between {@link ExecutionStage}s
      */
-    public boolean isInterStageCapable() {
-        return this.isInterStageCable;
-    }
-
-    /**
-     * Declares whether this instance can be shared among two different {@link PlatformExecution}s.
-     */
-    public boolean isInterPlatformCapable() {
-        return this.isInterPlatformCapable;
-    }
-
-    /**
-     * Declares whether the {@link Channel} is a {@link Platform}-internal.
-     */
-    public boolean isInternal() {
-        return !this.isInterPlatformCapable();
+    public boolean isSuitableForBreakpoint() {
+        return this.isSuitableForBreakpoint();
     }
 
     /**

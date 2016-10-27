@@ -115,18 +115,16 @@ public abstract class Channel {
     }
 
     /**
-     * Declares whether this instance can be shared among two different {@link ExecutionStage}s (of the same
-     * {@link PlatformExecution}, though).
+     * Tells whether this instance lends itself for {@link Breakpoint}s. That is particularly the case if:
+     * <ol>
+     *     <li>it is produced immediately by its producer ({@link #getProducer()};</li>
+     *     <li>the contained data are at rest;</li>
+     *     <li>and, as a bonus, the cardinality of the data can be observed.</li>
+     * </ol>
+     * @return whether this instance lends itself for {@link Breakpoint}s
      */
-    public boolean isInterStageCapable() {
-        return this.getDescriptor().isInterStageCapable();
-    }
-
-    /**
-     * Declares whether this instance can be shared among two different {@link PlatformExecution}s.
-     */
-    public boolean isInterPlatformCapable() {
-        return this.getDescriptor().isInterPlatformCapable();
+    public boolean isSuitableForBreakpoint() {
+        return this.getDescriptor().isSuitableForBreakpoint();
     }
 
     /**

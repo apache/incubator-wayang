@@ -15,7 +15,6 @@ public class DummyExternalReusableChannel extends Channel {
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(
             DummyExternalReusableChannel.class,
             true,
-            true,
             true
     );
 

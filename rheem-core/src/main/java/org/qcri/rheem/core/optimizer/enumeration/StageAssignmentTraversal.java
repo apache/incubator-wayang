@@ -15,9 +15,10 @@ import java.util.stream.Collectors;
 
 /**
  * Builds an {@link ExecutionPlan} from a {@link ExecutionTaskFlow}.
- * <p>Specifically, subdivides the {@link ExecutionTask}s into {@link PlatformExecution} and {@link ExecutionStage}s,
- * thereby discarding already executed {@link ExecutionTask}s. As of now, these are recognized as producers of
- * {@link Channel}s that are copied. This is because of {@link ExecutionTaskFlowCompiler} that copies {@link Channel}s
+ * <p>Specifically, subdivides the {@link ExecutionTask}s into {@link PlatformExecution}s and {@link ExecutionStage}s,
+ * thereby discarding already executed {@link ExecutionTask}s.</p>
+ * <p>As of now, these are recognized as producers of
+ * {@link Channel}s that are copied (see {@link Channel#isCopy()}). This is because of {@link ExecutionTaskFlowCompiler} that copies {@link Channel}s
  * to different alternative {@link ExecutionPlan}s on top of existing fixed {@link ExecutionTask}s.</p>
  */
 public class StageAssignmentTraversal extends OneTimeExecutable {
@@ -786,7 +787,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
                             .anyMatch(consumer -> !this.allTasks.contains(consumer));
                     if (!isInterStageRequired) continue;
                     this.outboundTasks.add(task);
-                    if (outputChannel.isInterStageCapable()) continue;
+//                    if (outputChannel.isInterStageCapable()) continue;
                     // TODO: We cannot "exchange" Channels so easily any more.
 //                    if (!task.getOperator().getPlatform().getChannelManager()
 //                            .exchangeWithInterstageCapable(outputChannel)) {

@@ -21,18 +21,12 @@ import java.util.OptionalLong;
  */
 public class RddChannel extends Channel {
 
-    private static final boolean IS_UNCACHED_REUSABLE = false;
-
-    private static final boolean IS_CACHED_REUSABLE = true;
-
-    private static final boolean IS_INTERNAL = true;
-
     public static final ChannelDescriptor UNCACHED_DESCRIPTOR = new ChannelDescriptor(
-            RddChannel.class, IS_UNCACHED_REUSABLE, IS_UNCACHED_REUSABLE, !IS_INTERNAL && IS_UNCACHED_REUSABLE
+            RddChannel.class, false, false
     );
 
     public static final ChannelDescriptor CACHED_DESCRIPTOR = new ChannelDescriptor(
-            RddChannel.class, IS_CACHED_REUSABLE, IS_CACHED_REUSABLE, !IS_INTERNAL && IS_CACHED_REUSABLE
+            RddChannel.class, true, false
     );
 
     public RddChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {

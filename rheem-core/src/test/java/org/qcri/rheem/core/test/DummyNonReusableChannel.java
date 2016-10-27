@@ -15,7 +15,6 @@ public class DummyNonReusableChannel extends Channel {
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(
             DummyNonReusableChannel.class,
             false,
-            false,
             false
     );
 

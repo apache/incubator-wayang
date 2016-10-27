@@ -15,8 +15,7 @@ public class DummyReusableChannel extends Channel {
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(
             DummyReusableChannel.class,
             true,
-            true,
-            false
+            true
     );
 
     public DummyReusableChannel(ChannelDescriptor descriptor, OutputSlot<?> producerSlot) {

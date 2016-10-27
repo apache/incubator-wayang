@@ -26,10 +26,6 @@ public class FileChannel extends Channel {
 
     public static final FileChannel.Descriptor HDFS_OBJECT_FILE_DESCRIPTOR = new FileChannel.Descriptor("hdfs", "object-file");
 
-    private static final boolean IS_REUSABLE = true;
-
-    private static final boolean IS_INTERNAL = false;
-
     public FileChannel(FileChannel.Descriptor descriptor) {
         this(descriptor, null);
     }
@@ -86,7 +82,7 @@ public class FileChannel extends Channel {
          * @param serialization type of serialization, e.g., {@code object-file}, {@code tsv}
          */
         public Descriptor(String location, String serialization) {
-            super(FileChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL && IS_REUSABLE);
+            super(FileChannel.class, true, true);
             this.location = location;
             this.serialization = serialization;
         }

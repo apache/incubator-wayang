@@ -16,11 +16,7 @@ import java.util.stream.Stream;
  */
 public class CollectionChannel extends Channel {
 
-    private static final boolean IS_REUSABLE = true;
-
-    private static final boolean IS_INTERNAL = true;
-
-    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(CollectionChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL && IS_REUSABLE);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(CollectionChannel.class, true, true);
 
     public CollectionChannel(ChannelDescriptor channelDescriptor, OutputSlot<?> outputSlot) {
         super(channelDescriptor, outputSlot);
