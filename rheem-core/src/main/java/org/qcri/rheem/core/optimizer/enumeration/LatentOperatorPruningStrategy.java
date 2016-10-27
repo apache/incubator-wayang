@@ -33,6 +33,9 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
 
     @Override
     public void prune(PlanEnumeration planEnumeration) {
+        // Skip if there is nothing to do...
+        if (planEnumeration.getPlanImplementations().size() < 2) return;
+
         // Group plans.
         final Collection<List<PlanImplementation>> competingPlans =
                 planEnumeration.getPlanImplementations().stream()

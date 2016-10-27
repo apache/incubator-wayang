@@ -1,9 +1,10 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Random;
 
 /**
  * This {@link PlanEnumerationPruningStrategy} retains only the best {@code k} {@link PlanImplementation}s.
