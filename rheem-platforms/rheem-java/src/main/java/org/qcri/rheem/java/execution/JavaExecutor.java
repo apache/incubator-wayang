@@ -44,7 +44,7 @@ public class JavaExecutor extends PushExecutorTemplate {
             ExecutionTask task,
             List<ChannelInstance> inputChannelInstances,
             OptimizationContext.OperatorContext producerOperatorContext,
-            boolean isForceExecution
+            boolean isRequestEagerExecution
     ) {
         // Provide the ChannelInstances for the output of the task.
         final ChannelInstance[] outputChannelInstances = task.getOperator().createOutputChannelInstances(
@@ -77,13 +77,9 @@ public class JavaExecutor extends PushExecutorTemplate {
         // Collect any cardinality updates.
         this.registerMeasuredCardinalities(producedChannelInstances);
 
-        // Force execution if necessary.
-        if (isForceExecution) {
-            if (partialExecution == null) {
-                this.logger.warn("Execution of {} might not have been enforced properly. " +
-                                "This might break the execution or cause side-effects with the re-optimization.",
-                        task);
-            }
+        // Warn if requested eager execution did not take place.
+        if (isRequestEagerExecution && partialExecution == null) {
+            this.logger.info("{} was not executed eagerly as requested.", task);
         }
 
         return new Tuple<>(Arrays.asList(outputChannelInstances), partialExecution);

@@ -215,6 +215,7 @@ public class Job extends OneTimeExecutable {
      * {@link PlanTransformation}s.
      */
     private void prepareRheemPlan() {
+        this.logger.info("Preparing plan...");
 
         // Prepare the RheemPlan for the optimization.
         this.optimizationRound.start("Prepare", "Prune&Isolate");
@@ -251,6 +252,8 @@ public class Job extends OneTimeExecutable {
      * {@link Operator}s and the execution profile and time of {@link ExecutionOperator}s.
      */
     private void estimateKeyFigures() {
+        this.logger.info("Estimating cardinalities and execution load...");
+
         this.optimizationRound.start("Cardinality&Load Estimation");
         if (this.cardinalityEstimatorManager == null) {
             this.optimizationRound.start("Cardinality&Load Estimation", "Create OptimizationContext");
@@ -275,6 +278,8 @@ public class Job extends OneTimeExecutable {
      * Determine a good/the best execution plan from a given {@link RheemPlan}.
      */
     private ExecutionPlan createInitialExecutionPlan() {
+        this.logger.info("Enumerating execution plans...");
+
         this.optimizationRound.start("Create Initial Execution Plan");
 
         // Defines the plan that we want to use in the end.
@@ -302,6 +307,7 @@ public class Job extends OneTimeExecutable {
         this.costEstimates.add(planImplementation.getCostEstimate());
         this.optimizationRound.stop("Create Initial Execution Plan", "Pick Best Plan");
 
+        this.logger.info("Compiling execution plan...");
         this.optimizationRound.start("Create Initial Execution Plan", "Split Stages");
         final ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.createFrom(planImplementation);
         final ExecutionPlan executionPlan = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
@@ -339,9 +345,11 @@ public class Job extends OneTimeExecutable {
     /**
      * Go over the given {@link RheemPlan} and update the cardinalities of data being passed between its
      * {@link Operator}s using the given {@link ExecutionState}.
+     *
+     * @return whether any cardinalities have been updated
      */
-    private void reestimateCardinalities(ExecutionState executionState) {
-        this.cardinalityEstimatorManager.pushCardinalityUpdates(executionState);
+    private boolean reestimateCardinalities(ExecutionState executionState) {
+        return this.cardinalityEstimatorManager.pushCardinalityUpdates(executionState);
     }
 
     /**
@@ -453,11 +461,16 @@ public class Job extends OneTimeExecutable {
         final TimeMeasurement round = this.optimizationRound.start(String.format("Post-processing %d", executionId));
 
         round.start("Reestimate Cardinalities&Time");
-        this.reestimateCardinalities(this.crossPlatformExecutor);
+        boolean isCardinalitiesUpdated = this.reestimateCardinalities(this.crossPlatformExecutor);
         round.stop("Reestimate Cardinalities&Time");
 
         round.start("Update Execution Plan");
-        this.updateExecutionPlan(executionPlan);
+        if (isCardinalitiesUpdated) {
+            this.logger.info("Re-optimizing execution plan.");
+            this.updateExecutionPlan(executionPlan);
+        } else {
+            this.logger.info("Skipping re-optimization: no new insights on cardinalities.");
+        }
         round.stop("Update Execution Plan");
 
         round.stop();

@@ -43,10 +43,16 @@ public class CardinalityEstimatorManager {
         this.configuration = configuration;
     }
 
-    public void pushCardinalities() {
-        this.getPlanTraversal().traverse(this.optimizationContext, this.configuration);
+    /**
+     * Traverse the {@link RheemPlan}, thereby updating {@link CardinalityEstimate}s.
+     *
+     * @return whether any {@link CardinalityEstimate}s have been updated
+     */
+    public boolean pushCardinalities() {
+        boolean isUpdated = this.getPlanTraversal().traverse(this.optimizationContext, this.configuration);
         this.optimizationContext.clearMarks();
         assert this.optimizationContext.isTimeEstimatesComplete();
+        return isUpdated;
     }
 
     public CardinalityEstimationTraversal getPlanTraversal() {
@@ -63,17 +69,23 @@ public class CardinalityEstimatorManager {
     /**
      * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link RheemPlan}
      * (or its {@link OptimizationContext}, respectively) and then reperforms the cardinality estimation.
+     *
+     * @return whether any cardinalities have been injected
      */
-    public void pushCardinalityUpdates(ExecutionState executionState) {
-        this.injectMeasuredCardinalities(executionState);
-        this.pushCardinalities();
+    public boolean pushCardinalityUpdates(ExecutionState executionState) {
+        boolean isInjected = this.injectMeasuredCardinalities(executionState);
+        if (isInjected) this.pushCardinalities();
+        return isInjected;
     }
 
     /**
      * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link RheemPlan}.
+     *
+     * @return whether any cardinalities have been injected
      */
-    private void injectMeasuredCardinalities(ExecutionState executionState) {
+    private boolean injectMeasuredCardinalities(ExecutionState executionState) {
         executionState.getCardinalityMeasurements().forEach(this::injectMeasuredCardinality);
+        return !executionState.getCardinalityMeasurements().isEmpty();
     }
 
     /**

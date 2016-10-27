@@ -39,24 +39,28 @@ public abstract class CardinalityPusher {
      *
      * @param opCtx         will be subject to the push
      * @param configuration potentially provides some estimation helpers
+     * @return whether an update of the {@link CardinalityEstimate}s took place
      */
-    public void push(OptimizationContext.OperatorContext opCtx, Configuration configuration) {
+    public boolean push(OptimizationContext.OperatorContext opCtx, Configuration configuration) {
         assert opCtx != null;
         this.logger.trace("Pushing through {}.", opCtx.getOperator());
 
         assert Arrays.stream(this.relevantInputIndices).mapToObj(opCtx::getInputCardinality).noneMatch(Objects::isNull)
                 : String.format("Incomplete input cardinalities for %s.", opCtx.getOperator());
 
-        if (this.canUpdate(opCtx)) {
-            if (this.logger.isTraceEnabled()) {
-                this.logger.trace("Pushing {} into {}.", Arrays.toString(opCtx.getInputCardinalities()), opCtx.getOperator());
-            }
-            this.doPush(opCtx, configuration);
+        if (!this.canUpdate(opCtx)) {
+            return false;
         }
+
+        if (this.logger.isTraceEnabled()) {
+            this.logger.trace("Pushing {} into {}.", Arrays.toString(opCtx.getInputCardinalities()), opCtx.getOperator());
+        }
+        this.doPush(opCtx, configuration);
 
         if (opCtx.getCostEstimate() == null) {
             opCtx.updateCostEstimate();
         }
+        return true;
     }
 
     /**

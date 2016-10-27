@@ -39,16 +39,16 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
     /**
      * Executes an {@link ExecutionTask}.
      *
-     * @param taskActivator    provides the {@link ExecutionTask} and its input dependenchannelInstancees.
-     * @param isForceExecution whether execution is forced, i.e., lazy execution of {@link ExecutionTask} is prohibited
+     * @param taskActivator           provides the {@link ExecutionTask} and its input dependenchannelInstancees.
+     * @param isRequestEagerExecution whether the {@link ExecutionTask} should be executed eagerly if possible
      * @return the output {@link ChannelInstance}s of the {@link ExecutionTask}
      */
-    private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator taskActivator, boolean isForceExecution) {
+    private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator taskActivator, boolean isRequestEagerExecution) {
         return this.execute(
                 taskActivator.getTask(),
                 taskActivator.getInputChannelInstances(),
                 taskActivator.getOperatorContext(),
-                isForceExecution
+                isRequestEagerExecution
         );
     }
 
@@ -83,12 +83,13 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
      * @param task                    that should be executed
      * @param inputChannelInstances   inputs into the {@code task}
      * @param producerOperatorContext
-     * @param isForceExecution        forbids lazy execution  @return the {@link ChannelInstance}s created as output of {@code task}
+     * @param isRequestEagerExecution whether the {@link ExecutionTask} should be executed eagerly if possible
+     * @return the {@link ChannelInstance}s created as output of {@code task}
      */
     protected abstract Tuple<List<ChannelInstance>, PartialExecution> execute(ExecutionTask task,
                                                                               List<ChannelInstance> inputChannelInstances,
                                                                               OptimizationContext.OperatorContext producerOperatorContext,
-                                                                              boolean isForceExecution);
+                                                                              boolean isRequestEagerExecution);
 
     /**
      * Keeps track of state that is required within the execution of a single {@link ExecutionStage}. Specifically,
@@ -188,8 +189,8 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
          * {@code null} if something has been actually executed
          */
         private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator readyActivator, ExecutionTask task) {
-            final boolean isForceExecution = this.terminalTasks.contains(task);
-            return this.executor().execute(readyActivator, isForceExecution);
+            final boolean isRequestEagerExecution = this.terminalTasks.contains(task);
+            return this.executor().execute(readyActivator, isRequestEagerExecution);
         }
 
         /**
