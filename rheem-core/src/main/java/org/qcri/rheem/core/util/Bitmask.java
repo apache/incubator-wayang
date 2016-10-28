@@ -180,6 +180,36 @@ public class Bitmask implements Cloneable {
         return copy.orInPlace(that);
     }
 
+
+    /**
+     * Accumulates the given instance to this one via logical AND.
+     *
+     * @param that that should be accumulated
+     * @return this instance
+     */
+    public Bitmask andInPlace(Bitmask that) {
+        this.ensureCapacity(that.bits.length << WORD_ADDRESS_BITS);
+        for (int i = 0; i < that.bits.length; i++) {
+            this.bits[i] &= that.bits[i];
+        }
+        for (int i = that.bits.length; i < this.bits.length; i++) {
+            this.bits[i] = 0;
+        }
+        this.cardinalityCache = -1;
+        return this;
+    }
+
+    /**
+     * Creates the new instance that merges this and the given one via logical AND.
+     *
+     * @param that the other instance
+     * @return this merged instance
+     */
+    public Bitmask and(Bitmask that) {
+        Bitmask copy = new Bitmask(this, that.bits.length << WORD_ADDRESS_BITS);
+        return copy.andInPlace(that);
+    }
+
     /**
      * Accumulates the given instance to this one via logical AND NOT.
      *
@@ -252,6 +282,20 @@ public class Bitmask implements Cloneable {
         }
         for (int i = minBitsLength; i < this.bits.length; i++) {
             if (this.bits[i] != 0L) return false;
+        }
+        return true;
+    }
+
+    /**
+     * Checks whether all bits set in this instance are not set in the given instance.
+     *
+     * @param that the potential disjoint instance
+     * @return whether the instances are disjoint
+     */
+    public boolean isDisjointFrom(Bitmask that) {
+        final int minBitsLength = Math.min(this.bits.length, that.bits.length);
+        for (int i = 0; i < minBitsLength; i++) {
+            if ((this.bits[i] & that.bits[i]) != 0) return false;
         }
         return true;
     }

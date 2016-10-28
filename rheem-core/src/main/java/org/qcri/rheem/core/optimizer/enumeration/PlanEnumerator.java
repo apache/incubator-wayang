@@ -81,7 +81,7 @@ public class PlanEnumerator {
     /**
      * {@link Channel}s that are existing and must be reused when re-optimizing.
      */
-    private final Map<OutputSlot<?>, Channel> existingChannels;
+    private final Map<OutputSlot<?>, Collection<Channel>> openChannels;
 
     /**
      * {@link OptimizationContext} that holds all relevant task data.
@@ -136,12 +136,12 @@ public class PlanEnumerator {
         for (Channel openChannel : openChannels) {
             final OutputSlot<?> outputSlot = OptimizationUtils.findRheemPlanOutputSlotFor(openChannel);
             if (outputSlot != null) {
-                for (OutputSlot<?> outputOutput : outputSlot.getOwner().getOutermostOutputSlots(outputSlot)) {
-                    final Channel otherExistingChannel = this.existingChannels.put(outputOutput, openChannel);
-                    assert otherExistingChannel == null :
-                            String.format("The two existing channels %s and %s represent the same output slot.",
-                                    openChannel, otherExistingChannel);
+                for (OutputSlot<?> outerOutput : outputSlot.getOwner().getOutermostOutputSlots(outputSlot)) {
+                    final Collection<Channel> channelSet = this.openChannels.computeIfAbsent(outerOutput, k -> new HashSet<>(1));
+                    channelSet.add(openChannel);
                 }
+            } else {
+                this.logger.error("Could not find the output slot for the open channel {}.", openChannel);
             }
         }
 
@@ -155,13 +155,13 @@ public class PlanEnumerator {
                            OperatorAlternative.Alternative enumeratedAlternative,
                            Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
                            Map<ExecutionOperator, ExecutionTask> executedTasks,
-                           Map<OutputSlot<?>, Channel> existingChannels) {
+                           Map<OutputSlot<?>, Collection<Channel>> openChannels) {
 
         this.optimizationContext = optimizationContext;
         this.enumeratedAlternative = enumeratedAlternative;
         this.presettledAlternatives = presettledAlternatives;
         this.executedTasks = executedTasks;
-        this.existingChannels = existingChannels;
+        this.openChannels = openChannels;
 
 
         // Set up start Operators.
@@ -375,7 +375,7 @@ public class PlanEnumerator {
                 final OutputSlot<?> output = lastOperator.getOutput(0);
                 branchEnumeration = branchEnumeration.concatenate(
                         output,
-                        this.existingChannels.get(output),
+                        this.openChannels.get(output),
                         Collections.singletonMap(operator.getInput(0), operatorEnumeration),
                         optimizationContext
                 );
@@ -436,7 +436,7 @@ public class PlanEnumerator {
                 alternative,
                 this.presettledAlternatives,
                 this.executedTasks,
-                this.existingChannels);
+                this.openChannels);
     }
 
     /**
@@ -448,7 +448,7 @@ public class PlanEnumerator {
                 null,
                 this.presettledAlternatives,
                 this.executedTasks,
-                this.existingChannels);
+                this.openChannels);
     }
 
     /**
@@ -465,7 +465,7 @@ public class PlanEnumerator {
 
         final PlanEnumeration concatenatedEnumeration = concatenationActivator.baseEnumeration.concatenate(
                 concatenationActivator.outputSlot,
-                this.existingChannels.get(concatenationActivator.outputSlot),
+                this.openChannels.get(concatenationActivator.outputSlot),
                 concatenationActivator.getAdjacentEnumerations(),
                 concatenationActivator.getOptimizationContext()
         );

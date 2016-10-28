@@ -249,7 +249,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
      * If a {@link PlatformExecution} is provided, the {@link InterimStage} will be associated with it.
      */
     private void createStageFor(ExecutionTask task, PlatformExecution platformExecution) {
-        assert task.getStage() == null;
+        assert task.getStage() == null : String.format("%s has already stage %s.", task, task.getStage());
 
         // See if there is already an InterimStage.
         if (this.assignedInterimStages.containsKey(task)) {

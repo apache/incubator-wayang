@@ -1,7 +1,6 @@
 package org.qcri.rheem.core.plan.executionplan;
 
 import org.qcri.rheem.core.optimizer.enumeration.ExecutionTaskFlow;
-import org.qcri.rheem.core.optimizer.enumeration.PlanImplementation;
 import org.qcri.rheem.core.optimizer.enumeration.StageAssignmentTraversal;
 import org.qcri.rheem.core.util.Counter;
 import org.slf4j.Logger;
@@ -72,17 +71,21 @@ public class ExecutionPlan {
 
     /**
      * Scrap {@link Channel}s and {@link ExecutionTask}s that are not within the given {@link ExecutionStage}s.
+     *
+     * @return {@link Channel}s from that consumer {@link ExecutionTask}s have been removed
      */
-    public void retain(Set<ExecutionStage> retainableStages) {
+    public Set<Channel> retain(Set<ExecutionStage> retainableStages) {
+        Set<Channel> openChannels = new HashSet<>();
         for (ExecutionStage stage : retainableStages) {
-            for (ExecutionTask terminalTask : stage.getAllTasks()) {
-                for (Channel channel : terminalTask.getOutputChannels()) {
-                    channel.retain(retainableStages);
+            for (Channel channel : stage.getOutboundChannels()) {
+                if (channel.retain(retainableStages)) {
+                    openChannels.add(channel);
                 }
             }
             stage.retainSuccessors(retainableStages);
             stage.getPlatformExecution().retain(retainableStages);
         }
+        return openChannels;
     }
 
     /**

@@ -87,16 +87,16 @@ public class ChannelConversionGraph {
      * {@code destInputSlots}.
      *
      * @param output              {@link OutputSlot} of an {@link ExecutionOperator} that should be consumed
-     * @param existingChannel     an existing {@link Channel} that must be part of the tree or {@code null}
+     * @param openChannels        existing {@link Channel}s that must be part of the tree or {@code null}
      * @param destInputSlots      {@link InputSlot}s of {@link ExecutionOperator}s that should receive data from the {@code output}
      * @param optimizationContext describes the above mentioned {@link ExecutionOperator} key figures
      * @return a {@link Junction} or {@code null} if none could be found
      */
     public Junction findMinimumCostJunction(OutputSlot<?> output,
-                                            Channel existingChannel,
+                                            Collection<Channel> openChannels,
                                             List<InputSlot<?>> destInputSlots,
                                             OptimizationContext optimizationContext) {
-        return new ShortestTreeSearcher(output, existingChannel, destInputSlots, optimizationContext).getJunction();
+        return new ShortestTreeSearcher(output, openChannels, destInputSlots, optimizationContext).getJunction();
     }
 
     /**
@@ -152,7 +152,7 @@ public class ChannelConversionGraph {
     }
 
     /**
-     * Finds the shortest tree between the {@link #startChannelDescriptor} and the {@link #destChannelDescriptorSets}.
+     * Finds the shortest tree between the {@link #sourceChannelDescriptor} and the {@link #destChannelDescriptorSets}.
      */
     private class ShortestTreeSearcher extends OneTimeExecutable {
 
@@ -162,9 +162,9 @@ public class ChannelConversionGraph {
         private final OutputSlot<?> sourceOutput;
 
         /**
-         * Produced by the {@link #sourceOutput}.
+         * {@link ChannelDescriptor} for the {@link Channel} produced by the {@link #sourceOutput}.
          */
-        private final Channel sourceChannel;
+        private final ChannelDescriptor sourceChannelDescriptor;
 
         /**
          * Describes the number of data quanta that are presumably converted.
@@ -177,19 +177,25 @@ public class ChannelConversionGraph {
         private final int numExecutions;
 
         /**
-         * The type of {@link Channel} from that the conversion should be started or continued.
+         * {@link ChannelDescriptor}s of {@link #existingChannels} that are allowed to have new consumers.
          */
-        private final ChannelDescriptor startChannelDescriptor;
+        private final Set<ChannelDescriptor> openChannelDescriptors;
 
         /**
-         * According to the {@link #startChannelDescriptor}.
+         * Maps {@link ChannelDescriptor}s to already existing {@link Channel}s.
          */
-        private final Channel startChannel;
+        private final Map<ChannelDescriptor, Channel> existingChannels;
 
         /**
-         * {@link ChannelDescriptor}s that should not be used in the search, as they are already visited.
+         * Maps destination {@link InputSlot}s to {@link #existingChannels} that are their destination.
          */
-        private final Collection<ChannelDescriptor> previsitedChannels;
+        private final Map<InputSlot<?>, Channel> existingDestinationChannels;
+
+        private final Bitmask existingDestinationChannelIndices,
+                absentDestinationChannelIndices,
+                allDestinationChannelIndices = new Bitmask();
+
+        private final Map<ChannelDescriptor, Bitmask> reachableExistingDestinationChannelIndices;
 
         /**
          * {@link InputSlot}s that should be served by the {@link #sourceOutput}.
@@ -232,19 +238,21 @@ public class ChannelConversionGraph {
          * Create a new instance.
          *
          * @param sourceOutput        provides a {@link Channel} that should be converted
-         * @param existingChannel     existing {@link Channel} derived from {@code sourceOutput} and where we must take up
+         * @param openChannels        existing {@link Channel} derived from {@code sourceOutput} and where we must take up
          *                            the search; or {@code null}
          * @param destInputs          that consume the converted {@link Channel}(s)
          * @param optimizationContext provides optimization info
          */
         private ShortestTreeSearcher(OutputSlot<?> sourceOutput,
-                                     Channel existingChannel,
+                                     Collection<Channel> openChannels,
                                      List<InputSlot<?>> destInputs,
                                      OptimizationContext optimizationContext) {
-            // Safe relevant variable.
+
+            // Store relevant variables.
             this.optimizationContext = optimizationContext;
             this.sourceOutput = sourceOutput;
             this.destInputs = destInputs;
+            final boolean isOpenChannelsPresent = openChannels != null && !openChannels.isEmpty();
 
             // Figure out the optimization info via the sourceOutput.
             final ExecutionOperator outputOperator = (ExecutionOperator) this.sourceOutput.getOwner();
@@ -254,26 +262,89 @@ public class ChannelConversionGraph {
             this.numExecutions = operatorContext.getNumExecutions();
 
             // Figure out, if a part of the conversion is already in place and initialize accordingly.
-            if (existingChannel != null) {
-                Channel allegedSourceChannel = existingChannel;
-                this.previsitedChannels = new ArrayList<>(4);
-                while (allegedSourceChannel.getProducer().getOperator() != outputOperator) {
-                    allegedSourceChannel = OptimizationUtils.getPredecessorChannel(allegedSourceChannel);
-                    this.previsitedChannels.add(allegedSourceChannel.getDescriptor());
+
+            if (isOpenChannelsPresent) {
+                // Take any open channel and trace it back to the source channel.
+                Channel existingChannel = RheemCollections.getAny(openChannels);
+                while (existingChannel.getProducerSlot() != sourceOutput) {
+                    existingChannel = OptimizationUtils.getPredecessorChannel(existingChannel);
                 }
-                this.sourceChannel = allegedSourceChannel;
-                this.startChannel = existingChannel.copy();
-                this.startChannelDescriptor = this.startChannel.getDescriptor();
+                final Channel sourceChannel = existingChannel;
+                this.sourceChannelDescriptor = sourceChannel.getDescriptor();
+
+                // Now traverse down-stream to find already reached destinations.
+                this.existingChannels = new HashMap<>();
+                this.existingDestinationChannels = new HashMap<>(4);
+                this.existingDestinationChannelIndices = new Bitmask();
+
+                this.collectExistingChannels(sourceChannel);
+                this.openChannelDescriptors = new HashSet<>(openChannels.size());
+                for (Channel openChannel : openChannels) {
+                    this.openChannelDescriptors.add(openChannel.getDescriptor());
+                }
             } else {
-                this.startChannelDescriptor = outputOperator.getOutputChannelDescriptor(this.sourceOutput.getIndex());
-                this.sourceChannel = null;
-                this.previsitedChannels = Collections.emptyList();
-                this.startChannel = null;
+                this.sourceChannelDescriptor = outputOperator.getOutputChannelDescriptor(this.sourceOutput.getIndex());
+                this.existingChannels = Collections.emptyMap();
+                this.existingDestinationChannels = Collections.emptyMap();
+                this.existingDestinationChannelIndices = new Bitmask();
+                this.openChannelDescriptors = Collections.emptySet();
             }
+
 
             // Set up the destinations.
             this.destChannelDescriptorSets = RheemCollections.map(destInputs, this::resolveSupportedChannels);
             assert this.destChannelDescriptorSets.stream().noneMatch(Collection::isEmpty);
+            this.kernelizeChannelRequests();
+
+            if (isOpenChannelsPresent) {
+                // Update the bitmask of all already reached destination channels...
+                // ...and mark the paths of already reached destination channels via upstream traversal.
+                this.reachableExistingDestinationChannelIndices = new HashMap<>();
+                for (Channel existingDestinationChannel : this.existingDestinationChannels.values()) {
+                    final Bitmask channelIndices = this.kernelDestChannelDescriptorsToIndices
+                            .get(existingDestinationChannel.getDescriptor())
+                            .and(this.existingDestinationChannelIndices);
+                    while (true) {
+                        this.reachableExistingDestinationChannelIndices.compute(
+                                existingDestinationChannel.getDescriptor(),
+                                (k, v) -> v == null ? new Bitmask(channelIndices) : v.orInPlace(channelIndices)
+                        );
+                        if (existingDestinationChannel.getDescriptor().equals(this.sourceChannelDescriptor)) break;
+                        existingDestinationChannel = OptimizationUtils.getPredecessorChannel(existingDestinationChannel);
+                    }
+                }
+            } else {
+                this.reachableExistingDestinationChannelIndices = Collections.emptyMap();
+            }
+
+            this.absentDestinationChannelIndices = this.allDestinationChannelIndices
+                    .andNot(this.existingDestinationChannelIndices);
+        }
+
+        /**
+         * Traverse the given {@link Channel} downstream and collect any {@link Channel} that feeds some
+         * {@link InputSlot} of a non-conversion {@link ExecutionOperator}.
+         *
+         * @param channel the {@link Channel} to traverse from
+         * @see #existingChannels
+         * @see #existingDestinationChannels
+         */
+        private void collectExistingChannels(Channel channel) {
+            this.existingChannels.put(channel.getDescriptor(), channel);
+            for (ExecutionTask consumer : channel.getConsumers()) {
+                final ExecutionOperator operator = consumer.getOperator();
+                if (OptimizationUtils.checkIfRheemPlanOperator(operator)) {
+                    final InputSlot<?> input = consumer.getInputSlotFor(channel);
+                    this.existingDestinationChannels.put(input, channel);
+                    int destIndex = 0;
+                    while (this.destInputs.get(destIndex) != input) destIndex++;
+                    this.existingDestinationChannelIndices.set(destIndex);
+                } else {
+                    for (Channel outputChannel : consumer.getOutputChannels()) {
+                        if (outputChannel != null) this.collectExistingChannels(outputChannel);
+                    }
+                }
+            }
         }
 
         /**
@@ -294,6 +365,11 @@ public class ChannelConversionGraph {
          * @return all eligible {@link ChannelDescriptor}s
          */
         private Set<ChannelDescriptor> resolveSupportedChannels(final InputSlot<?> input) {
+            final Channel existingChannel = this.existingDestinationChannels.get(input);
+            if (existingChannel != null) {
+                return Collections.singleton(existingChannel.getDescriptor());
+            }
+
             final ExecutionOperator owner = (ExecutionOperator) input.getOwner();
             final List<ChannelDescriptor> supportedInputChannels = owner.getSupportedInputChannels(input.getIndex());
             if (input.isLoopInvariant()) {
@@ -306,9 +382,6 @@ public class ChannelConversionGraph {
 
         @Override
         protected void doExecute() {
-            // Make the search problem easier by condensing the search query.
-            this.kernelizeChannelRequests();
-
             // Start from the root vertex.
             final Tree tree = this.searchTree();
             if (tree != null) {
@@ -327,44 +400,55 @@ public class ChannelConversionGraph {
         private void kernelizeChannelRequests() {
             // Check if the Junction enters a loop "from the side", i.e., across multiple iterations.
             // CHECK: Since we rule out non-reusable Channels in #resolveSupportedChannels, do we really need this?
-            final LoopSubplan outputLoop = this.sourceOutput.getOwner().getInnermostLoop();
-            final int outputLoopDepth = this.sourceOutput.getOwner().getLoopStack().size();
-            boolean isSideEnterLoop = this.destInputs.stream().anyMatch(input ->
-                    !input.getOwner().isLoopHead() &&
-                            (input.getOwner().getLoopStack().size() > outputLoopDepth ||
-                                    (input.getOwner().getLoopStack().size() == outputLoopDepth && input.getOwner().getInnermostLoop() != outputLoop)
-                            )
-            );
+//            final LoopSubplan outputLoop = this.sourceOutput.getOwner().getInnermostLoop();
+//            final int outputLoopDepth = this.sourceOutput.getOwner().getLoopStack().size();
+//            boolean isSideEnterLoop = this.destInputs.stream().anyMatch(input ->
+//                    !input.getOwner().isLoopHead() &&
+//                            (input.getOwner().getLoopStack().size() > outputLoopDepth ||
+//                                    (input.getOwner().getLoopStack().size() == outputLoopDepth && input.getOwner().getInnermostLoop() != outputLoop)
+//                            )
+//            );
 
-            // Index the Channel requests by their InputSlots, thereby merging equal ones.
-            this.kernelDestChannelDescriptorSetsToIndices = new HashMap<>(this.destChannelDescriptorSets.size());
+
+            // Index the (unreached) Channel requests by their InputSlots, thereby merging equal ones.
             int index = 0;
+            this.kernelDestChannelDescriptorSetsToIndices = new HashMap<>(this.destChannelDescriptorSets.size());
             for (Set<ChannelDescriptor> destChannelDescriptorSet : this.destChannelDescriptorSets) {
                 final Bitmask indices = this.kernelDestChannelDescriptorSetsToIndices.computeIfAbsent(
                         destChannelDescriptorSet, key -> new Bitmask(this.destChannelDescriptorSets.size())
                 );
+                this.allDestinationChannelIndices.set(index);
                 indices.set(index++);
             }
 
             // Strip off the non-reusable, superfluous ChannelDescriptors where applicable.
-            Collection<Tuple<Set<ChannelDescriptor>, Bitmask>> channelsToIndicesChanges = new LinkedList<>();
+            Collection<Tuple<Set<ChannelDescriptor>, Bitmask>> kernelDestChannelDescriptorSetsToIndicesUpdates = new LinkedList<>();
             final Iterator<Map.Entry<Set<ChannelDescriptor>, Bitmask>> iterator =
                     this.kernelDestChannelDescriptorSetsToIndices.entrySet().iterator();
             while (iterator.hasNext()) {
                 final Map.Entry<Set<ChannelDescriptor>, Bitmask> entry = iterator.next();
                 final Bitmask indices = entry.getValue();
-                if (indices.cardinality() < 2 && !isSideEnterLoop) continue;
+                // Don't touch destination channel sets that occur only once.
+                if (indices.cardinality() < 2) continue;
 
+                // If there is exactly one non-reusable and more than one reusable channel, we can remove the
+                // non-reusable one.
                 Set<ChannelDescriptor> channelDescriptors = entry.getKey();
                 int numReusableChannels = (int) channelDescriptors.stream().filter(ChannelDescriptor::isReusable).count();
-                if (numReusableChannels == 0 || numReusableChannels == channelDescriptors.size()) continue;
-
-                iterator.remove();
-                channelDescriptors = new HashSet<>(channelDescriptors);
-                channelDescriptors.removeIf(channelDescriptor -> !channelDescriptor.isReusable());
-                channelsToIndicesChanges.add(new Tuple<>(channelDescriptors, indices));
+                if (numReusableChannels == 0 && channelDescriptors.size() == 1) {
+                    logger.warn(
+                            "More than two target operators request only the non-reusable channel {}.",
+                            RheemCollections.getSingle(channelDescriptors)
+                    );
+                }
+                if (channelDescriptors.size() - numReusableChannels == 1) {
+                    iterator.remove();
+                    channelDescriptors = new HashSet<>(channelDescriptors);
+                    channelDescriptors.removeIf(channelDescriptor -> !channelDescriptor.isReusable());
+                    kernelDestChannelDescriptorSetsToIndicesUpdates.add(new Tuple<>(channelDescriptors, indices));
+                }
             }
-            for (Tuple<Set<ChannelDescriptor>, Bitmask> channelsToIndicesChange : channelsToIndicesChanges) {
+            for (Tuple<Set<ChannelDescriptor>, Bitmask> channelsToIndicesChange : kernelDestChannelDescriptorSetsToIndicesUpdates) {
                 this.kernelDestChannelDescriptorSetsToIndices.computeIfAbsent(
                         channelsToIndicesChange.getField0(),
                         key -> new Bitmask(this.destChannelDescriptorSets.size())
@@ -388,11 +472,14 @@ public class ChannelConversionGraph {
          */
         private Tree searchTree() {
             // Prepare the recursive traversal.
-            final HashSet<ChannelDescriptor> visitedChannelDescriptors = new HashSet<>(this.previsitedChannels);
-            visitedChannelDescriptors.add(this.startChannelDescriptor);
+            final HashSet<ChannelDescriptor> visitedChannelDescriptors = new HashSet<>(16);
 
             // Perform the traversal.
-            final Map<Bitmask, Tree> solutions = this.enumerate(visitedChannelDescriptors, this.startChannelDescriptor, Bitmask.EMPTY_BITMASK);
+            final Map<Bitmask, Tree> solutions = this.enumerate(
+                    visitedChannelDescriptors,
+                    this.sourceChannelDescriptor,
+                    Bitmask.EMPTY_BITMASK
+            );
 
             // Get hold of a comprehensive solution (if it exists).
             Bitmask requestedIndices = new Bitmask(this.destChannelDescriptorSets.size());
@@ -417,21 +504,48 @@ public class ChannelConversionGraph {
                 Bitmask settledDestinationIndices) {
 
             // Mapping from settled indices to the cheapest tree settling them. Will be the return value.
-            Map<Bitmask, Tree> newSolutions = new HashMap<>();
+            Map<Bitmask, Tree> newSolutions = new HashMap<>(16);
             Tree newSolution;
 
+
             // Check if current path is a (new) solution.
+            // Exclude existing destinations that are not reached via the current path.
+            final Bitmask excludedExistingIndices = this.existingDestinationChannelIndices.andNot(
+                    this.reachableExistingDestinationChannelIndices.getOrDefault(channelDescriptor, Bitmask.EMPTY_BITMASK)
+            );
+            // Exclude missing destinations if the current channel exists but is not open.
+            final Bitmask excludedAbsentIndices =
+                    (this.existingChannels.containsKey(channelDescriptor) && !openChannelDescriptors.contains(channelDescriptor)) ?
+                            this.absentDestinationChannelIndices :
+                            Bitmask.EMPTY_BITMASK;
             final Bitmask newSettledIndices = this.kernelDestChannelDescriptorsToIndices
                     .getOrDefault(channelDescriptor, Bitmask.EMPTY_BITMASK)
-                    .andNot(settledDestinationIndices);
-            if (!newSettledIndices.isEmpty() && (newSettledIndices.cardinality() < 2 || channelDescriptor.isReusable())) {
-                // Create a new solution.
-                newSolution = Tree.singleton(channelDescriptor, newSettledIndices);
-                newSolutions.put(newSolution.settledDestinationIndices, newSolution);
+                    .andNot(settledDestinationIndices)
+                    .andNotInPlace(excludedExistingIndices)
+                    .andNotInPlace(excludedAbsentIndices);
 
-                // Check if all destinations are settled.
-                // In that case, we can stop the recursion.
-                if (newSolution.settledDestinationIndices.cardinality() == this.destChannelDescriptorSets.size()) {
+            if (!newSettledIndices.isEmpty()) {
+                if (channelDescriptor.isReusable() || newSettledIndices.cardinality() == 1) {
+                    // If the channel is reusable, it is almost safe to say that we either use it for all possible
+                    // destinations or for none, because no extra costs can incur.
+                    // TODO: Create all possible combinations if required.
+                    // The same is for when there is only a single destination reached.
+                    newSolution = Tree.singleton(channelDescriptor, newSettledIndices);
+                    newSolutions.put(newSolution.settledDestinationIndices, newSolution);
+
+                } else {
+                    // Otherwise, create an entry for each settled index.
+                    for (int index = newSettledIndices.nextSetBit(0); index != -1; index = newSettledIndices.nextSetBit(index + 1)) {
+                        Bitmask newSettledIndicesSubset = new Bitmask(index + 1);
+                        newSettledIndicesSubset.set(index);
+                        newSolution = Tree.singleton(channelDescriptor, newSettledIndicesSubset);
+                        newSolutions.put(newSolution.settledDestinationIndices, newSolution);
+                    }
+                }
+
+                // Check early stopping criteria:
+                // There are no more channels that could be settled.
+                if (newSettledIndices.cardinality() == this.destChannelDescriptorSets.size() - excludedExistingIndices.cardinality()) {
                     return newSolutions;
                 }
             }
@@ -444,8 +558,15 @@ public class ChannelConversionGraph {
             final List<ChannelConversion> channelConversions =
                     ChannelConversionGraph.this.conversions.getOrDefault(channelDescriptor, Collections.emptyList());
             final List<Collection<Tree>> childSolutionSets = new ArrayList<>(channelConversions.size());
+            final Set<ChannelDescriptor> successorChannelDescriptors = this.getSuccessorChannelDescriptors(channelDescriptor);
             for (ChannelConversion channelConversion : channelConversions) {
                 final ChannelDescriptor targetChannelDescriptor = channelConversion.getTargetChannelDescriptor();
+
+                // Skip if there are successor channel descriptors that do not contain the target channel descriptor.
+                if (successorChannelDescriptors != null && !successorChannelDescriptors.contains(targetChannelDescriptor)) {
+                    continue;
+                }
+
                 if (visitedChannelDescriptors.add(targetChannelDescriptor)) {
                     final Map<Bitmask, Tree> childSolutions = this.enumerate(
                             visitedChannelDescriptors,
@@ -512,6 +633,28 @@ public class ChannelConversionGraph {
         }
 
         /**
+         * Find {@link ChannelDescriptor}s of {@link Channel}s that can be reached from the current
+         * {@link ChannelDescriptor}. This is relevant only when there are {@link #existingChannels}.
+         *
+         * @param descriptor from which successor {@link ChannelDescriptor}s are requested
+         * @return the successor {@link ChannelDescriptor}s or {@code null} if no restrictions apply
+         */
+        private Set<ChannelDescriptor> getSuccessorChannelDescriptors(ChannelDescriptor descriptor) {
+            final Channel channel = this.existingChannels.get(descriptor);
+            if (channel == null || this.openChannelDescriptors.contains(descriptor)) return null;
+
+            Set<ChannelDescriptor> result = new HashSet<>();
+            for (ExecutionTask consumer : channel.getConsumers()) {
+                if (OptimizationUtils.checkIfRheemPlanOperator(consumer.getOperator())) continue;
+                for (Channel successorChannel : consumer.getOutputChannels()) {
+                    result.add(successorChannel.getDescriptor());
+                }
+            }
+
+            return result;
+        }
+
+        /**
          * Retrieve a cached or calculate and cache the cost estimate for a given {@link ChannelConversion}
          * w.r.t. the {@link #cardinality}.
          *
@@ -530,14 +673,12 @@ public class ChannelConversionGraph {
 
             // Create the a new Junction.
             final Junction junction = new Junction(this.sourceOutput, this.destInputs, localOptimizationContexts);
-
-            // Create the Channels and ExecutionTasks.
-            Channel sourceChannel = this.sourceChannel == null ?
-                    this.startChannelDescriptor.createChannel(this.sourceOutput, this.optimizationContext.getConfiguration()) :
-                    this.sourceChannel;
+            Channel sourceChannel = this.existingChannels.get(this.sourceChannelDescriptor);
+            if (sourceChannel == null) {
+                sourceChannel = this.sourceChannelDescriptor.createChannel(this.sourceOutput, this.optimizationContext.getConfiguration());
+            }
             junction.setSourceChannel(sourceChannel);
-            Channel startChannel = this.startChannel == null ? sourceChannel : this.startChannel;
-            this.createJunctionAux(tree.root, startChannel, junction, true);
+            this.createJunctionAux(tree.root, sourceChannel, junction);
 
             // Assign appropriate LoopSubplans to the newly created ExecutionTasks.
             // Determine the LoopSubplan from the "source side" of the Junction.
@@ -566,58 +707,68 @@ public class ChannelConversionGraph {
                         targetChannel = producer.getInputChannel(0);
                     }
                 }
-
-            } else {
-                // TODO:
-                // Try to find for each distinct target LoopSubplan a "stallable" Channel, thereby ensuring not to
-                // assign ExecutionTasks twice.
-//                TIntCollection looplessDests = new TIntLinkedList();
-//                Map<LoopSubplan, TIntCollection> loopDests = new HashMap<>();
-//                for (int destIndex = 0; destIndex < this.destInputs.size(); destIndex++) {
-//                    final LoopSubplan targetLoop = this.destInputs.get(destIndex).getOwner().getInnermostLoop();
-//                    Channel targetChannel = junction.getTargetChannel(destIndex);
-//                    if (targetLoop == null) {
-//                        looplessDests.add(destIndex);
-//                    } else {
-//                        loopDests.computeIfAbsent(targetLoop, key -> new TIntLinkedList()).add(destIndex);
-//                    }
-//                }
             }
+
+            // CHECK: We don't need to worry about entering loops, because in this case #resolveSupportedChannels(...)
+            // does all the magic!?
 
             this.result = junction;
         }
 
-        private void createJunctionAux(TreeVertex vertex, Channel channel, Junction junction, boolean isOnAllPaths) {
-            channel.setBreakingProhibited(!isOnAllPaths);
-
-            // A bit of a hacky detail: declared settled indices of the channel are only valid if the channel can be
-            // reused or if it is "terminal". Otherwise, the search algorithm will have neglected that settled index.
-            if (channel.isReusable() || vertex.outEdges.isEmpty()) {
-                for (int index = vertex.settledIndices.nextSetBit(0); index >= 0; index = vertex.settledIndices.nextSetBit(index + 1)) {
-                    junction.setTargetChannel(index, channel);
+        /**
+         * Helper function to create a {@link Junction} from a {@link Tree}.
+         *
+         * @param vertex      the currently iterated {@link TreeVertex} (start at the root)
+         * @param baseChannel the corresponding {@link Channel}
+         * @param junction    that is being initialized
+         */
+        private void createJunctionAux(TreeVertex vertex, Channel baseChannel, Junction junction) {
+            Channel baseChannelCopy = null;
+            for (int index = vertex.settledIndices.nextSetBit(0);
+                 index >= 0;
+                 index = vertex.settledIndices.nextSetBit(index + 1)) {
+                // Beware that, if the base channel is existent (and open), we need to create a copy for any new
+                // destinations.
+                if (!this.existingDestinationChannelIndices.get(index) && this.openChannelDescriptors.contains(baseChannel.getDescriptor())) {
+                    if (baseChannelCopy == null) baseChannelCopy = baseChannel.copy();
+                    junction.setTargetChannel(index, baseChannelCopy);
+                } else {
+                    junction.setTargetChannel(index, baseChannel);
                 }
             }
-            isOnAllPaths &= vertex.settledIndices.isEmpty() && vertex.outEdges.size() <= 1;
+
             for (TreeEdge edge : vertex.outEdges) {
-                final ChannelConversion channelConversion = edge.channelConversion;
-                final Channel targetChannel = channelConversion.convert(
-                        channel,
-                        this.optimizationContext.getConfiguration(),
-                        junction.getOptimizationContexts(),
-                        // Hacky: Inject cardinality for cases where we convert a LoopHeadOperator output.
-                        junction.getOptimizationContexts().size() == 1 ? this.cardinality : null
-                );
-                if (targetChannel != channel) {
-                    final ExecutionTask producer = targetChannel.getProducer();
+                // See if there is an already existing channel in place.
+                Channel newChannel = this.existingChannels.get(edge.channelConversion.getTargetChannelDescriptor());
+
+                // Otherwise, create a new channel conversion.
+                if (newChannel == null) {
+                    // Beware that, if the base channel is existent (and open), we need to create a copy of it for the
+                    // new channel conversions.
+                    if (baseChannelCopy == null) {
+                        baseChannelCopy = this.openChannelDescriptors.contains(baseChannel.getDescriptor()) ?
+                                baseChannel.copy() :
+                                baseChannel;
+                    }
+                    newChannel = edge.channelConversion.convert(
+                            baseChannelCopy,
+                            this.optimizationContext.getConfiguration(),
+                            junction.getOptimizationContexts(),
+                            // Hacky: Inject cardinality for cases where we convert a LoopHeadOperator output.
+                            junction.getOptimizationContexts().size() == 1 ? this.cardinality : null
+                    );
+                }
+                if (baseChannel != newChannel) {
+                    final ExecutionTask producer = newChannel.getProducer();
                     final ExecutionOperator conversionOperator = producer.getOperator();
                     conversionOperator.setName(String.format(
                             "convert %s", junction.getSourceOutput()
                     ));
                     junction.register(producer);
                 }
-                this.createJunctionAux(edge.destination, targetChannel, junction, isOnAllPaths);
-            }
 
+                this.createJunctionAux(edge.destination, newChannel, junction);
+            }
         }
 
         /**

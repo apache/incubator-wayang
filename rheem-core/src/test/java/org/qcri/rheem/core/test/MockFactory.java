@@ -1,11 +1,11 @@
 package org.qcri.rheem.core.test;
 
 import org.mockito.Answers;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.InputSlot;
-import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
+
+import java.util.Collections;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -49,7 +49,14 @@ public class MockFactory {
         return mockedPlatform;
     }
 
-
+    public static CompositeOperator createCompositeOperator() {
+        final CompositeOperator op = mock(CompositeOperator.class);
+        final OperatorContainer container = mock(OperatorContainer.class);
+        when(op.getContainers()).thenReturn(Collections.singleton(container));
+        when(op.getContainer()).thenReturn(container);
+        when(container.toOperator()).thenReturn(op);
+        return op;
+    }
 
 
 }

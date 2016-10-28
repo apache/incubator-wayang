@@ -163,7 +163,7 @@ public class PlanEnumeration {
      * All {@link PlanEnumeration}s should be distinct.
      */
     public PlanEnumeration concatenate(OutputSlot<?> openOutputSlot,
-                                       Channel existingChannel,
+                                       Collection<Channel> openChannels,
                                        Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
                                        OptimizationContext optimizationContext) {
 
@@ -209,7 +209,7 @@ public class PlanEnumeration {
 
         // Create the PlanImplementations.
         result.planImplementations.addAll(
-                this.concatenatePartialPlans(openOutputSlot, existingChannel, targetEnumerations, optimizationContext, result)
+                this.concatenatePartialPlans(openOutputSlot, openChannels, targetEnumerations, optimizationContext, result)
         );
 
         logger.debug("Created {} plan implementations.", result.getPlanImplementations().size());
@@ -222,11 +222,11 @@ public class PlanEnumeration {
      * All {@link PlanEnumeration}s should be distinct.
      */
     private Collection<PlanImplementation> concatenatePartialPlans(OutputSlot<?> openOutputSlot,
-                                                                   Channel existingChannel,
+                                                                   Collection<Channel> openChannels,
                                                                    Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
                                                                    OptimizationContext optimizationContext,
                                                                    PlanEnumeration concatenationEnumeration) {
-        if (existingChannel == null) {
+        if (openChannels == null || openChannels.isEmpty()) {
             return this.concatenatePartialPlansBatchwise(
                     openOutputSlot,
                     targetEnumerations,
@@ -236,7 +236,7 @@ public class PlanEnumeration {
         } else {
             return this.concatenatePartialPlansPairwise(
                     openOutputSlot,
-                    existingChannel,
+                    openChannels,
                     targetEnumerations,
                     optimizationContext,
                     concatenationEnumeration
@@ -248,7 +248,7 @@ public class PlanEnumeration {
      * Concatenates {@link PlanEnumeration}s by pairwise processing of {@link PlanImplementation}s.
      *
      * @param openOutputSlot           of this instance to be concatenated
-     * @param existingChannel          an already executed {@link Channel} between the conctenatable instances or {@code null}
+     * @param openChannels          already created {@link Channel}s between the conctenatable instances or {@code null}
      * @param targetEnumerations       whose {@link InputSlot}s should be concatenated with the {@code openOutputSlot}
      * @param optimizationContext      provides concatenation information
      * @param concatenationEnumeration to which the {@link PlanImplementation}s should be added
@@ -256,7 +256,7 @@ public class PlanEnumeration {
      */
     private Collection<PlanImplementation> concatenatePartialPlansPairwise(
             OutputSlot<?> openOutputSlot,
-            Channel existingChannel,
+            Collection<Channel> openChannels,
             Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
             OptimizationContext optimizationContext,
             PlanEnumeration concatenationEnumeration) {
@@ -277,7 +277,7 @@ public class PlanEnumeration {
 
                 // Concatenate the PlanImplementations.
                 final PlanImplementation concatenationImpl = thisImpl.concatenate(
-                        openOutputSlot, existingChannel, targetImpls, inputSlots, concatenationEnumeration, optimizationContext
+                        openOutputSlot, openChannels, targetImpls, inputSlots, concatenationEnumeration, optimizationContext
                 );
                 if (concatenationImpl != null) {
                     resultCollector.add(concatenationImpl);

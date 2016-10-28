@@ -490,15 +490,8 @@ public class Job extends OneTimeExecutable {
                 .flatMap(stage -> stage.getAllTasks().stream())
                 .collect(Collectors.toSet());
 
-        // Find Channels that have yet to be consumed by unexecuted ExecutionTasks.
-        // This must be done before scrapping the unexecuted ExecutionTasks!
-        final Set<Channel> openChannels = completedTasks.stream()
-                .flatMap(task -> Arrays.stream(task.getOutputChannels()))
-                .filter(channel -> channel.getConsumers().stream().anyMatch(consumer -> !completedTasks.contains(consumer)))
-                .collect(Collectors.toSet());
-
-        // Scrap unexecuted bits of the plan.
-        executionPlan.retain(completedStages);
+        // Find Channels that have yet to be consumed by unexecuted ExecutionTasks and scrap unexecuted bits of the plan.
+        final Set<Channel> openChannels = executionPlan.retain(completedStages);
 
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator(executionPlan, openChannels);

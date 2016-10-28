@@ -46,14 +46,7 @@ public class OptimizationUtils {
     public static boolean checkIfRheemPlanOperator(ExecutionOperator operator) {
         // A non-RheemPlan operator is presumed to be "free floating" and completely unconnected. Connections are only
         // maintained via ExecutionTasks and Channels.
-        return !(operator.getParent() == null
-                && Arrays.stream(operator.getAllInputs())
-                .map(InputSlot::getOccupant)
-                .allMatch(Objects::isNull)
-                && Arrays.stream(operator.getAllOutputs())
-                .flatMap(outputSlot -> outputSlot.getOccupiedSlots().stream())
-                .allMatch(Objects::isNull)
-        );
+        return operator.getParent() != null || !operator.isUnconnected();
     }
 
     /**

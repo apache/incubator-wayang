@@ -344,6 +344,22 @@ public interface Operator {
     }
 
     /**
+     * Checks whether this instance is not connected to any other instance via its {@link Slot}s. This is a typical
+     * property of instances used for {@link org.qcri.rheem.core.optimizer.channels.ChannelConversion}s.
+     *
+     * @return whether this instance is unconnected
+     */
+    default boolean isUnconnected() {
+        for (InputSlot<?> inputSlot : this.getAllInputs()) {
+            if (inputSlot.getOccupant() != null) return false;
+        }
+        for (OutputSlot<?> outputSlot : this.getAllOutputs()) {
+            if (!outputSlot.getOccupiedSlots().isEmpty()) return false;
+        }
+        return true;
+    }
+
+    /**
      * Tells whether the given {@code input} is read by this operator. If not, the optimizer can make use of this
      * insight.
      *

@@ -23,9 +23,13 @@ public class DummyReusableChannel extends Channel {
         assert DESCRIPTOR == descriptor;
     }
 
+    public DummyReusableChannel(DummyReusableChannel dummyReusableChannel) {
+        super(dummyReusableChannel);
+    }
+
     @Override
     public Channel copy() {
-        throw new UnsupportedOperationException();
+        return new DummyReusableChannel(this);
     }
 
     @Override

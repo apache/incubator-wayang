@@ -271,12 +271,12 @@ public class PlanImplementation {
      * Creates a {@link Junction} between the {@link OutputSlot} and {@link InputSlot}s and with this concatenates
      * the {@link PlanImplementation}s.
      *
-     * @param existingChannel an existing {@link Channel} from that all {@code inputs} must be served or {@code null} otherwise
+     * @param openChannels existing {@link Channel}s to reuse or {@code null} otherwise
      * @return the concatenated {@link PlanImplementation} or {@code null} if the inputs do not fit
      * @deprecated {@link Junction}s should be created at {@link PlanEnumeration} level to reduce overhead
      */
     PlanImplementation concatenate(OutputSlot<?> output,
-                                   Channel existingChannel,
+                                   Collection<Channel> openChannels,
                                    List<PlanImplementation> targets,
                                    List<InputSlot<?>> inputs,
                                    PlanEnumeration concatenationEnumeration,
@@ -293,7 +293,7 @@ public class PlanImplementation {
                 }
         );
         final Junction junction = optimizationContext.getChannelConversionGraph().findMinimumCostJunction(
-                execOutputWithContext.getField0(), existingChannel, execInputs, execOutputWithContext.getField1().getOptimizationContext()
+                execOutputWithContext.getField0(), openChannels, execInputs, execOutputWithContext.getField1().getOptimizationContext()
         );
         if (junction == null) {
             return null;
