@@ -36,6 +36,11 @@ public abstract class OperatorBase implements Operator {
 
     private OperatorContainer container;
 
+    /**
+     * Tells whether this instance is auxiliary, i.e., it support some non-auxiliary operators.
+     */
+    private boolean isAuxiliary = false;
+
     private int epoch = FIRST_EPOCH;
 
     protected InputSlot<?>[] inputSlots;
@@ -286,6 +291,14 @@ public abstract class OperatorBase implements Operator {
     public void setCardinalityEstimator(int outputIndex, CardinalityEstimator cardinalityEstimator) {
         Validate.isAssignableFrom(ElementaryOperator.class, this.getClass());
         this.cardinalityEstimators[outputIndex] = cardinalityEstimator;
+    }
+
+    public boolean isAuxiliary() {
+        return this.isAuxiliary;
+    }
+
+    public void setAuxiliary(boolean auxiliaryOperator) {
+        this.isAuxiliary = auxiliaryOperator;
     }
 
     /**

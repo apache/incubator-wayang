@@ -592,5 +592,6 @@ public interface Operator {
      * @param name the name
      */
     void setName(String name);
+
 }
 

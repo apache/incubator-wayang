@@ -333,7 +333,7 @@ public class ChannelConversionGraph {
             this.existingChannels.put(channel.getDescriptor(), channel);
             for (ExecutionTask consumer : channel.getConsumers()) {
                 final ExecutionOperator operator = consumer.getOperator();
-                if (OptimizationUtils.checkIfRheemPlanOperator(operator)) {
+                if (!operator.isAuxiliary()) {
                     final InputSlot<?> input = consumer.getInputSlotFor(channel);
                     this.existingDestinationChannels.put(input, channel);
                     int destIndex = 0;
@@ -645,7 +645,7 @@ public class ChannelConversionGraph {
 
             Set<ChannelDescriptor> result = new HashSet<>();
             for (ExecutionTask consumer : channel.getConsumers()) {
-                if (OptimizationUtils.checkIfRheemPlanOperator(consumer.getOperator())) continue;
+                if (!consumer.getOperator().isAuxiliary()) continue;
                 for (Channel successorChannel : consumer.getOutputChannels()) {
                     result.add(successorChannel.getDescriptor());
                 }

@@ -3,8 +3,6 @@ package org.qcri.rheem.core.plan.rheemplan;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
-import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
@@ -42,5 +40,19 @@ public interface ElementaryOperator extends ActualOperator {
      * @param cardinalityEstimator the {@link CardinalityEstimator}
      */
     void setCardinalityEstimator(int outputIndex, CardinalityEstimator cardinalityEstimator);
+
+    /**
+     * Tells whether this instance is auxiliary, i.e., it support some non-auxiliary operators.
+     *
+     * @return whether this instance is auxiliary
+     */
+    boolean isAuxiliary();
+
+    /**
+     * Tell whether this instance is auxiliary, i.e., it support some non-auxiliary operators.
+     *
+     * @param isAuxiliary whether this instance is auxiliary
+     */
+    void setAuxiliary(boolean isAuxiliary);
 
 }

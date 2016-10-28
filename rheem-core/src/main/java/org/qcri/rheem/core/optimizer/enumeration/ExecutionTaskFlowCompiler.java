@@ -233,7 +233,7 @@ public class ExecutionTaskFlowCompiler
         Collection<InputSlot<?>> result = new LinkedList<>();
         for (ExecutionTask consumerTask : channel.getConsumers()) {
             if (executedStages.contains(consumerTask.getStage())) continue;
-            if (OptimizationUtils.checkIfRheemPlanOperator(consumerTask.getOperator())) {
+            if (!consumerTask.getOperator().isAuxiliary()) {
                 result.add(consumerTask.getInputSlotFor(channel));
             } else {
                 for (Channel consumerOutputChannel : consumerTask.getOutputChannels()) {

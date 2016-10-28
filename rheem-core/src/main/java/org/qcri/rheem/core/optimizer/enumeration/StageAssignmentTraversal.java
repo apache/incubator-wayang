@@ -301,6 +301,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
      */
     private void expandDownstream(ExecutionTask task, InterimStage expandableStage) {
         for (Channel channel : task.getOutputChannels()) {
+            assert channel != null : String.format("%s has null output channels.", task);
             if (channel.isExecutionBreaker()) {
                 expandableStage.setOutbound(task);
             }

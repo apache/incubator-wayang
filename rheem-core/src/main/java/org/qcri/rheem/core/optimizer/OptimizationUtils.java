@@ -26,7 +26,7 @@ public class OptimizationUtils {
         do {
             final ExecutionTask producer = tracedChannel.getProducer();
             final ExecutionOperator producerOperator = producer.getOperator();
-            if (checkIfRheemPlanOperator(producerOperator)) {
+            if (!producerOperator.isAuxiliary()) {
                 producerOutput = producer.getOutputSlotFor(tracedChannel);
             } else {
                 assert producer.getNumInputChannels() == 1;
@@ -34,19 +34,6 @@ public class OptimizationUtils {
             }
         } while (producerOutput == null);
         return producerOutput;
-    }
-
-    /**
-     * Heuristically determines if an {@link ExecutionOperator} was specified in a {@link RheemPlan} or if
-     * it has been inserted by Rheem in a later stage.
-     *
-     * @param operator should be checked
-     * @return whether the {@code operator} is deemed to be user-specified
-     */
-    public static boolean checkIfRheemPlanOperator(ExecutionOperator operator) {
-        // A non-RheemPlan operator is presumed to be "free floating" and completely unconnected. Connections are only
-        // maintained via ExecutionTasks and Channels.
-        return operator.getParent() != null || !operator.isUnconnected();
     }
 
     /**

@@ -458,6 +458,11 @@ public class Job extends OneTimeExecutable {
      * through re-optimization, and collects measured data.
      */
     private void postProcess(ExecutionPlan executionPlan, int executionId) {
+        if (this.crossPlatformExecutor.isVetoingPlanChanges()) {
+            this.logger.info("The cross-platform executor is currently not allowing re-optimization.");
+            return;
+        }
+
         final TimeMeasurement round = this.optimizationRound.start(String.format("Post-processing %d", executionId));
 
         round.start("Reestimate Cardinalities&Time");

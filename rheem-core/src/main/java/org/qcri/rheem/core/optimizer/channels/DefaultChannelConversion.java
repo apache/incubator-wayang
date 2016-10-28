@@ -69,6 +69,7 @@ public class DefaultChannelConversion extends ChannelConversion {
         // Create the ExecutionOperator.
         final ExecutionOperator executionOperator = this.executionOperatorFactory.apply(sourceChannel, configuration);
         assert executionOperator.getNumInputs() <= 1 && executionOperator.getNumOutputs() <= 1;
+        executionOperator.setAuxiliary(true);
 
         // Set up the Channels and the ExecutionTask.
         final ExecutionTask task = new ExecutionTask(executionOperator, 1, 1);

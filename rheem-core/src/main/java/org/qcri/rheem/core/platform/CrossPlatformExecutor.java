@@ -435,8 +435,6 @@ public class CrossPlatformExecutor implements ExecutionState {
         }
     }
 
-
-
     @Override
     public void addCardinalityMeasurement(ChannelInstance channelInstance) {
         this.cardinalityMeasurements.add(channelInstance);
@@ -466,6 +464,14 @@ public class CrossPlatformExecutor implements ExecutionState {
         this.breakpoint = breakpoint;
     }
 
+    /**
+     * Allows to inhibit changes to the {@link ExecutionPlan}, such as on re-optimization.
+     *
+     * @return whether this instance is vetoing on changes
+     */
+    public boolean isVetoingPlanChanges() {
+        return !this.loopContexts.isEmpty();
+    }
 
     public void shutdown() {
         // Release global resources.
