@@ -79,7 +79,7 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, T
     public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex, Configuration configuration) {
         switch (outputIndex) {
             case 0:
-                return Optional.of((configuration1, inputEstimates) -> {
+                return Optional.of((optimizationContext, inputEstimates) -> {
                     assert inputEstimates.length == 1;
                     return new CardinalityEstimate(
                             calculateNumVertices(inputEstimates[0].getLowerEstimate(), PageRankOperator.this.graphDensity.getUpperEstimate()),

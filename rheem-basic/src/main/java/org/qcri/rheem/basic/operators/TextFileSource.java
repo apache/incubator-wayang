@@ -2,6 +2,7 @@ package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.types.DataSetType;
@@ -81,7 +82,7 @@ public class TextFileSource extends UnarySource<String> {
         public static final double EXPECTED_ESTIMATE_DEVIATION = 0.05;
 
         @Override
-        public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
+        public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
             Validate.isTrue(TextFileSource.this.getNumInputs() == inputEstimates.length);
 
             OptionalLong fileSize = FileSystems.getFileSize(TextFileSource.this.inputUrl);

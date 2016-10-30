@@ -75,7 +75,7 @@ public class SubplanCardinalityPusherTest {
     public void testSourceSubplan() {
         TestSource<String> source = new TestSource<>(DataSetType.createDefault(String.class));
         final CardinalityEstimate sourceCardinality = new CardinalityEstimate(123, 321, 0.123d);
-        source.setCardinalityEstimators((configuration1, inputEstimates) -> sourceCardinality);
+        source.setCardinalityEstimators((optimizationContext, inputEstimates) -> sourceCardinality);
 
         TestMapOperator<String, String> op = new TestMapOperator<>(
                 DataSetType.createDefault(String.class),

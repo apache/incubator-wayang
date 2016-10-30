@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
-import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -13,6 +13,6 @@ import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 @FunctionalInterface
 public interface CardinalityEstimator {
 
-    CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates);
+    CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates);
 
 }

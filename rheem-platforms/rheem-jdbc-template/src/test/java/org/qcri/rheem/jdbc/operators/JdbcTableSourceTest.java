@@ -3,6 +3,7 @@ package org.qcri.rheem.jdbc.operators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.jdbc.test.HsqldbPlatform;
@@ -11,6 +12,9 @@ import org.qcri.rheem.jdbc.test.HsqldbTableSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Test suite for {@link SqlToStreamOperator}.
@@ -33,7 +37,9 @@ public class JdbcTableSourceTest {
 
         JdbcTableSource tableSource = new HsqldbTableSource("testCardinalityEstimator");
         final CardinalityEstimator cardinalityEstimator = tableSource.getCardinalityEstimator(0);
-        final CardinalityEstimate estimate = cardinalityEstimator.estimate(configuration);
+        OptimizationContext optimizationContext = mock(OptimizationContext.class);
+        when(optimizationContext.getConfiguration()).thenReturn(configuration);
+        final CardinalityEstimate estimate = cardinalityEstimator.estimate(optimizationContext);
 
         Assert.assertEquals(
                 new CardinalityEstimate(3, 3, 1d),

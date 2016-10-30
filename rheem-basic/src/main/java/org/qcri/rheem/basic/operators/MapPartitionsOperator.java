@@ -1,17 +1,12 @@
 package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.basic.data.Record;
-import org.qcri.rheem.basic.function.ProjectionDescriptor;
-import org.qcri.rheem.basic.types.RecordType;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.MapPartitionsDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
@@ -101,7 +96,7 @@ public class MapPartitionsOperator<InputType, OutputType> extends UnaryToUnaryOp
         }
 
         @Override
-        public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
+        public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
             assert MapPartitionsOperator.this.getNumInputs() == inputEstimates.length;
             final CardinalityEstimate inputEstimate = inputEstimates[0];
             return new CardinalityEstimate(

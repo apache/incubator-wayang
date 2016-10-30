@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
-import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 
 /**
@@ -22,7 +22,7 @@ public class FixedSizeCardinalityEstimator implements CardinalityEstimator {
     }
 
     @Override
-    public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
+    public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
         return new CardinalityEstimate(this.outputSize, this.outputSize, 1d, this.isOverride);
     }
 }

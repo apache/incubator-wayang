@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 
 import java.util.Arrays;
 import java.util.function.ToLongBiFunction;
@@ -44,14 +45,14 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator {
 
 
     @Override
-    public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
+    public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
         assert inputEstimates.length == this.numInputs
                 || (this.isAllowMoreInputs && inputEstimates.length > this.numInputs) :
                 String.format("Received %d input estimates, require %d%s.",
                         inputEstimates.length, this.numInputs, this.isAllowMoreInputs ? "+" : "");
 
         if (this.numInputs == 0) {
-            final long estimate = this.singlePointEstimator.applyAsLong(new long[0], configuration);
+            final long estimate = this.singlePointEstimator.applyAsLong(new long[0], optimizationContext.getConfiguration());
             return new CardinalityEstimate(estimate, estimate, this.certaintyProb);
         }
 
@@ -65,7 +66,10 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator {
                 int bit = (int) ((positionBitmask >>> pos) & 0x1);
                 currentInputEstimates[pos] = lowerAndUpperInputEstimates[(pos << 1) + bit];
             }
-            long currentEstimate = Math.max(this.singlePointEstimator.applyAsLong(currentInputEstimates, configuration), 0);
+            long currentEstimate = Math.max(
+                    this.singlePointEstimator.applyAsLong(currentInputEstimates, optimizationContext.getConfiguration()),
+                    0
+            );
             if (lowerEstimate == -1 || currentEstimate < lowerEstimate) {
                 lowerEstimate = currentEstimate;
             }

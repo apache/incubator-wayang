@@ -3,6 +3,7 @@ package org.qcri.rheem.basic.operators;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
@@ -98,7 +99,7 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         }
 
         @Override
-        public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
+        public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
             Validate.isTrue(inputEstimates.length == FilterOperator.this.getNumInputs());
             final CardinalityEstimate inputEstimate = inputEstimates[0];
 

@@ -1,7 +1,7 @@
 package org.qcri.rheem.jdbc.operators;
 
 import org.qcri.rheem.basic.operators.TableSource;
-import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
@@ -50,10 +50,10 @@ public abstract class JdbcTableSource extends TableSource implements JdbcExecuti
         assert outputIndex == 0;
         return new CardinalityEstimator() {
             @Override
-            public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
+            public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
                 // Establish a DB connection.
                 try (Connection connection = JdbcTableSource.this.getPlatform()
-                        .createDatabaseDescriptor(configuration)
+                        .createDatabaseDescriptor(optimizationContext.getConfiguration())
                         .createJdbcConnection()) {
 
                     // Query the table cardinality.
