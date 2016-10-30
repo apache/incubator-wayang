@@ -1,5 +1,6 @@
 package org.qcri.rheem.basic.operators;
 
+import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -85,12 +86,20 @@ public class TextFileSource extends UnarySource<String> {
         public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
             Validate.isTrue(TextFileSource.this.getNumInputs() == inputEstimates.length);
 
+            // see Job for StopWatch measurements
+            final TimeMeasurement timeMeasurement = optimizationContext.getJob().getStopWatch().start(
+                    "Optimization", "Cardinality&Load Estimation", "Push Estimation", "Estimate source cardinalities"
+            );
+
             OptionalLong fileSize = FileSystems.getFileSize(TextFileSource.this.inputUrl);
             if (!fileSize.isPresent()) {
                 TextFileSource.this.logger.warn("Could not determine size of {}... deliver fallback estimate.",
                         TextFileSource.this.inputUrl);
+                timeMeasurement.stop();
                 return this.FALLBACK_ESTIMATE;
+
             } else if (fileSize.getAsLong() == 0L) {
+                timeMeasurement.stop();
                 return new CardinalityEstimate(0L, 0L, 1d);
             }
 
@@ -98,12 +107,14 @@ public class TextFileSource extends UnarySource<String> {
             if (!bytesPerLine.isPresent()) {
                 TextFileSource.this.logger.warn("Could not determine average line size of {}... deliver fallback estimate.",
                         TextFileSource.this.inputUrl);
+                timeMeasurement.stop();
                 return this.FALLBACK_ESTIMATE;
             }
 
             double numEstimatedLines = fileSize.getAsLong() / bytesPerLine.getAsDouble();
             double expectedDeviation = numEstimatedLines * EXPECTED_ESTIMATE_DEVIATION;
 
+            timeMeasurement.stop();
             return new CardinalityEstimate(
                     (long) (numEstimatedLines - expectedDeviation),
                     (long) (numEstimatedLines + expectedDeviation),

@@ -686,4 +686,13 @@ public class Job extends OneTimeExecutable {
     public RheemPlan getRheemPlan() {
         return this.rheemPlan;
     }
+
+    /**
+     * Provide the {@link StopWatch} that is used to instrument the execution of this instance.
+     *
+     * @return the {@link StopWatch}
+     */
+    public StopWatch getStopWatch() {
+        return this.stopWatch;
+    }
 }

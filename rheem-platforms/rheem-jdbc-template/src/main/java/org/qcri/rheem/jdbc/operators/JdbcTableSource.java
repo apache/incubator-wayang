@@ -1,5 +1,6 @@
 package org.qcri.rheem.jdbc.operators;
 
+import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.basic.operators.TableSource;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
@@ -51,6 +52,11 @@ public abstract class JdbcTableSource extends TableSource implements JdbcExecuti
         return new CardinalityEstimator() {
             @Override
             public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
+                // see Job for StopWatch measurements
+                final TimeMeasurement timeMeasurement = optimizationContext.getJob().getStopWatch().start(
+                        "Optimization", "Cardinality&Load Estimation", "Push Estimation", "Estimate source cardinalities"
+                );
+
                 // Establish a DB connection.
                 try (Connection connection = JdbcTableSource.this.getPlatform()
                         .createDatabaseDescriptor(optimizationContext.getConfiguration())
@@ -72,6 +78,8 @@ public abstract class JdbcTableSource extends TableSource implements JdbcExecuti
 
                     // If we could not load the cardinality, let's use a very conservative estimate.
                     return new CardinalityEstimate(10, 10000000, 0.9);
+                } finally {
+                    timeMeasurement.stop();
                 }
             }
         };
