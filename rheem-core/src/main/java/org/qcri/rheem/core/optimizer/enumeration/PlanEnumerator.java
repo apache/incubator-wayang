@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -87,6 +88,11 @@ public class PlanEnumerator {
      * {@link OptimizationContext} that holds all relevant task data.
      */
     private final OptimizationContext optimizationContext;
+
+    /**
+     * Keeps track of the execution time.
+     */
+    private TimeMeasurement timeMeasurement;
 
     /**
      * Creates a new instance.
@@ -377,8 +383,9 @@ public class PlanEnumerator {
                         output,
                         this.openChannels.get(output),
                         Collections.singletonMap(operator.getInput(0), operatorEnumeration),
-                        optimizationContext
-                );
+                        optimizationContext,
+                        this.timeMeasurement);
+
                 if (branchEnumeration.getPlanImplementations().isEmpty()) {
                     if (this.isTopLevel()) {
                         throw new RheemException(String.format("Could not concatenate %s to %s.", lastOperator, operator));
@@ -431,24 +438,28 @@ public class PlanEnumerator {
      * @return the new instance
      */
     private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative, OptimizationContext optimizationContext) {
-        return new PlanEnumerator(Operators.collectStartOperators(alternative),
+        final PlanEnumerator fork = new PlanEnumerator(Operators.collectStartOperators(alternative),
                 optimizationContext,
                 alternative,
                 this.presettledAlternatives,
                 this.executedTasks,
                 this.openChannels);
+        fork.setTimeMeasurement(this.timeMeasurement);
+        return fork;
     }
 
     /**
      * Fork a new instance for the {@code optimizationContext}.
      */
     PlanEnumerator forkFor(LoopHeadOperator loopHeadOperator, OptimizationContext optimizationContext) {
-        return new PlanEnumerator(Operators.collectStartOperators(loopHeadOperator.getContainer()),
+        final PlanEnumerator fork = new PlanEnumerator(Operators.collectStartOperators(loopHeadOperator.getContainer()),
                 optimizationContext,
                 null,
                 this.presettledAlternatives,
                 this.executedTasks,
                 this.openChannels);
+        fork.setTimeMeasurement(this.timeMeasurement);
+        return fork;
     }
 
     /**
@@ -467,7 +478,8 @@ public class PlanEnumerator {
                 concatenationActivator.outputSlot,
                 this.openChannels.get(concatenationActivator.outputSlot),
                 concatenationActivator.getAdjacentEnumerations(),
-                concatenationActivator.getOptimizationContext()
+                concatenationActivator.getOptimizationContext(),
+                this.timeMeasurement
         );
 
         if (concatenatedEnumeration.getPlanImplementations().isEmpty()) {
@@ -658,6 +670,10 @@ public class PlanEnumerator {
      * @param planEnumeration to which the pruning should be applied
      */
     private void prune(final PlanEnumeration planEnumeration) {
+        TimeMeasurement pruneMeasurement =
+                this.timeMeasurement == null ? null : this.timeMeasurement.start("Prune");
+
+
         if (this.logger.isDebugEnabled()) {
             this.logger.debug("{} implementations for scope {}.", planEnumeration.getPlanImplementations().size(), planEnumeration.getScope());
             for (PlanImplementation planImplementation : planEnumeration.getPlanImplementations()) {
@@ -671,6 +687,8 @@ public class PlanEnumerator {
                 numPlanImplementations,
                 planEnumeration.getPlanImplementations().size()
         );
+
+        if (pruneMeasurement != null) pruneMeasurement.stop();
     }
 
     /**
@@ -885,4 +903,12 @@ public class PlanEnumerator {
 
     }
 
+    /**
+     * Provide a {@link TimeMeasurement} allowing this instance to time internally.
+     *
+     * @param timeMeasurement the {@link TimeMeasurement}
+     */
+    public void setTimeMeasurement(TimeMeasurement timeMeasurement) {
+        this.timeMeasurement = timeMeasurement;
+    }
 }

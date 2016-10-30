@@ -289,8 +289,10 @@ public class Job extends OneTimeExecutable {
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator();
 
-        this.optimizationRound.start("Create Initial Execution Plan", "Enumerate");
+        final TimeMeasurement enumerateMeasurment = this.optimizationRound.start("Create Initial Execution Plan", "Enumerate");
+        planEnumerator.setTimeMeasurement(enumerateMeasurment);
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
+        planEnumerator.setTimeMeasurement(null);
         this.optimizationRound.stop("Create Initial Execution Plan", "Enumerate");
 
         final Collection<PlanImplementation> executionPlans = comprehensiveEnumeration.getPlanImplementations();

@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -280,7 +281,8 @@ public class PlanImplementation {
                                    List<PlanImplementation> targets,
                                    List<InputSlot<?>> inputs,
                                    PlanEnumeration concatenationEnumeration,
-                                   OptimizationContext optimizationContext) {
+                                   OptimizationContext optimizationContext,
+                                   TimeMeasurement concatenationMeasurement) {
 
         // Construct the Junction between the PlanImplementations.
         final Tuple<OutputSlot<?>, PlanImplementation> execOutputWithContext =
@@ -292,9 +294,12 @@ public class PlanImplementation {
                     return RheemCollections.getSingle(targetImpl.findExecutionOperatorInputs(input));
                 }
         );
+        TimeMeasurement channelConversionMeasurement = concatenationMeasurement == null ?
+                null : concatenationMeasurement.start("Channel Conversion");
         final Junction junction = optimizationContext.getChannelConversionGraph().findMinimumCostJunction(
                 execOutputWithContext.getField0(), openChannels, execInputs, execOutputWithContext.getField1().getOptimizationContext()
         );
+        if (channelConversionMeasurement != null) channelConversionMeasurement.stop();
         if (junction == null) {
             return null;
         }

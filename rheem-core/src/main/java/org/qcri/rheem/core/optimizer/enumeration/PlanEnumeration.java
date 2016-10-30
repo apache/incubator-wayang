@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.plan.executionplan.Channel;
@@ -165,7 +166,7 @@ public class PlanEnumeration {
     public PlanEnumeration concatenate(OutputSlot<?> openOutputSlot,
                                        Collection<Channel> openChannels,
                                        Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
-                                       OptimizationContext optimizationContext) {
+                                       OptimizationContext optimizationContext, TimeMeasurement enumerationMeasurement) {
 
         // Check the parameters' validity.
         assert this.getServingOutputSlots().stream()
@@ -173,6 +174,10 @@ public class PlanEnumeration {
                 .anyMatch(openOutputSlot::equals)
                 : String.format("Cannot concatenate %s: it is not a served output.", openOutputSlot);
         assert !targetEnumerations.isEmpty();
+
+        final TimeMeasurement concatenationMeasurement = enumerationMeasurement == null ?
+                null :
+                enumerationMeasurement.start("Concatenation");
 
         if (logger.isInfoEnabled()) {
             StringBuilder sb = new StringBuilder();
@@ -208,11 +213,12 @@ public class PlanEnumeration {
         result.servingOutputSlots.removeIf(slotService -> slotService.getField0().equals(openOutputSlot));
 
         // Create the PlanImplementations.
-        result.planImplementations.addAll(
-                this.concatenatePartialPlans(openOutputSlot, openChannels, targetEnumerations, optimizationContext, result)
-        );
+        result.planImplementations.addAll(this.concatenatePartialPlans(
+                openOutputSlot, openChannels, targetEnumerations, optimizationContext, result, concatenationMeasurement
+        ));
 
         logger.debug("Created {} plan implementations.", result.getPlanImplementations().size());
+        if (concatenationMeasurement != null) concatenationMeasurement.stop();
         return result;
     }
 
@@ -225,13 +231,15 @@ public class PlanEnumeration {
                                                                    Collection<Channel> openChannels,
                                                                    Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
                                                                    OptimizationContext optimizationContext,
-                                                                   PlanEnumeration concatenationEnumeration) {
+                                                                   PlanEnumeration concatenationEnumeration,
+                                                                   TimeMeasurement concatenationMeasurement) {
         if (openChannels == null || openChannels.isEmpty()) {
             return this.concatenatePartialPlansBatchwise(
                     openOutputSlot,
                     targetEnumerations,
                     optimizationContext,
-                    concatenationEnumeration
+                    concatenationEnumeration,
+                    concatenationMeasurement
             );
         } else {
             return this.concatenatePartialPlansPairwise(
@@ -239,7 +247,8 @@ public class PlanEnumeration {
                     openChannels,
                     targetEnumerations,
                     optimizationContext,
-                    concatenationEnumeration
+                    concatenationEnumeration,
+                    concatenationMeasurement
             );
         }
     }
@@ -248,10 +257,11 @@ public class PlanEnumeration {
      * Concatenates {@link PlanEnumeration}s by pairwise processing of {@link PlanImplementation}s.
      *
      * @param openOutputSlot           of this instance to be concatenated
-     * @param openChannels          already created {@link Channel}s between the conctenatable instances or {@code null}
+     * @param openChannels             already created {@link Channel}s between the conctenatable instances or {@code null}
      * @param targetEnumerations       whose {@link InputSlot}s should be concatenated with the {@code openOutputSlot}
      * @param optimizationContext      provides concatenation information
      * @param concatenationEnumeration to which the {@link PlanImplementation}s should be added
+     * @param concatenationMeasurement
      * @return the concatenated {@link PlanImplementation}s
      */
     private Collection<PlanImplementation> concatenatePartialPlansPairwise(
@@ -259,7 +269,7 @@ public class PlanEnumeration {
             Collection<Channel> openChannels,
             Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
             OptimizationContext optimizationContext,
-            PlanEnumeration concatenationEnumeration) {
+            PlanEnumeration concatenationEnumeration, TimeMeasurement concatenationMeasurement) {
         // Simple implementation waives optimization potential.
 
         // Allocate the result collector.
@@ -277,7 +287,7 @@ public class PlanEnumeration {
 
                 // Concatenate the PlanImplementations.
                 final PlanImplementation concatenationImpl = thisImpl.concatenate(
-                        openOutputSlot, openChannels, targetImpls, inputSlots, concatenationEnumeration, optimizationContext
+                        openOutputSlot, openChannels, targetImpls, inputSlots, concatenationEnumeration, optimizationContext, concatenationMeasurement
                 );
                 if (concatenationImpl != null) {
                     resultCollector.add(concatenationImpl);
@@ -297,13 +307,15 @@ public class PlanEnumeration {
      * @param targetEnumerations       whose {@link InputSlot}s should be concatenated with the {@code openOutputSlot}
      * @param optimizationContext      provides concatenation information
      * @param concatenationEnumeration to which the {@link PlanImplementation}s should be added
+     * @param concatenationMeasurement
      * @return the concatenated {@link PlanImplementation}s
      */
     private Collection<PlanImplementation> concatenatePartialPlansBatchwise(
             OutputSlot<?> openOutputSlot,
             Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
             OptimizationContext optimizationContext,
-            PlanEnumeration concatenationEnumeration) {
+            PlanEnumeration concatenationEnumeration,
+            TimeMeasurement concatenationMeasurement) {
 
         // Preparatory initializations.
         final ChannelConversionGraph channelConversionGraph = optimizationContext.getChannelConversionGraph();
@@ -344,11 +356,14 @@ public class PlanEnumeration {
                 final Operator outputOperator = output.getOwner();
                 assert outputOperator.isExecutionOperator()
                         : String.format("Expected execution operator, found %s.", outputOperator);
+                TimeMeasurement channelConversionMeasurement = concatenationMeasurement == null ?
+                        null : concatenationMeasurement.start("Channel Conversion");
                 final Junction junction = channelConversionGraph.findMinimumCostJunction(
                         output,
                         inputs,
                         innerPlanImplementation.getOptimizationContext()
                 );
+                if (channelConversionMeasurement != null) channelConversionMeasurement.stop();
                 if (junction == null) continue;
 
                 // If we found a junction, then we can enumerate all PlanImplementation combinations.
