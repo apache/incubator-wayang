@@ -23,7 +23,7 @@ public class AggregateOptimizationContext extends OptimizationContext {
     private final Map<Operator, OperatorContext> operatorContextCache = new HashMap<>();
 
     public AggregateOptimizationContext(LoopContext loopContext, List<OptimizationContext> optimizationContexts) {
-        super(loopContext.getOptimizationContext().getConfiguration(),
+        super(loopContext.getOptimizationContext().getJob(),
                 null,
                 loopContext,
                 -1,

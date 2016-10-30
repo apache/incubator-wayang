@@ -1,7 +1,6 @@
 package org.qcri.rheem.core.optimizer.channels;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
@@ -59,20 +58,6 @@ public abstract class ChannelConversion {
         return this.targetChannelDescriptor;
     }
 
-    /**
-     * Estimate the required costs to carry out the conversion for a given {@code cardinality}.
-     *
-     * @param cardinality   the {@link CardinalityEstimate} of data to be converted
-     * @param numExecutions expected number of executions of this instance
-     * @param configuration provides estimators
-     * @return the cost estimate
-     * @see #estimateConversionCost(CardinalityEstimate, int, OptimizationContext)
-     */
-    public ProbabilisticDoubleInterval estimateConversionCost(CardinalityEstimate cardinality,
-                                                              int numExecutions,
-                                                              Configuration configuration) {
-        return this.estimateConversionCost(cardinality, numExecutions, new DefaultOptimizationContext(configuration));
-    }
 
     /**
      * Estimate the required cost to carry out the conversion for a given {@code cardinality}.

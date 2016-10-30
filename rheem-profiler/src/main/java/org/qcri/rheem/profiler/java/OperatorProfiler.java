@@ -118,7 +118,7 @@ public abstract class OperatorProfiler {
      */
     protected void evaluate(ChannelInstance[] inputs,
                             ChannelInstance[] outputs) {
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.executor.getConfiguration());
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.executor.getJob());
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(operator);
         operator.evaluate(inputs, outputs, this.executor, operatorContext);
     }

@@ -257,7 +257,7 @@ public class Job extends OneTimeExecutable {
         this.optimizationRound.start("Cardinality&Load Estimation");
         if (this.cardinalityEstimatorManager == null) {
             this.optimizationRound.start("Cardinality&Load Estimation", "Create OptimizationContext");
-            this.optimizationContext = new DefaultOptimizationContext(this.rheemPlan, this.configuration);
+            this.optimizationContext = DefaultOptimizationContext.createFrom(this);
             this.optimizationRound.stop("Cardinality&Load Estimation", "Create OptimizationContext");
 
             this.optimizationRound.start("Cardinality&Load Estimation", "Create CardinalityEstimationManager");
@@ -678,5 +678,12 @@ public class Job extends OneTimeExecutable {
         return this.experiment;
     }
 
-
+    /**
+     * Provide the {@link RheemPlan} executed by this instance.
+     *
+     * @return the {@link RheemPlan}
+     */
+    public RheemPlan getRheemPlan() {
+        return this.rheemPlan;
+    }
 }

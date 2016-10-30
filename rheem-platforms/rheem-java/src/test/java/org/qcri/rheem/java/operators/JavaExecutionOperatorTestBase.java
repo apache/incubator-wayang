@@ -27,19 +27,23 @@ public class JavaExecutionOperatorTestBase {
 
     protected static Configuration configuration;
 
+    protected static Job job;
+
     @BeforeClass
     public static void init() {
         configuration = new Configuration();
+        job = mock(Job.class);
+        when(job.getConfiguration()).thenReturn(configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(job);
+        when(job.getOptimizationContext()).thenReturn(optimizationContext);
     }
 
     protected static JavaExecutor createExecutor() {
-        final Job job = mock(Job.class);
-        when(job.getConfiguration()).thenReturn(configuration);
         return new JavaExecutor(JavaPlatform.getInstance(), job);
     }
 
     protected static OptimizationContext.OperatorContext createOperatorContext(Operator operator) {
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
+        OptimizationContext optimizationContext = job.getOptimizationContext();
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(operator);
         for (int i = 0; i < operator.getNumInputs(); i++) {
             operatorContext.setInputCardinality(i, new CardinalityEstimate(100, 10000, 0.1));

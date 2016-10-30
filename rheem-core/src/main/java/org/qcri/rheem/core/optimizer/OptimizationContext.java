@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
@@ -25,6 +26,11 @@ public abstract class OptimizationContext {
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
+     * The {@link Job} whose {@link RheemPlan} is to be optimized.
+     */
+    protected final Job job;
+
+    /**
      * The instance in that this instance is nested - or {@code null} if it is top-level.
      */
     protected final LoopContext hostLoopContext;
@@ -41,11 +47,6 @@ public abstract class OptimizationContext {
     private final OptimizationContext base;
 
     /**
-     * {@link Configuration} that is used to create estimates here.
-     */
-    private final Configuration configuration;
-
-    /**
      * {@link ChannelConversionGraph} used for the optimization.
      */
     private final ChannelConversionGraph channelConversionGraph;
@@ -58,13 +59,15 @@ public abstract class OptimizationContext {
     /**
      * Create a new, plain instance.
      */
-    public OptimizationContext(Configuration configuration) {
-        this(configuration,
+    public OptimizationContext(Job job) {
+        this(
+                job,
                 null,
                 null,
                 -1,
-                new ChannelConversionGraph(configuration),
-                initializePruningStrategies(configuration));
+                new ChannelConversionGraph(job.getConfiguration()),
+                initializePruningStrategies(job.getConfiguration())
+        );
     }
 
     /**
@@ -72,28 +75,28 @@ public abstract class OptimizationContext {
      *
      * @param operator the single {@link Operator} of this instance
      */
-    public OptimizationContext(Operator operator, Configuration configuration) {
-        this(configuration, null, null, -1, new ChannelConversionGraph(configuration), initializePruningStrategies(configuration));
+    public OptimizationContext(Job job, Operator operator) {
+        this(
+                job,
+                null,
+                null,
+                -1,
+                new ChannelConversionGraph(job.getConfiguration()),
+                initializePruningStrategies(job.getConfiguration())
+        );
         this.addOneTimeOperator(operator);
-    }
-
-    /**
-     * Creates a new (nested) instance for the given {@code loop}.
-     */
-    private OptimizationContext(LoopSubplan loop, LoopContext hostLoopContext, int iterationNumber, Configuration configuration) {
-        this(configuration, null, hostLoopContext, iterationNumber,
-                hostLoopContext.getOptimizationContext().getChannelConversionGraph(),
-                hostLoopContext.getOptimizationContext().getPruningStrategies());
-        this.addOneTimeOperators(loop);
     }
 
     /**
      * Base constructor.
      */
-    protected OptimizationContext(Configuration configuration, OptimizationContext base, LoopContext hostLoopContext,
-                                  int iterationNumber, ChannelConversionGraph channelConversionGraph,
+    protected OptimizationContext(Job job,
+                                  OptimizationContext base,
+                                  LoopContext hostLoopContext,
+                                  int iterationNumber,
+                                  ChannelConversionGraph channelConversionGraph,
                                   List<PlanEnumerationPruningStrategy> pruningStrategies) {
-        this.configuration = configuration;
+        this.job = job;
         this.base = base;
         this.hostLoopContext = hostLoopContext;
         this.iterationNumber = iterationNumber;
@@ -210,7 +213,7 @@ public abstract class OptimizationContext {
     public abstract void clearMarks();
 
     public Configuration getConfiguration() {
-        return this.configuration;
+        return this.job.getConfiguration();
     }
 
     /**
@@ -257,6 +260,15 @@ public abstract class OptimizationContext {
      * @return a {@link Collection} of said {@link DefaultOptimizationContext}s
      */
     public abstract Collection<DefaultOptimizationContext> getDefaultOptimizationContexts();
+
+    /**
+     * Provide the {@link Job} whose optimization is supported by this instance.
+     *
+     * @return the {@link Job}
+     */
+    public Job getJob() {
+        return this.job;
+    }
 
     /**
      * Represents a single optimization context of an {@link Operator}. This can be thought of as a single, virtual
@@ -544,7 +556,9 @@ public abstract class OptimizationContext {
             final int numIterationContexts = loop.getNumExpectedIterations() + 1;
             this.iterationContexts = new ArrayList<>(numIterationContexts);
             for (int iterationNumber = 0; iterationNumber < numIterationContexts; iterationNumber++) {
-                this.iterationContexts.add(new DefaultOptimizationContext(loop, this, iterationNumber, OptimizationContext.this.configuration));
+                this.iterationContexts.add(
+                        new DefaultOptimizationContext(loop, this, iterationNumber)
+                );
             }
         }
 

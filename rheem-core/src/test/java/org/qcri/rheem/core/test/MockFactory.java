@@ -1,6 +1,9 @@
 package org.qcri.rheem.core.test;
 
 import org.mockito.Answers;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
@@ -14,6 +17,14 @@ import static org.mockito.Mockito.when;
  * Utility to mock Rheem objects.
  */
 public class MockFactory {
+
+    public static Job createJob(Configuration configuration) {
+        Job job = mock(Job.class);
+        when(job.getConfiguration()).thenReturn(configuration);
+        final DefaultOptimizationContext optimizationContext = new DefaultOptimizationContext(job);
+        when(job.getOptimizationContext()).thenReturn(optimizationContext);
+        return job;
+    }
 
     public static ExecutionOperator createExecutionOperator(int numInputs, int numOutputs, Platform platform) {
         return createExecutionOperator(String.format("%d->%d, %s", numInputs, numOutputs, platform.getName()),

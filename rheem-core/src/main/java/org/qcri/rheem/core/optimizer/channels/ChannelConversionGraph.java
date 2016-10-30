@@ -208,9 +208,9 @@ public class ChannelConversionGraph {
         private final List<Set<ChannelDescriptor>> destChannelDescriptorSets;
 
         /**
-         * The input {@link OptimizationContext}.
+         * The input {@link OptimizationContext} (and a write-copy, repectively).
          */
-        private final OptimizationContext optimizationContext;
+        private final OptimizationContext optimizationContext, optimizationContextCopy;
 
         /**
          * Maps kernelized {@link Set}s of possible input {@link ChannelDescriptor}s to destination {@link InputSlot}s via
@@ -250,6 +250,7 @@ public class ChannelConversionGraph {
 
             // Store relevant variables.
             this.optimizationContext = optimizationContext;
+            this.optimizationContextCopy = new DefaultOptimizationContext(this.optimizationContext);
             this.sourceOutput = sourceOutput;
             this.destInputs = destInputs;
             final boolean isOpenChannelsPresent = openChannels != null && !openChannels.isEmpty();
@@ -664,7 +665,7 @@ public class ChannelConversionGraph {
         private ProbabilisticDoubleInterval getCostEstimate(ChannelConversion channelConversion) {
             return this.conversionCostCache.computeIfAbsent(
                     channelConversion,
-                    key -> key.estimateConversionCost(this.cardinality, this.numExecutions, this.optimizationContext.getConfiguration())
+                    key -> key.estimateConversionCost(this.cardinality, this.numExecutions, this.optimizationContextCopy)
             );
         }
 

@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationUtils;
@@ -11,17 +12,13 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.Subplan;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.test.*;
 import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * Test suite for {@link ChannelConversionGraph}.
@@ -37,6 +34,8 @@ public class ChannelConversionGraphTest {
     private static DefaultChannelConversion nonReusableToExternalChannelConversion;
 
     private static DefaultChannelConversion externalToNonReusableChannelConversion;
+
+    private static Job job;
 
     private static Configuration configuration;
 
@@ -76,6 +75,8 @@ public class ChannelConversionGraphTest {
                 createDummyExecutionOperatorFactory(DummyNonReusableChannel.DESCRIPTOR)
         );
         configuration = new Configuration();
+        job = MockFactory.createJob(configuration);
+
     }
 
     @Test
@@ -93,7 +94,7 @@ public class ChannelConversionGraphTest {
         destOperator1.getSupportedInputChannels(0).add(DummyReusableChannel.DESCRIPTOR);
         destOperator1.getSupportedInputChannels(0).add(DummyNonReusableChannel.DESCRIPTOR);
 
-        final OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
+        final OptimizationContext optimizationContext = new DefaultOptimizationContext(job);
         optimizationContext.addOneTimeOperator(sourceOperator).setOutputCardinality(0, new CardinalityEstimate(1000, 10000, 0.8d));
 
         channelConversionGraph.findMinimumCostJunction(
@@ -121,7 +122,7 @@ public class ChannelConversionGraphTest {
         ExecutionOperator destOperator1 = new DummyExecutionOperator(1, 1, false);
         destOperator1.getSupportedInputChannels(0).add(DummyReusableChannel.DESCRIPTOR);
 
-        final OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
+        final OptimizationContext optimizationContext = new DefaultOptimizationContext(job);
         optimizationContext.addOneTimeOperator(sourceOperator).setOutputCardinality(0, new CardinalityEstimate(1000, 10000, 0.8d));
 
         Junction junction = channelConversionGraph.findMinimumCostJunction(
@@ -149,7 +150,7 @@ public class ChannelConversionGraphTest {
         ExecutionOperator destOperator1 = new DummyExecutionOperator(1, 1, false);
         destOperator1.getSupportedInputChannels(0).add(DummyExternalReusableChannel.DESCRIPTOR);
 
-        final OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
+        final OptimizationContext optimizationContext = new DefaultOptimizationContext(job);
         optimizationContext.addOneTimeOperator(sourceOperator).setOutputCardinality(0, new CardinalityEstimate(1000, 10000, 0.8d));
 
         Junction junction = channelConversionGraph.findMinimumCostJunction(
@@ -177,7 +178,7 @@ public class ChannelConversionGraphTest {
         ExecutionOperator destOperator1 = new DummyExecutionOperator(1, 1, false);
         destOperator1.getSupportedInputChannels(0).add(DummyExternalReusableChannel.DESCRIPTOR);
 
-        final OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
+        final OptimizationContext optimizationContext = new DefaultOptimizationContext(job);
         optimizationContext.addOneTimeOperator(sourceOperator).setOutputCardinality(0, new CardinalityEstimate(1000, 10000, 0.8d));
 
         final Channel sourceChannel = DummyNonReusableChannel.DESCRIPTOR.createChannel(sourceOperator.getOutput(0), configuration);
@@ -218,7 +219,7 @@ public class ChannelConversionGraphTest {
         ExecutionOperator destOperator1 = new DummyExecutionOperator(1, 1, false);
         destOperator1.getSupportedInputChannels(0).add(DummyExternalReusableChannel.DESCRIPTOR);
 
-        final OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
+        final OptimizationContext optimizationContext = new DefaultOptimizationContext(job);
         optimizationContext.addOneTimeOperator(sourceOperator).setOutputCardinality(0, new CardinalityEstimate(1000, 10000, 0.8d));
 
         final Channel sourceChannel = DummyNonReusableChannel.DESCRIPTOR.createChannel(sourceOperator.getOutput(0), configuration);
@@ -265,7 +266,7 @@ public class ChannelConversionGraphTest {
         ExecutionOperator destOperator1 = new DummyExecutionOperator(1, 1, false);
         destOperator1.getSupportedInputChannels(0).add(DummyExternalReusableChannel.DESCRIPTOR);
 
-        final OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
+        final OptimizationContext optimizationContext = new DefaultOptimizationContext(job);
         optimizationContext.addOneTimeOperator(sourceOperator).setOutputCardinality(0, new CardinalityEstimate(1000, 10000, 0.8d));
 
         final Channel sourceChannel = DummyNonReusableChannel.DESCRIPTOR.createChannel(sourceOperator.getOutput(0), configuration);

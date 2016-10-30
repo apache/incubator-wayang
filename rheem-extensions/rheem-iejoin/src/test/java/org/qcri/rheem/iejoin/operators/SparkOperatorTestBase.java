@@ -9,7 +9,6 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
-import org.qcri.rheem.core.profiling.FullInstrumentationStrategy;
 import org.qcri.rheem.iejoin.test.ChannelFactory;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
@@ -31,21 +30,25 @@ public class SparkOperatorTestBase {
 
     protected SparkExecutor sparkExecutor;
 
+    protected Job job;
+
     @Before
     public void setUp() {
         this.configuration = new Configuration();
-        this.sparkExecutor = (SparkExecutor) SparkPlatform.getInstance().getExecutorFactory().create(this.mockJob());
+        this.job = mock(Job.class);
+        when(this.job.getConfiguration()).thenReturn(this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job);
+        when(this.job.getOptimizationContext()).thenReturn(optimizationContext);
+        CrossPlatformExecutor crossPlatformExecutor = new CrossPlatformExecutor(
+                job, this.configuration.getInstrumentationStrategyProvider().provide()
+        );
+        when(this.job.getCrossPlatformExecutor()).thenReturn(crossPlatformExecutor);
+        this.sparkExecutor = (SparkExecutor) SparkPlatform.getInstance().getExecutorFactory().create(this.job);
     }
 
-    Job mockJob() {
-        final Job job = mock(Job.class);
-        when(job.getConfiguration()).thenReturn(this.configuration);
-        when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new FullInstrumentationStrategy()));
-        return job;
-    }
 
     protected OptimizationContext.OperatorContext createOperatorContext(Operator operator) {
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(job);
         return optimizationContext.addOneTimeOperator(operator);
     }
 

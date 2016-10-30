@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.configuration.FunctionalKeyValueProvider;
 import org.qcri.rheem.core.api.configuration.KeyValueProvider;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
@@ -13,12 +14,15 @@ import org.qcri.rheem.core.plan.rheemplan.test.TestFilterOperator;
 import org.qcri.rheem.core.plan.rheemplan.test.TestJoin;
 import org.qcri.rheem.core.plan.rheemplan.test.TestLoopHead;
 import org.qcri.rheem.core.plan.rheemplan.test.TestSource;
+import org.qcri.rheem.core.test.MockFactory;
 import org.qcri.rheem.core.util.RheemCollections;
 
 /**
  * Test suite for {@link LoopSubplanCardinalityPusher}.
  */
 public class LoopSubplanCardinalityPusherTest {
+
+    private Job job;
 
     private Configuration configuration;
 
@@ -36,6 +40,7 @@ public class LoopSubplanCardinalityPusherTest {
                         },
                         this.configuration);
         this.configuration.setCardinalityEstimatorProvider(estimatorProvider);
+        this.job = MockFactory.createJob(this.configuration);
     }
 
     @Test
@@ -52,7 +57,7 @@ public class LoopSubplanCardinalityPusherTest {
 
         final LoopSubplan loop = LoopIsolator.isolate(loopHead);
         Assert.assertNotNull(loop);
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(loop, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job, loop);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(loop);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(123, 321, 0.123d);
         loopCtx.setInputCardinality(0, inputCardinality);
@@ -84,7 +89,7 @@ public class LoopSubplanCardinalityPusherTest {
 
         final LoopSubplan loop = LoopIsolator.isolate(loopHead);
         Assert.assertNotNull(loop);
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(loop, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job, loop);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(loop);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(123, 321, 0.123d);
         loopCtx.setInputCardinality(0, inputCardinality);
@@ -121,7 +126,7 @@ public class LoopSubplanCardinalityPusherTest {
         final LoopSubplan loop = LoopIsolator.isolate(loopHead);
         Assert.assertNotNull(loop);
 
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(loop, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job, loop);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(loop);
 
         final CardinalityEstimate mainInputCardinality = new CardinalityEstimate(123, 321, 0.123d);
@@ -174,7 +179,7 @@ public class LoopSubplanCardinalityPusherTest {
         LoopSubplan outerLoop = LoopIsolator.isolate(outerLoopHead);
         Assert.assertNotNull(outerLoop);
 
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(outerLoop, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job, outerLoop);
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(outerLoop);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(123, 321, 0.123d);
         loopCtx.setInputCardinality(0, inputCardinality);

@@ -389,4 +389,13 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
             return true;
         }
     }
+
+    /**
+     * Provide the {@link Job} that is processed by this instance.
+     *
+     * @return the {@link Job}
+     */
+    public Job getJob() {
+        return this.job;
+    }
 }

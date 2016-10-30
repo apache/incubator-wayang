@@ -58,7 +58,7 @@ public class JdbcExecutorTest {
         sqlToStreamTask.setStage(nextStage);
 
         JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
-        executor.execute(sqlStage, new DefaultOptimizationContext(configuration), job.getCrossPlatformExecutor());
+        executor.execute(sqlStage, new DefaultOptimizationContext(job), job.getCrossPlatformExecutor());
 
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
@@ -107,7 +107,7 @@ public class JdbcExecutorTest {
         sqlToStreamTask.setStage(nextStage);
 
         JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
-        executor.execute(sqlStage, new DefaultOptimizationContext(configuration), job.getCrossPlatformExecutor());
+        executor.execute(sqlStage, new DefaultOptimizationContext(job), job.getCrossPlatformExecutor());
 
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
@@ -149,7 +149,7 @@ public class JdbcExecutorTest {
         sqlToStreamTask.setStage(nextStage);
 
         JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
-        executor.execute(sqlStage, new DefaultOptimizationContext(configuration), job.getCrossPlatformExecutor());
+        executor.execute(sqlStage, new DefaultOptimizationContext(job), job.getCrossPlatformExecutor());
 
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
@@ -217,7 +217,7 @@ public class JdbcExecutorTest {
         sqlToStreamTask.setStage(nextStage);
 
         JdbcExecutor executor = new JdbcExecutor(HsqldbPlatform.getInstance(), job);
-        executor.execute(sqlStage, new DefaultOptimizationContext(configuration), job.getCrossPlatformExecutor());
+        executor.execute(sqlStage, new DefaultOptimizationContext(job), job.getCrossPlatformExecutor());
 
         SqlQueryChannel.Instance sqlQueryChannelInstance =
                 (SqlQueryChannel.Instance) job.getCrossPlatformExecutor().getChannelInstance(sqlToStreamTask.getInputChannel(0));
