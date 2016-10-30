@@ -270,11 +270,7 @@ public class ChannelConversionGraphTest {
 
         final Channel sourceChannel = DummyNonReusableChannel.DESCRIPTOR.createChannel(sourceOperator.getOutput(0), configuration);
         final Channel reusableChannel = nonReusableToReusableChannelConversion.convert(sourceChannel, configuration);
-        ExecutionTask destTask0 = new ExecutionTask(destOperator0);
-        reusableChannel.addConsumer(destTask0, 0);
         final Channel externalChannel = reusableToExternalChannelConversion.convert(reusableChannel, configuration);
-        ExecutionTask destTask1 = new ExecutionTask(destOperator1);
-        externalChannel.addConsumer(destTask1, 0);
 
         Junction junction = channelConversionGraph.findMinimumCostJunction(
                 sourceOperator.getOutput(0),
@@ -291,10 +287,7 @@ public class ChannelConversionGraphTest {
         Assert.assertTrue(nextChannel == reusableChannel);
         Assert.assertTrue(junction.getTargetChannel(0).isCopy() && junction.getTargetChannel(0).getOriginal() == nextChannel);
 
-        Assert.assertTrue(nextChannel.getConsumers().size() == 2);
-        consumer = RheemCollections.getSingle(
-                nextChannel.getConsumers().stream().filter(c -> c != destTask0).collect(Collectors.toSet())
-        );
+        consumer = RheemCollections.getSingle(nextChannel.getConsumers());
         nextChannel = consumer.getOutputChannel(0);
         Assert.assertTrue(nextChannel == externalChannel);
         Assert.assertTrue(junction.getTargetChannel(1).isCopy() && junction.getTargetChannel(1).getOriginal() == nextChannel);
