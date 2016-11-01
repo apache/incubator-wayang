@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,7 +39,14 @@ public class PlanEnumerator {
     /**
      * {@link ConcatenationActivator}s that are activated and should be executed.
      */
-    private final Queue<ConcatenationActivator> activatedConcatenations = new LinkedList<>();
+    private final Queue<ConcatenationActivator> activatedConcatenations = new PriorityQueue<>(
+            (activator0, activator1) -> Double.compare(activator0.priority, activator1.priority)
+    );
+
+    /**
+     * Determines how to calculate the priority of {@link ConcatenationActivator}s.
+     */
+    private final ToDoubleFunction<ConcatenationActivator> concatenationPriorityFunction;
 
     /**
      * TODO
@@ -174,6 +182,23 @@ public class PlanEnumerator {
         for (Operator startOperator : startOperators) {
             this.scheduleForEnumeration(startOperator, optimizationContext);
         }
+
+        final String priorityFunctionName = this.optimizationContext.getConfiguration().getStringProperty(
+                "rheem.core.optimizer.enumeration.concatenationprio"
+        );
+        switch (priorityFunctionName) {
+            case "slots":
+                this.concatenationPriorityFunction = ConcatenationActivator::countNumOfOpenSlots;
+                break;
+            case "plans":
+                this.concatenationPriorityFunction = ConcatenationActivator::estimateNumConcatenatedPlanImplementations;
+                break;
+            case "none":
+                this.concatenationPriorityFunction = activator -> 0d;
+                break;
+            default:
+                throw new RheemException("Unknown concatenation priority function: " + priorityFunctionName);
+        }
     }
 
     private void scheduleForEnumeration(Operator operator, OptimizationContext optimizationContext) {
@@ -226,6 +251,15 @@ public class PlanEnumerator {
     private synchronized void run() {
         if (this.resultReference == null) {
             while (!this.activatedEnumerations.isEmpty() || !this.activatedConcatenations.isEmpty()) {
+                // Try to enumerate branches.
+                EnumerationActivator enumerationActivator;
+                if ((enumerationActivator = this.activatedEnumerations.poll()) != null) {
+                    if (this.isTopLevel()) {
+                        this.logger.debug("Execute {}.", enumerationActivator);
+                    }
+                    this.enumerateBranchStartingFrom(enumerationActivator);
+                }
+
                 ConcatenationActivator concatenationActivator;
                 while ((concatenationActivator = this.activatedConcatenations.poll()) != null) {
                     if (this.isTopLevel()) {
@@ -235,15 +269,6 @@ public class PlanEnumerator {
                         );
                     }
                     this.concatenate(concatenationActivator);
-                }
-
-                // Try to enumerate branches.
-                EnumerationActivator enumerationActivator;
-                if ((enumerationActivator = this.activatedEnumerations.poll()) != null) {
-                    if (this.isTopLevel()) {
-                        this.logger.debug("Execute {}.", enumerationActivator);
-                    }
-                    this.enumerateBranchStartingFrom(enumerationActivator);
                 }
             }
 
@@ -646,7 +671,7 @@ public class PlanEnumerator {
 
     private ConcatenationActivator getOrCreateConcatenationActivator(OutputSlot<?> output,
                                                                      OptimizationContext optimizationCtx) {
-        Tuple<OutputSlot<?>, OptimizationContext> concatKey = ConcatenationActivator.createKey(output, optimizationCtx);
+        Tuple<OutputSlot<?>, OptimizationContext> concatKey = createConcatenationKey(output, optimizationCtx);
         return this.concatenationActivators.computeIfAbsent(
                 concatKey, key -> new ConcatenationActivator(key.getField0(), key.getField1()));
     }
@@ -803,7 +828,7 @@ public class PlanEnumerator {
     /**
      * TODO. Waiting for all {@link InputSlot}s for an {@link OutputSlot} in order to join.
      */
-    public static class ConcatenationActivator {
+    public class ConcatenationActivator {
 
         /**
          * Base plan that provides the {@link #outputSlot}. May change.
@@ -832,6 +857,12 @@ public class PlanEnumerator {
 
         protected boolean wasExecuted = false;
 
+        /**
+         * The priority of this instance.
+         */
+        private double priority = Double.NaN;
+
+
         private ConcatenationActivator(OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
             assert !outputSlot.getOccupiedSlots().isEmpty();
             this.outputSlot = outputSlot;
@@ -851,6 +882,8 @@ public class PlanEnumerator {
             assert openInputSlot.getOccupant() == this.outputSlot;
             this.activationCollector.put(openInputSlot, planEnumeration);
             assert this.numRequiredActivations >= this.activationCollector.size();
+
+            this.updatePriority();
         }
 
         public PlanEnumeration getBaseEnumeration() {
@@ -862,6 +895,68 @@ public class PlanEnumerator {
             assert this.baseEnumeration == null || baseEnumeration.getScope().containsAll(this.baseEnumeration.getScope());
             this.baseEnumeration = baseEnumeration;
             // }
+
+            this.updatePriority();
+        }
+
+        /**
+         * Update the {@link #priority} of this instance.
+         */
+        private void updatePriority() {
+            // If this instance is not ready for activation, it does not have or need a priority.
+            if (!this.canBeActivated()) return;
+
+            // Calculate the new priority.
+            double oldPriority = this.priority;
+            this.priority = PlanEnumerator.this.concatenationPriorityFunction.applyAsDouble(this);
+
+            // Update the priority queue if needed.
+            if (this.priority != oldPriority && PlanEnumerator.this.activatedConcatenations.remove(this)) {
+                PlanEnumerator.this.activatedConcatenations.add(this);
+            }
+        }
+
+        /**
+         * Estimates the number of {@link PlanImplementation}s in the concatenated {@link PlanEnumeration}. Can be used
+         * as {@link #concatenationPriorityFunction}.
+         *
+         * @return the number of {@link PlanImplementation}s
+         */
+        private double estimateNumConcatenatedPlanImplementations() {
+            // We use the product of all concatenatable PlanImplementations as an estimate of the size of the
+            // concatenated PlanEnumeration.
+            long num = this.baseEnumeration.getPlanImplementations().size();
+            for (PlanEnumeration successorEnumeration : activationCollector.values()) {
+                num *= successorEnumeration.getPlanImplementations().size();
+            }
+            return num;
+        }
+
+        /**
+         * Calculates the number of open {@link Slot}s in the concatenated {@link PlanEnumeration}. Can be used
+         * as {@link #concatenationPriorityFunction}.
+         *
+         * @return the number of open {@link Slot}s
+         */
+        private double countNumOfOpenSlots() {
+            // We use the number of open slots in the concatenated PlanEnumeration.
+            Set<Slot<?>> openSlots = new HashSet<>();
+            // Add all the slots from the baseEnumeration.
+            openSlots.addAll(this.baseEnumeration.getRequestedInputSlots());
+            for (Tuple<OutputSlot<?>, InputSlot<?>> outputInput : this.baseEnumeration.getServingOutputSlots()) {
+                openSlots.add(outputInput.getField0());
+            }
+            // Add all the slots from the successor enumerations.
+            for (PlanEnumeration successorEnumeration : this.activationCollector.values()) {
+                openSlots.addAll(successorEnumeration.getRequestedInputSlots());
+                for (Tuple<OutputSlot<?>, InputSlot<?>> outputInput : successorEnumeration.getServingOutputSlots()) {
+                    openSlots.add(outputInput.getField0());
+                }
+            }
+            // Remove all the slots that are being connected.
+            openSlots.remove(this.outputSlot);
+            openSlots.removeAll(this.activationCollector.keySet());
+            return openSlots.size();
         }
 
         public Map<InputSlot<?>, PlanEnumeration> getAdjacentEnumerations() {
@@ -873,12 +968,10 @@ public class PlanEnumerator {
         }
 
         public Tuple<OutputSlot<?>, OptimizationContext> getKey() {
-            return createKey(this.outputSlot, this.optimizationContext);
+            return createConcatenationKey(this.outputSlot, this.optimizationContext);
         }
 
-        public static Tuple<OutputSlot<?>, OptimizationContext> createKey(OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
-            return new Tuple<>(outputSlot, optimizationContext);
-        }
+
 
         public OptimizationContext getOptimizationContext() {
             return this.optimizationContext;
@@ -901,6 +994,12 @@ public class PlanEnumerator {
         }
 
 
+    }
+
+    public static Tuple<OutputSlot<?>, OptimizationContext> createConcatenationKey(
+            OutputSlot<?> outputSlot,
+            OptimizationContext optimizationContext) {
+        return new Tuple<>(outputSlot, optimizationContext);
     }
 
     /**
