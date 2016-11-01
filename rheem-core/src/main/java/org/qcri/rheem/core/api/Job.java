@@ -194,8 +194,7 @@ public class Job extends OneTimeExecutable {
             int executionId = 0;
             while (!this.execute(executionPlan, executionId)) {
                 this.optimizationRound.start();
-                this.postProcess(executionPlan, executionId);
-                executionId++;
+                if (this.postProcess(executionPlan, executionId)) executionId++;
                 this.optimizationRound.stop();
             }
 
@@ -464,11 +463,13 @@ public class Job extends OneTimeExecutable {
     /**
      * Injects the cardinalities obtained from {@link Channel} instrumentation, potentially updates the {@link ExecutionPlan}
      * through re-optimization, and collects measured data.
+     *
+     * @return whether the {@link ExecutionPlan} has been re-optimized
      */
-    private void postProcess(ExecutionPlan executionPlan, int executionId) {
+    private boolean postProcess(ExecutionPlan executionPlan, int executionId) {
         if (this.crossPlatformExecutor.isVetoingPlanChanges()) {
             this.logger.info("The cross-platform executor is currently not allowing re-optimization.");
-            return;
+            return false;
         }
 
         final TimeMeasurement round = this.optimizationRound.start(String.format("Post-processing %d", executionId));
@@ -483,10 +484,15 @@ public class Job extends OneTimeExecutable {
             this.updateExecutionPlan(executionPlan);
         } else {
             this.logger.info("Skipping re-optimization: no new insights on cardinalities.");
+            this.timeEstimates.add(this.timeEstimates.get(this.timeEstimates.size() - 1));
+            this.costEstimates.add(this.costEstimates.get(this.costEstimates.size() - 1));
+
         }
         round.stop("Update Execution Plan");
 
         round.stop();
+
+        return true;
     }
 
     /**
@@ -520,6 +526,8 @@ public class Job extends OneTimeExecutable {
         final PlanImplementation planImplementation = this.pickBestExecutionPlan(
                 costEstimateComparator, executionPlans, executionPlan, openChannels, completedStages
         );
+        this.timeEstimates.add(planImplementation.getTimeEstimate());
+        this.costEstimates.add(planImplementation.getCostEstimate());
 
         ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.recreateFrom(
                 planImplementation, executionPlan, openChannels, completedStages
@@ -580,7 +588,7 @@ public class Job extends OneTimeExecutable {
                 Formats.formatDuration(measuredExecutionMillis - effectiveExecutionMillis, true)
         );
         int i = 1;
-        for (TimeEstimate timeEstimate : timeEstimates) {
+        for (TimeEstimate timeEstimate : this.timeEstimates) {
             this.logger.info("Estimated execution time (plan {}): {}", i, timeEstimate);
             TimeMeasurement lowerEstimate = new TimeMeasurement(String.format("Estimate %d (lower)", i));
             lowerEstimate.setMillis(timeEstimate.getLowerEstimate());
