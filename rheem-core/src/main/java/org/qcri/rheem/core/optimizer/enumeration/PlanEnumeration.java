@@ -233,69 +233,14 @@ public class PlanEnumeration {
                                                                    OptimizationContext optimizationContext,
                                                                    PlanEnumeration concatenationEnumeration,
                                                                    TimeMeasurement concatenationMeasurement) {
-        if (openChannels == null || openChannels.isEmpty()) {
-            return this.concatenatePartialPlansBatchwise(
-                    openOutputSlot,
-                    targetEnumerations,
-                    optimizationContext,
-                    concatenationEnumeration,
-                    concatenationMeasurement
-            );
-        } else {
-            return this.concatenatePartialPlansPairwise(
-                    openOutputSlot,
-                    openChannels,
-                    targetEnumerations,
-                    optimizationContext,
-                    concatenationEnumeration,
-                    concatenationMeasurement
-            );
-        }
-    }
-
-    /**
-     * Concatenates {@link PlanEnumeration}s by pairwise processing of {@link PlanImplementation}s.
-     *
-     * @param openOutputSlot           of this instance to be concatenated
-     * @param openChannels             already created {@link Channel}s between the conctenatable instances or {@code null}
-     * @param targetEnumerations       whose {@link InputSlot}s should be concatenated with the {@code openOutputSlot}
-     * @param optimizationContext      provides concatenation information
-     * @param concatenationEnumeration to which the {@link PlanImplementation}s should be added
-     * @param concatenationMeasurement
-     * @return the concatenated {@link PlanImplementation}s
-     */
-    private Collection<PlanImplementation> concatenatePartialPlansPairwise(
-            OutputSlot<?> openOutputSlot,
-            Collection<Channel> openChannels,
-            Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
-            OptimizationContext optimizationContext,
-            PlanEnumeration concatenationEnumeration, TimeMeasurement concatenationMeasurement) {
-        // Simple implementation waives optimization potential.
-
-        // Allocate the result collector.
-        Collection<PlanImplementation> resultCollector = new LinkedList<>();
-
-        // Iterate over the cross product of PlanImplementations.
-        List<Map.Entry<InputSlot<?>, PlanEnumeration>> targetEnumerationEntries = new ArrayList<>(targetEnumerations.entrySet());
-        List<InputSlot<?>> inputSlots = RheemCollections.map(targetEnumerationEntries, Map.Entry::getKey);
-        List<Collection<PlanImplementation>> targetEnumerationImplList = RheemCollections.map(
-                targetEnumerationEntries,
-                entry -> entry.getValue().getPlanImplementations()
+        return this.concatenatePartialPlansBatchwise(
+                openOutputSlot,
+                openChannels,
+                targetEnumerations,
+                optimizationContext,
+                concatenationEnumeration,
+                concatenationMeasurement
         );
-        for (List<PlanImplementation> targetImpls : RheemCollections.streamedCrossProduct(targetEnumerationImplList)) {
-            for (PlanImplementation thisImpl : this.getPlanImplementations()) {
-
-                // Concatenate the PlanImplementations.
-                final PlanImplementation concatenationImpl = thisImpl.concatenate(
-                        openOutputSlot, openChannels, targetImpls, inputSlots, concatenationEnumeration, optimizationContext, concatenationMeasurement
-                );
-                if (concatenationImpl != null) {
-                    resultCollector.add(concatenationImpl);
-                }
-            }
-        }
-
-        return resultCollector;
     }
 
     /**
@@ -312,6 +257,7 @@ public class PlanEnumeration {
      */
     private Collection<PlanImplementation> concatenatePartialPlansBatchwise(
             OutputSlot<?> openOutputSlot,
+            Collection<Channel> openChannels,
             Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
             OptimizationContext optimizationContext,
             PlanEnumeration concatenationEnumeration,
@@ -360,6 +306,7 @@ public class PlanEnumeration {
                         null : concatenationMeasurement.start("Channel Conversion");
                 final Junction junction = channelConversionGraph.findMinimumCostJunction(
                         output,
+                        openChannels,
                         inputs,
                         innerPlanImplementation.getOptimizationContext()
                 );

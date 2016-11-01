@@ -1,6 +1,5 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
-import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -13,7 +12,6 @@ import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Canonicalizer;
-import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -267,47 +265,6 @@ public class PlanImplementation {
         }
     }
 
-
-    /**
-     * Creates a {@link Junction} between the {@link OutputSlot} and {@link InputSlot}s and with this concatenates
-     * the {@link PlanImplementation}s.
-     *
-     * @param openChannels existing {@link Channel}s to reuse or {@code null} otherwise
-     * @return the concatenated {@link PlanImplementation} or {@code null} if the inputs do not fit
-     * @deprecated {@link Junction}s should be created at {@link PlanEnumeration} level to reduce overhead
-     */
-    PlanImplementation concatenate(OutputSlot<?> output,
-                                   Collection<Channel> openChannels,
-                                   List<PlanImplementation> targets,
-                                   List<InputSlot<?>> inputs,
-                                   PlanEnumeration concatenationEnumeration,
-                                   OptimizationContext optimizationContext,
-                                   TimeMeasurement concatenationMeasurement) {
-
-        // Construct the Junction between the PlanImplementations.
-        final Tuple<OutputSlot<?>, PlanImplementation> execOutputWithContext =
-                RheemCollections.getSingle(this.findExecutionOperatorOutputWithContext(output));
-        final List<InputSlot<?>> execInputs = RheemCollections.map(
-                inputs,
-                (index, input) -> {
-                    PlanImplementation targetImpl = targets.get(index);
-                    return RheemCollections.getSingle(targetImpl.findExecutionOperatorInputs(input));
-                }
-        );
-        TimeMeasurement channelConversionMeasurement = concatenationMeasurement == null ?
-                null : concatenationMeasurement.start("Channel Conversion");
-        final Junction junction = optimizationContext.getChannelConversionGraph().findMinimumCostJunction(
-                execOutputWithContext.getField0(), openChannels, execInputs, execOutputWithContext.getField1().getOptimizationContext()
-        );
-        if (channelConversionMeasurement != null) channelConversionMeasurement.stop();
-        if (junction == null) {
-            return null;
-        }
-
-        // Delegate.
-        return this.concatenate(targets, junction, execOutputWithContext.getField1(), concatenationEnumeration);
-
-    }
 
     /**
      * Creates a new instance that forms the concatenation of this instance with the {@code targetPlans} via the
@@ -684,6 +641,7 @@ public class PlanImplementation {
 
     /**
      * Retrieve the {@link Platform}s that are utilized by this instance.
+     *
      * @return the {@link Platform}s
      */
     public Set<Platform> getUtilizedPlatforms() {
