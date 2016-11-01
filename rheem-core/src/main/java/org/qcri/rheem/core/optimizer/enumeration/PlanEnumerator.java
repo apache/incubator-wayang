@@ -193,6 +193,14 @@ public class PlanEnumerator {
             case "plans":
                 this.concatenationPriorityFunction = ConcatenationActivator::estimateNumConcatenatedPlanImplementations;
                 break;
+            case "random":
+                // Randomly generate a priority. However, avoid re-generate priorities, because that would increase
+                // of a concatenation activator being processed, the longer it is in the queue (I guess).
+                this.concatenationPriorityFunction = activator -> {
+                    if (!Double.isNaN(activator.priority)) return activator.priority;
+                    return Math.random();
+                };
+                break;
             case "none":
                 this.concatenationPriorityFunction = activator -> 0d;
                 break;
