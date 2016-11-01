@@ -18,6 +18,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.PlanMetrics;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.*;
@@ -631,6 +632,16 @@ public class Job extends OneTimeExecutable {
             ));
             i++;
         }
+
+        // Log some plan metrics.
+        final PlanMetrics planMetrics = PlanMetrics.createFor(this.rheemPlan, "Plan Metrics");
+        this.logger.info("Plan metrics: {} virtual operators, {} execution operators, {} alternatives, {} combinations",
+                planMetrics.getNumVirtualOperators(),
+                planMetrics.getNumExecutionOperators(),
+                planMetrics.getNumAlternatives(),
+                planMetrics.getNumCombinations()
+        );
+        this.experiment.addMeasurement(planMetrics);
     }
 
     /**
