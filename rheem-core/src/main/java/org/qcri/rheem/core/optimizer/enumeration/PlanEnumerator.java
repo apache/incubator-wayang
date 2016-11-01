@@ -103,6 +103,11 @@ public class PlanEnumerator {
     private TimeMeasurement timeMeasurement;
 
     /**
+     * Tells whether branches should be enumerated first.
+     */
+    private boolean isEnumeratingBranchesFirst;
+
+    /**
      * Creates a new instance.
      *
      * @param rheemPlan a hyperplan that should be used for enumeration.
@@ -183,30 +188,47 @@ public class PlanEnumerator {
             this.scheduleForEnumeration(startOperator, optimizationContext);
         }
 
-        final String priorityFunctionName = this.optimizationContext.getConfiguration().getStringProperty(
+        // Configure the enumeration.
+        final Configuration configuration = this.optimizationContext.getConfiguration();
+        this.isEnumeratingBranchesFirst = configuration.getBooleanProperty(
+                "rheem.core.optimizer.enumeration.branchesfirst", true
+        );
+
+        // Configure the concatenations.
+        final String priorityFunctionName = configuration.getStringProperty(
                 "rheem.core.optimizer.enumeration.concatenationprio"
         );
+        ToDoubleFunction<ConcatenationActivator> concatenationPriorityFunction;
         switch (priorityFunctionName) {
             case "slots":
-                this.concatenationPriorityFunction = ConcatenationActivator::countNumOfOpenSlots;
+                concatenationPriorityFunction = ConcatenationActivator::countNumOfOpenSlots;
                 break;
             case "plans":
-                this.concatenationPriorityFunction = ConcatenationActivator::estimateNumConcatenatedPlanImplementations;
+                concatenationPriorityFunction = ConcatenationActivator::estimateNumConcatenatedPlanImplementations;
                 break;
             case "random":
                 // Randomly generate a priority. However, avoid re-generate priorities, because that would increase
                 // of a concatenation activator being processed, the longer it is in the queue (I guess).
-                this.concatenationPriorityFunction = activator -> {
+                concatenationPriorityFunction = activator -> {
                     if (!Double.isNaN(activator.priority)) return activator.priority;
                     return Math.random();
                 };
                 break;
             case "none":
-                this.concatenationPriorityFunction = activator -> 0d;
+                concatenationPriorityFunction = activator -> 0d;
                 break;
             default:
                 throw new RheemException("Unknown concatenation priority function: " + priorityFunctionName);
         }
+
+        boolean isInvertConcatenationPriorities = configuration.getBooleanProperty(
+                "rheem.core.optimizer.enumeration.invertconcatenations", false
+        );
+        this.concatenationPriorityFunction = isInvertConcatenationPriorities ?
+                activator -> -concatenationPriorityFunction.applyAsDouble(activator) :
+                concatenationPriorityFunction;
+
+
     }
 
     private void scheduleForEnumeration(Operator operator, OptimizationContext optimizationContext) {
@@ -338,6 +360,10 @@ public class PlanEnumerator {
                 return null;
             }
             branch.add(currentOperator);
+
+            // Cut branches if requested.
+            if (!this.isEnumeratingBranchesFirst) break;
+
             // Try to advance. This requires certain conditions, though.
             OutputSlot<?> followableOutput;
             if (currentOperator.isLoopHead()) {
