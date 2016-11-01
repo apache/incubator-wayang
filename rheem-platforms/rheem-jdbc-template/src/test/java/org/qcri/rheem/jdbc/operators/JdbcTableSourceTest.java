@@ -1,8 +1,12 @@
 package org.qcri.rheem.jdbc.operators;
 
+import de.hpi.isg.profiledb.instrumentation.StopWatch;
+import de.hpi.isg.profiledb.store.model.Experiment;
+import de.hpi.isg.profiledb.store.model.Subject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
@@ -23,11 +27,17 @@ public class JdbcTableSourceTest {
 
     @Test
     public void testCardinalityEstimator() throws SQLException {
-        Configuration configuration = new Configuration();
+        Job job = mock(Job.class);
+        OptimizationContext optimizationContext = mock(OptimizationContext.class);
+        when(job.getOptimizationContext()).thenReturn(optimizationContext);
+        when(optimizationContext.getJob()).thenReturn(job);
+        when(job.getStopWatch()).thenReturn(new StopWatch(new Experiment("mock", new Subject("mock", "mock"))));
+        when(optimizationContext.getConfiguration()).thenReturn(new Configuration());
+        when(job.getConfiguration()).thenReturn(new Configuration());
         HsqldbPlatform hsqldbPlatform = new HsqldbPlatform();
 
         // Create some test data.
-        try (Connection jdbcConnection = hsqldbPlatform.createDatabaseDescriptor(configuration).createJdbcConnection()) {
+        try (Connection jdbcConnection = hsqldbPlatform.createDatabaseDescriptor(job.getConfiguration()).createJdbcConnection()) {
             final Statement statement = jdbcConnection.createStatement();
             statement.execute("CREATE TABLE testCardinalityEstimator (a INT, b VARCHAR(6));");
             statement.execute("INSERT INTO testCardinalityEstimator VALUES (0, 'zero');");
@@ -37,8 +47,7 @@ public class JdbcTableSourceTest {
 
         JdbcTableSource tableSource = new HsqldbTableSource("testCardinalityEstimator");
         final CardinalityEstimator cardinalityEstimator = tableSource.getCardinalityEstimator(0);
-        OptimizationContext optimizationContext = mock(OptimizationContext.class);
-        when(optimizationContext.getConfiguration()).thenReturn(configuration);
+
         final CardinalityEstimate estimate = cardinalityEstimator.estimate(optimizationContext);
 
         Assert.assertEquals(

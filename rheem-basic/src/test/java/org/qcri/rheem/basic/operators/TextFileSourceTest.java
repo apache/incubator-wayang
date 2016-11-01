@@ -1,8 +1,12 @@
 package org.qcri.rheem.basic.operators;
 
+import de.hpi.isg.profiledb.instrumentation.StopWatch;
+import de.hpi.isg.profiledb.store.model.Experiment;
+import de.hpi.isg.profiledb.store.model.Subject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
@@ -26,7 +30,11 @@ public class TextFileSourceTest {
 
     @Test
     public void testCardinalityEstimation() throws URISyntaxException, IOException {
+        Job job = mock(Job.class);
         OptimizationContext optimizationContext = mock(OptimizationContext.class);
+        when(job.getOptimizationContext()).thenReturn(optimizationContext);
+        when(optimizationContext.getJob()).thenReturn(job);
+        when(job.getStopWatch()).thenReturn(new StopWatch(new Experiment("mock", new Subject("mock", "mock"))));
         when(optimizationContext.getConfiguration()).thenReturn(new Configuration());
         final URL testFile = this.getClass().getResource("/ulysses.txt");
         final TextFileSource textFileSource = new TextFileSource(testFile.toString());
