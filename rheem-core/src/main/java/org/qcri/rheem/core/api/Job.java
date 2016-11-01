@@ -18,8 +18,8 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.PlanMetrics;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.PlanMetrics;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.*;
@@ -65,6 +65,11 @@ public class Job extends OneTimeExecutable {
      * {@link OptimizationContext} for the {@link #rheemPlan}.
      */
     private OptimizationContext optimizationContext;
+
+    /**
+     * General purpose cache.
+     */
+    private Map<String, Object> cache = new HashMap<>();
 
     /**
      * Executes the optimized {@link ExecutionPlan}.
@@ -707,5 +712,14 @@ public class Job extends OneTimeExecutable {
      */
     public StopWatch getStopWatch() {
         return this.stopWatch;
+    }
+
+    /**
+     * Provides a general-purpose cache. Can be used to communicate job-global information.
+     *
+     * @return the cache
+     */
+    public Map<String, Object> getCache() {
+        return this.cache;
     }
 }

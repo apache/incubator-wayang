@@ -271,6 +271,43 @@ public abstract class OptimizationContext {
     }
 
     /**
+     * Stores a value into the {@link Job}-global cache.
+     *
+     * @param key   identifies the value
+     * @param value the value
+     * @return the value previously associated with the key or else {@code null}
+     */
+    public Object putIntoJobCache(String key, Object value) {
+        return this.getJob().getCache().put(key, value);
+    }
+
+    /**
+     * Queries the {@link Job}-global cache.
+     *
+     * @param key that is associated with the value to be retrieved
+     * @return the value associated with the key or else {@code null}
+     */
+    public Object queryJobCache(String key) {
+        return this.getJob().getCache().get(key);
+    }
+
+    /**
+     * Queries the {@link Job}-global cache.
+     *
+     * @param key         that is associated with the value to be retrieved
+     * @param resultClass the expected {@link Class} of the retrieved value
+     * @return the value associated with the key or else {@code null}
+     */
+    public <T> T queryJobCache(String key, Class<T> resultClass) {
+        final Object value = this.queryJobCache(key);
+        try {
+            return resultClass.cast(value);
+        } catch (ClassCastException e) {
+            throw new RheemException("Job-cache value cannot be casted as requested.", e);
+        }
+    }
+
+    /**
      * Represents a single optimization context of an {@link Operator}. This can be thought of as a single, virtual
      * execution of the {@link Operator}.
      */
