@@ -758,6 +758,14 @@ public class ChannelConversionGraph {
                             // Hacky: Inject cardinality for cases where we convert a LoopHeadOperator output.
                             junction.getOptimizationContexts().size() == 1 ? this.cardinality : null
                     );
+                } else {
+                    edge.channelConversion.update(
+                            baseChannel,
+                            newChannel,
+                            junction.getOptimizationContexts(),
+                            // Hacky: Inject cardinality for cases where we convert a LoopHeadOperator output.
+                            junction.getOptimizationContexts().size() == 1 ? this.cardinality : null
+                    );
                 }
                 if (baseChannel != newChannel) {
                     final ExecutionTask producer = newChannel.getProducer();

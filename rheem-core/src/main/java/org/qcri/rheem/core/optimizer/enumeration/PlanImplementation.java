@@ -392,6 +392,22 @@ public class PlanImplementation {
                 return true;
             }
         }
+        for (Map.Entry<LoopSubplan, LoopImplementation> entry : this.loopImplementations.entrySet()) {
+            final LoopSubplan loop = entry.getKey();
+            final LoopImplementation thisLoopImplementation = entry.getValue();
+            final LoopImplementation thatLoopImplementation = that.loopImplementations.get(loop);
+            if (thatLoopImplementation == null) continue;
+            if (thisLoopImplementation
+                    .getIterationImplementations().get(0)
+                    .getBodyImplementation()
+                    .isSettledAlternativesContradicting(
+                            thatLoopImplementation
+                                    .getIterationImplementations().get(0)
+                                    .getBodyImplementation()
+                    )) {
+                return true;
+            }
+        }
         return false;
     }
 

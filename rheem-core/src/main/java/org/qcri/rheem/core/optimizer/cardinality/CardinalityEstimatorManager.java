@@ -2,6 +2,7 @@ package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -94,10 +95,20 @@ public class CardinalityEstimatorManager {
     private void injectMeasuredCardinality(ChannelInstance channelInstance) {
         assert channelInstance.wasProduced();
         assert channelInstance.isMarkedForInstrumentation();
+
+        // Obtain cardinality measurement.
         final long cardinality = channelInstance.getMeasuredCardinality().getAsLong();
-        final OutputSlot<?> producerSlot = channelInstance.getChannel().getProducerSlot();
-        int outputIndex = producerSlot == null ? 0 : producerSlot.getIndex();
-        this.injectMeasuredCardinality(cardinality, channelInstance.getProducerOperatorContext(), outputIndex);
+
+        // Try to inject into the RheemPlan Operator output.
+        final OutputSlot<?> rheemPlanOutput = OptimizationUtils.findRheemPlanOutputSlotFor(channelInstance.getChannel());
+        int outputIndex = rheemPlanOutput == null ? 0 : rheemPlanOutput.getIndex();
+        OptimizationContext optimizationContext = channelInstance.getProducerOperatorContext().getOptimizationContext();
+        final OptimizationContext.OperatorContext rheemPlanOperatorCtx = optimizationContext.getOperatorContext(rheemPlanOutput.getOwner());
+        if (rheemPlanOperatorCtx != null) {
+            this.injectMeasuredCardinality(cardinality, rheemPlanOperatorCtx, outputIndex);
+        } else {
+            this.logger.warn("Could not inject cardinality measurement {} for {}.", cardinality, rheemPlanOutput);
+        }
     }
 
     /**

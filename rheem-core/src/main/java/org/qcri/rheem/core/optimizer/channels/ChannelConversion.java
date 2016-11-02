@@ -50,6 +50,19 @@ public abstract class ChannelConversion {
                                     final Collection<OptimizationContext> optimizationContexts,
                                     final CardinalityEstimate cardinality);
 
+    /**
+     * Update an already existing {@link ChannelConversion}.
+     *
+     * @param sourceChannel        the {@link Channel} to be converted
+     * @param targetChannel        the converted {@link Channel}
+     * @param optimizationContexts to which estimates of the newly added {@link Operator} should be updated
+     * @param cardinality          optional {@link CardinalityEstimate} of the {@link Channel}s
+     */
+    public abstract void update(final Channel sourceChannel,
+                                final Channel targetChannel,
+                                final Collection<OptimizationContext> optimizationContexts,
+                                final CardinalityEstimate cardinality);
+
     public ChannelDescriptor getSourceChannelDescriptor() {
         return this.sourceChannelDescriptor;
     }

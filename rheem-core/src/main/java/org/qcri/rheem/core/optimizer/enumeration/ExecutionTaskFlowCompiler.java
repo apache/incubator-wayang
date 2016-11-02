@@ -435,11 +435,12 @@ public class ExecutionTaskFlowCompiler
             if (targetOperator.isAlternative()) {
                 OperatorAlternative.Alternative alternative =
                         ExecutionTaskFlowCompiler.this.planImplementation.getChosenAlternative((OperatorAlternative) targetOperator);
-                if (alternative != null) {
-                    final Collection<InputSlot<Object>> innerTargetInputs = alternative.followInput(targetInput);
-                    for (InputSlot<Object> innerTargetInput : innerTargetInputs) {
-                        this.createActivation(innerTargetInput, collector);
-                    }
+                if (alternative == null) {
+                    throw new IllegalStateException("No selected alternative for " + targetOperator);
+                }
+                final Collection<InputSlot<Object>> innerTargetInputs = alternative.followInput(targetInput);
+                for (InputSlot<Object> innerTargetInput : innerTargetInputs) {
+                    this.createActivation(innerTargetInput, collector);
                 }
             } else if (targetOperator.isExecutionOperator()) {
                 for (final LoopImplementation.IterationImplementation targetIteration : this.determineIteration(targetOperator)) {

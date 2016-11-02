@@ -76,7 +76,33 @@ public class DefaultChannelConversion extends ChannelConversion {
         sourceChannel.addConsumer(task, 0);
         final Channel outputChannel = task.initializeOutputChannel(0, configuration);
         sourceChannel.addSibling(outputChannel);
+        setCardinalityAndTimeEstimates(sourceChannel, optimizationContexts, optCardinality, task);
 
+
+        return outputChannel;
+    }
+
+    @Override
+    public void update(Channel sourceChannel,
+                       Channel targetChannel,
+                       Collection<OptimizationContext> optimizationContexts,
+                       CardinalityEstimate cardinality) {
+        ExecutionTask conversionTask = targetChannel.getProducer();
+        this.setCardinalityAndTimeEstimates(sourceChannel, optimizationContexts, cardinality, conversionTask);
+    }
+
+    /**
+     * Update the key figure estimates for the given {@link ExecutionTask}.
+     *
+     * @param sourceChannel        provides the {@link CardinalityEstimate}
+     * @param optimizationContexts in which the estimates should be updates; also provides the estimates for the {@code sourceChannel}
+     * @param optCardinality       overrides the {@link CardinalityEstimate} or else {@code null}
+     * @param task                 whose key figure estimates should be updated
+     */
+    private void setCardinalityAndTimeEstimates(Channel sourceChannel,
+                                                Collection<OptimizationContext> optimizationContexts,
+                                                CardinalityEstimate optCardinality,
+                                                ExecutionTask task) {
         // Enrich the optimizationContexts.
         for (OptimizationContext optimizationContext : optimizationContexts) {
             final CardinalityEstimate cardinality = optCardinality == null ?
@@ -84,8 +110,6 @@ public class DefaultChannelConversion extends ChannelConversion {
                     optCardinality;
             this.setCardinalityAndTimeEstimate(task, optimizationContext, cardinality);
         }
-
-        return outputChannel;
     }
 
     /**
