@@ -63,7 +63,7 @@ public class GraphChiPlatform extends Platform {
         int numCores = (int) configuration.getLongProperty(CORES_PROPERTY);
         double hdfsMsPerMb = configuration.getDoubleProperty(HDFS_MS_PER_MB_PROPERTY);
         return LoadProfileToTimeConverter.createDefault(
-                LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000)),
+                LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000d)),
                 LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000),
                 LoadToTimeConverter.createLinearCoverter(0),
                 (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate)
