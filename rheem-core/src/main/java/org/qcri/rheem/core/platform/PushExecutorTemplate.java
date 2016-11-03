@@ -53,31 +53,6 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
     }
 
     /**
-     * Utility method to create the output {@link ChannelInstance}s for a certain {@link ExecutionTask}.
-     *
-     * @param task                    the {@link ExecutionTask}
-     * @param producerOperatorContext the {@link OptimizationContext.OperatorContext} for the {@link ExecutionTask}
-     * @param inputChannelInstances   the input {@link ChannelInstance}s for the {@code task}
-     * @return
-     */
-    protected ChannelInstance[] createOutputChannelInstances(ExecutionTask task,
-                                                             OptimizationContext.OperatorContext producerOperatorContext,
-                                                             List<ChannelInstance> inputChannelInstances) {
-        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
-        for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
-            final Channel outputChannel = task.getOutputChannel(outputIndex);
-            final ChannelInstance outputChannelInstance = outputChannel.createInstance(this, producerOperatorContext, outputIndex);
-            channelInstances[outputIndex] = outputChannelInstance;
-            for (ChannelInstance inputChannelInstance : inputChannelInstances) {
-                if (inputChannelInstance != null) {
-                    outputChannelInstance.addPredecessor(inputChannelInstance);
-                }
-            }
-        }
-        return channelInstances;
-    }
-
-    /**
      * Executes the given {@code task} and return the output {@link ChannelInstance}s.
      *
      * @param task                    that should be executed

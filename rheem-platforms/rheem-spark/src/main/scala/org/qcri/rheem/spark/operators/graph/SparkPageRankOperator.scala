@@ -42,7 +42,7 @@ class SparkPageRankOperator(_numIterations: Int,
 
     output.accept(resultRdd, sparkExecutor)
 
-    ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext)
+    ExecutionOperator.modelQuasiEagerExecution(inputs, outputs, operatorContext)
   }
 
   override def getLoadProfileEstimatorConfigurationKey: String = "rheem.spark.pagerank.load"

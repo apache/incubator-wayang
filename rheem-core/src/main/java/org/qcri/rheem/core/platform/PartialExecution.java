@@ -296,7 +296,12 @@ public class PartialExecution implements JsonSerializable {
 
         @Override
         public String toString() {
-            return "OperatorExecution[" + operator + ']';
+            return String.format("%s[%s, in=%s, out=%s]",
+                    this.getClass().getSimpleName(),
+                    this.getOperator(),
+                    Arrays.toString(this.getInputCardinalities()),
+                    Arrays.toString(this.getOutputCardinalities())
+            );
         }
     }
 }

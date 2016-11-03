@@ -26,7 +26,7 @@ public interface SparkExecutionOperator extends ExecutionOperator {
      * a set of {@link ChannelInstance}s according to the operator outputs -- unless the operator is a sink, then it triggers
      * execution.
      * <p>In addition, this method should give feedback of what this instance was doing by wiring the
-     * {@link org.qcri.rheem.core.platform.LazyChannelLineage} of input and ouput {@link ChannelInstance}s and
+     * {@link org.qcri.rheem.core.platform.lineage.LazyExecutionLineageNode}s of input and ouput {@link ChannelInstance}s and
      * providing a {@link Collection} of executed {@link OptimizationContext.OperatorContext}s.</p>
      *
      * @param inputs          {@link ChannelInstance}s that satisfy the inputs of this operator

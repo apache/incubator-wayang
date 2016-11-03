@@ -88,8 +88,8 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
             joinStream = ((JavaChannelInstance) inputs[1]).<InputType1>provideStream().flatMap(dataQuantum1 ->
                     probeTable.getOrDefault(keyExtractor1.apply(dataQuantum1), Collections.emptyList()).stream()
                             .map(dataQuantum0 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
-            inputs[0].getLazyChannelLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
-            outputs[0].addPredecessor(inputs[1]);
+            inputs[0].getLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
+            operatorContext.getLineage().addPredecessor(inputs[1].getLineage());
         } else {
             final int expectedNumElements = cardinalityEstimate1 == null ?
                     1000 :
@@ -107,11 +107,12 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
             joinStream = ((JavaChannelInstance) inputs[0]).<InputType0>provideStream().flatMap(dataQuantum0 ->
                     probeTable.getOrDefault(keyExtractor0.apply(dataQuantum0), Collections.emptyList()).stream()
                             .map(dataQuantum1 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
-            inputs[1].getLazyChannelLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
-            outputs[0].addPredecessor(inputs[0]);
+            inputs[1].getLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
+            operatorContext.getLineage().addPredecessor(inputs[0].getLineage());
         }
 
         ((StreamChannel.Instance) outputs[0]).accept(joinStream);
+        outputs[0].getLineage().addPredecessor(operatorContext.getLineage());
 
         return new Tuple<>(executedOperatorContexts, producedChannelInstances);
     }

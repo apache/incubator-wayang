@@ -67,8 +67,6 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
         boolean endloop = false;
 
-        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
-        Collection<ChannelInstance> producedChannelInstances = new LinkedList<>();
         final Collection<ConvergenceType> convergenceCollection;
         final JavaChannelInstance input;
         switch (this.getState()) {
@@ -82,9 +80,8 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
                 assert inputs[CONVERGENCE_INPUT_INDEX] != null;
 
                 convergenceCollection = ((CollectionChannel.Instance) inputs[CONVERGENCE_INPUT_INDEX]).provideCollection();
+                operatorContext.getLineage().addPredecessor(inputs[CONVERGENCE_INPUT_INDEX].getLineage());
                 endloop = stoppingCondition.test(convergenceCollection);
-                executedOperatorContexts.add(operatorContext);
-                inputs[CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
                 input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
                 break;
             default:
@@ -103,7 +100,7 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return new Tuple<>(executedOperatorContexts, producedChannelInstances);
+        return operatorContext.getLineage().collectAndMark();
     }
 
     @Override

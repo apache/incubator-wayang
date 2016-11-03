@@ -69,7 +69,7 @@ public class GraphChiExecutor extends ExecutorTemplate {
         long endTime = System.currentTimeMillis();
 
         final Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> results =
-                ExecutionOperator.modelEagerExecution(inputChannelInstances, outputChannelInstances, operatorContext);
+                ExecutionOperator.modelQuasiEagerExecution(inputChannelInstances, outputChannelInstances, operatorContext);
         final Collection<OptimizationContext.OperatorContext> executedOperatorContexts = results.getField0();
         final Collection<ChannelInstance> producedChannelInstances = results.getField1();
 

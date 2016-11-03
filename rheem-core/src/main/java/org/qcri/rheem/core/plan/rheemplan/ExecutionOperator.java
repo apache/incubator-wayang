@@ -7,7 +7,11 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.platform.*;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.lineage.LazyExecutionLineageNode;
 import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.LoggerFactory;
 
@@ -101,8 +105,7 @@ public interface ExecutionOperator extends ElementaryOperator {
     }
 
     /**
-     * Create output {@link ChannelInstance}s for this instance, thereby also setting up the
-     * {@link org.qcri.rheem.core.platform.LazyChannelLineage} properly.
+     * Create output {@link ChannelInstance}s for this instance.
      *
      * @param task                    the {@link ExecutionTask} in which this instance is being wrapped
      * @param producerOperatorContext the {@link OptimizationContext.OperatorContext} for this instance
@@ -124,29 +127,61 @@ public interface ExecutionOperator extends ElementaryOperator {
         return channelInstances;
     }
 
+    /**
+     * Models eager execution by marking all {@link LazyExecutionLineageNode}s as executed and collecting all marked ones.
+     *
+     * @param inputs          the input {@link ChannelInstance}s
+     * @param outputs         the output {@link ChannelInstance}s
+     * @param operatorContext the executed {@link OptimizationContext.OperatorContext}
+     * @return the executed {@link OptimizationContext.OperatorContext} and produced {@link ChannelInstance}s
+     */
     static Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> modelEagerExecution(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             OptimizationContext.OperatorContext operatorContext) {
+        LazyExecutionLineageNode.connectAll(inputs, operatorContext, outputs);
         final Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> collectors;
         if (outputs.length == 0) {
-            collectors = inputs[0].getLazyChannelLineage().collectAndMark();
-            collectors.getField0().add(operatorContext);
+            collectors = operatorContext.getLineage().collectAndMark();
         } else {
             collectors = new Tuple<>(new LinkedList<>(), new LinkedList<>());
-            LazyChannelLineage.addAllPredecessors(inputs, outputs);
             for (ChannelInstance output : outputs) {
-                output.getLazyChannelLineage().collectAndMark(collectors.getField0(), collectors.getField1());
+                output.getLineage().collectAndMark(collectors.getField0(), collectors.getField1());
             }
         }
         return collectors;
     }
 
+    /**
+     * Models eager execution by marking all {@link LazyExecutionLineageNode}s as executed and collecting all marked ones.
+     * However, the output {@link ChannelInstance}s are not yet produced.
+     *
+     * @param inputs          the input {@link ChannelInstance}s
+     * @param outputs         the output {@link ChannelInstance}s
+     * @param operatorContext the executed {@link OptimizationContext.OperatorContext}
+     * @return the executed {@link OptimizationContext.OperatorContext} and produced {@link ChannelInstance}s
+     */
+    static Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> modelQuasiEagerExecution(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            OptimizationContext.OperatorContext operatorContext) {
+        LazyExecutionLineageNode.connectAll(inputs, operatorContext, outputs);
+        return operatorContext.getLineage().collectAndMark();
+    }
+
+    /**
+     * Models lazy execution by not marking any {@link LazyExecutionLineageNode}s.
+     *
+     * @param inputs          the input {@link ChannelInstance}s
+     * @param outputs         the output {@link ChannelInstance}s
+     * @param operatorContext the executed {@link OptimizationContext.OperatorContext}
+     * @return the executed {@link OptimizationContext.OperatorContext} and produced {@link ChannelInstance}s
+     */
     static Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>>
     modelLazyExecution(ChannelInstance[] inputs,
                        ChannelInstance[] outputs,
                        OptimizationContext.OperatorContext operatorContext) {
-        LazyChannelLineage.addAllPredecessors(inputs, outputs);
+        LazyExecutionLineageNode.connectAll(inputs, operatorContext, outputs);
         return new Tuple<>(Collections.emptyList(), Collections.emptyList());
     }
 

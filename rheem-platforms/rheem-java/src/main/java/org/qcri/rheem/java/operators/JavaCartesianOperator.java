@@ -102,8 +102,9 @@ public class JavaCartesianOperator<InputType0, InputType1>
             probingInput = inputs[0];
         }
 
-        output.addPredecessor(probingInput);
-        return materializedInput.getLazyChannelLineage().collectAndMark();
+        operatorContext.getLineage().addPredecessor(probingInput.getLineage());
+        output.getLineage().addPredecessor(operatorContext.getLineage());
+        return materializedInput.getLineage().collectAndMark();
     }
 
     @Override

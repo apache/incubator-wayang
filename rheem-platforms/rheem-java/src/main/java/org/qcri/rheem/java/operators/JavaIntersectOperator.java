@@ -68,17 +68,18 @@ public class JavaIntersectOperator<Type>
         if (isMaterialize0) {
             candidateStream = ((JavaChannelInstance) inputs[0]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[1]).provideStream());
-            inputs[0].getLazyChannelLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
-            outputs[0].addPredecessor(inputs[1]);
+            inputs[0].getLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
+            operatorContext.getLineage().addPredecessor(inputs[1].getLineage());
         } else {
             candidateStream = ((JavaChannelInstance) inputs[1]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[0]).provideStream());
-            inputs[1].getLazyChannelLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
-            outputs[0].addPredecessor(inputs[0]);
+            inputs[1].getLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
+            operatorContext.getLineage().addPredecessor(inputs[0].getLineage());
         }
 
         Stream<Type> intersectStream = candidateStream.filter(probingTable::remove);
         ((StreamChannel.Instance) outputs[0]).accept(intersectStream);
+        outputs[0].getLineage().addPredecessor(operatorContext.getLineage());
 
         return new Tuple<>(executedOperatorContexts, producedChannelInstances);
     }

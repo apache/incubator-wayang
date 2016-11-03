@@ -9,6 +9,7 @@ import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.lineage.OperatorLineageNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -350,6 +351,11 @@ public abstract class OptimizationContext {
         private int numExecutions = 1;
 
         /**
+         * In case this instance corresponds to an execution, this field keeps track of this execution.
+         */
+        private OperatorLineageNode lineage;
+
+        /**
          * Creates a new instance.
          */
         protected OperatorContext(Operator operator) {
@@ -589,6 +595,13 @@ public abstract class OptimizationContext {
                 this.updateCostEstimate();
             }
             return this.costEstimate;
+        }
+
+        public OperatorLineageNode getLineage() {
+            if (this.lineage == null) {
+                this.lineage = new OperatorLineageNode(this);
+            }
+            return this.lineage;
         }
 
         @Override

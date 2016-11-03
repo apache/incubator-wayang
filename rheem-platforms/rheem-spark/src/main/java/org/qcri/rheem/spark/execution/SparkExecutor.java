@@ -10,6 +10,7 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
+import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
@@ -109,6 +110,10 @@ public class SparkExecutor extends PushExecutorTemplate {
             this.numActions++;
         }
 
+        if (partialExecution == null && executionDuration > 10) {
+            this.logger.warn("Execution of {} took suspiciously long ({}).", task, Formats.formatDuration(executionDuration));
+        }
+
         // Collect any cardinality updates.
         this.registerMeasuredCardinalities(producedChannelInstances);
 
@@ -146,7 +151,7 @@ public class SparkExecutor extends PushExecutorTemplate {
         rddOutput.accept(rddInput.provideRdd(), this);
 
         // Manipulate the lineage.
-        output.getLazyChannelLineage().copyRootFrom(input.getLazyChannelLineage());
+        output.getLineage().addPredecessor(input.getLineage());
     }
 
     @Override

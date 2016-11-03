@@ -71,8 +71,6 @@ public class SparkLoopOperator<InputType, ConvergenceType>
                 sparkExecutor.getCompiler().compile(this.criterionDescriptor, this, operatorContext, inputs);
 
         boolean endloop = false;
-        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
-        Collection<ChannelInstance> producedChannelInstances = new LinkedList<>();
         final Collection<ConvergenceType> convergenceCollection;
         final RddChannel.Instance input;
         switch (this.getState()) {
@@ -89,16 +87,13 @@ public class SparkLoopOperator<InputType, ConvergenceType>
 
                 input = (RddChannel.Instance) inputs[ITERATION_INPUT_INDEX];
                 convergenceCollection = ((CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX]).provideCollection();
-                inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(
-                        executedOperatorContexts, producedChannelInstances
-                );
+                operatorContext.getLineage().addPredecessor(inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLineage());
 
                 try {
                     endloop = stoppingCondition.call(convergenceCollection);
                 } catch (Exception e) {
                     throw new RheemException(String.format("Executing %s's condition failed.", this), e);
                 }
-                executedOperatorContexts.add(operatorContext);
                 JavaExecutionOperator.forward(inputs[ITERATION_CONVERGENCE_INPUT_INDEX], outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]);
                 break;
             default:
@@ -118,7 +113,7 @@ public class SparkLoopOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return new Tuple<>(executedOperatorContexts, producedChannelInstances);
+        return operatorContext.getLineage().collectAndMark();
     }
 
     @Override

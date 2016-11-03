@@ -49,7 +49,7 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
 
         output.accept(pageRankStream);
 
-        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
+        return ExecutionOperator.modelQuasiEagerExecution(inputs, outputs, operatorContext);
     }
 
     /**

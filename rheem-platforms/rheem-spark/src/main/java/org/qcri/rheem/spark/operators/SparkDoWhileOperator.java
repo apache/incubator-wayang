@@ -65,8 +65,6 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
         final Function<Collection<ConvergenceType>, Boolean> stoppingCondition =
                 sparkExecutor.getCompiler().compile(this.criterionDescriptor, this, operatorContext, inputs);
         boolean endloop = false;
-        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
-        final Collection<ChannelInstance> producedChannelInstances = new LinkedList<>();
         switch (this.getState()) {
             case NOT_STARTED:
                 assert inputs[INITIAL_INPUT_INDEX] != null;
@@ -85,10 +83,7 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
                 } catch (Exception e) {
                     throw new RheemException(String.format("Could not evaluate stopping condition for %s.", this), e);
                 }
-                executedOperatorContexts.add(operatorContext);
-                convergenceInput.getLazyChannelLineage().collectAndMark(
-                        executedOperatorContexts, producedChannelInstances
-                );
+                operatorContext.getLineage().addPredecessor(convergenceInput.getLineage());
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -106,7 +101,7 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return new Tuple<>(executedOperatorContexts, producedChannelInstances);
+        return operatorContext.getLineage().collectAndMark();
     }
 
     @Override

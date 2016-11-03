@@ -3,6 +3,8 @@ package org.qcri.rheem.core.platform;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.lineage.ChannelLineageNode;
+import org.qcri.rheem.core.platform.lineage.LazyExecutionLineageNode;
 import org.slf4j.LoggerFactory;
 
 import java.util.OptionalLong;
@@ -22,7 +24,7 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
      */
     private final OptimizationContext.OperatorContext producerOperatorContext;
 
-    private LazyChannelLineage lazyChannelLineage;
+    private ChannelLineageNode lineage;
 
     /**
      * Creates a new instance and registers it with its {@link Executor}.
@@ -36,7 +38,7 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
                                       OptimizationContext.OperatorContext producerOperatorContext,
                                       int producerOutputIndex) {
         super(executor);
-        this.lazyChannelLineage = new LazyChannelLineage(this, producerOperatorContext, producerOutputIndex);
+        this.lineage = new ChannelLineageNode(this);
         this.producerOperatorContext = producerOperatorContext;
     }
 
@@ -59,8 +61,8 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
     }
 
     @Override
-    public LazyChannelLineage getLazyChannelLineage() {
-        return this.lazyChannelLineage;
+    public ChannelLineageNode getLineage() {
+        return this.lineage;
     }
 
     @Override

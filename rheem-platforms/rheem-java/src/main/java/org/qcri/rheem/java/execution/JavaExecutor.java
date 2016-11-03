@@ -10,6 +10,7 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
+import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.compiler.FunctionCompiler;
 import org.qcri.rheem.java.operators.JavaExecutionOperator;
@@ -73,6 +74,10 @@ public class JavaExecutor extends PushExecutorTemplate {
 
         // Check how much we executed.
         PartialExecution partialExecution = this.createPartialExecution(operatorContexts, executionDuration);
+
+        if (partialExecution == null && executionDuration > 10) {
+            this.logger.warn("Execution of {} took suspiciously long ().", task, Formats.formatDuration(executionDuration));
+        }
 
         // Collect any cardinality updates.
         this.registerMeasuredCardinalities(producedChannelInstances);

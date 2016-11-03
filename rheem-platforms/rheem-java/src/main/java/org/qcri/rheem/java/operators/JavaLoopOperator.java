@@ -68,8 +68,6 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         JavaExecutor.openFunction(this, stoppingCondition, inputs, operatorContext);
 
         boolean endloop = false;
-        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
-        Collection<ChannelInstance> producedChannelInstances = new LinkedList<>();
         final Collection<ConvergenceType> convergenceCollection;
         final JavaChannelInstance input;
         switch (this.getState()) {
@@ -86,12 +84,11 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
                 input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
                 convergenceCollection = ((CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX]).provideCollection();
-                inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
 
                 endloop = stoppingCondition.test(convergenceCollection);
-                executedOperatorContexts.add(operatorContext);
 
                 JavaExecutionOperator.forward(inputs[ITERATION_CONVERGENCE_INPUT_INDEX], outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]);
+                operatorContext.getLineage().addPredecessor(inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLineage());
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -110,7 +107,7 @@ public class JavaLoopOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return new Tuple<>(executedOperatorContexts, producedChannelInstances);
+        return operatorContext.getLineage().collectAndMark();
     }
 
     @Override

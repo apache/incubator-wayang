@@ -79,7 +79,7 @@ public class JavaRepeatOperator<Type>
             this.setState(State.RUNNING);
         }
 
-        return new Tuple<>(Collections.singletonList(operatorContext), Collections.emptyList());
+        return operatorContext.getLineage().collectAndMark();
     }
 
     @Override

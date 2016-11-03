@@ -3,6 +3,7 @@ package org.qcri.rheem.core.platform;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.lineage.ChannelLineageNode;
 
 import java.util.OptionalLong;
 
@@ -38,23 +39,12 @@ public interface ChannelInstance extends ExecutionResource {
     }
 
     /**
-     * Provides a {@link LazyChannelLineage} that keeps around (at least) all non-executed predecessor
-     * {@link ChannelInstance}s.
+     * Provides a {@link ChannelLineageNode} that keeps around (at least) all non-executed predecessor
+     * {@link ChannelInstance}s and {@link org.qcri.rheem.core.optimizer.OptimizationContext.OperatorContext}s.
      *
-     * @return the {@link LazyChannelLineage}
+     * @return the {@link ChannelLineageNode}
      */
-    LazyChannelLineage getLazyChannelLineage();
-
-    /**
-     * Adds a {@link ChannelInstance} as a predecessor in the {@link LazyChannelLineage}.
-     *
-     * @param channelInstance the {@link ChannelInstance}
-     */
-    default void addPredecessor(ChannelInstance channelInstance) {
-        if (!channelInstance.wasProduced()) {
-            this.getLazyChannelLineage().addPredecessor(channelInstance.getLazyChannelLineage());
-        }
-    }
+    ChannelLineageNode getLineage();
 
     /**
      * Tells whether this instance was already produced.
