@@ -185,7 +185,7 @@ public class ExecutionTaskFlowCompiler
         final LinkedList<LoopSubplan> loopStack = operator.getLoopStack();
         for (LoopSubplan loop : loopStack) {
             LoopImplementation loopImplementation = planImplementation.getLoopImplementations().get(loop);
-            iterationImplementation = this.getSingleiterationImplementation(loopImplementation);
+            iterationImplementation = loopImplementation.getSingleIterationImplementation();
             planImplementation = iterationImplementation.getBodyImplementation();
             if (planImplementation.getJunction(output) != null) break;
         }
@@ -209,26 +209,11 @@ public class ExecutionTaskFlowCompiler
         final LinkedList<LoopSubplan> loopStack = operator.getLoopStack();
         for (LoopSubplan loop : loopStack) {
             LoopImplementation loopImplementation = planImplementation.getLoopImplementations().get(loop);
-            iterationImplementation = this.getSingleiterationImplementation(loopImplementation);
+            iterationImplementation = loopImplementation.getSingleIterationImplementation();
             planImplementation = iterationImplementation.getBodyImplementation();
         }
 
         return iterationImplementation;
-    }
-
-    /**
-     * Retrieve the only {@link LoopImplementation.IterationImplementation} from the {@link LoopImplementation}.
-     *
-     * @param loopImplementation a {@link LoopImplementation} with a single {@link LoopImplementation.IterationImplementation} or {@code null}
-     * @return the {@link LoopImplementation.IterationImplementation} or {@code null} if {@code loopImplementation == null}
-     */
-    private LoopImplementation.IterationImplementation getSingleiterationImplementation(LoopImplementation loopImplementation) {
-        final List<LoopImplementation.IterationImplementation> iterationImplementations = loopImplementation.getIterationImplementations();
-        assert iterationImplementations.size() == 1 : String.format(
-                "Cannot handle more than one loop implementation during the re-optimization (cf. %s).",
-                loopImplementation
-        );
-        return iterationImplementations.get(0);
     }
 
     private Stream<InputSlot<?>> findExecutionOperatorInputs(InputSlot<?> input) {
@@ -473,7 +458,7 @@ public class ExecutionTaskFlowCompiler
                 final LoopImplementation loopImplementation =
                         ExecutionTaskFlowCompiler.this.planImplementation.getLoopImplementations().get(targetLoop);
                 if (targetOperator.isLoopHead()) {
-                    return Collections.singleton(loopImplementation.getIterationImplementations().get(0));
+                    return Collections.singleton(loopImplementation.getSingleIterationImplementation());
                 } else {
                     return loopImplementation.getIterationImplementations().stream()
                             .filter(iterImpl -> true)

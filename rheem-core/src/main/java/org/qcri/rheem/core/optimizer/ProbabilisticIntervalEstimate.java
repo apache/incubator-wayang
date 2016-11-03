@@ -71,7 +71,16 @@ public class ProbabilisticIntervalEstimate {
      * @return whether this instance is exactly {@code exactEstimate}
      */
     public boolean isExactly(long exactEstimate) {
-        return this.correctnessProb == 1d && this.lowerEstimate == this.upperEstimate && this.upperEstimate == exactEstimate;
+        return this.isExact() && this.upperEstimate == exactEstimate;
+    }
+
+    /**
+     * Checks whether this instance is an exact value, i.e., it is a confident single-point estimate.
+     *
+     * @return whether this instance is exact
+     */
+    public boolean isExact() {
+        return this.correctnessProb == 1d && this.lowerEstimate == this.upperEstimate;
     }
 
     /**

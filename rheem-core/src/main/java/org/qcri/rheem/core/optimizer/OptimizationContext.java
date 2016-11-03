@@ -259,7 +259,7 @@ public abstract class OptimizationContext {
      *
      * @return a {@link Collection} of said {@link DefaultOptimizationContext}s
      */
-    public abstract Collection<DefaultOptimizationContext> getDefaultOptimizationContexts();
+    public abstract List<DefaultOptimizationContext> getDefaultOptimizationContexts();
 
     /**
      * Provide the {@link Job} whose optimization is supported by this instance.
@@ -497,6 +497,30 @@ public abstract class OptimizationContext {
             // Calculate the cost estimate.
             final TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
             this.costEstimate = timeToCostConverter.convertWithoutFixCosts(this.timeEstimate);
+        }
+
+        /**
+         * Merges {@code that} instance into this instance.
+         *
+         * @param that the other instance
+         * @return this instance
+         */
+        protected OperatorContext merge(OperatorContext that) {
+            assert this.operator == that.operator;
+            assert this.inputCardinalities.length == that.inputCardinalities.length;
+            assert this.outputCardinalities.length == that.outputCardinalities.length;
+
+            System.arraycopy(that.inputCardinalities, 0, this.inputCardinalities, 0, that.inputCardinalities.length);
+            System.arraycopy(that.inputCardinalityMarkers, 0, this.inputCardinalityMarkers, 0, that.inputCardinalityMarkers.length);
+            System.arraycopy(that.outputCardinalities, 0, this.outputCardinalities, 0, that.outputCardinalities.length);
+            System.arraycopy(that.outputCardinalityMarkers, 0, this.outputCardinalityMarkers, 0, that.outputCardinalityMarkers.length);
+
+            this.loadProfile = that.loadProfile;
+            this.timeEstimate = that.timeEstimate;
+            this.costEstimate = that.costEstimate;
+            this.numExecutions = that.numExecutions;
+
+            return this;
         }
 
         public void increaseBy(OperatorContext that) {

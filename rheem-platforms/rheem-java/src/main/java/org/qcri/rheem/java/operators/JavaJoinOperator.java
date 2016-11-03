@@ -70,11 +70,11 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
 
         boolean isMaterialize0 = cardinalityEstimate0 != null &&
                 cardinalityEstimate1 != null &&
-                cardinalityEstimate0.getUpperEstimate() <= cardinalityEstimate1.getUpperEstimate();
+                cardinalityEstimate0.getGeometricMeanEstimate() <= cardinalityEstimate1.getGeometricMeanEstimate();
 
         if (isMaterialize0) {
             final int expectedNumElements =
-                    (int) (cardinalityEstimate0.getUpperEstimate() - cardinalityEstimate0.getLowerEstimate()) / 2;
+                    (int) cardinalityEstimate0.getGeometricMeanEstimate();
             Map<KeyType, Collection<InputType0>> probeTable = new HashMap<>(expectedNumElements);
             ((JavaChannelInstance) inputs[0]).<InputType0>provideStream().forEach(dataQuantum0 ->
                     probeTable.compute(keyExtractor0.apply(dataQuantum0),
@@ -93,7 +93,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
         } else {
             final int expectedNumElements = cardinalityEstimate1 == null ?
                     1000 :
-                    (int) (cardinalityEstimate1.getUpperEstimate() - cardinalityEstimate1.getLowerEstimate()) / 2;
+                    (int) cardinalityEstimate1.getGeometricMeanEstimate();
             Map<KeyType, Collection<InputType1>> probeTable = new HashMap<>(expectedNumElements);
             ((JavaChannelInstance) inputs[1]).<InputType1>provideStream().forEach(dataQuantum1 ->
                     probeTable.compute(keyExtractor1.apply(dataQuantum1),

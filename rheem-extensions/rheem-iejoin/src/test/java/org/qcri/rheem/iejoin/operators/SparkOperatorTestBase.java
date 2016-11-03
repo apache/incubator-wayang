@@ -37,7 +37,7 @@ public class SparkOperatorTestBase {
         this.configuration = new Configuration();
         this.job = mock(Job.class);
         when(this.job.getConfiguration()).thenReturn(this.configuration);
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job);
+        DefaultOptimizationContext optimizationContext = new DefaultOptimizationContext(this.job);
         when(this.job.getOptimizationContext()).thenReturn(optimizationContext);
         CrossPlatformExecutor crossPlatformExecutor = new CrossPlatformExecutor(
                 job, this.configuration.getInstrumentationStrategyProvider().provide()

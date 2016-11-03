@@ -3,7 +3,10 @@ package org.qcri.rheem.core.optimizer;
 import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -15,7 +18,7 @@ public class AggregateOptimizationContext extends OptimizationContext {
     /**
      * The aggregated {@link OptimizationContext}s.
      */
-    private final Collection<OptimizationContext> optimizationContexts;
+    private final List<OptimizationContext> optimizationContexts;
 
     /**
      * Caches aggregated {@link OptimizationContext.OperatorContext}s.
@@ -95,7 +98,7 @@ public class AggregateOptimizationContext extends OptimizationContext {
     }
 
     @Override
-    public Collection<DefaultOptimizationContext> getDefaultOptimizationContexts() {
+    public List<DefaultOptimizationContext> getDefaultOptimizationContexts() {
         return this.optimizationContexts.stream()
                 .flatMap(optCtx -> optCtx.getDefaultOptimizationContexts().stream())
                 .collect(Collectors.toList());

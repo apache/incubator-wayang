@@ -64,7 +64,7 @@ public class Job extends OneTimeExecutable {
     /**
      * {@link OptimizationContext} for the {@link #rheemPlan}.
      */
-    private OptimizationContext optimizationContext;
+    private DefaultOptimizationContext optimizationContext;
 
     /**
      * General purpose cache.
@@ -121,6 +121,11 @@ public class Job extends OneTimeExecutable {
      */
     private final StageAssignmentTraversal.StageSplittingCriterion stageSplittingCriterion =
             (producerTask, channel, consumerTask) -> false;
+
+    /**
+     * The {@link PlanImplementation} that is being executed.
+     */
+    private PlanImplementation planImplementation;
 
     /**
      * Creates a new instance.
@@ -309,20 +314,20 @@ public class Job extends OneTimeExecutable {
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
         this.optimizationRound.start("Create Initial Execution Plan", "Pick Best Plan");
-        final PlanImplementation planImplementation = this.pickBestExecutionPlan(costEstimateComparator, executionPlans, null, null, null);
+        this.pickBestExecutionPlan(costEstimateComparator, executionPlans, null, null, null);
         this.timeEstimates.add(planImplementation.getTimeEstimate());
         this.costEstimates.add(planImplementation.getCostEstimate());
         this.optimizationRound.stop("Create Initial Execution Plan", "Pick Best Plan");
 
         this.logger.info("Compiling execution plan...");
         this.optimizationRound.start("Create Initial Execution Plan", "Split Stages");
-        final ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.createFrom(planImplementation);
+        final ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.createFrom(this.planImplementation);
         final ExecutionPlan executionPlan = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         this.optimizationRound.stop("Create Initial Execution Plan", "Split Stages");
 
-        planImplementation.mergeJunctionOptimizationContexts();
+        this.planImplementation.mergeJunctionOptimizationContexts();
 
-        planImplementation.logTimeEstimates();
+        this.planImplementation.logTimeEstimates();
 
         //assert executionPlan.isSane();
 
@@ -346,7 +351,7 @@ public class Job extends OneTimeExecutable {
                 })
                 .orElseThrow(() -> new RheemException("Could not find an execution plan."));
         this.logger.info("Picked {} as best plan.", bestPlanImplementation);
-        return bestPlanImplementation;
+        return this.planImplementation = bestPlanImplementation;
     }
 
     /**
@@ -356,7 +361,7 @@ public class Job extends OneTimeExecutable {
      * @return whether any cardinalities have been updated
      */
     private boolean reestimateCardinalities(ExecutionState executionState) {
-        return this.cardinalityEstimatorManager.pushCardinalityUpdates(executionState);
+        return this.cardinalityEstimatorManager.pushCardinalityUpdates(executionState, this.planImplementation);
     }
 
     /**
@@ -523,11 +528,11 @@ public class Job extends OneTimeExecutable {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        final PlanImplementation planImplementation = this.pickBestExecutionPlan(
+        this.pickBestExecutionPlan(
                 costEstimateComparator, executionPlans, executionPlan, openChannels, completedStages
         );
-        this.timeEstimates.add(planImplementation.getTimeEstimate());
-        this.costEstimates.add(planImplementation.getCostEstimate());
+        this.timeEstimates.add(this.planImplementation.getTimeEstimate());
+        this.costEstimates.add(this.planImplementation.getCostEstimate());
 
         ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.recreateFrom(
                 planImplementation, executionPlan, openChannels, completedStages
@@ -535,7 +540,7 @@ public class Job extends OneTimeExecutable {
         final ExecutionPlan executionPlanExpansion = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);
 
-        planImplementation.mergeJunctionOptimizationContexts();
+        this.planImplementation.mergeJunctionOptimizationContexts();
 
         assert executionPlan.isSane();
     }
@@ -563,6 +568,26 @@ public class Job extends OneTimeExecutable {
         // Add the execution times to the experiment.
         int nextPartialExecutionMeasurementId = 0;
         for (PartialExecution partialExecution : partialExecutions) {
+            if (this.logger.isDebugEnabled()) {
+                for (OptimizationContext.OperatorContext operatorContext : partialExecution.getOperatorContexts()) {
+                    for (CardinalityEstimate cardinality : operatorContext.getInputCardinalities()) {
+                        if (cardinality != null && !cardinality.isExact()) {
+                            this.logger.debug(
+                                    "Inexact input cardinality estimate {} for {}.",
+                                    cardinality, operatorContext.getOperator()
+                            );
+                        }
+                    }
+                    for (CardinalityEstimate cardinality : operatorContext.getOutputCardinalities()) {
+                        if (cardinality != null && !cardinality.isExact()) {
+                            this.logger.debug(
+                                    "Inexact output cardinality estimate {} for {}.",
+                                    cardinality, operatorContext.getOperator()
+                            );
+                        }
+                    }
+                }
+            }
             String id = String.format("par-ex-%03d", nextPartialExecutionMeasurementId++);
             final PartialExecutionMeasurement measurement = new PartialExecutionMeasurement(id, partialExecution);
             this.experiment.addMeasurement(measurement);
@@ -677,8 +702,8 @@ public class Job extends OneTimeExecutable {
         return this.crossPlatformExecutor;
     }
 
-    public OptimizationContext getOptimizationContext() {
-        return optimizationContext;
+    public DefaultOptimizationContext getOptimizationContext() {
+        return this.optimizationContext;
     }
 
     /**

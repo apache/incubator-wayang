@@ -34,7 +34,7 @@ public class JavaExecutionOperatorTestBase {
         configuration = new Configuration();
         job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(job);
+        DefaultOptimizationContext optimizationContext = new DefaultOptimizationContext(job);
         when(job.getOptimizationContext()).thenReturn(optimizationContext);
     }
 

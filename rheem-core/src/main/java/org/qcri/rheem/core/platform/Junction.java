@@ -32,13 +32,13 @@ public class Junction {
 
     private final List<Channel> targetChannels;
 
-    private final Collection<OptimizationContext> optimizationContexts;
+    private final List<OptimizationContext> optimizationContexts;
 
     private final Collection<ExecutionTask> conversionTasks = new LinkedList<>();
 
     private TimeEstimate timeEstimateCache = null;
 
-    public Junction(OutputSlot<?> sourceOutput, List<InputSlot<?>> targetInputs, Collection<OptimizationContext> optimizationContexts) {
+    public Junction(OutputSlot<?> sourceOutput, List<InputSlot<?>> targetInputs, List<OptimizationContext> optimizationContexts) {
         // Copy parameters.
         assert sourceOutput.getOwner().isExecutionOperator();
         this.sourceOutput = sourceOutput;
@@ -203,7 +203,8 @@ public class Junction {
      *
      * @return the {@link OptimizationContext}s
      */
-    public Collection<OptimizationContext> getOptimizationContexts() {
+    public List<OptimizationContext> getOptimizationContexts() {
         return this.optimizationContexts;
     }
+
 }

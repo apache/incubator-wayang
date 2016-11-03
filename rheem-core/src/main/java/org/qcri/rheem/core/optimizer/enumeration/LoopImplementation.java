@@ -77,13 +77,26 @@ public class LoopImplementation {
     }
 
     /**
+     * Originally, only a single {@link IterationImplementation} is supported by Rheem. This method explicitly
+     * captures this assumption.
+     *
+     * @return the single {@link IterationImplementation}
+     */
+    public IterationImplementation getSingleIterationImplementation() {
+        if (this.iterationImplementations.size() != 1) {
+            throw new AssertionError("Expected only a single iteration implementation. Has this changed?");
+        }
+        return this.iterationImplementations.get(0);
+    }
+
+    /**
      * Stream all the {@link ExecutionOperator}s in this instance.
      *
      * @return a {@link Stream} containing every iteration-body {@link ExecutionOperator} at least once
      */
     Stream<ExecutionOperator> streamOperators() {
         // It is sufficient to take the first IterationImplementation to see all ExecutionOperators.
-        return this.getIterationImplementations().get(0).streamOperators();
+        return this.getSingleIterationImplementation().streamOperators();
     }
 
     /**

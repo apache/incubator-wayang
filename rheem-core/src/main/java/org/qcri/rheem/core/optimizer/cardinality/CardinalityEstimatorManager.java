@@ -3,14 +3,20 @@ package org.qcri.rheem.core.optimizer.cardinality;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationUtils;
+import org.qcri.rheem.core.optimizer.enumeration.LoopImplementation;
+import org.qcri.rheem.core.optimizer.enumeration.PlanImplementation;
+import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.ExecutionState;
+import org.qcri.rheem.core.platform.Junction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * Handles the {@link CardinalityEstimate}s of a {@link RheemPlan}.
@@ -56,6 +62,70 @@ public class CardinalityEstimatorManager {
         return isUpdated;
     }
 
+    /**
+     * Traverse the {@link RheemPlan}, thereby updating {@link CardinalityEstimate}s. Also update conversion
+     * {@link Operator} cardinalities as provided by the {@link PlanImplementation}.
+     *
+     * @param planImplementation that has conversion {@link Operator}s
+     * @return whether any {@link CardinalityEstimate}s have been updated
+     */
+    public boolean pushCardinalities(PlanImplementation planImplementation) {
+        boolean isUpdated = this.getPlanTraversal().traverse(this.optimizationContext, this.configuration);
+        this.updateConversionOperatorCardinalities(planImplementation, this.optimizationContext, 0);
+        this.optimizationContext.clearMarks();
+        assert this.optimizationContext.isTimeEstimatesComplete();
+        return isUpdated;
+    }
+
+    /**
+     * Update conversion {@link Operator} cardinalities.
+     *
+     * @param planImplementation       that has conversion {@link Operator}s
+     * @param optimizationContext      that provides optimization information for the {@code planImplementation}
+     * @param optimizationContextIndex the index of the {@code optimizationContext} (important inside of loops)
+     */
+    public void updateConversionOperatorCardinalities(
+            PlanImplementation planImplementation,
+            OptimizationContext optimizationContext,
+            int optimizationContextIndex) {
+
+        // Update conversion operators outside of loops.
+        for (OptimizationContext.OperatorContext operatorContext : optimizationContext.getLocalOperatorContexts().values()) {
+            final Operator operator = operatorContext.getOperator();
+            for (int outputIndex = 0; outputIndex < operator.getNumOutputs(); outputIndex++) {
+                if (operatorContext.isOutputMarked(outputIndex)) {
+                    final OutputSlot<?> output = operator.getOutput(outputIndex);
+                    final Junction junction = planImplementation.getJunction(output);
+                    if (junction == null) continue;
+                    final CardinalityEstimate cardinality = operatorContext.getOutputCardinality(outputIndex);
+                    OptimizationContext jctOptimizationContext = junction.getOptimizationContexts().get(optimizationContextIndex);
+                    for (OptimizationContext.OperatorContext opCtx : jctOptimizationContext.getLocalOperatorContexts().values()) {
+                        if (opCtx.getInputCardinalities().length == 1) opCtx.setInputCardinality(0, cardinality);
+                        if (opCtx.getOutputCardinalities().length == 1) opCtx.setOutputCardinality(0, cardinality);
+                        opCtx.updateCostEstimate();
+                    }
+                    optimizationContext.mergeToBase();
+                }
+            }
+        }
+        // Visit loops.
+        for (Map.Entry<LoopSubplan, LoopImplementation> entry : planImplementation.getLoopImplementations().entrySet()) {
+            final LoopSubplan loop = entry.getKey();
+            final LoopImplementation loopImplementation = entry.getValue();
+            final OptimizationContext.LoopContext loopContext = optimizationContext.getNestedLoopContext(loop);
+            assert loopContext != null;
+
+            for (int iteration = 0; iteration < loopContext.getIterationContexts().size(); iteration++) {
+                final OptimizationContext iterationContext = loopContext.getIterationContext(iteration);
+                this.updateConversionOperatorCardinalities(
+                        loopImplementation.getSingleIterationImplementation().getBodyImplementation(),
+                        iterationContext,
+                        iteration
+                );
+            }
+        }
+    }
+
     public CardinalityEstimationTraversal getPlanTraversal() {
         if (this.planTraversal == null) {
             this.planTraversal = CardinalityEstimationTraversal.createPushTraversal(
@@ -73,9 +143,9 @@ public class CardinalityEstimatorManager {
      *
      * @return whether any cardinalities have been injected
      */
-    public boolean pushCardinalityUpdates(ExecutionState executionState) {
+    public boolean pushCardinalityUpdates(ExecutionState executionState, PlanImplementation planImplementation) {
         boolean isInjected = this.injectMeasuredCardinalities(executionState);
-        if (isInjected) this.pushCardinalities();
+        if (isInjected) this.pushCardinalities(planImplementation);
         return isInjected;
     }
 

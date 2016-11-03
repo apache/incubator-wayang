@@ -670,7 +670,7 @@ public class ChannelConversionGraph {
         }
 
         private void createJunction(Tree tree) {
-            Collection<OptimizationContext> localOptimizationContexts = this.forkLocalOptimizationContext();
+            List<OptimizationContext> localOptimizationContexts = this.forkLocalOptimizationContext();
 
             // Create the a new Junction.
             final Junction junction = new Junction(this.sourceOutput, this.destInputs, localOptimizationContexts);
@@ -793,7 +793,7 @@ public class ChannelConversionGraph {
          * @return the forked {@link OptimizationContext}
          */
         // TODO: Refactor this.
-        private Collection<OptimizationContext> forkLocalOptimizationContext() {
+        private List<OptimizationContext> forkLocalOptimizationContext() {
             OptimizationContext baseOptimizationContext =
                     this.sourceOutput.getOwner().isLoopHead() && !this.sourceOutput.isFeedforward() ?
                             this.optimizationContext.getParent() :

@@ -7,7 +7,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
-import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.jdbc.test.HsqldbPlatform;
@@ -28,7 +28,7 @@ public class JdbcTableSourceTest {
     @Test
     public void testCardinalityEstimator() throws SQLException {
         Job job = mock(Job.class);
-        OptimizationContext optimizationContext = mock(OptimizationContext.class);
+        DefaultOptimizationContext optimizationContext = mock(DefaultOptimizationContext.class);
         when(job.getOptimizationContext()).thenReturn(optimizationContext);
         when(optimizationContext.getJob()).thenReturn(job);
         when(job.getStopWatch()).thenReturn(new StopWatch(new Experiment("mock", new Subject("mock", "mock"))));

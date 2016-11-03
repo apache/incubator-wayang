@@ -398,7 +398,7 @@ public class PlanImplementation {
             final LoopImplementation thatLoopImplementation = that.loopImplementations.get(loop);
             if (thatLoopImplementation == null) continue;
             if (thisLoopImplementation
-                    .getIterationImplementations().get(0)
+                    .getSingleIterationImplementation()
                     .getBodyImplementation()
                     .isSettledAlternativesContradicting(
                             thatLoopImplementation

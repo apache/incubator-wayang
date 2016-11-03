@@ -204,12 +204,18 @@ public class DefaultOptimizationContext extends OptimizationContext {
     public void mergeToBase() {
         if (this.getBase() == null) return;
         assert this.loopContexts.isEmpty() : "Merging loop contexts is not supported yet.";
-        this.getBase().operatorContexts.putAll(this.operatorContexts);
+        for (Map.Entry<Operator, OptimizationContext.OperatorContext> entry : this.operatorContexts.entrySet()) {
+            this.getBase().operatorContexts.merge(
+                    entry.getKey(),
+                    entry.getValue(),
+                    OperatorContext::merge
+            );
+        }
     }
 
     @Override
-    public Collection<DefaultOptimizationContext> getDefaultOptimizationContexts() {
-        return Collections.singleton(this);
+    public List<DefaultOptimizationContext> getDefaultOptimizationContexts() {
+        return Collections.singletonList(this);
     }
 
     /**
