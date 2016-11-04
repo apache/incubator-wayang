@@ -76,7 +76,7 @@ public class JavaExecutor extends PushExecutorTemplate {
         PartialExecution partialExecution = this.createPartialExecution(operatorContexts, executionDuration);
 
         if (partialExecution == null && executionDuration > 10) {
-            this.logger.warn("Execution of {} took suspiciously long ().", task, Formats.formatDuration(executionDuration));
+            this.logger.warn("Execution of {} took suspiciously long ({}).", task, Formats.formatDuration(executionDuration));
         }
 
         // Collect any cardinality updates.
