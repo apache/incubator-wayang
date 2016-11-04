@@ -223,7 +223,7 @@ public abstract class OptimizationContext {
     public abstract Map<Operator, OperatorContext> getLocalOperatorContexts();
 
     /**
-     * @return whether there is {@link TimeEstimate} for each {@link ExecutionOperator}
+     * @return whether there is a {@link TimeEstimate} for each {@link ExecutionOperator}
      */
     public abstract boolean isTimeEstimatesComplete();
 
@@ -417,6 +417,10 @@ public abstract class OptimizationContext {
                 );
             }
             this.inputCardinalities[inputIndex] = cardinality;
+
+            // Invalidate dependent estimate caches.
+            this.timeEstimate = null;
+            this.costEstimate = null;
         }
 
         /**
@@ -434,6 +438,10 @@ public abstract class OptimizationContext {
                 );
             }
             this.outputCardinalities[outputIndex] = cardinality;
+
+            // Invalidate dependent estimate caches.
+            this.timeEstimate = null;
+            this.costEstimate = null;
         }
 
         /**

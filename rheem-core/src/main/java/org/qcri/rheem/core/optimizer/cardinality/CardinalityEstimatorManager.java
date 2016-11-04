@@ -58,7 +58,6 @@ public class CardinalityEstimatorManager {
     public boolean pushCardinalities() {
         boolean isUpdated = this.getPlanTraversal().traverse(this.optimizationContext, this.configuration);
         this.optimizationContext.clearMarks();
-        assert this.optimizationContext.isTimeEstimatesComplete();
         return isUpdated;
     }
 
@@ -73,7 +72,6 @@ public class CardinalityEstimatorManager {
         boolean isUpdated = this.getPlanTraversal().traverse(this.optimizationContext, this.configuration);
         this.updateConversionOperatorCardinalities(planImplementation, this.optimizationContext, 0);
         this.optimizationContext.clearMarks();
-        assert this.optimizationContext.isTimeEstimatesComplete();
         return isUpdated;
     }
 
