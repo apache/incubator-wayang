@@ -2,6 +2,7 @@ package org.qcri.rheem.core.optimizer;
 
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.Random;
 
 /***
  * An value representation that is capable of expressing uncertainty.
@@ -36,6 +37,17 @@ public class ProbabilisticDoubleInterval {
             // NB: We do not assume a uniform distribution of the estimates within the instances.
             return Long.compare(t1.getGeometricMeanEstimate(), t2.getGeometricMeanEstimate());
         };
+    }
+
+    /**
+     * Provides a {@link Comparator} for {@link ProbabilisticDoubleInterval}s.
+     * It provides a random, but consistent order.
+     *
+     * @return a new random {@link Comparator}
+     */
+    public static Comparator<ProbabilisticDoubleInterval> randomComparator() {
+        final int salt = new Random().nextInt();
+        return (t1, t2) -> Integer.compare(t1.hashCode() + salt, t2.hashCode() + salt);
     }
 
     /**

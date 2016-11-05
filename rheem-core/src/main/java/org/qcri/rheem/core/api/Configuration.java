@@ -221,8 +221,26 @@ public class Configuration {
      * @param value the property's value
      */
     private void handleConfigurationFileEntry(String key, String value) {
-        // For now, we just add each entry into the #properties.
-        this.setProperty(key, value);
+        switch (key) {
+            case "rheem.core.optimizer.cost.comparator":
+                if (!(this.costEstimateComparatorProvider instanceof ConstantValueProvider)) {
+                    logger.warn("Cannot update cost estimate provider.");
+                } else if ("expectation".equals(value)) {
+                    ((ConstantValueProvider<Comparator<ProbabilisticDoubleInterval>>) this.costEstimateComparatorProvider).setValue(
+                            ProbabilisticDoubleInterval.expectationValueComparator()
+                    );
+                } else if ("random".equals(value)) {
+                    ((ConstantValueProvider<Comparator<ProbabilisticDoubleInterval>>) this.costEstimateComparatorProvider).setValue(
+                            ProbabilisticDoubleInterval.randomComparator()
+                    );
+                } else {
+                    logger.warn("Cannot set unknown cost comparator \"{}\".", value);
+                }
+                break;
+            default:
+                this.setProperty(key, value);
+                break;
+        }
     }
 
 
