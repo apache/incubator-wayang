@@ -100,7 +100,8 @@ public class ChannelConversionGraphTest {
         channelConversionGraph.findMinimumCostJunction(
                 sourceOperator.getOutput(0),
                 Arrays.asList(destOperator0.getInput(0), destOperator1.getInput(0)),
-                optimizationContext
+                optimizationContext,
+                false
         );
     }
 
@@ -128,7 +129,8 @@ public class ChannelConversionGraphTest {
         Junction junction = channelConversionGraph.findMinimumCostJunction(
                 sourceOperator.getOutput(0),
                 Arrays.asList(destOperator0.getInput(0), destOperator1.getInput(0)),
-                optimizationContext
+                optimizationContext,
+                false
         );
     }
 
@@ -156,7 +158,8 @@ public class ChannelConversionGraphTest {
         Junction junction = channelConversionGraph.findMinimumCostJunction(
                 sourceOperator.getOutput(0),
                 Arrays.asList(destOperator0.getInput(0), destOperator1.getInput(0)),
-                optimizationContext
+                optimizationContext,
+                false
         );
     }
 

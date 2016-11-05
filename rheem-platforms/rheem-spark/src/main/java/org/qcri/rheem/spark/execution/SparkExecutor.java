@@ -146,8 +146,8 @@ public class SparkExecutor extends PushExecutorTemplate {
         final RddChannel.Instance rddOutput = (RddChannel.Instance) output;
 
         // Do the forward.
-        assert rddInput.getChannel().getDescriptor() != RddChannel.CACHED_DESCRIPTOR ||
-                rddOutput.getChannel().getDescriptor() == RddChannel.CACHED_DESCRIPTOR;
+        assert rddInput.getChannel().getDescriptor() == RddChannel.CACHED_DESCRIPTOR ||
+                rddOutput.getChannel().getDescriptor() != RddChannel.CACHED_DESCRIPTOR;
         rddOutput.accept(rddInput.provideRdd(), this);
 
         // Manipulate the lineage.

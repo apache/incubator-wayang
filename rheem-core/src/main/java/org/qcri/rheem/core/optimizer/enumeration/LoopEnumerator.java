@@ -131,7 +131,7 @@ public class LoopEnumerator extends OneTimeExecutable {
                 execLoopBodyInputs.addAll(existingJunction.getTargetInputs());
             }
             final Junction junction = optimizationContext.getChannelConversionGraph().findMinimumCostJunction(
-                    execOutput, execLoopBodyInputs, optimizationContext
+                    execOutput, execLoopBodyInputs, optimizationContext, false
             );
             if (junction == null) return false;
 

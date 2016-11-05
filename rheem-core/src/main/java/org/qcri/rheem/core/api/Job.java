@@ -17,10 +17,7 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.PlanMetrics;
-import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.*;
 import org.qcri.rheem.core.profiling.*;
 import org.qcri.rheem.core.util.Formats;
@@ -128,6 +125,13 @@ public class Job extends OneTimeExecutable {
     private PlanImplementation planImplementation;
 
     /**
+     * Controls at which {@link CardinalityEstimate}s the execution should be interrupted.
+     */
+    private final CardinalityBreakpoint cardinalityBreakpoint;
+
+    private final boolean isProactiveReoptimization;
+
+    /**
      * Creates a new instance.
      *
      * @param name       name for this instance or {@code null} if a default name should be picked
@@ -141,6 +145,16 @@ public class Job extends OneTimeExecutable {
         this.rheemPlan = rheemPlan;
         for (String udfJar : udfJars) {
             this.addUdfJar(udfJar);
+        }
+
+        // Prepare re-optimization.
+        if (this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize")) {
+            this.cardinalityBreakpoint = new CardinalityBreakpoint(this.configuration);
+            this.isProactiveReoptimization =
+                    this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize.proactive", false);
+        } else {
+            this.cardinalityBreakpoint = null;
+            this.isProactiveReoptimization = false;
         }
 
         // Prepare instrumentation.
@@ -440,7 +454,7 @@ public class Job extends OneTimeExecutable {
         }
         this.crossPlatformExecutor.setBreakpoint(new ConjunctiveBreakpoint(
                 immediateBreakpoint,
-                new CardinalityBreakpoint(this.configuration),
+                this.cardinalityBreakpoint,
                 new NoIterationBreakpoint() // Avoid re-optimization inside of loops.
         ));
         breakpointRound.stop();
@@ -680,6 +694,21 @@ public class Job extends OneTimeExecutable {
                 planMetrics.getNumCombinations()
         );
         this.experiment.addMeasurement(planMetrics);
+    }
+
+    /**
+     * Whether a {@link Breakpoint} is requested for the given {@link OutputSlot}.
+     *
+     * @param output          the {@link OutputSlot}
+     * @param operatorContext the {@link OptimizationContext.OperatorContext} for the {@link OutputSlot} owner
+     * @return whether a {@link Breakpoint} is requested
+     */
+    public boolean isRequestBreakpointFor(OutputSlot<?> output, OptimizationContext.OperatorContext operatorContext) {
+        return this.isProactiveReoptimization
+                && output.getOwner().getInnermostLoop() == null
+                && this.cardinalityBreakpoint != null
+                && !this.cardinalityBreakpoint.approves(operatorContext.getOutputCardinality(output.getIndex())
+        );
     }
 
     /**

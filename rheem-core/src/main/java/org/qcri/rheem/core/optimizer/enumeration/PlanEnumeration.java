@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.plan.executionplan.Channel;
@@ -166,7 +167,8 @@ public class PlanEnumeration {
     public PlanEnumeration concatenate(OutputSlot<?> openOutputSlot,
                                        Collection<Channel> openChannels,
                                        Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
-                                       OptimizationContext optimizationContext, TimeMeasurement enumerationMeasurement) {
+                                       OptimizationContext optimizationContext,
+                                       TimeMeasurement enumerationMeasurement) {
 
         // Check the parameters' validity.
         assert this.getServingOutputSlots().stream()
@@ -214,7 +216,12 @@ public class PlanEnumeration {
 
         // Create the PlanImplementations.
         result.planImplementations.addAll(this.concatenatePartialPlans(
-                openOutputSlot, openChannels, targetEnumerations, optimizationContext, result, concatenationMeasurement
+                openOutputSlot,
+                openChannels,
+                targetEnumerations,
+                optimizationContext,
+                result,
+                concatenationMeasurement
         ));
 
         logger.debug("Created {} plan implementations.", result.getPlanImplementations().size());
@@ -233,11 +240,15 @@ public class PlanEnumeration {
                                                                    OptimizationContext optimizationContext,
                                                                    PlanEnumeration concatenationEnumeration,
                                                                    TimeMeasurement concatenationMeasurement) {
+        final Job job = optimizationContext.getJob();
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(openOutputSlot.getOwner());
+        boolean isRequestBreakpoint = job.isRequestBreakpointFor(openOutputSlot, operatorContext);
         return this.concatenatePartialPlansBatchwise(
                 openOutputSlot,
                 openChannels,
                 targetEnumerations,
                 optimizationContext,
+                isRequestBreakpoint,
                 concatenationEnumeration,
                 concatenationMeasurement
         );
@@ -253,6 +264,7 @@ public class PlanEnumeration {
      * @param optimizationContext      provides concatenation information
      * @param concatenationEnumeration to which the {@link PlanImplementation}s should be added
      * @param concatenationMeasurement
+     * @param isRequestBreakpoint      whether a breakpoint-capable {@link Channel} should be inserted
      * @return the concatenated {@link PlanImplementation}s
      */
     private Collection<PlanImplementation> concatenatePartialPlansBatchwise(
@@ -260,6 +272,7 @@ public class PlanEnumeration {
             Collection<Channel> openChannels,
             Map<InputSlot<?>, PlanEnumeration> targetEnumerations,
             OptimizationContext optimizationContext,
+            boolean isRequestBreakpoint,
             PlanEnumeration concatenationEnumeration,
             TimeMeasurement concatenationMeasurement) {
 
@@ -304,12 +317,18 @@ public class PlanEnumeration {
                         : String.format("Expected execution operator, found %s.", outputOperator);
                 TimeMeasurement channelConversionMeasurement = concatenationMeasurement == null ?
                         null : concatenationMeasurement.start("Channel Conversion");
-                final Junction junction = channelConversionGraph.findMinimumCostJunction(
-                        output,
-                        openChannels,
-                        inputs,
-                        innerPlanImplementation.getOptimizationContext()
-                );
+                final Junction junction = openChannels == null || openChannels.isEmpty() ?
+                        channelConversionGraph.findMinimumCostJunction(
+                                output,
+                                inputs,
+                                innerPlanImplementation.getOptimizationContext(),
+                                isRequestBreakpoint
+                        ) :
+                        channelConversionGraph.findMinimumCostJunction(
+                                output,
+                                openChannels,
+                                inputs,
+                                innerPlanImplementation.getOptimizationContext());
                 if (channelConversionMeasurement != null) channelConversionMeasurement.stop();
                 if (junction == null) continue;
 

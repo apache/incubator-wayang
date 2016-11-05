@@ -74,12 +74,14 @@ public class ChannelConversionGraph {
      * @param output              {@link OutputSlot} of an {@link ExecutionOperator} that should be consumed
      * @param destInputSlots      {@link InputSlot}s of {@link ExecutionOperator}s that should receive data from the {@code output}
      * @param optimizationContext describes the above mentioned {@link ExecutionOperator} key figures
+     * @param isRequestBreakpoint whether a breakpoint-capable {@link Channel} should be inserted if possible
      * @return a {@link Junction} or {@code null} if none could be found
      */
     public Junction findMinimumCostJunction(OutputSlot<?> output,
                                             List<InputSlot<?>> destInputSlots,
-                                            OptimizationContext optimizationContext) {
-        return this.findMinimumCostJunction(output, null, destInputSlots, optimizationContext);
+                                            OptimizationContext optimizationContext,
+                                            boolean isRequestBreakpoint) {
+        return new ShortestTreeSearcher(output, null, destInputSlots, optimizationContext, isRequestBreakpoint).getJunction();
     }
 
     /**
@@ -96,14 +98,14 @@ public class ChannelConversionGraph {
                                             Collection<Channel> openChannels,
                                             List<InputSlot<?>> destInputSlots,
                                             OptimizationContext optimizationContext) {
-        return new ShortestTreeSearcher(output, openChannels, destInputSlots, optimizationContext).getJunction();
+        return new ShortestTreeSearcher(output, openChannels, destInputSlots, optimizationContext, false).getJunction();
     }
 
     /**
      * Given two {@link Tree}s, choose the one with lower costs.
      */
     private Tree selectCheaperTree(Tree t1, Tree t2) {
-        return this.costEstimateComparator.compare(t1.costs, t2.costs) <= 0 ? t1 : t2;
+        return t2 == null || (t1 != null && this.costEstimateComparator.compare(t1.costs, t2.costs) <= 0) ? t1 : t2;
     }
 
     /**
@@ -213,6 +215,11 @@ public class ChannelConversionGraph {
         private final OptimizationContext optimizationContext, optimizationContextCopy;
 
         /**
+         * Whether the {@link #result} should contain a breakpoint-capable {@link Channel}.
+         */
+        private final boolean isRequestBreakpoint;
+
+        /**
          * Maps kernelized {@link Set}s of possible input {@link ChannelDescriptor}s to destination {@link InputSlot}s via
          * their respective indices in {@link #destInputs}.
          */
@@ -246,9 +253,11 @@ public class ChannelConversionGraph {
         private ShortestTreeSearcher(OutputSlot<?> sourceOutput,
                                      Collection<Channel> openChannels,
                                      List<InputSlot<?>> destInputs,
-                                     OptimizationContext optimizationContext) {
+                                     OptimizationContext optimizationContext,
+                                     boolean isRequestBreakpoint) {
 
             // Store relevant variables.
+            this.isRequestBreakpoint = isRequestBreakpoint && openChannels == null; // No breakpoints requestable.
             this.optimizationContext = optimizationContext;
             this.optimizationContextCopy = new DefaultOptimizationContext(this.optimizationContext);
             this.sourceOutput = sourceOutput;
@@ -479,7 +488,8 @@ public class ChannelConversionGraph {
             final Map<Bitmask, Tree> solutions = this.enumerate(
                     visitedChannelDescriptors,
                     this.sourceChannelDescriptor,
-                    Bitmask.EMPTY_BITMASK
+                    Bitmask.EMPTY_BITMASK,
+                    this.sourceChannelDescriptor.isSuitableForBreakpoint()
             );
 
             // Get hold of a comprehensive solution (if it exists).
@@ -491,18 +501,20 @@ public class ChannelConversionGraph {
         /**
          * Recursive {@link Tree} enumeration strategy.
          *
-         * @param visitedChannelDescriptors previously visited {@link ChannelDescriptor}s (inclusive of {@code channelDescriptor};
-         *                                  can be altered but must be in original state before leaving the method
-         * @param channelDescriptor         the currently enumerated {@link ChannelDescriptor}
-         * @param settledDestinationIndices indices of destinations that have already been reached via the
-         *                                  {@code visitedChannelDescriptors} (w/o {@code channelDescriptor};
-         *                                  can be altered but must be in original state before leaving the method
+         * @param visitedChannelDescriptors  previously visited {@link ChannelDescriptor}s (inclusive of {@code channelDescriptor};
+         *                                   can be altered but must be in original state before leaving the method
+         * @param channelDescriptor          the currently enumerated {@link ChannelDescriptor}
+         * @param settledDestinationIndices  indices of destinations that have already been reached via the
+         *                                   {@code visitedChannelDescriptors} (w/o {@code channelDescriptor};
+         *                                   can be altered but must be in original state before leaving the method
+         * @param isVisitedBreakpointChannel whether the {@code visitedChannelDescriptors} contain a breakpoint-capable {@link Channel}
          * @return solutions to the search problem reachable from this node; {@link Tree}s must still be rerooted
          */
         public Map<Bitmask, Tree> enumerate(
                 Set<ChannelDescriptor> visitedChannelDescriptors,
                 ChannelDescriptor channelDescriptor,
-                Bitmask settledDestinationIndices) {
+                Bitmask settledDestinationIndices,
+                boolean isVisitedBreakpointChannel) {
 
             // Mapping from settled indices to the cheapest tree settling them. Will be the return value.
             Map<Bitmask, Tree> newSolutions = new HashMap<>(16);
@@ -546,7 +558,8 @@ public class ChannelConversionGraph {
 
                 // Check early stopping criteria:
                 // There are no more channels that could be settled.
-                if (newSettledIndices.cardinality() == this.destChannelDescriptorSets.size() - excludedExistingIndices.cardinality()) {
+                if (newSettledIndices.cardinality() == this.destChannelDescriptorSets.size() - excludedExistingIndices.cardinality()
+                        && (!this.isRequestBreakpoint || isVisitedBreakpointChannel)) {
                     return newSolutions;
                 }
             }
@@ -572,7 +585,8 @@ public class ChannelConversionGraph {
                     final Map<Bitmask, Tree> childSolutions = this.enumerate(
                             visitedChannelDescriptors,
                             targetChannelDescriptor,
-                            settledDestinationIndices
+                            settledDestinationIndices,
+                            isVisitedBreakpointChannel || targetChannelDescriptor.isSuitableForBreakpoint()
                     );
                     childSolutions.values().forEach(
                             tree -> tree.reroot(
@@ -592,6 +606,23 @@ public class ChannelConversionGraph {
             // Merge the childSolutionSets into the newSolutions.
             // Each childSolutionSet corresponds to a traversed outgoing ChannelConversion.
 
+            // If a breakpoint is requested, we don't need to merge if there are already comprehensive solutions with
+            // breakpoints.
+            if (this.isRequestBreakpoint && !isVisitedBreakpointChannel) {
+                Tree bestBreakpointSolution = null;
+                for (Collection<Tree> trees : childSolutionSets) {
+                    for (Tree tree : trees) {
+                        if (this.allDestinationChannelIndices.isSubmaskOf(tree.settledDestinationIndices)) {
+                            bestBreakpointSolution = selectCheaperTree(bestBreakpointSolution, tree);
+                        }
+                    }
+                }
+                if (bestBreakpointSolution != null) {
+                    newSolutions.put(bestBreakpointSolution.settledDestinationIndices, bestBreakpointSolution);
+                    return newSolutions;
+                }
+            }
+
             // At first, consider the childSolutionSet for each outgoing ChannelConversion individually.
             for (Collection<Tree> childSolutionSet : childSolutionSets) {
                 // Each childSolutionSet its has a mapping from settled indices to trees.
@@ -600,7 +631,6 @@ public class ChannelConversionGraph {
                     newSolutions.merge(tree.settledDestinationIndices, tree, ChannelConversionGraph.this::selectCheaperTree);
                 }
             }
-
 
             // If the current Channel/vertex is reusable, also detect valid combinations.
             // Check if the combinations yield new solutions.

@@ -102,7 +102,13 @@ public class CardinalityBreakpoint implements Breakpoint {
         return null;
     }
 
-    private boolean approves(CardinalityEstimate cardinalityEstimate) {
+    /**
+     * Whether the given {@link CardinalityEstimate} does not require a breakpoint.
+     *
+     * @param cardinalityEstimate the {@link CardinalityEstimate}
+     * @return whether no breakpoint is needed
+     */
+    public boolean approves(CardinalityEstimate cardinalityEstimate) {
         return cardinalityEstimate.getCorrectnessProbability() >= this.minConfidence
                 && this.calculateSpread(cardinalityEstimate) <= this.maxSpread;
     }
