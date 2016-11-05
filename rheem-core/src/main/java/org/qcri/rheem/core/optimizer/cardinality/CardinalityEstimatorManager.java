@@ -95,14 +95,15 @@ public class CardinalityEstimatorManager {
                     final OutputSlot<?> output = operator.getOutput(outputIndex);
                     final Junction junction = planImplementation.getJunction(output);
                     if (junction == null) continue;
+
                     final CardinalityEstimate cardinality = operatorContext.getOutputCardinality(outputIndex);
-                    OptimizationContext jctOptimizationContext = junction.getOptimizationContexts().get(optimizationContextIndex);
-                    for (OptimizationContext.OperatorContext opCtx : jctOptimizationContext.getLocalOperatorContexts().values()) {
+                    OptimizationContext jctOptimizationContext = junction.getOptimizationContexts().get(0);
+                    for (OptimizationContext.OperatorContext jctOpCtx : jctOptimizationContext.getLocalOperatorContexts().values()) {
+                        final OptimizationContext.OperatorContext opCtx = optimizationContext.getOperatorContext(jctOpCtx.getOperator());
                         if (opCtx.getInputCardinalities().length == 1) opCtx.setInputCardinality(0, cardinality);
                         if (opCtx.getOutputCardinalities().length == 1) opCtx.setOutputCardinality(0, cardinality);
                         opCtx.updateCostEstimate();
                     }
-                    optimizationContext.mergeToBase();
                 }
             }
         }
