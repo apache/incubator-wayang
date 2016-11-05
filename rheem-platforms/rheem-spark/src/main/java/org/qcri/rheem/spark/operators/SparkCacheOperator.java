@@ -40,11 +40,13 @@ public class SparkCacheOperator<Type>
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
         final JavaRDD<Object> rdd = input.provideRdd();
         final JavaRDD<Object> cachedRdd = rdd.cache();
+        cachedRdd.foreachPartition(iterator -> {
+        });
 
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
         output.accept(cachedRdd, sparkExecutor);
 
-        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override

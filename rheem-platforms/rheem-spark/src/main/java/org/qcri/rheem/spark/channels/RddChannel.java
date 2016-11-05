@@ -26,7 +26,7 @@ public class RddChannel extends Channel {
     );
 
     public static final ChannelDescriptor CACHED_DESCRIPTOR = new ChannelDescriptor(
-            RddChannel.class, true, false
+            RddChannel.class, true, true
     );
 
     public RddChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {

@@ -80,10 +80,6 @@ public abstract class Channel {
         this.producerSlot = original.getProducerSlot();
     }
 
-    public static CardinalityEstimate extractCardinalityEstimate(ExecutionTask task, int outputIndex) {
-        return task.getOperator().getOutput(outputIndex).getCardinalityEstimate();
-    }
-
     /**
      * Set up a consumer {@link ExecutionTask} for this instance.
      *
