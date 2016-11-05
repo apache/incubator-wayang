@@ -2,6 +2,7 @@ package org.qcri.rheem.apps.util
 
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.qcri.rheem.basic.RheemBasics
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.plugin.{DynamicPlugin, Plugin}
 import org.qcri.rheem.graphchi.GraphChi
 import org.qcri.rheem.java.Java
@@ -25,6 +26,8 @@ object Parameters {
   private val doublePattern = """[+-]?\d+\.\d*""".r
 
   private val booleanPattern = """(?:true)|(?:false)""".r
+
+  private val probabilisticDoubleIntervalPattern = """(\d+)\.\.(\d+)(~\d+.\d+)?""".r
 
   private val experiment =
     """exp\(([^,;]+)(?:;tags=([^,;]+(?:,[^,;]+)*))?(?:;conf=([^,;:]+:[^,;:]+(?:,[^,;:]+:[^,;:]+)*))?\)""".r
@@ -101,13 +104,15 @@ object Parameters {
     * @param str the [[String]]
     * @return the parsed value
     */
-  private[util] def parseAny(str: String): AnyRef = {
+  def parseAny(str: String): AnyRef = {
     str match {
       case "null" => null
       case intPattern() => java.lang.Integer.valueOf(str)
       case longPattern() => java.lang.Long.valueOf(str.take(str.length - 1))
       case doublePattern() => java.lang.Double.valueOf(str)
       case booleanPattern() => java.lang.Boolean.valueOf(str)
+      case probabilisticDoubleIntervalPattern(lower, upper, conf) =>
+        new ProbabilisticDoubleInterval(lower.toDouble, upper.toDouble, if (conf == null) 1d else conf.substring(1).toDouble)
       case other: String => other
     }
   }
