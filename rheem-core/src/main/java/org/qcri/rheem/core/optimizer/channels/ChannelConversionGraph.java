@@ -483,6 +483,7 @@ public class ChannelConversionGraph {
         private Tree searchTree() {
             // Prepare the recursive traversal.
             final HashSet<ChannelDescriptor> visitedChannelDescriptors = new HashSet<>(16);
+            visitedChannelDescriptors.add(this.sourceChannelDescriptor);
 
             // Perform the traversal.
             final Map<Bitmask, Tree> solutions = this.enumerate(
