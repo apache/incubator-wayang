@@ -54,7 +54,7 @@ object WordCountScala extends ExperimentDescriptor {
   def main(args: Array[String]) {
     // Parse args.
     if (args.isEmpty) {
-      println(s"Usage: <main class> ${Parameters.experimentHelp} <plugin(,plugin)*> <input file> [<words per line a..b>]")
+      println(s"Usage: <main class> ${Parameters.experimentHelp} <plugin(,plugin)*> <input file> [<words per line a..b[~confidence]>]")
       sys.exit(1)
     }
     implicit val configuration = new Configuration
@@ -64,9 +64,8 @@ object WordCountScala extends ExperimentDescriptor {
     val inputFile = args(2)
     experiment.getSubject.addConfiguration("input", inputFile)
     val wordsPerLine = if (args.length >= 4) {
-      val Array(low, high) = args(3).split("""\.\.""").map(_.toDouble)
       experiment.getSubject.addConfiguration("wordsPerLine", args(3))
-      new ProbabilisticDoubleInterval(low, high, 0.8)
+      Parameters.parseAny(args(3)).asInstanceOf[ProbabilisticDoubleInterval]
     } else null
 
     // Run wordCount.
