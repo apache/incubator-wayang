@@ -47,7 +47,7 @@ public class ProbabilisticDoubleInterval {
      */
     public static Comparator<ProbabilisticDoubleInterval> randomComparator() {
         final int salt = new Random().nextInt();
-        return (t1, t2) -> Integer.compare(t1.hashCode() + salt, t2.hashCode() + salt);
+        return (t1, t2) -> Integer.compare(t1.hashCode() * salt + t1.hashCode(), t2.hashCode() * salt + t2.hashCode());
     }
 
     /**
