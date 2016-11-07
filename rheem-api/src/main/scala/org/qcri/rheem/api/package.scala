@@ -77,12 +77,12 @@ package object api {
     new FixedSizeCardinalityEstimator(fixCardinality, true)
 
   implicit def toCardinalityEstimator(f: Long => Long): CardinalityEstimator =
-    new DefaultCardinalityEstimator(1d, 1, true, new ToLongFunction[Array[Long]] {
+    new DefaultCardinalityEstimator(.99d, 1, true, new ToLongFunction[Array[Long]] {
       override def applyAsLong(inCards: Array[Long]): Long = f.apply(inCards(0))
     })
 
   implicit def toCardinalityEstimator(f: (Long, Long) => Long): CardinalityEstimator =
-    new DefaultCardinalityEstimator(1d, 1, true, new ToLongFunction[Array[Long]] {
+    new DefaultCardinalityEstimator(.99d, 1, true, new ToLongFunction[Array[Long]] {
       override def applyAsLong(inCards: Array[Long]): Long = f.apply(inCards(0), inCards(1))
     })
 
@@ -90,7 +90,7 @@ package object api {
     new DefaultLoadEstimator(
       1,
       1,
-      1d,
+      .99d,
       CardinalityEstimate.EMPTY_ESTIMATE,
       new ToLongBiFunction[Array[Long], Array[Long]] {
         override def applyAsLong(t: Array[Long], u: Array[Long]): Long = f.apply(t(0), u(0))
@@ -101,14 +101,14 @@ package object api {
     new DefaultLoadEstimator(
       2,
       1,
-      1d,
+      .99d,
       CardinalityEstimate.EMPTY_ESTIMATE,
       new ToLongBiFunction[Array[Long], Array[Long]] {
         override def applyAsLong(t: Array[Long], u: Array[Long]): Long = f.apply(t(0), t(1), u(0))
       }
     )
 
-  implicit def toInterval(double: Double): ProbabilisticDoubleInterval = ProbabilisticDoubleInterval.ofExactly(double)
+  implicit def toInterval(double: Double): ProbabilisticDoubleInterval = new ProbabilisticDoubleInterval(double, double, .99)
 
   implicit def createPlanBuilder(rheemContext: RheemContext): PlanBuilder = new PlanBuilder(rheemContext)
 
