@@ -306,10 +306,6 @@ public class Job extends OneTimeExecutable {
 
         this.optimizationRound.start("Create Initial Execution Plan");
 
-        // Defines the plan that we want to use in the end.
-        final Comparator<ProbabilisticDoubleInterval> costEstimateComparator =
-                this.configuration.getCostEstimateComparatorProvider().provide();
-
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator();
 
@@ -328,7 +324,7 @@ public class Job extends OneTimeExecutable {
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
         this.optimizationRound.start("Create Initial Execution Plan", "Pick Best Plan");
-        this.pickBestExecutionPlan(costEstimateComparator, executionPlans, null, null, null);
+        this.pickBestExecutionPlan(executionPlans, null, null, null);
         this.timeEstimates.add(planImplementation.getTimeEstimate());
         this.costEstimates.add(planImplementation.getCostEstimate());
         this.optimizationRound.stop("Create Initial Execution Plan", "Pick Best Plan");
@@ -351,17 +347,16 @@ public class Job extends OneTimeExecutable {
     }
 
 
-    private PlanImplementation pickBestExecutionPlan(Comparator<ProbabilisticDoubleInterval> costEstimateComparator,
-                                                     Collection<PlanImplementation> executionPlans,
+    private PlanImplementation pickBestExecutionPlan(Collection<PlanImplementation> executionPlans,
                                                      ExecutionPlan existingPlan,
                                                      Set<Channel> openChannels,
                                                      Set<ExecutionStage> executedStages) {
 
         final PlanImplementation bestPlanImplementation = executionPlans.stream()
                 .reduce((p1, p2) -> {
-                    final ProbabilisticDoubleInterval t1 = p1.getCostEstimate();
-                    final ProbabilisticDoubleInterval t2 = p2.getCostEstimate();
-                    return costEstimateComparator.compare(t1, t2) < 0 ? p1 : p2;
+                    final double t1 = p1.getSquashedCostEstimate();
+                    final double t2 = p2.getSquashedCostEstimate();
+                    return t1 < t2 ? p1 : p2;
                 })
                 .orElseThrow(() -> new RheemException("Could not find an execution plan."));
         this.logger.info("Picked {} as best plan.", bestPlanImplementation);
@@ -519,9 +514,6 @@ public class Job extends OneTimeExecutable {
      */
     private void updateExecutionPlan(ExecutionPlan executionPlan) {
         // Defines the plan that we want to use in the end.
-        final Comparator<ProbabilisticDoubleInterval> costEstimateComparator =
-                this.configuration.getCostEstimateComparatorProvider().provide();
-
         // Find and copy the open Channels.
         final Set<ExecutionStage> completedStages = this.crossPlatformExecutor.getCompletedStages();
         final Set<ExecutionTask> completedTasks = completedStages.stream()
@@ -542,9 +534,7 @@ public class Job extends OneTimeExecutable {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        this.pickBestExecutionPlan(
-                costEstimateComparator, executionPlans, executionPlan, openChannels, completedStages
-        );
+        this.pickBestExecutionPlan(executionPlans, executionPlan, openChannels, completedStages);
         this.timeEstimates.add(this.planImplementation.getTimeEstimate());
         this.costEstimates.add(this.planImplementation.getCostEstimate());
 

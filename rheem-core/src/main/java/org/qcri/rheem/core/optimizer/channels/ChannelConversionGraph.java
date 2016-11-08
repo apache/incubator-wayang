@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -35,7 +36,7 @@ public class ChannelConversionGraph {
     /**
      * Caches the {@link Comparator} for {@link ProbabilisticDoubleInterval}s.
      */
-    private final Comparator<ProbabilisticDoubleInterval> costEstimateComparator;
+    private final ToDoubleFunction<ProbabilisticDoubleInterval> costSquasher;
 
     private static final Logger logger = LoggerFactory.getLogger(ChannelConversionGraph.class);
 
@@ -45,7 +46,7 @@ public class ChannelConversionGraph {
      * @param configuration describes how to configure the new instance
      */
     public ChannelConversionGraph(Configuration configuration) {
-        this.costEstimateComparator = configuration.getCostEstimateComparatorProvider().provide();
+        this.costSquasher = configuration.getCostSquasherProvider().provide();
         configuration.getChannelConversionProvider().provideAll().forEach(this::add);
     }
 
@@ -105,7 +106,7 @@ public class ChannelConversionGraph {
      * Given two {@link Tree}s, choose the one with lower costs.
      */
     private Tree selectCheaperTree(Tree t1, Tree t2) {
-        return t2 == null || (t1 != null && this.costEstimateComparator.compare(t1.costs, t2.costs) <= 0) ? t1 : t2;
+        return t2 == null || (t1 != null && t1.costs <= t2.costs) ? t1 : t2;
     }
 
     /**
@@ -117,14 +118,13 @@ public class ChannelConversionGraph {
         assert trees.size() >= 2;
 
         // For various trees to be combined, we require them to be "disjoint". Check this.
-        // TODO: This might be a little bit too strict.
         final Iterator<Tree> iterator = trees.iterator();
         final Tree firstTree = iterator.next();
         Bitmask combinationSettledIndices = new Bitmask(firstTree.settledDestinationIndices);
         int maxSettledIndices = combinationSettledIndices.cardinality();
         final HashSet<ChannelDescriptor> employedChannelDescriptors = new HashSet<>(firstTree.employedChannelDescriptors);
         int maxVisitedChannelDescriptors = employedChannelDescriptors.size();
-        ProbabilisticDoubleInterval costs = firstTree.costs;
+        double costs = firstTree.costs;
         TreeVertex newRoot = new TreeVertex(firstTree.root.channelDescriptor, firstTree.root.settledIndices);
         newRoot.copyEdgesFrom(firstTree.root);
 
@@ -142,7 +142,7 @@ public class ChannelConversionGraph {
                 return null;
             }
 
-            costs = costs.plus(ithTree.costs);
+            costs += ithTree.costs;
             newRoot.copyEdgesFrom(ithTree.root);
         }
 
@@ -234,7 +234,7 @@ public class ChannelConversionGraph {
         /**
          * Caches cost estimates for {@link ChannelConversion}s.
          */
-        private Map<ChannelConversion, ProbabilisticDoubleInterval> conversionCostCache = new HashMap<>();
+        private Map<ChannelConversion, Double> conversionCostCache = new HashMap<>();
 
         /**
          * Caches the result of {@link #getJunction()}.
@@ -693,10 +693,15 @@ public class ChannelConversionGraph {
          * @param channelConversion whose cost estimate is requested
          * @return the cost estimate
          */
-        private ProbabilisticDoubleInterval getCostEstimate(ChannelConversion channelConversion) {
+        private double getCostEstimate(ChannelConversion channelConversion) {
             return this.conversionCostCache.computeIfAbsent(
                     channelConversion,
-                    key -> key.estimateConversionCost(this.cardinality, this.numExecutions, this.optimizationContextCopy)
+                    key -> {
+                        final ProbabilisticDoubleInterval costEstimate = key.estimateConversionCost(
+                                this.cardinality, this.numExecutions, this.optimizationContextCopy
+                        );
+                        return costSquasher.applyAsDouble(costEstimate);
+                    }
             );
         }
 
@@ -862,9 +867,9 @@ public class ChannelConversionGraph {
         private final Set<ChannelDescriptor> employedChannelDescriptors = new HashSet<>();
 
         /**
-         * The sum of {@link TimeEstimate}s of all {@link TreeEdge}s of this instance.
+         * The sum of the costs of all {@link TreeEdge}s of this instance.
          */
-        private ProbabilisticDoubleInterval costs = ProbabilisticDoubleInterval.zero;
+        private double costs = 0d;
 
         /**
          * Creates a new instance with a single {@link TreeVertex}.
@@ -895,7 +900,7 @@ public class ChannelConversionGraph {
         void reroot(ChannelDescriptor newRootChannelDescriptor,
                     Bitmask newRootSettledIndices,
                     ChannelConversion newToObsoleteRootConversion,
-                    ProbabilisticDoubleInterval costEstimate) {
+                    double costEstimate) {
             // Exchange the root.
             final TreeVertex newRoot = new TreeVertex(newRootChannelDescriptor, newRootSettledIndices);
             final TreeEdge edge = newRoot.linkTo(newToObsoleteRootConversion, this.root, costEstimate);
@@ -903,7 +908,7 @@ public class ChannelConversionGraph {
             // Update metadata.
             this.employedChannelDescriptors.add(newRootChannelDescriptor);
             this.settledDestinationIndices.orInPlace(newRootSettledIndices);
-            this.costs = this.costs.plus(edge.costEstimate);
+            this.costs += edge.costEstimate;
         }
 
         @Override
@@ -944,7 +949,7 @@ public class ChannelConversionGraph {
             this.outEdges = new ArrayList<>(4);
         }
 
-        private TreeEdge linkTo(ChannelConversion channelConversion, TreeVertex destination, ProbabilisticDoubleInterval costEstimate) {
+        private TreeEdge linkTo(ChannelConversion channelConversion, TreeVertex destination, double costEstimate) {
             final TreeEdge edge = new TreeEdge(channelConversion, destination, costEstimate);
             this.outEdges.add(edge);
             return edge;
@@ -993,9 +998,9 @@ public class ChannelConversionGraph {
         /**
          * The cost estimate of the {@link #channelConversion}.
          */
-        private final ProbabilisticDoubleInterval costEstimate;
+        private final double costEstimate;
 
-        private TreeEdge(ChannelConversion channelConversion, TreeVertex destination, ProbabilisticDoubleInterval costEstimate) {
+        private TreeEdge(ChannelConversion channelConversion, TreeVertex destination, double costEstimate) {
             this.channelConversion = channelConversion;
             this.destination = destination;
             this.costEstimate = costEstimate;

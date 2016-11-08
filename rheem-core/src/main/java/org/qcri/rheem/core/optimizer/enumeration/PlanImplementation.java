@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -67,9 +68,9 @@ public class PlanImplementation {
     private final OptimizationContext optimizationContext;
 
     /**
-     * The cost estimate to execute this instance.
+     * The squashed cost estimate to execute this instance. This will be used to select the best plan!
      */
-    private ProbabilisticDoubleInterval costEstimateWithoutOverheadCache, costEstimateCache;
+    private double squashedCostEstimateCache = Double.NaN, squashedCostEstimateWithoutOverheadCache = Double.NaN;
 
     /**
      * Create a new instance.
@@ -570,29 +571,74 @@ public class PlanImplementation {
      * @return the cost estimate
      */
     ProbabilisticDoubleInterval getCostEstimate(boolean isIncludeOverhead) {
-        assert (this.costEstimateCache == null) == (this.costEstimateWithoutOverheadCache == null);
-        if (this.costEstimateCache == null) {
-            final ProbabilisticDoubleInterval operatorCosts = this.operators.stream()
-                    .map(op -> this.optimizationContext.getOperatorContext(op).getCostEstimate())
-                    .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
-            final ProbabilisticDoubleInterval junctionCosts = this.optimizationContext.getDefaultOptimizationContexts().stream()
-                    .flatMap(optCtx -> this.junctions.values().stream().map(jct -> jct.getCostEstimate(optCtx)))
-                    .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
-            final ProbabilisticDoubleInterval loopCosts = this.loopImplementations.values().stream()
-                    .map(LoopImplementation::getCostEstimate)
-                    .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
-            this.costEstimateWithoutOverheadCache = operatorCosts.plus(junctionCosts).plus(loopCosts);
-            ProbabilisticDoubleInterval overheadCosts = this.getUtilizedPlatforms().stream()
-                    .map(platform -> {
-                        Configuration configuraiton = this.optimizationContext.getConfiguration();
-                        long startUpTime = configuraiton.getPlatformStartUpTimeProvider().provideFor(platform);
-                        TimeToCostConverter timeToCostConverter = configuraiton.getTimeToCostConverterProvider().provideFor(platform);
-                        return timeToCostConverter.convert(new TimeEstimate(startUpTime, startUpTime, 1d));
+        ProbabilisticDoubleInterval costEstimateWithoutOverheadCache, costEstimateCache;
+        final ProbabilisticDoubleInterval operatorCosts = this.operators.stream()
+                .map(op -> this.optimizationContext.getOperatorContext(op).getCostEstimate())
+                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
+        final ProbabilisticDoubleInterval junctionCosts = this.optimizationContext.getDefaultOptimizationContexts().stream()
+                .flatMap(optCtx -> this.junctions.values().stream().map(jct -> jct.getCostEstimate(optCtx)))
+                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
+        final ProbabilisticDoubleInterval loopCosts = this.loopImplementations.values().stream()
+                .map(LoopImplementation::getCostEstimate)
+                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
+        costEstimateWithoutOverheadCache = operatorCosts.plus(junctionCosts).plus(loopCosts);
+        ProbabilisticDoubleInterval overheadCosts = this.getUtilizedPlatforms().stream()
+                .map(platform -> {
+                    Configuration configuraiton = this.optimizationContext.getConfiguration();
+                    long startUpTime = configuraiton.getPlatformStartUpTimeProvider().provideFor(platform);
+                    TimeToCostConverter timeToCostConverter = configuraiton.getTimeToCostConverterProvider().provideFor(platform);
+                    return timeToCostConverter.convert(new TimeEstimate(startUpTime, startUpTime, 1d));
+                })
+                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
+        costEstimateCache = costEstimateWithoutOverheadCache.plus(overheadCosts);
+        return isIncludeOverhead ? costEstimateCache : costEstimateWithoutOverheadCache;
+    }
+
+    /**
+     * Retrieves the cost estimate for this instance including any overhead.
+     *
+     * @return the cost estimate
+     */
+    public double getSquashedCostEstimate() {
+        return this.getSquashedCostEstimate(true);
+    }
+
+    /**
+     * Retrieves the cost estimate for this instance.
+     *
+     * @param isIncludeOverhead whether to include global overhead in the {@link TimeEstimate} (to avoid repeating
+     *                          overhead in nested instances)
+     * @return the squashed cost estimate
+     */
+    double getSquashedCostEstimate(boolean isIncludeOverhead) {
+        assert Double.isNaN(this.squashedCostEstimateCache) == Double.isNaN(this.squashedCostEstimateWithoutOverheadCache);
+        if (Double.isNaN(this.squashedCostEstimateCache)) {
+            final double operatorCosts = this.operators.stream()
+                    .mapToDouble(op -> this.optimizationContext.getOperatorContext(op).getSquashedCostEstimate())
+                    .sum();
+            final double junctionCosts = this.optimizationContext.getDefaultOptimizationContexts().stream()
+                    .flatMapToDouble(optCtx -> this.junctions.values().stream().mapToDouble(jct -> jct.getSquashedCostEstimate(optCtx)))
+                    .sum();
+            final double loopCosts = this.loopImplementations.values().stream()
+                    .mapToDouble(LoopImplementation::getSquashedCostEstimate)
+                    .sum();
+            this.squashedCostEstimateWithoutOverheadCache = operatorCosts + junctionCosts + loopCosts;
+            double overheadCosts = this.getUtilizedPlatforms().stream()
+                    .mapToDouble(platform -> {
+                        Configuration configuration = this.optimizationContext.getConfiguration();
+
+                        long startUpTime = configuration.getPlatformStartUpTimeProvider().provideFor(platform);
+
+                        TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
+                        ProbabilisticDoubleInterval costs = timeToCostConverter.convert(new TimeEstimate(startUpTime, startUpTime, 1d));
+
+                        final ToDoubleFunction<ProbabilisticDoubleInterval> squasher = configuration.getCostSquasherProvider().provide();
+                        return squasher.applyAsDouble(costs);
                     })
-                    .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
-            this.costEstimateCache = this.costEstimateWithoutOverheadCache.plus(overheadCosts);
+                    .sum();
+            this.squashedCostEstimateCache = this.squashedCostEstimateWithoutOverheadCache + overheadCosts;
         }
-        return isIncludeOverhead ? this.costEstimateCache : this.costEstimateWithoutOverheadCache;
+        return isIncludeOverhead ? this.squashedCostEstimateCache : this.squashedCostEstimateWithoutOverheadCache;
     }
 
     public Junction getJunction(OutputSlot<?> output) {

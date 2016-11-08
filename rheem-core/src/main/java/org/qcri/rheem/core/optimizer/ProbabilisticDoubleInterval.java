@@ -1,8 +1,6 @@
 package org.qcri.rheem.core.optimizer;
 
-import java.util.Comparator;
 import java.util.Objects;
-import java.util.Random;
 
 /***
  * An value representation that is capable of expressing uncertainty.
@@ -14,41 +12,6 @@ public class ProbabilisticDoubleInterval {
      * Instance that basically represents the value {@code 0d}.
      */
     public static final ProbabilisticDoubleInterval zero = ProbabilisticDoubleInterval.ofExactly(0d);
-
-    /**
-     * Provides a {@link Comparator} for {@link ProbabilisticDoubleInterval}s.
-     * For two {@link ProbabilisticDoubleInterval}s {@code t1} and {@code t2}, it works as follows:
-     * <ol>
-     * <li>If a either of the {@link ProbabilisticDoubleInterval}s has a correctness probability of 0, we consider it to be greater.</li>
-     * <li>Otherwise, we compare the two {@link ProbabilisticDoubleInterval}s by their average estimation value.</li>
-     * </ol>
-     *
-     * @return
-     */
-    public static Comparator<ProbabilisticDoubleInterval> expectationValueComparator() {
-        return (t1, t2) -> {
-            if (t1.getCorrectnessProbability() == 0d) {
-                if (t2.getCorrectnessProbability() != 0d) {
-                    return 1;
-                }
-            } else if (t2.getCorrectnessProbability() == 0d) {
-                return -1;
-            }
-            // NB: We do not assume a uniform distribution of the estimates within the instances.
-            return Long.compare(t1.getGeometricMeanEstimate(), t2.getGeometricMeanEstimate());
-        };
-    }
-
-    /**
-     * Provides a {@link Comparator} for {@link ProbabilisticDoubleInterval}s.
-     * It provides a random, but consistent order.
-     *
-     * @return a new random {@link Comparator}
-     */
-    public static Comparator<ProbabilisticDoubleInterval> randomComparator() {
-        final int salt = new Random().nextInt();
-        return (t1, t2) -> Integer.compare(t1.hashCode() * salt + t1.hashCode(), t2.hashCode() * salt + t2.hashCode());
-    }
 
     /**
      * Probability of correctness between in the interval [0, 1]. This helps
