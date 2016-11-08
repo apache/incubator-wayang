@@ -280,7 +280,7 @@ public class PlanEnumerator {
      */
     private synchronized void run() {
         if (this.resultReference == null) {
-            while (!this.activatedEnumerations.isEmpty() || !this.activatedConcatenations.isEmpty()) {
+            while (!this.activatedEnumerations.isEmpty()) {
                 // Try to enumerate branches.
                 EnumerationActivator enumerationActivator;
                 if ((enumerationActivator = this.activatedEnumerations.poll()) != null) {
@@ -289,17 +289,17 @@ public class PlanEnumerator {
                     }
                     this.enumerateBranchStartingFrom(enumerationActivator);
                 }
+            }
 
-                ConcatenationActivator concatenationActivator;
-                while ((concatenationActivator = this.activatedConcatenations.poll()) != null) {
-                    if (this.isTopLevel()) {
-                        this.logger.debug("Execute {} (open inputs: {}).",
-                                concatenationActivator,
-                                concatenationActivator.getBaseEnumeration().getRequestedInputSlots()
-                        );
-                    }
-                    this.concatenate(concatenationActivator);
+            ConcatenationActivator concatenationActivator;
+            while ((concatenationActivator = this.activatedConcatenations.poll()) != null) {
+                if (this.isTopLevel()) {
+                    this.logger.debug("Execute {} (open inputs: {}).",
+                            concatenationActivator,
+                            concatenationActivator.getBaseEnumeration().getRequestedInputSlots()
+                    );
                 }
+                this.concatenate(concatenationActivator);
             }
 
             this.constructResultEnumeration();
@@ -1004,7 +1004,6 @@ public class PlanEnumerator {
         public Tuple<OutputSlot<?>, OptimizationContext> getKey() {
             return createConcatenationKey(this.outputSlot, this.optimizationContext);
         }
-
 
 
         public OptimizationContext getOptimizationContext() {
