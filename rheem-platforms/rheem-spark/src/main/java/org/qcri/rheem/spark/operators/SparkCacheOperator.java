@@ -46,7 +46,7 @@ public class SparkCacheOperator<Type>
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
         output.accept(cachedRdd, sparkExecutor);
 
-        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
+        return ExecutionOperator.modelQuasiEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
