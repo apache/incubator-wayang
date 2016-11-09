@@ -33,7 +33,6 @@ public class HadoopFileSystem implements FileSystem {
 
     /**
      * Make sure that this instance is initialized. This is particularly required to use HDFS {@link URL}s.
-     * @return
      */
     public void ensureInitialized() {
         if (this.isInitialized) return;

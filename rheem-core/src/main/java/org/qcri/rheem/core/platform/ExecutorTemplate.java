@@ -128,7 +128,7 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
      * @param executedOperatorContexts {@link ExecutionOperator}s' {@link OptimizationContext.OperatorContext}s that
      *                                 have been executed
      * @param executionDuration        the measured execution duration in milliseconds
-     * @return the {@link PartialExecution} or {@link null} if nothing has been executed
+     * @return the {@link PartialExecution} or {@code null} if nothing has been executed
      */
     protected PartialExecution createPartialExecution(
             Collection<OptimizationContext.OperatorContext> executedOperatorContexts,

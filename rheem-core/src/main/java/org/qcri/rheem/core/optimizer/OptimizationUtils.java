@@ -128,13 +128,12 @@ public class OptimizationUtils {
 
     /**
      * Uses the right part of the logistic regression curve to model a strictly growing function between
-     *
+     * {@code g0} and 1.
      * @param g0      the starting value at {@code x = 0}
      * @param epsilon the function should have a value {@code >= 1 - epsilon} for {@code x >= x0}
      * @param x0      the convergence {@code x} value
      * @param x       the actual input value to the function
      * @return the function value
-     * @{code g0} and 1.
      */
     public static double logisticGrowth(double g0, double epsilon, double x0, double x) {
         double a = 2 * (1 - g0);
