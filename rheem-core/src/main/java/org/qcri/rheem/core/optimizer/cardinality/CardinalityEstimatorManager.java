@@ -70,6 +70,10 @@ public class CardinalityEstimatorManager {
      */
     public boolean pushCardinalities(PlanImplementation planImplementation) {
         boolean isUpdated = this.getPlanTraversal().traverse(this.optimizationContext, this.configuration);
+        planImplementation.getLoopImplementations().keySet().forEach(
+                loop ->  this.optimizationContext.getNestedLoopContext(loop).getAggregateContext().updateOperatorContexts()
+        );
+
         this.updateConversionOperatorCardinalities(planImplementation, this.optimizationContext, 0);
         this.optimizationContext.clearMarks();
         return isUpdated;

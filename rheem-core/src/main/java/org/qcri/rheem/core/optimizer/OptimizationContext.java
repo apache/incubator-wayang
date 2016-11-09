@@ -562,10 +562,12 @@ public abstract class OptimizationContext {
             this.addTo(this.outputCardinalityMarkers, that.outputCardinalityMarkers);
             if (that.costEstimate != null) {
                 if (this.costEstimate == null) {
+                    this.loadProfile = that.loadProfile;
                     this.timeEstimate = that.timeEstimate;
                     this.costEstimate = that.costEstimate;
                     this.squashedCostEstimate = that.squashedCostEstimate;
                 } else {
+                    this.loadProfile = this.loadProfile.plus(that.loadProfile);
                     this.timeEstimate = this.timeEstimate.plus(that.timeEstimate);
                     this.costEstimate = this.costEstimate.plus(that.costEstimate);
                     this.squashedCostEstimate += that.squashedCostEstimate;
@@ -658,6 +660,19 @@ public abstract class OptimizationContext {
             return String.format("%s[%s]", this.getClass().getSimpleName(), this.getOperator());
         }
 
+        /**
+         * Resets the estimates of this instance.
+         */
+        public void resetEstimates() {
+            Arrays.fill(this.inputCardinalities, null);
+            Arrays.fill(this.inputCardinalityMarkers, false);
+            Arrays.fill(this.outputCardinalities, null);
+            Arrays.fill(this.outputCardinalityMarkers, false);
+            this.loadProfile = null;
+            this.timeEstimate = null;
+            this.costEstimate = null;
+            this.squashedCostEstimate = 0d;
+        }
     }
 
     /**
@@ -668,6 +683,8 @@ public abstract class OptimizationContext {
         private final OperatorContext loopSubplanContext;
 
         private final List<OptimizationContext> iterationContexts;
+
+        private AggregateOptimizationContext aggregateOptimizationContext;
 
         protected LoopContext(OperatorContext loopSubplanContext) {
             assert loopSubplanContext.getOptimizationContext() == OptimizationContext.this;
@@ -750,17 +767,11 @@ public abstract class OptimizationContext {
             return (LoopSubplan) this.loopSubplanContext.getOperator();
         }
 
-        public OptimizationContext createAggregateContext() {
-            return this.createAggregateContext(0, this.iterationContexts.size());
-        }
-
-        public OptimizationContext createAggregateContext(int fromIteration, int toIteration) {
-            return new AggregateOptimizationContext(
-                    this,
-                    fromIteration == 0 && toIteration == this.iterationContexts.size() ?
-                            this.iterationContexts :
-                            this.iterationContexts.subList(fromIteration, toIteration)
-            );
+        public AggregateOptimizationContext getAggregateContext() {
+            if (this.aggregateOptimizationContext == null) {
+                this.aggregateOptimizationContext = new AggregateOptimizationContext(this);
+            }
+            return this.aggregateOptimizationContext;
         }
     }
 
