@@ -87,6 +87,7 @@ public class RddChannel extends Channel {
         @Override
         protected void doDispose() {
             if (this.accumulator != null) {
+                this.setMeasuredCardinality(this.accumulator.value());
                 this.accumulator = null;
             }
             if (this.isRddCached() && this.rdd != null) {
