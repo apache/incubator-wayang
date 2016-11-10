@@ -66,7 +66,7 @@ public class RddChannel extends Channel {
         }
 
         public void accept(JavaRDD<?> rdd, SparkExecutor sparkExecutor) throws RheemException {
-            if (this.isMarkedForInstrumentation()) {
+            if (this.isMarkedForInstrumentation() && !this.isRddCached()) {
                 final Accumulator<Integer> accumulator = sparkExecutor.sc.accumulator(0);
                 this.rdd = rdd.filter(dataQuantum -> {
                     accumulator.add(1);

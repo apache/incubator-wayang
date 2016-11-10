@@ -16,6 +16,7 @@ public class ChannelLineageNode extends LazyExecutionLineageNode {
     public ChannelLineageNode(final ChannelInstance channelInstance) {
         assert !channelInstance.wasProduced();
         this.channelInstance = channelInstance;
+        this.channelInstance.noteObtainedReference();
     }
 
     @Override
@@ -23,10 +24,12 @@ public class ChannelLineageNode extends LazyExecutionLineageNode {
         return aggregator.aggregate(accumulator, this.channelInstance);
     }
 
+
     @Override
     protected void markAsExecuted() {
         super.markAsExecuted();
         assert !this.channelInstance.wasProduced();
         this.channelInstance.markProduced();
+        this.channelInstance.noteDiscardedReference(false);
     }
 }
