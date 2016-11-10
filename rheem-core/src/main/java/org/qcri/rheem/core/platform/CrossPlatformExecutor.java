@@ -315,6 +315,9 @@ public class CrossPlatformExecutor implements ExecutionState {
     private void tryToActivateSuccessors(StageActivator processedStageActivator) {
         final ExecutionStage processedStage = processedStageActivator.getStage();
 
+        boolean isLoopJustFinished = processedStage.isLoopHead()
+                && ((LoopHeadOperator) processedStage.getLoopHeadTask().getOperator()).getState() == LoopHeadOperator.State.FINISHED;
+
         // Gather all successor ExecutionStages for that a new ChannelInstance has been produced.
         final Collection<Channel> outboundChannels = processedStage.getOutboundChannels();
         Set<ExecutionStage> successorStages = new HashSet<>(outboundChannels.size());
@@ -323,7 +326,8 @@ public class CrossPlatformExecutor implements ExecutionState {
                 for (ExecutionTask consumer : outboundChannel.getConsumers()) {
                     final ExecutionStage consumerStage = consumer.getStage();
                     // We must be careful: outbound Channels still can have consumers within the producer's ExecutionStage.
-                    if (consumerStage != processedStage) {
+                    if (consumerStage != processedStage
+                            && !(isLoopJustFinished && processedStage.getLoop() == consumerStage.getLoop())) {
                         successorStages.add(consumerStage);
                     }
                 }

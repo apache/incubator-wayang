@@ -3,6 +3,7 @@ package org.qcri.rheem.core.plan.executionplan;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -121,6 +122,18 @@ public class ExecutionStage {
      */
     public ExecutionStageLoop getLoop() {
         return this.executionStageLoop;
+    }
+
+    /**
+     * Retrieves the {@link LoopHeadOperator} {@link ExecutionTask} in this instance. This instance must be a
+     * loop head.
+     *
+     * @return the {@link LoopHeadOperator} {@link ExecutionTask}
+     * @see #isLoopHead()
+     */
+    public ExecutionTask getLoopHeadTask() {
+        assert this.isLoopHead();
+        return RheemCollections.getSingle(this.getAllTasks());
     }
 
     public void markAsStartTask(ExecutionTask executionTask) {
