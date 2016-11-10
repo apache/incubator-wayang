@@ -51,7 +51,8 @@ class SimWords(plugins: Plugin*) {
       .readTextFile(inputFile).withName("Read corpus (2)")
       .flatMapJava(
         new CreateWordNeighborhoodFunction(neighborhoodReach, "wordIds"),
-        selectivity = wordsPerLine
+        selectivity = wordsPerLine,
+        udfCpuLoad = (in1: Long, in2: Long, out: Long) => 1000L * in1 * in2
       )
       .withBroadcast(wordIds, "wordIds")
       .withName("Create word vectors")
@@ -79,7 +80,7 @@ class SimWords(plugins: Plugin*) {
     // Run k-means on the vectors.
     val finalCentroids = initialCentroids.repeat(numIterations, { centroids: DataQuanta[(Int, SparseVector)] =>
       val newCentroids: DataQuanta[(Int, SparseVector)] = wordVectors
-        .mapJava(new SelectNearestCentroidFunction("centroids"), udfCpuLoad = (in1: Long, in2: Long, out: Long) => 100L * in1 * in2)
+        .mapJava(new SelectNearestCentroidFunction("centroids"), udfCpuLoad = (in1: Long, in2: Long, out: Long) => 1000L * in1 * in2)
         .withBroadcast(centroids, "centroids")
         .withName("Select nearest centroids")
         .map(assignment => (assignment._3, assignment._2)).withName("Strip word ID")
