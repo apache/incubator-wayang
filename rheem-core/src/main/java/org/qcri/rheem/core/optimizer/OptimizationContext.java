@@ -524,7 +524,7 @@ public abstract class OptimizationContext {
         }
 
         /**
-         * Merges {@code that} instance into this instance.
+         * Merges {@code that} instance into this instance. The lineage is not merged, though.
          *
          * @param that the other instance
          * @return this instance
