@@ -32,4 +32,9 @@ public class ChannelLineageNode extends LazyExecutionLineageNode {
         this.channelInstance.markProduced();
         this.channelInstance.noteDiscardedReference(false);
     }
+
+    @Override
+    public String toString() {
+        return "ChannelLineageNode[" + channelInstance + ']';
+    }
 }

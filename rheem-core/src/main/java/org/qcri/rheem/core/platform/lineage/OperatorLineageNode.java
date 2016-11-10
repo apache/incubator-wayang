@@ -22,4 +22,9 @@ public class OperatorLineageNode extends LazyExecutionLineageNode {
     protected <T> T accept(T accumulator, Aggregator<T> aggregator) {
         return aggregator.aggregate(accumulator, this.operatorContext);
     }
+
+    @Override
+    public String toString() {
+        return "OperatorLineageNode[" + this.operatorContext + ']';
+    }
 }

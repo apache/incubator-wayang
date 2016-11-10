@@ -136,6 +136,20 @@ public class ExecutionStage {
         return RheemCollections.getSingle(this.getAllTasks());
     }
 
+    /**
+     * Tells whether this instance is in a {@link ExecutionStageLoop} that has finished iterating.
+     *
+     * @return whether this instance is in a finished {@Link ESL}
+     * @see #isLoopHead()
+     */
+    public boolean isInFinishedLoop() {
+        if (this.executionStageLoop == null) {
+            return false;
+        }
+        final LoopHeadOperator loopHeadOperator = (LoopHeadOperator) this.executionStageLoop.getLoopHead().getLoopHeadTask().getOperator();
+        return loopHeadOperator.getState() == LoopHeadOperator.State.FINISHED;
+    }
+
     public void markAsStartTask(ExecutionTask executionTask) {
         Validate.isTrue(executionTask.getStage() == this);
         this.startTasks.add(executionTask);
