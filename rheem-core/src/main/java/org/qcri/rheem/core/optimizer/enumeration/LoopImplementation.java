@@ -72,6 +72,22 @@ public class LoopImplementation {
         return costEstimate;
     }
 
+    /**
+     * Retrieve the squashed cost estimate for this instance. Fix costs are not excluded.
+     *
+     * @return the squashed cost estimate
+     */
+    public double getSquashedCostEstimate() {
+        // What about the Junctions? Are they already included?
+        // Yes, in-loop Junctions are contained in the body implementations and the surrounding Junctions are
+        // contained in the top-level PlanImplementation.
+        double costEstimate = 0d;
+        for (int i = 0; i < this.iterationImplementations.size(); i++) {
+            costEstimate += this.iterationImplementations.get(i).getSquashedCostEstimate();
+        }
+        return costEstimate;
+    }
+
     public List<IterationImplementation> getIterationImplementations() {
         return this.iterationImplementations;
     }
@@ -210,6 +226,15 @@ public class LoopImplementation {
          */
         public ProbabilisticDoubleInterval getCostEstimate() {
             return this.bodyImplementation.getCostEstimate(false);
+        }
+
+        /**
+         * Retrieve the cost estimate for this instance. Global overhead is not included.
+         *
+         * @return the cost estimate
+         */
+        public double getSquashedCostEstimate() {
+            return this.bodyImplementation.getSquashedCostEstimate(false);
         }
 
         /**

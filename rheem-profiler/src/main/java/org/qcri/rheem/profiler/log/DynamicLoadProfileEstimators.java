@@ -9,11 +9,16 @@ import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.util.RheemArrays;
-import org.qcri.rheem.java.operators.JavaCollectOperator;
+import org.qcri.rheem.graphchi.operators.GraphChiPageRankOperator;
+import org.qcri.rheem.java.operators.*;
+import org.qcri.rheem.java.operators.graph.JavaPageRankOperator;
+import org.qcri.rheem.jdbc.operators.JdbcFilterOperator;
+import org.qcri.rheem.jdbc.operators.JdbcProjectionOperator;
+import org.qcri.rheem.jdbc.operators.JdbcTableSource;
 import org.qcri.rheem.jdbc.operators.SqlToStreamOperator;
-import org.qcri.rheem.spark.operators.SparkBroadcastOperator;
-import org.qcri.rheem.spark.operators.SparkCacheOperator;
-import org.qcri.rheem.spark.operators.SparkCollectOperator;
+import org.qcri.rheem.spark.operators.*;
+import org.qcri.rheem.spark.operators.graph.SparkPageRankOperator;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,6 +42,193 @@ public class DynamicLoadProfileEstimators {
                                                                       OptimizationSpace optimizationSpace,
                                                                       Configuration configuration) {
 
+        // JavaExecutionOperators.
+
+        // Map-like operators.
+        if (operator instanceof JavaMapOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof JavaFilterOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof JavaFlatMapOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof JavaMapPartitionsOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof JavaRandomSampleOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof JavaReservoirSampleOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+
+            // Reduce-like operators
+        } else if (operator instanceof JavaReduceByOperator) {
+            return createQuadraticEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof JavaMaterializedGroupByOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof JavaDistinctOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof JavaSortOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof JavaGlobalReduceOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof JavaGlobalMaterializedGroupOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof JavaCountOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
+
+            // Binary operators.
+        } else if (operator instanceof JavaIntersectOperator) {
+            return createLinearEstimator(operator, new int[]{0, 1}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof JavaUnionAllOperator) {
+            return createLinearEstimator(operator, new int[0], new int[0], true, optimizationSpace);
+        } else if (operator instanceof JavaCartesianOperator) {
+            return createLinearEstimator(operator, new int[0], new int[]{0}, false, optimizationSpace);
+        } else if (operator instanceof JavaJoinOperator) {
+            return createLinearEstimator(operator, new int[]{0, 1}, new int[]{0}, false, optimizationSpace);
+
+            // Loop operators.
+        } else if (operator instanceof JavaLoopOperator) {
+            return createLoopEstimator(operator, optimizationSpace);
+        } else if (operator instanceof JavaDoWhileOperator) {
+            return createLoopEstimator(operator, optimizationSpace);
+        } else if (operator instanceof JavaRepeatOperator) {
+            return createLoopEstimator(operator, optimizationSpace);
+
+            // Sources and sinks.
+        } else if (operator instanceof JavaCollectionSource) {
+            return createLinearEstimator(operator, new int[0], new int[0], true, optimizationSpace);
+        } else if (operator instanceof JavaLocalCallbackSink) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof JavaTextFileSource) {
+            return createLinearEstimator(operator, new int[]{}, new int[]{0}, true, optimizationSpace);
+        } else if (operator instanceof JavaTextFileSink) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
+        } else if (operator instanceof JavaObjectFileSource) {
+            return createLinearEstimator(operator, new int[]{}, new int[]{0}, true, optimizationSpace);
+        } else if (operator instanceof JavaObjectFileSink) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
+        } else if (operator instanceof JavaTsvFileSource) {
+            return createLinearEstimator(operator, new int[]{}, new int[]{0}, true, optimizationSpace);
+        } else if (operator instanceof JavaTsvFileSink) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
+
+            // Graph operators.
+        } else if (operator instanceof JavaPageRankOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{0}, false, optimizationSpace);
+
+            // Conversion operators.
+        } else if (operator instanceof JavaCollectOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof SqlToStreamOperator) {
+            return createLinearEstimator(operator, new int[]{}, new int[]{0}, true, optimizationSpace);
+        }
+
+        // SparkExecutionOperators.
+
+        // Map-like operators.
+        else if (operator instanceof SparkMapOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof SparkFilterOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof SparkFlatMapOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof SparkMapPartitionsOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof SparkBernoulliSampleOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof SparkRandomPartitionSampleOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof SparkShufflePartitionSampleOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof ZipWithIdOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+
+            // Reduce-like operators
+        } else if (operator instanceof SparkReduceByOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof SparkMaterializedGroupByOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof SparkDistinctOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, false, optimizationSpace);
+        } else if (operator instanceof SparkSortOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof SparkGlobalReduceOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
+        } else if (operator instanceof SparkGlobalMaterializedGroupOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
+        } else if (operator instanceof SparkCountOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
+
+            // Binary operators.
+        } else if (operator instanceof SparkIntersectOperator) {
+            return createLinearEstimator(operator, new int[]{0, 1}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof SparkUnionAllOperator) {
+            return createLinearEstimator(operator, new int[0], new int[0], true, optimizationSpace);
+        } else if (operator instanceof SparkCartesianOperator) {
+            return createLinearEstimator(operator, new int[0], new int[]{0}, false, optimizationSpace);
+        } else if (operator instanceof SparkJoinOperator) {
+            return createLinearEstimator(operator, new int[]{0, 1}, new int[]{0}, false, optimizationSpace);
+
+            // Loop operators.
+        } else if (operator instanceof SparkLoopOperator) {
+            return createLoopEstimator(operator, optimizationSpace);
+        } else if (operator instanceof SparkDoWhileOperator) {
+            return createLoopEstimator(operator, optimizationSpace);
+        } else if (operator instanceof SparkRepeatOperator) {
+            return createLoopEstimator(operator, optimizationSpace);
+
+            // Sources and sinks.
+        } else if (operator instanceof SparkCollectionSource) {
+            return createLinearEstimator(operator, new int[0], new int[0], true, optimizationSpace);
+        } else if (operator instanceof SparkLocalCallbackSink) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], false, optimizationSpace);
+        } else if (operator instanceof SparkTextFileSource) {
+            return createLinearEstimator(operator, new int[]{}, new int[]{0}, true, optimizationSpace);
+        } else if (operator instanceof SparkTextFileSink) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
+        } else if (operator instanceof SparkObjectFileSource) {
+            return createLinearEstimator(operator, new int[]{}, new int[]{0}, true, optimizationSpace);
+        } else if (operator instanceof SparkObjectFileSink) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
+        } else if (operator instanceof SparkTsvFileSource) {
+            return createLinearEstimator(operator, new int[]{}, new int[]{0}, true, optimizationSpace);
+        } else if (operator instanceof SparkTsvFileSink) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
+
+            // Graph operators.
+        } else if (operator instanceof SparkPageRankOperator) {
+            return createQuadraticEstimator(operator, new int[]{0}, new int[]{0}, true, optimizationSpace);
+
+            // Conversion operators.
+        } else if (operator instanceof SparkCollectOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
+        } else if (operator instanceof SparkCacheOperator) {
+            return createLinearEstimator(operator, new int[]{}, new int[]{0}, true, optimizationSpace);
+        } else if (operator instanceof SparkBroadcastOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{}, true, optimizationSpace);
+        }
+
+        // JdbcExecutionOperators.
+        else if (operator instanceof JdbcTableSource) {
+            return createLinearEstimator(operator, new int[]{}, new int[]{0}, true, optimizationSpace);
+        } else if (operator instanceof JdbcFilterOperator) {
+            return createLinearEstimator(operator, new int[]{}, new int[]{0}, false, optimizationSpace);
+        } else if (operator instanceof JdbcProjectionOperator) {
+            return createLinearEstimator(operator, new int[]{}, new int[]{0}, false, optimizationSpace);
+
+            // GraphChiExecutionOperators.
+        } else if (operator instanceof GraphChiPageRankOperator) {
+            return createLinearEstimator(operator, new int[]{0}, new int[]{0}, true, optimizationSpace);
+        }
+
+        // Otherwise, use heuristics.
+        System.out.printf("Creating load profile estimator for %s heuristically.\n", operator);
+
+        return createSuitableEstimatorHeuristically(operator, optimizationSpace, configuration);
+    }
+
+    private static DynamicLoadProfileEstimator createSuitableEstimatorHeuristically(
+            ExecutionOperator operator,
+            OptimizationSpace optimizationSpace,
+            Configuration configuration) {
         // First check if the configuration already provides an estimator.
         final String key = operator.getLoadProfileEstimatorConfigurationKey();
         final String juelSpec = configuration.getProperties().provideLocally(key);
@@ -54,12 +246,12 @@ public class DynamicLoadProfileEstimators {
                 (operator instanceof CountOperator || operator instanceof GlobalReduceOperator
                         || operator instanceof GlobalMaterializedGroupOperator);
         if (isMapLike || isGlobalReduction) {
-            return createLinearEstimator(operator, new int[]{0}, new int[0], optimizationSpace);
+            return createLinearEstimator(operator, new int[]{0}, new int[0], true, optimizationSpace);
         }
 
         // Special treatment of such binay operator that have a static number of output data quanta.
         if (operator instanceof UnionAllOperator || operator instanceof CartesianOperator) {
-            return createLinearEstimator(operator, new int[0], new int[]{0}, optimizationSpace);
+            return createLinearEstimator(operator, new int[0], new int[]{0}, true, optimizationSpace);
         }
 
         // Special treatment of loop head operators.
@@ -67,7 +259,7 @@ public class DynamicLoadProfileEstimators {
             return createLoopEstimator(operator, optimizationSpace);
         }
 
-        return createLinearEstimator(operator, optimizationSpace);
+        return createLinearEstimator(operator, true, optimizationSpace);
     }
 
     /**
@@ -75,14 +267,17 @@ public class DynamicLoadProfileEstimators {
      *
      * @param operator          the {@link ExecutionOperator} for that should be estimated
      * @param optimizationSpace context for {@link Variable}s
+     * @param isWithOffset      whether to include an offset
      * @return the {@link DynamicLoadProfileEstimator}
      */
     public static DynamicLoadProfileEstimator createLinearEstimator(ExecutionOperator operator,
+                                                                    boolean isWithOffset,
                                                                     OptimizationSpace optimizationSpace) {
         return createLinearEstimator(
                 operator,
                 RheemArrays.range(operator.getNumInputs()),
                 RheemArrays.range(operator.getNumOutputs()),
+                isWithOffset,
                 optimizationSpace
         );
     }
@@ -93,12 +288,14 @@ public class DynamicLoadProfileEstimators {
      * @param operator          the {@link ExecutionOperator} for that should be estimated
      * @param inputIndices      indices of {@link InputSlot}s for which {@link Variable}s should be created
      * @param outputIndices     indices of {@link OutputSlot}s for which {@link Variable}s should be created
+     * @param isWithOffset      whether to include an offset
      * @param optimizationSpace context for {@link Variable}s
      * @return the {@link DynamicLoadProfileEstimator}
      */
     public static DynamicLoadProfileEstimator createLinearEstimator(ExecutionOperator operator,
                                                                     int[] inputIndices,
                                                                     int[] outputIndices,
+                                                                    boolean isWithOffset,
                                                                     OptimizationSpace optimizationSpace) {
         // Create variables.
         Variable[] inVars = new Variable[inputIndices.length];
@@ -115,13 +312,13 @@ public class DynamicLoadProfileEstimators {
                     operator.getLoadProfileEstimatorConfigurationKey() + "->" + operator.getOutput(index).getName()
             );
         }
-        Variable offsetVar = optimizationSpace.getOrCreateVariable(
+        Variable offsetVar = isWithOffset ? optimizationSpace.getOrCreateVariable(
                 operator.getLoadProfileEstimatorConfigurationKey() + "->offset"
-        );
+        ) : null;
 
         // Create the estimation function.
         final DynamicLoadEstimator.SinglePointEstimator singlePointEstimator = (individual, in, out) -> {
-            double accu = offsetVar.getValue(individual);
+            double accu = isWithOffset ? offsetVar.getValue(individual) : 0d;
             for (int i = 0; i < inputIndices.length; i++) {
                 accu += inVars[i].getValue(individual) * in[inputIndices[i]];
             }
@@ -139,14 +336,116 @@ public class DynamicLoadProfileEstimators {
         for (int i = 0; i < outputIndices.length; i++) {
             sb.append("%s*out").append(outputIndices[i]).append(" + ");
         }
-        sb.append("%s}");
+        if (isWithOffset) {
+            sb.append("%s}");
+        } else {
+            sb.setLength(sb.length() - " + ".length());
+            sb.append("}");
+        }
         String juelTemplate = sb.toString();
 
         // Gather the employed variables.
         Collection<Variable> employedVariables = new LinkedList<>();
         employedVariables.addAll(Arrays.asList(inVars));
         employedVariables.addAll(Arrays.asList(outVars));
-        employedVariables.add(offsetVar);
+        if (isWithOffset) employedVariables.add(offsetVar);
+
+        // Assemble the estimator.
+        return new DynamicLoadProfileEstimator(
+                operator.getLoadProfileEstimatorConfigurationKey(),
+                operator.getNumInputs(),
+                operator.getNumOutputs(),
+                new DynamicLoadEstimator(singlePointEstimator, juelTemplate, employedVariables)
+        );
+    }
+
+    /**
+     * Create a {@link DynamicLoadProfileEstimator} that is linear in the input and output (including some offset).
+     *
+     * @param operator          the {@link ExecutionOperator} for that should be estimated
+     * @param inputIndices      indices of {@link InputSlot}s for which {@link Variable}s should be created
+     * @param outputIndices     indices of {@link OutputSlot}s for which {@link Variable}s should be created
+     * @param isWithOffset      whether to include an offset
+     * @param optimizationSpace context for {@link Variable}s
+     * @return the {@link DynamicLoadProfileEstimator}
+     */
+    public static DynamicLoadProfileEstimator createQuadraticEstimator(ExecutionOperator operator,
+                                                                    int[] inputIndices,
+                                                                    int[] outputIndices,
+                                                                    boolean isWithOffset,
+                                                                    OptimizationSpace optimizationSpace) {
+        // Create variables.
+        Variable[] linearInVars = new Variable[inputIndices.length];
+        Variable[] quadraticInVars = new Variable[inputIndices.length];
+        for (int i = 0; i < inputIndices.length; i++) {
+            int index = inputIndices[i];
+            linearInVars[i] = optimizationSpace.getOrCreateVariable(
+                    operator.getLoadProfileEstimatorConfigurationKey() + "->" + operator.getInput(index).getName()
+            );
+            quadraticInVars[i] = optimizationSpace.getOrCreateVariable(
+                    operator.getLoadProfileEstimatorConfigurationKey() + "->" + operator.getInput(index).getName() + "^2"
+            );
+        }
+        Variable[] linearOutVars = new Variable[outputIndices.length];
+        Variable[] quadraticOutVars = new Variable[outputIndices.length];
+        for (int i = 0; i < outputIndices.length; i++) {
+            int index = outputIndices[i];
+            linearOutVars[i] = optimizationSpace.getOrCreateVariable(
+                    operator.getLoadProfileEstimatorConfigurationKey() + "->" + operator.getOutput(index).getName()
+            );
+            quadraticOutVars[i] = optimizationSpace.getOrCreateVariable(
+                    operator.getLoadProfileEstimatorConfigurationKey() + "->" + operator.getOutput(index).getName() + "^2"
+            );
+        }
+
+        Variable offsetVar = isWithOffset ? optimizationSpace.getOrCreateVariable(
+                operator.getLoadProfileEstimatorConfigurationKey() + "->offset"
+        ) : null;
+
+        // Create the estimation function.
+        final DynamicLoadEstimator.SinglePointEstimator singlePointEstimator = (individual, in, out) -> {
+            double accu = isWithOffset ? offsetVar.getValue(individual) : 0d;
+            for (int i = 0; i < inputIndices.length; i++) {
+                accu += linearInVars[i].getValue(individual) * in[inputIndices[i]]
+                        + quadraticInVars[i].getValue(individual) * in[inputIndices[i]] * in[inputIndices[i]];
+            }
+            for (int i = 0; i < outputIndices.length; i++) {
+                accu += linearOutVars[i].getValue(individual) * out[outputIndices[i]]
+                        + quadraticOutVars[i].getValue(individual) * out[outputIndices[i]] * out[outputIndices[i]];
+            }
+            return accu;
+        };
+
+        // Create the JUEL template.
+        StringBuilder sb = new StringBuilder().append("${");
+        for (int i = 0; i < inputIndices.length; i++) {
+            sb.append("%s*in").append(inputIndices[i]).append(" + ")
+                    .append("%s*in").append(inputIndices[i]).append("*in").append(inputIndices[i]).append(" + ");
+        }
+        for (int i = 0; i < outputIndices.length; i++) {
+            sb.append("%s*out").append(outputIndices[i]).append(" + ")
+                    .append("%s*out").append(inputIndices[i]).append("*out").append(inputIndices[i]).append(" + ");
+
+        }
+        if (isWithOffset) {
+            sb.append("%s}");
+        } else {
+            sb.setLength(sb.length() - " + ".length());
+            sb.append("}");
+        }
+        String juelTemplate = sb.toString();
+
+        // Gather the employed variables.
+        Collection<Variable> employedVariables = new LinkedList<>();
+        for (int i = 0; i < linearInVars.length; i++) {
+            employedVariables.add(linearInVars[i]);
+            employedVariables.add(quadraticInVars[i]);
+        }
+        for (int i = 0; i < linearOutVars.length; i++) {
+            employedVariables.add(linearOutVars[i]);
+            employedVariables.add(quadraticOutVars[i]);
+        }
+        employedVariables.addAll(Arrays.asList(linearInVars));
 
         // Assemble the estimator.
         return new DynamicLoadProfileEstimator(

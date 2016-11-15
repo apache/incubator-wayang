@@ -152,6 +152,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
                 // Activate successor ExecutionTasks.
                 this.activateSuccessorTasks(task, outputChannelInstances);
+                outputChannelInstances.stream().filter(Objects::nonNull).forEach(ChannelInstance::disposeIfUnreferenced);
             }
         }
 

@@ -1,5 +1,7 @@
 package org.qcri.rheem.profiler.log;
 
+import gnu.trove.map.TObjectIntMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -31,6 +33,11 @@ public class GeneticOptimizer {
      * Observations to assess the fitness of the to-be-learnt function.
      */
     private final Collection<PartialExecution> observations;
+
+    /**
+     * Counts observation instances, such as an operator or a platform initialization, in the training data.
+     */
+    private final TObjectIntMap<Object> numObservations;
 
     /**
      * {@link LoadProfileEstimator}s that are relevant to calculate the fitness of {@link Individual}s.
@@ -83,6 +90,11 @@ public class GeneticOptimizer {
     private final ToDoubleFunction<Individual> fitnessFunction;
 
     /**
+     * The sum of the runtime of all {@link #observations}.
+     */
+    private long runtimeSum;
+
+    /**
      * Creates a new instance.
      */
     public GeneticOptimizer(OptimizationSpace optimizationSpace,
@@ -118,24 +130,31 @@ public class GeneticOptimizer {
         this.mutationResetRatio = this.configuration.getDoubleProperty("rheem.profiler.ga.mutation.reset", 0.01d);
         switch (this.configuration.getStringProperty("rheem.profiler.ga.fitness.type", "relative")) {
             case "relative":
-                this.fitnessFunction = individual -> individual.calculateRelativeFitness(
-                        this.observations, this.estimators, this.platformOverheads, this.configuration
-                );
+                this.fitnessFunction = individual -> individual.calculateRelativeFitness(this);
                 break;
             case "absolute":
-                this.fitnessFunction = individual -> individual.calculateAbsoluteFitness(
-                        this.observations, this.estimators, this.platformOverheads, this.configuration
-                );
+                this.fitnessFunction = individual -> individual.calculateAbsoluteFitness(this);
                 break;
             case "subject":
-                this.fitnessFunction = individual -> individual.calcluateSubjectbasedFitness(
-                        this.observations, this.estimators, this.platformOverheads, this.configuration
-                );
+                this.fitnessFunction = individual -> individual.calcluateSubjectbasedFitness(this);
                 break;
             default:
                 throw new IllegalStateException(
                         "Unknown fitness function: " + this.configuration.getStringProperty("rheem.profiler.ga.fitness.type")
                 );
+        }
+
+        // Count the distinct elements in the PartialExecutions.
+        this.numObservations = new TObjectIntHashMap<>();
+        this.runtimeSum = 0L;
+        for (PartialExecution observation : this.observations) {
+            for (PartialExecution.OperatorExecution operatorExecution : observation.getOperatorExecutions()) {
+                this.numObservations.adjustOrPutValue(operatorExecution.getOperator().getClass(), 1, 1);
+            }
+            for (Platform platform : observation.getInitializedPlatforms()) {
+                this.numObservations.adjustOrPutValue(platform, 1, 1);
+            }
+            this.runtimeSum += observation.getMeasuredExecutionTime();
         }
     }
 
@@ -233,5 +252,43 @@ public class GeneticOptimizer {
         return this.observations;
     }
 
+    public Configuration getConfiguration() {
+        return configuration;
+    }
 
+    public OptimizationSpace getOptimizationSpace() {
+        return optimizationSpace;
+    }
+
+    public Collection<PartialExecution> getObservations() {
+        return observations;
+    }
+
+    public TObjectIntMap<Object> getNumObservations() {
+        return numObservations;
+    }
+
+    public Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> getEstimators() {
+        return estimators;
+    }
+
+    public Map<Platform, Variable> getPlatformOverheads() {
+        return platformOverheads;
+    }
+
+    public double calculateObservationBasedWeight(PartialExecution observation) {
+        double weight = 0;
+        for (Platform platform : observation.getInitializedPlatforms()) {
+            weight += 1d / this.numObservations.get(platform);
+        }
+        for (PartialExecution.OperatorExecution operatorExecution : observation.getOperatorExecutions()) {
+            weight += 1d / this.numObservations.get(operatorExecution.getOperator().getClass());
+        }
+
+        return weight / this.numObservations.size();
+    }
+
+    public double calculateRuntimeBasedWeight(PartialExecution observation) {
+        return observation.getMeasuredExecutionTime() / (double) this.runtimeSum;
+    }
 }

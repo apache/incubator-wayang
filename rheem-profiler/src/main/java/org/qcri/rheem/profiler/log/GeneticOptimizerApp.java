@@ -4,7 +4,6 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.Platform;
@@ -64,13 +63,37 @@ public class GeneticOptimizerApp {
         this.configuration = configuration;
 
         // Load the ExecutionLog.
-        final double samplingFactor = this.configuration.getDoubleProperty("rheem.profiler.ga.sampling", 1d);
+        double samplingFactor = this.configuration.getDoubleProperty("rheem.profiler.ga.sampling", 1d);
+        double maxCardinalitySpread = this.configuration.getDoubleProperty("rheem.profiler.ga.max-cardinality-spread", 1d);
         double minCardinalityConfidence = this.configuration.getDoubleProperty("rheem.profiler.ga.min-cardinality-confidence", 1d);
+        long minExecutionTime = this.configuration.getLongProperty("rheem.profiler.ga.min-exec-time", 1);
         try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
-            this.partialExecutions = executionLog.stream()
-                    .filter(partialExecution -> this.checkConfidence(partialExecution, minCardinalityConfidence))
-                    .filter(partialExecution -> new Random().nextDouble() < samplingFactor)
-                    .collect(Collectors.toList());
+            this.partialExecutions = executionLog.stream().collect(Collectors.toList());
+
+            int lastSize = this.partialExecutions.size();
+            this.partialExecutions.removeIf(partialExecution -> !this.checkSpread(partialExecution, maxCardinalitySpread));
+            int newSize = this.partialExecutions.size();
+            System.out.printf("Removed %d executions with a too large cardinality spread (> %.2f).\n", lastSize - newSize, minCardinalityConfidence);
+            lastSize = newSize;
+
+            this.partialExecutions.removeIf(partialExecution -> !this.checkNonEmptyCardinalities(partialExecution));
+            newSize = this.partialExecutions.size();
+            System.out.printf("Removed %d executions with zero cardinalities.\n", lastSize - newSize);
+            lastSize = newSize;
+
+            this.partialExecutions.removeIf(partialExecution -> !this.checkConfidence(partialExecution, minCardinalityConfidence));
+            newSize = this.partialExecutions.size();
+            System.out.printf("Removed %d executions with a too low cardinality confidence (< %.2f).\n", lastSize - newSize, minCardinalityConfidence);
+            lastSize = newSize;
+
+            this.partialExecutions.removeIf(partialExecution -> partialExecution.getMeasuredExecutionTime() < minExecutionTime);
+            newSize = this.partialExecutions.size();
+            System.out.printf("Removed %d executions with a too short runtime (< %,d ms).\n", lastSize - newSize, minExecutionTime);
+            lastSize = newSize;
+
+            this.partialExecutions.removeIf(partialExecution -> new Random().nextDouble() > samplingFactor);
+            newSize = this.partialExecutions.size();
+            System.out.printf("Removed %d executions due to sampling.\n", lastSize - newSize);
         } catch (Exception e) {
             throw new RheemException("Could not evaluate execution log.", e);
         }
@@ -161,6 +184,60 @@ public class GeneticOptimizerApp {
         );
     }
 
+    /**
+     * Check if all {@link CardinalityEstimate}s for the {@link PartialExecution} are greater than zero.
+     *
+     * @param partialExecution     whose {@link CardinalityEstimate}s should be checked
+     * @return whether the {@link CardinalityEstimate}s are not equal to zero
+     */
+    private boolean checkNonEmptyCardinalities(PartialExecution partialExecution) {
+        return partialExecution.getOperatorExecutions().stream().allMatch(
+                operatorExecution -> {
+                    for (CardinalityEstimate cardinality : operatorExecution.getInputCardinalities()) {
+                        if (cardinality == null) continue;
+                        if (cardinality.getUpperEstimate() == 0) {
+                            return false;
+                        }
+                    }
+                    for (CardinalityEstimate cardinality : operatorExecution.getOutputCardinalities()) {
+                        if (cardinality == null) continue;
+                        if (cardinality.getUpperEstimate() == 0) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+        );
+    }
+
+    /**
+     * Check if all {@link CardinalityEstimate}s for the {@link PartialExecution} are sufficiently narrow.
+     *
+     * @param partialExecution     whose {@link CardinalityEstimate}s should be checked
+     * @param maxCardinalitySpread the maximum spread of the {@link CardinalityEstimate}s
+     * @return whether the {@link CardinalityEstimate}s are sufficiently narrow
+     */
+    private boolean checkSpread(PartialExecution partialExecution, double maxCardinalitySpread) {
+        return partialExecution.getOperatorExecutions().stream().allMatch(
+                operatorExecution -> {
+                    for (CardinalityEstimate cardinality : operatorExecution.getInputCardinalities()) {
+                        if (cardinality == null) continue;
+                        if (cardinality.getLowerEstimate() * maxCardinalitySpread < cardinality.getUpperEstimate()) {
+                            return false;
+                        }
+                    }
+                    for (CardinalityEstimate cardinality : operatorExecution.getOutputCardinalities()) {
+                        if (cardinality == null) continue;
+                        if (cardinality.getLowerEstimate() * maxCardinalitySpread < cardinality.getUpperEstimate()) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+        );
+    }
+
+
     public void run() {
         if (this.optimizationSpace.getNumDimensions() == 0) {
             System.out.println("There is nothing to optimize - all estimators are specified in the configuration.");
@@ -235,12 +312,11 @@ public class GeneticOptimizerApp {
                 // Gather the PartialExecutions that are not well explained by the learned model.
                 List<Tuple<PartialExecution, Double>> partialExecutionDeviations = new ArrayList<>();
                 for (PartialExecution partialExecution : partialExecutions) {
-                    final TimeEstimate timeEstimate = fittestIndividual.estimateTime(
+                    final double timeEstimate = fittestIndividual.estimateTime(
                             partialExecution, this.estimators, this.platformOverheads, this.configuration
                     );
-                    final long avgEstimate = timeEstimate.getAverageEstimate();
-                    double deviation = (Math.max(avgEstimate, partialExecution.getMeasuredExecutionTime()) + 500) /
-                            (Math.min(avgEstimate, partialExecution.getMeasuredExecutionTime()) + 500);
+                    double deviation = (Math.max(timeEstimate, partialExecution.getMeasuredExecutionTime()) + 500) /
+                            (Math.min(timeEstimate, partialExecution.getMeasuredExecutionTime()) + 500);
                     if (deviation > partialExecutionRemovalThreshold) {
                         partialExecutionDeviations.add(new Tuple<>(partialExecution, deviation));
                     }
@@ -263,11 +339,11 @@ public class GeneticOptimizerApp {
                     if (numRemovables-- <= 0) break;
                     final PartialExecution partialExecution = partialExecutionDeviation.getField0();
                     final double deviation = partialExecutionDeviation.getField1();
-                    final TimeEstimate timeEstimate = fittestIndividual.estimateTime(
+                    final double timeEstimate = fittestIndividual.estimateTime(
                             partialExecution, this.estimators, this.platformOverheads, this.configuration
                     );
                     System.out.printf("Removing %s... (estimated %s, deviation %,.2f)\n",
-                            format(partialExecution), timeEstimate, deviation
+                            format(partialExecution), Formats.formatDuration(Math.round(timeEstimate)), deviation
                     );
                     this.partialExecutions.remove(partialExecution);
                 }
@@ -285,10 +361,10 @@ public class GeneticOptimizerApp {
         List<PartialExecution> data = new ArrayList<>(optimizer.getData());
         data.sort((e1, e2) -> Long.compare(e2.getMeasuredExecutionTime(), e1.getMeasuredExecutionTime()));
         for (PartialExecution partialExecution : data) {
-            final TimeEstimate timeEstimate = individual.estimateTime(partialExecution, this.estimators, this.platformOverheads, this.configuration);
+            final double timeEstimate = individual.estimateTime(partialExecution, this.estimators, this.platformOverheads, this.configuration);
             System.out.printf("Actual %13s | Estimated: %72s | %3d operators | %s\n",
                     Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
-                    timeEstimate,
+                    Formats.formatDuration(Math.round(timeEstimate)),
                     partialExecution.getOperatorExecutions().size(),
                     Stream.concat(
                             partialExecution.getOperatorExecutions().stream().map(operatorExecution -> operatorExecution.getOperator().getClass().getSimpleName()),

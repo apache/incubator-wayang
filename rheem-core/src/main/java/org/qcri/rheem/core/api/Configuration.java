@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
+import java.util.function.ToDoubleFunction;
 
 import static org.qcri.rheem.core.util.ReflectionUtils.instantiateDefault;
 
@@ -77,6 +78,8 @@ public class Configuration {
 
     private KeyValueProvider<Platform, TimeToCostConverter> timeToCostConverterProvider;
 
+    private ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> costSquasherProvider;
+
     private KeyValueProvider<Platform, Long> platformStartUpTimeProvider;
 
     private ExplicitCollectionProvider<Platform> platformProvider;
@@ -84,8 +87,6 @@ public class Configuration {
     private ExplicitCollectionProvider<Mapping> mappingProvider;
 
     private ExplicitCollectionProvider<ChannelConversion> channelConversionProvider;
-
-    private ValueProvider<Comparator<ProbabilisticDoubleInterval>> costEstimateComparatorProvider;
 
     private CollectionProvider<Class<PlanEnumerationPruningStrategy>> pruningStrategyClassProvider;
 
@@ -147,10 +148,11 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(this.parent.timeToCostConverterProvider, this);
             this.platformStartUpTimeProvider =
                     new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider, this);
+            this.costSquasherProvider =
+                    new ConstantValueProvider<>(this, this.parent.costSquasherProvider);
 
             // Providers for plan enumeration.
             this.pruningStrategyClassProvider = new ExplicitCollectionProvider<>(this, this.parent.pruningStrategyClassProvider);
-            this.costEstimateComparatorProvider = new ConstantValueProvider<>(this, this.parent.costEstimateComparatorProvider);
             this.instrumentationStrategyProvider = new ConstantValueProvider<>(this, this.parent.instrumentationStrategyProvider);
 
             // Properties.
@@ -222,16 +224,17 @@ public class Configuration {
      */
     private void handleConfigurationFileEntry(String key, String value) {
         switch (key) {
-            case "rheem.core.optimizer.cost.comparator":
-                if (!(this.costEstimateComparatorProvider instanceof ConstantValueProvider)) {
+            case "rheem.core.optimizer.cost.squash":
+                if (!(this.costSquasherProvider instanceof ConstantValueProvider)) {
                     logger.warn("Cannot update cost estimate provider.");
                 } else if ("expectation".equals(value)) {
-                    ((ConstantValueProvider<Comparator<ProbabilisticDoubleInterval>>) this.costEstimateComparatorProvider).setValue(
-                            ProbabilisticDoubleInterval.expectationValueComparator()
+                    ((ConstantValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>>) this.costSquasherProvider).setValue(
+                            ProbabilisticDoubleInterval::getGeometricMeanEstimate
                     );
                 } else if ("random".equals(value)) {
-                    ((ConstantValueProvider<Comparator<ProbabilisticDoubleInterval>>) this.costEstimateComparatorProvider).setValue(
-                            ProbabilisticDoubleInterval.randomComparator()
+                    final int salt = new Random().nextInt();
+                    ((ConstantValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>>) this.costSquasherProvider).setValue(
+                            cost -> cost.hashCode() * salt + cost.hashCode()
                     );
                 } else {
                     logger.warn("Cannot set unknown cost comparator \"{}\".", value);
@@ -497,11 +500,11 @@ public class Configuration {
             configuration.setPruningStrategyClassProvider(overrideProvider);
         }
         {
-            ValueProvider<Comparator<ProbabilisticDoubleInterval>> defaultProvider =
-                    new ConstantValueProvider<>(ProbabilisticDoubleInterval.expectationValueComparator(), configuration);
-            ValueProvider<Comparator<ProbabilisticDoubleInterval>> overrideProvider =
+            ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> defaultProvider =
+                    new ConstantValueProvider<>(ProbabilisticDoubleInterval::getGeometricMeanEstimate, configuration);
+            ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> overrideProvider =
                     new ConstantValueProvider<>(defaultProvider);
-            configuration.setCostEstimateComparatorProvider(overrideProvider);
+            configuration.setCostSquasherProvider(overrideProvider);
         }
         {
             ValueProvider<InstrumentationStrategy> defaultProvider =
@@ -623,14 +626,6 @@ public class Configuration {
         this.channelConversionProvider = channelConversionProvider;
     }
 
-    public ValueProvider<Comparator<ProbabilisticDoubleInterval>> getCostEstimateComparatorProvider() {
-        return this.costEstimateComparatorProvider;
-    }
-
-    public void setCostEstimateComparatorProvider(ValueProvider<Comparator<ProbabilisticDoubleInterval>> costEstimateComparatorProvider) {
-        this.costEstimateComparatorProvider = costEstimateComparatorProvider;
-    }
-
     public CollectionProvider<Class<PlanEnumerationPruningStrategy>> getPruningStrategyClassProvider() {
         return this.pruningStrategyClassProvider;
     }
@@ -694,6 +689,14 @@ public class Configuration {
 
     public void setTimeToCostConverterProvider(KeyValueProvider<Platform, TimeToCostConverter> timeToCostConverterProvider) {
         this.timeToCostConverterProvider = timeToCostConverterProvider;
+    }
+
+    public ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> getCostSquasherProvider() {
+        return this.costSquasherProvider;
+    }
+
+    public void setCostSquasherProvider(ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> costSquasherProvider) {
+        this.costSquasherProvider = costSquasherProvider;
     }
 
     public OptionalLong getOptionalLongProperty(String key) {

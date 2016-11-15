@@ -26,7 +26,8 @@ public abstract class LazyExecutionLineageNode {
      * @param predecessor the predecessor
      */
     public void addPredecessor(LazyExecutionLineageNode predecessor) {
-        assert !this.predecessors.contains(predecessor);
+        assert !this.predecessors.contains(predecessor) :
+                String.format("Lineage predecessor %s is already present.", predecessor);
         this.predecessors.add(predecessor);
     }
 

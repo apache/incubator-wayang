@@ -3,6 +3,7 @@ package org.qcri.rheem.core.plan.executionplan;
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -121,6 +122,32 @@ public class ExecutionStage {
      */
     public ExecutionStageLoop getLoop() {
         return this.executionStageLoop;
+    }
+
+    /**
+     * Retrieves the {@link LoopHeadOperator} {@link ExecutionTask} in this instance. This instance must be a
+     * loop head.
+     *
+     * @return the {@link LoopHeadOperator} {@link ExecutionTask}
+     * @see #isLoopHead()
+     */
+    public ExecutionTask getLoopHeadTask() {
+        assert this.isLoopHead();
+        return RheemCollections.getSingle(this.getAllTasks());
+    }
+
+    /**
+     * Tells whether this instance is in a {@link ExecutionStageLoop} that has finished iterating.
+     *
+     * @return whether this instance is in a finished {@Link ESL}
+     * @see #isLoopHead()
+     */
+    public boolean isInFinishedLoop() {
+        if (this.executionStageLoop == null) {
+            return false;
+        }
+        final LoopHeadOperator loopHeadOperator = (LoopHeadOperator) this.executionStageLoop.getLoopHead().getLoopHeadTask().getOperator();
+        return loopHeadOperator.getState() == LoopHeadOperator.State.FINISHED;
     }
 
     public void markAsStartTask(ExecutionTask executionTask) {
