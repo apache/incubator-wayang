@@ -40,7 +40,8 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     /**
      * Special dataset size that represents "unknown".
      */
-    public static final long UNKNOWN_DATASET_SIZE = -1;
+    // TODO: With 0 being a legal dataset size, it would be nice to use a different "null" value, e.g., -1.
+    public static final long UNKNOWN_DATASET_SIZE = 0L;
 
     /**
      * Default seed value.
@@ -136,7 +137,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * @return whether it knows the dataset size
      */
     protected boolean isDataSetSizeKnown() {
-        return this.datasetSize >= 0;
+        return this.datasetSize > 0;
     }
 
     public Methods getSampleMethod() {
