@@ -875,6 +875,11 @@ class SampleDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], sampl
     */
   private var sampleMethod = SampleOperator.Methods.ANY
 
+  /**
+    * Seed to use.
+    */
+  private var seed = SampleOperator.DEFAULT_SEED
+
   // Reuse the input TypeTrap to enforce type equality between input and output.
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
 
@@ -900,8 +905,19 @@ class SampleDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], sampl
     this
   }
 
+  /**
+    * Set the sample method to be used.
+    *
+    * @param seed
+    * @return this instance
+    */
+  def withSeed(seed: Long) = {
+    this.seed = seed
+    this
+  }
+
   override protected def build = inputDataQuanta.dataQuanta().sample(
-    sampleSize, this.datasetSize, this.sampleMethod
+    sampleSize, this.datasetSize, this.seed, this.sampleMethod
   )
 
 }

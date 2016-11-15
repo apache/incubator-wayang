@@ -217,8 +217,8 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def sample(sampleSize: Int,
              datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
-             sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY,
-             seed: Long = SampleOperator.DEFAULT_SEED): DataQuanta[Out] = {
+             seed: Long = SampleOperator.DEFAULT_SEED,
+             sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] = {
     val sampleOperator = new SampleOperator(
       sampleSize,
       datasetSize,
