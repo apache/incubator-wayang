@@ -32,7 +32,7 @@ public class SampleMapping implements Mapping {
                 "sample", new SampleOperator<>(0, DataSetType.none(), null), false
         ).withAdditionalTest(op ->
                 op.getSampleMethod() == SampleOperator.Methods.RANDOM
-                        || op.getSampleMethod() == SampleOperator.Methods.SHUFFLE_FIRST
+                        || op.getSampleMethod() == SampleOperator.Methods.SHUFFLE_PARTITION_FIRST
                         || op.getSampleMethod() == SampleOperator.Methods.BERNOULLI
                         || op.getSampleMethod() == SampleOperator.Methods.ANY
         ); //TODO: check if the zero here affects execution
@@ -46,7 +46,7 @@ public class SampleMapping implements Mapping {
                         case ANY:
                         case RANDOM:
                             return new SparkRandomPartitionSampleOperator<>(matchedOperator);
-                        case SHUFFLE_FIRST:
+                        case SHUFFLE_PARTITION_FIRST:
                             return new SparkShufflePartitionSampleOperator<>(matchedOperator);
                         case BERNOULLI:
                             return new SparkBernoulliSampleOperator<>(matchedOperator);

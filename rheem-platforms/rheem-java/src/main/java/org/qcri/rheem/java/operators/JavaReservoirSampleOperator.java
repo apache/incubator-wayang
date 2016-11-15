@@ -26,7 +26,7 @@ public class JavaReservoirSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
-    private final Random rand = new Random();
+    private final Random rand = new Random(seed);
 
     /**
      * Creates a new instance.
@@ -45,6 +45,17 @@ public class JavaReservoirSampleOperator<Type>
      */
     public JavaReservoirSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
         super(sampleSize, datasetSize, type, Methods.RESERVOIR);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param sampleSize
+     * @param datasetSize
+     * @param seed
+     */
+    public JavaReservoirSampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type) {
+        super(sampleSize, datasetSize, seed, type, Methods.RESERVOIR);
     }
 
     /**

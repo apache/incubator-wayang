@@ -47,6 +47,17 @@ public class SparkBernoulliSampleOperator<Type>
     }
 
     /**
+     * Creates a new instance.
+     *
+     * @param sampleSize
+     * @param datasetSize
+     * @param seed
+     */
+    public SparkBernoulliSampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type) {
+        super(sampleSize, datasetSize, seed, type, Methods.BERNOULLI);
+    }
+
+    /**
      * Copies an instance (exclusive of broadcasts).
      *
      * @param that that should be copied
@@ -72,7 +83,7 @@ public class SparkBernoulliSampleOperator<Type>
         final JavaRDD<Type> inputRdd = input.provideRdd();
         long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() : inputRdd.count();
         double sampleFraction = ((double) this.sampleSize) / datasetSize;
-        final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction);
+        final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction, seed);
         this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);

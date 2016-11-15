@@ -33,7 +33,7 @@ public class SparkRandomPartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
-    private final Random rand = new Random();
+    private final Random rand = new Random(seed);
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -55,6 +55,13 @@ public class SparkRandomPartitionSampleOperator<Type>
      */
     public SparkRandomPartitionSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
         super(sampleSize, datasetSize, type, Methods.RANDOM);
+    }
+
+    /**
+     * Creates a new instance.
+     */
+    public SparkRandomPartitionSampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type) {
+        super(sampleSize, datasetSize, seed, type, Methods.RANDOM);
     }
 
     /**

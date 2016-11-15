@@ -29,6 +29,7 @@ public class SparkRandomPartitionSampleOperatorTest extends SparkOperatorTestBas
                         sampleSize,
                         DataSetType.createDefaultUnchecked(Integer.class)
                 );
+        sampleOperator.setSeed(42);
 
         // Set up the ChannelInstances.
         final ChannelInstance[] inputs = new ChannelInstance[]{input};

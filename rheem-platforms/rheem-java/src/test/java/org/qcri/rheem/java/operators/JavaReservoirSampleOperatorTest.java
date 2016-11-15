@@ -26,6 +26,7 @@ public class JavaReservoirSampleOperatorTest extends JavaExecutionOperatorTestBa
                 new JavaReservoirSampleOperator<>(
                         sampleSize,
                         10,
+                        42,
                         DataSetType.createDefaultUnchecked(Integer.class)
                 );
 

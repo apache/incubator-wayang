@@ -27,7 +27,7 @@ public class JavaRandomSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
-    private final Random rand = new Random();
+    private final Random rand = new Random(seed);
 
     /**
      * Creates a new instance.
@@ -46,6 +46,17 @@ public class JavaRandomSampleOperator<Type>
      */
     public JavaRandomSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
         super(sampleSize, datasetSize, type, Methods.RANDOM);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param sampleSize  size of sample
+     * @param datasetSize size of data
+     * @param seed
+     */
+    public JavaRandomSampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type) {
+        super(sampleSize, datasetSize, seed, type, Methods.RANDOM);
     }
 
     /**

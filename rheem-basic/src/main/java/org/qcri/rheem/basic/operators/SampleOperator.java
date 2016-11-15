@@ -28,9 +28,9 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
          */
         RANDOM,
         /**
-         * Shuffle the data first, then sequentially take the sample.
+         * Shuffle a data partition first, then sequentially take the sample from this partition.
          */
-        SHUFFLE_FIRST,
+        SHUFFLE_PARTITION_FIRST,
         /**
          * Reservoir sampling.
          */
@@ -40,10 +40,19 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     /**
      * Special dataset size that represents "unknown".
      */
-    // TODO: With 0 being a legal dataset size, it would be nice to use a different "null" value, e.g., -1.
-    public static final long UNKNOWN_DATASET_SIZE = 0L;
+    public static final long UNKNOWN_DATASET_SIZE = -1;
+
+    /**
+     * Default seed value.
+     */
+    public static final long DEFAULT_SEED = System.nanoTime();
 
     protected int sampleSize;
+
+    /**
+     * Optionally sets the seed for the sample.
+     */
+    protected long seed;
 
     /**
      * Size of the dataset to be sampled or {@code 0} if a dataset size is not known.
@@ -73,9 +82,17 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * Creates a new instance given the sample size and total dataset size.
      */
     public SampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type, Methods sampleMethod) {
+        this(sampleSize, datasetSize, DEFAULT_SEED, type, sampleMethod);
+    }
+
+    /**
+     * Creates a new instance given the sample size, total dataset size and seed.
+     */
+    public SampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type, Methods sampleMethod) {
         super(type, type, true);
         this.sampleSize = sampleSize;
         this.datasetSize = datasetSize;
+        this.seed = seed;
         this.sampleMethod = sampleMethod;
     }
 
@@ -89,6 +106,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         this.sampleSize = that.getSampleSize();
         this.sampleMethod = that.getSampleMethod();
         this.datasetSize = that.getDatasetSize();
+        this.seed = that.getSeed();
     }
 
 
@@ -103,6 +121,14 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     public long getDatasetSize() {
         return this.datasetSize;
     }
+
+    public void setDatasetSize(long datasetSize) { this.datasetSize = datasetSize; }
+
+    public long getSeed() {
+        return this.seed;
+    }
+
+    public void setSeed(long seed) { this.seed = seed; }
 
     /**
      * Find out whether this instance knows about the size of the incoming dataset.
