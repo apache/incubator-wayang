@@ -8,6 +8,7 @@ import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.util.RheemArrays;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.graphchi.operators.GraphChiPageRankOperator;
 import org.qcri.rheem.java.operators.*;
 import org.qcri.rheem.java.operators.graph.JavaPageRankOperator;
@@ -228,7 +229,7 @@ public class DynamicLoadProfileEstimators {
             OptimizationSpace optimizationSpace,
             Configuration configuration) {
         // First check if the configuration already provides an estimator.
-        final String key = operator.getLoadProfileEstimatorConfigurationKey();
+        final String key = RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys());
         final String juelSpec = configuration.getProperties().provideLocally(key);
         if (juelSpec != null) {
             return wrap(LoadProfileEstimators.createFromJuelSpecification(juelSpec));
@@ -300,18 +301,18 @@ public class DynamicLoadProfileEstimators {
         for (int i = 0; i < inputIndices.length; i++) {
             int index = inputIndices[i];
             inVars[i] = optimizationSpace.getOrCreateVariable(
-                    operator.getLoadProfileEstimatorConfigurationKey() + "->" + operator.getInput(index).getName()
+                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getInput(index).getName()
             );
         }
         Variable[] outVars = new Variable[outputIndices.length];
         for (int i = 0; i < outputIndices.length; i++) {
             int index = outputIndices[i];
             outVars[i] = optimizationSpace.getOrCreateVariable(
-                    operator.getLoadProfileEstimatorConfigurationKey() + "->" + operator.getOutput(index).getName()
+                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getOutput(index).getName()
             );
         }
         Variable offsetVar = isWithOffset ? optimizationSpace.getOrCreateVariable(
-                operator.getLoadProfileEstimatorConfigurationKey() + "->offset"
+                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->offset"
         ) : null;
 
         // Create the estimation function.
@@ -350,7 +351,7 @@ public class DynamicLoadProfileEstimators {
 
         // Assemble the estimator.
         return new DynamicLoadProfileEstimator(
-                operator.getLoadProfileEstimatorConfigurationKey(),
+                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()),
                 operator.getNumInputs(),
                 operator.getNumOutputs(),
                 new DynamicLoadEstimator(singlePointEstimator, juelTemplate, employedVariables)
@@ -378,10 +379,10 @@ public class DynamicLoadProfileEstimators {
         for (int i = 0; i < inputIndices.length; i++) {
             int index = inputIndices[i];
             linearInVars[i] = optimizationSpace.getOrCreateVariable(
-                    operator.getLoadProfileEstimatorConfigurationKey() + "->" + operator.getInput(index).getName()
+                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getInput(index).getName()
             );
             quadraticInVars[i] = optimizationSpace.getOrCreateVariable(
-                    operator.getLoadProfileEstimatorConfigurationKey() + "->" + operator.getInput(index).getName() + "^2"
+                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getInput(index).getName() + "^2"
             );
         }
         Variable[] linearOutVars = new Variable[outputIndices.length];
@@ -389,15 +390,15 @@ public class DynamicLoadProfileEstimators {
         for (int i = 0; i < outputIndices.length; i++) {
             int index = outputIndices[i];
             linearOutVars[i] = optimizationSpace.getOrCreateVariable(
-                    operator.getLoadProfileEstimatorConfigurationKey() + "->" + operator.getOutput(index).getName()
+                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getOutput(index).getName()
             );
             quadraticOutVars[i] = optimizationSpace.getOrCreateVariable(
-                    operator.getLoadProfileEstimatorConfigurationKey() + "->" + operator.getOutput(index).getName() + "^2"
+                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getOutput(index).getName() + "^2"
             );
         }
 
         Variable offsetVar = isWithOffset ? optimizationSpace.getOrCreateVariable(
-                operator.getLoadProfileEstimatorConfigurationKey() + "->offset"
+                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->offset"
         ) : null;
 
         // Create the estimation function.
@@ -447,7 +448,7 @@ public class DynamicLoadProfileEstimators {
 
         // Assemble the estimator.
         return new DynamicLoadProfileEstimator(
-                operator.getLoadProfileEstimatorConfigurationKey(),
+                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()),
                 operator.getNumInputs(),
                 operator.getNumOutputs(),
                 new DynamicLoadEstimator(singlePointEstimator, juelTemplate, employedVariables)
@@ -483,15 +484,15 @@ public class DynamicLoadProfileEstimators {
 
         // Create variables.
         Variable mainVar = optimizationSpace.getOrCreateVariable(
-                operator.getLoadProfileEstimatorConfigurationKey() + "->main"
+                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->main"
         );
         Variable convergenceVar = convergenceInputIndices.length > 0 ?
                 optimizationSpace.getOrCreateVariable(
-                        operator.getLoadProfileEstimatorConfigurationKey() + "->convergence"
+                        RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->convergence"
                 ) :
                 null;
         Variable offsetVar = optimizationSpace.getOrCreateVariable(
-                operator.getLoadProfileEstimatorConfigurationKey() + "->offset"
+                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->offset"
         );
 
         // Create the estimation function.

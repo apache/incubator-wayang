@@ -5,6 +5,7 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -45,24 +46,54 @@ public interface ExecutionOperator extends ElementaryOperator {
      * by default)
      */
     default Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        String configurationKey = this.getLoadProfileEstimatorConfigurationKey();
-        if (configurationKey == null) {
-            return Optional.empty();
+        Collection<String> configurationKeys = this.getLoadProfileEstimatorConfigurationKeys();
+        NestableLoadProfileEstimator mainEstimator = null;
+        for (String configurationKey : configurationKeys) {
+            final NestableLoadProfileEstimator loadProfileEstimator = createLoadProfileEstimator(configurationKey, configuration);
+            if (mainEstimator == null) {
+                mainEstimator = loadProfileEstimator;
+            } else {
+                mainEstimator.nest(loadProfileEstimator);
+            }
         }
-        final Optional<String> optSpecification = configuration.getOptionalStringProperty(configurationKey);
-        if (!optSpecification.isPresent()) {
-            LoggerFactory
-                    .getLogger(this.getClass())
-                    .warn("Could not find an estimator specification associated with '{}'.", configuration);
-            return Optional.empty();
-        }
-        return Optional.of(LoadProfileEstimators.createFromJuelSpecification(optSpecification.get()));
+        return Optional.ofNullable(mainEstimator);
     }
 
     /**
-     * Provide the {@link Configuration} key for the {@link LoadProfileEstimator} specification of this instance.
+     * Creates a {@link LoadProfileEstimator} according to the {@link Configuration}.
      *
-     * @return the {@link Configuration} key or {@code null} if none
+     * @param configurationKey the key for the specification within the {@link Configuration}
+     * @param configuration    the {@link Configuration}
+     * @return the {@link LoadProfileEstimator} or {@code null} if none could be created
+     */
+    static NestableLoadProfileEstimator createLoadProfileEstimator(String configurationKey, Configuration configuration) {
+        final Optional<String> optSpecification = configuration.getOptionalStringProperty(configurationKey);
+        if (optSpecification.isPresent()) {
+            return LoadProfileEstimators.createFromJuelSpecification(optSpecification.get());
+        } else {
+            LoggerFactory
+                    .getLogger(ExecutionOperator.class)
+                    .warn("Could not find an estimator specification associated with '{}'.", configuration);
+            return null;
+
+        }
+
+    }
+
+    /**
+     * Provide the {@link Configuration} keys for the {@link LoadProfileEstimator} specification of this instance.
+     *
+     * @return the {@link Configuration} keys
+     */
+    default Collection<String> getLoadProfileEstimatorConfigurationKeys() {
+        final String singleKey = this.getLoadProfileEstimatorConfigurationKey();
+        return singleKey == null ?
+                Collections.emptyList() :
+                Collections.singletonList(singleKey);
+    }
+
+    /**
+     * @deprecated Use {@link #getLoadProfileEstimatorConfigurationKeys()}
      */
     default String getLoadProfileEstimatorConfigurationKey() {
         return null;
