@@ -1,7 +1,6 @@
 package org.qcri.rheem.core.optimizer.costs;
 
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.util.Tuple;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -11,12 +10,12 @@ import java.util.function.ToDoubleBiFunction;
 /**
  * {@link LoadProfileEstimator} that can host further {@link LoadProfileEstimator}s.
  */
-public class NestableLoadProfileEstimator<Artifact> implements LoadProfileEstimator<Artifact> {
+public class NestableLoadProfileEstimator implements LoadProfileEstimator {
 
     /**
      * {@link LoadEstimator} to estimate a certain aspect of the {@link LoadProfile}s for the {@code Artifact}.
      */
-    private final LoadEstimator<Artifact> cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator;
+    private final LoadEstimator cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator;
 
     /**
      * The degree to which the load profile can utilize available resources.
@@ -32,7 +31,7 @@ public class NestableLoadProfileEstimator<Artifact> implements LoadProfileEstima
      * Nested {@link LoadProfileEstimator}s together with a {@link Function} to extract the estimated
      * {@code Artifact} from the {@code Artifact}s subject to this instance.
      */
-    private Collection<Tuple<Function<Artifact, ?>, LoadProfileEstimator<?>>> nestedEstimators = new LinkedList<>();
+    private Collection<LoadProfileEstimator> nestedEstimators = new LinkedList<>();
 
 
     /**
@@ -41,7 +40,7 @@ public class NestableLoadProfileEstimator<Artifact> implements LoadProfileEstima
      * @param cpuLoadEstimator estimates CPU load in terms of cycles
      * @param ramLoadEstimator estimates RAM load in terms of MB
      */
-    public NestableLoadProfileEstimator(LoadEstimator<Artifact> cpuLoadEstimator, LoadEstimator<Artifact> ramLoadEstimator) {
+    public NestableLoadProfileEstimator(LoadEstimator cpuLoadEstimator, LoadEstimator ramLoadEstimator) {
         this(cpuLoadEstimator, ramLoadEstimator, null, null);
     }
 
@@ -53,10 +52,10 @@ public class NestableLoadProfileEstimator<Artifact> implements LoadProfileEstima
      * @param diskLoadEstimator    estimates disk accesses in terms of bytes
      * @param networkLoadEstimator estimates network in terms of bytes
      */
-    public NestableLoadProfileEstimator(LoadEstimator<Artifact> cpuLoadEstimator,
-                                        LoadEstimator<Artifact> ramLoadEstimator,
-                                        LoadEstimator<Artifact> diskLoadEstimator,
-                                        LoadEstimator<Artifact> networkLoadEstimator) {
+    public NestableLoadProfileEstimator(LoadEstimator cpuLoadEstimator,
+                                        LoadEstimator ramLoadEstimator,
+                                        LoadEstimator diskLoadEstimator,
+                                        LoadEstimator networkLoadEstimator) {
         this(cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator, (in, out) -> 1d, 0L);
     }
 
@@ -70,10 +69,10 @@ public class NestableLoadProfileEstimator<Artifact> implements LoadProfileEstima
      * @param resourceUtilizationEstimator degree to which the load profile can utilize available resources
      * @param overheadMillis               overhead that this load profile incurs
      */
-    public NestableLoadProfileEstimator(LoadEstimator<Artifact> cpuLoadEstimator,
-                                        LoadEstimator<Artifact> ramLoadEstimator,
-                                        LoadEstimator<Artifact> diskLoadEstimator,
-                                        LoadEstimator<Artifact> networkLoadEstimator,
+    public NestableLoadProfileEstimator(LoadEstimator cpuLoadEstimator,
+                                        LoadEstimator ramLoadEstimator,
+                                        LoadEstimator diskLoadEstimator,
+                                        LoadEstimator networkLoadEstimator,
                                         ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator,
                                         long overheadMillis) {
         this.cpuLoadEstimator = cpuLoadEstimator;
@@ -87,39 +86,20 @@ public class NestableLoadProfileEstimator<Artifact> implements LoadProfileEstima
     /**
      * Nest a {@link LoadProfileEstimator} in this instance. No artifact will be available to it, though.
      *
-     * @param nestedEstimator  the {@link LoadProfileEstimator} that should be nested
-     * @param <NestedArtifact> the type of sub-artifact
-     * @see #nest(LoadProfileEstimator, Function)
+     * @param nestedEstimator the {@link LoadProfileEstimator} that should be nested
      */
-    public <NestedArtifact> void nest(LoadProfileEstimator<NestedArtifact> nestedEstimator) {
-        this.nest(nestedEstimator, artifact -> null);
-    }
-
-    /**
-     * Nest a {@link LoadProfileEstimator} in this instance. No artifact will be available to it, though.
-     *
-     * @param nestedEstimator          the {@link LoadProfileEstimator} that should be nested
-     * @param nestedArtifactExtraction from the artifact of this instance, extract the sub-artifact for the {@code nestedEstimator}
-     * @param <NestedArtifact>         the type of sub-artifact
-     */
-    public <NestedArtifact> void nest(LoadProfileEstimator<NestedArtifact> nestedEstimator,
-                                      Function<Artifact, NestedArtifact> nestedArtifactExtraction) {
-        this.nestedEstimators.add(new Tuple<>(nestedArtifactExtraction, nestedEstimator));
+    public void nest(LoadProfileEstimator nestedEstimator) {
+        this.nestedEstimators.add(nestedEstimator);
     }
 
     @Override
-    public LoadProfile estimate(Artifact artifact,
-                                CardinalityEstimate[] inputCardinalities,
-                                CardinalityEstimate[] outputCardinalities) {
+    public LoadProfile estimate(EstimationContext context) {
         // Estimate the load for the very artifact.
-        final LoadProfile mainLoadProfile = this.performLocalEstimation(artifact, inputCardinalities, outputCardinalities);
+        final LoadProfile mainLoadProfile = this.performLocalEstimation(context);
 
         // Estiamte the load for any nested artifacts.
-        for (Tuple<Function<Artifact, ?>, LoadProfileEstimator<?>> nestedEstimatorDescriptor : this.nestedEstimators) {
-            Object nestedArtifact = nestedEstimatorDescriptor.getField0().apply(artifact);
-            @SuppressWarnings("unchecked")
-            LoadProfileEstimator<Object> nestedEstimator = (LoadProfileEstimator<Object>) nestedEstimatorDescriptor.getField1();
-            LoadProfile nestedProfile = nestedEstimator.estimate(nestedArtifact, inputCardinalities, outputCardinalities);
+        for (LoadProfileEstimator nestedEstimator : this.nestedEstimators) {
+            LoadProfile nestedProfile = nestedEstimator.estimate(context);
             mainLoadProfile.nest(nestedProfile);
         }
 
@@ -130,23 +110,19 @@ public class NestableLoadProfileEstimator<Artifact> implements LoadProfileEstima
     /**
      * Perform the estimation for the very {@code artifact}, i.e., without any nested artifacts.
      *
-     * @param artifact        the subject to estimation
-     * @param inputEstimates  input {@link CardinalityEstimate}s for the estimation
-     * @param outputEstimates output {@link CardinalityEstimate}s for the estimation
+     * @param context provides parameters for the estimation
      * @return the {@link LoadProfile} for the {@code artifact}
      */
-    private LoadProfile performLocalEstimation(Artifact artifact,
-                                               CardinalityEstimate[] inputEstimates,
-                                               CardinalityEstimate[] outputEstimates) {
-        final LoadEstimate cpuLoadEstimate = this.cpuLoadEstimator.calculate(artifact, inputEstimates, outputEstimates);
-        final LoadEstimate ramLoadEstimate = this.ramLoadEstimator.calculate(artifact, inputEstimates, outputEstimates);
+    private LoadProfile performLocalEstimation(EstimationContext context) {
+        final LoadEstimate cpuLoadEstimate = this.cpuLoadEstimator.calculate(context);
+        final LoadEstimate ramLoadEstimate = this.ramLoadEstimator.calculate(context);
         final LoadEstimate diskLoadEstimate = this.diskLoadEstimator == null ?
                 null :
-                this.diskLoadEstimator.calculate(artifact, inputEstimates, outputEstimates);
+                this.diskLoadEstimator.calculate(context);
         final LoadEstimate networkLoadEstimate = this.networkLoadEstimator == null ?
                 null :
-                this.networkLoadEstimator.calculate(artifact, inputEstimates, outputEstimates);
-        final double resourceUtilization = this.estimateResourceUtilization(inputEstimates, outputEstimates);
+                this.networkLoadEstimator.calculate(context);
+        final double resourceUtilization = this.estimateResourceUtilization(context);
         return new LoadProfile(
                 cpuLoadEstimate,
                 ramLoadEstimate,
@@ -160,13 +136,12 @@ public class NestableLoadProfileEstimator<Artifact> implements LoadProfileEstima
     /**
      * Estimates the resource utilization.
      *
-     * @param inputEstimates  input {@link CardinalityEstimate}s
-     * @param outputEstimates output {@link CardinalityEstimate}s
+     * @param context provides parameters for the estimation
      * @return the estimated resource utilization
      */
-    private double estimateResourceUtilization(CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
-        long[] avgInputEstimates = extractMeanValues(inputEstimates);
-        long[] avgOutputEstimates = extractMeanValues(outputEstimates);
+    private double estimateResourceUtilization(EstimationContext context) {
+        long[] avgInputEstimates = extractMeanValues(context.getInputCardinalities());
+        long[] avgOutputEstimates = extractMeanValues(context.getOutputCardinalities());
         return this.resourceUtilizationEstimator.applyAsDouble(avgInputEstimates, avgOutputEstimates);
     }
 

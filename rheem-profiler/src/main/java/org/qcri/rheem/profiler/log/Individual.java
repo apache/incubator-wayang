@@ -282,7 +282,7 @@ public class Individual {
     }
 
     double estimateTime(PartialExecution partialExecution,
-                        Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+                        Map<Class<? extends ExecutionOperator>, LoadProfileEstimator> estimators,
                         Map<Platform, Variable> platformOverheads,
                         Configuration configuration) {
         final DoubleStream operatorEstimates = partialExecution.getOperatorExecutions().stream()
@@ -297,12 +297,12 @@ public class Individual {
     }
 
     private TimeEstimate estimateTime(PartialExecution.OperatorExecution operatorExecution,
-                                      Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+                                      Map<Class<? extends ExecutionOperator>, LoadProfileEstimator> estimators,
                                       Configuration configuration) {
         final ExecutionOperator operator = operatorExecution.getOperator();
-        final LoadProfileEstimator<Individual> estimator = estimators.get(operator.getClass());
+        final LoadProfileEstimator estimator = estimators.get(operator.getClass());
         final LoadProfile loadProfile = estimator.estimate(
-                this, operatorExecution.getInputCardinalities(), operatorExecution.getOutputCardinalities()
+                new DynamicEstimationContext(this, operatorExecution)
         );
         if (operatorExecution.getNestedLoadProfile() != null) {
             loadProfile.nest(operatorExecution.getNestedLoadProfile());

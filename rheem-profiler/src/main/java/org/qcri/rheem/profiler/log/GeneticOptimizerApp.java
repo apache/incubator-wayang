@@ -47,7 +47,7 @@ public class GeneticOptimizerApp {
      * Maintains a {@link LoadProfileEstimator} for every type of {@link ExecutionOperator} in the
      * {@link #partialExecutions}.
      */
-    Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators;
+    Map<Class<? extends ExecutionOperator>, LoadProfileEstimator> estimators;
 
     /**
      * Maintains variables that quantify the overhead for initializing a {@link Platform}.
@@ -390,7 +390,7 @@ public class GeneticOptimizerApp {
                     Math.round(overhead.getValue(individual))
             );
         }
-        for (LoadProfileEstimator<Individual> estimator : estimators.values()) {
+        for (LoadProfileEstimator estimator : estimators.values()) {
             if (estimator instanceof DynamicLoadProfileEstimator) {
                 final DynamicLoadProfileEstimator dynamicLoadProfileEstimator = (DynamicLoadProfileEstimator) estimator;
                 if (!optimizedVariables.containsAll(dynamicLoadProfileEstimator.getEmployedVariables())) continue;

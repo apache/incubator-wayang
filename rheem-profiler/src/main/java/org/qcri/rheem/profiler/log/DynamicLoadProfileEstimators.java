@@ -2,7 +2,6 @@ package org.qcri.rheem.profiler.log;
 
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
@@ -18,7 +17,6 @@ import org.qcri.rheem.jdbc.operators.JdbcTableSource;
 import org.qcri.rheem.jdbc.operators.SqlToStreamOperator;
 import org.qcri.rheem.spark.operators.*;
 import org.qcri.rheem.spark.operators.graph.SparkPageRankOperator;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -370,10 +368,10 @@ public class DynamicLoadProfileEstimators {
      * @return the {@link DynamicLoadProfileEstimator}
      */
     public static DynamicLoadProfileEstimator createQuadraticEstimator(ExecutionOperator operator,
-                                                                    int[] inputIndices,
-                                                                    int[] outputIndices,
-                                                                    boolean isWithOffset,
-                                                                    OptimizationSpace optimizationSpace) {
+                                                                       int[] inputIndices,
+                                                                       int[] outputIndices,
+                                                                       boolean isWithOffset,
+                                                                       OptimizationSpace optimizationSpace) {
         // Create variables.
         Variable[] linearInVars = new Variable[inputIndices.length];
         Variable[] quadraticInVars = new Variable[inputIndices.length];
@@ -550,11 +548,11 @@ public class DynamicLoadProfileEstimators {
      * @param loadProfileEstimator the {@link LoadProfileEstimator} or {@code null}
      * @return the {@link DynamicLoadProfileEstimator} or {@code null} if {@code loadProfileEstimator} is {@code null}
      */
-    public static DynamicLoadProfileEstimator wrap(LoadProfileEstimator<ExecutionOperator> loadProfileEstimator) {
+    public static DynamicLoadProfileEstimator wrap(LoadProfileEstimator loadProfileEstimator) {
         return new DynamicLoadProfileEstimator("(none)", -1, -1, DynamicLoadEstimator.zeroLoad) {
             @Override
-            public LoadProfile estimate(Individual individual, CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
-                return loadProfileEstimator.estimate(null, inputEstimates, outputEstimates);
+            public LoadProfile estimate(EstimationContext context) {
+                return loadProfileEstimator.estimate(context);
             }
 
             @Override
@@ -571,14 +569,12 @@ public class DynamicLoadProfileEstimators {
      * @param loadEstimator the {@link LoadEstimator} or {@code null}
      * @return the {@link DynamicLoadEstimator} or {@code null} if {@code loadEstimator} is {@code null}
      */
-    public static DynamicLoadEstimator wrap(LoadEstimator<ExecutionOperator> loadEstimator) {
+    public static DynamicLoadEstimator wrap(LoadEstimator loadEstimator) {
         if (loadEstimator == null) return null;
         return new DynamicLoadEstimator(null, null, Collections.emptySet()) {
             @Override
-            public LoadEstimate calculate(Individual individual,
-                                          CardinalityEstimate[] inputEstimates,
-                                          CardinalityEstimate[] outputEstimates) {
-                return loadEstimator.calculate(null, inputEstimates, outputEstimates);
+            public LoadEstimate calculate(EstimationContext estimationContext) {
+                return loadEstimator.calculate(estimationContext);
             }
         };
     }

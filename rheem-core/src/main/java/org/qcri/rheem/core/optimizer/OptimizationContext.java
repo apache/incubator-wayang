@@ -313,7 +313,7 @@ public abstract class OptimizationContext {
      * Represents a single optimization context of an {@link Operator}. This can be thought of as a single, virtual
      * execution of the {@link Operator}.
      */
-    public class OperatorContext {
+    public class OperatorContext implements EstimationContext {
 
         /**
          * The {@link Operator} that is being decorated with this instance.
@@ -400,10 +400,12 @@ public abstract class OptimizationContext {
             Arrays.fill(this.outputCardinalityMarkers, false);
         }
 
+        @Override
         public CardinalityEstimate[] getInputCardinalities() {
             return this.inputCardinalities;
         }
 
+        @Override
         public CardinalityEstimate[] getOutputCardinalities() {
             return this.outputCardinalities;
         }
@@ -471,6 +473,11 @@ public abstract class OptimizationContext {
             this.operator.propagateOutputCardinality(outputIndex, this, targetContext);
         }
 
+        @Override
+        public double getDoubleProperty(String propertyKey, double fallback) {
+            throw new UnsupportedOperationException("Not implemented yet.");
+        }
+
         /**
          * @return the {@link OptimizationContext} in which this instance resides
          */
@@ -495,7 +502,7 @@ public abstract class OptimizationContext {
 
             // Estimate the LoadProfile.
             final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
-            final LoadProfileEstimator<ExecutionOperator> loadProfileEstimator = configuration
+            final LoadProfileEstimator loadProfileEstimator = configuration
                     .getOperatorLoadProfileEstimatorProvider()
                     .provideFor(executionOperator);
             try {

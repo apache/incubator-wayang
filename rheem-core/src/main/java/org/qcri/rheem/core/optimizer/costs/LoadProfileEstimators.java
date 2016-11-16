@@ -6,7 +6,7 @@ import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator.EstimationFunction;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator.SinglePointEstimationFunction;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.util.JuelUtils;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -49,7 +49,7 @@ public class LoadProfileEstimators {
      * @param jsonJuelSpec a specification that adheres to above format
      * @return the new instance
      */
-    public static <T> NestableLoadProfileEstimator<T> createFromJuelSpecification(String jsonJuelSpec) {
+    public static NestableLoadProfileEstimator createFromJuelSpecification(String jsonJuelSpec) {
         try {
             final JSONObject spec = new JSONObject(jsonJuelSpec);
             int numInputs = spec.getInt("in");
@@ -60,28 +60,28 @@ public class LoadProfileEstimators {
                     Collections.emptyList();
 
 
-            LoadEstimator<T> cpuEstimator = new DefaultLoadEstimator<>(
+            LoadEstimator cpuEstimator = new DefaultLoadEstimator(
                     numInputs,
                     numOutputs,
                     correctnessProb,
                     CardinalityEstimate.EMPTY_ESTIMATE,
                     parseLoadJuel(spec.getString("cpu"), numInputs, numOutputs, operatorProperties)
             );
-            LoadEstimator<T> ramEstimator = new DefaultLoadEstimator<>(
+            LoadEstimator ramEstimator = new DefaultLoadEstimator(
                     numInputs,
                     numOutputs,
                     correctnessProb,
                     CardinalityEstimate.EMPTY_ESTIMATE,
                     parseLoadJuel(spec.getString("ram"), numInputs, numOutputs, operatorProperties)
             );
-            LoadEstimator<T> diskEstimator = !spec.has("disk") ? null : new DefaultLoadEstimator<>(
+            LoadEstimator diskEstimator = !spec.has("disk") ? null : new DefaultLoadEstimator(
                     numInputs,
                     numOutputs,
                     correctnessProb,
                     CardinalityEstimate.EMPTY_ESTIMATE,
                     parseLoadJuel(spec.getString("disk"), numInputs, numOutputs, operatorProperties)
             );
-            LoadEstimator<T> networkEstimator = !spec.has("network") ? null : new DefaultLoadEstimator<>(
+            LoadEstimator networkEstimator = !spec.has("network") ? null : new DefaultLoadEstimator(
                     numInputs,
                     numOutputs,
                     correctnessProb,
@@ -93,7 +93,7 @@ public class LoadProfileEstimators {
             ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator = spec.has("ru") ?
                     parseResourceUsageJuel(spec.getString("ru"), numInputs, numOutputs) :
                     DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR;
-            return new NestableLoadProfileEstimator<>(
+            return new NestableLoadProfileEstimator(
                     cpuEstimator,
                     ramEstimator,
                     diskEstimator,
@@ -107,7 +107,7 @@ public class LoadProfileEstimators {
     }
 
     /**
-     * Parses a JUEL expression and provides it as a {@link EstimationFunction}.
+     * Parses a JUEL expression and provides it as a {@link SinglePointEstimationFunction}.
      *
      * @param juel                 a JUEL expression
      * @param numInputs            the number of inputs of the estimated operator, reflected as JUEL variables {@code in0}, {@code in1}, ...
@@ -115,10 +115,10 @@ public class LoadProfileEstimators {
      * @param additionalProperties additional properties to consider
      * @return a {@link ToLongBiFunction} wrapping the JUEL expression
      */
-    private static <T> EstimationFunction<T> parseLoadJuel(String juel,
-                                                           int numInputs,
-                                                           int numOutputs,
-                                                           List<String> additionalProperties) {
+    private static SinglePointEstimationFunction parseLoadJuel(String juel,
+                                                               int numInputs,
+                                                               int numOutputs,
+                                                               List<String> additionalProperties) {
         final Map<String, Class<?>> parameterClasses = createJuelParameterClasses(
                 numInputs,
                 numOutputs,
@@ -200,15 +200,10 @@ public class LoadProfileEstimators {
      */
     public static <T extends ExecutionOperator> LoadProfile estimateLoadProfile(
             OptimizationContext.OperatorContext operatorContext,
-            LoadProfileEstimator<T> estimator) {
-
-        // Retrieve and normalize the CardinalityEstimates for a single execution.
-        CardinalityEstimate[] normalizedInputEstimates = normalize(operatorContext.getInputCardinalities(), operatorContext.getNumExecutions());
-        CardinalityEstimate[] normalizedOutputEstimates = normalize(operatorContext.getOutputCardinalities(), operatorContext.getNumExecutions());
+            LoadProfileEstimator estimator) {
 
         // Estimate the LoadProfile for that single execution.
-        @SuppressWarnings("unchecked")
-        final LoadProfile baseProfile = estimator.estimate((T) operatorContext.getOperator(), normalizedInputEstimates, normalizedOutputEstimates);
+        final LoadProfile baseProfile = estimator.estimate(operatorContext.getNormalizedEstimationContext());
         return baseProfile.timesSequential(operatorContext.getNumExecutions());
     }
 
@@ -219,36 +214,18 @@ public class LoadProfileEstimators {
      * @param functionDescriptor whose {@link LoadProfileEstimator} should be nested
      * @param configuration      provides the UDF {@link LoadProfileEstimator}
      */
-    public static void nestUdfEstimator(Optional<LoadProfileEstimator<ExecutionOperator>> mainEstimator,
+    public static void nestUdfEstimator(Optional<LoadProfileEstimator> mainEstimatorOpt,
                                         FunctionDescriptor functionDescriptor,
                                         Configuration configuration) {
-        if (!mainEstimator.isPresent() || !(mainEstimator.get() instanceof NestableLoadProfileEstimator<?>)) return;
-        mainEstimator.ifPresent(estimator -> {
-            final LoadProfileEstimator<?> subestimator = configuration
-                    .getFunctionLoadProfileEstimatorProvider()
-                    .provideFor(functionDescriptor);
-            ((NestableLoadProfileEstimator<?>) estimator).nest(subestimator);
-        });
+        final LoadProfileEstimator mainEstimator = mainEstimatorOpt.orElse(null);
+        if (mainEstimator == null || !(mainEstimator instanceof NestableLoadProfileEstimator)) return;
+        final LoadProfileEstimator subestimator = configuration
+                .getFunctionLoadProfileEstimatorProvider()
+                .provideFor(functionDescriptor);
+        ((NestableLoadProfileEstimator) mainEstimator).nest(subestimator);
+
     }
 
-    /**
-     * Normalize the given estimates by dividing them by a number of executions.
-     *
-     * @param estimates     that should be normalized
-     * @param numExecutions the number execution
-     * @return the normalized estimates (and {@code estimates} if {@code numExecution == 1}
-     */
-    private static CardinalityEstimate[] normalize(CardinalityEstimate[] estimates, int numExecutions) {
-        if (numExecutions == 1 || estimates.length == 0) return estimates;
-
-        CardinalityEstimate[] normalizedEstimates = new CardinalityEstimate[estimates.length];
-        for (int i = 0; i < estimates.length; i++) {
-            final CardinalityEstimate estimate = estimates[i];
-            if (estimate != null) normalizedEstimates[i] = estimate.divideBy(numExecutions);
-        }
-
-        return normalizedEstimates;
-    }
 
     private static final ToDoubleBiFunction<long[], long[]> DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR = (in, out) -> 1d;
 

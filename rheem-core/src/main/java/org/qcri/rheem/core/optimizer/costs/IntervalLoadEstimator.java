@@ -12,7 +12,7 @@ import java.util.stream.LongStream;
 /**
  * Implementation of {@link LoadEstimator} that uses a interval-based cost function.
  */
-public class IntervalLoadEstimator<T> extends LoadEstimator<T> {
+public class IntervalLoadEstimator extends LoadEstimator {
 
     private final double correctnessProbablity;
 
@@ -60,13 +60,13 @@ public class IntervalLoadEstimator<T> extends LoadEstimator<T> {
      * @param confidence                  confidence in the new instance
      * @param nullCardinalityReplacement  replacement for {@code null}s as {@link CardinalityEstimate}s
      */
-    public static <T extends ExecutionOperator> LoadEstimator<T> createIOLinearEstimator(
+    public static <T extends ExecutionOperator> LoadEstimator createIOLinearEstimator(
             T operator,
             long lowerLoadPerCardinalityUnit,
             long upperLoadPerCardinalityUnit,
             double confidence,
             CardinalityEstimate nullCardinalityReplacement) {
-        return new IntervalLoadEstimator<>(
+        return new IntervalLoadEstimator(
                 operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumInputs(),
                 operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumOutputs(),
                 confidence,
@@ -85,7 +85,9 @@ public class IntervalLoadEstimator<T> extends LoadEstimator<T> {
     }
 
     @Override
-    public LoadEstimate calculate(T artifact, CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
+    public LoadEstimate calculate(EstimationContext context) {
+        final CardinalityEstimate[] inputEstimates = context.getInputCardinalities();
+        final CardinalityEstimate[] outputEstimates = context.getOutputCardinalities();
         Validate.isTrue(inputEstimates.length >= this.numInputs || this.numInputs == UNSPECIFIED_NUM_SLOTS,
                 "Received %d input estimates, require %d.", inputEstimates.length, this.numInputs);
         Validate.isTrue(outputEstimates.length == this.numOutputs || this.numOutputs == UNSPECIFIED_NUM_SLOTS,

@@ -86,7 +86,7 @@ package object api {
       override def applyAsLong(inCards: Array[Long]): Long = f.apply(inCards(0), inCards(1))
     })
 
-  implicit def toLoadEstimator[T](f: (Long, Long) => Long): LoadEstimator[T] =
+  implicit def toLoadEstimator(f: (Long, Long) => Long): LoadEstimator =
     new DefaultLoadEstimator(
       1,
       1,
@@ -97,7 +97,7 @@ package object api {
       }
     )
 
-  implicit def toLoadEstimator[T](f: (Long, Long, Long) => Long): LoadEstimator[T] =
+  implicit def toLoadEstimator(f: (Long, Long, Long) => Long): LoadEstimator =
     new DefaultLoadEstimator(
       2,
       1,

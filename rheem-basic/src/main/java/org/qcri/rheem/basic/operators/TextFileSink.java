@@ -29,8 +29,8 @@ public class TextFileSink<T> extends UnarySink<T> {
                         Objects::toString,
                         typeClass,
                         String.class,
-                        new DefaultLoadEstimator<>(1, 1, .99d, (in, out) -> 10 * in[0]),
-                        new DefaultLoadEstimator<>(1, 1, .99d, (in, out) -> 1000)
+                        new DefaultLoadEstimator(1, 1, .99d, (in, out) -> 10 * in[0]),
+                        new DefaultLoadEstimator(1, 1, .99d, (in, out) -> 1000)
                 )
         );
     }

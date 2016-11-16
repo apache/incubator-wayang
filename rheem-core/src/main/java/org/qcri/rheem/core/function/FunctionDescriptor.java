@@ -16,20 +16,20 @@ import java.util.function.Predicate;
  */
 public abstract class FunctionDescriptor {
 
-    private LoadProfileEstimator<?> loadProfileEstimator;
+    private LoadProfileEstimator loadProfileEstimator;
 
     public FunctionDescriptor() {
         this(null, null);
     }
 
-    public FunctionDescriptor(LoadEstimator<?> cpuLoadEstimator,
-                              LoadEstimator<?> memoryLoadEstimator) {
+    public FunctionDescriptor(LoadEstimator cpuLoadEstimator,
+                              LoadEstimator memoryLoadEstimator) {
         this.setLoadEstimators(cpuLoadEstimator, memoryLoadEstimator);
     }
 
     @SuppressWarnings("unchecked")
-    public void setLoadEstimators(LoadEstimator<?> cpuLoadEstimator,
-                                  LoadEstimator<?> memoryLoadEstimator) {
+    public void setLoadEstimators(LoadEstimator cpuLoadEstimator,
+                                  LoadEstimator memoryLoadEstimator) {
         if (cpuLoadEstimator == null && memoryLoadEstimator == null) {
             this.loadProfileEstimator = null;
         } else {

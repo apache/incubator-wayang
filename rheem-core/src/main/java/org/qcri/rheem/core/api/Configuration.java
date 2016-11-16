@@ -70,7 +70,7 @@ public class Configuration {
 
     private KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> udfSelectivityProvider;
 
-    private KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> operatorLoadProfileEstimatorProvider;
+    private KeyValueProvider<ExecutionOperator, LoadProfileEstimator> operatorLoadProfileEstimatorProvider;
 
     private KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider;
 
@@ -340,11 +340,11 @@ public class Configuration {
     private static void bootstrapLoadAndTimeEstimatorProviders(Configuration configuration) {
         {
             // Safety net: provide a fallback selectivity.
-            KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> fallbackProvider =
-                    new FunctionalKeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>>(
+            KeyValueProvider<ExecutionOperator, LoadProfileEstimator> fallbackProvider =
+                    new FunctionalKeyValueProvider<ExecutionOperator, LoadProfileEstimator>(
                             (operator, requestee) -> {
                                 final Configuration conf = requestee.getConfiguration();
-                                return new NestableLoadProfileEstimator<>(
+                                return new NestableLoadProfileEstimator(
                                         IntervalLoadEstimator.createIOLinearEstimator(
                                                 null,
                                                 conf.getLongProperty("rheem.core.fallback.udf.cpu.lower"),
@@ -365,14 +365,14 @@ public class Configuration {
                     ).withSlf4jWarning("Creating fallback load estimator for {}.");
 
             // Built-in option: let the ExecutionOperators provide the LoadProfileEstimator.
-            KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> builtInProvider =
+            KeyValueProvider<ExecutionOperator, LoadProfileEstimator> builtInProvider =
                     new FunctionalKeyValueProvider<>(
                             fallbackProvider,
                             (operator, requestee) -> operator.createLoadProfileEstimator(requestee.getConfiguration()).orElse(null)
                     );
 
             // Customizable layer: Users can override manually.
-            KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> overrideProvider =
+            KeyValueProvider<ExecutionOperator, LoadProfileEstimator> overrideProvider =
                     new MapBasedKeyValueProvider<>(builtInProvider);
 
             configuration.setOperatorLoadProfileEstimatorProvider(overrideProvider);
@@ -383,7 +383,7 @@ public class Configuration {
                     new FunctionalKeyValueProvider<FunctionDescriptor, LoadProfileEstimator>(
                             (operator, requestee) -> {
                                 final Configuration conf = requestee.getConfiguration();
-                                return new NestableLoadProfileEstimator<>(
+                                return new NestableLoadProfileEstimator(
                                         IntervalLoadEstimator.createIOLinearEstimator(
                                                 null,
                                                 conf.getLongProperty("rheem.core.fallback.operator.cpu.lower"),
@@ -586,11 +586,11 @@ public class Configuration {
         this.udfSelectivityProvider = udfSelectivityProvider;
     }
 
-    public KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> getOperatorLoadProfileEstimatorProvider() {
+    public KeyValueProvider<ExecutionOperator, LoadProfileEstimator> getOperatorLoadProfileEstimatorProvider() {
         return this.operatorLoadProfileEstimatorProvider;
     }
 
-    public void setOperatorLoadProfileEstimatorProvider(KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> operatorLoadProfileEstimatorProvider) {
+    public void setOperatorLoadProfileEstimatorProvider(KeyValueProvider<ExecutionOperator, LoadProfileEstimator> operatorLoadProfileEstimatorProvider) {
         this.operatorLoadProfileEstimatorProvider = operatorLoadProfileEstimatorProvider;
     }
 

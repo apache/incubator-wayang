@@ -2,6 +2,7 @@ package org.qcri.rheem.profiler.log;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.EstimationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 
@@ -11,7 +12,7 @@ import java.util.HashSet;
 /**
  * Adjustable {@link LoadProfileEstimator} implementation.
  */
-public class DynamicLoadProfileEstimator implements LoadProfileEstimator<Individual> {
+public class DynamicLoadProfileEstimator implements LoadProfileEstimator {
 
     /**
      * Number of expected input/output {@link CardinalityEstimate}s.
@@ -82,12 +83,12 @@ public class DynamicLoadProfileEstimator implements LoadProfileEstimator<Individ
     }
 
     @Override
-    public LoadProfile estimate(Individual individual, CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
+    public LoadProfile estimate(EstimationContext estimationContext) {
         return new LoadProfile(
-                this.cpuEstimator.calculate(individual, inputEstimates, outputEstimates),
-                this.ramEstimator.calculate(individual, inputEstimates, outputEstimates),
-                this.diskEstimator.calculate(individual, inputEstimates, outputEstimates),
-                this.networkEstimator.calculate(individual, inputEstimates, outputEstimates)
+                this.cpuEstimator.calculate(estimationContext),
+                this.ramEstimator.calculate(estimationContext),
+                this.diskEstimator.calculate(estimationContext),
+                this.networkEstimator.calculate(estimationContext)
         );
     }
 

@@ -123,13 +123,13 @@ public class SparkShufflePartitionSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         // NB: This was not measured but is guesswork, adapted from SparkFilterOperator.
-        final NestableLoadProfileEstimator<ExecutionOperator> mainEstimator = new NestableLoadProfileEstimator<ExecutionOperator>(
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 0),
+        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
                 (in, out) -> 0.23d,
                 550
         );

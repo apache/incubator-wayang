@@ -42,7 +42,7 @@ public class GeneticOptimizer {
     /**
      * {@link LoadProfileEstimator}s that are relevant to calculate the fitness of {@link Individual}s.
      */
-    private final Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators;
+    private final Map<Class<? extends ExecutionOperator>, LoadProfileEstimator> estimators;
 
     /**
      * {@link Variable}s to learn the overhead of {@link Platform} initialization.
@@ -99,7 +99,7 @@ public class GeneticOptimizer {
      */
     public GeneticOptimizer(OptimizationSpace optimizationSpace,
                             Collection<PartialExecution> observations,
-                            Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+                            Map<Class<? extends ExecutionOperator>, LoadProfileEstimator> estimators,
                             Map<Platform, Variable> platformOverheads,
                             Configuration configuration) {
         this.configuration = configuration;
@@ -110,7 +110,7 @@ public class GeneticOptimizer {
         this.activatedGenes = new Bitmask(this.optimizationSpace.getNumDimensions());
         for (PartialExecution observation : observations) {
             for (PartialExecution.OperatorExecution opExec : observation.getOperatorExecutions()) {
-                final LoadProfileEstimator<Individual> estimator = estimators.get(opExec.getOperator().getClass());
+                final LoadProfileEstimator estimator = estimators.get(opExec.getOperator().getClass());
                 if (estimator instanceof DynamicLoadProfileEstimator) {
                     for (Variable variable : ((DynamicLoadProfileEstimator) estimator).getEmployedVariables()) {
                         this.activatedGenes.set(variable.getIndex());
@@ -268,7 +268,7 @@ public class GeneticOptimizer {
         return numObservations;
     }
 
-    public Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> getEstimators() {
+    public Map<Class<? extends ExecutionOperator>, LoadProfileEstimator> getEstimators() {
         return estimators;
     }
 

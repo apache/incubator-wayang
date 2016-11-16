@@ -1,6 +1,7 @@
 package org.qcri.rheem.profiler.log;
 
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.EstimationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
@@ -12,7 +13,7 @@ import java.util.Collections;
 /**
  * Adjustable {@link LoadProfileEstimator} implementation.
  */
-public class DynamicLoadEstimator extends LoadEstimator<Individual> {
+public class DynamicLoadEstimator extends LoadEstimator {
 
     /**
      * Instance that always estimates a load of {@code 0}.
@@ -77,9 +78,13 @@ public class DynamicLoadEstimator extends LoadEstimator<Individual> {
     }
 
     @Override
-    public LoadEstimate calculate(Individual individual,
-                                  CardinalityEstimate[] inputEstimates,
-                                  CardinalityEstimate[] outputEstimates) {
+    public LoadEstimate calculate(EstimationContext context) {
+        if (!(context instanceof DynamicEstimationContext)) {
+            throw new IllegalArgumentException("Invalid estimation context.");
+        }
+        final DynamicEstimationContext dynamicContext = (DynamicEstimationContext) context;
+        final CardinalityEstimate[] inputEstimates = context.getInputCardinalities();
+        final CardinalityEstimate[] outputEstimates = context.getOutputCardinalities();
         long[] inputCardinalities = new long[inputEstimates.length];
         long[] outputCardinalities = new long[outputEstimates.length];
         for (int i = 0; i < inputEstimates.length; i++) {
@@ -88,14 +93,18 @@ public class DynamicLoadEstimator extends LoadEstimator<Individual> {
         for (int i = 0; i < outputEstimates.length; i++) {
             outputCardinalities[i] = this.replaceNullCardinality(outputEstimates[i]).getLowerEstimate();
         }
-        double lowerEstimate = this.singlePointEstimator.estimate(individual, inputCardinalities, outputCardinalities);
+        double lowerEstimate = this.singlePointEstimator.estimate(
+                dynamicContext.getIndividual(), inputCardinalities, outputCardinalities
+        );
         for (int i = 0; i < inputEstimates.length; i++) {
             inputCardinalities[i] = this.replaceNullCardinality(inputEstimates[i]).getUpperEstimate();
         }
         for (int i = 0; i < outputEstimates.length; i++) {
             outputCardinalities[i] = this.replaceNullCardinality(outputEstimates[i]).getUpperEstimate();
         }
-        double upperEstimate = this.singlePointEstimator.estimate(individual, inputCardinalities, outputCardinalities);
+        double upperEstimate = this.singlePointEstimator.estimate(
+                dynamicContext.getIndividual(), inputCardinalities, outputCardinalities
+        );
         return new LoadEstimate(
                 Math.round(lowerEstimate),
                 Math.round(upperEstimate),
