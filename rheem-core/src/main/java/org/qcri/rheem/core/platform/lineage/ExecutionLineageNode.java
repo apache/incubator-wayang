@@ -50,6 +50,15 @@ public class ExecutionLineageNode extends LazyExecutionLineageNode {
     }
 
     /**
+     * Adds an {@link AtomicExecution} for the {@link LoadProfileEstimator} of the described {@link OptimizationContext.OperatorContext}.
+     *
+     * @return this instance
+     */
+    public ExecutionLineageNode addAllFromOperatorContext() {
+        return this.add(this.operatorContext.getLoadProfileEstimator());
+    }
+
+    /**
      * Retrieve the {@link OptimizationContext.OperatorContext} corresponding to this instance.
      *
      * @return the {@link OptimizationContext.OperatorContext}

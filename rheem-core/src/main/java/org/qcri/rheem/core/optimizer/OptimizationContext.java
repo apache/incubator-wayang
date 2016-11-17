@@ -501,10 +501,7 @@ public abstract class OptimizationContext {
             if (!this.operator.isExecutionOperator()) return;
 
             // Estimate the LoadProfile.
-            final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
-            final LoadProfileEstimator loadProfileEstimator = configuration
-                    .getOperatorLoadProfileEstimatorProvider()
-                    .provideFor(executionOperator);
+            final LoadProfileEstimator loadProfileEstimator = this.getLoadProfileEstimator();
             try {
                 this.loadProfile = LoadProfileEstimators.estimateLoadProfile(this, loadProfileEstimator);
             } catch (Exception e) {
@@ -512,6 +509,7 @@ public abstract class OptimizationContext {
             }
 
             // Calculate the TimeEstimate.
+            final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
             final Platform platform = executionOperator.getPlatform();
             final LoadProfileToTimeConverter timeConverter = configuration.getLoadProfileToTimeConverterProvider().provideFor(platform);
             this.timeEstimate = TimeEstimate.MINIMUM.plus(timeConverter.convert(this.loadProfile));
@@ -528,6 +526,20 @@ public abstract class OptimizationContext {
             // Squash the cost estimate.
             final ToDoubleFunction<ProbabilisticDoubleInterval> costSquasher = configuration.getCostSquasherProvider().provide();
             this.squashedCostEstimate = costSquasher.applyAsDouble(this.costEstimate);
+        }
+
+        /**
+         * Get the {@link LoadProfileEstimator} for the {@link ExecutionOperator} in this instance.
+         *
+         * @return the {@link LoadProfileEstimator}
+         */
+        public LoadProfileEstimator getLoadProfileEstimator() {
+            if (!(this.operator instanceof ExecutionOperator)) {
+                return null;
+            }
+            return this.getOptimizationContext().getConfiguration()
+                    .getOperatorLoadProfileEstimatorProvider()
+                    .provideFor((ExecutionOperator) this.operator);
         }
 
         /**
