@@ -209,7 +209,7 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @param operatorContext the executed {@link OptimizationContext.OperatorContext}
      * @return the executed {@link OptimizationContext.OperatorContext} and produced {@link ChannelInstance}s
      */
-    static Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>>
+    static Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>>
     modelLazyExecution(ChannelInstance[] inputs,
                        ChannelInstance[] outputs,
                        OptimizationContext.OperatorContext operatorContext) {

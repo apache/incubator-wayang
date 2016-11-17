@@ -6,6 +6,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
@@ -42,7 +43,7 @@ public class JavaIntersectOperator<Type>
     }
 
     @Override
-    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             JavaExecutor javaExecutor,
@@ -61,19 +62,19 @@ public class JavaIntersectOperator<Type>
                 cardinalityEstimate1 != null &&
                 cardinalityEstimate0.getUpperEstimate() <= cardinalityEstimate1.getUpperEstimate();
 
-        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
+        final Collection<ExecutionLineageNode> executionLineageNodes = new LinkedList<>();
         final Collection<ChannelInstance> producedChannelInstances = new LinkedList<>();
         final Stream<Type> candidateStream;
         final Set<Type> probingTable;
         if (isMaterialize0) {
             candidateStream = ((JavaChannelInstance) inputs[0]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[1]).provideStream());
-            inputs[0].getLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
+            inputs[0].getLineage().collectAndMark(executionLineageNodes, producedChannelInstances);
             operatorContext.getLineage().addPredecessor(inputs[1].getLineage());
         } else {
             candidateStream = ((JavaChannelInstance) inputs[1]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[0]).provideStream());
-            inputs[1].getLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
+            inputs[1].getLineage().collectAndMark(executionLineageNodes, producedChannelInstances);
             operatorContext.getLineage().addPredecessor(inputs[0].getLineage());
         }
 
@@ -81,7 +82,7 @@ public class JavaIntersectOperator<Type>
         ((StreamChannel.Instance) outputs[0]).accept(intersectStream);
         outputs[0].getLineage().addPredecessor(operatorContext.getLineage());
 
-        return new Tuple<>(executedOperatorContexts, producedChannelInstances);
+        return new Tuple<>(executionLineageNodes, producedChannelInstances);
     }
 
     /**

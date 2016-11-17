@@ -11,6 +11,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
@@ -50,7 +51,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             JavaExecutor javaExecutor,
@@ -65,7 +66,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
         final CardinalityEstimate cardinalityEstimate1 = operatorContext.getInputCardinality(1);
 
         final Stream<Tuple2<InputType0, InputType1>> joinStream;
-        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
+        Collection<ExecutionLineageNode> executionLineageNodes = new LinkedList<>();
         Collection<ChannelInstance> producedChannelInstances = new LinkedList<>();
 
         boolean isMaterialize0 = cardinalityEstimate0 != null &&
@@ -88,7 +89,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
             joinStream = ((JavaChannelInstance) inputs[1]).<InputType1>provideStream().flatMap(dataQuantum1 ->
                     probeTable.getOrDefault(keyExtractor1.apply(dataQuantum1), Collections.emptyList()).stream()
                             .map(dataQuantum0 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
-            inputs[0].getLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
+            inputs[0].getLineage().collectAndMark(executionLineageNodes, producedChannelInstances);
             operatorContext.getLineage().addPredecessor(inputs[1].getLineage());
         } else {
             final int expectedNumElements = cardinalityEstimate1 == null ?
@@ -107,14 +108,14 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
             joinStream = ((JavaChannelInstance) inputs[0]).<InputType0>provideStream().flatMap(dataQuantum0 ->
                     probeTable.getOrDefault(keyExtractor0.apply(dataQuantum0), Collections.emptyList()).stream()
                             .map(dataQuantum1 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
-            inputs[1].getLineage().collectAndMark(executedOperatorContexts, producedChannelInstances);
+            inputs[1].getLineage().collectAndMark(executionLineageNodes, producedChannelInstances);
             operatorContext.getLineage().addPredecessor(inputs[0].getLineage());
         }
 
         ((StreamChannel.Instance) outputs[0]).accept(joinStream);
         outputs[0].getLineage().addPredecessor(operatorContext.getLineage());
 
-        return new Tuple<>(executedOperatorContexts, producedChannelInstances);
+        return new Tuple<>(executionLineageNodes, producedChannelInstances);
     }
 
     @Override
