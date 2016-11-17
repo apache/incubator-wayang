@@ -9,7 +9,7 @@ import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.platform.lineage.OperatorLineageNode;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -359,7 +359,7 @@ public abstract class OptimizationContext {
         /**
          * In case this instance corresponds to an execution, this field keeps track of this execution.
          */
-        private OperatorLineageNode lineage;
+        private ExecutionLineageNode lineage;
 
         /**
          * Creates a new instance.
@@ -655,9 +655,9 @@ public abstract class OptimizationContext {
             return this.squashedCostEstimate;
         }
 
-        public OperatorLineageNode getLineage() {
+        public ExecutionLineageNode getLineage() {
             if (this.lineage == null) {
-                this.lineage = new OperatorLineageNode(this);
+                this.lineage = new ExecutionLineageNode(this);
             }
             return this.lineage;
         }

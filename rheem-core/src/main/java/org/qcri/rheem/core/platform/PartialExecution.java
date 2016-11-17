@@ -6,11 +6,10 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.LoadProfile;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
+import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.JsonSerializable;
 import org.qcri.rheem.core.util.JsonSerializables;
 
@@ -33,9 +32,9 @@ public class PartialExecution implements JsonSerializable {
     private final double lowerCost, upperCost;
 
     /**
-     * {@link OptimizationContext.OperatorContext}s captured by this instance.
+     * {@link AtomicExecutionGroup}s captured by this instance.
      */
-    transient private final Collection<OptimizationContext.OperatorContext> operatorContexts;
+    transient private final Collection<AtomicExecutionGroup> atomicExecutionGroups;
 
     /**
      * Persistent reflection of the {@link #operatorContexts}.
@@ -43,27 +42,27 @@ public class PartialExecution implements JsonSerializable {
     private Collection<OperatorExecution> operatorExecutions;
 
     /**
-     * Platforms initialized in this instance.
+     * Platforms initialized/involved this instance.
      */
-    private Collection<Platform> initializedPlatforms = new LinkedList<>();
+    private Collection<Platform> initializedPlatforms = new LinkedList<>(), involvedPlatforms;
 
     /**
      * Creates a new instance according to the measurement data.
      *
-     * @param measuredExecutionTime    the measured execution time
-     * @param executedOperatorContexts the {@link OptimizationContext.OperatorContext} of exected {@link ExecutionOperator}s
-     * @param configuration            the execution {@link Configuration}
+     * @param measuredExecutionTime the measured execution time
+     * @param executionLineageNodes the {@link ExecutionLineageNode}s reflecting what has been executed
+     * @param configuration         the execution {@link Configuration}
      * @return the new instance
      */
     public static PartialExecution createFromMeasurement(
             long measuredExecutionTime,
-            Collection<OptimizationContext.OperatorContext> executedOperatorContexts,
+            Collection<ExecutionLineageNode> executionLineageNodes,
             Configuration configuration) {
 
         // Calculate possible costs.
         double lowerCost = Double.POSITIVE_INFINITY, upperCost = Double.NEGATIVE_INFINITY;
-        final Set<Platform> platforms = executedOperatorContexts.stream()
-                .map(operatorContext -> ((ExecutionOperator) operatorContext.getOperator()).getPlatform())
+        final Set<Platform> platforms = executionLineageNodes.stream()
+                .map(node -> ((ExecutionOperator) node.getOperatorContext().getOperator()).getPlatform())
                 .collect(Collectors.toSet());
         for (Platform platform : platforms) {
             final TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
@@ -73,7 +72,7 @@ public class PartialExecution implements JsonSerializable {
             upperCost = Math.max(upperCost, costs.getUpperEstimate());
         }
 
-        return new PartialExecution(measuredExecutionTime, lowerCost, upperCost, executedOperatorContexts);
+        return new PartialExecution(measuredExecutionTime, lowerCost, upperCost, executionLineageNodes);
     }
 
     /**
@@ -82,13 +81,23 @@ public class PartialExecution implements JsonSerializable {
      * @param measuredExecutionTime the time measured for the partial execution
      * @param lowerCost             the lower possible costs for the new instance (excluding fix costs)
      * @param upperCost             the upper possible costs for the new instance (excluding fix costs)
-     * @param operatorContexts      for all executed {@link ExecutionOperator}s
+     * @param executionLineageNodes for all executed {@link ExecutionOperator}s
      */
-    public PartialExecution(long measuredExecutionTime, double lowerCost, double upperCost, Collection<OptimizationContext.OperatorContext> operatorContexts) {
+    public PartialExecution(long measuredExecutionTime, double lowerCost, double upperCost, Collection<ExecutionLineageNode> executionLineageNodes) {
         this.measuredExecutionTime = measuredExecutionTime;
-        this.operatorContexts = operatorContexts;
+        this.atomicExecutionGroups = executionLineageNodes.stream()
+                .map(node -> new AtomicExecutionGroup(
+                        node.getOperatorContext(),
+                        ((ExecutionOperator) node.getOperatorContext().getOperator()).getPlatform(),
+                        node.getAtomicExecutions()
+                ))
+                .collect(Collectors.toList());
         this.lowerCost = lowerCost;
         this.upperCost = upperCost;
+        this.involvedPlatforms = executionLineageNodes.stream()
+                .map(node -> ((ExecutionOperator) node.getOperatorContext().getOperator()).getPlatform())
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     /**
@@ -96,7 +105,7 @@ public class PartialExecution implements JsonSerializable {
      */
     private PartialExecution(long measuredExecutionTime, double lowerCost, double upperCost, List<OperatorExecution> executions) {
         this.measuredExecutionTime = measuredExecutionTime;
-        this.operatorContexts = null;
+        this.atomicExecutionGroups = null;
         this.operatorExecutions = executions;
         this.lowerCost = lowerCost;
         this.upperCost = upperCost;
@@ -124,19 +133,13 @@ public class PartialExecution implements JsonSerializable {
         return this.upperCost;
     }
 
-    public Collection<OptimizationContext.OperatorContext> getOperatorContexts() {
-        return operatorContexts;
-    }
-
     /**
      * Retrieve the {@link Platform}s involved in this instance.
      *
      * @return the {@link Platform}s
      */
     public Collection<Platform> getInvolvedPlatforms() {
-        return this.operatorContexts.stream()
-                .map(operatorContext -> ((ExecutionOperator) operatorContext.getOperator()).getPlatform())
-                .collect(Collectors.toSet());
+        return this.involvedPlatforms;
     }
 
     /**
@@ -144,10 +147,14 @@ public class PartialExecution implements JsonSerializable {
      *
      * @return the overall {@link TimeEstimate}
      */
-    public TimeEstimate getOverallTimeEstimate() {
-        return operatorContexts.stream()
-                .map(OptimizationContext.OperatorContext::getTimeEstimate)
+    public TimeEstimate getOverallTimeEstimate(Configuration configuration) {
+        final long platformInitializationTime = this.initializedPlatforms.stream()
+                .mapToLong(platform -> platform.getInitializeMillis(configuration))
+                .sum();
+        final TimeEstimate executionTime = this.atomicExecutionGroups.stream()
+                .map(group -> group.estimateExecutionTime(configuration))
                 .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+        return executionTime.plus(platformInitializationTime);
     }
 
     /**
@@ -174,7 +181,8 @@ public class PartialExecution implements JsonSerializable {
 
     public Collection<OperatorExecution> getOperatorExecutions() {
         if (this.operatorExecutions == null) {
-            this.operatorExecutions = this.operatorContexts.stream().map(OperatorExecution::new).collect(Collectors.toList());
+            // TODO: Abolish OperatorExecutions.
+//            this.operatorExecutions = this.operatorContexts.stream().map(OperatorExecution::new).collect(Collectors.toList());
         }
         return this.operatorExecutions;
     }
@@ -204,6 +212,81 @@ public class PartialExecution implements JsonSerializable {
                                 .map(platform -> platform.getClass().getCanonicalName())
                                 .collect(Collectors.toList())
                 ));
+    }
+
+    /**
+     * Provide the {@link AtomicExecutionGroup}s captured by this instance
+     *
+     * @return the {@link AtomicExecutionGroup}s
+     */
+    public Collection<AtomicExecutionGroup> getAtomicExecutionGroups() {
+        return this.atomicExecutionGroups;
+    }
+
+    /**
+     * This class groups {@link AtomicExecution}s with a common {@link EstimationContext} and {@link Platform}.
+     */
+    public static class AtomicExecutionGroup {
+
+        /**
+         * The common {@link EstimationContext}.
+         */
+        private EstimationContext estimationContext;
+
+        /**
+         * The common {@link Platform} for all {@link #atomicExecutions}.
+         */
+        private Platform platform;
+
+        /**
+         * The {@link AtomicExecution}s.
+         */
+        private Collection<AtomicExecution> atomicExecutions;
+
+        public AtomicExecutionGroup(EstimationContext estimationContext,
+                                    Platform platform,
+                                    Collection<AtomicExecution> atomicExecutions) {
+            this.estimationContext = estimationContext;
+            this.platform = platform;
+            this.atomicExecutions = atomicExecutions;
+        }
+
+        /**
+         * Estimate the {@link LoadProfile} for all {@link AtomicExecution}s in this instance.
+         *
+         * @return the {@link LoadProfile}
+         */
+        public LoadProfile estimateLoad() {
+            return this.atomicExecutions.stream()
+                    .map(execution -> execution.estimateLoad(this.estimationContext))
+                    .reduce(LoadProfile::plus)
+                    .orElse(LoadProfile.emptyLoadProfile);
+        }
+
+        /**
+         * Estimate the {@link TimeEstimate} for all {@link AtomicExecution}s in this instance.
+         *
+         * @param configuration calibrates the estimation
+         * @return the {@link TimeEstimate}
+         */
+        public TimeEstimate estimateExecutionTime(Configuration configuration) {
+            final LoadProfileToTimeConverter converter = configuration
+                    .getLoadProfileToTimeConverterProvider()
+                    .provideFor(this.platform);
+            return converter.convert(this.estimateLoad());
+        }
+
+        public EstimationContext getEstimationContext() {
+            return this.estimationContext;
+        }
+
+        public Platform getPlatform() {
+            return this.platform;
+        }
+
+        public Collection<AtomicExecution> getAtomicExecutions() {
+            return this.atomicExecutions;
+        }
     }
 
     /**

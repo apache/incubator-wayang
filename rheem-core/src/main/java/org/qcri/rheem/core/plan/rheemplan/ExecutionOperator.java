@@ -12,6 +12,7 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.platform.lineage.LazyExecutionLineageNode;
 import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.LoggerFactory;
@@ -166,12 +167,12 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @param operatorContext the executed {@link OptimizationContext.OperatorContext}
      * @return the executed {@link OptimizationContext.OperatorContext} and produced {@link ChannelInstance}s
      */
-    static Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> modelEagerExecution(
+    static Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> modelEagerExecution(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             OptimizationContext.OperatorContext operatorContext) {
         LazyExecutionLineageNode.connectAll(inputs, operatorContext, outputs);
-        final Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> collectors;
+        final Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> collectors;
         if (outputs.length == 0) {
             collectors = operatorContext.getLineage().collectAndMark();
         } else {
@@ -192,7 +193,7 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @param operatorContext the executed {@link OptimizationContext.OperatorContext}
      * @return the executed {@link OptimizationContext.OperatorContext} and produced {@link ChannelInstance}s
      */
-    static Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> modelQuasiEagerExecution(
+    static Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> modelQuasiEagerExecution(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             OptimizationContext.OperatorContext operatorContext) {

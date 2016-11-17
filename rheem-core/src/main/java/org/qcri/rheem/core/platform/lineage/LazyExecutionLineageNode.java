@@ -93,27 +93,27 @@ public abstract class LazyExecutionLineageNode {
     }
 
     /**
-     * Collect and mark all unmarked {@link LazyExecutionLineageNode}s in this instance.
+     * Collect and mark all unmarked {@link ExecutionLineageNode}s in this instance.
      *
-     * @return the collected {@link OptimizationContext.OperatorContext}s and produced {@link ChannelInstance}s
+     * @return the collected {@link ExecutionLineageNode}s and produced {@link ChannelInstance}s
      */
-    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> collectAndMark() {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> collectAndMark() {
         return this.collectAndMark(new LinkedList<>(), new LinkedList<>());
     }
 
     /**
      * Collect and mark all unmarked {@link LazyExecutionLineageNode}s in this instance.
      *
-     * @param operatorContextCollector collects the {@link OptimizationContext.OperatorContext} in the unmarked {@link LazyExecutionLineageNode}s
+     * @param executionLineageCollector collects the unmarked {@link ExecutionLineageNode}
      * @param channelInstanceCollector collects the {@link ChannelInstance} in the unmarked {@link LazyExecutionLineageNode}s
      * @return the two collectors
      */
-    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> collectAndMark(
-            Collection<OptimizationContext.OperatorContext> operatorContextCollector,
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> collectAndMark(
+            Collection<ExecutionLineageNode> executionLineageCollector,
             Collection<ChannelInstance> channelInstanceCollector
     ) {
         return this.traverseAndMark(
-                new Tuple<>(operatorContextCollector, channelInstanceCollector),
+                new Tuple<>(executionLineageCollector, channelInstanceCollector),
                 new CollectingAggregator()
         );
     }
@@ -128,20 +128,20 @@ public abstract class LazyExecutionLineageNode {
         /**
          * Visit an {@link ChannelLineageNode}.
          *
-         * @param accumulator     current accumulator value
-         * @param channelInstance the {@link ChannelInstance} of wrapped by the visited {@link LazyExecutionLineageNode}
+         * @param accumulator current accumulator value
+         * @param node        the visited {@link ChannelLineageNode}
          * @return the new accumulator value
          */
-        T aggregate(T accumulator, ChannelInstance channelInstance);
+        T aggregate(T accumulator, ChannelLineageNode node);
 
         /**
-         * Visit an {@link OperatorLineageNode}.
+         * Visit an {@link ExecutionLineageNode}.
          *
-         * @param accumulator     current accumulator value
-         * @param operatorContext the {@link OptimizationContext.OperatorContext} of the visited {@link LazyExecutionLineageNode}
+         * @param accumulator current accumulator value
+         * @param node        the visited {@link ExecutionLineageNode}
          * @return the new accumulator value
          */
-        T aggregate(T accumulator, OptimizationContext.OperatorContext operatorContext);
+        T aggregate(T accumulator, ExecutionLineageNode node);
 
     }
 
@@ -149,21 +149,21 @@ public abstract class LazyExecutionLineageNode {
      * {@link Aggregator} implementation that collects all visited {@link LazyExecutionLineageNode} contents.
      */
     public static class CollectingAggregator
-            implements Aggregator<Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>>> {
+            implements Aggregator<Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>>> {
 
         @Override
-        public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> aggregate(
-                Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> accumulator,
-                ChannelInstance channelInstance) {
-            accumulator.getField1().add(channelInstance);
+        public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> aggregate(
+                Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> accumulator,
+                ChannelLineageNode node) {
+            accumulator.getField1().add(node.getChannelInstance());
             return accumulator;
         }
 
         @Override
-        public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> aggregate(
-                Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> accumulator,
-                OptimizationContext.OperatorContext operatorContext) {
-            accumulator.getField0().add(operatorContext);
+        public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> aggregate(
+                Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> accumulator,
+                ExecutionLineageNode node) {
+            accumulator.getField0().add(node);
             return accumulator;
         }
     }
