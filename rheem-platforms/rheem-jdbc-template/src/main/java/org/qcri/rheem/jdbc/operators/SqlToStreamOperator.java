@@ -10,6 +10,7 @@ import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.JsonSerializable;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -61,7 +62,7 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     }
 
     @Override
-    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             JavaExecutor executor,
