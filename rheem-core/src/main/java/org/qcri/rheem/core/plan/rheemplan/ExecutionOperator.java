@@ -62,7 +62,7 @@ public interface ExecutionOperator extends ElementaryOperator {
     static NestableLoadProfileEstimator createLoadProfileEstimator(Configuration configuration, String configurationKey) {
         final Optional<String> optSpecification = configuration.getOptionalStringProperty(configurationKey);
         if (optSpecification.isPresent()) {
-            return LoadProfileEstimators.createFromJuelSpecification(optSpecification.get());
+            return LoadProfileEstimators.createFromSpecification(optSpecification.get());
         } else {
             LoggerFactory.getLogger(ExecutionOperator.class)
                     .warn("Could not find an estimator specification associated with '{}'.", configuration);

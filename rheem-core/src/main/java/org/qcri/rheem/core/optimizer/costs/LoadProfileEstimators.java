@@ -52,85 +52,8 @@ public class LoadProfileEstimators {
     /**
      * Creates a new instance from a specification {@link String}. Valid specifications are as follows:
      * <pre>
-     *     {"cpu":&lt;JUEL expression&gt;,
-     *      "ram":&lt;JUEL expression&gt;,
-     *      "disk":&lt;JUEL expression&gt;,
-     *      "network":&lt;JUEL expression&gt;,
-     *      "import":&lt;["optional", "operator", "properties"]&gt;,
-     *      "in":&lt;#inputs&gt;,
-     *      "out":&lt;#outputs&gt;,
-     *      "p":&lt;correctness probability&gt;,
-     *      "overhead":&lt;overhead in milliseconds&gt;,
-     *      "ru":&lt;resource utilization JUEL expression&gt;
-     *      }
-     * </pre>
-     * The JUEL expressions accept as parameters {@code in0}, {@code in1} a.s.o. for the input cardinalities and
-     * {@code out0}, {@code out1} a.s.o. for the output cardinalities.
-     *
-     * @param jsonJuelSpec a specification that adheres to above format
-     * @return the new instance
-     */
-    public static NestableLoadProfileEstimator createFromJuelSpecification(String jsonJuelSpec) {
-        try {
-            final JSONObject spec = new JSONObject(jsonJuelSpec);
-            int numInputs = spec.getInt("in");
-            int numOutputs = spec.getInt("out");
-            double correctnessProb = spec.getDouble("p");
-            List<String> operatorProperties = spec.has("import") ?
-                    StreamSupport.stream(spec.optJSONArray("import").spliterator(), false).map(Objects::toString).collect(Collectors.toList()) :
-                    Collections.emptyList();
-
-
-            LoadEstimator cpuEstimator = new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseLoadJuel(spec.getString("cpu"), numInputs, numOutputs, operatorProperties)
-            );
-            LoadEstimator ramEstimator = new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseLoadJuel(spec.getString("ram"), numInputs, numOutputs, operatorProperties)
-            );
-            LoadEstimator diskEstimator = !spec.has("disk") ? null : new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseLoadJuel(spec.getString("disk"), numInputs, numOutputs, operatorProperties)
-            );
-            LoadEstimator networkEstimator = !spec.has("network") ? null : new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    parseLoadJuel(spec.getString("network"), numInputs, numOutputs, operatorProperties)
-            );
-
-            long overhead = spec.has("overhead") ? spec.getLong("overhead") : 0L;
-            ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator = spec.has("ru") ?
-                    parseResourceUsageJuel(spec.getString("ru"), numInputs, numOutputs) :
-                    DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR;
-            return new NestableLoadProfileEstimator(
-                    cpuEstimator,
-                    ramEstimator,
-                    diskEstimator,
-                    networkEstimator,
-                    resourceUtilizationEstimator,
-                    overhead
-            );
-        } catch (Exception e) {
-            throw new RheemException(String.format("Could not initialize from specification \"%s\".", jsonJuelSpec), e);
-        }
-    }
-
-    /**
-     * Creates a new instance from a specification {@link String}. Valid specifications are as follows:
-     * <pre>
-     *     {"cpu":&lt;mathematical expression&gt;,
+     *     {"type":&lt;*juel*, mathex&gt;,
+     *      "cpu":&lt;mathematical expression&gt;,
      *      "ram":&lt;mathematical expression&gt;,
      *      "disk":&lt;mathematical expression&gt;,
      *      "network":&lt;mathematical expression&gt;,
@@ -151,58 +74,163 @@ public class LoadProfileEstimators {
     public static NestableLoadProfileEstimator createFromSpecification(String specification) {
         try {
             final JSONObject spec = new JSONObject(specification);
-            int numInputs = spec.getInt("in");
-            int numOutputs = spec.getInt("out");
-            double correctnessProb = spec.getDouble("p");
-            List<String> operatorProperties = spec.has("import") ?
-                    StreamSupport.stream(spec.optJSONArray("import").spliterator(), false).map(Objects::toString).collect(Collectors.toList()) :
-                    Collections.emptyList();
-
-
-            LoadEstimator cpuEstimator = new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    compile(spec.getString("cpu"))
-            );
-            LoadEstimator ramEstimator = new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    compile(spec.getString("ram"))
-            );
-            LoadEstimator diskEstimator = !spec.has("disk") ? null : new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    compile(spec.getString("disk"))
-            );
-            LoadEstimator networkEstimator = !spec.has("network") ? null : new DefaultLoadEstimator(
-                    numInputs,
-                    numOutputs,
-                    correctnessProb,
-                    CardinalityEstimate.EMPTY_ESTIMATE,
-                    compile(spec.getString("network"))
-            );
-
-            long overhead = spec.has("overhead") ? spec.getLong("overhead") : 0L;
-            ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator = spec.has("ru") ?
-                    compileResourceUsage(spec.getString("ru")) :
-                    DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR;
-            return new NestableLoadProfileEstimator(
-                    cpuEstimator,
-                    ramEstimator,
-                    diskEstimator,
-                    networkEstimator,
-                    resourceUtilizationEstimator,
-                    overhead
-            );
+            if (!spec.has("type") || "juel".equalsIgnoreCase(spec.getString("type"))) {
+                return createFromJuelSpecification(spec);
+            } else if ("mathex".equalsIgnoreCase(spec.getString("type"))) {
+                return createFromMathExSpecification(spec);
+            } else {
+                throw new RheemException(String.format("Unknown specification type: %s", spec.get("type")));
+            }
         } catch (Exception e) {
             throw new RheemException(String.format("Could not initialize from specification \"%s\".", specification), e);
         }
+    }
+
+    /**
+     * Creates a new instance from a specification {@link String}. Valid specifications are as follows:
+     * <pre>
+     *     {"cpu":&lt;JUEL expression&gt;,
+     *      "ram":&lt;JUEL expression&gt;,
+     *      "disk":&lt;JUEL expression&gt;,
+     *      "network":&lt;JUEL expression&gt;,
+     *      "import":&lt;["optional", "operator", "properties"]&gt;,
+     *      "in":&lt;#inputs&gt;,
+     *      "out":&lt;#outputs&gt;,
+     *      "p":&lt;correctness probability&gt;,
+     *      "overhead":&lt;overhead in milliseconds&gt;,
+     *      "ru":&lt;resource utilization JUEL expression&gt;
+     *      }
+     * </pre>
+     * The JUEL expressions accept as parameters {@code in0}, {@code in1} a.s.o. for the input cardinalities and
+     * {@code out0}, {@code out1} a.s.o. for the output cardinalities.
+     *
+     * @param spec a specification that adheres to above format
+     * @return the new instance
+     */
+    public static NestableLoadProfileEstimator createFromJuelSpecification(JSONObject spec) {
+        int numInputs = spec.getInt("in");
+        int numOutputs = spec.getInt("out");
+        double correctnessProb = spec.getDouble("p");
+        List<String> operatorProperties = spec.has("import") ?
+                StreamSupport.stream(spec.optJSONArray("import").spliterator(), false).map(Objects::toString).collect(Collectors.toList()) :
+                Collections.emptyList();
+
+
+        LoadEstimator cpuEstimator = new DefaultLoadEstimator(
+                numInputs,
+                numOutputs,
+                correctnessProb,
+                CardinalityEstimate.EMPTY_ESTIMATE,
+                parseLoadJuel(spec.getString("cpu"), numInputs, numOutputs, operatorProperties)
+        );
+        LoadEstimator ramEstimator = new DefaultLoadEstimator(
+                numInputs,
+                numOutputs,
+                correctnessProb,
+                CardinalityEstimate.EMPTY_ESTIMATE,
+                parseLoadJuel(spec.getString("ram"), numInputs, numOutputs, operatorProperties)
+        );
+        LoadEstimator diskEstimator = !spec.has("disk") ? null : new DefaultLoadEstimator(
+                numInputs,
+                numOutputs,
+                correctnessProb,
+                CardinalityEstimate.EMPTY_ESTIMATE,
+                parseLoadJuel(spec.getString("disk"), numInputs, numOutputs, operatorProperties)
+        );
+        LoadEstimator networkEstimator = !spec.has("network") ? null : new DefaultLoadEstimator(
+                numInputs,
+                numOutputs,
+                correctnessProb,
+                CardinalityEstimate.EMPTY_ESTIMATE,
+                parseLoadJuel(spec.getString("network"), numInputs, numOutputs, operatorProperties)
+        );
+
+        long overhead = spec.has("overhead") ? spec.getLong("overhead") : 0L;
+        ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator = spec.has("ru") ?
+                parseResourceUsageJuel(spec.getString("ru"), numInputs, numOutputs) :
+                DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR;
+        return new NestableLoadProfileEstimator(
+                cpuEstimator,
+                ramEstimator,
+                diskEstimator,
+                networkEstimator,
+                resourceUtilizationEstimator,
+                overhead
+        );
+    }
+
+    /**
+     * Creates a new instance from a specification {@link String}. Valid specifications are as follows:
+     * <pre>
+     *     {"cpu":&lt;mathematical expression&gt;,
+     *      "ram":&lt;mathematical expression&gt;,
+     *      "disk":&lt;mathematical expression&gt;,
+     *      "network":&lt;mathematical expression&gt;,
+     *      "import":&lt;["optional", "operator", "properties"]&gt;,
+     *      "in":&lt;#inputs&gt;,
+     *      "out":&lt;#outputs&gt;,
+     *      "p":&lt;correctness probability&gt;,
+     *      "overhead":&lt;overhead in milliseconds&gt;,
+     *      "ru":&lt;resource utilization mathematical expression&gt;
+     *      }
+     * </pre>
+     * The JUEL expressions accept as parameters {@code in0}, {@code in1} a.s.o. for the input cardinalities and
+     * {@code out0}, {@code out1} a.s.o. for the output cardinalities.
+     *
+     * @param spec a specification that adheres to above format
+     * @return the new instance
+     */
+    public static NestableLoadProfileEstimator createFromMathExSpecification(JSONObject spec) {
+        int numInputs = spec.getInt("in");
+        int numOutputs = spec.getInt("out");
+        double correctnessProb = spec.getDouble("p");
+        List<String> operatorProperties = spec.has("import") ?
+                StreamSupport.stream(spec.optJSONArray("import").spliterator(), false).map(Objects::toString).collect(Collectors.toList()) :
+                Collections.emptyList();
+
+
+        LoadEstimator cpuEstimator = new DefaultLoadEstimator(
+                numInputs,
+                numOutputs,
+                correctnessProb,
+                CardinalityEstimate.EMPTY_ESTIMATE,
+                compile(spec.getString("cpu"))
+        );
+        LoadEstimator ramEstimator = new DefaultLoadEstimator(
+                numInputs,
+                numOutputs,
+                correctnessProb,
+                CardinalityEstimate.EMPTY_ESTIMATE,
+                compile(spec.getString("ram"))
+        );
+        LoadEstimator diskEstimator = !spec.has("disk") ? null : new DefaultLoadEstimator(
+                numInputs,
+                numOutputs,
+                correctnessProb,
+                CardinalityEstimate.EMPTY_ESTIMATE,
+                compile(spec.getString("disk"))
+        );
+        LoadEstimator networkEstimator = !spec.has("network") ? null : new DefaultLoadEstimator(
+                numInputs,
+                numOutputs,
+                correctnessProb,
+                CardinalityEstimate.EMPTY_ESTIMATE,
+                compile(spec.getString("network"))
+        );
+
+        long overhead = spec.has("overhead") ? spec.getLong("overhead") : 0L;
+        ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator = spec.has("ru") ?
+                compileResourceUsage(spec.getString("ru")) :
+                DEFAULT_RESOURCE_UTILIZATION_ESTIMATOR;
+        return new NestableLoadProfileEstimator(
+                cpuEstimator,
+                ramEstimator,
+                diskEstimator,
+                networkEstimator,
+                resourceUtilizationEstimator,
+                overhead
+        );
+
     }
 
     /**
