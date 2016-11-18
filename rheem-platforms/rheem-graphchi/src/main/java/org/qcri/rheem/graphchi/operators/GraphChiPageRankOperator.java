@@ -12,11 +12,15 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.PageRankOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.ConsumerIteratorAdapter;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.core.util.fs.LocalFileSystem;
@@ -50,24 +54,29 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
     }
 
     @Override
-    public void execute(ChannelInstance[] inputChannelInstances, ChannelInstance[] outputChannelInstances,
-                        Configuration configuration) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> execute(
+            ChannelInstance[] inputChannelInstances,
+            ChannelInstance[] outputChannelInstances,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputChannelInstances.length == this.getNumInputs();
         assert outputChannelInstances.length == this.getNumOutputs();
 
         final FileChannel.Instance inputChannelInstance = (FileChannel.Instance) inputChannelInstances[0];
         final StreamChannel.Instance outputChannelInstance = (StreamChannel.Instance) outputChannelInstances[0];
         try {
-            this.runGraphChi(inputChannelInstance, outputChannelInstance, configuration);
+            return this.runGraphChi(inputChannelInstance, outputChannelInstance, operatorContext);
         } catch (IOException e) {
             throw new RheemException(String.format("Running %s failed.", this), e);
         }
     }
 
-    private void runGraphChi(FileChannel.Instance inputFileChannelInstance,
-                             StreamChannel.Instance outputChannelInstance,
-                             Configuration configuration)
+    private Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> runGraphChi(
+            FileChannel.Instance inputFileChannelInstance,
+            StreamChannel.Instance outputChannelInstance,
+            OptimizationContext.OperatorContext operatorContext)
             throws IOException {
+
+        assert inputFileChannelInstance.wasProduced();
 
         final String inputPath = inputFileChannelInstance.getSinglePath();
         final String actualInputPath = FileSystems.findActualSingleInputPath(inputPath);
@@ -76,6 +85,7 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
         );
 
         // Create shards.
+        Configuration configuration = operatorContext.getOptimizationContext().getConfiguration();
         String tempDirPath = configuration.getStringProperty("rheem.graphchi.tempdir");
         Random random = new Random();
         String tempFilePath = String.format("%s%s%04x-%04x-%04x-%04x.tmp", tempDirPath, File.separator,
@@ -127,6 +137,21 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
 
         Stream<Tuple2<Long, Float>> outputStream = StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false);
         outputChannelInstance.accept(outputStream);
+
+        // Model what has been executed.
+        final ExecutionLineageNode mainExecutionLineage = new ExecutionLineageNode(operatorContext);
+        mainExecutionLineage.add(LoadProfileEstimators.createFromSpecification(
+                configuration.getStringProperty("rheem.graphchi.pagerank.load.main")
+        ));
+        mainExecutionLineage.addPredecessor(inputFileChannelInstance.getLineage());
+
+        final ExecutionLineageNode outputExecutionLineage = new ExecutionLineageNode(operatorContext);
+        outputExecutionLineage.add(LoadProfileEstimators.createFromSpecification(
+                configuration.getStringProperty("rheem.graphchi.pagerank.load.output")
+        ));
+        outputChannelInstance.getLineage().addPredecessor(outputExecutionLineage);
+
+        return mainExecutionLineage.collectAndMark();
     }
 
     /**
@@ -156,8 +181,8 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
     }
 
     @Override
-    public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.graphchi.pagerank.load";
+    public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
+        return Arrays.asList("rheem.graphchi.pagerank.load.main", "rheem.graphchi.pagerank.load.output");
     }
 
     @Override

@@ -4,8 +4,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.CrossPlatformExecutor;
+import org.qcri.rheem.core.profiling.FullInstrumentationStrategy;
 import org.qcri.rheem.graphchi.GraphChi;
 import org.qcri.rheem.graphchi.execution.GraphChiExecutor;
 import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
@@ -36,6 +41,10 @@ public class GraphChiPageRankOperatorTest {
         GraphChi.plugin().configure(configuration);
         final GraphChiPageRankOperator graphChiPageRankOperator = new GraphChiPageRankOperator(20);
 
+        final Job job = mock(Job.class);
+        when(job.getConfiguration()).thenReturn(configuration);
+        when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new FullInstrumentationStrategy()));
+
         final ExecutionOperator outputOperator = mock(ExecutionOperator.class);
         when(outputOperator.getNumOutputs()).thenReturn(1);
         FileChannel.Instance inputChannelInstance =
@@ -50,10 +59,13 @@ public class GraphChiPageRankOperatorTest {
                         .createChannel(graphChiPageRankOperator.getOutput(), configuration)
                         .createInstance(graphChiExecutor, null, -1);
 
+        final DefaultOptimizationContext optimizationContext = new DefaultOptimizationContext(job);
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(graphChiPageRankOperator);
+
         graphChiPageRankOperator.execute(
                 new ChannelInstance[]{inputChannelInstance},
                 new ChannelInstance[]{outputFileChannelInstance},
-                configuration
+                operatorContext
         );
     }
 
