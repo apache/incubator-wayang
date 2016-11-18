@@ -61,6 +61,10 @@
             <groupId>de.hpi.isg</groupId>
             <artifactId>profiledb-store</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.sekruse</groupId>
+            <artifactId>mathex</artifactId>
+        </dependency>
     </dependencies>
 
 </project>
