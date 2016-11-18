@@ -667,6 +667,8 @@ public abstract class OptimizationContext {
             return this.squashedCostEstimate;
         }
 
+        @Deprecated
+        // TODO: Remove because now there can be more than one such lineage node.
         public ExecutionLineageNode getLineage() {
             if (this.lineage == null) {
                 this.lineage = new ExecutionLineageNode(this);

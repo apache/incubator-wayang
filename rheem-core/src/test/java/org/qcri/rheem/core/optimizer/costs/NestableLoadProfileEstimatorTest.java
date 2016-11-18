@@ -85,7 +85,7 @@ public class NestableLoadProfileEstimatorTest {
 
     @Ignore("Requires properties from operators to be leveraged.")
     @Test
-    public void testFromJueloSpecificationWithImport() {
+    public void testFromJuelSpecificationWithImport() {
         String specification = "{" +
                 "\"in\":2," +
                 "\"out\":1," +

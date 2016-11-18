@@ -138,14 +138,6 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
         final PartialExecution partialExecution = PartialExecution.createFromMeasurement(
                 executionDuration, executionLineageNodes, this.getConfiguration()
         );
-        if (this.logger.isInfoEnabled()) {
-            this.logger.info(
-                    "Executed {} items in {} (estimated {}).",
-                    executionLineageNodes.size(),
-                    Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
-                    partialExecution.getOverallTimeEstimate(this.getConfiguration())
-            );
-        }
 
         return partialExecution;
     }
