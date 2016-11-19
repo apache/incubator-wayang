@@ -37,6 +37,10 @@ public class AtomicExecution {
         return this.loadProfileEstimator.estimate(context);
     }
 
+    /**
+     * This {@link JsonSerializer} stores the given instances via their {@link org.qcri.rheem.core.api.Configuration}
+     * key, if any, or else by the {@link LoadProfile} that they estimate.
+     */
     public static class KeyOrLoadSerializer implements JsonSerializer<AtomicExecution> {
 
         private final EstimationContext estimationContext;
@@ -73,8 +77,7 @@ public class AtomicExecution {
 
         @Override
         public AtomicExecution deserialize(JSONObject json, Class<? extends AtomicExecution> cls) {
-            // TODO: Deserialize with DynamicLoadProfileEstimator.
-            return null;
+            throw new UnsupportedOperationException("Deserialization is not supported.");
         }
     }
 }

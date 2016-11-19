@@ -272,10 +272,12 @@ public class PartialExecution implements JsonSerializable {
 
         @Override
         public JSONObject toJson() {
+            AtomicExecution.KeyOrLoadSerializer atomicExecutionSerializer =
+                    new AtomicExecution.KeyOrLoadSerializer(this.estimationContext);
             return new JSONObject()
-                    .put("ctx", JsonSerializables.serialize(this.estimationContext, true))
+                    .put("ctx", JsonSerializables.serialize(this.estimationContext, false, EstimationContext.defaultSerializer))
                     .put("platform", JsonSerializables.serialize(this.platform, true, Platform.jsonSerializer))
-                    .put("executions", JsonSerializables.serializeAll(this.atomicExecutions, false));
+                    .put("executions", JsonSerializables.serializeAll(this.atomicExecutions, false, atomicExecutionSerializer));
 
         }
     }

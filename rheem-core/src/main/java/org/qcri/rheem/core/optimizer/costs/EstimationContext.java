@@ -1,7 +1,13 @@
 package org.qcri.rheem.core.optimizer.costs;
 
+import org.json.JSONObject;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.util.JsonSerializable;
+import org.qcri.rheem.core.util.JsonSerializables;
+import org.qcri.rheem.core.util.JsonSerializer;
+
+import java.util.Arrays;
 
 /**
  * Provides parameters required by {@link LoadProfileEstimator}s.
@@ -100,5 +106,25 @@ public interface EstimationContext {
 
         return normalizedEstimates;
     }
+
+    /**
+     * Default {@link JsonSerializer} for {@link EstimationContext}s. Does not support deserialization, though.
+     */
+    JsonSerializer<EstimationContext> defaultSerializer = new JsonSerializer<EstimationContext>() {
+
+        @Override
+        public JSONObject serialize(EstimationContext ctx) {
+            return new JSONObject()
+                    .put("inCards", JsonSerializables.serializeAll(Arrays.asList(ctx.getInputCardinalities()), false))
+                    .put("outCards", JsonSerializables.serializeAll(Arrays.asList(ctx.getOutputCardinalities()), false))
+                    .put("executions", ctx.getNumExecutions());
+            // TODO: Serializer operator properties.
+        }
+
+        @Override
+        public EstimationContext deserialize(JSONObject json, Class<? extends EstimationContext> cls) {
+            throw new UnsupportedOperationException("Deserialization not supported.");
+        }
+    };
 
 }

@@ -172,10 +172,10 @@ public class LoadProfile implements JsonSerializable {
     @Override
     public JSONObject toJson() {
         JSONObject json = new JSONObject();
-        json.put("cpu", JsonSerializables.serialize(this.cpuUsage, true));
-        json.put("ram", JsonSerializables.serialize(this.ramUsage, true));
-        json.putOpt("network", JsonSerializables.serialize(this.networkUsage, true));
-        json.putOpt("disk", JsonSerializables.serialize(this.diskUsage, true));
+        json.put("cpu", JsonSerializables.serialize(this.cpuUsage, false));
+        json.put("ram", JsonSerializables.serialize(this.ramUsage, false));
+        json.putOpt("network", JsonSerializables.serialize(this.networkUsage, false));
+        json.putOpt("disk", JsonSerializables.serialize(this.diskUsage, false));
         json.put("utilization", this.resourceUtilization);
         json.put("overhead", this.overheadMillis);
         return json;

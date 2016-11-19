@@ -6,6 +6,7 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.platform.PartialExecution;
+import org.qcri.rheem.core.util.JsonSerializables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +77,7 @@ public class ExecutionLog implements AutoCloseable {
      * @param partialExecution that should be stored
      */
     public void store(PartialExecution partialExecution) throws IOException {
-        this.write(partialExecution.toJson());
+        this.write(JsonSerializables.serialize(partialExecution, false));
     }
 
     /**
