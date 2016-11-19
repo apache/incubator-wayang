@@ -58,9 +58,9 @@ public class LoadEstimate extends ProbabilisticIntervalEstimate implements JsonS
     @Override
     public JSONObject toJson() {
         JSONObject json = new JSONObject();
-        json.put("lower", JsonSerializables.serialize(this.getLowerEstimate()));
-        json.put("upper", JsonSerializables.serialize(this.getUpperEstimate()));
-        json.put("prob", JsonSerializables.serialize(this.getCorrectnessProbability()));
+        json.put("lower", JsonSerializables.serialize(this.getLowerEstimate(), false));
+        json.put("upper", JsonSerializables.serialize(this.getUpperEstimate(), false));
+        json.put("prob", JsonSerializables.serialize(this.getCorrectnessProbability(), false));
         return json;
     }
 

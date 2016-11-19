@@ -141,12 +141,14 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
         // Model what has been executed.
         final ExecutionLineageNode mainExecutionLineage = new ExecutionLineageNode(operatorContext);
         mainExecutionLineage.add(LoadProfileEstimators.createFromSpecification(
+                "rheem.graphchi.pagerank.load.main",
                 configuration.getStringProperty("rheem.graphchi.pagerank.load.main")
         ));
         mainExecutionLineage.addPredecessor(inputFileChannelInstance.getLineage());
 
         final ExecutionLineageNode outputExecutionLineage = new ExecutionLineageNode(operatorContext);
         outputExecutionLineage.add(LoadProfileEstimators.createFromSpecification(
+                "rheem.graphchi.pagerank.load.output",
                 configuration.getStringProperty("rheem.graphchi.pagerank.load.output")
         ));
         outputChannelInstance.getLineage().addPredecessor(outputExecutionLineage);

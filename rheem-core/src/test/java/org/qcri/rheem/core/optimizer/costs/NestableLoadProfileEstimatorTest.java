@@ -32,7 +32,7 @@ public class NestableLoadProfileEstimatorTest {
                 "\"ru\":\"${rheem:logGrowth(0.1, 0.1, 10000, in0+in1)}\"" +
                 "}";
         final NestableLoadProfileEstimator estimator =
-                LoadProfileEstimators.createFromSpecification(specification);
+                LoadProfileEstimators.createFromSpecification(null, specification);
         final LoadProfile estimate = estimator.estimate(new DummyEstimationContext(
                 new CardinalityEstimate[]{
                         new CardinalityEstimate(10, 10, 1d), new CardinalityEstimate(100, 100, 1d)
@@ -64,7 +64,7 @@ public class NestableLoadProfileEstimatorTest {
                 "\"ru\":\"logGrowth(0.1, 0.1, 10000, in0+in1)\"" +
                 "}";
         final NestableLoadProfileEstimator estimator =
-                LoadProfileEstimators.createFromSpecification(specification);
+                LoadProfileEstimators.createFromSpecification(null, specification);
         final LoadProfile estimate = estimator.estimate(new DummyEstimationContext(
                 new CardinalityEstimate[]{
                         new CardinalityEstimate(10, 10, 1d), new CardinalityEstimate(100, 100, 1d)
@@ -97,7 +97,7 @@ public class NestableLoadProfileEstimatorTest {
                 "\"ru\":\"${rheem:logGrowth(0.1, 0.1, 10000, in0+in1)}\"" +
                 "}";
         final NestableLoadProfileEstimator estimator =
-                LoadProfileEstimators.createFromSpecification(specification);
+                LoadProfileEstimators.createFromSpecification(null, specification);
         SomeExecutionOperator execOp = new SomeExecutionOperator();
         final LoadProfile estimate = estimator.estimate(new DummyEstimationContext(
 //                execOp,
@@ -133,7 +133,7 @@ public class NestableLoadProfileEstimatorTest {
                 "\"ru\":\"logGrowth(0.1, 0.1, 10000, in0+in1)\"" +
                 "}";
         final NestableLoadProfileEstimator estimator =
-                LoadProfileEstimators.createFromSpecification(specification);
+                LoadProfileEstimators.createFromSpecification(null, specification);
         SomeExecutionOperator execOp = new SomeExecutionOperator();
         final LoadProfile estimate = estimator.estimate(new DummyEstimationContext(
 //                execOp,

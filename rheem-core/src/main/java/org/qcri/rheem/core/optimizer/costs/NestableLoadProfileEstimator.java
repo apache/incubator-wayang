@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.costs;
 
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 
 import java.util.Collection;
@@ -33,6 +34,11 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
      */
     private Collection<LoadProfileEstimator> nestedEstimators = new LinkedList<>();
 
+    /**
+     * If this instance was created from a specification in the {@link Configuration},
+     * then the according {@link Configuration} key should be stored.
+     */
+    private final String configurationKey;
 
     /**
      * Creates an new instance.
@@ -56,7 +62,7 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                                         LoadEstimator ramLoadEstimator,
                                         LoadEstimator diskLoadEstimator,
                                         LoadEstimator networkLoadEstimator) {
-        this(cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator, (in, out) -> 1d, 0L);
+        this(cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator, (in, out) -> 1d, 0L, null);
     }
 
     /**
@@ -75,12 +81,37 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                                         LoadEstimator networkLoadEstimator,
                                         ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator,
                                         long overheadMillis) {
+        this(
+                cpuLoadEstimator, ramLoadEstimator, diskLoadEstimator, networkLoadEstimator,
+                resourceUtilizationEstimator, overheadMillis, null
+        );
+    }
+
+    /**
+     * Creates an new instance.
+     *
+     * @param cpuLoadEstimator             estimates CPU load in terms of cycles
+     * @param ramLoadEstimator             estimates RAM load in terms of bytes
+     * @param diskLoadEstimator            estimates disk accesses in terms of bytes
+     * @param networkLoadEstimator         estimates network in terms of bytes
+     * @param resourceUtilizationEstimator degree to which the load profile can utilize available resources
+     * @param overheadMillis               overhead that this load profile incurs
+     * @param configurationKey             from that this instances was perceived
+     */
+    public NestableLoadProfileEstimator(LoadEstimator cpuLoadEstimator,
+                                        LoadEstimator ramLoadEstimator,
+                                        LoadEstimator diskLoadEstimator,
+                                        LoadEstimator networkLoadEstimator,
+                                        ToDoubleBiFunction<long[], long[]> resourceUtilizationEstimator,
+                                        long overheadMillis,
+                                        String configurationKey) {
         this.cpuLoadEstimator = cpuLoadEstimator;
         this.ramLoadEstimator = ramLoadEstimator;
         this.diskLoadEstimator = diskLoadEstimator;
         this.networkLoadEstimator = networkLoadEstimator;
         this.resourceUtilizationEstimator = resourceUtilizationEstimator;
         this.overheadMillis = overheadMillis;
+        this.configurationKey = configurationKey;
     }
 
     /**
@@ -166,4 +197,13 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
         return this.overheadMillis;
     }
 
+    @Override
+    public Collection<LoadProfileEstimator> getNestedEstimators() {
+        return this.nestedEstimators;
+    }
+
+    @Override
+    public String getConfigurationKey() {
+        return this.configurationKey;
+    }
 }

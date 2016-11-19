@@ -68,16 +68,17 @@ public class LoadProfileEstimators {
      * The JUEL expressions accept as parameters {@code in0}, {@code in1} a.s.o. for the input cardinalities and
      * {@code out0}, {@code out1} a.s.o. for the output cardinalities.
      *
+     * @param configKey     the {@link Configuration} from that the {@code spec} was retrieved or else {@code null}
      * @param specification a specification that adheres to above format
      * @return the new instance
      */
-    public static NestableLoadProfileEstimator createFromSpecification(String specification) {
+    public static NestableLoadProfileEstimator createFromSpecification(String configKey, String specification) {
         try {
             final JSONObject spec = new JSONObject(specification);
             if (!spec.has("type") || "juel".equalsIgnoreCase(spec.getString("type"))) {
-                return createFromJuelSpecification(spec);
+                return createFromJuelSpecification(configKey, spec);
             } else if ("mathex".equalsIgnoreCase(spec.getString("type"))) {
-                return createFromMathExSpecification(spec);
+                return createFromMathExSpecification(configKey, spec);
             } else {
                 throw new RheemException(String.format("Unknown specification type: %s", spec.get("type")));
             }
@@ -104,10 +105,11 @@ public class LoadProfileEstimators {
      * The JUEL expressions accept as parameters {@code in0}, {@code in1} a.s.o. for the input cardinalities and
      * {@code out0}, {@code out1} a.s.o. for the output cardinalities.
      *
-     * @param spec a specification that adheres to above format
+     * @param configKey the {@link Configuration} from that the {@code spec} was retrieved or else {@code null}
+     * @param spec      a specification that adheres to above format
      * @return the new instance
      */
-    public static NestableLoadProfileEstimator createFromJuelSpecification(JSONObject spec) {
+    public static NestableLoadProfileEstimator createFromJuelSpecification(String configKey, JSONObject spec) {
         int numInputs = spec.getInt("in");
         int numOutputs = spec.getInt("out");
         double correctnessProb = spec.getDouble("p");
@@ -155,7 +157,8 @@ public class LoadProfileEstimators {
                 diskEstimator,
                 networkEstimator,
                 resourceUtilizationEstimator,
-                overhead
+                overhead,
+                configKey
         );
     }
 
@@ -177,10 +180,11 @@ public class LoadProfileEstimators {
      * The JUEL expressions accept as parameters {@code in0}, {@code in1} a.s.o. for the input cardinalities and
      * {@code out0}, {@code out1} a.s.o. for the output cardinalities.
      *
-     * @param spec a specification that adheres to above format
+     * @param configKey the {@link Configuration} from that the {@code spec} was retrieved or else {@code null}
+     * @param spec      a specification that adheres to above format
      * @return the new instance
      */
-    public static NestableLoadProfileEstimator createFromMathExSpecification(JSONObject spec) {
+    public static NestableLoadProfileEstimator createFromMathExSpecification(String configKey, JSONObject spec) {
         int numInputs = spec.getInt("in");
         int numOutputs = spec.getInt("out");
         double correctnessProb = spec.getDouble("p");
@@ -228,7 +232,8 @@ public class LoadProfileEstimators {
                 diskEstimator,
                 networkEstimator,
                 resourceUtilizationEstimator,
-                overhead
+                overhead,
+                configKey
         );
 
     }
