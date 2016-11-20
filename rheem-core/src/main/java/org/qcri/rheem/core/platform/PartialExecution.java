@@ -4,11 +4,13 @@ import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import org.qcri.rheem.core.optimizer.costs.*;
+import org.qcri.rheem.core.optimizer.costs.EstimationContext;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
-import org.qcri.rheem.core.util.JsonSerializable;
 import org.qcri.rheem.core.util.JsonSerializables;
+import org.qcri.rheem.core.util.JsonSerializer;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -18,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * Captures data of a execution of a set of {@link ExecutionOperator}s.
  */
-public class PartialExecution implements JsonSerializable {
+public class PartialExecution {
 
     /**
      * The measured execution time of this instance in milliseconds.
@@ -160,43 +162,6 @@ public class PartialExecution implements JsonSerializable {
     }
 
     /**
-     * Converts this instance into a {@link JSONObject}.
-     *
-     * @return the {@link JSONObject}
-     */
-    @Override
-    public JSONObject toJson() {
-        return new JSONObject()
-                .put("millis", this.measuredExecutionTime)
-                .put("lowerCost", this.lowerCost)
-                .put("upperCost", this.upperCost)
-                .put("execGroups", JsonSerializables.serializeAll(this.atomicExecutionGroups, false))
-                .putOpt("initPlatforms", JsonSerializables.serializeAll(this.initializedPlatforms, true, Platform.jsonSerializer));
-    }
-
-    /**
-     * Parses a {@link JSONObject} and creates a new instance.
-     *
-     * @param jsonObject to be parsed
-     * @return the new instance
-     */
-    public static PartialExecution fromJson(JSONObject jsonObject) {
-        final long measuredExecutionTime = jsonObject.getLong("millis");
-        final double lowerCost = jsonObject.optDouble("lowerCost", -1);
-        final double uppserCost = jsonObject.optDouble("upperCost", -1);
-        final Collection<PartialExecution.AtomicExecutionGroup> atomicExecutionGroups =
-                JsonSerializables.deserializeAllAsList(jsonObject.getJSONArray("execGroups"), AtomicExecutionGroup.class);
-        final Collection<Platform> initializedPlatforms =
-                JsonSerializables.deserializeAllAsList(jsonObject.optJSONArray("initPlatforms"), Platform.jsonSerializer);
-        final PartialExecution partialExecution = new PartialExecution(
-                atomicExecutionGroups, measuredExecutionTime, lowerCost, uppserCost
-        );
-        partialExecution.initializedPlatforms.addAll(initializedPlatforms);
-        return partialExecution;
-
-    }
-
-    /**
      * Provide the {@link AtomicExecutionGroup}s captured by this instance
      *
      * @return the {@link AtomicExecutionGroup}s
@@ -206,80 +171,59 @@ public class PartialExecution implements JsonSerializable {
     }
 
     /**
-     * This class groups {@link AtomicExecution}s with a common {@link EstimationContext} and {@link Platform}.
+     * {@link JsonSerializer} implementation for {@link PartialExecution}s.
      */
-    public static class AtomicExecutionGroup implements JsonSerializable {
+    public static class Serializer implements JsonSerializer<PartialExecution> {
+
+        private final Configuration configuration;
 
         /**
-         * The common {@link EstimationContext}.
-         */
-        private EstimationContext estimationContext;
-
-        /**
-         * The common {@link Platform} for all {@link #atomicExecutions}.
-         */
-        private Platform platform;
-
-        /**
-         * The {@link AtomicExecution}s.
-         */
-        private Collection<AtomicExecution> atomicExecutions;
-
-        public AtomicExecutionGroup(EstimationContext estimationContext,
-                                    Platform platform,
-                                    Collection<AtomicExecution> atomicExecutions) {
-            this.estimationContext = estimationContext;
-            this.platform = platform;
-            this.atomicExecutions = atomicExecutions;
-        }
-
-        /**
-         * Estimate the {@link LoadProfile} for all {@link AtomicExecution}s in this instance.
+         * Creates a new instance.
          *
-         * @return the {@link LoadProfile}
+         * @param configuration is required for deserialization; can otherwise be {@code null}
          */
-        public LoadProfile estimateLoad() {
-            return this.atomicExecutions.stream()
-                    .map(execution -> execution.estimateLoad(this.estimationContext))
-                    .reduce(LoadProfile::plus)
-                    .orElse(LoadProfile.emptyLoadProfile);
+        public Serializer(Configuration configuration) {
+            this.configuration = configuration;
         }
 
-        /**
-         * Estimate the {@link TimeEstimate} for all {@link AtomicExecution}s in this instance.
-         *
-         * @param configuration calibrates the estimation
-         * @return the {@link TimeEstimate}
-         */
-        public TimeEstimate estimateExecutionTime(Configuration configuration) {
-            final LoadProfileToTimeConverter converter = configuration
-                    .getLoadProfileToTimeConverterProvider()
-                    .provideFor(this.platform);
-            return converter.convert(this.estimateLoad());
-        }
 
-        public EstimationContext getEstimationContext() {
-            return this.estimationContext;
-        }
-
-        public Platform getPlatform() {
-            return this.platform;
-        }
-
-        public Collection<AtomicExecution> getAtomicExecutions() {
-            return this.atomicExecutions;
+        @Override
+        public JSONObject serialize(PartialExecution pe) {
+            return new JSONObject()
+                    .put("millis", pe.measuredExecutionTime)
+                    .put("lowerCost", pe.lowerCost)
+                    .put("upperCost", pe.upperCost)
+                    .put("execGroups", JsonSerializables.serializeAll(
+                            pe.atomicExecutionGroups,
+                            false,
+                            new AtomicExecutionGroup.Serializer(this.configuration))
+                    )
+                    .putOpt(
+                            "initPlatforms",
+                            JsonSerializables.serializeAll(pe.initializedPlatforms, true, Platform.jsonSerializer)
+                    );
         }
 
         @Override
-        public JSONObject toJson() {
-            AtomicExecution.KeyOrLoadSerializer atomicExecutionSerializer =
-                    new AtomicExecution.KeyOrLoadSerializer(this.estimationContext);
-            return new JSONObject()
-                    .put("ctx", JsonSerializables.serialize(this.estimationContext, false, EstimationContext.defaultSerializer))
-                    .put("platform", JsonSerializables.serialize(this.platform, true, Platform.jsonSerializer))
-                    .put("executions", JsonSerializables.serializeAll(this.atomicExecutions, false, atomicExecutionSerializer));
-
+        public PartialExecution deserialize(JSONObject json, Class<? extends PartialExecution> cls) {
+            final long measuredExecutionTime = json.getLong("millis");
+            final double lowerCost = json.optDouble("lowerCost", -1);
+            final double uppserCost = json.optDouble("upperCost", -1);
+            final Collection<AtomicExecutionGroup> atomicExecutionGroups =
+                    JsonSerializables.deserializeAllAsList(
+                            json.getJSONArray("execGroups"),
+                            new AtomicExecutionGroup.Serializer(this.configuration),
+                            AtomicExecutionGroup.class
+                    );
+            final Collection<Platform> initializedPlatforms =
+                    JsonSerializables.deserializeAllAsList(json.optJSONArray("initPlatforms"), Platform.jsonSerializer);
+            final PartialExecution partialExecution = new PartialExecution(
+                    atomicExecutionGroups, measuredExecutionTime, lowerCost, uppserCost
+            );
+            partialExecution.initializedPlatforms.addAll(initializedPlatforms);
+            return partialExecution;
         }
     }
+
 
 }

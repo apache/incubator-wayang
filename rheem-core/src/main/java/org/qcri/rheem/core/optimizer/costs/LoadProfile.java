@@ -186,8 +186,8 @@ public class LoadProfile implements JsonSerializable {
         return new LoadProfile(
                 JsonSerializables.deserialize(jsonObject.getJSONObject("cpu"), LoadEstimate.class),
                 JsonSerializables.deserialize(jsonObject.getJSONObject("ram"), LoadEstimate.class),
-                JsonSerializables.deserialize(jsonObject.getJSONObject("network"), LoadEstimate.class),
-                JsonSerializables.deserialize(jsonObject.getJSONObject("disk"), LoadEstimate.class),
+                JsonSerializables.deserialize(jsonObject.optJSONObject("network"), LoadEstimate.class),
+                JsonSerializables.deserialize(jsonObject.optJSONObject("disk"), LoadEstimate.class),
                 jsonObject.getDouble("utilization"),
                 jsonObject.getLong("overhead")
         );

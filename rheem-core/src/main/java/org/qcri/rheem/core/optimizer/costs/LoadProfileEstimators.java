@@ -429,7 +429,7 @@ public class LoadProfileEstimators {
         final LoadProfileEstimator subestimator = configuration
                 .getFunctionLoadProfileEstimatorProvider()
                 .provideFor(functionDescriptor);
-        ((NestableLoadProfileEstimator) mainEstimator).nest(subestimator);
+        mainEstimator.nest(subestimator);
 
     }
 

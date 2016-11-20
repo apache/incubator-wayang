@@ -53,12 +53,11 @@ public class PartialExecutionTest {
         PartialExecution original = new PartialExecution(12345L, 12, 13, Arrays.asList(executionLineageNode1, executionLineageNode2));
         original.addInitializedPlatform(DummyPlatform.getInstance());
 
-        final JSONObject jsonObject = JsonSerializables.serialize(original, false);
+        final JSONObject jsonObject = JsonSerializables.serialize(original, false, new PartialExecution.Serializer(configuration));
         final PartialExecution loaded = JsonSerializables.deserialize(jsonObject, PartialExecution.class);
 
         Assert.assertEquals(original.getMeasuredExecutionTime(), loaded.getMeasuredExecutionTime());
-//        Assert.assertEquals(2, loaded.getOperatorExecutions().size());
-        // todo: Check the AtomicExecutionGroups.
+        Assert.assertEquals(2, loaded.getAtomicExecutionGroups().size());
         Assert.assertEquals(1, loaded.getInitializedPlatforms().size());
         Assert.assertSame(DummyPlatform.getInstance(), RheemCollections.getAny(loaded.getInitializedPlatforms()));
     }

@@ -573,7 +573,7 @@ public class Job extends OneTimeExecutable {
         int nextPartialExecutionMeasurementId = 0;
         for (PartialExecution partialExecution : partialExecutions) {
             if (this.logger.isDebugEnabled()) {
-                for (PartialExecution.AtomicExecutionGroup atomicExecutionGroup : partialExecution.getAtomicExecutionGroups()) {
+                for (AtomicExecutionGroup atomicExecutionGroup : partialExecution.getAtomicExecutionGroups()) {
                     if (!(atomicExecutionGroup.getEstimationContext() instanceof OptimizationContext.OperatorContext)) {
                         continue;
                     }

@@ -1,10 +1,10 @@
 package org.qcri.rheem.core.platform;
 
+import org.apache.commons.lang.SerializationException;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.qcri.rheem.core.optimizer.costs.EstimationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfile;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.util.JsonSerializables;
 import org.qcri.rheem.core.util.JsonSerializer;
 
@@ -43,9 +43,19 @@ public class AtomicExecution {
      */
     public static class KeyOrLoadSerializer implements JsonSerializer<AtomicExecution> {
 
+        private final Configuration configuration;
+
         private final EstimationContext estimationContext;
 
-        public KeyOrLoadSerializer(EstimationContext estimationContext) {
+        /**
+         * Creates a new instance.
+         *
+         * @param configuration     required for deserialization; can otherwise be {@code null}
+         * @param estimationContext of the enclosing {@link AtomicExecutionGroup};
+         *                          required for serialization; can otherwise be {@code null}
+         */
+        public KeyOrLoadSerializer(Configuration configuration, EstimationContext estimationContext) {
+            this.configuration = configuration;
             this.estimationContext = estimationContext;
         }
 
@@ -77,7 +87,71 @@ public class AtomicExecution {
 
         @Override
         public AtomicExecution deserialize(JSONObject json, Class<? extends AtomicExecution> cls) {
-            throw new UnsupportedOperationException("Deserialization is not supported.");
+            final JSONArray estimators = json.getJSONArray("estimators");
+            if (estimators.length() < 1) {
+                throw new IllegalStateException("Expected at least one serialized estimator.");
+            }
+            // De-serialize the main estimator.
+            final JSONObject mainEstimatorJson = estimators.getJSONObject(0);
+            LoadProfileEstimator mainEstimator = this.deserializeEstimator(mainEstimatorJson);
+
+            // De-serialize nested estimators.
+            for (int i = 1; i < estimators.length(); i++) {
+                mainEstimator.nest(this.deserializeEstimator(estimators.getJSONObject(i)));
+            }
+
+            return new AtomicExecution(mainEstimator);
         }
+
+        /**
+         * Deserialize a {@link LoadProfileEstimator} according to {@link #serialize(LoadProfileEstimator, JSONArray)}.
+         *
+         * @param jsonObject that should be deserialized
+         * @return the {@link LoadProfileEstimator}
+         */
+        private LoadProfileEstimator deserializeEstimator(JSONObject jsonObject) {
+            if (jsonObject.has("key")) {
+                final String key = jsonObject.getString("key");
+                return LoadProfileEstimators.createFromSpecification(key, this.configuration.getStringProperty(key));
+            } else if (jsonObject.has("load")) {
+                final LoadProfile load = JsonSerializables.deserialize(jsonObject.getJSONObject("load"), LoadProfile.class);
+                return new ConstantLoadProfileEstimator(load);
+            }
+            throw new SerializationException(String.format("Cannot deserialize load estimator from %s.", jsonObject));
+        }
+    }
+
+    /**
+     * Retrieve the {@link LoadProfileEstimator} encapsulated by this instance.
+     *
+     * @return the {@link LoadProfileEstimator}
+     */
+    public LoadProfileEstimator getLoadProfileEstimator() {
+        return this.loadProfileEstimator;
+    }
+
+    /**
+     * Change the {@link LoadProfileEstimator} encapsulated by this instance.
+     *
+     * @param loadProfileEstimator the {@link LoadProfileEstimator}
+     */
+    public void setLoadProfileEstimator(LoadProfileEstimator loadProfileEstimator) {
+        this.loadProfileEstimator = loadProfileEstimator;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.getClass().getSimpleName()).append('[');
+        if (this.loadProfileEstimator.getConfigurationKey() != null) {
+            sb.append(this.loadProfileEstimator.getConfigurationKey());
+        } else {
+            sb.append(this.loadProfileEstimator);
+        }
+        if (!this.loadProfileEstimator.getNestedEstimators().isEmpty()) {
+            sb.append('+').append(this.loadProfileEstimator.getNestedEstimators().size()).append(" nested");
+        }
+        sb.append(']');
+        return super.toString();
     }
 }

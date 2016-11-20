@@ -118,7 +118,7 @@ public interface EstimationContext {
                     .put("inCards", JsonSerializables.serializeAll(Arrays.asList(ctx.getInputCardinalities()), false))
                     .put("outCards", JsonSerializables.serializeAll(Arrays.asList(ctx.getOutputCardinalities()), false))
                     .put("executions", ctx.getNumExecutions());
-            // TODO: Serializer operator properties.
+            // TODO: Serialize operator properties.
         }
 
         @Override
