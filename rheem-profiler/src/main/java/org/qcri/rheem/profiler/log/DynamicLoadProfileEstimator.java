@@ -6,6 +6,7 @@ import org.qcri.rheem.core.optimizer.costs.EstimationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -29,6 +30,8 @@ public class DynamicLoadProfileEstimator implements LoadProfileEstimator {
      */
     private final Collection<Variable> employedVariables = new HashSet<>();
 
+    private final Collection<LoadProfileEstimator> nestedEstimators = new ArrayList<>(4);
+
     /**
      * {@link Configuration} key of this instance.
      */
@@ -42,14 +45,7 @@ public class DynamicLoadProfileEstimator implements LoadProfileEstimator {
      * @param cpuEstimator a {@link DynamicLoadEstimator} to estimate CPU load
      */
     public DynamicLoadProfileEstimator(String configKey, int numInputs, int numOutputs, DynamicLoadEstimator cpuEstimator) {
-        this(
-                configKey,
-                numInputs,
-                numOutputs,
-                cpuEstimator,
-                DynamicLoadEstimator.zeroLoad,
-                DynamicLoadEstimator.zeroLoad
-        );
+        this(configKey, numInputs, numOutputs, cpuEstimator, DynamicLoadEstimator.zeroLoad, DynamicLoadEstimator.zeroLoad);
     }
 
     /**
@@ -92,6 +88,21 @@ public class DynamicLoadProfileEstimator implements LoadProfileEstimator {
         );
     }
 
+    @Override
+    public void nest(LoadProfileEstimator loadProfileEstimator) {
+        this.nestedEstimators.add(loadProfileEstimator);
+    }
+
+    @Override
+    public Collection<LoadProfileEstimator> getNestedEstimators() {
+        return this.nestedEstimators;
+    }
+
+    @Override
+    public String getConfigurationKey() {
+        return this.configKey;
+    }
+
     /**
      * Creates a JSON representation of this instance that can be plugged into a properties file.
      *
@@ -103,10 +114,10 @@ public class DynamicLoadProfileEstimator implements LoadProfileEstimator {
         sb.append(this.configKey).append(" = {\\\n");
         sb.append(" \"in\":").append(this.numInputs).append(",\\\n");
         sb.append(" \"out\":").append(this.numOutputs).append(",\\\n");
-        sb.append(" \"cpu\":\"").append(this.cpuEstimator.toJuel(individual)).append("\",\\\n");
-        sb.append(" \"ram\":\"").append(this.ramEstimator.toJuel(individual)).append("\",\\\n");
-        sb.append(" \"disk\":\"").append(this.diskEstimator.toJuel(individual)).append("\",\\\n");
-        sb.append(" \"net\":\"").append(this.networkEstimator.toJuel(individual)).append("\",\\\n");
+        sb.append(" \"cpu\":\"").append(this.cpuEstimator.toMathEx(individual)).append("\",\\\n");
+        sb.append(" \"ram\":\"").append(this.ramEstimator.toMathEx(individual)).append("\",\\\n");
+        sb.append(" \"disk\":\"").append(this.diskEstimator.toMathEx(individual)).append("\",\\\n");
+        sb.append(" \"net\":\"").append(this.networkEstimator.toMathEx(individual)).append("\",\\\n");
         sb.append(" \"p\":0.9\\\n");
         sb.append("}");
         return sb.toString();

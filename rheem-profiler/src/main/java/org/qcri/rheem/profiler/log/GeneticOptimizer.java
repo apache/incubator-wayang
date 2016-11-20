@@ -4,7 +4,8 @@ import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.AtomicExecution;
+import org.qcri.rheem.core.platform.AtomicExecutionGroup;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Bitmask;
@@ -38,11 +39,6 @@ public class GeneticOptimizer {
      * Counts observation instances, such as an operator or a platform initialization, in the training data.
      */
     private final TObjectIntMap<Object> numObservations;
-
-    /**
-     * {@link LoadProfileEstimator}s that are relevant to calculate the fitness of {@link Individual}s.
-     */
-    private final Map<Class<? extends ExecutionOperator>, LoadProfileEstimator> estimators;
 
     /**
      * {@link Variable}s to learn the overhead of {@link Platform} initialization.
@@ -99,19 +95,19 @@ public class GeneticOptimizer {
      */
     public GeneticOptimizer(OptimizationSpace optimizationSpace,
                             Collection<PartialExecution> observations,
-                            Map<Class<? extends ExecutionOperator>, LoadProfileEstimator> estimators,
+                            Map<String, DynamicLoadProfileEstimator> estimators,
                             Map<Platform, Variable> platformOverheads,
                             Configuration configuration) {
         this.configuration = configuration;
         this.optimizationSpace = optimizationSpace;
         this.observations = observations;
-        this.estimators = estimators;
         this.platformOverheads = platformOverheads;
         this.activatedGenes = new Bitmask(this.optimizationSpace.getNumDimensions());
         for (PartialExecution observation : observations) {
-            for (PartialExecution.OperatorExecution opExec : observation.getOperatorExecutions()) {
-                final LoadProfileEstimator estimator = estimators.get(opExec.getOperator().getClass());
-                if (estimator instanceof DynamicLoadProfileEstimator) {
+            final Collection<String> loadProfileEstimatorKeys = getLoadProfileEstimatorKeys(observation);
+            for (String loadProfileEstimatorKey : loadProfileEstimatorKeys) {
+                final LoadProfileEstimator estimator = estimators.get(loadProfileEstimatorKey);
+                if (estimator != null) {
                     for (Variable variable : ((DynamicLoadProfileEstimator) estimator).getEmployedVariables()) {
                         this.activatedGenes.set(variable.getIndex());
                     }
@@ -135,9 +131,9 @@ public class GeneticOptimizer {
             case "absolute":
                 this.fitnessFunction = individual -> individual.calculateAbsoluteFitness(this);
                 break;
-            case "subject":
-                this.fitnessFunction = individual -> individual.calcluateSubjectbasedFitness(this);
-                break;
+//            case "subject":
+//                this.fitnessFunction = individual -> individual.calcluateSubjectbasedFitness(this);
+//                break;
             default:
                 throw new IllegalStateException(
                         "Unknown fitness function: " + this.configuration.getStringProperty("rheem.profiler.ga.fitness.type")
@@ -148,8 +144,8 @@ public class GeneticOptimizer {
         this.numObservations = new TObjectIntHashMap<>();
         this.runtimeSum = 0L;
         for (PartialExecution observation : this.observations) {
-            for (PartialExecution.OperatorExecution operatorExecution : observation.getOperatorExecutions()) {
-                this.numObservations.adjustOrPutValue(operatorExecution.getOperator().getClass(), 1, 1);
+            for (String key : getLoadProfileEstimatorKeys(observation)) {
+                this.numObservations.adjustOrPutValue(key, 1, 1);
             }
             for (Platform platform : observation.getInitializedPlatforms()) {
                 this.numObservations.adjustOrPutValue(platform, 1, 1);
@@ -268,10 +264,6 @@ public class GeneticOptimizer {
         return numObservations;
     }
 
-    public Map<Class<? extends ExecutionOperator>, LoadProfileEstimator> getEstimators() {
-        return estimators;
-    }
-
     public Map<Platform, Variable> getPlatformOverheads() {
         return platformOverheads;
     }
@@ -281,8 +273,8 @@ public class GeneticOptimizer {
         for (Platform platform : observation.getInitializedPlatforms()) {
             weight += 1d / this.numObservations.get(platform);
         }
-        for (PartialExecution.OperatorExecution operatorExecution : observation.getOperatorExecutions()) {
-            weight += 1d / this.numObservations.get(operatorExecution.getOperator().getClass());
+        for (String key : getLoadProfileEstimatorKeys(observation)) {
+            weight += 1d / this.numObservations.get(key);
         }
 
         return weight / this.numObservations.size();
@@ -290,5 +282,31 @@ public class GeneticOptimizer {
 
     public double calculateRuntimeBasedWeight(PartialExecution observation) {
         return observation.getMeasuredExecutionTime() / (double) this.runtimeSum;
+    }
+
+    /**
+     * Collects all configuration keys of {@link LoadProfileEstimator}s embedded in the given {@link PartialExecution}.
+     *
+     * @param partialExecution the {@link PartialExecution}
+     * @return the configuration keys
+     */
+    private static Collection<String> getLoadProfileEstimatorKeys(PartialExecution partialExecution) {
+        Collection<String> keys = new LinkedList<>();
+        for (AtomicExecutionGroup atomicExecutionGroup : partialExecution.getAtomicExecutionGroups()) {
+            for (AtomicExecution atomicExecution : atomicExecutionGroup.getAtomicExecutions()) {
+                collectLoadProfileEstimatorKeys(atomicExecution.getLoadProfileEstimator(), keys);
+            }
+        }
+        return keys;
+    }
+
+    /**
+     * Helper method for {@link #getLoadProfileEstimatorKeys(PartialExecution)}.
+     */
+    private static void collectLoadProfileEstimatorKeys(LoadProfileEstimator lpe, Collection<String> collector) {
+        if (lpe.getConfigurationKey() != null) collector.add(lpe.getConfigurationKey());
+        for (LoadProfileEstimator nestedEstimator : lpe.getNestedEstimators()) {
+            collectLoadProfileEstimatorKeys(nestedEstimator, collector);
+        }
     }
 }

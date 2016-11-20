@@ -2,40 +2,39 @@ package org.qcri.rheem.profiler.log;
 
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.EstimationContext;
-import org.qcri.rheem.core.platform.PartialExecution;
 
 /**
  * {@link EstimationContext} implementation for {@link DynamicLoadEstimator}s.
  */
 public class DynamicEstimationContext implements EstimationContext {
 
-    private final PartialExecution.OperatorExecution operatorExecution;
+    private final EstimationContext wrappedEstimationContext;
 
     private final Individual individual;
 
-    public DynamicEstimationContext(Individual individual, PartialExecution.OperatorExecution operatorExecution) {
+    public DynamicEstimationContext(Individual individual, EstimationContext wrappedEstimationContext) {
         this.individual = individual;
-        this.operatorExecution = operatorExecution;
+        this.wrappedEstimationContext = wrappedEstimationContext;
     }
 
     @Override
     public CardinalityEstimate[] getInputCardinalities() {
-        return this.operatorExecution.getInputCardinalities();
+        return this.wrappedEstimationContext.getInputCardinalities();
     }
 
     @Override
     public CardinalityEstimate[] getOutputCardinalities() {
-        return this.operatorExecution.getOutputCardinalities();
+        return this.wrappedEstimationContext.getOutputCardinalities();
     }
 
     @Override
     public double getDoubleProperty(String propertyKey, double fallback) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        return this.wrappedEstimationContext.getDoubleProperty(propertyKey, fallback);
     }
 
     @Override
     public int getNumExecutions() {
-        return this.operatorExecution.getNumExecutions();
+        return this.wrappedEstimationContext.getNumExecutions();
     }
 
     public Individual getIndividual() {
