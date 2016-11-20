@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
  */
 public class PartialExecutionTest {
 
-    @Ignore("Move from OperatorExecutions to AtomicExecutions")
     @Test
     public void testJsonSerialization() {
         // Create first OperatorContext with non-serializable ExecutionOperator.
@@ -53,8 +52,9 @@ public class PartialExecutionTest {
         PartialExecution original = new PartialExecution(12345L, 12, 13, Arrays.asList(executionLineageNode1, executionLineageNode2));
         original.addInitializedPlatform(DummyPlatform.getInstance());
 
-        final JSONObject jsonObject = JsonSerializables.serialize(original, false, new PartialExecution.Serializer(configuration));
-        final PartialExecution loaded = JsonSerializables.deserialize(jsonObject, PartialExecution.class);
+        final PartialExecution.Serializer serializer = new PartialExecution.Serializer(configuration);
+        final JSONObject jsonObject = JsonSerializables.serialize(original, false, serializer);
+        final PartialExecution loaded = JsonSerializables.deserialize(jsonObject, serializer, PartialExecution.class);
 
         Assert.assertEquals(original.getMeasuredExecutionTime(), loaded.getMeasuredExecutionTime());
         Assert.assertEquals(2, loaded.getAtomicExecutionGroups().size());

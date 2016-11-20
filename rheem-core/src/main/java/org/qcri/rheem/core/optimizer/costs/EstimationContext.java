@@ -3,11 +3,11 @@ package org.qcri.rheem.core.optimizer.costs;
 import org.json.JSONObject;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.util.JsonSerializable;
 import org.qcri.rheem.core.util.JsonSerializables;
 import org.qcri.rheem.core.util.JsonSerializer;
 
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Provides parameters required by {@link LoadProfileEstimator}s.
@@ -36,6 +36,13 @@ public interface EstimationContext {
      * @return the property value or {@code fallback}
      */
     double getDoubleProperty(String propertyKey, double fallback);
+
+    /**
+     * Retrieve the eligible property keys for {@link #getDoubleProperty(String, double)}.
+     *
+     * @return the property keys
+     */
+    Collection<String> getPropertyKeys();
 
     /**
      * Retrieve the number of executions to be estimated.
@@ -82,6 +89,11 @@ public interface EstimationContext {
             }
 
             @Override
+            public Collection<String> getPropertyKeys() {
+                return EstimationContext.this.getPropertyKeys();
+            }
+
+            @Override
             public int getNumExecutions() {
                 return 1;
             }
@@ -114,11 +126,17 @@ public interface EstimationContext {
 
         @Override
         public JSONObject serialize(EstimationContext ctx) {
-            return new JSONObject()
+            JSONObject doubleProperties = new JSONObject();
+            for (String key : ctx.getPropertyKeys()) {
+                double value = ctx.getDoubleProperty(key, 0);
+                doubleProperties.put(key, value);
+            }
+            if (doubleProperties.length() == 0) doubleProperties = null;
+            return doubleProperties
                     .put("inCards", JsonSerializables.serializeAll(Arrays.asList(ctx.getInputCardinalities()), false))
                     .put("outCards", JsonSerializables.serializeAll(Arrays.asList(ctx.getOutputCardinalities()), false))
-                    .put("executions", ctx.getNumExecutions());
-            // TODO: Serialize operator properties.
+                    .put("executions", ctx.getNumExecutions())
+                    .putOpt("properties", doubleProperties);
         }
 
         @Override

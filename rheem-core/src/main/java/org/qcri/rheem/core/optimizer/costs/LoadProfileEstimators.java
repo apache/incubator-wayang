@@ -15,7 +15,6 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator.SinglePointEstimationFunction;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.util.JuelUtils;
-import org.qcri.rheem.core.util.ReflectionUtils;
 
 import java.util.*;
 import java.util.function.ToDoubleBiFunction;
@@ -257,7 +256,7 @@ public class LoadProfileEstimators {
                 additionalProperties.toArray(new String[additionalProperties.size()])
         );
         final JuelUtils.JuelFunction<Long> juelFunction = new JuelUtils.JuelFunction<>(juel, Long.class, parameterClasses);
-        return (op, inCards, outCards) -> applyJuelFunction(juelFunction, op, inCards, outCards, additionalProperties);
+        return (estimationContext, inCards, outCards) -> applyJuelFunction(juelFunction, estimationContext, inCards, outCards, additionalProperties);
     }
 
     /**
@@ -304,7 +303,7 @@ public class LoadProfileEstimators {
      * @return the JUEL function result
      */
     private static <T> T applyJuelFunction(JuelUtils.JuelFunction<T> juelFunction,
-                                           Object artifact,
+                                           EstimationContext estimationContext,
                                            long[] inputCardinalities,
                                            long[] outputCardinalities,
                                            List<String> artifactProperties) {
@@ -316,7 +315,7 @@ public class LoadProfileEstimators {
             parameters.put("out" + i, outputCardinalities[i]);
         }
         for (String property : artifactProperties) {
-            parameters.put(property, ReflectionUtils.getProperty(artifact, property));
+            parameters.put(property, estimationContext.getDoubleProperty(property, 0d));
         }
         return juelFunction.apply(parameters, true);
     }

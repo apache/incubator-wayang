@@ -10,6 +10,7 @@ import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -475,7 +476,17 @@ public abstract class OptimizationContext {
 
         @Override
         public double getDoubleProperty(String propertyKey, double fallback) {
-            throw new UnsupportedOperationException("Not implemented yet.");
+            try {
+                return ReflectionUtils.toDouble(ReflectionUtils.getProperty(this.operator, propertyKey));
+            } catch (Exception e) {
+                logger.error("Could not retrieve property \"{}\" from {}.", propertyKey, this.operator, e);
+                return fallback;
+            }
+        }
+
+        @Override
+        public Collection<String> getPropertyKeys() {
+            return this.operator.getEstimationContextProperties();
         }
 
         /**

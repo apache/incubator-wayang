@@ -1,11 +1,13 @@
 package org.qcri.rheem.core.optimizer.costs;
 
+import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.json.JSONObject;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.util.JsonSerializables;
 import org.qcri.rheem.core.util.JsonSerializer;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -15,7 +17,7 @@ public class SimpleEstimationContext implements EstimationContext {
 
     private final CardinalityEstimate[] inputCardinalities, outputCardinalities;
 
-    private final TObjectDoubleHashMap<String> doubleProperties;
+    private final TObjectDoubleMap<String> doubleProperties;
 
     private final int numExecutions;
 
@@ -24,7 +26,7 @@ public class SimpleEstimationContext implements EstimationContext {
      */
     public SimpleEstimationContext(CardinalityEstimate[] inputCardinalities,
                                    CardinalityEstimate[] outputCardinalities,
-                                   TObjectDoubleHashMap<String> doubleProperties,
+                                   TObjectDoubleMap<String> doubleProperties,
                                    int numExecutions) {
         this.inputCardinalities = inputCardinalities;
         this.outputCardinalities = outputCardinalities;
@@ -54,6 +56,11 @@ public class SimpleEstimationContext implements EstimationContext {
         return this.numExecutions;
     }
 
+    @Override
+    public Collection<String> getPropertyKeys() {
+        return this.doubleProperties.keySet();
+    }
+
     /**
      * {@link JsonSerializer} for {@link SimpleEstimationContext}s.
      */
@@ -81,8 +88,13 @@ public class SimpleEstimationContext implements EstimationContext {
                             CardinalityEstimate.class
                     );
 
-                    // TODO: Deserialize double properties.
                     final TObjectDoubleHashMap<String> doubleProperties = new TObjectDoubleHashMap<>();
+                    final JSONObject doublePropertiesJson = json.optJSONObject("properties");
+                    if (doublePropertiesJson != null) {
+                        for (String key : doublePropertiesJson.keySet()) {
+                            doubleProperties.put(key, doublePropertiesJson.getDouble(key));
+                        }
+                    }
 
                     final int numExecutions = json.getInt("executions");
 

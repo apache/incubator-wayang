@@ -1,5 +1,7 @@
 package org.qcri.rheem.core.optimizer.costs;
 
+import gnu.trove.map.TObjectDoubleMap;
+import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -9,7 +11,6 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.test.DummyEstimationContext;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.List;
@@ -33,11 +34,12 @@ public class NestableLoadProfileEstimatorTest {
                 "}";
         final NestableLoadProfileEstimator estimator =
                 LoadProfileEstimators.createFromSpecification(null, specification);
-        final LoadProfile estimate = estimator.estimate(new DummyEstimationContext(
+        final LoadProfile estimate = estimator.estimate(new SimpleEstimationContext(
                 new CardinalityEstimate[]{
                         new CardinalityEstimate(10, 10, 1d), new CardinalityEstimate(100, 100, 1d)
                 },
                 new CardinalityEstimate[]{new CardinalityEstimate(200, 300, 1d)},
+                new TObjectDoubleHashMap<>(),
                 1
         ));
 
@@ -65,11 +67,12 @@ public class NestableLoadProfileEstimatorTest {
                 "}";
         final NestableLoadProfileEstimator estimator =
                 LoadProfileEstimators.createFromSpecification(null, specification);
-        final LoadProfile estimate = estimator.estimate(new DummyEstimationContext(
+        final LoadProfile estimate = estimator.estimate(new SimpleEstimationContext(
                 new CardinalityEstimate[]{
                         new CardinalityEstimate(10, 10, 1d), new CardinalityEstimate(100, 100, 1d)
                 },
                 new CardinalityEstimate[]{new CardinalityEstimate(200, 300, 1d)},
+                new TObjectDoubleHashMap<>(),
                 1
         ));
 
@@ -83,7 +86,6 @@ public class NestableLoadProfileEstimatorTest {
         Assert.assertEquals(143, estimate.getOverheadMillis());
     }
 
-    @Ignore("Requires properties from operators to be leveraged.")
     @Test
     public void testFromJuelSpecificationWithImport() {
         String specification = "{" +
@@ -99,12 +101,14 @@ public class NestableLoadProfileEstimatorTest {
         final NestableLoadProfileEstimator estimator =
                 LoadProfileEstimators.createFromSpecification(null, specification);
         SomeExecutionOperator execOp = new SomeExecutionOperator();
-        final LoadProfile estimate = estimator.estimate(new DummyEstimationContext(
-//                execOp,
+        TObjectDoubleMap<String> properties = new TObjectDoubleHashMap<>();
+        properties.put("numIterations", 2d);
+        final LoadProfile estimate = estimator.estimate(new SimpleEstimationContext(
                 new CardinalityEstimate[]{
                         new CardinalityEstimate(10, 10, 1d), new CardinalityEstimate(100, 100, 1d)
                 },
                 new CardinalityEstimate[]{new CardinalityEstimate(200, 300, 1d)},
+                properties,
                 1
         ));
 
@@ -118,7 +122,6 @@ public class NestableLoadProfileEstimatorTest {
         Assert.assertEquals(143, estimate.getOverheadMillis());
     }
 
-    @Ignore("Requires properties from operators to be leveraged.")
     @Test
     public void testMathExFromSpecificationWithImport() {
         String specification = "{" +
@@ -128,19 +131,21 @@ public class NestableLoadProfileEstimatorTest {
                 "\"import\":[\"numIterations\"]," +
                 "\"p\":0.8," +
                 "\"cpu\":\"(3*in0 + 2*in1 + 7*out0) * numIterations\"," +
-                "\"ram\":\"${6*in0 + 4*in1 + 14*out0}\"," +
+                "\"ram\":\"6*in0 + 4*in1 + 14*out0\"," +
                 "\"overhead\":143," +
                 "\"ru\":\"logGrowth(0.1, 0.1, 10000, in0+in1)\"" +
                 "}";
         final NestableLoadProfileEstimator estimator =
                 LoadProfileEstimators.createFromSpecification(null, specification);
         SomeExecutionOperator execOp = new SomeExecutionOperator();
-        final LoadProfile estimate = estimator.estimate(new DummyEstimationContext(
-//                execOp,
+        TObjectDoubleMap<String> properties = new TObjectDoubleHashMap<>();
+        properties.put("numIterations", 2d);
+        final LoadProfile estimate = estimator.estimate(new SimpleEstimationContext(
                 new CardinalityEstimate[]{
                         new CardinalityEstimate(10, 10, 1d), new CardinalityEstimate(100, 100, 1d)
                 },
                 new CardinalityEstimate[]{new CardinalityEstimate(200, 300, 1d)},
+                properties,
                 1
         ));
 

@@ -3,6 +3,8 @@ package org.qcri.rheem.profiler.log;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.EstimationContext;
 
+import java.util.Collection;
+
 /**
  * {@link EstimationContext} implementation for {@link DynamicLoadEstimator}s.
  */
@@ -35,6 +37,11 @@ public class DynamicEstimationContext implements EstimationContext {
     @Override
     public int getNumExecutions() {
         return this.wrappedEstimationContext.getNumExecutions();
+    }
+
+    @Override
+    public Collection<String> getPropertyKeys() {
+        return this.wrappedEstimationContext.getPropertyKeys();
     }
 
     public Individual getIndividual() {

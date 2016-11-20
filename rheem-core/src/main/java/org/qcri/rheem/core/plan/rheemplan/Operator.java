@@ -8,6 +8,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
 import org.qcri.rheem.core.platform.Platform;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -592,6 +593,28 @@ public interface Operator {
      * @param name the name
      */
     void setName(String name);
+
+    /**
+     * Collects all fields of this instance that have a {@link EstimationContextProperty} annotation.
+     *
+     * @return the fields
+     */
+    default Collection<String> getEstimationContextProperties() {
+        Set<String> properties = new HashSet<>(2);
+        Queue<Class<?>> classQueue = new LinkedList<>();
+        classQueue.add(this.getClass());
+        while (!classQueue.isEmpty()) {
+            final Class<?> cls = classQueue.poll();
+            if (cls.getSuperclass() != null) classQueue.add(cls.getSuperclass());
+            for (Field declaredField : cls.getDeclaredFields()) {
+                final EstimationContextProperty annotation = declaredField.getDeclaredAnnotation(EstimationContextProperty.class);
+                if (annotation != null) {
+                    properties.add(declaredField.getName());
+                }
+            }
+        }
+        return properties;
+    }
 
 }
 
