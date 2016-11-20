@@ -4,6 +4,7 @@ import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
 import org.qcri.rheem.basic.operators.SampleOperator;
+import org.qcri.rheem.basic.operators.UDFSampleSize;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
@@ -48,6 +49,13 @@ public class SparkShufflePartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      */
+    public SparkShufflePartitionSampleOperator(UDFSampleSize udfSampleSize, DataSetType<Type> type) {
+        super(udfSampleSize, type, Methods.SHUFFLE_PARTITION_FIRST);
+    }
+
+    /**
+     * Creates a new instance.
+     */
     public SparkShufflePartitionSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
         super(sampleSize, datasetSize, type, Methods.SHUFFLE_PARTITION_FIRST);
     }
@@ -55,8 +63,22 @@ public class SparkShufflePartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      */
+    public SparkShufflePartitionSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, DataSetType<Type> type) {
+        super(udfSampleSize, datasetSize, type, Methods.SHUFFLE_PARTITION_FIRST);
+    }
+
+    /**
+     * Creates a new instance.
+     */
     public SparkShufflePartitionSampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type) {
         super(sampleSize, datasetSize, seed, type, Methods.SHUFFLE_PARTITION_FIRST);
+    }
+
+    /**
+     * Creates a new instance.
+     */
+    public SparkShufflePartitionSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, long seed, DataSetType<Type> type) {
+        super(udfSampleSize, datasetSize, seed, type, Methods.SHUFFLE_PARTITION_FIRST);
     }
 
     /**
@@ -84,6 +106,9 @@ public class SparkShufflePartitionSampleOperator<Type>
         long datasetSize = this.isDataSetSizeKnown() ?
                 this.getDatasetSize() :
                 inputRdd.cache().count();
+
+        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) //if it is not null, compute the sample size with the UDF
+            sampleSize = udfSampleSize.apply();
 
         if (sampleSize >= datasetSize) { //return all and return
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());

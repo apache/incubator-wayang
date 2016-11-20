@@ -43,12 +43,16 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     // TODO: With 0 being a legal dataset size, it would be nice to use a different "null" value, e.g., -1.
     public static final long UNKNOWN_DATASET_SIZE = 0L;
 
+    public static final UDFSampleSize UNKNOWN_UDF_SAMPLE_SIZE = null;
+
     /**
      * Default seed value.
      */
     public static final long DEFAULT_SEED = System.nanoTime();
 
     protected int sampleSize;
+
+    protected UDFSampleSize udfSampleSize;
 
     /**
      * Optionally sets the seed for the sample.
@@ -61,6 +65,16 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     protected long datasetSize;
 
     private Methods sampleMethod;
+
+    /**
+     * Creates a new instance with any sampling method.
+     *
+     * @param udfSampleSize user-specified size of the sample
+     * @param type       {@link DataSetType} of the sampled dataset
+     */
+    public SampleOperator(UDFSampleSize udfSampleSize, DataSetType<Type> type) {
+        this(udfSampleSize, type, Methods.ANY);
+    }
 
     /**
      * Creates a new instance with any sampling method.
@@ -80,10 +94,24 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     }
 
     /**
+     * Creates a new instance given a user-defined sample size method.
+     */
+    public SampleOperator(UDFSampleSize udfSampleSize, DataSetType<Type> type, Methods sampleMethod) {
+        this(udfSampleSize, UNKNOWN_DATASET_SIZE, type, sampleMethod);
+    }
+
+    /**
      * Creates a new instance given the sample size and total dataset size.
      */
     public SampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type, Methods sampleMethod) {
         this(sampleSize, datasetSize, DEFAULT_SEED, type, sampleMethod);
+    }
+
+    /**
+     * Creates a new instance given a user-defined sample size method and total dataset size.
+     */
+    public SampleOperator(UDFSampleSize udfSampleSize, long datasetSize, DataSetType<Type> type, Methods sampleMethod) {
+        this(udfSampleSize, datasetSize, DEFAULT_SEED, type, sampleMethod);
     }
 
     /**
@@ -98,6 +126,17 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     }
 
     /**
+     * Creates a new instance given a user-defined sample size method, total dataset size and seed.
+     */
+    public SampleOperator(UDFSampleSize udfSampleSize, long datasetSize, long seed, DataSetType<Type> type, Methods sampleMethod) {
+        super(type, type, true);
+        this.udfSampleSize = udfSampleSize;
+        this.datasetSize = datasetSize;
+        this.seed = seed;
+        this.sampleMethod = sampleMethod;
+    }
+
+    /**
      * Copies an instance (exclusive of broadcasts).
      *
      * @param that that should be copied
@@ -105,6 +144,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     public SampleOperator(SampleOperator<Type> that) {
         super(that);
         this.sampleSize = that.getSampleSize();
+        this.udfSampleSize = that.getUDFSampleSize();
         this.sampleMethod = that.getSampleMethod();
         this.datasetSize = that.getDatasetSize();
         this.seed = that.getSeed();
@@ -117,6 +157,10 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
     public int getSampleSize() {
         return this.sampleSize;
+    }
+
+    public UDFSampleSize getUDFSampleSize() {
+        return this.udfSampleSize;
     }
 
     public long getDatasetSize() {

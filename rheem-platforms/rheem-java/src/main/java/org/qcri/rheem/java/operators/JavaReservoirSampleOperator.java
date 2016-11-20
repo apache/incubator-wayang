@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.SampleOperator;
+import org.qcri.rheem.basic.operators.UDFSampleSize;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
@@ -40,11 +41,30 @@ public class JavaReservoirSampleOperator<Type>
     /**
      * Creates a new instance.
      *
+     * @param udfSampleSize
+     */
+    public JavaReservoirSampleOperator(UDFSampleSize udfSampleSize, DataSetType<Type> type) {
+        super(udfSampleSize, type, Methods.RESERVOIR);
+    }
+
+    /**
+     * Creates a new instance.
+     *
      * @param sampleSize
      * @param datasetSize
      */
     public JavaReservoirSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
         super(sampleSize, datasetSize, type, Methods.RESERVOIR);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param udfSampleSize
+     * @param datasetSize
+     */
+    public JavaReservoirSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, DataSetType<Type> type) {
+        super(udfSampleSize, datasetSize, type, Methods.RESERVOIR);
     }
 
     /**
@@ -56,6 +76,17 @@ public class JavaReservoirSampleOperator<Type>
      */
     public JavaReservoirSampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type) {
         super(sampleSize, datasetSize, seed, type, Methods.RESERVOIR);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param udfSampleSize
+     * @param datasetSize
+     * @param seed
+     */
+    public JavaReservoirSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, long seed, DataSetType<Type> type) {
+        super(udfSampleSize, datasetSize, seed, type, Methods.RESERVOIR);
     }
 
     /**
@@ -77,6 +108,9 @@ public class JavaReservoirSampleOperator<Type>
             OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+
+        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) //if it is not null, compute the sample size with the UDF
+            sampleSize = udfSampleSize.apply();
 
         ((CollectionChannel.Instance) outputs[0]).accept(reservoirSample(rand, ((JavaChannelInstance) inputs[0]).<Type>provideStream().iterator(), sampleSize));
 

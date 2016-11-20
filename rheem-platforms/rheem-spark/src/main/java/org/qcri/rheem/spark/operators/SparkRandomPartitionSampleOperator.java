@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.operators;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.SampleOperator;
+import org.qcri.rheem.basic.operators.UDFSampleSize;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -53,6 +54,13 @@ public class SparkRandomPartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      */
+    public SparkRandomPartitionSampleOperator(UDFSampleSize udfSampleSize, DataSetType<Type> type) {
+        super(udfSampleSize, type, Methods.RANDOM);
+    }
+
+    /**
+     * Creates a new instance.
+     */
     public SparkRandomPartitionSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
         super(sampleSize, datasetSize, type, Methods.RANDOM);
     }
@@ -60,8 +68,22 @@ public class SparkRandomPartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      */
+    public SparkRandomPartitionSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, DataSetType<Type> type) {
+        super(udfSampleSize, datasetSize, type, Methods.RANDOM);
+    }
+
+    /**
+     * Creates a new instance.
+     */
     public SparkRandomPartitionSampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type) {
         super(sampleSize, datasetSize, seed, type, Methods.RANDOM);
+    }
+
+    /**
+     * Creates a new instance.
+     */
+    public SparkRandomPartitionSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, long seed, DataSetType<Type> type) {
+        super(udfSampleSize, datasetSize, seed, type, Methods.RANDOM);
     }
 
     /**
@@ -90,9 +112,14 @@ public class SparkRandomPartitionSampleOperator<Type>
                 this.getDatasetSize() :
                 inputRdd.cache().count();
 
+        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) { //if it is not null, compute the sample size with the UDF
+            sampleSize = udfSampleSize.apply();
+            System.out.println("sample size " + sampleSize);
+        }
+
         if (sampleSize >= datasetSize) { //return whole dataset
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
-            return null;
+            return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
         }
 
         List<Type> result;

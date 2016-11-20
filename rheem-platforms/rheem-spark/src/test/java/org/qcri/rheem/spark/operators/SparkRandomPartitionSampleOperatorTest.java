@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.basic.operators.UDFSampleSize;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.RheemCollections;
@@ -45,4 +46,41 @@ public class SparkRandomPartitionSampleOperatorTest extends SparkOperatorTestBas
 
     }
 
+    @Test
+    public void testUDFExecution() {
+        // Prepare test data.
+        RddChannel.Instance input = this.createRddChannelInstance(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+        CollectionChannel.Instance output = this.createCollectionChannelInstance();
+
+
+        // Build the distinct operator.
+        SparkRandomPartitionSampleOperator<Integer> sampleOperator =
+                new SparkRandomPartitionSampleOperator<>(
+                        new myUDFSampleSize(),
+                        DataSetType.createDefaultUnchecked(Integer.class)
+                );
+        sampleOperator.setSeed(42);
+
+        // Set up the ChannelInstances.
+        final ChannelInstance[] inputs = new ChannelInstance[]{input};
+        final ChannelInstance[] outputs = new ChannelInstance[]{output};
+
+        // Execute.
+        this.evaluate(sampleOperator, inputs, outputs);
+
+        // Verify the outcome.
+        final List<Integer> result = RheemCollections.asList(output.provideCollection());
+        System.out.println(result);
+        Assert.assertEquals(5, result.size());
+
+    }
+
+}
+
+class myUDFSampleSize implements UDFSampleSize {
+
+    @Override
+    public int apply() {
+        return 5;
+    }
 }

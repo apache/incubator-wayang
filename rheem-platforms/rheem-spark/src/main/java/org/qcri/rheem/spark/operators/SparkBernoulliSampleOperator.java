@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.SampleOperator;
+import org.qcri.rheem.basic.operators.UDFSampleSize;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
@@ -39,11 +40,30 @@ public class SparkBernoulliSampleOperator<Type>
     /**
      * Creates a new instance.
      *
+     * @param udfSampleSize
+     */
+    public SparkBernoulliSampleOperator(UDFSampleSize udfSampleSize, DataSetType<Type> type) {
+        super(udfSampleSize, type, Methods.BERNOULLI);
+    }
+
+    /**
+     * Creates a new instance.
+     *
      * @param sampleSize
      * @param datasetSize
      */
     public SparkBernoulliSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
         super(sampleSize, datasetSize, type, Methods.BERNOULLI);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param udfSampleSize
+     * @param datasetSize
+     */
+    public SparkBernoulliSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, DataSetType<Type> type) {
+        super(udfSampleSize, datasetSize, type, Methods.BERNOULLI);
     }
 
     /**
@@ -55,6 +75,17 @@ public class SparkBernoulliSampleOperator<Type>
      */
     public SparkBernoulliSampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type) {
         super(sampleSize, datasetSize, seed, type, Methods.BERNOULLI);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param udfSampleSize
+     * @param datasetSize
+     * @param seed
+     */
+    public SparkBernoulliSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, long seed, DataSetType<Type> type) {
+        super(udfSampleSize, datasetSize, seed, type, Methods.BERNOULLI);
     }
 
     /**
@@ -82,6 +113,10 @@ public class SparkBernoulliSampleOperator<Type>
 
         final JavaRDD<Type> inputRdd = input.provideRdd();
         long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() : inputRdd.count();
+
+        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) //if it is not null, compute the sample size with the UDF
+            sampleSize = udfSampleSize.apply();
+
         double sampleFraction = ((double) this.sampleSize) / datasetSize;
         final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction, seed);
         this.name(outputRdd);

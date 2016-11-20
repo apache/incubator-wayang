@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.SampleOperator;
+import org.qcri.rheem.basic.operators.UDFSampleSize;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
@@ -41,11 +42,31 @@ public class JavaRandomSampleOperator<Type>
     /**
      * Creates a new instance.
      *
+     * @param udfSampleSize udf-based size of sample
+     */
+    public JavaRandomSampleOperator(UDFSampleSize udfSampleSize, DataSetType<Type> type) {
+        super(udfSampleSize, type, Methods.RANDOM);
+    }
+
+
+    /**
+     * Creates a new instance.
+     *
      * @param sampleSize  size of sample
      * @param datasetSize size of data
      */
     public JavaRandomSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
         super(sampleSize, datasetSize, type, Methods.RANDOM);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param udfSampleSize  udf-based size of sample
+     * @param datasetSize size of data
+     */
+    public JavaRandomSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, DataSetType<Type> type) {
+        super(udfSampleSize, datasetSize, type, Methods.RANDOM);
     }
 
     /**
@@ -57,6 +78,17 @@ public class JavaRandomSampleOperator<Type>
      */
     public JavaRandomSampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type) {
         super(sampleSize, datasetSize, seed, type, Methods.RANDOM);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param udfSampleSize  udf-based size of sample
+     * @param datasetSize size of data
+     * @param seed
+     */
+    public JavaRandomSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, long seed, DataSetType<Type> type) {
+        super(udfSampleSize, datasetSize, seed, type, Methods.RANDOM);
     }
 
     /**
@@ -78,9 +110,11 @@ public class JavaRandomSampleOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        //TODO: it causes class cast exception because input is a streamchannel
         long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() :
                 ((CollectionChannel.Instance) inputs[0]).provideCollection().size();
+
+        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) //if it is not null, compute the sample size with the UDF
+            sampleSize = udfSampleSize.apply();
 
         if (sampleSize >= datasetSize) { //return all
             ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).provideStream());
