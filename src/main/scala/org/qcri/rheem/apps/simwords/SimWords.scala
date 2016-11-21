@@ -5,11 +5,13 @@ import org.qcri.rheem.api._
 import org.qcri.rheem.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelper}
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators
 import org.qcri.rheem.core.plugin.Plugin
 import org.qcri.rheem.core.util.fs.FileSystems
 
 /**
   * This app clusters words by their word neighborhoods in a corpus.
+  * <p>Note the UDF load properties `rheem.apps.simwords.udfs.create-neighborhood.load` and `rheem.apps.simwords.udfs.select-centroid.load`.</p>
   */
 class SimWords(plugins: Plugin*) {
 
@@ -52,7 +54,8 @@ class SimWords(plugins: Plugin*) {
       .flatMapJava(
         new CreateWordNeighborhoodFunction(neighborhoodReach, "wordIds"),
         selectivity = wordsPerLine,
-        udfCpuLoad = (in1: Long, in2: Long, out: Long) => 1000L * in1 * in2
+        udfLoad = LoadProfileEstimators.createFromSpecification("rheem.apps.simwords.udfs.create-neighborhood.load", configuration)
+
       )
       .withBroadcast(wordIds, "wordIds")
       .withName("Create word vectors")
@@ -80,7 +83,10 @@ class SimWords(plugins: Plugin*) {
     // Run k-means on the vectors.
     val finalCentroids = initialCentroids.repeat(numIterations, { centroids: DataQuanta[(Int, SparseVector)] =>
       val newCentroids: DataQuanta[(Int, SparseVector)] = wordVectors
-        .mapJava(new SelectNearestCentroidFunction("centroids"), udfCpuLoad = (in1: Long, in2: Long, out: Long) => 1000L * in1 * in2)
+        .mapJava(
+          new SelectNearestCentroidFunction("centroids"),
+          udfLoad = LoadProfileEstimators.createFromSpecification("rheem.apps.simwords.udfs.select-centroid.load", configuration)
+        )
         .withBroadcast(centroids, "centroids")
         .withName("Select nearest centroids")
         .map(assignment => (assignment._3, assignment._2)).withName("Strip word ID")

@@ -8,6 +8,7 @@ import org.qcri.rheem.apps.util.{ExperimentDescriptor, Parameters, ProfileDBHelp
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.ExecutionContext
 import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators
 import org.qcri.rheem.core.plugin.Plugin
 
 import scala.collection.JavaConversions._
@@ -15,6 +16,7 @@ import scala.util.Random
 
 /**
   * K-Means app for Rheem.
+  * <p>Note the UDF load property `rheem.apps.kmeans.udfs.select-centroid.load`.</p>
   */
 class Kmeans(plugin: Plugin*) {
 
@@ -45,7 +47,7 @@ class Kmeans(plugin: Plugin*) {
       val newCentroids = points
         .mapJava(
           new SelectNearestCentroid,
-          udfCpuLoad = (in1: Long, in2: Long, out: Long) => in1 * in2 * 100L
+          udfLoad = LoadProfileEstimators.createFromSpecification("rheem.apps.kmeans.udfs.select-centroid.load", configuration)
         )
         .withBroadcast(currentCentroids, "centroids").withName("Find nearest centroid")
         .reduceByKey(_.centroidId, _ + _).withName("Add up points")
