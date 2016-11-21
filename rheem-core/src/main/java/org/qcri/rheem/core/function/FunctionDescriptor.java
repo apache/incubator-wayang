@@ -1,7 +1,9 @@
 package org.qcri.rheem.core.function;
 
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 
 import java.io.Serializable;
 import java.util.Optional;
@@ -46,6 +48,20 @@ public abstract class FunctionDescriptor {
             return ((MapPartitionsDescriptor<?, ?>) functionDescriptor).getSelectivity();
         }
         throw new IllegalArgumentException(String.format("Cannot retrieve selectivity of %s.", functionDescriptor));
+    }
+
+    /**
+     * Updates the {@link LoadProfileEstimator} of this instance.
+     *
+     * @param cpuEstimator the {@link LoadEstimator} for the CPU load
+     * @param ramEstimator the {@link LoadEstimator} for the RAM load
+     * @deprecated Use {@link #setLoadProfileEstimator(LoadProfileEstimator)} instead.
+     */
+    public void setLoadEstimators(LoadEstimator cpuEstimator, LoadEstimator ramEstimator) {
+        this.setLoadProfileEstimator(new NestableLoadProfileEstimator(
+                cpuEstimator,
+                ramEstimator
+        ));
     }
 
     /**
