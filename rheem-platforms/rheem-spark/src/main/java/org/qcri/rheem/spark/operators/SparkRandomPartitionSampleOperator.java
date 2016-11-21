@@ -5,6 +5,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.basic.operators.UDFSampleSize;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -12,7 +13,9 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.execution.JavaExecutionContext;
 import org.qcri.rheem.spark.channels.RddChannel;
+import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,8 +116,9 @@ public class SparkRandomPartitionSampleOperator<Type>
                 inputRdd.cache().count();
 
         if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) { //if it is not null, compute the sample size with the UDF
+            int iterationNumber = operatorContext.getOptimizationContext().getIterationNumber();
+            udfSampleSize.open(new SparkExecutionContext(iterationNumber));
             sampleSize = udfSampleSize.apply();
-            System.out.println("sample size " + sampleSize);
         }
 
         if (sampleSize >= datasetSize) { //return whole dataset

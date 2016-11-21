@@ -15,6 +15,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
+import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.*;
@@ -114,8 +115,11 @@ public class SparkBernoulliSampleOperator<Type>
         final JavaRDD<Type> inputRdd = input.provideRdd();
         long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() : inputRdd.count();
 
-        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) //if it is not null, compute the sample size with the UDF
+        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) { //if it is not null, compute the sample size with the UDF
+            int iterationNumber = operatorContext.getOptimizationContext().getIterationNumber();
+            udfSampleSize.open(new SparkExecutionContext(iterationNumber));
             sampleSize = udfSampleSize.apply();
+        }
 
         double sampleFraction = ((double) this.sampleSize) / datasetSize;
         final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction, seed);

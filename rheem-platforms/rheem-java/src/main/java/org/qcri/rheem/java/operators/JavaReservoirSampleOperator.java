@@ -16,6 +16,7 @@ import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
+import org.qcri.rheem.java.execution.JavaExecutionContext;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
@@ -109,8 +110,11 @@ public class JavaReservoirSampleOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) //if it is not null, compute the sample size with the UDF
+        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) { //if it is not null, compute the sample size with the UDF
+            int iterationNumber = operatorContext.getOptimizationContext().getIterationNumber();
+            udfSampleSize.open(new JavaExecutionContext(this, inputs, iterationNumber));
             sampleSize = udfSampleSize.apply();
+        }
 
         ((CollectionChannel.Instance) outputs[0]).accept(reservoirSample(rand, ((JavaChannelInstance) inputs[0]).<Type>provideStream().iterator(), sampleSize));
 

@@ -17,6 +17,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
+import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 import scala.collection.JavaConversions;
 import scala.collection.convert.Wrappers;
@@ -107,8 +108,11 @@ public class SparkShufflePartitionSampleOperator<Type>
                 this.getDatasetSize() :
                 inputRdd.cache().count();
 
-        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) //if it is not null, compute the sample size with the UDF
+        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) { //if it is not null, compute the sample size with the UDF
+            int iterationNumber = operatorContext.getOptimizationContext().getIterationNumber();
+            udfSampleSize.open(new SparkExecutionContext(iterationNumber));
             sampleSize = udfSampleSize.apply();
+        }
 
         if (sampleSize >= datasetSize) { //return all and return
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());

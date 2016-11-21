@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.operators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.operators.UDFSampleSize;
+import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.RheemCollections;
@@ -71,7 +72,7 @@ public class SparkRandomPartitionSampleOperatorTest extends SparkOperatorTestBas
         // Verify the outcome.
         final List<Integer> result = RheemCollections.asList(output.provideCollection());
         System.out.println(result);
-        Assert.assertEquals(5, result.size());
+        Assert.assertEquals(2, result.size());
 
     }
 
@@ -79,8 +80,15 @@ public class SparkRandomPartitionSampleOperatorTest extends SparkOperatorTestBas
 
 class myUDFSampleSize implements UDFSampleSize {
 
+    int iteration;
+
+    @Override
+    public void open(ExecutionContext ctx) {
+        this.iteration = ctx.getCurrentIteration();
+    }
+
     @Override
     public int apply() {
-        return 5;
+        return iteration + 3; //given that the sample is not inside the loop, iteration = -1
     }
 }

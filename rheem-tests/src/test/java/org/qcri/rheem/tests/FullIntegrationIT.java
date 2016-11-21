@@ -413,6 +413,21 @@ public class FullIntegrationIT {
         System.out.println(collector);
     }
 
+//    @Test
+//    public void testSampleInLoop() throws URISyntaxException {
+//        // Build the RheemPlan.
+//        final List<Integer> collector = new LinkedList<>();
+//        RheemPlan rheemPlan = RheemPlans.sampleInLoop(collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+//
+//        // Instantiate Rheem and activate the Java backend.
+//        RheemContext rheemContext = new RheemContext(configuration)
+//                .with(Java.basicPlugin())
+//                .with(Spark.basicPlugin());
+//
+//        rheemContext.execute(rheemPlan);
+//        System.out.println(collector);
+//    }
+
     @Test
     public void testCurrentIterationNumber() {
         RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());

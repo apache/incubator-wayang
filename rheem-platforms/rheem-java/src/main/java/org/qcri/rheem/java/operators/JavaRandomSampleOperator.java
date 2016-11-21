@@ -16,6 +16,7 @@ import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
+import org.qcri.rheem.java.execution.JavaExecutionContext;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
@@ -113,8 +114,11 @@ public class JavaRandomSampleOperator<Type>
         long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() :
                 ((CollectionChannel.Instance) inputs[0]).provideCollection().size();
 
-        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) //if it is not null, compute the sample size with the UDF
+        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) { //if it is not null, compute the sample size with the UDF
+            int iterationNumber = operatorContext.getOptimizationContext().getIterationNumber();
+            udfSampleSize.open(new JavaExecutionContext(this, inputs, iterationNumber));
             sampleSize = udfSampleSize.apply();
+        }
 
         if (sampleSize >= datasetSize) { //return all
             ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).provideStream());
