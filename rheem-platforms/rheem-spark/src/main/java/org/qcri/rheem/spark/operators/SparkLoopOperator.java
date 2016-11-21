@@ -65,8 +65,8 @@ public class SparkLoopOperator<InputType, ConvergenceType>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final RddChannel.Instance iterationInput;
-        final CollectionChannel.Instance convergenceInput;
+        ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
 
         final Function<Collection<ConvergenceType>, Boolean> stoppingCondition =
                 sparkExecutor.getCompiler().compile(this.criterionDescriptor, this, operatorContext, inputs);
@@ -88,7 +88,7 @@ public class SparkLoopOperator<InputType, ConvergenceType>
 
                 input = (RddChannel.Instance) inputs[ITERATION_INPUT_INDEX];
                 convergenceCollection = ((CollectionChannel.Instance) inputs[ITERATION_CONVERGENCE_INPUT_INDEX]).provideCollection();
-                operatorContext.getLineage().addPredecessor(inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLineage());
+                executionLineageNode.addPredecessor(inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLineage());
 
                 try {
                     endloop = stoppingCondition.call(convergenceCollection);
@@ -114,7 +114,7 @@ public class SparkLoopOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return operatorContext.getLineage().collectAndMark();
+        return executionLineageNode.collectAndMark();
     }
 
     @Override

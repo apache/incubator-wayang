@@ -65,6 +65,15 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
         final CardinalityEstimate cardinalityEstimate0 = operatorContext.getInputCardinality(0);
         final CardinalityEstimate cardinalityEstimate1 = operatorContext.getInputCardinality(1);
 
+        ExecutionLineageNode indexingExecutionLineageNode = new ExecutionLineageNode(operatorContext);
+        indexingExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                "rheem.java.join.load.indexing", javaExecutor.getConfiguration()
+        ));
+        ExecutionLineageNode probingExecutionLineageNode = new ExecutionLineageNode(operatorContext);
+        probingExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                "rheem.java.join.load.probing", javaExecutor.getConfiguration()
+        ));
+
         final Stream<Tuple2<InputType0, InputType1>> joinStream;
         Collection<ExecutionLineageNode> executionLineageNodes = new LinkedList<>();
         Collection<ChannelInstance> producedChannelInstances = new LinkedList<>();
@@ -89,8 +98,9 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
             joinStream = ((JavaChannelInstance) inputs[1]).<InputType1>provideStream().flatMap(dataQuantum1 ->
                     probeTable.getOrDefault(keyExtractor1.apply(dataQuantum1), Collections.emptyList()).stream()
                             .map(dataQuantum0 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
-            inputs[0].getLineage().collectAndMark(executionLineageNodes, producedChannelInstances);
-            operatorContext.getLineage().addPredecessor(inputs[1].getLineage());
+            indexingExecutionLineageNode.addPredecessor(inputs[0].getLineage());
+            indexingExecutionLineageNode.collectAndMark(executionLineageNodes, producedChannelInstances);
+            probingExecutionLineageNode.addPredecessor(inputs[1].getLineage());
         } else {
             final int expectedNumElements = cardinalityEstimate1 == null ?
                     1000 :
@@ -108,19 +118,20 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
             joinStream = ((JavaChannelInstance) inputs[0]).<InputType0>provideStream().flatMap(dataQuantum0 ->
                     probeTable.getOrDefault(keyExtractor0.apply(dataQuantum0), Collections.emptyList()).stream()
                             .map(dataQuantum1 -> new Tuple2<>(dataQuantum0, dataQuantum1)));
-            inputs[1].getLineage().collectAndMark(executionLineageNodes, producedChannelInstances);
-            operatorContext.getLineage().addPredecessor(inputs[0].getLineage());
+            indexingExecutionLineageNode.addPredecessor(inputs[1].getLineage());
+            indexingExecutionLineageNode.collectAndMark(executionLineageNodes, producedChannelInstances);
+            probingExecutionLineageNode.addPredecessor(inputs[0].getLineage());
         }
 
         ((StreamChannel.Instance) outputs[0]).accept(joinStream);
-        outputs[0].getLineage().addPredecessor(operatorContext.getLineage());
+        outputs[0].getLineage().addPredecessor(probingExecutionLineageNode);
 
         return new Tuple<>(executionLineageNodes, producedChannelInstances);
     }
 
     @Override
-    public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.java.join.load";
+    public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
+        return Arrays.asList("rheem.java.join.load.indexing", "rheem.java.join.load.probing");
     }
 
     @Override

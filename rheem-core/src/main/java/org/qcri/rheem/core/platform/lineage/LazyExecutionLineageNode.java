@@ -1,6 +1,5 @@
 package org.qcri.rheem.core.platform.lineage;
 
-import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.Tuple;
 
@@ -76,19 +75,19 @@ public abstract class LazyExecutionLineageNode {
     /**
      * Set all of the {@code inputs} as predecessors of the {@code operatorContext} each of the {@code outputs}.
      *
-     * @param inputs          input {@link ChannelInstance}s
-     * @param operatorContext in-between {@link OptimizationContext.OperatorContext}
-     * @param outputs         output {@link ChannelInstance}s
+     * @param inputs               input {@link ChannelInstance}s
+     * @param executionLineageNode in-between {@link ExecutionLineageNode}
+     * @param outputs              output {@link ChannelInstance}s
      * @see #addPredecessor(LazyExecutionLineageNode)
      */
     public static void connectAll(ChannelInstance[] inputs,
-                                  OptimizationContext.OperatorContext operatorContext,
+                                  ExecutionLineageNode executionLineageNode,
                                   ChannelInstance[] outputs) {
         for (ChannelInstance input : inputs) {
-            if (input != null) operatorContext.getLineage().addPredecessor(input.getLineage());
+            if (input != null) executionLineageNode.addPredecessor(input.getLineage());
         }
         for (ChannelInstance output : outputs) {
-            if (output != null) output.getLineage().addPredecessor(operatorContext.getLineage());
+            if (output != null) output.getLineage().addPredecessor(executionLineageNode);
         }
     }
 
@@ -105,7 +104,7 @@ public abstract class LazyExecutionLineageNode {
      * Collect and mark all unmarked {@link LazyExecutionLineageNode}s in this instance.
      *
      * @param executionLineageCollector collects the unmarked {@link ExecutionLineageNode}
-     * @param channelInstanceCollector collects the {@link ChannelInstance} in the unmarked {@link LazyExecutionLineageNode}s
+     * @param channelInstanceCollector  collects the {@link ChannelInstance} in the unmarked {@link LazyExecutionLineageNode}s
      * @return the two collectors
      */
     public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> collectAndMark(

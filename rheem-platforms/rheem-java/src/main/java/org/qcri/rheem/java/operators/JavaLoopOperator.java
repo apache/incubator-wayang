@@ -64,6 +64,9 @@ public class JavaLoopOperator<InputType, ConvergenceType>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        final ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
+
         final Predicate<Collection<ConvergenceType>> stoppingCondition =
                 javaExecutor.getCompiler().compile(this.criterionDescriptor);
         JavaExecutor.openFunction(this, stoppingCondition, inputs, operatorContext);
@@ -89,7 +92,7 @@ public class JavaLoopOperator<InputType, ConvergenceType>
                 endloop = stoppingCondition.test(convergenceCollection);
 
                 JavaExecutionOperator.forward(inputs[ITERATION_CONVERGENCE_INPUT_INDEX], outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]);
-                operatorContext.getLineage().addPredecessor(inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLineage());
+                executionLineageNode.addPredecessor(inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLineage());
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -108,7 +111,7 @@ public class JavaLoopOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return operatorContext.getLineage().collectAndMark();
+        return executionLineageNode.collectAndMark();
     }
 
     @Override

@@ -112,7 +112,11 @@ public class AtomicExecution {
         private LoadProfileEstimator deserializeEstimator(JSONObject jsonObject) {
             if (jsonObject.has("key")) {
                 final String key = jsonObject.getString("key");
-                return LoadProfileEstimators.createFromSpecification(key, this.configuration.getStringProperty(key));
+                final LoadProfileEstimator estimator = LoadProfileEstimators.createFromSpecification(key, this.configuration);
+                if (estimator == null) {
+                    throw new SerializationException("Could not create estimator for key " + key);
+                }
+                return estimator;
             } else if (jsonObject.has("load")) {
                 final LoadProfile load = JsonSerializables.deserialize(jsonObject.getJSONObject("load"), LoadProfile.class);
                 return new ConstantLoadProfileEstimator(load);

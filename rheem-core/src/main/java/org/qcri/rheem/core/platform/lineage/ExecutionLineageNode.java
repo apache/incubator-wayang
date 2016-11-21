@@ -54,7 +54,7 @@ public class ExecutionLineageNode extends LazyExecutionLineageNode {
      *
      * @return this instance
      */
-    public ExecutionLineageNode addAllFromOperatorContext() {
+    public ExecutionLineageNode addAtomicExecutionFromOperatorContext() {
         return this.add(this.operatorContext.getLoadProfileEstimator());
     }
 

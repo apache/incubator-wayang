@@ -74,6 +74,8 @@ public class Configuration {
 
     private KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider;
 
+    private MapBasedKeyValueProvider<String, LoadProfileEstimator> loadProfileEstimatorCache;
+
     private KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider;
 
     private KeyValueProvider<Platform, TimeToCostConverter> timeToCostConverterProvider;
@@ -142,6 +144,8 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(this.parent.operatorLoadProfileEstimatorProvider, this);
             this.functionLoadProfileEstimatorProvider =
                     new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider, this);
+            this.loadProfileEstimatorCache =
+                    new MapBasedKeyValueProvider<>(this.parent.loadProfileEstimatorCache, this);
             this.loadProfileToTimeConverterProvider =
                     new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider, this);
             this.timeToCostConverterProvider =
@@ -469,6 +473,9 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(builtInProvider, false);
             configuration.setTimeToCostConverterProvider(overrideProvider);
         }
+        {
+            configuration.setLoadProfileEstimatorCache(new MapBasedKeyValueProvider<>(configuration, true));
+        }
     }
 
     private static void bootstrapPruningProviders(Configuration configuration) {
@@ -600,6 +607,14 @@ public class Configuration {
 
     public void setFunctionLoadProfileEstimatorProvider(KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider) {
         this.functionLoadProfileEstimatorProvider = functionLoadProfileEstimatorProvider;
+    }
+
+    public MapBasedKeyValueProvider<String, LoadProfileEstimator> getLoadProfileEstimatorCache() {
+        return this.loadProfileEstimatorCache;
+    }
+
+    public void setLoadProfileEstimatorCache(MapBasedKeyValueProvider<String, LoadProfileEstimator> loadProfileEstimatorCache) {
+        this.loadProfileEstimatorCache = loadProfileEstimatorCache;
     }
 
     public ExplicitCollectionProvider<Platform> getPlatformProvider() {

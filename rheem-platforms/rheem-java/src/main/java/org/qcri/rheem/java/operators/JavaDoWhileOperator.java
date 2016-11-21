@@ -62,6 +62,9 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
+
         final Predicate<Collection<ConvergenceType>> stoppingCondition =
                 javaExecutor.getCompiler().compile(this.criterionDescriptor);
         JavaExecutor.openFunction(this, stoppingCondition, inputs, operatorContext);
@@ -81,7 +84,7 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
                 assert inputs[CONVERGENCE_INPUT_INDEX] != null;
 
                 convergenceCollection = ((CollectionChannel.Instance) inputs[CONVERGENCE_INPUT_INDEX]).provideCollection();
-                operatorContext.getLineage().addPredecessor(inputs[CONVERGENCE_INPUT_INDEX].getLineage());
+                executionLineageNode.addPredecessor(inputs[CONVERGENCE_INPUT_INDEX].getLineage());
                 endloop = stoppingCondition.test(convergenceCollection);
                 input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
                 break;
@@ -101,7 +104,7 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return operatorContext.getLineage().collectAndMark();
+        return executionLineageNode.collectAndMark();
     }
 
     @Override

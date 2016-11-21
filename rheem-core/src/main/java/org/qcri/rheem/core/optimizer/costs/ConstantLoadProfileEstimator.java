@@ -43,4 +43,10 @@ public class ConstantLoadProfileEstimator implements LoadProfileEstimator {
     public String getConfigurationKey() {
         return null;
     }
+
+    @Override
+    public LoadProfileEstimator copy() {
+        // No copying required.
+        return this;
+    }
 }

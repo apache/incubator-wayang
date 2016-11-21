@@ -132,7 +132,7 @@ public interface EstimationContext {
                 doubleProperties.put(key, value);
             }
             if (doubleProperties.length() == 0) doubleProperties = null;
-            return doubleProperties
+            return new JSONObject()
                     .put("inCards", JsonSerializables.serializeAll(Arrays.asList(ctx.getInputCardinalities()), false))
                     .put("outCards", JsonSerializables.serializeAll(Arrays.asList(ctx.getOutputCardinalities()), false))
                     .put("executions", ctx.getNumExecutions())

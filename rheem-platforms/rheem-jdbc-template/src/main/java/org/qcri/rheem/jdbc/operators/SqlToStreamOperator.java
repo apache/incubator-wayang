@@ -97,6 +97,7 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
+        // TODO: Split up execution model?: (i) query processing (ii) data retrieval
         return String.format("rheem.%s.sqltostream.load", this.jdbcPlatform.getPlatformId());
     }
 

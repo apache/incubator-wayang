@@ -657,8 +657,8 @@ public class DynamicLoadProfileEstimators {
 
         DynamicLoadEstimator cpuEstimator =
                 DynamicLoadEstimator.createFor(configKey, "cpu", spec.getString("cpu"), optimizationSpace);
-        DynamicLoadEstimator ramEstimator =
-                DynamicLoadEstimator.createFor(configKey, "ram", spec.getString("ram"), optimizationSpace);
+//        DynamicLoadEstimator ramEstimator =
+//                DynamicLoadEstimator.createFor(configKey, "ram", spec.getString("ram"), optimizationSpace);
         DynamicLoadEstimator diskEstimator = !spec.has("disk") ?
                 DynamicLoadEstimator.zeroLoad :
                 DynamicLoadEstimator.createFor(configKey, "disk", spec.getString("disk"), optimizationSpace);

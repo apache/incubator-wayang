@@ -206,4 +206,16 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
     public String getConfigurationKey() {
         return this.configurationKey;
     }
+
+    @Override
+    public LoadProfileEstimator copy() {
+        LoadProfileEstimator copy = new NestableLoadProfileEstimator(
+                this.cpuLoadEstimator, this.ramLoadEstimator, this.diskLoadEstimator, this.networkLoadEstimator,
+                this.resourceUtilizationEstimator, this.overheadMillis, this.configurationKey
+        );
+        for (LoadProfileEstimator nestedEstimator : this.nestedEstimators) {
+            copy.nest(nestedEstimator.copy());
+        }
+        return copy;
+    }
 }

@@ -15,6 +15,8 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator.SinglePointEstimationFunction;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.util.JuelUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.ToDoubleBiFunction;
@@ -33,6 +35,8 @@ public class LoadProfileEstimators {
      */
     public static final Context baseContext;
 
+    private static final Logger logger = LoggerFactory.getLogger(LoadProfileEstimators.class);
+
     static {
         DefaultContext ctx = new DefaultContext(Context.baseContext);
         ctx.setFunction(
@@ -46,6 +50,30 @@ public class LoadProfileEstimators {
      * Prevent instantiation of this class.
      */
     private LoadProfileEstimators() {
+    }
+
+    /**
+     * Creates an {@link LoadProfileEstimator} via a specification that is retrieved from a {@link Configuration}.
+     *
+     * @param configKey     to look up the specification
+     * @param configuration provides the specification and caches the {@link LoadProfileEstimator}
+     * @return the {@link LoadProfileEstimator} or {@code null} if no specification was found
+     */
+    public static LoadProfileEstimator createFromSpecification(String configKey, Configuration configuration) {
+        final LoadProfileEstimator cachedEstimator =
+                configuration.getLoadProfileEstimatorCache().optionallyProvideFor(configKey).orElse(null);
+        if (cachedEstimator != null) return cachedEstimator.copy();
+
+        final Optional<String> optSpecification = configuration.getOptionalStringProperty(configKey);
+        if (optSpecification.isPresent()) {
+            final NestableLoadProfileEstimator estimator =
+                    LoadProfileEstimators.createFromSpecification(configKey, optSpecification.get());
+            configuration.getLoadProfileEstimatorCache().set(configKey, estimator.copy());
+            return estimator;
+        } else {
+            logger.warn("Could not find an estimator specification associated with '{}'.", configuration);
+            return null;
+        }
     }
 
     /**

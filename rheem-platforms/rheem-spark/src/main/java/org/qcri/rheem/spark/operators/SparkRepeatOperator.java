@@ -47,6 +47,8 @@ public class SparkRepeatOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
 
         RddChannel.Instance iterationInput;
         switch (this.getState()) {
@@ -76,7 +78,7 @@ public class SparkRepeatOperator<Type>
             this.setState(State.RUNNING);
         }
 
-        return operatorContext.getLineage().collectAndMark();
+        return executionLineageNode.collectAndMark();
     }
 
     @Override

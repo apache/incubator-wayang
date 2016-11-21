@@ -62,6 +62,9 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
+
         final RddChannel.Instance iterationInput;
         final Function<Collection<ConvergenceType>, Boolean> stoppingCondition =
                 sparkExecutor.getCompiler().compile(this.criterionDescriptor, this, operatorContext, inputs);
@@ -84,7 +87,7 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
                 } catch (Exception e) {
                     throw new RheemException(String.format("Could not evaluate stopping condition for %s.", this), e);
                 }
-                operatorContext.getLineage().addPredecessor(convergenceInput.getLineage());
+                executionLineageNode.addPredecessor(convergenceInput.getLineage());
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -102,7 +105,7 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return operatorContext.getLineage().collectAndMark();
+        return executionLineageNode.collectAndMark();
     }
 
     @Override

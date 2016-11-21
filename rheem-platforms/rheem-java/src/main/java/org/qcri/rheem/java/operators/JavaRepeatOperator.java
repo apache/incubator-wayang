@@ -52,6 +52,9 @@ public class JavaRepeatOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        final ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
+
         final JavaChannelInstance input;
         switch (this.getState()) {
             case NOT_STARTED:
@@ -80,7 +83,7 @@ public class JavaRepeatOperator<Type>
             this.setState(State.RUNNING);
         }
 
-        return operatorContext.getLineage().collectAndMark();
+        return executionLineageNode.collectAndMark();
     }
 
     @Override

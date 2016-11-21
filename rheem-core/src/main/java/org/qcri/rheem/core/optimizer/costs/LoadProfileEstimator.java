@@ -49,4 +49,13 @@ public interface LoadProfileEstimator {
         return configKey == null ? null : configKey + ".template";
     }
 
+    /**
+     * <i>Optional operation.</i> Copy this instance.
+     *
+     * @return the copy
+     */
+    default LoadProfileEstimator copy() {
+        throw new UnsupportedOperationException();
+    }
+
 }

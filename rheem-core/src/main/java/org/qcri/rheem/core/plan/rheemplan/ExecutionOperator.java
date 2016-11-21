@@ -5,7 +5,6 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -48,39 +47,21 @@ public interface ExecutionOperator extends ElementaryOperator {
      */
     default Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         Collection<String> configurationKeys = this.getLoadProfileEstimatorConfigurationKeys();
-        NestableLoadProfileEstimator mainEstimator = createLoadProfileEstimators(configuration, configurationKeys);
+        LoadProfileEstimator mainEstimator = createLoadProfileEstimators(configuration, configurationKeys);
         return Optional.ofNullable(mainEstimator);
     }
 
     /**
      * Creates a {@link LoadProfileEstimator} according to the {@link Configuration}.
      *
-     * @param configuration    the {@link Configuration}
-     * @param configurationKey the key for the specification within the {@link Configuration}
-     * @return the {@link LoadProfileEstimator} or {@code null} if none could be created
-     */
-    static NestableLoadProfileEstimator createLoadProfileEstimator(Configuration configuration, String configurationKey) {
-        final Optional<String> optSpecification = configuration.getOptionalStringProperty(configurationKey);
-        if (optSpecification.isPresent()) {
-            return LoadProfileEstimators.createFromSpecification(configurationKey, optSpecification.get());
-        } else {
-            LoggerFactory.getLogger(ExecutionOperator.class)
-                    .warn("Could not find an estimator specification associated with '{}'.", configuration);
-            return null;
-        }
-    }
-
-    /**
-     * Creates a {@link LoadProfileEstimator} according to the {@link Configuration}.
-     *
-     * @param configuration    the {@link Configuration}
+     * @param configuration     the {@link Configuration}
      * @param configurationKeys keys for the specification within the {@link Configuration}
      * @return the {@link LoadProfileEstimator} or {@code null} if none could be created
      */
-    static NestableLoadProfileEstimator createLoadProfileEstimators(Configuration configuration, Collection<String> configurationKeys) {
-        NestableLoadProfileEstimator mainEstimator = null;
+    static LoadProfileEstimator createLoadProfileEstimators(Configuration configuration, Collection<String> configurationKeys) {
+        LoadProfileEstimator mainEstimator = null;
         for (String configurationKey : configurationKeys) {
-            final NestableLoadProfileEstimator loadProfileEstimator = createLoadProfileEstimator(configuration, configurationKey);
+            final LoadProfileEstimator loadProfileEstimator = LoadProfileEstimators.createFromSpecification(configurationKey, configuration);
             if (mainEstimator == null) {
                 mainEstimator = loadProfileEstimator;
             } else {
@@ -180,12 +161,14 @@ public interface ExecutionOperator extends ElementaryOperator {
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             OptimizationContext.OperatorContext operatorContext) {
-        LazyExecutionLineageNode.connectAll(inputs, operatorContext, outputs);
-        operatorContext.getLineage().addAllFromOperatorContext();
+
+        final ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
+        LazyExecutionLineageNode.connectAll(inputs, executionLineageNode, outputs);
 
         final Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> collectors;
         if (outputs.length == 0) {
-            collectors = operatorContext.getLineage().collectAndMark();
+            collectors = executionLineageNode.collectAndMark();
         } else {
             collectors = new Tuple<>(new LinkedList<>(), new LinkedList<>());
             for (ChannelInstance output : outputs) {
@@ -208,10 +191,12 @@ public interface ExecutionOperator extends ElementaryOperator {
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             OptimizationContext.OperatorContext operatorContext) {
-        LazyExecutionLineageNode.connectAll(inputs, operatorContext, outputs);
-        operatorContext.getLineage().addAllFromOperatorContext();
 
-        return operatorContext.getLineage().collectAndMark();
+        final ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
+        LazyExecutionLineageNode.connectAll(inputs, executionLineageNode, outputs);
+
+        return executionLineageNode.collectAndMark();
     }
 
     /**
@@ -226,8 +211,10 @@ public interface ExecutionOperator extends ElementaryOperator {
     modelLazyExecution(ChannelInstance[] inputs,
                        ChannelInstance[] outputs,
                        OptimizationContext.OperatorContext operatorContext) {
-        LazyExecutionLineageNode.connectAll(inputs, operatorContext, outputs);
-        operatorContext.getLineage().addAllFromOperatorContext();
+
+        final ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
+        LazyExecutionLineageNode.connectAll(inputs, executionLineageNode, outputs);
 
         return new Tuple<>(Collections.emptyList(), Collections.emptyList());
     }
