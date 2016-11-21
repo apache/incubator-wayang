@@ -1,7 +1,7 @@
 package org.qcri.rheem.core.function;
 
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 
 import java.util.Optional;
@@ -26,36 +26,33 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
 
     public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
                                Class<Input> inputTypeClass) {
-        this(javaImplementation, inputTypeClass, null);
+        this(javaImplementation, inputTypeClass, (ProbabilisticDoubleInterval) null);
     }
 
     public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
                                Class<Input> inputTypeClass,
                                ProbabilisticDoubleInterval selectivity) {
-        this(javaImplementation, inputTypeClass, selectivity, null, null);
+        this(javaImplementation, inputTypeClass, selectivity, null);
     }
 
     public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
                                Class<Input> inputTypeClass,
-                               LoadEstimator cpuLoadEstimator,
-                               LoadEstimator ramLoadEstimator) {
-        this(javaImplementation, inputTypeClass, null, cpuLoadEstimator, ramLoadEstimator);
+                               LoadProfileEstimator loadProfileEstimator) {
+        this(javaImplementation, inputTypeClass, null, loadProfileEstimator);
     }
 
     public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
                                Class<Input> inputTypeClass,
                                ProbabilisticDoubleInterval selectivity,
-                               LoadEstimator cpuLoadEstimator,
-                               LoadEstimator ramLoadEstimator) {
-        this(javaImplementation, BasicDataUnitType.createBasic(inputTypeClass), selectivity, cpuLoadEstimator, ramLoadEstimator);
+                               LoadProfileEstimator loadProfileEstimator) {
+        this(javaImplementation, BasicDataUnitType.createBasic(inputTypeClass), selectivity, loadProfileEstimator);
     }
 
     public PredicateDescriptor(SerializablePredicate<Input> javaImplementation,
                                BasicDataUnitType<Input> inputType,
                                ProbabilisticDoubleInterval selectivity,
-                               LoadEstimator cpuLoadEstimator,
-                               LoadEstimator ramLoadEstimator) {
-        super(cpuLoadEstimator, ramLoadEstimator);
+                               LoadProfileEstimator loadProfileEstimator) {
+        super(loadProfileEstimator);
         this.javaImplementation = javaImplementation;
         this.inputType = inputType;
         this.selectivity = selectivity;
@@ -85,7 +82,7 @@ public class PredicateDescriptor<Input> extends FunctionDescriptor {
      * This function is not built to last. It is thought to help out devising programs while we are still figuring
      * out how to express functions in a platform-independent way.
      *
-     * @param sqlImplementation  a SQL predicate applicable in a {@code WHERE} clause representing this predicate
+     * @param sqlImplementation a SQL predicate applicable in a {@code WHERE} clause representing this predicate
      */
     public PredicateDescriptor<Input> withSqlImplementation(String sqlImplementation) {
         this.sqlImplementation = sqlImplementation;

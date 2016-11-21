@@ -12,7 +12,7 @@ import org.qcri.rheem.basic.operators.{GlobalReduceOperator, LocalCallbackSink, 
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator
+import org.qcri.rheem.core.optimizer.costs.{LoadEstimator, LoadProfile, LoadProfileEstimator}
 import org.qcri.rheem.core.plan.rheemplan.{Operator, OutputSlot, RheemPlan, UnarySource}
 import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.core.types.DataSetType
@@ -324,7 +324,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @return the collected data quanta
     */
   def writeTextFile(url: String, formatterUdf: SerializableFunction[Out, String], jobName: String): Unit =
-  this.writeTextFile(url, formatterUdf, null, null)
+  this.writeTextFile(url, formatterUdf, jobName, null)
 
   /**
     * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.TextFileSink]]. This triggers
@@ -335,9 +335,11 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     */
   def writeTextFile(url: String,
                     formatterUdf: SerializableFunction[Out, String],
-                    udfCpuLoad: LoadEstimator,
-                    udfRamLoad: LoadEstimator): Unit =
-  this.dataQuanta().writeTextFileJava(url, formatterUdf, udfCpuLoad, udfRamLoad)
+                    jobName: String,
+                    udfLoadProfileEstimator: LoadProfileEstimator): Unit = {
+    this.javaPlanBuilder.withJobName(jobName)
+    this.dataQuanta().writeTextFileJava(url, formatterUdf, udfLoadProfileEstimator)
+  }
 
   /**
     * Enriches the set of operations to [[Record]]-based ones. This instances must deal with data quanta of
@@ -545,11 +547,8 @@ class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
                                    (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[MapDataQuantaBuilder[In, Out], Out] {
 
-  /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
-  private var udfCpuEstimator: LoadEstimator = _
-
-  /** [[LoadEstimator]] to estimate the RAM load of the [[udf]]. */
-  private var udfRamEstimator: LoadEstimator = _
+  /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
+  private var udfLoadProfileEstimator: LoadProfileEstimator = _
 
   // Try to infer the type classes from the udf.
   locally {
@@ -565,28 +564,17 @@ class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
   }
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the UDF.
+    * Set a [[LoadProfileEstimator]] for the load of the UDF.
     *
-    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
     * @return this instance
     */
-  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-    this.udfCpuEstimator = udfCpuEstimator
+  def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
+    this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
 
-  /**
-    * Set a [[LoadEstimator]] for the RAM load of the UDF.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
-  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-    this.udfRamEstimator = udfRamEstimator
-    this
-  }
-
-  override protected def build = inputDataQuanta.dataQuanta().mapJava(udf, this.udfCpuEstimator, this.udfRamEstimator)
+  override protected def build = inputDataQuanta.dataQuanta().mapJava(udf, this.udfLoadProfileEstimator)
 
 }
 
@@ -601,35 +589,7 @@ class ProjectionDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_,
                                           (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[ProjectionDataQuantaBuilder[In, Out], Out] {
 
-  /** [[LoadEstimator]] to estimate the CPU load of the projection. */
-  private var udfCpuEstimator: LoadEstimator = _
-
-  /** [[LoadEstimator]] to estimate the RAM load of the projection. */
-  private var udfRamEstimator: LoadEstimator = _
-
-  /**
-    * Set a [[LoadEstimator]] for the CPU load of the UDF.
-    *
-    * @param udfCpuEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
-  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-    this.udfCpuEstimator = udfCpuEstimator
-    this
-  }
-
-  /**
-    * Set a [[LoadEstimator]] for the RAM load of the UDF.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
-  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-    this.udfRamEstimator = udfRamEstimator
-    this
-  }
-
-  override protected def build = inputDataQuanta.dataQuanta().project(fieldNames.toSeq, this.udfCpuEstimator, this.udfRamEstimator)
+  override protected def build = inputDataQuanta.dataQuanta().project(fieldNames.toSeq)
 
 }
 
@@ -647,12 +607,9 @@ class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: 
   // Reuse the input TypeTrap to enforce type equality between input and output.
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
 
-  /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
-  private var udfCpuEstimator: LoadEstimator = _
-
-  /** [[LoadEstimator]] to estimate the RAM load of the [[udf]]. */
-  private var udfRamEstimator: LoadEstimator = _
-
+  /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
+  private var udfLoadProfileEstimator: LoadProfileEstimator = _
+  
   /** Selectivity of the filter predicate. */
   private var selectivity: ProbabilisticDoubleInterval = _
 
@@ -668,25 +625,15 @@ class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: 
     }
   }
 
-  /**
-    * Set a [[LoadEstimator]] for the CPU load of the UDF.
-    *
-    * @param udfCpuEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
-  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-    this.udfCpuEstimator = udfCpuEstimator
-    this
-  }
 
   /**
-    * Set a [[LoadEstimator]] for the RAM load of the UDF.
+    * Set a [[LoadProfileEstimator]] for the load of the UDF.
     *
-    * @param udfRamEstimator the [[LoadEstimator]]
+    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
     * @return this instance
     */
-  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-    this.udfRamEstimator = udfRamEstimator
+  def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
+    this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
 
@@ -715,7 +662,7 @@ class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: 
   }
 
   override protected def build = inputDataQuanta.dataQuanta().filterJava(
-    udf, this.sqlUdf, this.selectivity, this.udfCpuEstimator, this.udfRamEstimator
+    udf, this.sqlUdf, this.selectivity, this.udfLoadProfileEstimator
   )
 
 }
@@ -731,11 +678,9 @@ class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In
                                        (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[FlatMapDataQuantaBuilder[In, Out], Out] {
 
-  /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
-  private var udfCpuEstimator: LoadEstimator = _
 
-  /** [[LoadEstimator]] to estimate the RAM load of the [[udf]]. */
-  private var udfRamEstimator: LoadEstimator = _
+  /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
+  private var udfLoadProfileEstimator: LoadProfileEstimator = _
 
   /** Selectivity of the filter predicate. */
   private var selectivity: ProbabilisticDoubleInterval = _
@@ -752,24 +697,13 @@ class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In
   }
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the UDF.
+    * Set a [[LoadProfileEstimator]] for the load of the UDF.
     *
-    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
     * @return this instance
     */
-  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-    this.udfCpuEstimator = udfCpuEstimator
-    this
-  }
-
-  /**
-    * Set a [[LoadEstimator]] for the RAM load of the UDF.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
-  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-    this.udfRamEstimator = udfRamEstimator
+  def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
+    this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
 
@@ -787,7 +721,7 @@ class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In
   }
 
   override protected def build = inputDataQuanta.dataQuanta().flatMapJava(
-    udf, this.selectivity, this.udfCpuEstimator, this.udfRamEstimator
+    udf, this.selectivity, this.udfLoadProfileEstimator
   )
 
 }
@@ -803,11 +737,8 @@ class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder
                                              (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[MapPartitionsDataQuantaBuilder[In, Out], Out] {
 
-  /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
-  private var udfCpuEstimator: LoadEstimator = _
-
-  /** [[LoadEstimator]] to estimate the RAM load of the [[udf]]. */
-  private var udfRamEstimator: LoadEstimator = _
+  /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
+  private var udfLoadProfileEstimator: LoadProfileEstimator = _
 
   /** Selectivity of the filter predicate. */
   private var selectivity: ProbabilisticDoubleInterval = _
@@ -815,24 +746,13 @@ class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder
   // TODO: Try to infer the type classes from the udf.
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the UDF.
+    * Set a [[LoadProfileEstimator]] for the load of the UDF.
     *
-    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
     * @return this instance
     */
-  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-    this.udfCpuEstimator = udfCpuEstimator
-    this
-  }
-
-  /**
-    * Set a [[LoadEstimator]] for the RAM load of the UDF.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
-  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-    this.udfRamEstimator = udfRamEstimator
+  def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
+    this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
 
@@ -850,7 +770,7 @@ class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder
   }
 
   override protected def build = inputDataQuanta.dataQuanta().mapPartitionsJava(
-    udf, this.selectivity, this.udfCpuEstimator, this.udfRamEstimator
+    udf, this.selectivity, this.udfLoadProfileEstimator
   )
 
 }
@@ -924,11 +844,8 @@ class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T]
 
   implicit var keyTag: ClassTag[Key] = _
 
-  /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
-  private var udfCpuEstimator: LoadEstimator = _
-
-  /** [[LoadEstimator]] to estimate the RAM load of the [[udf]]. */
-  private var udfRamEstimator: LoadEstimator = _
+  /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
+  private var udfLoadProfileEstimator: LoadProfileEstimator = _
 
   // TODO: Add these estimators.
   //  /** [[LoadEstimator]] to estimate the CPU load of the [[keyUdf]]. */
@@ -959,51 +876,18 @@ class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T]
   }
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the UDF.
+    * Set a [[LoadProfileEstimator]] for the load of the UDF.
     *
-    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
     * @return this instance
     */
-  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-    this.udfCpuEstimator = udfCpuEstimator
+  def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
+    this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
-
-  /**
-    * Set a [[LoadEstimator]] for the RAM load of the UDF.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
-  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-    this.udfRamEstimator = udfRamEstimator
-    this
-  }
-
-  //  /**
-  //    * Set a [[LoadEstimator]] for the CPU load of the key extraction UDF.
-  //    *
-  //    * @param udfCpuEstimator the [[LoadEstimator]]
-  //    * @return this instance
-  //    */
-  //  def withKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-  //    this.keyUdfCpuEstimator = udfCpuEstimator
-  //    this
-  //  }
-  //
-  //  /**
-  //    * Set a [[LoadEstimator]] for the RAM load of the key extraction UDF.
-  //    *
-  //    * @param udfRamEstimator the [[LoadEstimator]]
-  //    * @return this instance
-  //    */
-  //  def withKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-  //    this.keyUdfRamEstimator = udfRamEstimator
-  //    this
-  //  }
 
   override protected def build =
-    inputDataQuanta.dataQuanta().reduceByKeyJava(keyUdf, udf, this.udfCpuEstimator, this.udfRamEstimator)
+    inputDataQuanta.dataQuanta().reduceByKeyJava(keyUdf, udf, this.udfLoadProfileEstimator)
 
 }
 
@@ -1020,11 +904,8 @@ class GroupByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T],
   implicit var keyTag: ClassTag[Key] = _
 
 
-  /** [[LoadEstimator]] to estimate the CPU load of the [[keyUdf]]. */
-  private var keyUdfCpuEstimator: LoadEstimator = _
-
-  /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf]]. */
-  private var keyUdfRamEstimator: LoadEstimator = _
+  /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[keyUdf]]. */
+  private var keyUdfLoadProfileEstimator: LoadProfileEstimator = _
 
   // Try to infer the type classes from the UDFs.
   locally {
@@ -1043,29 +924,18 @@ class GroupByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T],
   }
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the key extraction UDF.
+    * Set a [[LoadProfileEstimator]] for the load of the UDF.
     *
-    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
     * @return this instance
     */
-  def withKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-    this.keyUdfCpuEstimator = udfCpuEstimator
-    this
-  }
-
-  /**
-    * Set a [[LoadEstimator]] for the RAM load of the key extraction UDF.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
-  def withKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-    this.keyUdfRamEstimator = udfRamEstimator
+  def withKeyUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
+    this.keyUdfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
 
   override protected def build =
-    inputDataQuanta.dataQuanta().groupByKeyJava(keyUdf, this.keyUdfCpuEstimator, this.keyUdfRamEstimator)
+    inputDataQuanta.dataQuanta().groupByKeyJava(keyUdf, this.keyUdfLoadProfileEstimator)
 
 }
 
@@ -1096,11 +966,8 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
   // Reuse the input TypeTrap to enforce type equality between input and output.
   override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
 
-  /** [[LoadEstimator]] to estimate the CPU load of the [[udf]]. */
-  private var udfCpuEstimator: LoadEstimator = _
-
-  /** [[LoadEstimator]] to estimate the RAM load of the [[udf]]. */
-  private var udfRamEstimator: LoadEstimator = _
+  /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
+  private var udfLoadProfileEstimator: LoadProfileEstimator = _
 
   // Try to infer the type classes from the udf.
   locally {
@@ -1112,28 +979,17 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
   }
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the UDF.
+    * Set a [[LoadProfileEstimator]] for the load of the UDF.
     *
-    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
     * @return this instance
     */
-  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-    this.udfCpuEstimator = udfCpuEstimator
+  def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
+    this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
 
-  /**
-    * Set a [[LoadEstimator]] for the RAM load of the UDF.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
-  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-    this.udfRamEstimator = udfRamEstimator
-    this
-  }
-
-  override protected def build = inputDataQuanta.dataQuanta().reduceJava(udf, this.udfCpuEstimator, this.udfRamEstimator)
+  override protected def build = inputDataQuanta.dataQuanta().reduceJava(udf, this.udfLoadProfileEstimator)
 
 }
 
@@ -1408,34 +1264,20 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
 
   // TODO: We could improve by combining the TypeTraps in the body loop.
 
-  /** [[LoadEstimator]] to estimate the CPU load of the [[conditionUdf]]. */
-  private var udfCpuEstimator: LoadEstimator = _
-
-  /** [[LoadEstimator]] to estimate the RAM load of the [[conditionUdf]]. */
-  private var udfRamEstimator: LoadEstimator = _
+  /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the UDF. */
+  private var udfLoadProfileEstimator: LoadProfileEstimator = _
 
   /** Number of expected iterations. */
   private var numExpectedIterations = 20
 
   /**
-    * Set a [[LoadEstimator]] for the CPU load of the condition UDF.
+    * Set a [[LoadProfileEstimator]] for the load of the UDF.
     *
-    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @param udfLoadProfileEstimator the [[LoadProfileEstimator]]
     * @return this instance
     */
-  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
-    this.udfCpuEstimator = udfCpuEstimator
-    this
-  }
-
-  /**
-    * Set a [[LoadEstimator]] for the RAM load of the condition UDF.
-    *
-    * @param udfRamEstimator the [[LoadEstimator]]
-    * @return this instance
-    */
-  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
-    this.udfRamEstimator = udfRamEstimator
+  def withUdfLoad(udfLoadProfileEstimator: LoadProfileEstimator) = {
+    this.udfLoadProfileEstimator = udfLoadProfileEstimator
     this
   }
 
@@ -1476,7 +1318,7 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
 
   override protected def build =
     inputDataQuanta.dataQuanta().doWhileJava[ConvOut](
-      conditionUdf, dataQuantaBodyBuilder, this.numExpectedIterations, this.udfCpuEstimator, this.udfRamEstimator
+      conditionUdf, dataQuantaBodyBuilder, this.numExpectedIterations, this.udfLoadProfileEstimator
     )(this.convOutClassTag)
 
 

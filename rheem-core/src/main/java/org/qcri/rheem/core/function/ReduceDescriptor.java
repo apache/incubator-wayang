@@ -1,6 +1,8 @@
 package org.qcri.rheem.core.function;
 
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataUnitGroupType;
 import org.qcri.rheem.core.types.DataUnitType;
@@ -22,16 +24,16 @@ public class ReduceDescriptor<Type> extends FunctionDescriptor {
     public ReduceDescriptor(SerializableBinaryOperator<Type> javaImplementation,
                             DataUnitGroupType<Type> inputType,
                             BasicDataUnitType<Type> outputType) {
-        this(javaImplementation, inputType, outputType,
+        this(javaImplementation, inputType, outputType, new NestableLoadProfileEstimator(
                 LoadEstimator.createFallback(1, 1),
-                LoadEstimator.createFallback(1, 1));
+                LoadEstimator.createFallback(1, 1)
+        ));
     }
 
     public ReduceDescriptor(SerializableBinaryOperator<Type> javaImplementation,
                             DataUnitGroupType<Type> inputType, BasicDataUnitType<Type> outputType,
-                            LoadEstimator cpuLoadEstimator,
-                            LoadEstimator memoryLoadEstimator) {
-        super(cpuLoadEstimator, memoryLoadEstimator);
+                            LoadProfileEstimator loadProfileEstimator) {
+        super(loadProfileEstimator);
         this.inputType = inputType;
         this.outputType = outputType;
         this.javaImplementation = javaImplementation;

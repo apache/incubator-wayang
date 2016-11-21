@@ -8,7 +8,7 @@ import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, DefaultCardinalityEstimator, FixedSizeCardinalityEstimator}
-import org.qcri.rheem.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator}
+import org.qcri.rheem.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator, LoadProfileEstimator, NestableLoadProfileEstimator}
 import org.qcri.rheem.core.plan.rheemplan.ElementaryOperator
 import org.qcri.rheem.core.types.{BasicDataUnitType, DataSetType, DataUnitGroupType, DataUnitType}
 
@@ -107,6 +107,13 @@ package object api {
         override def applyAsLong(t: Array[Long], u: Array[Long]): Long = f.apply(t(0), t(1), u(0))
       }
     )
+
+  implicit def toLoadProfileEstimator(f: (Long, Long) => Long): LoadProfileEstimator =
+    new NestableLoadProfileEstimator(f, (in: Long, out: Long) => 0L)
+
+  implicit def toLoadProfileEstimator(f: (Long, Long, Long) => Long): LoadProfileEstimator =
+    new NestableLoadProfileEstimator(f, (in0: Long, in1: Long, out: Long) => 0L)
+
 
   implicit def toInterval(double: Double): ProbabilisticDoubleInterval = new ProbabilisticDoubleInterval(double, double, .99)
 

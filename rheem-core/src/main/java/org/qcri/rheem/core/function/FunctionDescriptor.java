@@ -1,9 +1,7 @@
 package org.qcri.rheem.core.function;
 
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 
 import java.io.Serializable;
 import java.util.Optional;
@@ -18,30 +16,12 @@ public abstract class FunctionDescriptor {
 
     private LoadProfileEstimator loadProfileEstimator;
 
-    public FunctionDescriptor() {
-        this(null, null);
+    public FunctionDescriptor(LoadProfileEstimator loadProfileEstimator) {
+        this.setLoadProfileEstimator(loadProfileEstimator);
     }
 
-    public FunctionDescriptor(LoadEstimator cpuLoadEstimator,
-                              LoadEstimator memoryLoadEstimator) {
-        this.setLoadEstimators(cpuLoadEstimator, memoryLoadEstimator);
-    }
-
-    @SuppressWarnings("unchecked")
-    public void setLoadEstimators(LoadEstimator cpuLoadEstimator,
-                                  LoadEstimator memoryLoadEstimator) {
-        if (cpuLoadEstimator == null && memoryLoadEstimator == null) {
-            this.loadProfileEstimator = null;
-        } else {
-            this.loadProfileEstimator = new NestableLoadProfileEstimator(
-                    cpuLoadEstimator == null ?
-                            LoadEstimator.createFallback(LoadEstimator.UNSPECIFIED_NUM_SLOTS, LoadEstimator.UNSPECIFIED_NUM_SLOTS) :
-                            cpuLoadEstimator,
-                    memoryLoadEstimator == null ?
-                            LoadEstimator.createFallback(LoadEstimator.UNSPECIFIED_NUM_SLOTS, LoadEstimator.UNSPECIFIED_NUM_SLOTS) :
-                            memoryLoadEstimator
-            );
-        }
+    public void setLoadProfileEstimator(LoadProfileEstimator loadProfileEstimator) {
+        this.loadProfileEstimator = loadProfileEstimator;
     }
 
     public Optional<LoadProfileEstimator> getLoadProfileEstimator() {
