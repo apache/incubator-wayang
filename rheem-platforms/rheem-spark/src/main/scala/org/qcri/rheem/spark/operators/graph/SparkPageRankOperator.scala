@@ -8,8 +8,9 @@ import org.apache.spark.graphx.Graph
 import org.apache.spark.graphx.lib.PageRank
 import org.qcri.rheem.basic.data.{Tuple2 => T2}
 import org.qcri.rheem.basic.operators.PageRankOperator
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators
 import org.qcri.rheem.core.optimizer.{OptimizationContext, ProbabilisticDoubleInterval}
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode
 import org.qcri.rheem.core.platform.{ChannelDescriptor, ChannelInstance}
 import org.qcri.rheem.spark.channels.RddChannel
 import org.qcri.rheem.spark.execution.SparkExecutor
@@ -42,10 +43,23 @@ class SparkPageRankOperator(_numIterations: Int,
 
     output.accept(resultRdd, sparkExecutor)
 
-    ExecutionOperator.modelQuasiEagerExecution(inputs, outputs, operatorContext)
+    val mainExecutionLineageNode = new ExecutionLineageNode(operatorContext)
+    mainExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
+      "rheem.spark.pagerank.load.main", sparkExecutor.getConfiguration
+    ))
+    mainExecutionLineageNode.addPredecessor(input.getLineage)
+
+    val outputExecutionLineageNode = new ExecutionLineageNode(operatorContext)
+    outputExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
+      "rheem.spark.pagerank.load.output", sparkExecutor.getConfiguration
+    ))
+    output.getLineage.addPredecessor(outputExecutionLineageNode)
+
+    mainExecutionLineageNode.collectAndMark()
   }
 
-  override def getLoadProfileEstimatorConfigurationKey: String = "rheem.spark.pagerank.load"
+  override def getLoadProfileEstimatorConfigurationKeys: java.util.Collection[String] =
+    java.util.Arrays.asList("rheem.spark.pagerank.load.main", "rheem.spark.pagerank.load.output")
 
   override def getSupportedInputChannels(index: Int): util.List[ChannelDescriptor] = {
     assert(index == 0)
