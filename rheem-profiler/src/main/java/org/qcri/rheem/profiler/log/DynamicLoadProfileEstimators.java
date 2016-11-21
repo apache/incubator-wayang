@@ -605,7 +605,7 @@ public class DynamicLoadProfileEstimators {
     /**
      * Creates a new instance from a template {@link String}. Valid specifications are as follows:
      * <pre>
-     *     {"type":&lt;*mathex*&gt;,
+     *     {"type":&lt;*org.qcri.rheem.core.util.mathex.mathex*&gt;,
      *      "cpu":&lt;mathematical expression&gt;,
      *      "ram":&lt;mathematical expression&gt;,
      *      "disk":&lt;mathematical expression&gt;,

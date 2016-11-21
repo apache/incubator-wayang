@@ -1,12 +1,12 @@
 package org.qcri.rheem.profiler.log;
 
-import com.github.sekruse.mathex.Context;
-import com.github.sekruse.mathex.DefaultContext;
-import com.github.sekruse.mathex.Expression;
-import com.github.sekruse.mathex.ExpressionBuilder;
-import com.github.sekruse.mathex.exceptions.EvaluationException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.*;
+import org.qcri.rheem.core.util.mathex.Context;
+import org.qcri.rheem.core.util.mathex.DefaultContext;
+import org.qcri.rheem.core.util.mathex.Expression;
+import org.qcri.rheem.core.util.mathex.ExpressionBuilder;
+import org.qcri.rheem.core.util.mathex.exceptions.EvaluationException;
 
 import java.util.Arrays;
 import java.util.Collection;

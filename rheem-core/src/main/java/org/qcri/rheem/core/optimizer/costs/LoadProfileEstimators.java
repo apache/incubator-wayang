@@ -1,10 +1,5 @@
 package org.qcri.rheem.core.optimizer.costs;
 
-import com.github.sekruse.mathex.Context;
-import com.github.sekruse.mathex.DefaultContext;
-import com.github.sekruse.mathex.Expression;
-import com.github.sekruse.mathex.ExpressionBuilder;
-import com.github.sekruse.mathex.exceptions.EvaluationException;
 import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
@@ -15,6 +10,11 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator.SinglePointEstimationFunction;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.util.JuelUtils;
+import org.qcri.rheem.core.util.mathex.Context;
+import org.qcri.rheem.core.util.mathex.DefaultContext;
+import org.qcri.rheem.core.util.mathex.Expression;
+import org.qcri.rheem.core.util.mathex.ExpressionBuilder;
+import org.qcri.rheem.core.util.mathex.exceptions.EvaluationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,7 +79,7 @@ public class LoadProfileEstimators {
     /**
      * Creates a new instance from a specification {@link String}. Valid specifications are as follows:
      * <pre>
-     *     {"type":&lt;*juel*, mathex&gt;,
+     *     {"type":&lt;*juel*, org.qcri.rheem.core.util.mathex.mathex&gt;,
      *      "cpu":&lt;mathematical expression&gt;,
      *      "ram":&lt;mathematical expression&gt;,
      *      "disk":&lt;mathematical expression&gt;,

@@ -12,6 +12,15 @@
     <artifactId>rheem-core</artifactId>
     <description>This Rheem module contains all the base code that is used by all other modules.</description>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>org.json</groupId>
@@ -62,8 +71,8 @@
             <artifactId>profiledb-store</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.sekruse</groupId>
-            <artifactId>mathex</artifactId>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4</artifactId>
         </dependency>
     </dependencies>
 
