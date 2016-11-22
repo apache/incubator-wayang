@@ -321,7 +321,7 @@ public class RheemPlans {
         source.setName("source");
 
         SampleOperator<Integer> sampleOperator = new SampleOperator<>(
-                3, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM, SampleOperator.DEFAULT_SEED
+                3, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM, SampleOperator.randomSeed()
         );
         sampleOperator.setName("sample");
 

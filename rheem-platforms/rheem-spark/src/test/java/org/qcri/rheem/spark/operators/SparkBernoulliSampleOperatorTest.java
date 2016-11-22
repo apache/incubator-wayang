@@ -27,7 +27,7 @@ public class SparkBernoulliSampleOperatorTest extends SparkOperatorTestBase {
                 new SparkBernoulliSampleOperator<>(
                         iterationNumber -> 5,
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        SampleOperator.DEFAULT_SEED
+                        SampleOperator.randomSeed()
                 );
 
         // Set up the ChannelInstances.
@@ -52,7 +52,7 @@ public class SparkBernoulliSampleOperatorTest extends SparkOperatorTestBase {
                 new SparkBernoulliSampleOperator<>(
                         iterationNumber -> 5,
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        SampleOperator.DEFAULT_SEED
+                        SampleOperator.randomSeed()
                 );
 
         // Set up the ChannelInstances.

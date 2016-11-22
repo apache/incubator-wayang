@@ -198,7 +198,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def sample(sampleSize: Int,
              datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
-             seed: Long = SampleOperator.DEFAULT_SEED,
+             seed: Option[Long] = None,
              sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] =
   this.sampleDynamic(_ => sampleSize, datasetSize, seed, sampleMethod)
 
@@ -213,7 +213,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def sampleDynamic(sampleSizeFunction: Int => Int,
                     datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
-                    seed: Long = SampleOperator.DEFAULT_SEED,
+                    seed: Option[Long] = None,
                     sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] =
   this.sampleDynamicJava(
     new IntUnaryOperator {
@@ -235,13 +235,13 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def sampleDynamicJava(sampleSizeFunction: IntUnaryOperator,
                         datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
-                        seed: Long = SampleOperator.DEFAULT_SEED,
+                        seed: Option[Long] = None,
                         sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] = {
     val sampleOperator = new SampleOperator(
       sampleSizeFunction,
       dataSetType[Out],
       sampleMethod,
-      seed
+      seed.getOrElse(SampleOperator.randomSeed)
     )
     sampleOperator.setDatasetSize(datasetSize)
     this.connectTo(sampleOperator, 0)

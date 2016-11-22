@@ -50,9 +50,11 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     public static final long UNKNOWN_DATASET_SIZE = 0L;
 
     /**
-     * Default seed value.
+     * Generate a random seed.
      */
-    public static final long DEFAULT_SEED = 0;
+    public static long randomSeed() {
+        return System.nanoTime();
+    }
 
     /**
      * This function determines the sample size by the number of iterations.
@@ -88,7 +90,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * @param type               {@link DataSetType} of the sampled dataset
      */
     public SampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type) {
-        this(sampleSizeFunction, type, Methods.ANY, DEFAULT_SEED);
+        this(sampleSizeFunction, type, Methods.ANY, randomSeed());
     }
 
     /**
@@ -132,10 +134,6 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
 
     public void setDatasetSize(long datasetSize) {
         this.datasetSize = datasetSize;
-    }
-
-    public long getSeed() {
-        return this.seed;
     }
 
     /**

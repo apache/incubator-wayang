@@ -29,7 +29,7 @@ public class SampleMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern<>(
-                "sample", new SampleOperator<>(0, DataSetType.none(), null, SampleOperator.DEFAULT_SEED), false
+                "sample", new SampleOperator<>(0, DataSetType.none(), null, 0), false
         ).withAdditionalTest(op ->
                 op.getSampleMethod() == SampleOperator.Methods.RANDOM
                         || op.getSampleMethod() == SampleOperator.Methods.SHUFFLE_PARTITION_FIRST
