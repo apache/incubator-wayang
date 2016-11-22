@@ -96,7 +96,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
             this.optimizationContext = optimizationContext;
 
             // Initialize the readyActivators.
-            assert !stage.getStartTasks().isEmpty() : String.format("No start tasks for {}.", stage);
+            assert !stage.getStartTasks().isEmpty() : String.format("No start tasks for %s.", stage);
             stage.getStartTasks().forEach(this::scheduleStartTask);
 
             // Initialize the terminalTasks.
@@ -140,7 +140,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                 final Tuple<List<ChannelInstance>, PartialExecution> executionResult = this.execute(readyActivator, task);
                 readyActivator.dispose();
 
-                // Register the outputChannelInstances (to obtain cardinality measurements and for furhter stages).
+                // Register the outputChannelInstances (to obtain cardinality measurements and for further stages).
                 final List<ChannelInstance> outputChannelInstances = executionResult.getField0();
                 outputChannelInstances.stream().filter(Objects::nonNull).forEach(this::store);
 

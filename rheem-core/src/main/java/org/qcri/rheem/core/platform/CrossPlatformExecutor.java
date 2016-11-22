@@ -491,6 +491,14 @@ public class CrossPlatformExecutor implements ExecutionState {
     @Override
     public void add(PartialExecution partialExecution) {
         this.partialExecutions.add(partialExecution);
+        if (this.logger.isInfoEnabled()) {
+            this.logger.info(
+                    "Executed {} items in {} (estimated {}).",
+                    partialExecution.getAtomicExecutionGroups().size(),
+                    Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
+                    partialExecution.getOverallTimeEstimate(this.getConfiguration())
+            );
+        }
     }
 
     @Override

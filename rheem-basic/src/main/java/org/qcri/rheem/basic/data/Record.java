@@ -1,6 +1,7 @@
 package org.qcri.rheem.basic.data;
 
 import org.qcri.rheem.core.util.Copyable;
+import org.qcri.rheem.core.util.ReflectionUtils;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -52,14 +53,8 @@ public class Record implements Serializable, Copyable<Record> {
      */
     public double getDouble(int index) {
         Object field = this.values[index];
-        if (field instanceof Double) return (Double) field;
-        else if (field instanceof Integer) return (Integer) field;
-        else if (field instanceof Float) return (Float) field;
-        else if (field instanceof Long) return (Long) field;
-        else if (field instanceof Short) return (Short) field;
-        else if (field instanceof Byte) return (Byte) field;
-        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", field));
-    }
+        return ReflectionUtils.toDouble(field);
+       }
 
     /**
      * Retrieve a field as a {@code long}. It must be castable as such.

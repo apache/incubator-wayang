@@ -573,7 +573,13 @@ public class Job extends OneTimeExecutable {
         int nextPartialExecutionMeasurementId = 0;
         for (PartialExecution partialExecution : partialExecutions) {
             if (this.logger.isDebugEnabled()) {
-                for (OptimizationContext.OperatorContext operatorContext : partialExecution.getOperatorContexts()) {
+                for (AtomicExecutionGroup atomicExecutionGroup : partialExecution.getAtomicExecutionGroups()) {
+                    if (!(atomicExecutionGroup.getEstimationContext() instanceof OptimizationContext.OperatorContext)) {
+                        continue;
+                    }
+                    OptimizationContext.OperatorContext operatorContext =
+                            (OptimizationContext.OperatorContext) atomicExecutionGroup.getEstimationContext();
+
                     for (CardinalityEstimate cardinality : operatorContext.getInputCardinalities()) {
                         if (cardinality != null && !cardinality.isExact()) {
                             this.logger.debug(
@@ -593,7 +599,7 @@ public class Job extends OneTimeExecutable {
                 }
             }
             String id = String.format("par-ex-%03d", nextPartialExecutionMeasurementId++);
-            final PartialExecutionMeasurement measurement = new PartialExecutionMeasurement(id, partialExecution);
+            final PartialExecutionMeasurement measurement = new PartialExecutionMeasurement(id, partialExecution, this.configuration);
             this.experiment.addMeasurement(measurement);
         }
 

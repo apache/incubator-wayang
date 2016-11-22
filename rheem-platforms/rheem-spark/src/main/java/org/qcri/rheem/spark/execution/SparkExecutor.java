@@ -10,6 +10,7 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
@@ -84,18 +85,18 @@ public class SparkExecutor extends PushExecutorTemplate {
         );
 
         // Execute.
-        final Collection<OptimizationContext.OperatorContext> operatorContexts;
+        final Collection<ExecutionLineageNode> executionLineageNodes;
         final Collection<ChannelInstance> producedChannelInstances;
         long startTime = System.currentTimeMillis();
         try {
-            final Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> results =
+            final Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> results =
                     cast(task.getOperator()).evaluate(
                             toArray(inputChannelInstances),
                             outputChannelInstances,
                             this,
                             producerOperatorContext
                     );
-            operatorContexts = results.getField0();
+            executionLineageNodes = results.getField0();
             producedChannelInstances = results.getField1();
         } catch (Exception e) {
             throw new RheemException(String.format("Executing %s failed.", task), e);
@@ -104,7 +105,7 @@ public class SparkExecutor extends PushExecutorTemplate {
         long executionDuration = endTime - startTime;
 
         // Check how much we executed.
-        PartialExecution partialExecution = this.createPartialExecution(operatorContexts, executionDuration);
+        PartialExecution partialExecution = this.createPartialExecution(executionLineageNodes, executionDuration);
         if (partialExecution != null) {
             if (this.numActions == 0) partialExecution.addInitializedPlatform(SparkPlatform.getInstance());
             this.numActions++;

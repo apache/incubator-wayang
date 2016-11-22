@@ -172,10 +172,10 @@ public class LoadProfile implements JsonSerializable {
     @Override
     public JSONObject toJson() {
         JSONObject json = new JSONObject();
-        json.put("cpu", JsonSerializables.serialize(this.cpuUsage));
-        json.put("ram", JsonSerializables.serialize(this.ramUsage));
-        json.putOpt("network", JsonSerializables.serialize(this.networkUsage));
-        json.putOpt("disk", JsonSerializables.serialize(this.diskUsage));
+        json.put("cpu", JsonSerializables.serialize(this.cpuUsage, false));
+        json.put("ram", JsonSerializables.serialize(this.ramUsage, false));
+        json.putOpt("network", JsonSerializables.serialize(this.networkUsage, false));
+        json.putOpt("disk", JsonSerializables.serialize(this.diskUsage, false));
         json.put("utilization", this.resourceUtilization);
         json.put("overhead", this.overheadMillis);
         return json;
@@ -186,8 +186,8 @@ public class LoadProfile implements JsonSerializable {
         return new LoadProfile(
                 JsonSerializables.deserialize(jsonObject.getJSONObject("cpu"), LoadEstimate.class),
                 JsonSerializables.deserialize(jsonObject.getJSONObject("ram"), LoadEstimate.class),
-                JsonSerializables.deserialize(jsonObject.getJSONObject("network"), LoadEstimate.class),
-                JsonSerializables.deserialize(jsonObject.getJSONObject("disk"), LoadEstimate.class),
+                JsonSerializables.deserialize(jsonObject.optJSONObject("network"), LoadEstimate.class),
+                JsonSerializables.deserialize(jsonObject.optJSONObject("disk"), LoadEstimate.class),
                 jsonObject.getDouble("utilization"),
                 jsonObject.getLong("overhead")
         );

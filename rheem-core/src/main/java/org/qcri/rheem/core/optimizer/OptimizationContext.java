@@ -9,7 +9,8 @@ import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Platform;
-import org.qcri.rheem.core.platform.lineage.OperatorLineageNode;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -313,7 +314,7 @@ public abstract class OptimizationContext {
      * Represents a single optimization context of an {@link Operator}. This can be thought of as a single, virtual
      * execution of the {@link Operator}.
      */
-    public class OperatorContext {
+    public class OperatorContext implements EstimationContext {
 
         /**
          * The {@link Operator} that is being decorated with this instance.
@@ -359,7 +360,7 @@ public abstract class OptimizationContext {
         /**
          * In case this instance corresponds to an execution, this field keeps track of this execution.
          */
-        private OperatorLineageNode lineage;
+        private ExecutionLineageNode lineage;
 
         /**
          * Creates a new instance.
@@ -400,10 +401,12 @@ public abstract class OptimizationContext {
             Arrays.fill(this.outputCardinalityMarkers, false);
         }
 
+        @Override
         public CardinalityEstimate[] getInputCardinalities() {
             return this.inputCardinalities;
         }
 
+        @Override
         public CardinalityEstimate[] getOutputCardinalities() {
             return this.outputCardinalities;
         }
@@ -471,6 +474,21 @@ public abstract class OptimizationContext {
             this.operator.propagateOutputCardinality(outputIndex, this, targetContext);
         }
 
+        @Override
+        public double getDoubleProperty(String propertyKey, double fallback) {
+            try {
+                return ReflectionUtils.toDouble(ReflectionUtils.getProperty(this.operator, propertyKey));
+            } catch (Exception e) {
+                logger.error("Could not retrieve property \"{}\" from {}.", propertyKey, this.operator, e);
+                return fallback;
+            }
+        }
+
+        @Override
+        public Collection<String> getPropertyKeys() {
+            return this.operator.getEstimationContextProperties();
+        }
+
         /**
          * @return the {@link OptimizationContext} in which this instance resides
          */
@@ -494,10 +512,7 @@ public abstract class OptimizationContext {
             if (!this.operator.isExecutionOperator()) return;
 
             // Estimate the LoadProfile.
-            final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
-            final LoadProfileEstimator<ExecutionOperator> loadProfileEstimator = configuration
-                    .getOperatorLoadProfileEstimatorProvider()
-                    .provideFor(executionOperator);
+            final LoadProfileEstimator loadProfileEstimator = this.getLoadProfileEstimator();
             try {
                 this.loadProfile = LoadProfileEstimators.estimateLoadProfile(this, loadProfileEstimator);
             } catch (Exception e) {
@@ -505,6 +520,7 @@ public abstract class OptimizationContext {
             }
 
             // Calculate the TimeEstimate.
+            final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
             final Platform platform = executionOperator.getPlatform();
             final LoadProfileToTimeConverter timeConverter = configuration.getLoadProfileToTimeConverterProvider().provideFor(platform);
             this.timeEstimate = TimeEstimate.MINIMUM.plus(timeConverter.convert(this.loadProfile));
@@ -521,6 +537,20 @@ public abstract class OptimizationContext {
             // Squash the cost estimate.
             final ToDoubleFunction<ProbabilisticDoubleInterval> costSquasher = configuration.getCostSquasherProvider().provide();
             this.squashedCostEstimate = costSquasher.applyAsDouble(this.costEstimate);
+        }
+
+        /**
+         * Get the {@link LoadProfileEstimator} for the {@link ExecutionOperator} in this instance.
+         *
+         * @return the {@link LoadProfileEstimator}
+         */
+        public LoadProfileEstimator getLoadProfileEstimator() {
+            if (!(this.operator instanceof ExecutionOperator)) {
+                return null;
+            }
+            return this.getOptimizationContext().getConfiguration()
+                    .getOperatorLoadProfileEstimatorProvider()
+                    .provideFor((ExecutionOperator) this.operator);
         }
 
         /**
@@ -646,13 +676,6 @@ public abstract class OptimizationContext {
                 this.updateCostEstimate();
             }
             return this.squashedCostEstimate;
-        }
-
-        public OperatorLineageNode getLineage() {
-            if (this.lineage == null) {
-                this.lineage = new OperatorLineageNode(this);
-            }
-            return this.lineage;
         }
 
         @Override
