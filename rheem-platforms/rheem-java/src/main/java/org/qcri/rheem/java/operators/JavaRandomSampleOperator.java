@@ -1,7 +1,6 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.SampleOperator;
-import org.qcri.rheem.basic.operators.UDFSampleSize;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
@@ -17,10 +16,10 @@ import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
-import org.qcri.rheem.java.execution.JavaExecutionContext;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
 
 /**
@@ -37,60 +36,17 @@ public class JavaRandomSampleOperator<Type>
      *
      * @param sampleSize size of sample
      */
-    public JavaRandomSampleOperator(int sampleSize, DataSetType<Type> type) {
-        super(sampleSize, type, Methods.RANDOM);
+    public JavaRandomSampleOperator(int sampleSize, DataSetType<Type> type, long seed) {
+        this(iterationNumber -> sampleSize, type, seed);
     }
 
     /**
      * Creates a new instance.
      *
-     * @param udfSampleSize udf-based size of sample
+     * @param sampleSizeFunction udf-based size of sample
      */
-    public JavaRandomSampleOperator(UDFSampleSize udfSampleSize, DataSetType<Type> type) {
-        super(udfSampleSize, type, Methods.RANDOM);
-    }
-
-
-    /**
-     * Creates a new instance.
-     *
-     * @param sampleSize  size of sample
-     * @param datasetSize size of data
-     */
-    public JavaRandomSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
-        super(sampleSize, datasetSize, type, Methods.RANDOM);
-    }
-
-    /**
-     * Creates a new instance.
-     *
-     * @param udfSampleSize  udf-based size of sample
-     * @param datasetSize size of data
-     */
-    public JavaRandomSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, DataSetType<Type> type) {
-        super(udfSampleSize, datasetSize, type, Methods.RANDOM);
-    }
-
-    /**
-     * Creates a new instance.
-     *
-     * @param sampleSize  size of sample
-     * @param datasetSize size of data
-     * @param seed
-     */
-    public JavaRandomSampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type) {
-        super(sampleSize, datasetSize, seed, type, Methods.RANDOM);
-    }
-
-    /**
-     * Creates a new instance.
-     *
-     * @param udfSampleSize  udf-based size of sample
-     * @param datasetSize size of data
-     * @param seed
-     */
-    public JavaRandomSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, long seed, DataSetType<Type> type) {
-        super(udfSampleSize, datasetSize, seed, type, Methods.RANDOM);
+    public JavaRandomSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {
+        super(sampleSizeFunction, type, Methods.RANDOM, seed);
     }
 
     /**
@@ -112,14 +68,9 @@ public class JavaRandomSampleOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        int sampleSize = (int) this.getSampleSize(operatorContext);
         long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() :
                 ((CollectionChannel.Instance) inputs[0]).provideCollection().size();
-
-        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) { //if it is not null, compute the sample size with the UDF
-            int iterationNumber = operatorContext.getOptimizationContext().getIterationNumber();
-            udfSampleSize.open(new JavaExecutionContext(this, inputs, iterationNumber));
-            sampleSize = udfSampleSize.apply();
-        }
 
         if (sampleSize >= datasetSize) { //return all
             ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).provideStream());
@@ -168,7 +119,7 @@ public class JavaRandomSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaRandomSampleOperator<>(this.sampleSize, this.getType());
+        return new JavaRandomSampleOperator<>(this);
     }
 
 

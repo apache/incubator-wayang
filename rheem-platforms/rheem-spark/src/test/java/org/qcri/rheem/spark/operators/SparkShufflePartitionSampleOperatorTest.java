@@ -2,7 +2,6 @@ package org.qcri.rheem.spark.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.RheemCollections;
@@ -27,11 +26,11 @@ public class SparkShufflePartitionSampleOperatorTest extends SparkOperatorTestBa
         // Build the distinct operator.
         SparkShufflePartitionSampleOperator<Integer> sampleOperator =
                 new SparkShufflePartitionSampleOperator<>(
-                        sampleSize,
-                        10, //dataset size
-                        42, //seed
-                        DataSetType.createDefaultUnchecked(Integer.class)
+                        iterationNumber -> sampleSize,
+                        DataSetType.createDefaultUnchecked(Integer.class),
+                        42
                 );
+        sampleOperator.setDatasetSize(10);
 
         // Set up the ChannelInstances.
         final ChannelInstance[] inputs = new ChannelInstance[]{input};
@@ -54,14 +53,13 @@ public class SparkShufflePartitionSampleOperatorTest extends SparkOperatorTestBa
         CollectionChannel.Instance output = this.createCollectionChannelInstance();
         int sampleSize = 3;
 
-        // Build the distinct operator.
+        // Build the operator.
         SparkShufflePartitionSampleOperator<Integer> sampleOperator =
                 new SparkShufflePartitionSampleOperator<>(
-                        sampleSize,
-                        SampleOperator.UNKNOWN_DATASET_SIZE,
-                        DataSetType.createDefaultUnchecked(Integer.class)
+                        iterationNumber -> sampleSize,
+                        DataSetType.createDefaultUnchecked(Integer.class),
+                        42
                 );
-
         // Set up the ChannelInstances.
         final ChannelInstance[] inputs = new ChannelInstance[]{input};
         final ChannelInstance[] outputs = new ChannelInstance[]{output};

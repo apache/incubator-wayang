@@ -1,7 +1,7 @@
 package org.qcri.rheem.api
 
 import _root_.java.lang.{Iterable => JavaIterable}
-import _root_.java.util.function.{Consumer, Function => JavaFunction}
+import _root_.java.util.function.{Consumer, IntUnaryOperator, Function => JavaFunction}
 import _root_.java.util.{Collection => JavaCollection}
 
 import de.hpi.isg.profiledb.store.model.Experiment
@@ -188,7 +188,8 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   }
 
   /**
-    * Feed this instance into a [[SampleOperator]].
+    * Feed this instance into a [[SampleOperator]]. If this operation is inside of a loop, the sampling size
+    * can be adjusted in each iteration.
     *
     * @param sampleSize   absolute size of the sample
     * @param datasetSize  optional size of the dataset to be sampled
@@ -198,14 +199,51 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def sample(sampleSize: Int,
              datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
              seed: Long = SampleOperator.DEFAULT_SEED,
-             sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] = {
+             sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] =
+  this.sampleDynamic(_ => sampleSize, datasetSize, seed, sampleMethod)
+
+  /**
+    * Feed this instance into a [[SampleOperator]]. If this operation is inside of a loop, the sampling size
+    * can be adjusted in each iteration.
+    *
+    * @param sampleSizeFunction absolute size of the sample as a function of the current iteration number
+    * @param datasetSize        optional size of the dataset to be sampled
+    * @param sampleMethod       the [[SampleOperator.Methods]] to use for sampling
+    * @return a new instance representing the [[FlatMapOperator]]'s output
+    */
+  def sampleDynamic(sampleSizeFunction: Int => Int,
+                    datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
+                    seed: Long = SampleOperator.DEFAULT_SEED,
+                    sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] =
+  this.sampleDynamicJava(
+    new IntUnaryOperator {
+      override def applyAsInt(operand: Int): Int = sampleSizeFunction(operand)
+    },
+    datasetSize,
+    seed,
+    sampleMethod
+  )
+
+
+  /**
+    * Feed this instance into a [[SampleOperator]].
+    *
+    * @param sampleSizeFunction absolute size of the sample as a function of the current iteration number
+    * @param datasetSize        optional size of the dataset to be sampled
+    * @param sampleMethod       the [[SampleOperator.Methods]] to use for sampling
+    * @return a new instance representing the [[FlatMapOperator]]'s output
+    */
+  def sampleDynamicJava(sampleSizeFunction: IntUnaryOperator,
+                        datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
+                        seed: Long = SampleOperator.DEFAULT_SEED,
+                        sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] = {
     val sampleOperator = new SampleOperator(
-      sampleSize,
-      datasetSize,
-      seed,
+      sampleSizeFunction,
       dataSetType[Out],
-      sampleMethod
+      sampleMethod,
+      seed
     )
+    sampleOperator.setDatasetSize(datasetSize)
     this.connectTo(sampleOperator, 0)
     sampleOperator
   }
@@ -247,7 +285,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   /**
     * Feed this instance into a [[MaterializedGroupByOperator]].
     *
-    * @param keyUdf  UDF to extract the grouping key from the data quanta
+    * @param keyUdf     UDF to extract the grouping key from the data quanta
     * @param keyUdfLoad optional [[LoadProfileEstimator]] for the `keyUdf`
     * @return a new instance representing the [[MaterializedGroupByOperator]]'s output
     */
@@ -258,7 +296,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   /**
     * Feed this instance into a [[MaterializedGroupByOperator]].
     *
-    * @param keyUdf  UDF to extract the grouping key from the data quanta
+    * @param keyUdf     UDF to extract the grouping key from the data quanta
     * @param keyUdfLoad optional [[LoadProfileEstimator]] for the `keyUdf`
     * @return a new instance representing the [[MaterializedGroupByOperator]]'s output
     */

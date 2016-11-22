@@ -18,17 +18,17 @@ public class JavaReservoirSampleOperatorTest extends JavaExecutionOperatorTestBa
     @Test
     public void testExecution() {
         // Prepare test data.
-        Stream<Integer> inputStream = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).stream();
+        Stream<Integer> inputStream = Stream.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
         final int sampleSize = 5;
 
         // Build the distinct operator.
         JavaReservoirSampleOperator<Integer> sampleOperator =
                 new JavaReservoirSampleOperator<>(
-                        sampleSize,
-                        10,
-                        42,
-                        DataSetType.createDefaultUnchecked(Integer.class)
+                        iterationNumber -> sampleSize,
+                        DataSetType.createDefaultUnchecked(Integer.class),
+                        42
                 );
+        sampleOperator.setDatasetSize(10);
 
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createStreamChannelInstance(inputStream)};
         JavaChannelInstance[] outputs = new JavaChannelInstance[]{createCollectionChannelInstance()};
@@ -38,9 +38,7 @@ public class JavaReservoirSampleOperatorTest extends JavaExecutionOperatorTestBa
 
         // Verify the outcome.
         final List<Integer> result = outputs[0].<Integer>provideStream().collect(Collectors.toList());
-        System.out.println(result);
         Assert.assertEquals(sampleSize, result.size());
-
     }
 
 }

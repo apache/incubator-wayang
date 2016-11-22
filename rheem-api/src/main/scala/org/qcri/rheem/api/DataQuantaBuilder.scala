@@ -1,7 +1,7 @@
 package org.qcri.rheem.api
 
 
-import java.util.function.{Consumer, Function => JavaFunction}
+import java.util.function.{Consumer, IntUnaryOperator, Function => JavaFunction}
 import java.util.{Collection => JavaCollection}
 
 import de.hpi.isg.profiledb.store.model.Experiment
@@ -167,7 +167,18 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @param sampleSize the absolute size of the sample
     * @return a [[SampleDataQuantaBuilder]]
     */
-  def sample(sampleSize: Int) = new SampleDataQuantaBuilder(this, sampleSize)
+  def sample(sampleSize: Int): SampleDataQuantaBuilder[Out] = this.sample(new IntUnaryOperator {
+    override def applyAsInt(operand: Int): Int = sampleSize
+  })
+
+
+  /**
+    * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.SampleOperator]].
+    *
+    * @param sampleSizeFunction the absolute size of the sample as a function of the current iteration number
+    * @return a [[SampleDataQuantaBuilder]]
+    */
+  def sample(sampleSizeFunction: IntUnaryOperator) = new SampleDataQuantaBuilder[Out](this, sampleSizeFunction)
 
   /**
     * Feed the built [[DataQuanta]] into a [[GlobalReduceOperator]].
@@ -609,7 +620,7 @@ class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: 
 
   /** [[LoadProfileEstimator]] to estimate the [[LoadProfile]] of the [[udf]]. */
   private var udfLoadProfileEstimator: LoadProfileEstimator = _
-  
+
   /** Selectivity of the filter predicate. */
   private var selectivity: ProbabilisticDoubleInterval = _
 
@@ -778,10 +789,10 @@ class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder
 /**
   * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.SampleOperator]]s.
   *
-  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param sampleSize      the absolute size of the sample
+  * @param inputDataQuanta    [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param sampleSizeFunction the absolute size of the sample as a function of the current iteration number
   */
-class SampleDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], sampleSize: Int)
+class SampleDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], sampleSizeFunction: IntUnaryOperator)
                                 (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[SampleDataQuantaBuilder[T], T] {
 
@@ -836,9 +847,8 @@ class SampleDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], sampl
     this
   }
 
-  override protected def build = inputDataQuanta.dataQuanta().sample(
-    sampleSize, this.datasetSize, this.seed, this.sampleMethod
-  )
+  override protected def build =
+    inputDataQuanta.dataQuanta().sampleDynamicJava(sampleSizeFunction, this.datasetSize, this.seed, this.sampleMethod)
 
 }
 

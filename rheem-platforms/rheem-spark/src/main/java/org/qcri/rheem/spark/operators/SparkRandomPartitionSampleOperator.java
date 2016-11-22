@@ -3,9 +3,7 @@ package org.qcri.rheem.spark.operators;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.SampleOperator;
-import org.qcri.rheem.basic.operators.UDFSampleSize;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.function.ExtendedFunction;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -14,12 +12,8 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
-import org.qcri.rheem.java.execution.JavaExecutionContext;
 import org.qcri.rheem.spark.channels.RddChannel;
-import org.qcri.rheem.spark.execution.SparkExecutionContext;
 import org.qcri.rheem.spark.execution.SparkExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
 import scala.runtime.AbstractFunction1;
 
@@ -29,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.IntUnaryOperator;
 
 
 /**
@@ -40,8 +35,6 @@ public class SparkRandomPartitionSampleOperator<Type>
 
     private final Random rand = new Random(seed);
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
-
     private int nb_partitions = 0;
 
     private int partitionSize = 0;
@@ -51,43 +44,8 @@ public class SparkRandomPartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public SparkRandomPartitionSampleOperator(int sampleSize, DataSetType<Type> type) {
-        super(sampleSize, type, Methods.RANDOM);
-    }
-
-    /**
-     * Creates a new instance.
-     */
-    public SparkRandomPartitionSampleOperator(UDFSampleSize udfSampleSize, DataSetType<Type> type) {
-        super(udfSampleSize, type, Methods.RANDOM);
-    }
-
-    /**
-     * Creates a new instance.
-     */
-    public SparkRandomPartitionSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
-        super(sampleSize, datasetSize, type, Methods.RANDOM);
-    }
-
-    /**
-     * Creates a new instance.
-     */
-    public SparkRandomPartitionSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, DataSetType<Type> type) {
-        super(udfSampleSize, datasetSize, type, Methods.RANDOM);
-    }
-
-    /**
-     * Creates a new instance.
-     */
-    public SparkRandomPartitionSampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type) {
-        super(sampleSize, datasetSize, seed, type, Methods.RANDOM);
-    }
-
-    /**
-     * Creates a new instance.
-     */
-    public SparkRandomPartitionSampleOperator(UDFSampleSize udfSampleSize, long datasetSize, long seed, DataSetType<Type> type) {
-        super(udfSampleSize, datasetSize, seed, type, Methods.RANDOM);
+    public SparkRandomPartitionSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {
+        super(sampleSizeFunction, type, Methods.RANDOM, seed);
     }
 
     /**
@@ -116,11 +74,7 @@ public class SparkRandomPartitionSampleOperator<Type>
                 this.getDatasetSize() :
                 inputRdd.cache().count();
 
-        if (udfSampleSize != UNKNOWN_UDF_SAMPLE_SIZE) { //if it is not null, compute the sample size with the UDF
-            int iterationNumber = operatorContext.getOptimizationContext().getIterationNumber();
-            udfSampleSize.open(new SparkExecutionContext(iterationNumber));
-            sampleSize = udfSampleSize.apply();
-        }
+        int sampleSize = this.getSampleSize(operatorContext);
 
         if (sampleSize >= datasetSize) { //return whole dataset
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
@@ -202,7 +156,7 @@ public class SparkRandomPartitionSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkRandomPartitionSampleOperator<>(this.sampleSize, this.getType());
+        return new SparkRandomPartitionSampleOperator<>(this);
     }
 
     @Override

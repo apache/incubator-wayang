@@ -2,17 +2,23 @@ package org.qcri.rheem.basic.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.util.function.IntUnaryOperator;
 
 /**
  * A random sample operator randomly selects its inputs from the input slot and pushes that element to the output slot.
  */
 public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
+
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public enum Methods {
         /**
@@ -34,7 +40,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         /**
          * Reservoir sampling.
          */
-        RESERVOIR
+        RESERVOIR;
     }
 
     /**
@@ -43,38 +49,27 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     // TODO: With 0 being a legal dataset size, it would be nice to use a different "null" value, e.g., -1.
     public static final long UNKNOWN_DATASET_SIZE = 0L;
 
-    public static final UDFSampleSize UNKNOWN_UDF_SAMPLE_SIZE = null;
-
     /**
      * Default seed value.
      */
-    public static final long DEFAULT_SEED = System.nanoTime();
+    public static final long DEFAULT_SEED = 0;
 
-    protected int sampleSize;
-
-    protected UDFSampleSize udfSampleSize;
+    /**
+     * This function determines the sample size by the number of iterations.
+     */
+    protected IntUnaryOperator sampleSizeFunction;
 
     /**
      * Optionally sets the seed for the sample.
      */
-    protected long seed;
+    protected final long seed;
 
     /**
-     * Size of the dataset to be sampled or {@code 0} if a dataset size is not known.
+     * Size of the dataset to be sampled or {@value #UNKNOWN_DATASET_SIZE} if a dataset size is not known.
      */
-    protected long datasetSize;
+    protected long datasetSize = UNKNOWN_DATASET_SIZE;
 
     private Methods sampleMethod;
-
-    /**
-     * Creates a new instance with any sampling method.
-     *
-     * @param udfSampleSize user-specified size of the sample
-     * @param type       {@link DataSetType} of the sampled dataset
-     */
-    public SampleOperator(UDFSampleSize udfSampleSize, DataSetType<Type> type) {
-        this(udfSampleSize, type, Methods.ANY);
-    }
 
     /**
      * Creates a new instance with any sampling method.
@@ -83,57 +78,34 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * @param type       {@link DataSetType} of the sampled dataset
      */
     public SampleOperator(int sampleSize, DataSetType<Type> type) {
-        this(sampleSize, type, Methods.ANY);
+        this(iterationNumber -> sampleSize, type);
+    }
+
+    /**
+     * Creates a new instance with any sampling method.
+     *
+     * @param sampleSizeFunction user-specified size of the sample in dependence of the current iteration number
+     * @param type               {@link DataSetType} of the sampled dataset
+     */
+    public SampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type) {
+        this(sampleSizeFunction, type, Methods.ANY, DEFAULT_SEED);
     }
 
     /**
      * Creates a new instance given the sample size.
      */
-    public SampleOperator(int sampleSize, DataSetType<Type> type, Methods sampleMethod) {
-        this(sampleSize, UNKNOWN_DATASET_SIZE, type, sampleMethod);
+    public SampleOperator(int sampleSize, DataSetType<Type> type, Methods sampleMethod, long seed) {
+        this(iterationNumber -> sampleSize, type, sampleMethod, seed);
     }
 
     /**
      * Creates a new instance given a user-defined sample size method.
      */
-    public SampleOperator(UDFSampleSize udfSampleSize, DataSetType<Type> type, Methods sampleMethod) {
-        this(udfSampleSize, UNKNOWN_DATASET_SIZE, type, sampleMethod);
-    }
-
-    /**
-     * Creates a new instance given the sample size and total dataset size.
-     */
-    public SampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type, Methods sampleMethod) {
-        this(sampleSize, datasetSize, DEFAULT_SEED, type, sampleMethod);
-    }
-
-    /**
-     * Creates a new instance given a user-defined sample size method and total dataset size.
-     */
-    public SampleOperator(UDFSampleSize udfSampleSize, long datasetSize, DataSetType<Type> type, Methods sampleMethod) {
-        this(udfSampleSize, datasetSize, DEFAULT_SEED, type, sampleMethod);
-    }
-
-    /**
-     * Creates a new instance given the sample size, total dataset size and seed.
-     */
-    public SampleOperator(int sampleSize, long datasetSize, long seed, DataSetType<Type> type, Methods sampleMethod) {
+    public SampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Methods sampleMethod, long seed) {
         super(type, type, true);
-        this.sampleSize = sampleSize;
-        this.datasetSize = datasetSize;
-        this.seed = seed;
+        this.sampleSizeFunction = sampleSizeFunction;
         this.sampleMethod = sampleMethod;
-    }
-
-    /**
-     * Creates a new instance given a user-defined sample size method, total dataset size and seed.
-     */
-    public SampleOperator(UDFSampleSize udfSampleSize, long datasetSize, long seed, DataSetType<Type> type, Methods sampleMethod) {
-        super(type, type, true);
-        this.udfSampleSize = udfSampleSize;
-        this.datasetSize = datasetSize;
         this.seed = seed;
-        this.sampleMethod = sampleMethod;
     }
 
     /**
@@ -143,11 +115,10 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      */
     public SampleOperator(SampleOperator<Type> that) {
         super(that);
-        this.sampleSize = that.getSampleSize();
-        this.udfSampleSize = that.getUDFSampleSize();
+        this.sampleSizeFunction = that.sampleSizeFunction;
         this.sampleMethod = that.getSampleMethod();
         this.datasetSize = that.getDatasetSize();
-        this.seed = that.getSeed();
+        this.seed = that.seed;
     }
 
 
@@ -155,25 +126,17 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         return this.getInputType();
     }
 
-    public int getSampleSize() {
-        return this.sampleSize;
-    }
-
-    public UDFSampleSize getUDFSampleSize() {
-        return this.udfSampleSize;
-    }
-
     public long getDatasetSize() {
         return this.datasetSize;
     }
 
-    public void setDatasetSize(long datasetSize) { this.datasetSize = datasetSize; }
+    public void setDatasetSize(long datasetSize) {
+        this.datasetSize = datasetSize;
+    }
 
     public long getSeed() {
         return this.seed;
     }
-
-    public void setSeed(long seed) { this.seed = seed; }
 
     /**
      * Find out whether this instance knows about the size of the incoming dataset.
@@ -188,12 +151,25 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         return this.sampleMethod;
     }
 
+    /**
+     * Retrieve the sample size for this instance w.r.t. the current iteration.
+     *
+     * @param operatorContext provides the current iteration number
+     * @return the sample size
+     */
+    protected int getSampleSize(OptimizationContext.OperatorContext operatorContext) {
+        assert operatorContext.getOperator() == this;
+        final int iterationNumber = operatorContext.getOptimizationContext().getIterationNumber();
+        return this.sampleSizeFunction.applyAsInt(iterationNumber);
+    }
+
     @Override
     public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
-        return Optional.of(new FixedSizeCardinalityEstimator(sampleSize));
+        // TODO: Incorporate OperatoContext would allow for precise estimation.
+        return Optional.of(new FixedSizeCardinalityEstimator(this.sampleSizeFunction.applyAsInt(0)));
     }
 }
 
