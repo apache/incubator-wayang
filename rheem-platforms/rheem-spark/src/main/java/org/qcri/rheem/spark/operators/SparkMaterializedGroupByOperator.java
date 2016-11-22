@@ -12,6 +12,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
@@ -45,7 +46,7 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
-    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             SparkExecutor sparkExecutor,
@@ -90,8 +91,8 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator> optEstimator =
                 SparkExecutionOperator.super.createLoadProfileEstimator(configuration);
         LoadProfileEstimators.nestUdfEstimator(optEstimator, this.keyDescriptor, configuration);
         return optEstimator;

@@ -4,7 +4,6 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.lineage.ChannelLineageNode;
-import org.qcri.rheem.core.platform.lineage.LazyExecutionLineageNode;
 import org.slf4j.LoggerFactory;
 
 import java.util.OptionalLong;
@@ -49,14 +48,16 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
 
     @Override
     public void setMeasuredCardinality(long cardinality) {
-        this.measuredCardinality.ifPresent(oldCardinality ->
+        this.measuredCardinality.ifPresent(oldCardinality -> {
+            if (oldCardinality != cardinality) {
                 LoggerFactory.getLogger(this.getClass()).warn(
                         "Replacing existing measured cardinality of {} with {} (was {}).",
                         this.getChannel(),
                         cardinality,
                         oldCardinality
-                )
-        );
+                );
+            }
+        });
         this.measuredCardinality = OptionalLong.of(cardinality);
     }
 

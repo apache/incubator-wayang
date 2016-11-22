@@ -5,11 +5,12 @@ import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.types.RecordType;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.JsonSerializable;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -61,7 +62,7 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     }
 
     @Override
-    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             JavaExecutor executor,
@@ -81,7 +82,20 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
 
         output.accept(resultSetStream);
 
-        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
+        ExecutionLineageNode queryLineageNode = new ExecutionLineageNode(operatorContext);
+        queryLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                String.format("rheem.%s.sqltostream.load.query", this.jdbcPlatform.getPlatformId()),
+                        executor.getConfiguration()
+                ));
+        queryLineageNode.addPredecessor(input.getLineage());
+        ExecutionLineageNode outputLineageNode = new ExecutionLineageNode(operatorContext);
+        outputLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                String.format("rheem.%s.sqltostream.load.output", this.jdbcPlatform.getPlatformId()),
+                executor.getConfiguration()
+        ));
+        output.getLineage().addPredecessor(outputLineageNode);
+
+        return queryLineageNode.collectAndMark();
     }
 
     @Override
@@ -95,8 +109,11 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     }
 
     @Override
-    public String getLoadProfileEstimatorConfigurationKey() {
-        return String.format("rheem.%s.sqltostream.load", this.jdbcPlatform.getPlatformId());
+    public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
+        return Arrays.asList(
+                String.format("rheem.%s.sqltostream.load.query", this.jdbcPlatform.getPlatformId()),
+                String.format("rheem.%s.sqltostream.load.output", this.jdbcPlatform.getPlatformId())
+        );
     }
 
     /**

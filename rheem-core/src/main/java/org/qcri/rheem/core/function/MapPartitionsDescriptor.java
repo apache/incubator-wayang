@@ -1,7 +1,7 @@
 package org.qcri.rheem.core.function;
 
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataUnitType;
 
@@ -30,50 +30,46 @@ public class MapPartitionsDescriptor<Input, Output> extends FunctionDescriptor {
     public MapPartitionsDescriptor(SerializableFunction<Iterable<Input>, Iterable<Output>> javaImplementation,
                                    Class<Input> inputTypeClass,
                                    Class<Output> outputTypeClass) {
-        this(javaImplementation, inputTypeClass, outputTypeClass, null);
+        this(javaImplementation, inputTypeClass, outputTypeClass, (ProbabilisticDoubleInterval) null);
     }
 
     public MapPartitionsDescriptor(SerializableFunction<Iterable<Input>, Iterable<Output>> javaImplementation,
                                    Class<Input> inputTypeClass,
                                    Class<Output> outputTypeClass,
                                    ProbabilisticDoubleInterval selectivity) {
-        this(javaImplementation, inputTypeClass, outputTypeClass, selectivity, null, null);
+        this(javaImplementation, inputTypeClass, outputTypeClass, selectivity, null);
     }
 
 
     public MapPartitionsDescriptor(SerializableFunction<Iterable<Input>, Iterable<Output>> javaImplementation,
                                    Class<Input> inputTypeClass,
                                    Class<Output> outputTypeClass,
-                                   LoadEstimator cpuLoadEstimator,
-                                   LoadEstimator ramLoadEstimator) {
+                                   LoadProfileEstimator loadProfileEstimator) {
         this(javaImplementation,
                 inputTypeClass,
                 outputTypeClass,
                 null,
-                cpuLoadEstimator,
-                ramLoadEstimator);
+                loadProfileEstimator);
     }
+
     public MapPartitionsDescriptor(SerializableFunction<Iterable<Input>, Iterable<Output>> javaImplementation,
                                    Class<Input> inputTypeClass,
                                    Class<Output> outputTypeClass,
                                    ProbabilisticDoubleInterval selectivity,
-                                   LoadEstimator cpuLoadEstimator,
-                                   LoadEstimator ramLoadEstimator) {
+                                   LoadProfileEstimator loadProfileEstimator) {
         this(javaImplementation,
                 DataUnitType.createBasic(inputTypeClass),
                 DataUnitType.createBasic(outputTypeClass),
                 selectivity,
-                cpuLoadEstimator,
-                ramLoadEstimator);
+                loadProfileEstimator);
     }
 
     public MapPartitionsDescriptor(SerializableFunction<Iterable<Input>, Iterable<Output>> javaImplementation,
                                    BasicDataUnitType<Input> inputType,
                                    BasicDataUnitType<Output> outputType,
                                    ProbabilisticDoubleInterval selectivity,
-                                   LoadEstimator cpuLoadEstimator,
-                                   LoadEstimator ramLoadEstimator) {
-        super(cpuLoadEstimator, ramLoadEstimator);
+                                   LoadProfileEstimator loadProfileEstimator) {
+        super(loadProfileEstimator);
         this.javaImplementation = javaImplementation;
         this.inputType = inputType;
         this.outputType = outputType;

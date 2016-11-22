@@ -9,6 +9,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
@@ -55,13 +56,16 @@ public class JavaLoopOperator<InputType, ConvergenceType>
 
     @Override
     @SuppressWarnings("unchecked")
-    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             JavaExecutor javaExecutor,
             OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+
+        final ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
 
         final Predicate<Collection<ConvergenceType>> stoppingCondition =
                 javaExecutor.getCompiler().compile(this.criterionDescriptor);
@@ -88,7 +92,7 @@ public class JavaLoopOperator<InputType, ConvergenceType>
                 endloop = stoppingCondition.test(convergenceCollection);
 
                 JavaExecutionOperator.forward(inputs[ITERATION_CONVERGENCE_INPUT_INDEX], outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]);
-                operatorContext.getLineage().addPredecessor(inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLineage());
+                executionLineageNode.addPredecessor(inputs[ITERATION_CONVERGENCE_INPUT_INDEX].getLineage());
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -107,7 +111,7 @@ public class JavaLoopOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return operatorContext.getLineage().collectAndMark();
+        return executionLineageNode.collectAndMark();
     }
 
     @Override
@@ -116,8 +120,8 @@ public class JavaLoopOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator> optEstimator =
                 JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
         LoadProfileEstimators.nestUdfEstimator(optEstimator, this.criterionDescriptor, configuration);
         return optEstimator;

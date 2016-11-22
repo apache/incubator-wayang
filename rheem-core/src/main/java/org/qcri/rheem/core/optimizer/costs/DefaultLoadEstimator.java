@@ -12,13 +12,13 @@ import java.util.stream.LongStream;
 /**
  * Implementation of {@link LoadEstimator} that uses a single-point cost function.
  */
-public class DefaultLoadEstimator<T> extends LoadEstimator<T> {
+public class DefaultLoadEstimator extends LoadEstimator {
 
     private final double correctnessProbability;
 
     private final int numInputs, numOutputs;
 
-    private final EstimationFunction<T> singlePointEstimator;
+    private final SinglePointEstimationFunction singlePointEstimator;
 
     public DefaultLoadEstimator(int numInputs,
                                 int numOutputs,
@@ -34,7 +34,7 @@ public class DefaultLoadEstimator<T> extends LoadEstimator<T> {
                                 ToLongBiFunction<long[], long[]> singlePointFunction) {
         this(
                 numInputs, numOutputs, correctnessProbability, nullCardinalityReplacement,
-                (artifact, inputEstimates, outputEstimates) -> singlePointFunction.applyAsLong(inputEstimates, outputEstimates)
+                (context, inputEstimates, outputEstimates) -> singlePointFunction.applyAsLong(inputEstimates, outputEstimates)
         );
     }
 
@@ -42,7 +42,7 @@ public class DefaultLoadEstimator<T> extends LoadEstimator<T> {
                                 int numOutputs,
                                 double correctnessProbability,
                                 CardinalityEstimate nullCardinalityReplacement,
-                                EstimationFunction<T> singlePointFunction) {
+                                SinglePointEstimationFunction singlePointFunction) {
         super(nullCardinalityReplacement);
         this.numInputs = numInputs;
         this.numOutputs = numOutputs;
@@ -76,9 +76,9 @@ public class DefaultLoadEstimator<T> extends LoadEstimator<T> {
      * @param loadPerCardinalityUnit expected load units per input and output data quantum
      * @param confidence             confidence in the new instance
      */
-    public static LoadEstimator<ExecutionOperator> createIOLinearEstimator(ExecutionOperator operator,
-                                                                           long loadPerCardinalityUnit,
-                                                                           double confidence) {
+    public static LoadEstimator createIOLinearEstimator(ExecutionOperator operator,
+                                                        long loadPerCardinalityUnit,
+                                                        double confidence) {
         return createIOLinearEstimator(operator, loadPerCardinalityUnit, confidence, CardinalityEstimate.EMPTY_ESTIMATE);
     }
 
@@ -91,11 +91,11 @@ public class DefaultLoadEstimator<T> extends LoadEstimator<T> {
      * @param confidence                 confidence in the new instance
      * @param nullCardinalityReplacement replacement for {@code null}s as {@link CardinalityEstimate}s
      */
-    public static LoadEstimator<ExecutionOperator> createIOLinearEstimator(ExecutionOperator operator,
-                                                                           long loadPerCardinalityUnit,
-                                                                           double confidence,
-                                                                           CardinalityEstimate nullCardinalityReplacement) {
-        return new DefaultLoadEstimator<>(
+    public static LoadEstimator createIOLinearEstimator(ExecutionOperator operator,
+                                                        long loadPerCardinalityUnit,
+                                                        double confidence,
+                                                        CardinalityEstimate nullCardinalityReplacement) {
+        return new DefaultLoadEstimator(
                 operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumInputs(),
                 operator == null ? UNSPECIFIED_NUM_SLOTS : operator.getNumOutputs(),
                 confidence,
@@ -109,7 +109,9 @@ public class DefaultLoadEstimator<T> extends LoadEstimator<T> {
     }
 
     @Override
-    public LoadEstimate calculate(T artifact, CardinalityEstimate[] inputEstimates, CardinalityEstimate[] outputEstimates) {
+    public LoadEstimate calculate(EstimationContext context) {
+        final CardinalityEstimate[] inputEstimates = context.getInputCardinalities();
+        final CardinalityEstimate[] outputEstimates = context.getOutputCardinalities();
         Validate.isTrue(inputEstimates.length >= this.numInputs || this.numInputs == UNSPECIFIED_NUM_SLOTS,
                 "Received %d input estimates, require %d.", inputEstimates.length, this.numInputs);
         Validate.isTrue(outputEstimates.length == this.numOutputs || this.numOutputs == UNSPECIFIED_NUM_SLOTS,
@@ -122,7 +124,7 @@ public class DefaultLoadEstimator<T> extends LoadEstimator<T> {
         for (int inputEstimateId = 0; inputEstimateId < inputEstimateCombinations.length; inputEstimateId++) {
             for (int outputEstimateId = 0; outputEstimateId < outputEstimateCombinations.length; outputEstimateId++) {
                 long estimate = Math.max(this.singlePointEstimator.estimate(
-                        artifact,
+                        context,
                         inputEstimateCombinations[inputEstimateId],
                         outputEstimateCombinations[outputEstimateId]
                 ), 0);

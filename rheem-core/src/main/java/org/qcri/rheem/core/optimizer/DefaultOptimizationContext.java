@@ -91,13 +91,8 @@ public class DefaultOptimizationContext extends OptimizationContext {
                                        LoopContext hostLoopContext,
                                        int iterationNumber,
                                        ChannelConversionGraph channelConversionGraph,
-                                       List<PlanEnumerationPruningStrategy> pruningStrategies,
-                                       Map<Operator, OperatorContext> operatorContexts,
-                                       Map<LoopSubplan, LoopContext> loopContexts) {
+                                       List<PlanEnumerationPruningStrategy> pruningStrategies) {
         super(job, base, hostLoopContext, iterationNumber, channelConversionGraph, pruningStrategies);
-        this.operatorContexts.putAll(operatorContexts);
-        this.loopContexts.putAll(loopContexts);
-
     }
 
     @Override
@@ -224,15 +219,25 @@ public class DefaultOptimizationContext extends OptimizationContext {
      * @return the shallow copy
      */
     public DefaultOptimizationContext copy() {
-        return new DefaultOptimizationContext(
+        final DefaultOptimizationContext copy = new DefaultOptimizationContext(
                 this.getJob(),
                 this.getBase(),
                 this.getLoopContext(),
                 this.getIterationNumber(),
                 this.getChannelConversionGraph(),
-                this.getPruningStrategies(),
-                this.operatorContexts,
-                this.loopContexts
+                this.getPruningStrategies()
         );
+
+        // Make copies of the
+        for (Map.Entry<Operator, OperatorContext> entry : operatorContexts.entrySet()) {
+            final OperatorContext operatorCtxCopy = copy.addOneTimeOperator(entry.getKey());
+            operatorCtxCopy.merge(entry.getValue());
+        }
+
+        // Loops are not supported yet.
+        assert this.loopContexts.isEmpty();
+
+        return copy;
     }
+
 }

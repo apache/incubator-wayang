@@ -11,6 +11,7 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.platform.lineage.LazyExecutionLineageNode;
 import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.LoggerFactory;
@@ -44,25 +45,46 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @return an {@link Optional} that might contain the {@link LoadProfileEstimator} (but {@link Optional#empty()}
      * by default)
      */
-    default Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        String configurationKey = this.getLoadProfileEstimatorConfigurationKey();
-        if (configurationKey == null) {
-            return Optional.empty();
-        }
-        final Optional<String> optSpecification = configuration.getOptionalStringProperty(configurationKey);
-        if (!optSpecification.isPresent()) {
-            LoggerFactory
-                    .getLogger(this.getClass())
-                    .warn("Could not find an estimator specification associated with '{}'.", configuration);
-            return Optional.empty();
-        }
-        return Optional.of(LoadProfileEstimators.createFromJuelSpecification(optSpecification.get()));
+    default Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
+        Collection<String> configurationKeys = this.getLoadProfileEstimatorConfigurationKeys();
+        LoadProfileEstimator mainEstimator = createLoadProfileEstimators(configuration, configurationKeys);
+        return Optional.ofNullable(mainEstimator);
     }
 
     /**
-     * Provide the {@link Configuration} key for the {@link LoadProfileEstimator} specification of this instance.
+     * Creates a {@link LoadProfileEstimator} according to the {@link Configuration}.
      *
-     * @return the {@link Configuration} key or {@code null} if none
+     * @param configuration     the {@link Configuration}
+     * @param configurationKeys keys for the specification within the {@link Configuration}
+     * @return the {@link LoadProfileEstimator} or {@code null} if none could be created
+     */
+    static LoadProfileEstimator createLoadProfileEstimators(Configuration configuration, Collection<String> configurationKeys) {
+        LoadProfileEstimator mainEstimator = null;
+        for (String configurationKey : configurationKeys) {
+            final LoadProfileEstimator loadProfileEstimator = LoadProfileEstimators.createFromSpecification(configurationKey, configuration);
+            if (mainEstimator == null) {
+                mainEstimator = loadProfileEstimator;
+            } else {
+                mainEstimator.nest(loadProfileEstimator);
+            }
+        }
+        return mainEstimator;
+    }
+
+    /**
+     * Provide the {@link Configuration} keys for the {@link LoadProfileEstimator} specification of this instance.
+     *
+     * @return the {@link Configuration} keys
+     */
+    default Collection<String> getLoadProfileEstimatorConfigurationKeys() {
+        final String singleKey = this.getLoadProfileEstimatorConfigurationKey();
+        return singleKey == null ?
+                Collections.emptyList() :
+                Collections.singletonList(singleKey);
+    }
+
+    /**
+     * @deprecated Use {@link #getLoadProfileEstimatorConfigurationKeys()}
      */
     default String getLoadProfileEstimatorConfigurationKey() {
         return null;
@@ -135,14 +157,18 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @param operatorContext the executed {@link OptimizationContext.OperatorContext}
      * @return the executed {@link OptimizationContext.OperatorContext} and produced {@link ChannelInstance}s
      */
-    static Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> modelEagerExecution(
+    static Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> modelEagerExecution(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             OptimizationContext.OperatorContext operatorContext) {
-        LazyExecutionLineageNode.connectAll(inputs, operatorContext, outputs);
-        final Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> collectors;
+
+        final ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
+        LazyExecutionLineageNode.connectAll(inputs, executionLineageNode, outputs);
+
+        final Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> collectors;
         if (outputs.length == 0) {
-            collectors = operatorContext.getLineage().collectAndMark();
+            collectors = executionLineageNode.collectAndMark();
         } else {
             collectors = new Tuple<>(new LinkedList<>(), new LinkedList<>());
             for (ChannelInstance output : outputs) {
@@ -161,12 +187,16 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @param operatorContext the executed {@link OptimizationContext.OperatorContext}
      * @return the executed {@link OptimizationContext.OperatorContext} and produced {@link ChannelInstance}s
      */
-    static Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> modelQuasiEagerExecution(
+    static Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> modelQuasiEagerExecution(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             OptimizationContext.OperatorContext operatorContext) {
-        LazyExecutionLineageNode.connectAll(inputs, operatorContext, outputs);
-        return operatorContext.getLineage().collectAndMark();
+
+        final ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
+        LazyExecutionLineageNode.connectAll(inputs, executionLineageNode, outputs);
+
+        return executionLineageNode.collectAndMark();
     }
 
     /**
@@ -177,11 +207,15 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @param operatorContext the executed {@link OptimizationContext.OperatorContext}
      * @return the executed {@link OptimizationContext.OperatorContext} and produced {@link ChannelInstance}s
      */
-    static Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>>
+    static Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>>
     modelLazyExecution(ChannelInstance[] inputs,
                        ChannelInstance[] outputs,
                        OptimizationContext.OperatorContext operatorContext) {
-        LazyExecutionLineageNode.connectAll(inputs, operatorContext, outputs);
+
+        final ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
+        LazyExecutionLineageNode.connectAll(inputs, executionLineageNode, outputs);
+
         return new Tuple<>(Collections.emptyList(), Collections.emptyList());
     }
 

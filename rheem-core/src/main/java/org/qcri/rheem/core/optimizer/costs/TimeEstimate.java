@@ -3,8 +3,6 @@ package org.qcri.rheem.core.optimizer.costs;
 import org.qcri.rheem.core.optimizer.ProbabilisticIntervalEstimate;
 import org.qcri.rheem.core.util.Formats;
 
-import java.util.Comparator;
-
 /**
  * An estimate of time (in <b>milliseconds</b>) expressed as a {@link ProbabilisticIntervalEstimate}.
  */

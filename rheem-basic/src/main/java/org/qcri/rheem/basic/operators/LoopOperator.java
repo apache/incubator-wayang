@@ -2,18 +2,16 @@ package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.SwitchForwardCardinalityEstimator;
-import org.qcri.rheem.core.plan.executionplan.Channel;
-import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.platform.ChannelInstance;
-import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Optional;
 
 /**
  * This operator has three inputs and three outputs.

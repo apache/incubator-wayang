@@ -16,32 +16,14 @@ import java.util.function.Predicate;
  */
 public abstract class FunctionDescriptor {
 
-    private LoadProfileEstimator<?> loadProfileEstimator;
+    private LoadProfileEstimator loadProfileEstimator;
 
-    public FunctionDescriptor() {
-        this(null, null);
+    public FunctionDescriptor(LoadProfileEstimator loadProfileEstimator) {
+        this.setLoadProfileEstimator(loadProfileEstimator);
     }
 
-    public FunctionDescriptor(LoadEstimator<?> cpuLoadEstimator,
-                              LoadEstimator<?> memoryLoadEstimator) {
-        this.setLoadEstimators(cpuLoadEstimator, memoryLoadEstimator);
-    }
-
-    @SuppressWarnings("unchecked")
-    public void setLoadEstimators(LoadEstimator<?> cpuLoadEstimator,
-                                  LoadEstimator<?> memoryLoadEstimator) {
-        if (cpuLoadEstimator == null && memoryLoadEstimator == null) {
-            this.loadProfileEstimator = null;
-        } else {
-            this.loadProfileEstimator = new NestableLoadProfileEstimator(
-                    cpuLoadEstimator == null ?
-                            LoadEstimator.createFallback(LoadEstimator.UNSPECIFIED_NUM_SLOTS, LoadEstimator.UNSPECIFIED_NUM_SLOTS) :
-                            cpuLoadEstimator,
-                    memoryLoadEstimator == null ?
-                            LoadEstimator.createFallback(LoadEstimator.UNSPECIFIED_NUM_SLOTS, LoadEstimator.UNSPECIFIED_NUM_SLOTS) :
-                            memoryLoadEstimator
-            );
-        }
+    public void setLoadProfileEstimator(LoadProfileEstimator loadProfileEstimator) {
+        this.loadProfileEstimator = loadProfileEstimator;
     }
 
     public Optional<LoadProfileEstimator> getLoadProfileEstimator() {
@@ -66,6 +48,20 @@ public abstract class FunctionDescriptor {
             return ((MapPartitionsDescriptor<?, ?>) functionDescriptor).getSelectivity();
         }
         throw new IllegalArgumentException(String.format("Cannot retrieve selectivity of %s.", functionDescriptor));
+    }
+
+    /**
+     * Updates the {@link LoadProfileEstimator} of this instance.
+     *
+     * @param cpuEstimator the {@link LoadEstimator} for the CPU load
+     * @param ramEstimator the {@link LoadEstimator} for the RAM load
+     * @deprecated Use {@link #setLoadProfileEstimator(LoadProfileEstimator)} instead.
+     */
+    public void setLoadEstimators(LoadEstimator cpuEstimator, LoadEstimator ramEstimator) {
+        this.setLoadProfileEstimator(new NestableLoadProfileEstimator(
+                cpuEstimator,
+                ramEstimator
+        ));
     }
 
     /**

@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.platform;
 
+import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
@@ -9,6 +10,8 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.executionplan.PlatformExecution;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.util.JsonSerializables;
+import org.qcri.rheem.core.util.JsonSerializer;
 import org.qcri.rheem.core.util.ReflectionUtils;
 
 /**
@@ -116,5 +119,23 @@ public abstract class Platform {
     public long getInitializeMillis(Configuration configuration) {
         return 0L;
     }
+
+    /**
+     * Default {@link JsonSerializer} implementation that stores the {@link Class} of the instance and then
+     * tries to deserialize by invoking the static {@code getInstance()} method.
+     */
+    public static final JsonSerializer<Platform> jsonSerializer = new JsonSerializer<Platform>() {
+
+        @Override
+        public JSONObject serialize(Platform platform) {
+            // Enforce polymorph serialization.
+            return JsonSerializables.addClassTag(platform, new JSONObject());
+        }
+
+        @Override
+        public Platform deserialize(JSONObject json, Class<? extends Platform> cls) {
+            return ReflectionUtils.evaluate(cls.getCanonicalName() + ".getInstance()");
+        }
+    };
 
 }

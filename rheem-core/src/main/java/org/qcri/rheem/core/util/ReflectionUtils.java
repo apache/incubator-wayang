@@ -409,4 +409,21 @@ public class ReflectionUtils {
         }
         throw new IllegalArgumentException(String.format("Did not find method %s() for %s.", accessorName, obj));
     }
+
+    /**
+     * Convert the given {@link Object} to a {@code double}.
+     *
+     * @param o the {@link Object}
+     * @return the {@code double}
+     */
+    public static double toDouble(Object o) {
+        if (o instanceof Double) return (Double) o;
+        else if (o instanceof Integer) return (Integer) o;
+        else if (o instanceof Float) return (Float) o;
+        else if (o instanceof Long) return (Long) o;
+        else if (o instanceof Short) return (Short) o;
+        else if (o instanceof Byte) return (Byte) o;
+        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", o));
+
+    }
 }

@@ -5,7 +5,7 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStageLoop;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
 import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
@@ -125,34 +125,19 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
     /**
      * Create a {@link PartialExecution} according to the given parameters.
      *
-     * @param executedOperatorContexts {@link ExecutionOperator}s' {@link OptimizationContext.OperatorContext}s that
-     *                                 have been executed
-     * @param executionDuration        the measured execution duration in milliseconds
+     * @param executionLineageNodes {@link ExecutionLineageNode}s reflecting what has been executed
+     * @param executionDuration     the measured execution duration in milliseconds
      * @return the {@link PartialExecution} or {@code null} if nothing has been executed
      */
     protected PartialExecution createPartialExecution(
-            Collection<OptimizationContext.OperatorContext> executedOperatorContexts,
+            Collection<ExecutionLineageNode> executionLineageNodes,
             long executionDuration) {
 
-        if (executedOperatorContexts.isEmpty()) return null;
+        if (executionLineageNodes.isEmpty()) return null;
 
         final PartialExecution partialExecution = PartialExecution.createFromMeasurement(
-                executionDuration, executedOperatorContexts, this.getConfiguration()
+                executionDuration, executionLineageNodes, this.getConfiguration()
         );
-        if (this.logger.isInfoEnabled()) {
-            this.logger.info(
-                    "Executed {} operator(s) in {} (estimated {}): {}",
-                    executedOperatorContexts.size(),
-                    Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
-                    partialExecution.getOverallTimeEstimate(),
-                    partialExecution.getOperatorContexts().stream()
-                            .map(opCtx -> String.format(
-                                    "%s(time=%s, cards=%s)",
-                                    opCtx.getOperator(), opCtx.getTimeEstimate(), formatCardinalities(opCtx)
-                            ))
-                            .collect(Collectors.toList())
-            );
-        }
 
         return partialExecution;
     }

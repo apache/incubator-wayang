@@ -48,10 +48,10 @@ class ProjectRecordsDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Reco
   private var sqlUdf: String = _
 
   /** [[LoadEstimator]] to estimate the CPU load of the projection. */
-  private var udfCpuEstimator: LoadEstimator[AnyRef] = _
+  private var udfCpuEstimator: LoadEstimator = _
 
   /** [[LoadEstimator]] to estimate the RAM load of the projection. */
-  private var udfRamEstimator: LoadEstimator[AnyRef] = _
+  private var udfRamEstimator: LoadEstimator = _
 
   /**
     * Set a [[LoadEstimator]] for the CPU load of the UDF.
@@ -59,7 +59,7 @@ class ProjectRecordsDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Reco
     * @param udfCpuEstimator the [[LoadEstimator]]
     * @return this instance
     */
-  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator[AnyRef]) = {
+  def withUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
     this.udfCpuEstimator = udfCpuEstimator
     this
   }
@@ -70,7 +70,7 @@ class ProjectRecordsDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Reco
     * @param udfRamEstimator the [[LoadEstimator]]
     * @return this instance
     */
-  def withUdfRamEstimator(udfRamEstimator: LoadEstimator[AnyRef]) = {
+  def withUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
     this.udfRamEstimator = udfRamEstimator
     this
   }

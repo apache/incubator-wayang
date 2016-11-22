@@ -6,6 +6,8 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.platform.CrossPlatformExecutor;
 import org.qcri.rheem.core.platform.PartialExecution;
+import org.qcri.rheem.core.util.JsonSerializables;
+import org.qcri.rheem.core.util.JsonSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,11 +31,17 @@ public class ExecutionLog implements AutoCloseable {
     private final String repositoryPath;
 
     /**
+     * {@link Configuration} to use.
+     */
+    private final Configuration configuration;
+
+    /**
      * Created on demand an can be closed as well.
      */
     private BufferedWriter writer;
 
-    private ExecutionLog(String repositoryPath) {
+    private ExecutionLog(Configuration configuration, String repositoryPath) {
+        this.configuration = configuration;
         this.repositoryPath = repositoryPath;
         this.logger.info("Curating execution log at {}.", repositoryPath);
     }
@@ -45,18 +53,19 @@ public class ExecutionLog implements AutoCloseable {
      * @return the new instance
      */
     public static ExecutionLog open(Configuration configuration) {
-        return open(configuration.getStringProperty("rheem.core.log.executions"));
+        return open(configuration, configuration.getStringProperty("rheem.core.log.executions"));
     }
 
 
     /**
      * Opens an instance.
      *
+     * @param configuration  describes the instance to be opened
      * @param repositoryPath location of the instance
      * @return the new instance
      */
-    public static ExecutionLog open(String repositoryPath) {
-        return new ExecutionLog(repositoryPath);
+    public static ExecutionLog open(Configuration configuration, String repositoryPath) {
+        return new ExecutionLog(configuration, repositoryPath);
     }
 
     /**
@@ -65,8 +74,9 @@ public class ExecutionLog implements AutoCloseable {
      * @param partialExecutions that should be stored
      */
     public void storeAll(Iterable<PartialExecution> partialExecutions) throws IOException {
+        final PartialExecution.Serializer serializer = new PartialExecution.Serializer(this.configuration);
         for (PartialExecution partialExecution : partialExecutions) {
-            this.store(partialExecution);
+            this.store(partialExecution, serializer);
         }
     }
 
@@ -76,7 +86,18 @@ public class ExecutionLog implements AutoCloseable {
      * @param partialExecution that should be stored
      */
     public void store(PartialExecution partialExecution) throws IOException {
-        this.write(partialExecution.toJson());
+        this.store(partialExecution, new PartialExecution.Serializer(this.configuration));
+    }
+
+    /**
+     * Stores the given {@link PartialExecution} in this instance.
+     *
+     * @param partialExecution               that should be stored
+     * @param partialExecutionJsonSerializer serializes {@link PartialExecution}s
+     */
+    private void store(PartialExecution partialExecution, JsonSerializer<PartialExecution> partialExecutionJsonSerializer)
+            throws IOException {
+        this.write(JsonSerializables.serialize(partialExecution, false, partialExecutionJsonSerializer));
     }
 
     /**
@@ -96,10 +117,11 @@ public class ExecutionLog implements AutoCloseable {
     public Stream<PartialExecution> stream() throws IOException {
         IOUtils.closeQuietly(this.writer);
         this.writer = null;
+        final PartialExecution.Serializer serializer = new PartialExecution.Serializer(this.configuration);
         return Files.lines(Paths.get(this.repositoryPath), Charset.forName("UTF-8"))
                 .map(line -> {
                     try {
-                        return PartialExecution.fromJson(new JSONObject(line));
+                        return JsonSerializables.deserialize(new JSONObject(line), serializer, PartialExecution.class);
                     } catch (Exception e) {
                         throw new RheemException(String.format("Could not parse \"%s\".", line), e);
                     }

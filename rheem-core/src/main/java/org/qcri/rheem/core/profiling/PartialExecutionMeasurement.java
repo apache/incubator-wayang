@@ -2,13 +2,9 @@ package org.qcri.rheem.core.profiling;
 
 import de.hpi.isg.profiledb.store.model.Measurement;
 import de.hpi.isg.profiledb.store.model.Type;
-import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.PartialExecution;
-
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * This {@link Measurement} adapts a {@link PartialExecutionMeasurement}.
@@ -17,17 +13,12 @@ import java.util.List;
 public class PartialExecutionMeasurement extends Measurement {
 
     /**
-     * @see PartialExecution#getOperatorContexts()
-     */
-    private List<Operator> operators = new LinkedList<>();
-
-    /**
      * @see PartialExecution#getMeasuredExecutionTime()
      */
     private long executionMillis;
 
     /**
-     * @see PartialExecution#getOverallTimeEstimate()
+     * @see PartialExecution#getOverallTimeEstimate(Configuration)
      */
     private TimeEstimate estimatedExecutionMillis;
 
@@ -43,18 +34,13 @@ public class PartialExecutionMeasurement extends Measurement {
      *
      * @param id               the ID of the new instance
      * @param partialExecution provides data for the new instance
+     * @param configuration    required to calculate the estimated execution time
      */
-    public PartialExecutionMeasurement(String id, PartialExecution partialExecution) {
+    public PartialExecutionMeasurement(String id, PartialExecution partialExecution, Configuration configuration) {
         super(id);
-        partialExecution.getOperatorContexts().stream()
-                .map(OptimizationContext.OperatorContext::getOperator)
-                .forEach(this.operators::add);
+        // TODO: Capture what has been executed?
         this.executionMillis = partialExecution.getMeasuredExecutionTime();
-        this.estimatedExecutionMillis = partialExecution.getOverallTimeEstimate();
-    }
-
-    public List<Operator> getOperators() {
-        return operators;
+        this.estimatedExecutionMillis = partialExecution.getOverallTimeEstimate(configuration);
     }
 
     public long getExecutionMillis() {

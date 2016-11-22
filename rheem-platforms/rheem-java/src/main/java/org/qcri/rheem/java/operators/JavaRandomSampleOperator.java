@@ -11,6 +11,7 @@ import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
@@ -103,7 +104,7 @@ public class JavaRandomSampleOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             JavaExecutor javaExecutor,
@@ -158,9 +159,9 @@ public class JavaRandomSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        return Optional.of(new NestableLoadProfileEstimator<>(
-                new DefaultLoadEstimator<>(this.getNumInputs(), 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
+        return Optional.of(new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(this.getNumInputs(), 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
                 LoadEstimator.createFallback(this.getNumInputs(), 1)
         ));
     }

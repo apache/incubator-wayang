@@ -8,6 +8,8 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.CrossPlatformExecutor;
+import org.qcri.rheem.core.profiling.NoInstrumentationStrategy;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
@@ -35,6 +37,7 @@ public class JavaExecutionOperatorTestBase {
         job = mock(Job.class);
         when(job.getConfiguration()).thenReturn(configuration);
         DefaultOptimizationContext optimizationContext = new DefaultOptimizationContext(job);
+        when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new NoInstrumentationStrategy()));
         when(job.getOptimizationContext()).thenReturn(optimizationContext);
     }
 

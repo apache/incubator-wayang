@@ -11,6 +11,7 @@ import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
@@ -100,7 +101,7 @@ public class SparkBernoulliSampleOperator<Type>
     }
 
     @Override
-    public Tuple<Collection<OptimizationContext.OperatorContext>, Collection<ChannelInstance>> evaluate(
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             SparkExecutor sparkExecutor,
@@ -136,13 +137,13 @@ public class SparkBernoulliSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         // NB: This was not measured but is guesswork, adapted from SparkFilterOperator.
-        final LoadProfileEstimator<ExecutionOperator> mainEstimator = new NestableLoadProfileEstimator<>(
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 0),
+        final LoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
                 (in, out) -> 0.23d,
                 550
         );

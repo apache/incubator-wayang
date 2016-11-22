@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
+import java.util.function.ToDoubleFunction;
 
 import static org.qcri.rheem.core.util.ReflectionUtils.instantiateDefault;
 
@@ -69,13 +70,17 @@ public class Configuration {
 
     private KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> udfSelectivityProvider;
 
-    private KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> operatorLoadProfileEstimatorProvider;
+    private KeyValueProvider<ExecutionOperator, LoadProfileEstimator> operatorLoadProfileEstimatorProvider;
 
     private KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider;
+
+    private MapBasedKeyValueProvider<String, LoadProfileEstimator> loadProfileEstimatorCache;
 
     private KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider;
 
     private KeyValueProvider<Platform, TimeToCostConverter> timeToCostConverterProvider;
+
+    private ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> costSquasherProvider;
 
     private KeyValueProvider<Platform, Long> platformStartUpTimeProvider;
 
@@ -84,8 +89,6 @@ public class Configuration {
     private ExplicitCollectionProvider<Mapping> mappingProvider;
 
     private ExplicitCollectionProvider<ChannelConversion> channelConversionProvider;
-
-    private ValueProvider<Comparator<ProbabilisticDoubleInterval>> costEstimateComparatorProvider;
 
     private CollectionProvider<Class<PlanEnumerationPruningStrategy>> pruningStrategyClassProvider;
 
@@ -141,16 +144,19 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(this.parent.operatorLoadProfileEstimatorProvider, this);
             this.functionLoadProfileEstimatorProvider =
                     new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider, this);
+            this.loadProfileEstimatorCache =
+                    new MapBasedKeyValueProvider<>(this.parent.loadProfileEstimatorCache, this);
             this.loadProfileToTimeConverterProvider =
                     new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider, this);
             this.timeToCostConverterProvider =
                     new MapBasedKeyValueProvider<>(this.parent.timeToCostConverterProvider, this);
             this.platformStartUpTimeProvider =
                     new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider, this);
+            this.costSquasherProvider =
+                    new ConstantValueProvider<>(this, this.parent.costSquasherProvider);
 
             // Providers for plan enumeration.
             this.pruningStrategyClassProvider = new ExplicitCollectionProvider<>(this, this.parent.pruningStrategyClassProvider);
-            this.costEstimateComparatorProvider = new ConstantValueProvider<>(this, this.parent.costEstimateComparatorProvider);
             this.instrumentationStrategyProvider = new ConstantValueProvider<>(this, this.parent.instrumentationStrategyProvider);
 
             // Properties.
@@ -222,16 +228,17 @@ public class Configuration {
      */
     private void handleConfigurationFileEntry(String key, String value) {
         switch (key) {
-            case "rheem.core.optimizer.cost.comparator":
-                if (!(this.costEstimateComparatorProvider instanceof ConstantValueProvider)) {
+            case "rheem.core.optimizer.cost.squash":
+                if (!(this.costSquasherProvider instanceof ConstantValueProvider)) {
                     logger.warn("Cannot update cost estimate provider.");
                 } else if ("expectation".equals(value)) {
-                    ((ConstantValueProvider<Comparator<ProbabilisticDoubleInterval>>) this.costEstimateComparatorProvider).setValue(
-                            ProbabilisticDoubleInterval.expectationValueComparator()
+                    ((ConstantValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>>) this.costSquasherProvider).setValue(
+                            ProbabilisticDoubleInterval::getGeometricMeanEstimate
                     );
                 } else if ("random".equals(value)) {
-                    ((ConstantValueProvider<Comparator<ProbabilisticDoubleInterval>>) this.costEstimateComparatorProvider).setValue(
-                            ProbabilisticDoubleInterval.randomComparator()
+                    final int salt = new Random().nextInt();
+                    ((ConstantValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>>) this.costSquasherProvider).setValue(
+                            cost -> cost.hashCode() * salt + cost.hashCode()
                     );
                 } else {
                     logger.warn("Cannot set unknown cost comparator \"{}\".", value);
@@ -337,11 +344,11 @@ public class Configuration {
     private static void bootstrapLoadAndTimeEstimatorProviders(Configuration configuration) {
         {
             // Safety net: provide a fallback selectivity.
-            KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> fallbackProvider =
-                    new FunctionalKeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>>(
+            KeyValueProvider<ExecutionOperator, LoadProfileEstimator> fallbackProvider =
+                    new FunctionalKeyValueProvider<ExecutionOperator, LoadProfileEstimator>(
                             (operator, requestee) -> {
                                 final Configuration conf = requestee.getConfiguration();
-                                return new NestableLoadProfileEstimator<>(
+                                return new NestableLoadProfileEstimator(
                                         IntervalLoadEstimator.createIOLinearEstimator(
                                                 null,
                                                 conf.getLongProperty("rheem.core.fallback.udf.cpu.lower"),
@@ -362,14 +369,14 @@ public class Configuration {
                     ).withSlf4jWarning("Creating fallback load estimator for {}.");
 
             // Built-in option: let the ExecutionOperators provide the LoadProfileEstimator.
-            KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> builtInProvider =
+            KeyValueProvider<ExecutionOperator, LoadProfileEstimator> builtInProvider =
                     new FunctionalKeyValueProvider<>(
                             fallbackProvider,
                             (operator, requestee) -> operator.createLoadProfileEstimator(requestee.getConfiguration()).orElse(null)
                     );
 
             // Customizable layer: Users can override manually.
-            KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> overrideProvider =
+            KeyValueProvider<ExecutionOperator, LoadProfileEstimator> overrideProvider =
                     new MapBasedKeyValueProvider<>(builtInProvider);
 
             configuration.setOperatorLoadProfileEstimatorProvider(overrideProvider);
@@ -380,7 +387,7 @@ public class Configuration {
                     new FunctionalKeyValueProvider<FunctionDescriptor, LoadProfileEstimator>(
                             (operator, requestee) -> {
                                 final Configuration conf = requestee.getConfiguration();
-                                return new NestableLoadProfileEstimator<>(
+                                return new NestableLoadProfileEstimator(
                                         IntervalLoadEstimator.createIOLinearEstimator(
                                                 null,
                                                 conf.getLongProperty("rheem.core.fallback.operator.cpu.lower"),
@@ -466,6 +473,9 @@ public class Configuration {
                     new MapBasedKeyValueProvider<>(builtInProvider, false);
             configuration.setTimeToCostConverterProvider(overrideProvider);
         }
+        {
+            configuration.setLoadProfileEstimatorCache(new MapBasedKeyValueProvider<>(configuration, true));
+        }
     }
 
     private static void bootstrapPruningProviders(Configuration configuration) {
@@ -497,11 +507,11 @@ public class Configuration {
             configuration.setPruningStrategyClassProvider(overrideProvider);
         }
         {
-            ValueProvider<Comparator<ProbabilisticDoubleInterval>> defaultProvider =
-                    new ConstantValueProvider<>(ProbabilisticDoubleInterval.expectationValueComparator(), configuration);
-            ValueProvider<Comparator<ProbabilisticDoubleInterval>> overrideProvider =
+            ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> defaultProvider =
+                    new ConstantValueProvider<>(ProbabilisticDoubleInterval::getGeometricMeanEstimate, configuration);
+            ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> overrideProvider =
                     new ConstantValueProvider<>(defaultProvider);
-            configuration.setCostEstimateComparatorProvider(overrideProvider);
+            configuration.setCostSquasherProvider(overrideProvider);
         }
         {
             ValueProvider<InstrumentationStrategy> defaultProvider =
@@ -583,11 +593,11 @@ public class Configuration {
         this.udfSelectivityProvider = udfSelectivityProvider;
     }
 
-    public KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> getOperatorLoadProfileEstimatorProvider() {
+    public KeyValueProvider<ExecutionOperator, LoadProfileEstimator> getOperatorLoadProfileEstimatorProvider() {
         return this.operatorLoadProfileEstimatorProvider;
     }
 
-    public void setOperatorLoadProfileEstimatorProvider(KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> operatorLoadProfileEstimatorProvider) {
+    public void setOperatorLoadProfileEstimatorProvider(KeyValueProvider<ExecutionOperator, LoadProfileEstimator> operatorLoadProfileEstimatorProvider) {
         this.operatorLoadProfileEstimatorProvider = operatorLoadProfileEstimatorProvider;
     }
 
@@ -597,6 +607,14 @@ public class Configuration {
 
     public void setFunctionLoadProfileEstimatorProvider(KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider) {
         this.functionLoadProfileEstimatorProvider = functionLoadProfileEstimatorProvider;
+    }
+
+    public MapBasedKeyValueProvider<String, LoadProfileEstimator> getLoadProfileEstimatorCache() {
+        return this.loadProfileEstimatorCache;
+    }
+
+    public void setLoadProfileEstimatorCache(MapBasedKeyValueProvider<String, LoadProfileEstimator> loadProfileEstimatorCache) {
+        this.loadProfileEstimatorCache = loadProfileEstimatorCache;
     }
 
     public ExplicitCollectionProvider<Platform> getPlatformProvider() {
@@ -621,14 +639,6 @@ public class Configuration {
 
     public void setChannelConversionProvider(ExplicitCollectionProvider<ChannelConversion> channelConversionProvider) {
         this.channelConversionProvider = channelConversionProvider;
-    }
-
-    public ValueProvider<Comparator<ProbabilisticDoubleInterval>> getCostEstimateComparatorProvider() {
-        return this.costEstimateComparatorProvider;
-    }
-
-    public void setCostEstimateComparatorProvider(ValueProvider<Comparator<ProbabilisticDoubleInterval>> costEstimateComparatorProvider) {
-        this.costEstimateComparatorProvider = costEstimateComparatorProvider;
     }
 
     public CollectionProvider<Class<PlanEnumerationPruningStrategy>> getPruningStrategyClassProvider() {
@@ -694,6 +704,14 @@ public class Configuration {
 
     public void setTimeToCostConverterProvider(KeyValueProvider<Platform, TimeToCostConverter> timeToCostConverterProvider) {
         this.timeToCostConverterProvider = timeToCostConverterProvider;
+    }
+
+    public ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> getCostSquasherProvider() {
+        return this.costSquasherProvider;
+    }
+
+    public void setCostSquasherProvider(ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> costSquasherProvider) {
+        this.costSquasherProvider = costSquasherProvider;
     }
 
     public OptionalLong getOptionalLongProperty(String key) {

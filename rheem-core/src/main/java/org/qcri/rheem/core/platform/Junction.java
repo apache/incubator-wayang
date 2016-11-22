@@ -144,6 +144,23 @@ public class Junction {
     }
 
     /**
+     * Calculates the cost estimate for all {@link ExecutionOperator}s in this instance for a given
+     * {@link OptimizationContext} that should be known itself (or as a fork) to this instance.
+     *
+     * @param optimizationContext the {@link OptimizationContext}
+     * @return the aggregate cost estimate
+     */
+    public double getSquashedCostEstimate(OptimizationContext optimizationContext) {
+        final OptimizationContext localMatchingOptCtx = this.findMatchingOptimizationContext(optimizationContext);
+        assert localMatchingOptCtx != null : "No matching OptimizationContext for in Junction.";
+        return this.conversionTasks.stream()
+                .map(ExecutionTask::getOperator)
+                .map(localMatchingOptCtx::getOperatorContext)
+                .mapToDouble(OptimizationContext.OperatorContext::getSquashedCostEstimate)
+                .sum();
+    }
+
+    /**
      * Determines a matching {@link OptimizationContext} from {@link #optimizationContexts} w.r.t. the given
      * {@link OptimizationContext}. A match is given if the local {@link OptimizationContext} is either forked
      * from {@code externalOptCtx} or a parent.
