@@ -15,6 +15,8 @@ import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.java.operators.JavaCollectionSource;
+import org.qcri.rheem.java.operators.JavaDoWhileOperator;
 import org.qcri.rheem.sqlite3.Sqlite3;
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource;
 
@@ -318,7 +320,9 @@ public class RheemPlans {
         CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
         source.setName("source");
 
-        SampleOperator<Integer> sampleOperator = new SampleOperator<>(3, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM);
+        SampleOperator<Integer> sampleOperator = new SampleOperator<>(
+                3, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM, SampleOperator.randomSeed()
+        );
         sampleOperator.setName("sample");
 
         MapOperator<Integer, Integer> mapOperator = new MapOperator<>(n -> 2 * n, Integer.class, Integer.class);

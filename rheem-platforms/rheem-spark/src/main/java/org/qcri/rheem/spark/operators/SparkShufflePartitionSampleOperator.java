@@ -24,6 +24,7 @@ import scala.runtime.AbstractFunction1;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 
 /**
@@ -33,7 +34,7 @@ public class SparkShufflePartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
-    private final Random rand = new Random();
+    private final Random rand = new Random(seed);
 
     private int partitionID = 0;
 
@@ -42,15 +43,8 @@ public class SparkShufflePartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public SparkShufflePartitionSampleOperator(int sampleSize, DataSetType<Type> type) {
-        super(sampleSize, type, Methods.SHUFFLE_FIRST);
-    }
-
-    /**
-     * Creates a new instance.
-     */
-    public SparkShufflePartitionSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
-        super(sampleSize, datasetSize, type, Methods.SHUFFLE_FIRST);
+    public SparkShufflePartitionSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {
+        super(sampleSizeFunction, type, Methods.SHUFFLE_PARTITION_FIRST, seed);
     }
 
     /**
@@ -60,7 +54,7 @@ public class SparkShufflePartitionSampleOperator<Type>
      */
     public SparkShufflePartitionSampleOperator(SampleOperator<Type> that) {
         super(that);
-        assert that.getSampleMethod() == Methods.SHUFFLE_FIRST || that.getSampleMethod() == Methods.ANY;
+        assert that.getSampleMethod() == Methods.SHUFFLE_PARTITION_FIRST || that.getSampleMethod() == Methods.ANY;
     }
 
     @Override
@@ -78,7 +72,7 @@ public class SparkShufflePartitionSampleOperator<Type>
         long datasetSize = this.isDataSetSizeKnown() ?
                 this.getDatasetSize() :
                 inputRdd.cache().count();
-
+        int sampleSize = this.getSampleSize(operatorContext);
         if (sampleSize >= datasetSize) { //return all and return
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
             return null;
@@ -93,7 +87,7 @@ public class SparkShufflePartitionSampleOperator<Type>
                 int nb_partitions = inputRdd.partitions().size();
                 //choose a random partition
                 partitionID = rand.nextInt(nb_partitions);
-                inputRdd = inputRdd.<Type>mapPartitionsWithIndex(new ShufflePartition<>(partitionID), true).cache();
+                inputRdd = inputRdd.<Type>mapPartitionsWithIndex(new ShufflePartition<>(partitionID, seed), true).cache();
                 miscalculated = false;
             }
             //read sequentially from partitionID
@@ -120,7 +114,7 @@ public class SparkShufflePartitionSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkShufflePartitionSampleOperator<>(this.sampleSize, this.getType());
+        return new SparkShufflePartitionSampleOperator<>(this);
     }
 
     @Override
@@ -155,9 +149,17 @@ public class SparkShufflePartitionSampleOperator<Type>
 class ShufflePartition<V, T, R> implements Function2<V, T, R> {
 
     private int partitionID;
+    private Random rand;
 
     ShufflePartition(int partitionID) {
         this.partitionID = partitionID;
+        this.rand = new Random();
+    }
+
+    ShufflePartition(int partitionID, long seed) {
+        this.partitionID = partitionID;
+        this.rand = new Random(seed);
+
     }
 
     @Override
@@ -168,7 +170,7 @@ class ShufflePartition<V, T, R> implements Function2<V, T, R> {
             List<T> list = new ArrayList<>();
             while (sparkIt.hasNext())
                 list.add(sparkIt.next());
-            Collections.shuffle(list);
+            Collections.shuffle(list, rand);
             return list.iterator();
         }
         return Collections.emptyIterator();

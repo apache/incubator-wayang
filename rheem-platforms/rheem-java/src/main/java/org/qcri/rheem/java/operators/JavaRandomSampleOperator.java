@@ -19,6 +19,7 @@ import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
 
 /**
@@ -28,25 +29,15 @@ public class JavaRandomSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
-    private final Random rand = new Random();
+    private final Random rand = new Random(seed);
 
     /**
      * Creates a new instance.
      *
-     * @param sampleSize size of sample
+     * @param sampleSizeFunction udf-based size of sample
      */
-    public JavaRandomSampleOperator(int sampleSize, DataSetType<Type> type) {
-        super(sampleSize, type, Methods.RANDOM);
-    }
-
-    /**
-     * Creates a new instance.
-     *
-     * @param sampleSize  size of sample
-     * @param datasetSize size of data
-     */
-    public JavaRandomSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
-        super(sampleSize, datasetSize, type, Methods.RANDOM);
+    public JavaRandomSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {
+        super(sampleSizeFunction, type, Methods.RANDOM, seed);
     }
 
     /**
@@ -68,6 +59,7 @@ public class JavaRandomSampleOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+        int sampleSize = (int) this.getSampleSize(operatorContext);
         long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() :
                 ((CollectionChannel.Instance) inputs[0]).provideCollection().size();
 
@@ -118,7 +110,7 @@ public class JavaRandomSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaRandomSampleOperator<>(this.sampleSize, this.getType());
+        return new JavaRandomSampleOperator<>(this);
     }
 
 

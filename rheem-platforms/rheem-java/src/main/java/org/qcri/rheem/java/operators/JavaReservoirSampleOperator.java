@@ -19,6 +19,7 @@ import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 /**
  * Java implementation of the {@link JavaReservoirSampleOperator}.
@@ -27,25 +28,13 @@ public class JavaReservoirSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
-    private final Random rand = new Random();
+    private final Random rand = new Random(seed);
 
     /**
      * Creates a new instance.
-     *
-     * @param sampleSize
      */
-    public JavaReservoirSampleOperator(int sampleSize, DataSetType<Type> type) {
-        super(sampleSize, type, Methods.RESERVOIR);
-    }
-
-    /**
-     * Creates a new instance.
-     *
-     * @param sampleSize
-     * @param datasetSize
-     */
-    public JavaReservoirSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
-        super(sampleSize, datasetSize, type, Methods.RESERVOIR);
+    public JavaReservoirSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {
+        super(sampleSizeFunction, type, Methods.RESERVOIR, seed);
     }
 
     /**
@@ -67,6 +56,8 @@ public class JavaReservoirSampleOperator<Type>
             OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+
+        int sampleSize = this.getSampleSize(operatorContext);
 
         ((CollectionChannel.Instance) outputs[0]).accept(reservoirSample(rand, ((JavaChannelInstance) inputs[0]).<Type>provideStream().iterator(), sampleSize));
 
@@ -100,7 +91,7 @@ public class JavaReservoirSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaReservoirSampleOperator<>(this.sampleSize, this.getType());
+        return new JavaReservoirSampleOperator<>(this);
     }
 
     @Override

@@ -18,6 +18,7 @@ import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 
 /**
@@ -30,21 +31,9 @@ public class SparkBernoulliSampleOperator<Type>
 
     /**
      * Creates a new instance.
-     *
-     * @param sampleSize
      */
-    public SparkBernoulliSampleOperator(int sampleSize, DataSetType<Type> type) {
-        super(sampleSize, type, Methods.BERNOULLI);
-    }
-
-    /**
-     * Creates a new instance.
-     *
-     * @param sampleSize
-     * @param datasetSize
-     */
-    public SparkBernoulliSampleOperator(int sampleSize, long datasetSize, DataSetType<Type> type) {
-        super(sampleSize, datasetSize, type, Methods.BERNOULLI);
+    public SparkBernoulliSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {
+        super(sampleSizeFunction, type, Methods.BERNOULLI, seed);
     }
 
     /**
@@ -72,8 +61,10 @@ public class SparkBernoulliSampleOperator<Type>
 
         final JavaRDD<Type> inputRdd = input.provideRdd();
         long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() : inputRdd.count();
-        double sampleFraction = ((double) this.sampleSize) / datasetSize;
-        final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction);
+        int sampleSize = this.getSampleSize(operatorContext);
+
+        double sampleFraction = ((double) sampleSize) / datasetSize;
+        final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction, seed);
         this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
@@ -83,7 +74,7 @@ public class SparkBernoulliSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkBernoulliSampleOperator<>(this.sampleSize, this.datasetSize, this.getType());
+        return new SparkBernoulliSampleOperator<>(this);
     }
 
     @Override
