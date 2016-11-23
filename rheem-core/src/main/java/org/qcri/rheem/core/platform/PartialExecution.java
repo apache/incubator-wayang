@@ -68,7 +68,7 @@ public class PartialExecution {
             upperCost = Math.max(upperCost, costs.getUpperEstimate());
         }
 
-        return new PartialExecution(measuredExecutionTime, lowerCost, upperCost, executionLineageNodes);
+        return new PartialExecution(measuredExecutionTime, lowerCost, upperCost, executionLineageNodes, configuration);
     }
 
     /**
@@ -78,13 +78,17 @@ public class PartialExecution {
      * @param lowerCost             the lower possible costs for the new instance (excluding fix costs)
      * @param upperCost             the upper possible costs for the new instance (excluding fix costs)
      * @param executionLineageNodes for all executed {@link ExecutionOperator}s
+     * @param configuration         the {@link Configuration} to re-estimate execution statistics
      */
-    public PartialExecution(long measuredExecutionTime, double lowerCost, double upperCost, Collection<ExecutionLineageNode> executionLineageNodes) {
+    public PartialExecution(long measuredExecutionTime, double lowerCost, double upperCost,
+                            Collection<ExecutionLineageNode> executionLineageNodes,
+                            Configuration configuration) {
         this.measuredExecutionTime = measuredExecutionTime;
         this.atomicExecutionGroups = executionLineageNodes.stream()
                 .map(node -> new AtomicExecutionGroup(
                         node.getOperatorContext(),
                         ((ExecutionOperator) node.getOperatorContext().getOperator()).getPlatform(),
+                        configuration,
                         node.getAtomicExecutions()
                 ))
                 .collect(Collectors.toList());
@@ -148,7 +152,7 @@ public class PartialExecution {
                 .mapToLong(platform -> platform.getInitializeMillis(configuration))
                 .sum();
         final TimeEstimate executionTime = this.atomicExecutionGroups.stream()
-                .map(group -> group.estimateExecutionTime(configuration))
+                .map(group -> group.estimateExecutionTime())
                 .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
         return executionTime.plus(platformInitializationTime);
     }

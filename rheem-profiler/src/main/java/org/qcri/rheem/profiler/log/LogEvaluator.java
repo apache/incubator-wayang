@@ -101,7 +101,7 @@ public class LogEvaluator {
         System.out.printf("> Estimated execution time: %s\n", pe.getOverallTimeEstimate(this.configuration));
         System.out.printf("> Delta: %s\n", pe.getOverallTimeEstimate(this.configuration).plus(-pe.getMeasuredExecutionTime()));
         for (AtomicExecutionGroup atomicExecutionGroup : pe.getAtomicExecutionGroups()) {
-            System.out.printf("--> %s: %s\n", atomicExecutionGroup, atomicExecutionGroup.estimateExecutionTime(this.configuration));
+            System.out.printf("--> %s: %s\n", atomicExecutionGroup, atomicExecutionGroup.estimateExecutionTime());
         }
         System.out.println();
     }

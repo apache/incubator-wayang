@@ -50,7 +50,7 @@ public abstract class LoadEstimator {
     /**
      * Calculate the {@link LoadEstimate}.
      *
-     * @param context         within that the {@link LoadEstimate} should be calculated
+     * @param context within that the {@link LoadEstimate} should be calculated
      * @return the {@link LoadEstimate}
      */
     public abstract LoadEstimate calculate(EstimationContext context);
@@ -91,16 +91,25 @@ public abstract class LoadEstimator {
             return new long[1][0];
         }
 
-        int numCombinations = 1 << cardinalityEstimates.length;
-        long[][] combinations = new long[numCombinations][cardinalityEstimates.length];
-        for (int combinationIdentifier = 0; combinationIdentifier < numCombinations; combinationIdentifier++) {
-            for (int pos = 0; pos < cardinalityEstimates.length; pos++) {
-                int bit = (combinationIdentifier >>> pos) & 0x1;
-                final CardinalityEstimate cardinalityEstimate = this.replaceNullCardinality(cardinalityEstimates[pos]);
-                combinations[combinationIdentifier][pos] = bit == 0 ?
-                        cardinalityEstimate.getLowerEstimate() :
-                        cardinalityEstimate.getUpperEstimate();
-            }
+        // Version that creates each possible combination.
+//        int numCombinations = 1 << cardinalityEstimates.length;
+//        long[][] combinations = new long[numCombinations][cardinalityEstimates.length];
+//        for (int combinationIdentifier = 0; combinationIdentifier < numCombinations; combinationIdentifier++) {
+//            for (int pos = 0; pos < cardinalityEstimates.length; pos++) {
+//                int bit = (combinationIdentifier >>> pos) & 0x1;
+//                final CardinalityEstimate cardinalityEstimate = this.replaceNullCardinality(cardinalityEstimates[pos]);
+//                combinations[combinationIdentifier][pos] = bit == 0 ?
+//                        cardinalityEstimate.getLowerEstimate() :
+//                        cardinalityEstimate.getUpperEstimate();
+//            }
+//        }
+
+        // Version that creates only a "lower" and "upper" combination.
+        long[][] combinations = new long[2][cardinalityEstimates.length];
+        for (int pos = 0; pos < cardinalityEstimates.length; pos++) {
+            final CardinalityEstimate cardinalityEstimate = this.replaceNullCardinality(cardinalityEstimates[pos]);
+            combinations[0][pos] = cardinalityEstimate.getLowerEstimate();
+            combinations[1][pos] = cardinalityEstimate.getUpperEstimate();
         }
 
         return combinations;

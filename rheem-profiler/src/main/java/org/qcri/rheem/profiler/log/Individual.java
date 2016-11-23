@@ -298,6 +298,6 @@ public class Individual {
     private TimeEstimate estimateTime(AtomicExecutionGroup executionGroup,
                                       Configuration configuration) {
         final EstimationContext estimationContext = executionGroup.getEstimationContext();
-        return executionGroup.estimateExecutionTime(configuration, new DynamicEstimationContext(this, estimationContext));
+        return executionGroup.estimateExecutionTime(new DynamicEstimationContext(this, estimationContext));
     }
 }

@@ -53,7 +53,9 @@ public abstract class KeyValueProvider<Key, Value> {
 
         // If present, delegate request to parent.
         if (this.parent != null) {
-            return this.parent.provideFor(key, requestee);
+            final Value parentValue = this.parent.provideFor(key, requestee);
+            this.processParentEntry(key, parentValue);
+            return parentValue;
         }
 
         throw new NoSuchKeyException(String.format("Could not provide value for %s from %s.", key, requestee.getConfiguration()));
@@ -83,6 +85,15 @@ public abstract class KeyValueProvider<Key, Value> {
      */
     public Value provideLocally(Key key) {
         return this.tryToProvide(key, this);
+    }
+
+    /**
+     * React to a value that has been delivered by a {@link #parent}. Does nothing be default.
+     *
+     * @param key   the key of the entry
+     * @param value the value of the entry or {@code null} if no such value exists
+     */
+    protected void processParentEntry(Key key, Value value) {
     }
 
     public void setParent(KeyValueProvider<Key, Value> parent) {

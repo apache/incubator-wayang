@@ -28,12 +28,24 @@ public class AtomicExecutionGroup {
      */
     private Collection<AtomicExecution> atomicExecutions;
 
+    /**
+     * The {@link Configuration} that provides estimation information.
+     */
+    private Configuration configuration;
+
+    /**
+     * Caches the {@link LoadProfileToTimeConverter} for this instance.
+     */
+    private LoadProfileToTimeConverter loadProfileToTimeConverterCache;
+
     public AtomicExecutionGroup(EstimationContext estimationContext,
                                 Platform platform,
+                                Configuration configuration,
                                 Collection<AtomicExecution> atomicExecutions) {
         this.estimationContext = estimationContext;
         this.platform = platform;
         this.atomicExecutions = atomicExecutions;
+        this.configuration = configuration;
     }
 
     /**
@@ -62,25 +74,25 @@ public class AtomicExecutionGroup {
      * Estimate the {@link TimeEstimate} for all {@link AtomicExecution}s in this instance in the light of the
      * given {@link EstimationContext}.
      *
-     * @param configuration     calibrates the estimation
      * @param estimationContext that provides estimation parameters
      * @return the {@link TimeEstimate}
      */
-    public TimeEstimate estimateExecutionTime(Configuration configuration, EstimationContext estimationContext) {
-        final LoadProfileToTimeConverter converter = configuration
-                .getLoadProfileToTimeConverterProvider()
-                .provideFor(this.platform);
-        return converter.convert(this.estimateLoad(estimationContext));
+    public TimeEstimate estimateExecutionTime(EstimationContext estimationContext) {
+        if (this.loadProfileToTimeConverterCache == null) {
+            this.loadProfileToTimeConverterCache = this.configuration
+                    .getLoadProfileToTimeConverterProvider()
+                    .provideFor(this.platform);
+        }
+        return this.loadProfileToTimeConverterCache.convert(this.estimateLoad(estimationContext));
     }
 
     /**
      * Estimate the {@link TimeEstimate} for all {@link AtomicExecution}s in this instance.
      *
-     * @param configuration calibrates the estimation
      * @return the {@link TimeEstimate}
      */
-    public TimeEstimate estimateExecutionTime(Configuration configuration) {
-        return this.estimateExecutionTime(configuration, this.estimationContext);
+    public TimeEstimate estimateExecutionTime() {
+        return this.estimateExecutionTime(this.estimationContext);
     }
 
     public EstimationContext getEstimationContext() {
@@ -139,6 +151,7 @@ public class AtomicExecutionGroup {
                             json.getJSONObject("platform"),
                             Platform.jsonSerializer
                     ),
+                    this.configuration,
                     JsonSerializables.deserializeAllAsList(
                             json.getJSONArray("executions"),
                             new AtomicExecution.KeyOrLoadSerializer(this.configuration, null),

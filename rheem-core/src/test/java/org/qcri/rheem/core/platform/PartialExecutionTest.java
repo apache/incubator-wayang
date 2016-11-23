@@ -2,7 +2,6 @@ package org.qcri.rheem.core.platform;
 
 import org.json.JSONObject;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.configuration.KeyValueProvider;
@@ -49,7 +48,10 @@ public class PartialExecutionTest {
                 .add(estimatorProvider.provideFor((ExecutionOperator) operatorContext1.getOperator()));
         ExecutionLineageNode executionLineageNode2 = new ExecutionLineageNode(operatorContext1)
                 .add(estimatorProvider.provideFor((ExecutionOperator) operatorContext2.getOperator()));
-        PartialExecution original = new PartialExecution(12345L, 12, 13, Arrays.asList(executionLineageNode1, executionLineageNode2));
+        PartialExecution original = new PartialExecution(12345L, 12, 13,
+                Arrays.asList(executionLineageNode1, executionLineageNode2),
+                configuration
+        );
         original.addInitializedPlatform(DummyPlatform.getInstance());
 
         final PartialExecution.Serializer serializer = new PartialExecution.Serializer(configuration);
