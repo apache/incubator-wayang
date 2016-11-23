@@ -339,53 +339,6 @@ public class RheemPlans {
         return new RheemPlan(sink);
     }
 
-//    /**
-//     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link SampleOperator}. It will
-//     * then keep only the max of the samples and iterate this 10 times.
-//     */
-//    public static RheemPlan sampleInLoop(Collection<Integer> collector, final int... values)
-//            throws URISyntaxException {
-//        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
-//        source.setName("source");
-//
-//        ArrayList<Integer> broadcastVar = new ArrayList<>(1);
-//        broadcastVar.add(0);
-//        CollectionSource<Integer> broadcastSource = new JavaCollectionSource(broadcastVar, DataSetType.createDefault(Integer.class));
-//        broadcastSource.setName("Context source (collectionsource)");
-//
-//        DoWhileOperator<Integer, Integer> loopOperator = new JavaDoWhileOperator<>(DataSetType.createDefault(Integer.class),
-//                DataSetType.createDefault(Integer.class),
-//                (PredicateDescriptor.SerializablePredicate<Collection<Integer>>) collection ->
-//                        collection.iterator().next() >= 10,
-//                10
-//
-//        );
-//        loopOperator.setName("loop");
-//
-//        MapOperator<Integer, Integer> counter = new MapOperator<>(
-//                new TransformationDescriptor<>(n -> n + 1, Integer.class, Integer.class)
-//        );
-//        counter.setName("counter");
-//
-//        SampleOperator<Integer> sampleOperator = new SampleOperator<>(3, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM);
-//        sampleOperator.setName("sample");
-//
-//        GlobalReduceOperator<Integer> reduceOperator = new GlobalReduceOperator<>( (a, b) -> Math.max(a, b), Integer.class);
-//
-//        LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(collector, Integer.class);
-//        sink.setName("sink");
-//
-//        broadcastSource.connectTo(0, loopOperator, 0);
-//        loopOperator.broadcastTo(0, sampleOperator, "max");
-//        source.connectTo(0, sampleOperator, 0);
-//        sampleOperator.connectTo(0, reduceOperator, 0);
-//        loopOperator.endIteration(reduceOperator, 0, counter, 0);
-//        loopOperator.outputConnectTo(sink, 0);
-//
-//        // Create the RheemPlan.
-//        return new RheemPlan(sink);
-//    }
-
     /**
      * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link GlobalMaterializedGroupOperator}.
      * It will then push the results in the {@code collector}.

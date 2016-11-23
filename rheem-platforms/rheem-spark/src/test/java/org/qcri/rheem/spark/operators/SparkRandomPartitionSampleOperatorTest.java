@@ -40,7 +40,6 @@ public class SparkRandomPartitionSampleOperatorTest extends SparkOperatorTestBas
 
         // Verify the outcome.
         final List<Integer> result = RheemCollections.asList(output.provideCollection());
-        System.out.println(result);
         Assert.assertEquals(sampleSize, result.size());
 
     }

@@ -34,15 +34,6 @@ public class JavaRandomSampleOperator<Type>
     /**
      * Creates a new instance.
      *
-     * @param sampleSize size of sample
-     */
-    public JavaRandomSampleOperator(int sampleSize, DataSetType<Type> type, long seed) {
-        this(iterationNumber -> sampleSize, type, seed);
-    }
-
-    /**
-     * Creates a new instance.
-     *
      * @param sampleSizeFunction udf-based size of sample
      */
     public JavaRandomSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {

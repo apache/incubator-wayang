@@ -25,7 +25,7 @@ public class JavaRandomSampleOperatorTest extends JavaExecutionOperatorTestBase 
         // Build the distinct operator.
         JavaRandomSampleOperator<Integer> sampleOperator =
                 new JavaRandomSampleOperator<>(
-                        sampleSize,
+                        iteration -> sampleSize,
                         DataSetType.createDefaultUnchecked(Integer.class),
                         42
                 );
