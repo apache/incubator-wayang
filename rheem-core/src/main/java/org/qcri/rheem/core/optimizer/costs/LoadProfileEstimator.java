@@ -3,6 +3,7 @@ package org.qcri.rheem.core.optimizer.costs;
 import org.qcri.rheem.core.api.Configuration;
 
 import java.util.Collection;
+import java.util.LinkedList;
 
 /**
  * Estimates the {@link LoadProfile} of some executable artifact that takes some input data quanta and produces them.
@@ -47,6 +48,22 @@ public interface LoadProfileEstimator {
     default String getTemplateKey() {
         final String configKey = this.getConfigurationKey();
         return configKey == null ? null : configKey + ".template";
+    }
+
+    /**
+     * Retrieve the {@link Configuration} template keys for this and all nested instances.
+     * @return the template keys (no {@code nulls})
+     */
+    default Collection<String> getTemplateKeys() {
+        Collection<String> templateKeys = new LinkedList<>();
+        final String templateKey = this.getTemplateKey();
+        if (templateKey != null) {
+            templateKeys.add(templateKey);
+        }
+        for (LoadProfileEstimator nestedEstimator : this.getNestedEstimators()) {
+            templateKeys.addAll(nestedEstimator.getTemplateKeys());
+        }
+        return templateKeys;
     }
 
     /**

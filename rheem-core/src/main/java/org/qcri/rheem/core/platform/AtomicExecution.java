@@ -156,6 +156,6 @@ public class AtomicExecution {
             sb.append('+').append(this.loadProfileEstimator.getNestedEstimators().size()).append(" nested");
         }
         sb.append(']');
-        return super.toString();
+        return sb.toString();
     }
 }
