@@ -127,7 +127,7 @@ public class GeneticOptimizerApp {
         // Apply binning if requested.
         double binningStretch = this.configuration.getDoubleProperty("rheem.profiler.ga.binning", 1.1d);
         if (binningStretch > 1d) {
-            System.out.println("Applying binning...");
+            System.out.print("Applying binning... ");
             int numOriginalPartialExecutions = this.partialExecutions.size();
             this.partialExecutions.clear();
             for (List<PartialExecution> group : this.partialExecutionGroups) {
@@ -136,7 +136,7 @@ public class GeneticOptimizerApp {
                 this.partialExecutions.addAll(reducedGroup);
             }
             System.out.printf(
-                    "...binning reduced the number of partial executions from %d to %d.\n",
+                    "reduced the number of partial executions from %d to %d.\n",
                     numOriginalPartialExecutions, this.partialExecutions.size()
             );
         }

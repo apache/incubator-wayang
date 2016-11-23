@@ -294,19 +294,11 @@ public class GeneticOptimizer {
         Collection<String> keys = new LinkedList<>();
         for (AtomicExecutionGroup atomicExecutionGroup : partialExecution.getAtomicExecutionGroups()) {
             for (AtomicExecution atomicExecution : atomicExecutionGroup.getAtomicExecutions()) {
-                collectLoadProfileEstimatorKeys(atomicExecution.getLoadProfileEstimator(), keys);
+                keys.addAll(atomicExecution.getLoadProfileEstimator().getConfigurationKeys());
             }
         }
         return keys;
     }
 
-    /**
-     * Helper method for {@link #getLoadProfileEstimatorKeys(PartialExecution)}.
-     */
-    private static void collectLoadProfileEstimatorKeys(LoadProfileEstimator lpe, Collection<String> collector) {
-        if (lpe.getConfigurationKey() != null) collector.add(lpe.getConfigurationKey());
-        for (LoadProfileEstimator nestedEstimator : lpe.getNestedEstimators()) {
-            collectLoadProfileEstimatorKeys(nestedEstimator, collector);
-        }
-    }
+
 }

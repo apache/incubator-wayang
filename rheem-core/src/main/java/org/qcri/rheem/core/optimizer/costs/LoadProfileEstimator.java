@@ -40,6 +40,22 @@ public interface LoadProfileEstimator {
     String getConfigurationKey();
 
     /**
+     * Retrieve the {@link Configuration} keys for this and all nested instances.
+     * @return the keys (no {@code nulls})
+     */
+    default Collection<String> getConfigurationKeys() {
+        Collection<String> keys = new LinkedList<>();
+        final String key = this.getConfigurationKey();
+        if (key != null) {
+            keys.add(key);
+        }
+        for (LoadProfileEstimator nestedEstimator : this.getNestedEstimators()) {
+            keys.addAll(nestedEstimator.getConfigurationKeys());
+        }
+        return keys;
+    }
+
+    /**
      * Retrieve the {@link Configuration} template key if any. Usually, this is the {@link Configuration} key
      * suffixed by {@code .template}.
      *
