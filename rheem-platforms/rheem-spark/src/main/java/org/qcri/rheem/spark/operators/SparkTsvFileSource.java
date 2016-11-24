@@ -94,4 +94,9 @@ public class SparkTsvFileSource<T> extends UnarySource<T> implements SparkExecut
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return false;
+    }
+
 }

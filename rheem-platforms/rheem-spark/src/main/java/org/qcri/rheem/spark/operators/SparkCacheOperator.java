@@ -61,6 +61,11 @@ public class SparkCacheOperator<Type>
     }
 
     @Override
+    public boolean containsAction() {
+        return true;
+    }
+
+    @Override
     public Optional<CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {

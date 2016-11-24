@@ -173,6 +173,11 @@ public class SparkRandomPartitionSampleOperator<Type>
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return true;
+    }
+
 }
 
 class PartitionSampleFunction<V> extends AbstractFunction1<scala.collection.Iterator<V>, List<V>> implements Serializable {

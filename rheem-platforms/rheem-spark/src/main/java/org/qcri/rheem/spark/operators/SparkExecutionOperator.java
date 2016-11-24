@@ -43,6 +43,14 @@ public interface SparkExecutionOperator extends ExecutionOperator {
             OptimizationContext.OperatorContext operatorContext);
 
     /**
+     * Tell whether this instances is a Spark action. This is important to keep track on when Spark is actually
+     * initialized.
+     *
+     * @return whether this instance issues Spark actions
+     */
+    boolean containsAction();
+
+    /**
      * Utility method to name an RDD according to this instance's name.
      *
      * @param rdd that should be renamed

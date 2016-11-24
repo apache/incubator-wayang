@@ -78,4 +78,9 @@ public class SparkObjectFileSink<T> extends UnarySink<T> implements SparkExecuti
         return Collections.singletonList(FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return true;
+    }
+
 }

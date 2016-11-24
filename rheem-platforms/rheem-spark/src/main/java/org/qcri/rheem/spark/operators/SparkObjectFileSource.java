@@ -86,4 +86,9 @@ public class SparkObjectFileSource<T> extends UnarySource<T> implements SparkExe
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return false;
+    }
+
 }

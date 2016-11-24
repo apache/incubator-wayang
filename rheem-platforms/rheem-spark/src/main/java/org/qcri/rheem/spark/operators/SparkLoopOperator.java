@@ -171,4 +171,9 @@ public class SparkLoopOperator<InputType, ConvergenceType>
         }
     }
 
+    @Override
+    public boolean containsAction() {
+        return false;
+    }
+
 }

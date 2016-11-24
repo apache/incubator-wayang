@@ -144,6 +144,11 @@ public class SparkShufflePartitionSampleOperator<Type>
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return true;
+    }
+
 }
 
 class ShufflePartition<V, T, R> implements Function2<V, T, R> {

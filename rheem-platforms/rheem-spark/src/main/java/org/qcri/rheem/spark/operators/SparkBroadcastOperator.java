@@ -49,6 +49,11 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
+    @Override
+    public boolean containsAction() {
+        return true;
+    }
+
     @SuppressWarnings("unchecked")
     public DataSetType<Type> getType() {
         return (DataSetType<Type>) this.getInput(0).getType();

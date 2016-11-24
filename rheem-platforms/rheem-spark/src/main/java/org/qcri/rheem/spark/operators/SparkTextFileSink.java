@@ -62,6 +62,11 @@ public class SparkTextFileSink<T> extends TextFileSink<T> implements SparkExecut
     }
 
     @Override
+    public boolean containsAction() {
+        return true;
+    }
+
+    @Override
     public String getLoadProfileEstimatorConfigurationKey() {
         return "rheem.spark.textfilesink.load";
     }

@@ -104,4 +104,9 @@ public class SparkGlobalReduceOperator<Type>
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return true;
+    }
+
 }

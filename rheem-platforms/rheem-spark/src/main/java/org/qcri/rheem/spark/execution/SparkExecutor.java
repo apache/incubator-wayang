@@ -106,7 +106,7 @@ public class SparkExecutor extends PushExecutorTemplate {
 
         // Check how much we executed.
         PartialExecution partialExecution = this.createPartialExecution(executionLineageNodes, executionDuration);
-        if (partialExecution != null) {
+        if (partialExecution != null && cast(task.getOperator()).containsAction()) {
             if (this.numActions == 0) partialExecution.addInitializedPlatform(SparkPlatform.getInstance());
             this.numActions++;
         }

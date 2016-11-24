@@ -108,4 +108,9 @@ public class SparkMaterializedGroupByOperator<Type, KeyType>
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return false;
+    }
+
 }

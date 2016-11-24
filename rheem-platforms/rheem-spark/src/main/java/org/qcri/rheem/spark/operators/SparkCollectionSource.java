@@ -98,4 +98,9 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return false;
+    }
+
 }

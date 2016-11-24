@@ -82,4 +82,9 @@ public class SparkIntersectOperator<Type> extends IntersectOperator<Type> implem
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return false;
+    }
+
 }

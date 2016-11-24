@@ -78,4 +78,9 @@ public class SparkLocalCallbackSink<T extends Serializable> extends LocalCallbac
         throw new UnsupportedOperationException(String.format("%s does not have output channels.", this));
     }
 
+    @Override
+    public boolean containsAction() {
+        return true;
+    }
+
 }

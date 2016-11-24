@@ -71,4 +71,5 @@ class SparkPageRankOperator(_numIterations: Int,
     Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR)
   }
 
+  override def containsAction(): Boolean = true
 }

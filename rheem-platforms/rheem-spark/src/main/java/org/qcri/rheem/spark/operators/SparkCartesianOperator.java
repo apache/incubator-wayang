@@ -92,4 +92,9 @@ public class SparkCartesianOperator<InputType0, InputType1>
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return false;
+    }
+
 }

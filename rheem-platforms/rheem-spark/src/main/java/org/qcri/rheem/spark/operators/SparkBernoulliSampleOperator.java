@@ -28,7 +28,6 @@ public class SparkBernoulliSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
-
     /**
      * Creates a new instance.
      */
@@ -108,4 +107,8 @@ public class SparkBernoulliSampleOperator<Type>
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return true;
+    }
 }

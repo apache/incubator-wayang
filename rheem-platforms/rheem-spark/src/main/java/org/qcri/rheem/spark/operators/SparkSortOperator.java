@@ -94,5 +94,10 @@ public class SparkSortOperator<Type>
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return false;
+    }
+
 }
 

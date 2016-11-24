@@ -131,4 +131,9 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return false;
+    }
+
 }

@@ -152,4 +152,9 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
         // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
     }
 
+    @Override
+    public boolean containsAction() {
+        return false;
+    }
+
 }
