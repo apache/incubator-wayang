@@ -162,5 +162,11 @@ public class SparkIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exte
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        // TODO: Check if RDD.partition() is an action.
+        return false;
+    }
+
 }
 
