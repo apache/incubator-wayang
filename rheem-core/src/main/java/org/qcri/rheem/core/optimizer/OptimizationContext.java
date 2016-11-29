@@ -779,10 +779,7 @@ public abstract class OptimizationContext {
             newSecondToLastIterationContext.iterationNumber++;
 
             // Insert and return the copied iteration context.
-            this.iterationContexts.set(
-                    iterationContexts.size() - 2,
-                    newSecondToLastIterationContext
-            );
+            this.iterationContexts.set(iterationContexts.size() - 2, newSecondToLastIterationContext);
             return newSecondToLastIterationContext;
         }
 

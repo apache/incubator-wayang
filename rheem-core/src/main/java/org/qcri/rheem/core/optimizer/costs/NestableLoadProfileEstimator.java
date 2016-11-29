@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.optimizer.costs;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 
 import java.util.Collection;
@@ -145,23 +146,27 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
      * @return the {@link LoadProfile} for the {@code artifact}
      */
     private LoadProfile performLocalEstimation(EstimationContext context) {
-        final LoadEstimate cpuLoadEstimate = this.cpuLoadEstimator.calculate(context);
-        final LoadEstimate ramLoadEstimate = this.ramLoadEstimator.calculate(context);
-        final LoadEstimate diskLoadEstimate = this.diskLoadEstimator == null ?
-                null :
-                this.diskLoadEstimator.calculate(context);
-        final LoadEstimate networkLoadEstimate = this.networkLoadEstimator == null ?
-                null :
-                this.networkLoadEstimator.calculate(context);
-        final double resourceUtilization = this.estimateResourceUtilization(context);
-        return new LoadProfile(
-                cpuLoadEstimate,
-                ramLoadEstimate,
-                networkLoadEstimate,
-                diskLoadEstimate,
-                resourceUtilization,
-                this.getOverheadMillis()
-        );
+        try {
+            final LoadEstimate cpuLoadEstimate = this.cpuLoadEstimator.calculate(context);
+            final LoadEstimate ramLoadEstimate = this.ramLoadEstimator.calculate(context);
+            final LoadEstimate diskLoadEstimate = this.diskLoadEstimator == null ?
+                    null :
+                    this.diskLoadEstimator.calculate(context);
+            final LoadEstimate networkLoadEstimate = this.networkLoadEstimator == null ?
+                    null :
+                    this.networkLoadEstimator.calculate(context);
+            final double resourceUtilization = this.estimateResourceUtilization(context);
+            return new LoadProfile(
+                    cpuLoadEstimate,
+                    ramLoadEstimate,
+                    networkLoadEstimate,
+                    diskLoadEstimate,
+                    resourceUtilization,
+                    this.getOverheadMillis()
+            );
+        } catch (Exception e) {
+            throw new RheemException(String.format("Failed estimating on %s.", this, context), e);
+        }
     }
 
     /**
@@ -217,5 +222,13 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
             copy.nest(nestedEstimator.copy());
         }
         return copy;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s[%s]",
+                this.getClass().getSimpleName(),
+                this.configurationKey == null ? "(no key)" : this.configurationKey
+        );
     }
 }

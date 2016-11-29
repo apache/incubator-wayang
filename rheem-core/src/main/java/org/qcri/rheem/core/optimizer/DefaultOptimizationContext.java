@@ -98,7 +98,7 @@ public class DefaultOptimizationContext extends OptimizationContext {
     @Override
     public OperatorContext addOneTimeOperator(Operator operator) {
         final OperatorContext operatorContext = new OperatorContext(operator);
-        this.operatorContexts.put(operator, operatorContext);
+        this.operatorContexts.putIfAbsent(operator, operatorContext);
         if (!operator.isElementary()) {
             if (operator.isLoopSubplan()) {
                 this.addOneTimeLoop(operatorContext);
@@ -228,10 +228,17 @@ public class DefaultOptimizationContext extends OptimizationContext {
                 this.getPruningStrategies()
         );
 
-        // Make copies of the
-        for (Map.Entry<Operator, OperatorContext> entry : operatorContexts.entrySet()) {
-            final OperatorContext operatorCtxCopy = copy.addOneTimeOperator(entry.getKey());
-            operatorCtxCopy.merge(entry.getValue());
+        // Make copies of the OperatorContexts.
+        for (Operator operator : operatorContexts.keySet()) {
+            copy.addOneTimeOperator(operator);
+        }
+        // Now merge the original to the copied OperatorContexts.
+        // Note: This must be a separate step! Each operation above potentially creates multiple OperatorContexts.
+        for (Map.Entry<Operator, OperatorContext> entry : copy.operatorContexts.entrySet()) {
+            Operator operator = entry.getKey();
+            OperatorContext opCtxCopy = entry.getValue();
+            OperatorContext originalOpCtx = this.operatorContexts.get(operator);
+            if (originalOpCtx != null) opCtxCopy.merge(originalOpCtx);
         }
 
         // Loops are not supported yet.
