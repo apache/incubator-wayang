@@ -2,7 +2,6 @@ package org.qcri.rheem.core.api;
 
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.Subject;
-import org.apache.commons.lang3.StringUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.plugin.Plugin;
@@ -10,9 +9,6 @@ import org.qcri.rheem.core.profiling.CardinalityRepository;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.util.Arrays;
 
 /**
  * This is the entry point for users to work with Rheem.

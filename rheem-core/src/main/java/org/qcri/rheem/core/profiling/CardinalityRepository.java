@@ -38,7 +38,6 @@ public class CardinalityRepository {
 
     public CardinalityRepository(Configuration configuration) {
         this.repositoryPath = configuration.getStringProperty("rheem.core.log.cardinalities");
-        this.logger.info("Storing cardinalities at {}.", repositoryPath);
     }
 
     /**
@@ -53,6 +52,8 @@ public class CardinalityRepository {
      *                            possible accurate data
      */
     public void storeAll(ExecutionState executionState, OptimizationContext optimizationContext) {
+        this.logger.info("Storing cardinalities at {}.", this.repositoryPath);
+
 //        executionState.getCardinalityMeasurements().forEach(
 //                channelInstance -> {
 //                    for (Slot<?> correspondingSlot : channelInstance.getChannel().getCorrespondingSlots()) {
