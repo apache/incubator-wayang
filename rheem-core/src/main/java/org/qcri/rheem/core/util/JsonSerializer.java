@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.util;
 
-import org.apache.commons.lang.SerializationException;
+import org.apache.commons.lang3.SerializationException;
 import org.json.JSONObject;
 
 /**

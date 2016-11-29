@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.platform;
 
-import org.apache.commons.lang.SerializationException;
+import org.apache.commons.lang3.SerializationException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
