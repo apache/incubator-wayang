@@ -185,6 +185,17 @@ public class Job extends OneTimeExecutable {
         return  executionPlan;
     }
 
+    // TODO: Move outside of Job class
+    public void reportProgress(String opName, Integer progress) {
+        HashMap<String, Integer> partialProgress = new HashMap<>();
+        partialProgress.put(opName, progress);
+        try {
+            this.monitor.updateProgress(partialProgress);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     protected void doExecute() {
         // Make sure that each job is only executed once.

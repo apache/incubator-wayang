@@ -84,6 +84,10 @@ public class SparkExecutor extends PushExecutorTemplate {
 
         // Execute.
         final Collection<OptimizationContext.OperatorContext> operatorContexts;
+
+        // TODO: Use proper progress estimator.
+        this.job.reportProgress(task.getOperator().getName(), 50);
+
         long startTime = System.currentTimeMillis();
         try {
             operatorContexts = cast(task.getOperator()).evaluate(
@@ -92,11 +96,13 @@ public class SparkExecutor extends PushExecutorTemplate {
                     this,
                     producerOperatorContext
             );
+            //Thread.sleep(1000);
         } catch (Exception e) {
             throw new RheemException(String.format("Executing %s failed.", task), e);
         }
         long endTime = System.currentTimeMillis();
         long executionDuration = endTime - startTime;
+        this.job.reportProgress(task.getOperator().getName(), 100);
 
         // Check how much we executed.
         PartialExecution partialExecution = this.createPartialExecution(operatorContexts, executionDuration);

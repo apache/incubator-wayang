@@ -60,6 +60,13 @@ public class Monitor {
             this.progress.put(operatorName, partialProgress.get(operatorName));
         }
 
+        for (String operatorName: this.progress.keySet()) {
+            overall = overall + this.progress.get(operatorName);
+        }
+
+        if (this.progress.size()>0)
+            overall = overall/this.progress.size();
+
         final FileSystem progressFile = FileSystems.getFileSystem(progressUrl).get();
         try (final OutputStreamWriter writer = new OutputStreamWriter(progressFile.create(progressUrl, true))) {
             progressBar.put("overall", overall);
