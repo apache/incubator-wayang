@@ -1,4 +1,4 @@
-package org.qcri.rheem.core.util;
+package org.qcri.rheem.core.monitor;
 
 
 import org.json.JSONObject;
