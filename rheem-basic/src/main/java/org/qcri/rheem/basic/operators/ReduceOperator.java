@@ -1,6 +1,7 @@
 package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.ReduceDescriptor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
@@ -38,6 +39,22 @@ public class ReduceOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
         super(inputType, outputType, true);
         this.reduceDescriptor = reduceDescriptor;
     }
+
+
+    /**
+     * Creates a new instance.
+     *
+     * @param reduceDescriptor describes the reduction to be performed by this operator
+     */
+    public ReduceOperator(FunctionDescriptor.SerializableBinaryOperator<Type> reduceDescriptor,
+                          Class<Type> typeClass) {
+        this(new ReduceDescriptor<>(reduceDescriptor, typeClass),
+                DataSetType.createDefault(typeClass),
+                DataSetType.createDefault(typeClass));
+    }
+
+
+
 
     public ReduceDescriptor<Type> getReduceDescriptor() {
         return this.reduceDescriptor;
