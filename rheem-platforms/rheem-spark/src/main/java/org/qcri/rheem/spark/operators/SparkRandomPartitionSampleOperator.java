@@ -8,12 +8,12 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
 import scala.runtime.AbstractFunction1;
 
@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.IntUnaryOperator;
 
 
 /**
@@ -32,9 +33,7 @@ public class SparkRandomPartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
-    private final Random rand = new Random();
-
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Random rand = new Random(seed);
 
     private int nb_partitions = 0;
 
@@ -45,15 +44,8 @@ public class SparkRandomPartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public SparkRandomPartitionSampleOperator(Integer sampleSize, DataSetType<Type> type) {
-        super(sampleSize, type, Methods.RANDOM);
-    }
-
-    /**
-     * Creates a new instance.
-     */
-    public SparkRandomPartitionSampleOperator(Integer sampleSize, Long datasetSize, DataSetType<Type> type) {
-        super(sampleSize, datasetSize, type, Methods.RANDOM);
+    public SparkRandomPartitionSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
+        super(sampleSizeFunction, type, Methods.RANDOM, seed);
     }
 
     /**
@@ -67,10 +59,11 @@ public class SparkRandomPartitionSampleOperator<Type>
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    SparkExecutor sparkExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            SparkExecutor sparkExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -81,9 +74,11 @@ public class SparkRandomPartitionSampleOperator<Type>
                 this.getDatasetSize() :
                 inputRdd.cache().count();
 
+        int sampleSize = this.getSampleSize(operatorContext);
+
         if (sampleSize >= datasetSize) { //return whole dataset
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
-            return null;
+            return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
         }
 
         List<Type> result;
@@ -161,7 +156,7 @@ public class SparkRandomPartitionSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkRandomPartitionSampleOperator<>(this.sampleSize, this.getType());
+        return new SparkRandomPartitionSampleOperator<>(this);
     }
 
     @Override
@@ -176,6 +171,11 @@ public class SparkRandomPartitionSampleOperator<Type>
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public boolean containsAction() {
+        return true;
     }
 
 }

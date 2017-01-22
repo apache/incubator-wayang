@@ -1,26 +1,26 @@
 package org.qcri.rheem.core.platform;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.LoadProfile;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
+import org.qcri.rheem.core.optimizer.costs.EstimationContext;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
-import org.qcri.rheem.core.util.JsonSerializable;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.JsonSerializables;
+import org.qcri.rheem.core.util.JsonSerializer;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * Captures data of a execution of a set of {@link ExecutionOperator}s.
  */
-public class PartialExecution implements JsonSerializable {
+public class PartialExecution {
 
     /**
      * The measured execution time of this instance in milliseconds.
@@ -28,46 +28,118 @@ public class PartialExecution implements JsonSerializable {
     private final long measuredExecutionTime;
 
     /**
-     * {@link OptimizationContext.OperatorContext}s captured by this instance.
+     * Cost bounds for this instance.
      */
-    transient private final Collection<OptimizationContext.OperatorContext> operatorContexts;
+    private final double lowerCost, upperCost;
 
     /**
-     * Persistent reflection of the {@link #operatorContexts}.
+     * {@link AtomicExecutionGroup}s captured by this instance.
      */
-    private Collection<OperatorExecution> operatorExecutions;
+    private final Collection<AtomicExecutionGroup> atomicExecutionGroups;
 
     /**
-     * Platforms initialized in this instance.
+     * Platforms initialized/involved this instance.
      */
     private Collection<Platform> initializedPlatforms = new LinkedList<>();
+
+    /**
+     * Creates a new instance according to the measurement data.
+     *
+     * @param measuredExecutionTime the measured execution time
+     * @param executionLineageNodes the {@link ExecutionLineageNode}s reflecting what has been executed
+     * @param configuration         the execution {@link Configuration}
+     * @return the new instance
+     */
+    public static PartialExecution createFromMeasurement(
+            long measuredExecutionTime,
+            Collection<ExecutionLineageNode> executionLineageNodes,
+            Configuration configuration) {
+
+        // Calculate possible costs.
+        double lowerCost = Double.POSITIVE_INFINITY, upperCost = Double.NEGATIVE_INFINITY;
+        final Set<Platform> platforms = executionLineageNodes.stream()
+                .map(node -> ((ExecutionOperator) node.getOperatorContext().getOperator()).getPlatform())
+                .collect(Collectors.toSet());
+        for (Platform platform : platforms) {
+            final TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
+            final ProbabilisticDoubleInterval costs =
+                    timeToCostConverter.convertWithoutFixCosts(TimeEstimate.ZERO.plus(measuredExecutionTime));
+            lowerCost = Math.min(lowerCost, costs.getLowerEstimate());
+            upperCost = Math.max(upperCost, costs.getUpperEstimate());
+        }
+
+        return new PartialExecution(measuredExecutionTime, lowerCost, upperCost, executionLineageNodes, configuration);
+    }
 
     /**
      * Creates a new instance.
      *
      * @param measuredExecutionTime the time measured for the partial execution
-     * @param operatorContexts      for all executed {@link ExecutionOperator}s
+     * @param lowerCost             the lower possible costs for the new instance (excluding fix costs)
+     * @param upperCost             the upper possible costs for the new instance (excluding fix costs)
+     * @param executionLineageNodes for all executed {@link ExecutionOperator}s
+     * @param configuration         the {@link Configuration} to re-estimate execution statistics
      */
-    public PartialExecution(long measuredExecutionTime, Collection<OptimizationContext.OperatorContext> operatorContexts) {
+    public PartialExecution(long measuredExecutionTime, double lowerCost, double upperCost,
+                            Collection<ExecutionLineageNode> executionLineageNodes,
+                            Configuration configuration) {
         this.measuredExecutionTime = measuredExecutionTime;
-        this.operatorContexts = operatorContexts;
+        this.atomicExecutionGroups = executionLineageNodes.stream()
+                .map(node -> new AtomicExecutionGroup(
+                        node.getOperatorContext(),
+                        ((ExecutionOperator) node.getOperatorContext().getOperator()).getPlatform(),
+                        configuration,
+                        node.getAtomicExecutions()
+                ))
+                .collect(Collectors.toList());
+        this.lowerCost = lowerCost;
+        this.upperCost = upperCost;
     }
 
     /**
      * Deserialization constructor.
      */
-    private PartialExecution(long measuredExecutionTime, List<OperatorExecution> executions) {
+    private PartialExecution(Collection<AtomicExecutionGroup> atomicExecutionGroups,
+                             long measuredExecutionTime,
+                             double lowerCost,
+                             double upperCost) {
         this.measuredExecutionTime = measuredExecutionTime;
-        this.operatorContexts = null;
-        this.operatorExecutions = executions;
+        this.atomicExecutionGroups = atomicExecutionGroups;
+        this.lowerCost = lowerCost;
+        this.upperCost = upperCost;
     }
 
     public long getMeasuredExecutionTime() {
         return measuredExecutionTime;
     }
 
-    public Collection<OptimizationContext.OperatorContext> getOperatorContexts() {
-        return operatorContexts;
+    /**
+     * The lower cost for this instance (without fix costs).
+     *
+     * @return the lower execution costs
+     */
+    public double getMeasuredLowerCost() {
+        return this.lowerCost;
+    }
+
+    /**
+     * The upper cost for this instance (without fix costs).
+     *
+     * @return the upper execution costs
+     */
+    public double getMeasuredUpperCost() {
+        return this.upperCost;
+    }
+
+    /**
+     * Retrieve the {@link Platform}s involved in this instance.
+     * <i>Note that this method can only be successful if the {@link AtomicExecutionGroup}s use
+     * {@link OptimizationContext.OperatorContext}s as their {@link EstimationContext}.</i>
+     *
+     * @return the {@link Platform}s
+     */
+    public Set<Platform> getInvolvedPlatforms() {
+        return this.atomicExecutionGroups.stream().map(AtomicExecutionGroup::getPlatform).collect(Collectors.toSet());
     }
 
     /**
@@ -75,37 +147,14 @@ public class PartialExecution implements JsonSerializable {
      *
      * @return the overall {@link TimeEstimate}
      */
-    public TimeEstimate getOverallTimeEstimate() {
-        return operatorContexts.stream()
-                .map(OptimizationContext.OperatorContext::getTimeEstimate)
+    public TimeEstimate getOverallTimeEstimate(Configuration configuration) {
+        final long platformInitializationTime = this.initializedPlatforms.stream()
+                .mapToLong(platform -> platform.getInitializeMillis(configuration))
+                .sum();
+        final TimeEstimate executionTime = this.atomicExecutionGroups.stream()
+                .map(group -> group.estimateExecutionTime())
                 .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
-    }
-
-    /**
-     * Parses a {@link JSONObject} and creates a new instance.
-     *
-     * @param jsonObject to be parsed
-     * @return the new instance
-     */
-    public static PartialExecution fromJson(JSONObject jsonObject) {
-        final PartialExecution partialExecution = new PartialExecution(
-                jsonObject.getLong("millis"),
-                JsonSerializables.deserializeAllAsList(jsonObject.getJSONArray("executions"), OperatorExecution.class)
-        );
-        final JSONArray platforms = jsonObject.optJSONArray("initPlatforms");
-        if (platforms != null) {
-            for (Object platform : platforms) {
-                partialExecution.addInitializedPlatform(Platform.load((String) platform));
-            }
-        }
-        return partialExecution;
-    }
-
-    public Collection<OperatorExecution> getOperatorExecutions() {
-        if (this.operatorExecutions == null) {
-            this.operatorExecutions = this.operatorContexts.stream().map(OperatorExecution::new).collect(Collectors.toList());
-        }
-        return this.operatorExecutions;
+        return executionTime.plus(platformInitializationTime);
     }
 
     public Collection<Platform> getInitializedPlatforms() {
@@ -117,113 +166,68 @@ public class PartialExecution implements JsonSerializable {
     }
 
     /**
-     * Converts this instance into a {@link JSONObject}.
+     * Provide the {@link AtomicExecutionGroup}s captured by this instance
      *
-     * @return the {@link JSONObject}
+     * @return the {@link AtomicExecutionGroup}s
      */
-    @Override
-    public JSONObject toJson() {
-        return new JSONObject()
-                .put("millis", this.measuredExecutionTime)
-                .put("executions", JsonSerializables.serializeAll(this.getOperatorExecutions()))
-                .putOpt("initPlatforms", JsonSerializables.serializeAll(
-                        this.getInitializedPlatforms().stream()
-                                .map(platform -> platform.getClass().getCanonicalName())
-                                .collect(Collectors.toList())
-                ));
+    public Collection<AtomicExecutionGroup> getAtomicExecutionGroups() {
+        return this.atomicExecutionGroups;
     }
 
     /**
-     * This class reflects one or more executions of an {@link ExecutionOperator}.
+     * {@link JsonSerializer} implementation for {@link PartialExecution}s.
      */
-    public static class OperatorExecution implements JsonSerializable {
+    public static class Serializer implements JsonSerializer<PartialExecution> {
 
-        public OperatorExecution(OptimizationContext.OperatorContext opCtx) {
-            this.operator = (ExecutionOperator) opCtx.getOperator();
-            this.inputCardinalities = opCtx.getInputCardinalities();
-            this.outputCardinalities = opCtx.getOutputCardinalities();
-            this.numExecutions = opCtx.getNumExecutions();
-            final LoadProfile loadProfile = opCtx.getLoadProfile();
-            final Collection<LoadProfile> subprofiles = loadProfile == null ?
-                    Collections.emptyList() :
-                    loadProfile.getSubprofiles();
-            this.nestedLoadProfile = subprofiles.isEmpty() ?
-                    null :
-                    subprofiles.stream().reduce(LoadProfile.emptyLoadProfile, LoadProfile::plus);
+        private final Configuration configuration;
+
+        /**
+         * Creates a new instance.
+         *
+         * @param configuration is required for deserialization; can otherwise be {@code null}
+         */
+        public Serializer(Configuration configuration) {
+            this.configuration = configuration;
         }
 
-        private OperatorExecution() {
 
-        }
-
-        private ExecutionOperator operator;
-
-        private CardinalityEstimate[] inputCardinalities;
-
-        private CardinalityEstimate[] outputCardinalities;
-
-        private LoadProfile nestedLoadProfile;
-
-        private int numExecutions;
-
-        public ExecutionOperator getOperator() {
-            return operator;
-        }
-
-        public CardinalityEstimate[] getInputCardinalities() {
-            return inputCardinalities;
-        }
-
-        public CardinalityEstimate[] getOutputCardinalities() {
-            return outputCardinalities;
-        }
-
-        public LoadProfile getNestedLoadProfile() {
-            return nestedLoadProfile;
-        }
-
-        public int getNumExecutions() {
-            return numExecutions;
+        @Override
+        public JSONObject serialize(PartialExecution pe) {
+            return new JSONObject()
+                    .put("millis", pe.measuredExecutionTime)
+                    .put("lowerCost", pe.lowerCost)
+                    .put("upperCost", pe.upperCost)
+                    .put("execGroups", JsonSerializables.serializeAll(
+                            pe.atomicExecutionGroups,
+                            false,
+                            new AtomicExecutionGroup.Serializer(this.configuration))
+                    )
+                    .putOpt(
+                            "initPlatforms",
+                            JsonSerializables.serializeAll(pe.initializedPlatforms, true, Platform.jsonSerializer)
+                    );
         }
 
         @Override
-        public JSONObject toJson() {
-            JSONObject json = new JSONObject();
-            json.put("operator", JsonSerializables.serializeAtLeastClass(this.operator));
-            json.put("inputCards", JsonSerializables.serializeAll(this.inputCardinalities));
-            json.put("outputCards", JsonSerializables.serializeAll(this.outputCardinalities));
-            json.put("executions", JsonSerializables.serialize(this.numExecutions));
-            json.putOpt("nestedLoadProfile", JsonSerializables.serialize(this.nestedLoadProfile));
-            return json;
-        }
-
-        @SuppressWarnings("unused")
-        public static OperatorExecution fromJson(JSONObject jsonObject) {
-            OperatorExecution operatorExecution = new OperatorExecution();
-            operatorExecution.operator = JsonSerializables.deserializeAtLeastClass(
-                    jsonObject.getJSONObject("operator"), OperatorBase.STANDARD_OPERATOR_ARGS
+        public PartialExecution deserialize(JSONObject json, Class<? extends PartialExecution> cls) {
+            final long measuredExecutionTime = json.getLong("millis");
+            final double lowerCost = json.optDouble("lowerCost", -1);
+            final double uppserCost = json.optDouble("upperCost", -1);
+            final Collection<AtomicExecutionGroup> atomicExecutionGroups =
+                    JsonSerializables.deserializeAllAsList(
+                            json.getJSONArray("execGroups"),
+                            new AtomicExecutionGroup.Serializer(this.configuration),
+                            AtomicExecutionGroup.class
+                    );
+            final Collection<Platform> initializedPlatforms =
+                    JsonSerializables.deserializeAllAsList(json.optJSONArray("initPlatforms"), Platform.jsonSerializer);
+            final PartialExecution partialExecution = new PartialExecution(
+                    atomicExecutionGroups, measuredExecutionTime, lowerCost, uppserCost
             );
-            operatorExecution.inputCardinalities = JsonSerializables.deserializeAllAsArray(
-                    jsonObject.getJSONArray("inputCards"), CardinalityEstimate.class
-            );
-            operatorExecution.outputCardinalities = JsonSerializables.deserializeAllAsArray(
-                    jsonObject.getJSONArray("outputCards"), CardinalityEstimate.class
-            );
-            operatorExecution.numExecutions = jsonObject.getInt("executions");
-            if (jsonObject.has("nestedLoadProfile")) {
-                operatorExecution.nestedLoadProfile = JsonSerializables.deserialize(
-                        jsonObject.getJSONObject("nestedLoadProfile"), LoadProfile.class
-                );
-            }
-            operatorExecution.nestedLoadProfile = JsonSerializables.deserialize(
-                    jsonObject.optJSONObject("nestedLoadProfile"), LoadProfile.class
-            );
-            return operatorExecution;
-        }
-
-        @Override
-        public String toString() {
-            return "OperatorExecution[" + operator + ']';
+            partialExecution.initializedPlatforms.addAll(initializedPlatforms);
+            return partialExecution;
         }
     }
+
+
 }

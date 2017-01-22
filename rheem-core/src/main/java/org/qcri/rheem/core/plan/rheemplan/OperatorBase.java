@@ -6,7 +6,6 @@ import org.qcri.rheem.core.function.*;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
@@ -37,6 +36,11 @@ public abstract class OperatorBase implements Operator {
 
     private OperatorContainer container;
 
+    /**
+     * Tells whether this instance is auxiliary, i.e., it support some non-auxiliary operators.
+     */
+    private boolean isAuxiliary = false;
+
     private int epoch = FIRST_EPOCH;
 
     protected InputSlot<?>[] inputSlots;
@@ -56,11 +60,6 @@ public abstract class OperatorBase implements Operator {
      * Optional name. Helpful for debugging.
      */
     private String name;
-
-    /**
-     * Can assign a {@link TimeEstimate} to {@link ExecutionOperator}s.
-     */
-    private TimeEstimate timeEstimate;
 
     public OperatorBase(InputSlot<?>[] inputSlots, OutputSlot<?>[] outputSlots, boolean isSupportingBroadcastInputs) {
         this.container = null;
@@ -188,20 +187,6 @@ public abstract class OperatorBase implements Operator {
         this.targetPlatforms.add(platform);
     }
 
-    public TimeEstimate getTimeEstimate() {
-        if (!this.isExecutionOperator()) {
-            throw new IllegalStateException("Cannot retrieve time estimate for non-execution operator " + this);
-        }
-        return this.timeEstimate;
-    }
-
-    public void setTimeEstimate(TimeEstimate timeEstimate) {
-        if (!this.isExecutionOperator()) {
-            throw new IllegalStateException("Cannot set time estimate for non-execution operator " + this);
-        }
-        this.timeEstimate = timeEstimate;
-    }
-
     @Override
     public void propagateOutputCardinality(int outputIndex,
                                            OptimizationContext.OperatorContext operatorContext,
@@ -306,6 +291,14 @@ public abstract class OperatorBase implements Operator {
     public void setCardinalityEstimator(int outputIndex, CardinalityEstimator cardinalityEstimator) {
         Validate.isAssignableFrom(ElementaryOperator.class, this.getClass());
         this.cardinalityEstimators[outputIndex] = cardinalityEstimator;
+    }
+
+    public boolean isAuxiliary() {
+        return this.isAuxiliary;
+    }
+
+    public void setAuxiliary(boolean auxiliaryOperator) {
+        this.isAuxiliary = auxiliaryOperator;
     }
 
     /**

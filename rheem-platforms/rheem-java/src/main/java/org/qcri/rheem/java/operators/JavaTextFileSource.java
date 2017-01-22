@@ -3,9 +3,11 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.TextFileSource;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
 import org.qcri.rheem.java.channels.StreamChannel;
@@ -15,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -39,10 +42,11 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    JavaExecutor javaExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            JavaExecutor javaExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -59,12 +63,23 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
             throw new RheemException(String.format("Reading %s failed.", url), e);
         }
 
-        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
+        ExecutionLineageNode prepareLineageNode = new ExecutionLineageNode(operatorContext);
+        prepareLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                "rheem.java.textfilesource.load.prepare", javaExecutor.getConfiguration()
+        ));
+        ExecutionLineageNode mainLineageNode = new ExecutionLineageNode(operatorContext);
+        mainLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                "rheem.java.textfilesource.load.main", javaExecutor.getConfiguration()
+        ));
+
+        outputs[0].getLineage().addPredecessor(mainLineageNode);
+
+        return prepareLineageNode.collectAndMark();
     }
 
     @Override
-    public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.java.textfilesource.load";
+    public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
+        return Arrays.asList("rheem.java.textfilesource.load.prepare", "rheem.java.textfilesource.load.main");
     }
 
     @Override

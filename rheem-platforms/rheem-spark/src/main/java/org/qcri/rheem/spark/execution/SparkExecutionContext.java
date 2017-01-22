@@ -48,6 +48,13 @@ public class SparkExecutionContext implements ExecutionContext, Serializable {
     }
 
     /**
+     * Creates a new instance.
+     */
+    public SparkExecutionContext(int iterationNumber) {
+        this.iterationNumber = iterationNumber;
+    }
+
+    /**
      * For serialization purposes.
      */
     @SuppressWarnings("unused")

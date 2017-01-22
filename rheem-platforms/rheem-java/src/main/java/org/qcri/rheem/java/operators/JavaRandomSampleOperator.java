@@ -10,13 +10,16 @@ import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
 
 /**
@@ -26,25 +29,15 @@ public class JavaRandomSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
-    private final Random rand = new Random();
+    private final Random rand = new Random(seed);
 
     /**
      * Creates a new instance.
      *
-     * @param sampleSize size of sample
+     * @param sampleSizeFunction udf-based size of sample
      */
-    public JavaRandomSampleOperator(Integer sampleSize, DataSetType<Type> type) {
-        super(sampleSize, type, Methods.RANDOM);
-    }
-
-    /**
-     * Creates a new instance.
-     *
-     * @param sampleSize  size of sample
-     * @param datasetSize size of data
-     */
-    public JavaRandomSampleOperator(Integer sampleSize, Long datasetSize, DataSetType<Type> type) {
-        super(sampleSize, datasetSize, type, Methods.RANDOM);
+    public JavaRandomSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
+        super(sampleSizeFunction, type, Methods.RANDOM, seed);
     }
 
     /**
@@ -58,15 +51,18 @@ public class JavaRandomSampleOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    JavaExecutor javaExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            JavaExecutor javaExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
+
+        Integer sampleSize = (Integer) this.getSampleSize(operatorContext);
         Long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() :
-            ((CollectionChannel.Instance) inputs[0]).provideCollection().size();
+                ((CollectionChannel.Instance) inputs[0]).provideCollection().size();
 
         if (sampleSize >= datasetSize) { //return all
             ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).provideStream());
@@ -106,16 +102,16 @@ public class JavaRandomSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        return Optional.of(new NestableLoadProfileEstimator<>(
-                new DefaultLoadEstimator<>(this.getNumInputs(), 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
+        return Optional.of(new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(this.getNumInputs(), 1, 0.9d, (inCards, outCards) -> 25 * inCards[0] + 350000),
                 LoadEstimator.createFallback(this.getNumInputs(), 1)
         ));
     }
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaRandomSampleOperator<>(this.sampleSize, this.getType());
+        return new JavaRandomSampleOperator<>(this);
     }
 
 
@@ -123,8 +119,8 @@ public class JavaRandomSampleOperator<Type>
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
         assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
         return this.isDataSetSizeKnown() ?
-            Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR) :
-            Collections.singletonList(CollectionChannel.DESCRIPTOR);
+                Arrays.asList(CollectionChannel.DESCRIPTOR, StreamChannel.DESCRIPTOR) :
+                Collections.singletonList(CollectionChannel.DESCRIPTOR);
 
     }
 

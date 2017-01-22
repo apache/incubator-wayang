@@ -11,6 +11,8 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
@@ -34,10 +36,11 @@ public class SparkTextFileSink<T> extends TextFileSink<T> implements SparkExecut
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    SparkExecutor sparkExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            SparkExecutor sparkExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == 1;
         assert outputs.length == 0;
         JavaRDD<T> inputRdd = ((RddChannel.Instance) inputs[0]).provideRdd();
@@ -59,13 +62,18 @@ public class SparkTextFileSink<T> extends TextFileSink<T> implements SparkExecut
     }
 
     @Override
+    public boolean containsAction() {
+        return true;
+    }
+
+    @Override
     public String getLoadProfileEstimatorConfigurationKey() {
         return "rheem.spark.textfilesink.load";
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator> optEstimator =
                 SparkExecutionOperator.super.createLoadProfileEstimator(configuration);
         LoadProfileEstimators.nestUdfEstimator(optEstimator, this.formattingDescriptor, configuration);
         return optEstimator;

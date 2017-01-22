@@ -2,6 +2,7 @@ package org.qcri.rheem.core.optimizer;
 
 import org.qcri.rheem.core.util.Formats;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 /***
@@ -70,7 +71,33 @@ public class ProbabilisticIntervalEstimate {
      * @return whether this instance is exactly {@code exactEstimate}
      */
     public boolean isExactly(long exactEstimate) {
-        return this.correctnessProb == 1d && this.lowerEstimate == this.upperEstimate && this.upperEstimate == exactEstimate;
+        return this.isExact() && this.upperEstimate == exactEstimate;
+    }
+
+    /**
+     * Checks whether this instance is an exact value, i.e., it is a confident single-point estimate.
+     *
+     * @return whether this instance is exact
+     */
+    public boolean isExact() {
+        return this.correctnessProb == 1d && this.lowerEstimate == this.upperEstimate;
+    }
+
+    /**
+     * Creates a {@link Comparator} based on the mean of instances.
+     */
+    public static <T extends ProbabilisticIntervalEstimate> Comparator<T> expectationValueComparator() {
+        return (t1, t2) -> {
+            if (t1.getCorrectnessProbability() == 0d) {
+                if (t2.getCorrectnessProbability() != 0d) {
+                    return 1;
+                }
+            } else if (t2.getCorrectnessProbability() == 0d) {
+                return -1;
+            }
+            // NB: We do not assume a uniform distribution of the estimates within the instances.
+            return Long.compare(t1.getGeometricMeanEstimate(), t2.getGeometricMeanEstimate());
+        };
     }
 
     @Override

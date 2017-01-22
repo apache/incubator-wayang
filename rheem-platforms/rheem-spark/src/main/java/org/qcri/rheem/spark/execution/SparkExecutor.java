@@ -10,6 +10,8 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.PushExecutorTemplate;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
+import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
@@ -76,27 +78,30 @@ public class SparkExecutor extends PushExecutorTemplate {
     protected Tuple<List<ChannelInstance>, PartialExecution> execute(ExecutionTask task,
                                                                      List<ChannelInstance> inputChannelInstances,
                                                                      OptimizationContext.OperatorContext producerOperatorContext,
-                                                                     boolean isForceExecution) {
+                                                                     boolean isRequestEagerExecution) {
         // Provide the ChannelInstances for the output of the task.
         final ChannelInstance[] outputChannelInstances = task.getOperator().createOutputChannelInstances(
                 this, task, producerOperatorContext, inputChannelInstances
         );
 
         // Execute.
-        final Collection<OptimizationContext.OperatorContext> operatorContexts;
-
+        final Collection<ExecutionLineageNode> executionLineageNodes;
+        final Collection<ChannelInstance> producedChannelInstances;
         // TODO: Use proper progress estimator.
         this.job.reportProgress(task.getOperator().getName(), 50);
 
         long startTime = System.currentTimeMillis();
         try {
-            operatorContexts = cast(task.getOperator()).evaluate(
-                    toArray(inputChannelInstances),
-                    outputChannelInstances,
-                    this,
-                    producerOperatorContext
-            );
+            final Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> results =
+                    cast(task.getOperator()).evaluate(
+                            toArray(inputChannelInstances),
+                            outputChannelInstances,
+                            this,
+                            producerOperatorContext
+                    );
             //Thread.sleep(1000);
+            executionLineageNodes = results.getField0();
+            producedChannelInstances = results.getField1();
         } catch (Exception e) {
             throw new RheemException(String.format("Executing %s failed.", task), e);
         }
@@ -105,21 +110,23 @@ public class SparkExecutor extends PushExecutorTemplate {
         this.job.reportProgress(task.getOperator().getName(), 100);
 
         // Check how much we executed.
-        PartialExecution partialExecution = this.createPartialExecution(operatorContexts, executionDuration);
-        if (partialExecution != null) {
+        PartialExecution partialExecution = this.createPartialExecution(executionLineageNodes, executionDuration);
+        if (partialExecution != null && cast(task.getOperator()).containsAction()) {
             if (this.numActions == 0) partialExecution.addInitializedPlatform(SparkPlatform.getInstance());
             this.numActions++;
-            this.job.addPartialExecutionMeasurement(partialExecution);
         }
 
+        if (partialExecution == null && executionDuration > 10) {
+            this.logger.warn("Execution of {} took suspiciously long ({}).", task, Formats.formatDuration(executionDuration));
+        }
 
-        // Force execution if necessary.
-        if (isForceExecution) {
-            if (partialExecution == null) {
-                this.logger.warn("Execution of {} might not have been enforced properly. " +
-                                "This might break the execution or cause side-effects with the re-optimization.",
-                        task);
-            }
+        // Collect any cardinality updates.
+        this.registerMeasuredCardinalities(producedChannelInstances);
+
+
+        // Warn if requested eager execution did not take place.
+        if (isRequestEagerExecution && partialExecution == null) {
+            this.logger.info("{} was not executed eagerly as requested.", task);
         }
 
         return new Tuple<>(Arrays.asList(outputChannelInstances), partialExecution);
@@ -145,12 +152,12 @@ public class SparkExecutor extends PushExecutorTemplate {
         final RddChannel.Instance rddOutput = (RddChannel.Instance) output;
 
         // Do the forward.
-        assert rddInput.getChannel().getDescriptor() != RddChannel.CACHED_DESCRIPTOR ||
-                rddOutput.getChannel().getDescriptor() == RddChannel.CACHED_DESCRIPTOR;
+        assert rddInput.getChannel().getDescriptor() == RddChannel.CACHED_DESCRIPTOR ||
+                rddOutput.getChannel().getDescriptor() != RddChannel.CACHED_DESCRIPTOR;
         rddOutput.accept(rddInput.provideRdd(), this);
 
         // Manipulate the lineage.
-        output.getLazyChannelLineage().copyRootFrom(input.getLazyChannelLineage());
+        output.getLineage().addPredecessor(input.getLineage());
     }
 
     @Override

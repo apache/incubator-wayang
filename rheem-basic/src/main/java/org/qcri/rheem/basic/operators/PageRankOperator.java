@@ -6,6 +6,7 @@ import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.EstimationContextProperty;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.types.DataSetType;
 
@@ -22,6 +23,7 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, T
 
     public static final ProbabilisticDoubleInterval DEFAULT_GRAPH_DENSITIY = new ProbabilisticDoubleInterval(.0001d, .5d, .5d);
 
+    @EstimationContextProperty
     protected final Integer numIterations;
 
     protected final float dampingFactor;
@@ -79,7 +81,7 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, T
     public Optional<CardinalityEstimator> createCardinalityEstimator(int outputIndex, Configuration configuration) {
         switch (outputIndex) {
             case 0:
-                return Optional.of((configuration1, inputEstimates) -> {
+                return Optional.of((optimizationContext, inputEstimates) -> {
                     assert inputEstimates.length == 1;
                     return new CardinalityEstimate(
                             calculateNumVertices(inputEstimates[0].getLowerEstimate(), PageRankOperator.this.graphDensity.getUpperEstimate()),
@@ -102,4 +104,6 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, T
     private static long calculateNumVertices(long numEdges, double density) {
         return density == 0 ? 0L : Math.round(0.5d + Math.sqrt(0.25 + 2 * numEdges / density));
     }
+
+
 }

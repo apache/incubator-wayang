@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
@@ -26,17 +26,32 @@ public class DefaultOptimizationContext extends OptimizationContext {
     private final Map<LoopSubplan, LoopContext> loopContexts = new HashMap<>();
 
     /**
-     * Create a new, plain instance.
+     * Create a new instance and adds all {@link Operator}s in the {@link RheemPlan}.
+     *
+     * @param job the optimization task; loops should already be isolated
      */
-    public DefaultOptimizationContext(Configuration configuration) {
-        super(configuration);
+    public static DefaultOptimizationContext createFrom(Job job) {
+        DefaultOptimizationContext instance = new DefaultOptimizationContext(job);
+        PlanTraversal.upstream()
+                .withCallback(instance::addOneTimeOperator)
+                .traverse(job.getRheemPlan().getSinks());
+        return instance;
+    }
+
+    /**
+     * Create a new instance.
+     *
+     * @param job the optimization task; loops should already be isolated
+     */
+    public DefaultOptimizationContext(Job job) {
+        super(job);
     }
 
     /**
      * Forks an {@link DefaultOptimizationContext} by providing a write-layer on top of the {@code base}.
      */
-    public DefaultOptimizationContext(DefaultOptimizationContext base) {
-        super(base.getConfiguration(),
+    public DefaultOptimizationContext(OptimizationContext base) {
+        super(base.getJob(),
                 base,
                 base.hostLoopContext,
                 base.getIterationNumber(),
@@ -45,32 +60,21 @@ public class DefaultOptimizationContext extends OptimizationContext {
     }
 
     /**
-     * Create a new instance.
-     *
-     * @param rheemPlan that the new instance should describe; loops should already be isolated
-     */
-    public DefaultOptimizationContext(RheemPlan rheemPlan, Configuration configuration) {
-        super(configuration);
-        PlanTraversal.upstream()
-                .withCallback(this::addOneTimeOperator)
-                .traverse(rheemPlan.getSinks());
-    }
-
-    /**
      * Creates a new instance. Useful for testing.
      *
+     * @param job      whose optimization thew new instance backs
      * @param operator the single {@link Operator} of this instance
      */
-    public DefaultOptimizationContext(Operator operator, Configuration configuration) {
-        super(configuration);
+    public DefaultOptimizationContext(Job job, Operator operator) {
+        super(job);
         this.addOneTimeOperator(operator);
     }
 
     /**
      * Creates a new (nested) instance for the given {@code loop}.
      */
-    DefaultOptimizationContext(LoopSubplan loop, LoopContext hostLoopContext, int iterationNumber, Configuration configuration) {
-        super(configuration,
+    DefaultOptimizationContext(LoopSubplan loop, LoopContext hostLoopContext, int iterationNumber) {
+        super(hostLoopContext.getOptimizationContext().getJob(),
                 null,
                 hostLoopContext,
                 iterationNumber,
@@ -82,24 +86,19 @@ public class DefaultOptimizationContext extends OptimizationContext {
     /**
      * Base constructor.
      */
-    private DefaultOptimizationContext(Configuration configuration,
+    private DefaultOptimizationContext(Job job,
                                        OptimizationContext base,
                                        LoopContext hostLoopContext,
                                        int iterationNumber,
                                        ChannelConversionGraph channelConversionGraph,
-                                       List<PlanEnumerationPruningStrategy> pruningStrategies,
-                                       Map<Operator, OperatorContext> operatorContexts,
-                                       Map<LoopSubplan, LoopContext> loopContexts) {
-        super(configuration, base, hostLoopContext, iterationNumber, channelConversionGraph, pruningStrategies);
-        this.operatorContexts.putAll(operatorContexts);
-        this.loopContexts.putAll(loopContexts);
-
+                                       List<PlanEnumerationPruningStrategy> pruningStrategies) {
+        super(job, base, hostLoopContext, iterationNumber, channelConversionGraph, pruningStrategies);
     }
 
     @Override
     public OperatorContext addOneTimeOperator(Operator operator) {
         final OperatorContext operatorContext = new OperatorContext(operator);
-        this.operatorContexts.put(operator, operatorContext);
+        this.operatorContexts.putIfAbsent(operator, operatorContext);
         if (!operator.isElementary()) {
             if (operator.isLoopSubplan()) {
                 this.addOneTimeLoop(operatorContext);
@@ -200,12 +199,18 @@ public class DefaultOptimizationContext extends OptimizationContext {
     public void mergeToBase() {
         if (this.getBase() == null) return;
         assert this.loopContexts.isEmpty() : "Merging loop contexts is not supported yet.";
-        this.getBase().operatorContexts.putAll(this.operatorContexts);
+        for (Map.Entry<Operator, OptimizationContext.OperatorContext> entry : this.operatorContexts.entrySet()) {
+            this.getBase().operatorContexts.merge(
+                    entry.getKey(),
+                    entry.getValue(),
+                    OperatorContext::merge
+            );
+        }
     }
 
     @Override
-    public Collection<DefaultOptimizationContext> getDefaultOptimizationContexts() {
-        return Collections.singleton(this);
+    public List<DefaultOptimizationContext> getDefaultOptimizationContexts() {
+        return Collections.singletonList(this);
     }
 
     /**
@@ -214,15 +219,32 @@ public class DefaultOptimizationContext extends OptimizationContext {
      * @return the shallow copy
      */
     public DefaultOptimizationContext copy() {
-        return new DefaultOptimizationContext(
-                this.getConfiguration(),
+        final DefaultOptimizationContext copy = new DefaultOptimizationContext(
+                this.getJob(),
                 this.getBase(),
                 this.getLoopContext(),
                 this.getIterationNumber(),
                 this.getChannelConversionGraph(),
-                this.getPruningStrategies(),
-                this.operatorContexts,
-                this.loopContexts
+                this.getPruningStrategies()
         );
+
+        // Make copies of the OperatorContexts.
+        for (Operator operator : operatorContexts.keySet()) {
+            copy.addOneTimeOperator(operator);
+        }
+        // Now merge the original to the copied OperatorContexts.
+        // Note: This must be a separate step! Each operation above potentially creates multiple OperatorContexts.
+        for (Map.Entry<Operator, OperatorContext> entry : copy.operatorContexts.entrySet()) {
+            Operator operator = entry.getKey();
+            OperatorContext opCtxCopy = entry.getValue();
+            OperatorContext originalOpCtx = this.operatorContexts.get(operator);
+            if (originalOpCtx != null) opCtxCopy.merge(originalOpCtx);
+        }
+
+        // Loops are not supported yet.
+        assert this.loopContexts.isEmpty();
+
+        return copy;
     }
+
 }

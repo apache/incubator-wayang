@@ -26,11 +26,40 @@ public class SparkShufflePartitionSampleOperatorTest extends SparkOperatorTestBa
         // Build the distinct operator.
         SparkShufflePartitionSampleOperator<Integer> sampleOperator =
                 new SparkShufflePartitionSampleOperator<>(
-                        sampleSize,
-                        10L,
-                        DataSetType.createDefaultUnchecked(Integer.class)
+                        iterationNumber -> sampleSize,
+                        DataSetType.createDefaultUnchecked(Integer.class),
+                        42L
                 );
+        sampleOperator.setDatasetSize(10);
 
+        // Set up the ChannelInstances.
+        final ChannelInstance[] inputs = new ChannelInstance[]{input};
+        final ChannelInstance[] outputs = new ChannelInstance[]{output};
+
+        // Execute.
+        this.evaluate(sampleOperator, inputs, outputs);
+
+        // Verify the outcome.
+        final List<Integer> result = RheemCollections.asList(output.provideCollection());
+        System.out.println(result);
+        Assert.assertEquals(sampleSize, result.size());
+
+    }
+
+    @Test
+    public void testExecutionWithUnknownDatasetSize() {
+        // Prepare test data.
+        RddChannel.Instance input = this.createRddChannelInstance(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+        CollectionChannel.Instance output = this.createCollectionChannelInstance();
+        int sampleSize = 3;
+
+        // Build the operator.
+        SparkShufflePartitionSampleOperator<Integer> sampleOperator =
+                new SparkShufflePartitionSampleOperator<>(
+                        iterationNumber -> sampleSize,
+                        DataSetType.createDefaultUnchecked(Integer.class),
+                        42L
+                );
         // Set up the ChannelInstances.
         final ChannelInstance[] inputs = new ChannelInstance[]{input};
         final ChannelInstance[] outputs = new ChannelInstance[]{output};

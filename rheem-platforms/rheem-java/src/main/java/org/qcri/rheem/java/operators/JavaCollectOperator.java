@@ -9,7 +9,9 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
@@ -30,10 +32,11 @@ public class JavaCollectOperator<Type> extends UnaryToUnaryOperator<Type, Type> 
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    JavaExecutor javaExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            JavaExecutor javaExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         final StreamChannel.Instance streamChannelInstance = (StreamChannel.Instance) inputs[0];
         final CollectionChannel.Instance collectionChannelInstance = (CollectionChannel.Instance) outputs[0];
 

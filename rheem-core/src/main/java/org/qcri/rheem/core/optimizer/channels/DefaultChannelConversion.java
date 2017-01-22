@@ -2,8 +2,8 @@ package org.qcri.rheem.core.optimizer.channels;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -69,13 +69,40 @@ public class DefaultChannelConversion extends ChannelConversion {
         // Create the ExecutionOperator.
         final ExecutionOperator executionOperator = this.executionOperatorFactory.apply(sourceChannel, configuration);
         assert executionOperator.getNumInputs() <= 1 && executionOperator.getNumOutputs() <= 1;
+        executionOperator.setAuxiliary(true);
 
         // Set up the Channels and the ExecutionTask.
         final ExecutionTask task = new ExecutionTask(executionOperator, 1, 1);
         sourceChannel.addConsumer(task, 0);
         final Channel outputChannel = task.initializeOutputChannel(0, configuration);
         sourceChannel.addSibling(outputChannel);
+        setCardinalityAndTimeEstimates(sourceChannel, optimizationContexts, optCardinality, task);
 
+
+        return outputChannel;
+    }
+
+    @Override
+    public void update(Channel sourceChannel,
+                       Channel targetChannel,
+                       Collection<OptimizationContext> optimizationContexts,
+                       CardinalityEstimate cardinality) {
+        ExecutionTask conversionTask = targetChannel.getProducer();
+        this.setCardinalityAndTimeEstimates(sourceChannel, optimizationContexts, cardinality, conversionTask);
+    }
+
+    /**
+     * Update the key figure estimates for the given {@link ExecutionTask}.
+     *
+     * @param sourceChannel        provides the {@link CardinalityEstimate}
+     * @param optimizationContexts in which the estimates should be updates; also provides the estimates for the {@code sourceChannel}
+     * @param optCardinality       overrides the {@link CardinalityEstimate} or else {@code null}
+     * @param task                 whose key figure estimates should be updated
+     */
+    private void setCardinalityAndTimeEstimates(Channel sourceChannel,
+                                                Collection<OptimizationContext> optimizationContexts,
+                                                CardinalityEstimate optCardinality,
+                                                ExecutionTask task) {
         // Enrich the optimizationContexts.
         for (OptimizationContext optimizationContext : optimizationContexts) {
             final CardinalityEstimate cardinality = optCardinality == null ?
@@ -83,8 +110,6 @@ public class DefaultChannelConversion extends ChannelConversion {
                     optCardinality;
             this.setCardinalityAndTimeEstimate(task, optimizationContext, cardinality);
         }
-
-        return outputChannel;
     }
 
     /**
@@ -116,8 +141,8 @@ public class DefaultChannelConversion extends ChannelConversion {
      * @param cardinality         the {@link CardinalityEstimate}
      */
     private void setCardinalityAndTimeEstimate(ExecutionTask conversionTask,
-                                OptimizationContext optimizationContext,
-                                CardinalityEstimate cardinality) {
+                                               OptimizationContext optimizationContext,
+                                               CardinalityEstimate cardinality) {
         final ExecutionOperator operator = conversionTask.getOperator();
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(operator);
 
@@ -131,11 +156,13 @@ public class DefaultChannelConversion extends ChannelConversion {
             operatorContext.setOutputCardinality(0, cardinality);
         }
 
-        operatorContext.updateTimeEstimate();
+        operatorContext.updateCostEstimate();
     }
 
     @Override
-    public TimeEstimate estimateConversionTime(CardinalityEstimate cardinality, int numExecutions, OptimizationContext optimizationContext) {
+    public ProbabilisticDoubleInterval estimateConversionCost(CardinalityEstimate cardinality,
+                                                              int numExecutions,
+                                                              OptimizationContext optimizationContext) {
         // Create OperatorContext.
         final ExecutionOperator executionOperator = this.executionOperatorFactory.apply(null, optimizationContext.getConfiguration());
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(executionOperator);
@@ -145,8 +172,8 @@ public class DefaultChannelConversion extends ChannelConversion {
         this.setCardinality(operatorContext, cardinality);
 
         // Estimate time.
-        operatorContext.updateTimeEstimate();
-        return operatorContext.getTimeEstimate();
+        operatorContext.updateCostEstimate();
+        return operatorContext.getCostEstimate();
     }
 
     private void setCardinality(OptimizationContext.OperatorContext operatorContext, CardinalityEstimate cardinality) {

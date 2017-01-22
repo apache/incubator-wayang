@@ -1,32 +1,33 @@
 package org.qcri.rheem.profiler.log;
 
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimate;
-import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.*;
+import org.qcri.rheem.core.util.mathex.Context;
+import org.qcri.rheem.core.util.mathex.DefaultContext;
+import org.qcri.rheem.core.util.mathex.Expression;
+import org.qcri.rheem.core.util.mathex.ExpressionBuilder;
+import org.qcri.rheem.core.util.mathex.exceptions.EvaluationException;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
+import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
 
 /**
  * Adjustable {@link LoadProfileEstimator} implementation.
  */
-public class DynamicLoadEstimator extends LoadEstimator<Individual> {
+public class DynamicLoadEstimator extends LoadEstimator {
 
     /**
      * Instance that always estimates a load of {@code 0}.
      */
     public static DynamicLoadEstimator zeroLoad = new DynamicLoadEstimator(
             (individual, inputCardinalities, outputCardinalities) -> 0d,
-            "0",
+            individual -> "0",
             Collections.emptySet()
     );
-
-    /**
-     * Template to produce a JUEL expression reflecting this instance.
-     */
-    private final String juelTemplate;
 
     /**
      * Function to estimate the load for given {@link Individual}.
@@ -38,48 +39,159 @@ public class DynamicLoadEstimator extends LoadEstimator<Individual> {
      */
     private final Collection<Variable> employedVariables;
 
+    /**
+     * Maps an {@link Individual} to a MathEx specifation {@link String}.
+     */
+    private final Function<Individual, String> specificationBuilder;
+
     @FunctionalInterface
     public interface SinglePointEstimator {
 
-        double estimate(Individual individual, long[] inputCardinalities, long[] outputCardinalities);
+        double estimate(DynamicEstimationContext context, long[] inputCardinalities, long[] outputCardinalities);
 
     }
+
+    /**
+     * Parses a mathematical expression and provides it as a {@link LoadEstimator.SinglePointEstimationFunction}.
+     *
+     * @param templateKey       of the {@code expression}
+     * @param resource          that is being estimated
+     * @param expression        a mathematical expression
+     * @param optimizationSpace in which new {@link Variable}s should be created
+     * @return the {@link LoadEstimator.SinglePointEstimationFunction}
+     */
+    public static DynamicLoadEstimator createFor(String templateKey,
+                                                 String resource,
+                                                 String expression,
+                                                 OptimizationSpace optimizationSpace) {
+        // Replace the question marks with variable names.
+        Collection<Variable> variables = new LinkedList<>();
+        StringBuilder sb = new StringBuilder(2 * expression.length());
+        for (int i = 0; i < expression.length(); i++) {
+            final char c = expression.charAt(i);
+            if (c == '?') {
+                String variableId = templateKey + "." + resource + "[" + variables.size() + "]";
+                final Variable variable = optimizationSpace.getOrCreateVariable(variableId);
+                variables.add(variable);
+                sb.append("_var").append(variable.getIndex());
+            } else {
+                sb.append(c);
+            }
+        }
+
+        final Expression expr = ExpressionBuilder.parse(sb.toString()).specify(LoadProfileEstimators.baseContext);
+
+        SinglePointEstimator singlePointEstimator =
+                (individual, inCards, outCards) -> {
+                    Context mathContext = createMathContext(individual, inCards, outCards);
+                    return Math.round(expr.evaluate(mathContext));
+                };
+        final Function<Individual, String> specificationBuilder = individual -> {
+            DefaultContext context = new DefaultContext();
+            for (Variable variable : variables) {
+                final double value = variable.getValue(individual);
+                final String name = "_var" + variable.getIndex();
+                context.setVariable(name, value);
+            }
+            return expr.specify(context).toString();
+        };
+
+        return new DynamicLoadEstimator(singlePointEstimator, specificationBuilder, variables);
+    }
+
+    /**
+     * Create a mathematical {@link Context} from the parameters.
+     *
+     * @param context             provides miscellaneous variables and the {@link Individual}
+     * @param inputCardinalities  provides input {@link CardinalityEstimate}s (`in***`)
+     * @param outputCardinalities provides output {@link CardinalityEstimate}s (`out***`)
+     * @return the {@link Context}
+     */
+    private static Context createMathContext(final DynamicEstimationContext context,
+                                             final long[] inputCardinalities,
+                                             final long[] outputCardinalities) {
+        return new Context() {
+            @Override
+            public double getVariable(String variableName) throws EvaluationException {
+                // Serve "in999" and "out999" variables directly from the cardinality arrays.
+                if (variableName.startsWith("in") && variableName.length() > 2) {
+                    int accu = 0;
+                    int i;
+                    for (i = 2; i < variableName.length(); i++) {
+                        char c = variableName.charAt(i);
+                        if (!Character.isDigit(c)) break;
+                        accu = 10 * accu + (c - '0');
+                    }
+                    if (i == variableName.length()) return inputCardinalities[accu];
+                } else if (variableName.startsWith("out") && variableName.length() > 3) {
+                    int accu = 0;
+                    int i;
+                    for (i = 3; i < variableName.length(); i++) {
+                        char c = variableName.charAt(i);
+                        if (!Character.isDigit(c)) break;
+                        accu = 10 * accu + (c - '0');
+                    }
+                    if (i == variableName.length()) return outputCardinalities[accu];
+                } else if (variableName.startsWith("_var") && variableName.length() > 4) {
+                    int accu = 0;
+                    int i;
+                    for (i = 4; i < variableName.length(); i++) {
+                        char c = variableName.charAt(i);
+                        if (!Character.isDigit(c)) break;
+                        accu = 10 * accu + (c - '0');
+                    }
+                    if (i == variableName.length()) return context.getIndividual().getGenome()[accu];
+                }
+
+                // Otherwise, ask the context for the property.
+                return context.getDoubleProperty(variableName, Double.NaN);
+            }
+
+            @Override
+            public ToDoubleFunction<double[]> getFunction(String functionName) throws EvaluationException {
+                throw new EvaluationException("This context does not provide any functions.");
+            }
+        };
+    }
+
 
     /**
      * Creates a new instance.
      *
      * @param singlePointEstimator the {@link SinglePointEstimator} to use
-     * @param juelTemplate         template for creating a JUEL expression reflecting the {@code singlePointEstimator};
-     *                             formatting arguments are the {@code employedVariables}
+     * @param specificationBuilder creates a MathEx specification for the new instance
+     *                             with the parameters from an {@link Individual}
      * @param employedVariables    the {@link Variable}s appearing in the {@code singlePointEstimator}
      */
     public DynamicLoadEstimator(SinglePointEstimator singlePointEstimator,
-                                String juelTemplate,
+                                Function<Individual, String> specificationBuilder,
                                 Variable... employedVariables) {
-        this(singlePointEstimator, juelTemplate, Arrays.asList(employedVariables));
+        this(singlePointEstimator, specificationBuilder, Arrays.asList(employedVariables));
     }
 
     /**
      * Creates a new instance.
      *
      * @param singlePointEstimator the {@link SinglePointEstimator} to use
-     * @param juelTemplate         template for creating a JUEL expression reflecting the {@code singlePointEstimator};
-     *                             formatting arguments are the {@code employedVariables}
      * @param employedVariables    the {@link Variable}s appearing in the {@code singlePointEstimator}
      */
     public DynamicLoadEstimator(SinglePointEstimator singlePointEstimator,
-                                String juelTemplate,
+                                Function<Individual, String> specificationBuilder,
                                 Collection<Variable> employedVariables) {
         super(CardinalityEstimate.EMPTY_ESTIMATE);
         this.singlePointEstimator = singlePointEstimator;
-        this.juelTemplate = juelTemplate;
+        this.specificationBuilder = specificationBuilder;
         this.employedVariables = employedVariables;
     }
 
     @Override
-    public LoadEstimate calculate(Individual individual,
-                                  CardinalityEstimate[] inputEstimates,
-                                  CardinalityEstimate[] outputEstimates) {
+    public LoadEstimate calculate(EstimationContext context) {
+        if (!(context instanceof DynamicEstimationContext)) {
+            throw new IllegalArgumentException("Invalid estimation context.");
+        }
+        final DynamicEstimationContext dynamicContext = (DynamicEstimationContext) context;
+        final CardinalityEstimate[] inputEstimates = context.getInputCardinalities();
+        final CardinalityEstimate[] outputEstimates = context.getOutputCardinalities();
         long[] inputCardinalities = new long[inputEstimates.length];
         long[] outputCardinalities = new long[outputEstimates.length];
         for (int i = 0; i < inputEstimates.length; i++) {
@@ -88,14 +200,18 @@ public class DynamicLoadEstimator extends LoadEstimator<Individual> {
         for (int i = 0; i < outputEstimates.length; i++) {
             outputCardinalities[i] = this.replaceNullCardinality(outputEstimates[i]).getLowerEstimate();
         }
-        double lowerEstimate = this.singlePointEstimator.estimate(individual, inputCardinalities, outputCardinalities);
+        double lowerEstimate = this.singlePointEstimator.estimate(
+                dynamicContext, inputCardinalities, outputCardinalities
+        );
         for (int i = 0; i < inputEstimates.length; i++) {
             inputCardinalities[i] = this.replaceNullCardinality(inputEstimates[i]).getUpperEstimate();
         }
         for (int i = 0; i < outputEstimates.length; i++) {
             outputCardinalities[i] = this.replaceNullCardinality(outputEstimates[i]).getUpperEstimate();
         }
-        double upperEstimate = this.singlePointEstimator.estimate(individual, inputCardinalities, outputCardinalities);
+        double upperEstimate = this.singlePointEstimator.estimate(
+                dynamicContext, inputCardinalities, outputCardinalities
+        );
         return new LoadEstimate(
                 Math.round(lowerEstimate),
                 Math.round(upperEstimate),
@@ -104,19 +220,13 @@ public class DynamicLoadEstimator extends LoadEstimator<Individual> {
     }
 
     /**
-     * Creates a JUEL expression reflecting this instance under the configuration specified by an {@link Individual}.
+     * Creates a MathEx expression reflecting this instance under the configuration specified by an {@link Individual}.
      *
      * @param individual specifies values of the employed {@link Variable}s
-     * @return the JUEL expression
+     * @return the MathEx expression
      */
-    public String toJuel(Individual individual) {
-        Object[] formatArgs = new Object[this.employedVariables.size()];
-        int i = 0;
-        for (Variable variable : employedVariables) {
-            formatArgs[i++] = variable.getValue(individual);
-        }
-        return String.format(this.juelTemplate, formatArgs);
-
+    public String toMathEx(Individual individual) {
+        return this.specificationBuilder.apply(individual);
     }
 
     /**

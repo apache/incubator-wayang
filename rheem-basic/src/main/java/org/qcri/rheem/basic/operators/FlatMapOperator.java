@@ -4,6 +4,7 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
@@ -86,12 +87,12 @@ public class FlatMapOperator<InputType, OutputType> extends UnaryToUnaryOperator
 
         private CardinalityEstimator(Configuration configuration) {
             this.selectivity = configuration
-                    .getMultimapSelectivityProvider()
+                    .getUdfSelectivityProvider()
                     .provideFor(FlatMapOperator.this.functionDescriptor);
         }
 
         @Override
-        public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
+        public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
             assert FlatMapOperator.this.getNumInputs() == inputEstimates.length;
             final CardinalityEstimate inputEstimate = inputEstimates[0];
             return new CardinalityEstimate(

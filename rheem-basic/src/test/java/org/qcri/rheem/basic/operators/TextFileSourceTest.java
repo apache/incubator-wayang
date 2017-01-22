@@ -1,8 +1,14 @@
 package org.qcri.rheem.basic.operators;
 
+import de.hpi.isg.profiledb.instrumentation.StopWatch;
+import de.hpi.isg.profiledb.store.model.Experiment;
+import de.hpi.isg.profiledb.store.model.Subject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
+import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.slf4j.Logger;
@@ -13,6 +19,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 /**
  * Test suite for {@link TextFileSource}.
  */
@@ -22,6 +31,12 @@ public class TextFileSourceTest {
 
     @Test
     public void testCardinalityEstimation() throws URISyntaxException, IOException {
+        Job job = mock(Job.class);
+        DefaultOptimizationContext optimizationContext = mock(DefaultOptimizationContext.class);
+        when(job.getOptimizationContext()).thenReturn(optimizationContext);
+        when(optimizationContext.getJob()).thenReturn(job);
+        when(job.getStopWatch()).thenReturn(new StopWatch(new Experiment("mock", new Subject("mock", "mock"))));
+        when(optimizationContext.getConfiguration()).thenReturn(new Configuration());
         final URL testFile = this.getClass().getResource("/ulysses.txt");
         final TextFileSource textFileSource = new TextFileSource(testFile.toString());
 
@@ -43,12 +58,11 @@ public class TextFileSourceTest {
             }
         }
 
-        Configuration configuration = new Configuration();
         final Optional<CardinalityEstimator> cardinalityEstimator = textFileSource
-                .createCardinalityEstimator(0, configuration);
+                .createCardinalityEstimator(0, optimizationContext.getConfiguration());
 
         Assert.assertTrue(cardinalityEstimator.isPresent());
-        final CardinalityEstimate estimate = cardinalityEstimator.get().estimate(configuration);
+        final CardinalityEstimate estimate = cardinalityEstimator.get().estimate(optimizationContext);
 
         this.logger.info("Estimated between {} and {} lines in {} and counted {}.",
                 estimate.getLowerEstimate(),

@@ -15,8 +15,7 @@ public class DummyReusableChannel extends Channel {
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(
             DummyReusableChannel.class,
             true,
-            true,
-            false
+            true
     );
 
     public DummyReusableChannel(ChannelDescriptor descriptor, OutputSlot<?> producerSlot) {
@@ -24,9 +23,13 @@ public class DummyReusableChannel extends Channel {
         assert DESCRIPTOR == descriptor;
     }
 
+    public DummyReusableChannel(DummyReusableChannel dummyReusableChannel) {
+        super(dummyReusableChannel);
+    }
+
     @Override
     public Channel copy() {
-        throw new UnsupportedOperationException();
+        return new DummyReusableChannel(this);
     }
 
     @Override

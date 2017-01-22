@@ -36,7 +36,6 @@ public class RheemPlan {
      * Creates a new instance and does some preprocessing (such as loop isolation).
      *
      * @param sinks the sinks of the new instance
-     * @return the prepared instance
      */
     public RheemPlan(Operator... sinks) {
         for (Operator sink : sinks) {

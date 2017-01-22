@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
-import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 
 /**
  * Assumes with a confidence of 50% that the output cardinality will be somewhere between 1 and the product of
@@ -9,7 +9,7 @@ import org.qcri.rheem.core.api.Configuration;
 public class FallbackCardinalityEstimator implements CardinalityEstimator {
 
     @Override
-    public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
+    public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
         double probability = .5d;
         long upperEstimate = 1L;
         for (CardinalityEstimate inputEstimate : inputEstimates) {

@@ -8,6 +8,7 @@ import org.qcri.rheem.core.optimizer.cardinality.CardinalityPusher;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
 import org.qcri.rheem.core.platform.Platform;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -344,6 +345,22 @@ public interface Operator {
     }
 
     /**
+     * Checks whether this instance is not connected to any other instance via its {@link Slot}s. This is a typical
+     * property of instances used for {@link org.qcri.rheem.core.optimizer.channels.ChannelConversion}s.
+     *
+     * @return whether this instance is unconnected
+     */
+    default boolean isUnconnected() {
+        for (InputSlot<?> inputSlot : this.getAllInputs()) {
+            if (inputSlot.getOccupant() != null) return false;
+        }
+        for (OutputSlot<?> outputSlot : this.getAllOutputs()) {
+            if (!outputSlot.getOccupiedSlots().isEmpty()) return false;
+        }
+        return true;
+    }
+
+    /**
      * Tells whether the given {@code input} is read by this operator. If not, the optimizer can make use of this
      * insight.
      *
@@ -576,5 +593,28 @@ public interface Operator {
      * @param name the name
      */
     void setName(String name);
+
+    /**
+     * Collects all fields of this instance that have a {@link EstimationContextProperty} annotation.
+     *
+     * @return the fields
+     */
+    default Collection<String> getEstimationContextProperties() {
+        Set<String> properties = new HashSet<>(2);
+        Queue<Class<?>> classQueue = new LinkedList<>();
+        classQueue.add(this.getClass());
+        while (!classQueue.isEmpty()) {
+            final Class<?> cls = classQueue.poll();
+            if (cls.getSuperclass() != null) classQueue.add(cls.getSuperclass());
+            for (Field declaredField : cls.getDeclaredFields()) {
+                final EstimationContextProperty annotation = declaredField.getDeclaredAnnotation(EstimationContextProperty.class);
+                if (annotation != null) {
+                    properties.add(declaredField.getName());
+                }
+            }
+        }
+        return properties;
+    }
+
 }
 

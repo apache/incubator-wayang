@@ -156,7 +156,7 @@ public class JdbcExecutor extends ExecutorTemplate {
                                                                 OptimizationContext optimizationContext,
                                                                 SqlQueryChannel.Instance predecessorChannelInstance) {
         final SqlQueryChannel.Instance newInstance = this.instantiateOutboundChannel(task, optimizationContext);
-        newInstance.getLazyChannelLineage().addPredecessor(predecessorChannelInstance.getLazyChannelLineage());
+        newInstance.getLineage().addPredecessor(predecessorChannelInstance.getLineage());
         return newInstance;
     }
 

@@ -18,11 +18,7 @@ import java.util.stream.Stream;
  */
 public class StreamChannel extends Channel {
 
-    private static final boolean IS_REUSABLE = false;
-
-    private static final boolean IS_INTERNAL = true;
-
-    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(StreamChannel.class, IS_REUSABLE, IS_REUSABLE, IS_REUSABLE & !IS_INTERNAL);
+    public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(StreamChannel.class, false, false);
 
     public StreamChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
         super(descriptor, outputSlot);
@@ -31,21 +27,6 @@ public class StreamChannel extends Channel {
 
     private StreamChannel(StreamChannel parent) {
         super(parent);
-    }
-
-    @Override
-    public boolean isReusable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterStageCapable() {
-        return IS_REUSABLE;
-    }
-
-    @Override
-    public boolean isInterPlatformCapable() {
-        return IS_REUSABLE & !IS_INTERNAL;
     }
 
     @Override

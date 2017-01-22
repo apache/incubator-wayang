@@ -16,10 +16,16 @@ public class OptimizationSpace {
     private int numDimensions = 0;
     
     public Variable getOrCreateVariable(String id) {
-        final Variable variable = this.variables.computeIfAbsent(id, key -> new Variable(this.numDimensions++, key));
-        if (variable.getIndex() == this.numDimensions - 1) {
-            variableVector.add(variable);
-        }
+        final Variable variable = this.variables.computeIfAbsent(id, key -> {
+            final Variable newVariable = new Variable(this.numDimensions++, key);
+            this.variableVector.add(newVariable);
+            return newVariable;
+        });
+
+        assert this.variables.size() == this.variableVector.size() :
+                String.format("Having %d ID-indexed and %d ordered variables after serving key \"%s\".",
+                        this.variables.size(), this.variableVector.size(), id
+                );
         return variable;
     }
 

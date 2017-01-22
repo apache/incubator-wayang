@@ -6,7 +6,9 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
@@ -43,10 +45,11 @@ public class SparkDistinctOperator<Type>
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    SparkExecutor sparkExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            SparkExecutor sparkExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -79,6 +82,11 @@ public class SparkDistinctOperator<Type>
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
+    }
+
+    @Override
+    public boolean containsAction() {
+        return false;
     }
 
 }

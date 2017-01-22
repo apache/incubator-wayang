@@ -2,9 +2,9 @@ package org.qcri.rheem.profiler.log;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticIntervalEstimate;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.AtomicExecutionGroup;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.profiling.ExecutionLog;
 import org.qcri.rheem.core.util.Formats;
@@ -19,7 +19,6 @@ import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -97,12 +96,12 @@ public class LogEvaluator {
     }
 
     private void print(PartialExecution pe) {
-        System.out.printf("Partial execution with %d operators:\n", pe.getOperatorContexts().size());
+        System.out.printf("Partial execution with %d execution groups:\n", pe.getAtomicExecutionGroups().size());
         System.out.printf("> Measured execution time: %s\n", Formats.formatDuration(pe.getMeasuredExecutionTime(), true));
-        System.out.printf("> Estimated execution time: %s\n", pe.getOverallTimeEstimate());
-        System.out.printf("> Delta: %s\n", pe.getOverallTimeEstimate().plus(-pe.getMeasuredExecutionTime()));
-        for (OptimizationContext.OperatorContext operatorContext : pe.getOperatorContexts()) {
-            System.out.printf("--> %s: %s\n", operatorContext.getOperator(), operatorContext.getTimeEstimate());
+        System.out.printf("> Estimated execution time: %s\n", pe.getOverallTimeEstimate(this.configuration));
+        System.out.printf("> Delta: %s\n", pe.getOverallTimeEstimate(this.configuration).plus(-pe.getMeasuredExecutionTime()));
+        for (AtomicExecutionGroup atomicExecutionGroup : pe.getAtomicExecutionGroups()) {
+            System.out.printf("--> %s: %s\n", atomicExecutionGroup, atomicExecutionGroup.estimateExecutionTime());
         }
         System.out.println();
     }
@@ -110,7 +109,7 @@ public class LogEvaluator {
     private void printStatistics() {
         // Print some general statistics.
         final TimeEstimate overallTimeEstimate = this.createPartialExecutionStream()
-                .map(PartialExecution::getOverallTimeEstimate)
+                .map(partialExecution -> partialExecution.getOverallTimeEstimate(this.configuration))
                 .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
         final long overallMeasuredTime = this.createPartialExecutionStream()
                 .map(PartialExecution::getMeasuredExecutionTime)
@@ -133,26 +132,29 @@ public class LogEvaluator {
                 this.filters.clear();
                 return;
             case "name":
-                predicate = pe -> pe.getOperatorContexts().stream()
-                        .map(operatorContext -> operatorContext.getOperator().getName())
-                        .filter(Objects::nonNull)
-                        .anyMatch(name -> matchSubstring(name, commandLine[2]));
+                System.out.println("Not supported.");
+//                predicate = pe -> pe.getOperatorContexts().stream()
+//                        .map(operatorContext -> operatorContext.getOperator().getName())
+//                        .filter(Objects::nonNull)
+//                        .anyMatch(name -> matchSubstring(name, commandLine[2]));
                 break;
             case "operator":
-                predicate = pe -> pe.getOperatorContexts().stream()
-                        .map(operatorContext -> operatorContext.getOperator().getClass().getSimpleName())
-                        .anyMatch(name -> matchSubstring(name, commandLine[2]));
+                System.out.println("Not supported.");
+//                predicate = pe -> pe.getOperatorContexts().stream()
+//                        .map(operatorContext -> operatorContext.getOperator().getClass().getSimpleName())
+//                        .anyMatch(name -> matchSubstring(name, commandLine[2]));
                 break;
             case "platform":
-                predicate = pe -> pe.getOperatorContexts().stream()
-                        .map(operatorContext -> ((ExecutionOperator) operatorContext.getOperator()).getPlatform())
-                        .anyMatch(platform -> matchSubstring(platform.getName(), commandLine[2]));
+                System.out.println("Not supported.");
+//                predicate = pe -> pe.getOperatorContexts().stream()
+//                        .map(operatorContext -> ((ExecutionOperator) operatorContext.getOperator()).getPlatform())
+//                        .anyMatch(platform -> matchSubstring(platform.getName(), commandLine[2]));
                 break;
             default:
                 System.out.println("Unknown filter type.");
                 return;
         }
-        this.filters.add(predicate);
+//        this.filters.add(predicate);
     }
 
     private void modifySorting(String[] commandLine) {
@@ -161,27 +163,30 @@ public class LogEvaluator {
             System.out.println("sort clear");
             return;
         }
-        final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
+        final Comparator<TimeEstimate> timeEstimateComparator = ProbabilisticIntervalEstimate.expectationValueComparator();
         switch (commandLine[1]) {
             case "clear":
                 this.sortCriterion = null;
                 return;
             case "est":
-                this.sortCriterion = (a, b) -> timeEstimateComparator.compare(a.getOverallTimeEstimate(), b.getOverallTimeEstimate());
+                this.sortCriterion = (a, b) -> timeEstimateComparator.compare(
+                        a.getOverallTimeEstimate(this.configuration),
+                        b.getOverallTimeEstimate(this.configuration)
+                );
                 break;
             case "run":
                 this.sortCriterion = (a, b) -> Long.compare(a.getMeasuredExecutionTime(), b.getMeasuredExecutionTime());
                 break;
             case "abs":
                 this.sortCriterion = (a, b) -> timeEstimateComparator.compare(
-                        a.getOverallTimeEstimate().plus(-a.getMeasuredExecutionTime()),
-                        b.getOverallTimeEstimate().plus(-a.getMeasuredExecutionTime())
+                        a.getOverallTimeEstimate(this.configuration).plus(-a.getMeasuredExecutionTime()),
+                        b.getOverallTimeEstimate(this.configuration).plus(-a.getMeasuredExecutionTime())
                 );
                 break;
             case "rel":
                 this.sortCriterion = (a, b) -> timeEstimateComparator.compare(
-                        a.getOverallTimeEstimate().times(1d / a.getMeasuredExecutionTime()),
-                        b.getOverallTimeEstimate().times(1d / -a.getMeasuredExecutionTime())
+                        a.getOverallTimeEstimate(this.configuration).times(1d / a.getMeasuredExecutionTime()),
+                        b.getOverallTimeEstimate(this.configuration).times(1d / -a.getMeasuredExecutionTime())
                 );
                 break;
             default:

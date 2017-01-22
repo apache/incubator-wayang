@@ -1,6 +1,8 @@
 package org.qcri.rheem.core.function;
 
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 
 import java.util.function.Function;
@@ -17,11 +19,11 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
 
     protected final BasicDataUnitType<Output> outputType;
 
-    private final FunctionDescriptor.SerializableFunction<Input,Output> javaImplementation;
+    private final FunctionDescriptor.SerializableFunction<Input, Output> javaImplementation;
 
     public TransformationDescriptor(FunctionDescriptor.SerializableFunction<Input, Output> javaImplementation,
-                                       Class<Input> inputTypeClass,
-                                       Class<Output> outputTypeClass) {
+                                    Class<Input> inputTypeClass,
+                                    Class<Output> outputTypeClass) {
         this(javaImplementation,
                 BasicDataUnitType.createBasic(inputTypeClass),
                 BasicDataUnitType.createBasic(outputTypeClass));
@@ -30,29 +32,29 @@ public class TransformationDescriptor<Input, Output> extends FunctionDescriptor 
     public TransformationDescriptor(FunctionDescriptor.SerializableFunction<Input, Output> javaImplementation,
                                     Class<Input> inputTypeClass,
                                     Class<Output> outputTypeClass,
-                                    LoadEstimator<?> cpuLoadEstimator,
-                                    LoadEstimator<?> ramLoadEstimator) {
+                                    LoadProfileEstimator loadProfileEstimator) {
         this(javaImplementation,
                 BasicDataUnitType.createBasic(inputTypeClass),
                 BasicDataUnitType.createBasic(outputTypeClass),
-                cpuLoadEstimator,
-                ramLoadEstimator);
+                loadProfileEstimator);
     }
 
     public TransformationDescriptor(FunctionDescriptor.SerializableFunction<Input, Output> javaImplementation,
-                                       BasicDataUnitType<Input> inputType,
-                                       BasicDataUnitType<Output> outputType) {
+                                    BasicDataUnitType<Input> inputType,
+                                    BasicDataUnitType<Output> outputType) {
         this(javaImplementation, inputType, outputType,
-                LoadEstimator.createFallback(1, 1),
-                LoadEstimator.createFallback(1, 1));
+                new NestableLoadProfileEstimator(
+                        LoadEstimator.createFallback(1, 1),
+                        LoadEstimator.createFallback(1, 1)
+                )
+        );
     }
 
     public TransformationDescriptor(FunctionDescriptor.SerializableFunction<Input, Output> javaImplementation,
                                     BasicDataUnitType<Input> inputType,
                                     BasicDataUnitType<Output> outputType,
-                                    LoadEstimator<?> cpuLoadEstimator,
-                                    LoadEstimator<?> ramLoadEstimator) {
-        super(cpuLoadEstimator, ramLoadEstimator);
+                                    LoadProfileEstimator loadProfileEstimator) {
+        super(loadProfileEstimator);
         this.javaImplementation = javaImplementation;
         this.inputType = inputType;
         this.outputType = outputType;

@@ -11,7 +11,9 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
@@ -52,18 +54,21 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     @SuppressWarnings("unchecked")
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    SparkExecutor sparkExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            SparkExecutor sparkExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+
+        ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
 
         final RddChannel.Instance iterationInput;
         final Function<Collection<ConvergenceType>, Boolean> stoppingCondition =
                 sparkExecutor.getCompiler().compile(this.criterionDescriptor, this, operatorContext, inputs);
         boolean endloop = false;
-        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
         switch (this.getState()) {
             case NOT_STARTED:
                 assert inputs[INITIAL_INPUT_INDEX] != null;
@@ -82,8 +87,7 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
                 } catch (Exception e) {
                     throw new RheemException(String.format("Could not evaluate stopping condition for %s.", this), e);
                 }
-                executedOperatorContexts.add(operatorContext);
-                convergenceInput.getLazyChannelLineage().collectAndMark(executedOperatorContexts);
+                executionLineageNode.addPredecessor(convergenceInput.getLineage());
                 break;
             default:
                 throw new IllegalStateException(String.format("%s is finished, yet executed.", this));
@@ -101,7 +105,7 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return executedOperatorContexts;
+        return executionLineageNode.collectAndMark();
     }
 
     @Override
@@ -120,8 +124,8 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator> optEstimator =
                 SparkExecutionOperator.super.createLoadProfileEstimator(configuration);
         LoadProfileEstimators.nestUdfEstimator(optEstimator, this.criterionDescriptor, configuration);
         return optEstimator;
@@ -146,6 +150,11 @@ public class SparkDoWhileOperator<InputType, ConvergenceType>
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
         // TODO: In this specific case, the actual output Channel is context-sensitive because we could forward Streams/Collections.
+    }
+
+    @Override
+    public boolean containsAction() {
+        return false;
     }
 
 }

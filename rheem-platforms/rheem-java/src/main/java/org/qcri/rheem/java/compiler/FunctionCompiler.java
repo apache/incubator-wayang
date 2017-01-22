@@ -1,10 +1,7 @@
 package org.qcri.rheem.java.compiler;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.function.FlatMapDescriptor;
-import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.function.ReduceDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
+import org.qcri.rheem.core.function.*;
 
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -30,6 +27,19 @@ public class FunctionCompiler {
      * @return a compiled function
      */
     public <I, O> Function<I, O> compile(TransformationDescriptor<I, O> descriptor) {
+        // This is a dummy method but shows the intention of having something compilable in the descriptors.
+        return descriptor.getJavaImplementation();
+    }
+
+    /**
+     * Compile a partition transformation.
+     *
+     * @param descriptor describes the transformation
+     * @param <I>        input type of the transformation
+     * @param <O>        output type of the transformation
+     * @return a compiled function
+     */
+    public <I, O> Function<Iterable<I>, Iterable<O>> compile(MapPartitionsDescriptor<I, O> descriptor) {
         // This is a dummy method but shows the intention of having something compilable in the descriptors.
         return descriptor.getJavaImplementation();
     }

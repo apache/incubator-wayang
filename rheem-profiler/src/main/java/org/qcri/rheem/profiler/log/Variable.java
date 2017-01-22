@@ -39,7 +39,7 @@ public class Variable {
     }
 
     public double mutate(double currentValue, Random random) {
-        final double deltaSmoothing = 10;
+        final double deltaSmoothing = 1E-9;
         if (!Double.isFinite(this.minValue)) {
             if (!Double.isInfinite(this.maxValue)) {
                 return currentValue + random.nextGaussian() * Math.abs(currentValue);
@@ -64,5 +64,10 @@ public class Variable {
 
     public int getIndex() {
         return index;
+    }
+
+    @Override
+    public String toString() {
+        return "Variable[id=" + id + ", index=" + index + ']';
     }
 }

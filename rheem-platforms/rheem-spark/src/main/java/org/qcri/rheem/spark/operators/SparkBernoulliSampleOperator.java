@@ -10,12 +10,15 @@ import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.*;
+import java.util.function.IntUnaryOperator;
 
 
 /**
@@ -25,24 +28,11 @@ public class SparkBernoulliSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
-
     /**
      * Creates a new instance.
-     *
-     * @param sampleSize
      */
-    public SparkBernoulliSampleOperator(Integer sampleSize, DataSetType<Type> type) {
-        super(sampleSize, type, Methods.BERNOULLI);
-    }
-
-    /**
-     * Creates a new instance.
-     *
-     * @param sampleSize
-     * @param datasetSize
-     */
-    public SparkBernoulliSampleOperator(Integer sampleSize, Long datasetSize, DataSetType<Type> type) {
-        super(sampleSize, datasetSize, type, Methods.BERNOULLI);
+    public SparkBernoulliSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
+        super(sampleSizeFunction, type, Methods.BERNOULLI, seed);
     }
 
     /**
@@ -56,10 +46,11 @@ public class SparkBernoulliSampleOperator<Type>
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    SparkExecutor sparkExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            SparkExecutor sparkExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -69,8 +60,10 @@ public class SparkBernoulliSampleOperator<Type>
 
         final JavaRDD<Type> inputRdd = input.provideRdd();
         long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() : inputRdd.count();
-        double sampleFraction = ((double) this.sampleSize) / datasetSize;
-        final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction);
+        int sampleSize = this.getSampleSize(operatorContext);
+
+        double sampleFraction = ((double) sampleSize) / datasetSize;
+        final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction, seed);
         this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
@@ -80,17 +73,17 @@ public class SparkBernoulliSampleOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkBernoulliSampleOperator<>(this.sampleSize, this.datasetSize, this.getType());
+        return new SparkBernoulliSampleOperator<>(this);
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
         // NB: This was not measured but is guesswork, adapted from SparkFilterOperator.
-        final LoadProfileEstimator<ExecutionOperator> mainEstimator = new NestableLoadProfileEstimator<>(
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator<>(1, 1, .9d, (inputCards, outputCards) -> 0),
+        final LoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
+                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
                 (in, out) -> 0.23d,
                 550
         );
@@ -114,4 +107,8 @@ public class SparkBernoulliSampleOperator<Type>
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        return true;
+    }
 }

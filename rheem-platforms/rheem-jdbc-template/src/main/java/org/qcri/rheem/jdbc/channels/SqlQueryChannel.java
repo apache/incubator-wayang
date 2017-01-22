@@ -78,17 +78,13 @@ public class SqlQueryChannel extends Channel {
      */
     public static class Descriptor extends ChannelDescriptor {
 
-        private static final boolean IS_REUSABLE = false;
-
-        private static final boolean IS_INTERNAL = true;
-
         /**
          * {@link Platform} to which corresponding {@link Channel}s belong.
          */
         private final JdbcPlatformTemplate platform;
 
         public Descriptor(JdbcPlatformTemplate platform) {
-            super(SqlQueryChannel.class, IS_REUSABLE, IS_REUSABLE, IS_REUSABLE & !IS_INTERNAL);
+            super(SqlQueryChannel.class, false, false);
             this.platform = platform;
         }
 

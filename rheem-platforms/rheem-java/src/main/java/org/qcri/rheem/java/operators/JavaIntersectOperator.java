@@ -3,10 +3,13 @@ package org.qcri.rheem.java.operators;
 import org.qcri.rheem.basic.operators.IntersectOperator;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
@@ -41,10 +44,11 @@ public class JavaIntersectOperator<Type>
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    JavaExecutor javaExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            JavaExecutor javaExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -55,29 +59,41 @@ public class JavaIntersectOperator<Type>
         final CardinalityEstimate cardinalityEstimate0 = operatorContext.getInputCardinality(0);
         final CardinalityEstimate cardinalityEstimate1 = operatorContext.getOutputCardinality(0);
 
+        ExecutionLineageNode indexingExecutionLineageNode = new ExecutionLineageNode(operatorContext);
+        indexingExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                "rheem.java.intersect.load.indexing", javaExecutor.getConfiguration()
+        ));
+        ExecutionLineageNode probingExecutionLineageNode = new ExecutionLineageNode(operatorContext);
+        probingExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
+                "rheem.java.intersect.load.probing", javaExecutor.getConfiguration()
+        ));
+
         boolean isMaterialize0 = cardinalityEstimate0 != null &&
                 cardinalityEstimate1 != null &&
                 cardinalityEstimate0.getUpperEstimate() <= cardinalityEstimate1.getUpperEstimate();
 
-        final Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
+        final Collection<ExecutionLineageNode> executionLineageNodes = new LinkedList<>();
+        final Collection<ChannelInstance> producedChannelInstances = new LinkedList<>();
         final Stream<Type> candidateStream;
         final Set<Type> probingTable;
         if (isMaterialize0) {
             candidateStream = ((JavaChannelInstance) inputs[0]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[1]).provideStream());
-            inputs[0].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
-            outputs[0].addPredecessor(inputs[1]);
+            indexingExecutionLineageNode.addPredecessor(inputs[0].getLineage());
+            probingExecutionLineageNode.addPredecessor(inputs[1].getLineage());
         } else {
             candidateStream = ((JavaChannelInstance) inputs[1]).provideStream();
             probingTable = this.createProbingTable(((JavaChannelInstance) inputs[0]).provideStream());
-            inputs[1].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
-            outputs[0].addPredecessor(inputs[0]);
+            indexingExecutionLineageNode.addPredecessor(inputs[1].getLineage());
+            probingExecutionLineageNode.addPredecessor(inputs[0].getLineage());
         }
 
         Stream<Type> intersectStream = candidateStream.filter(probingTable::remove);
         ((StreamChannel.Instance) outputs[0]).accept(intersectStream);
+        outputs[0].getLineage().addPredecessor(probingExecutionLineageNode);
 
-        return executedOperatorContexts;
+        indexingExecutionLineageNode.collectAndMark(executionLineageNodes, producedChannelInstances);
+        return new Tuple<>(executionLineageNodes, producedChannelInstances);
     }
 
     /**
@@ -91,8 +107,8 @@ public class JavaIntersectOperator<Type>
     }
 
     @Override
-    public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.java.intersect.load";
+    public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
+        return Arrays.asList("rheem.java.intersect.load.indexing", "rheem.java.intersect.load.probing");
     }
 
     @Override

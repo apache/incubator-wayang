@@ -3,7 +3,10 @@ package org.qcri.rheem.core.optimizer;
 import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -13,23 +16,23 @@ import java.util.stream.Collectors;
 public class AggregateOptimizationContext extends OptimizationContext {
 
     /**
-     * The aggregated {@link OptimizationContext}s.
-     */
-    private final Collection<OptimizationContext> optimizationContexts;
-
-    /**
      * Caches aggregated {@link OptimizationContext.OperatorContext}s.
      */
     private final Map<Operator, OperatorContext> operatorContextCache = new HashMap<>();
 
-    public AggregateOptimizationContext(LoopContext loopContext, List<OptimizationContext> optimizationContexts) {
-        super(loopContext.getOptimizationContext().getConfiguration(),
+    /**
+     * The {@link OptimizationContext}s aggregated by this instance.
+     */
+    private final List<OptimizationContext> optimizationContexts;
+
+    public AggregateOptimizationContext(LoopContext loopContext) {
+        super(loopContext.getOptimizationContext().getJob(),
                 null,
                 loopContext,
                 -1,
                 loopContext.getOptimizationContext().getChannelConversionGraph(),
                 loopContext.getOptimizationContext().getPruningStrategies());
-        this.optimizationContexts = optimizationContexts;
+        this.optimizationContexts = loopContext.getIterationContexts();
     }
 
     @Override
@@ -48,6 +51,14 @@ public class AggregateOptimizationContext extends OptimizationContext {
     }
 
     /**
+     * This instance caches for efficiency reasons the aggregated {@link OperatorContext}s. This method
+     * causes a re-calculation of this cache.
+     */
+    public void updateOperatorContexts() {
+        this.operatorContextCache.values().forEach(this::updateOperatorContext);
+    }
+
+    /**
      * Aggregates the {@link OptimizationContext.OperatorContext} in the {@link #optimizationContexts} for the
      * given {@link Operator}.
      *
@@ -55,17 +66,20 @@ public class AggregateOptimizationContext extends OptimizationContext {
      * @return the aggregated {@link OptimizationContext.OperatorContext} or {@code null} if nothing could be aggregated
      */
     private OperatorContext aggregateOperatorContext(Operator operator) {
-        OperatorContext aggregateOperatorContext = null;
-        for (OptimizationContext partialOptimizationContext : this.optimizationContexts) {
-            final OperatorContext partialOperatorContext = partialOptimizationContext.getOperatorContext(operator);
-            if (partialOperatorContext == null) continue;
-            if (aggregateOperatorContext == null) {
-                aggregateOperatorContext = new OperatorContext(operator);
-                aggregateOperatorContext.setNumExecutions(0);
-            }
-            aggregateOperatorContext.increaseBy(partialOperatorContext);
-        }
+        OperatorContext aggregateOperatorContext = new OperatorContext(operator);
+        this.updateOperatorContext(aggregateOperatorContext);
         return aggregateOperatorContext;
+    }
+
+    private void updateOperatorContext(OperatorContext operatorContext) {
+        operatorContext.resetEstimates();
+        operatorContext.setNumExecutions(0);
+        for (OptimizationContext partialOptimizationContext : this.optimizationContexts) {
+            final OperatorContext partialOperatorContext =
+                    partialOptimizationContext.getOperatorContext(operatorContext.getOperator());
+            if (partialOperatorContext == null) continue;
+            operatorContext.increaseBy(partialOperatorContext);
+        }
     }
 
     @Override
@@ -95,7 +109,7 @@ public class AggregateOptimizationContext extends OptimizationContext {
     }
 
     @Override
-    public Collection<DefaultOptimizationContext> getDefaultOptimizationContexts() {
+    public List<DefaultOptimizationContext> getDefaultOptimizationContexts() {
         return this.optimizationContexts.stream()
                 .flatMap(optCtx -> optCtx.getDefaultOptimizationContexts().stream())
                 .collect(Collectors.toList());

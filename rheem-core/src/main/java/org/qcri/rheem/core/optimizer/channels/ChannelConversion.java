@@ -1,10 +1,9 @@
 package org.qcri.rheem.core.optimizer.channels;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -51,6 +50,19 @@ public abstract class ChannelConversion {
                                     final Collection<OptimizationContext> optimizationContexts,
                                     final CardinalityEstimate cardinality);
 
+    /**
+     * Update an already existing {@link ChannelConversion}.
+     *
+     * @param sourceChannel        the {@link Channel} to be converted
+     * @param targetChannel        the converted {@link Channel}
+     * @param optimizationContexts to which estimates of the newly added {@link Operator} should be updated
+     * @param cardinality          optional {@link CardinalityEstimate} of the {@link Channel}s
+     */
+    public abstract void update(final Channel sourceChannel,
+                                final Channel targetChannel,
+                                final Collection<OptimizationContext> optimizationContexts,
+                                final CardinalityEstimate cardinality);
+
     public ChannelDescriptor getSourceChannelDescriptor() {
         return this.sourceChannelDescriptor;
     }
@@ -59,30 +71,18 @@ public abstract class ChannelConversion {
         return this.targetChannelDescriptor;
     }
 
-    /**
-     * Estimate the required time to carry out the conversion for a given {@code cardinality}.
-     *
-     * @param cardinality   the {@link CardinalityEstimate} of data to be converted
-     * @param numExecutions expected number of executions of this instance
-     * @param configuration provides estimators
-     * @return the {@link TimeEstimate}
-     * @see #estimateConversionTime(CardinalityEstimate, int, OptimizationContext)
-     */
-    public TimeEstimate estimateConversionTime(CardinalityEstimate cardinality, int numExecutions, Configuration configuration) {
-        return this.estimateConversionTime(cardinality, numExecutions, new DefaultOptimizationContext(configuration));
-    }
 
     /**
-     * Estimate the required time to carry out the conversion for a given {@code cardinality}.
+     * Estimate the required cost to carry out the conversion for a given {@code cardinality}.
      *
      * @param cardinality         the {@link CardinalityEstimate} of data to be converted
      * @param numExecutions       expected number of executions of this instance
      * @param optimizationContext provides a {@link Configuration} and keeps around generated optimization information
-     * @return the {@link TimeEstimate}
+     * @return the cost estimate
      */
-    public abstract TimeEstimate estimateConversionTime(CardinalityEstimate cardinality,
-                                                        int numExecutions,
-                                                        OptimizationContext optimizationContext);
+    public abstract ProbabilisticDoubleInterval estimateConversionCost(CardinalityEstimate cardinality,
+                                                                       int numExecutions,
+                                                                       OptimizationContext optimizationContext);
 
     @Override
     public String toString() {

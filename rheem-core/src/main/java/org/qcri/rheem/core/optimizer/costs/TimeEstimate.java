@@ -3,8 +3,6 @@ package org.qcri.rheem.core.optimizer.costs;
 import org.qcri.rheem.core.optimizer.ProbabilisticIntervalEstimate;
 import org.qcri.rheem.core.util.Formats;
 
-import java.util.Comparator;
-
 /**
  * An estimate of time (in <b>milliseconds</b>) expressed as a {@link ProbabilisticIntervalEstimate}.
  */
@@ -36,29 +34,6 @@ public class TimeEstimate extends ProbabilisticIntervalEstimate {
                 this.getUpperEstimate() + millis,
                 this.getCorrectnessProbability()
         );
-    }
-
-    /**
-     * Provides a {@link Comparator} for {@link TimeEstimate}s. For two {@link TimeEstimate}s {@code t1} and {@code t2},
-     * it works as follows:
-     * <ol>
-     *     <li>If a either of the {@link TimeEstimate}s has a correctness probability of 0, we consider it to be greater.</li>
-     *     <li>Otherwise, we compare the two {@link TimeEstimate}s by their average estimation value.</li>
-     * </ol>
-     * @return
-     */
-    public static Comparator<TimeEstimate> expectationValueComparator() {
-        return (t1, t2) -> {
-            if (t1.getCorrectnessProbability() == 0d) {
-                if (t2.getCorrectnessProbability() != 0d) {
-                    return 1;
-                }
-            } else if (t2.getCorrectnessProbability() == 0d) {
-                return -1;
-            }
-            // NB: We do not assume a uniform distribution of the estimates within the instances.
-            return Long.compare(t1.getGeometricMeanEstimate(), t2.getGeometricMeanEstimate());
-        };
     }
 
     public TimeEstimate times(double scalar) {

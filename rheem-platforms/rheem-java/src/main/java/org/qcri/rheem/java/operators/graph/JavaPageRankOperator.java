@@ -11,6 +11,8 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
@@ -34,10 +36,11 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    JavaExecutor javaExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            JavaExecutor javaExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         CollectionChannel.Instance input = (CollectionChannel.Instance) inputs[0];
         StreamChannel.Instance output = (StreamChannel.Instance) outputs[0];
 
@@ -47,7 +50,7 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
 
         output.accept(pageRankStream);
 
-        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
+        return ExecutionOperator.modelQuasiEagerExecution(inputs, outputs, operatorContext);
     }
 
     /**

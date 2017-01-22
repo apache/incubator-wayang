@@ -1,18 +1,21 @@
 package org.qcri.rheem.core.optimizer;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph;
 import org.qcri.rheem.core.optimizer.costs.*;
 import org.qcri.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
 import org.qcri.rheem.core.plan.rheemplan.*;
-import org.qcri.rheem.core.platform.ExecutionState;
 import org.qcri.rheem.core.platform.Platform;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
+import org.qcri.rheem.core.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,6 +27,11 @@ import java.util.stream.Stream;
 public abstract class OptimizationContext {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    /**
+     * The {@link Job} whose {@link RheemPlan} is to be optimized.
+     */
+    protected final Job job;
 
     /**
      * The instance in that this instance is nested - or {@code null} if it is top-level.
@@ -42,11 +50,6 @@ public abstract class OptimizationContext {
     private final OptimizationContext base;
 
     /**
-     * {@link Configuration} that is used to create estimates here.
-     */
-    private final Configuration configuration;
-
-    /**
      * {@link ChannelConversionGraph} used for the optimization.
      */
     private final ChannelConversionGraph channelConversionGraph;
@@ -59,13 +62,15 @@ public abstract class OptimizationContext {
     /**
      * Create a new, plain instance.
      */
-    public OptimizationContext(Configuration configuration) {
-        this(configuration,
+    public OptimizationContext(Job job) {
+        this(
+                job,
                 null,
                 null,
                 -1,
-                new ChannelConversionGraph(configuration),
-                initializePruningStrategies(configuration));
+                new ChannelConversionGraph(job.getConfiguration()),
+                initializePruningStrategies(job.getConfiguration())
+        );
     }
 
     /**
@@ -73,28 +78,28 @@ public abstract class OptimizationContext {
      *
      * @param operator the single {@link Operator} of this instance
      */
-    public OptimizationContext(Operator operator, Configuration configuration) {
-        this(configuration, null, null, -1, new ChannelConversionGraph(configuration), initializePruningStrategies(configuration));
+    public OptimizationContext(Job job, Operator operator) {
+        this(
+                job,
+                null,
+                null,
+                -1,
+                new ChannelConversionGraph(job.getConfiguration()),
+                initializePruningStrategies(job.getConfiguration())
+        );
         this.addOneTimeOperator(operator);
-    }
-
-    /**
-     * Creates a new (nested) instance for the given {@code loop}.
-     */
-    private OptimizationContext(LoopSubplan loop, LoopContext hostLoopContext, int iterationNumber, Configuration configuration) {
-        this(configuration, null, hostLoopContext, iterationNumber,
-                hostLoopContext.getOptimizationContext().getChannelConversionGraph(),
-                hostLoopContext.getOptimizationContext().getPruningStrategies());
-        this.addOneTimeOperators(loop);
     }
 
     /**
      * Base constructor.
      */
-    protected OptimizationContext(Configuration configuration, OptimizationContext base, LoopContext hostLoopContext,
-                                  int iterationNumber, ChannelConversionGraph channelConversionGraph,
+    protected OptimizationContext(Job job,
+                                  OptimizationContext base,
+                                  LoopContext hostLoopContext,
+                                  int iterationNumber,
+                                  ChannelConversionGraph channelConversionGraph,
                                   List<PlanEnumerationPruningStrategy> pruningStrategies) {
-        this.configuration = configuration;
+        this.job = job;
         this.base = base;
         this.hostLoopContext = hostLoopContext;
         this.iterationNumber = iterationNumber;
@@ -211,7 +216,7 @@ public abstract class OptimizationContext {
     public abstract void clearMarks();
 
     public Configuration getConfiguration() {
-        return this.configuration;
+        return this.job.getConfiguration();
     }
 
     /**
@@ -220,7 +225,7 @@ public abstract class OptimizationContext {
     public abstract Map<Operator, OperatorContext> getLocalOperatorContexts();
 
     /**
-     * @return whether there is {@link TimeEstimate} for each {@link ExecutionOperator}
+     * @return whether there is a {@link TimeEstimate} for each {@link ExecutionOperator}
      */
     public abstract boolean isTimeEstimatesComplete();
 
@@ -257,13 +262,59 @@ public abstract class OptimizationContext {
      *
      * @return a {@link Collection} of said {@link DefaultOptimizationContext}s
      */
-    public abstract Collection<DefaultOptimizationContext> getDefaultOptimizationContexts();
+    public abstract List<DefaultOptimizationContext> getDefaultOptimizationContexts();
+
+    /**
+     * Provide the {@link Job} whose optimization is supported by this instance.
+     *
+     * @return the {@link Job}
+     */
+    public Job getJob() {
+        return this.job;
+    }
+
+    /**
+     * Stores a value into the {@link Job}-global cache.
+     *
+     * @param key   identifies the value
+     * @param value the value
+     * @return the value previously associated with the key or else {@code null}
+     */
+    public Object putIntoJobCache(String key, Object value) {
+        return this.getJob().getCache().put(key, value);
+    }
+
+    /**
+     * Queries the {@link Job}-global cache.
+     *
+     * @param key that is associated with the value to be retrieved
+     * @return the value associated with the key or else {@code null}
+     */
+    public Object queryJobCache(String key) {
+        return this.getJob().getCache().get(key);
+    }
+
+    /**
+     * Queries the {@link Job}-global cache.
+     *
+     * @param key         that is associated with the value to be retrieved
+     * @param resultClass the expected {@link Class} of the retrieved value
+     * @return the value associated with the key or else {@code null}
+     */
+    public <T> T queryJobCache(String key, Class<T> resultClass) {
+        final Object value = this.queryJobCache(key);
+        try {
+            return resultClass.cast(value);
+        } catch (ClassCastException e) {
+            throw new RheemException("Job-cache value cannot be casted as requested.", e);
+        }
+    }
 
     /**
      * Represents a single optimization context of an {@link Operator}. This can be thought of as a single, virtual
      * execution of the {@link Operator}.
      */
-    public class OperatorContext {
+    public class OperatorContext implements EstimationContext {
 
         /**
          * The {@link Operator} that is being decorated with this instance.
@@ -287,14 +338,29 @@ public abstract class OptimizationContext {
         private LoadProfile loadProfile;
 
         /**
-         * {@link TimeEstimate} for the {@link ExecutionState}.
+         * {@link TimeEstimate} for the {@link ExecutionOperator}.
          */
         protected TimeEstimate timeEstimate;
+
+        /**
+         * Cost estimate for the {@link ExecutionOperator}.
+         */
+        private ProbabilisticDoubleInterval costEstimate;
+
+        /**
+         * The squashed version of the {@link #costEstimate}.
+         */
+        private double squashedCostEstimate;
 
         /**
          * Reflects the number of executions of the {@link #operator}. This, e.g., relevant in {@link LoopContext}s.
          */
         private int numExecutions = 1;
+
+        /**
+         * In case this instance corresponds to an execution, this field keeps track of this execution.
+         */
+        private ExecutionLineageNode lineage;
 
         /**
          * Creates a new instance.
@@ -335,10 +401,12 @@ public abstract class OptimizationContext {
             Arrays.fill(this.outputCardinalityMarkers, false);
         }
 
+        @Override
         public CardinalityEstimate[] getInputCardinalities() {
             return this.inputCardinalities;
         }
 
+        @Override
         public CardinalityEstimate[] getOutputCardinalities() {
             return this.outputCardinalities;
         }
@@ -358,6 +426,10 @@ public abstract class OptimizationContext {
                 );
             }
             this.inputCardinalities[inputIndex] = cardinality;
+
+            // Invalidate dependent estimate caches.
+            this.timeEstimate = null;
+            this.costEstimate = null;
         }
 
         /**
@@ -375,6 +447,10 @@ public abstract class OptimizationContext {
                 );
             }
             this.outputCardinalities[outputIndex] = cardinality;
+
+            // Invalidate dependent estimate caches.
+            this.timeEstimate = null;
+            this.costEstimate = null;
         }
 
         /**
@@ -398,6 +474,21 @@ public abstract class OptimizationContext {
             this.operator.propagateOutputCardinality(outputIndex, this, targetContext);
         }
 
+        @Override
+        public double getDoubleProperty(String propertyKey, double fallback) {
+            try {
+                return ReflectionUtils.toDouble(ReflectionUtils.getProperty(this.operator, propertyKey));
+            } catch (Exception e) {
+                logger.error("Could not retrieve property \"{}\" from {}.", propertyKey, this.operator, e);
+                return fallback;
+            }
+        }
+
+        @Override
+        public Collection<String> getPropertyKeys() {
+            return this.operator.getEstimationContextProperties();
+        }
+
         /**
          * @return the {@link OptimizationContext} in which this instance resides
          */
@@ -408,8 +499,8 @@ public abstract class OptimizationContext {
         /**
          * Update the {@link LoadProfile} and {@link TimeEstimate} of this instance.
          */
-        public void updateTimeEstimate() {
-            this.updateTimeEstimate(this.getOptimizationContext().getConfiguration());
+        public void updateCostEstimate() {
+            this.updateCostEstimate(this.getOptimizationContext().getConfiguration());
         }
 
         /**
@@ -417,19 +508,19 @@ public abstract class OptimizationContext {
          *
          * @param configuration provides the necessary functions
          */
-        private void updateTimeEstimate(Configuration configuration) {
+        private void updateCostEstimate(Configuration configuration) {
             if (!this.operator.isExecutionOperator()) return;
 
-            final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
-            final LoadProfileEstimator<ExecutionOperator> loadProfileEstimator = configuration
-                    .getOperatorLoadProfileEstimatorProvider()
-                    .provideFor(executionOperator);
+            // Estimate the LoadProfile.
+            final LoadProfileEstimator loadProfileEstimator = this.getLoadProfileEstimator();
             try {
                 this.loadProfile = LoadProfileEstimators.estimateLoadProfile(this, loadProfileEstimator);
             } catch (Exception e) {
                 throw new RheemException(String.format("Load profile estimation for %s failed.", this.operator), e);
             }
 
+            // Calculate the TimeEstimate.
+            final ExecutionOperator executionOperator = (ExecutionOperator) this.operator;
             final Platform platform = executionOperator.getPlatform();
             final LoadProfileToTimeConverter timeConverter = configuration.getLoadProfileToTimeConverterProvider().provideFor(platform);
             this.timeEstimate = TimeEstimate.MINIMUM.plus(timeConverter.convert(this.loadProfile));
@@ -438,22 +529,89 @@ public abstract class OptimizationContext {
                         "Setting time estimate of {} to {}.", this.operator, this.timeEstimate
                 );
             }
+
+            // Calculate the cost estimate.
+            final TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
+            this.costEstimate = timeToCostConverter.convertWithoutFixCosts(this.timeEstimate);
+
+            // Squash the cost estimate.
+            final ToDoubleFunction<ProbabilisticDoubleInterval> costSquasher = configuration.getCostSquasherProvider().provide();
+            this.squashedCostEstimate = costSquasher.applyAsDouble(this.costEstimate);
         }
 
+        /**
+         * Get the {@link LoadProfileEstimator} for the {@link ExecutionOperator} in this instance.
+         *
+         * @return the {@link LoadProfileEstimator}
+         */
+        public LoadProfileEstimator getLoadProfileEstimator() {
+            if (!(this.operator instanceof ExecutionOperator)) {
+                return null;
+            }
+            return this.getOptimizationContext().getConfiguration()
+                    .getOperatorLoadProfileEstimatorProvider()
+                    .provideFor((ExecutionOperator) this.operator);
+        }
+
+        /**
+         * Merges {@code that} instance into this instance. The lineage is not merged, though.
+         *
+         * @param that the other instance
+         * @return this instance
+         */
+        protected OperatorContext merge(OperatorContext that) {
+            assert this.operator == that.operator;
+            assert this.inputCardinalities.length == that.inputCardinalities.length;
+            assert this.outputCardinalities.length == that.outputCardinalities.length;
+
+            System.arraycopy(that.inputCardinalities, 0, this.inputCardinalities, 0, that.inputCardinalities.length);
+            System.arraycopy(that.inputCardinalityMarkers, 0, this.inputCardinalityMarkers, 0, that.inputCardinalityMarkers.length);
+            System.arraycopy(that.outputCardinalities, 0, this.outputCardinalities, 0, that.outputCardinalities.length);
+            System.arraycopy(that.outputCardinalityMarkers, 0, this.outputCardinalityMarkers, 0, that.outputCardinalityMarkers.length);
+
+            this.loadProfile = that.loadProfile;
+            this.timeEstimate = that.timeEstimate;
+            this.costEstimate = that.costEstimate;
+            this.squashedCostEstimate = that.squashedCostEstimate;
+            this.numExecutions = that.numExecutions;
+
+            return this;
+        }
+
+        /**
+         * Increases the {@link CardinalityEstimate}, {@link TimeEstimate}, and {@link ProbabilisticDoubleInterval cost estimate}
+         * of this instance by those of the given instance.
+         *
+         * @param that the increment
+         */
         public void increaseBy(OperatorContext that) {
             assert this.operator.equals(that.operator);
             this.addTo(this.inputCardinalities, that.inputCardinalities);
             this.addTo(this.inputCardinalityMarkers, that.inputCardinalityMarkers);
             this.addTo(this.outputCardinalities, that.outputCardinalities);
             this.addTo(this.outputCardinalityMarkers, that.outputCardinalityMarkers);
-            this.timeEstimate = this.timeEstimate == null ?
-                    that.timeEstimate :
-                    that.timeEstimate == null ?
-                            this.timeEstimate :
-                            this.timeEstimate.plus(that.timeEstimate);
-            this.numExecutions++;
+            if (that.costEstimate != null) {
+                if (this.costEstimate == null) {
+                    this.loadProfile = that.loadProfile;
+                    this.timeEstimate = that.timeEstimate;
+                    this.costEstimate = that.costEstimate;
+                    this.squashedCostEstimate = that.squashedCostEstimate;
+                } else {
+                    this.loadProfile = this.loadProfile.plus(that.loadProfile);
+                    this.timeEstimate = this.timeEstimate.plus(that.timeEstimate);
+                    this.costEstimate = this.costEstimate.plus(that.costEstimate);
+                    this.squashedCostEstimate += that.squashedCostEstimate;
+                }
+            }
+            this.numExecutions += that.numExecutions;
         }
 
+        /**
+         * Adds up {@link CardinalityEstimate}s.
+         *
+         * @param aggregate the accumulator
+         * @param delta     the increment
+         */
         private void addTo(CardinalityEstimate[] aggregate, CardinalityEstimate[] delta) {
             assert aggregate.length == delta.length;
             for (int i = 0; i < aggregate.length; i++) {
@@ -484,16 +642,40 @@ public abstract class OptimizationContext {
 
         public LoadProfile getLoadProfile() {
             if (this.loadProfile == null) {
-                this.updateTimeEstimate();
+                this.updateCostEstimate();
             }
             return this.loadProfile;
         }
 
         public TimeEstimate getTimeEstimate() {
             if (this.timeEstimate == null) {
-                this.updateTimeEstimate();
+                this.updateCostEstimate();
             }
             return this.timeEstimate;
+        }
+
+        /**
+         * Get the estimated costs incurred by this instance (without fix costs).
+         *
+         * @return the cost estimate
+         */
+        public ProbabilisticDoubleInterval getCostEstimate() {
+            if (this.costEstimate == null) {
+                this.updateCostEstimate();
+            }
+            return this.costEstimate;
+        }
+
+        /**
+         * Get the squashed estimated costs incurred by this instance (without fix costs).
+         *
+         * @return the squashed cost estimate
+         */
+        public double getSquashedCostEstimate() {
+            if (this.costEstimate == null) {
+                this.updateCostEstimate();
+            }
+            return this.squashedCostEstimate;
         }
 
         @Override
@@ -501,6 +683,19 @@ public abstract class OptimizationContext {
             return String.format("%s[%s]", this.getClass().getSimpleName(), this.getOperator());
         }
 
+        /**
+         * Resets the estimates of this instance.
+         */
+        public void resetEstimates() {
+            Arrays.fill(this.inputCardinalities, null);
+            Arrays.fill(this.inputCardinalityMarkers, false);
+            Arrays.fill(this.outputCardinalities, null);
+            Arrays.fill(this.outputCardinalityMarkers, false);
+            this.loadProfile = null;
+            this.timeEstimate = null;
+            this.costEstimate = null;
+            this.squashedCostEstimate = 0d;
+        }
     }
 
     /**
@@ -512,6 +707,8 @@ public abstract class OptimizationContext {
 
         private final List<OptimizationContext> iterationContexts;
 
+        private AggregateOptimizationContext aggregateOptimizationContext;
+
         protected LoopContext(OperatorContext loopSubplanContext) {
             assert loopSubplanContext.getOptimizationContext() == OptimizationContext.this;
             assert loopSubplanContext.getOperator() instanceof LoopSubplan;
@@ -522,7 +719,9 @@ public abstract class OptimizationContext {
             final int numIterationContexts = loop.getNumExpectedIterations() + 1;
             this.iterationContexts = new ArrayList<>(numIterationContexts);
             for (int iterationNumber = 0; iterationNumber < numIterationContexts; iterationNumber++) {
-                this.iterationContexts.add(new DefaultOptimizationContext(loop, this, iterationNumber, OptimizationContext.this.configuration));
+                this.iterationContexts.add(
+                        new DefaultOptimizationContext(loop, this, iterationNumber)
+                );
             }
         }
 
@@ -580,10 +779,7 @@ public abstract class OptimizationContext {
             newSecondToLastIterationContext.iterationNumber++;
 
             // Insert and return the copied iteration context.
-            this.iterationContexts.set(
-                    iterationContexts.size() - 2,
-                    newSecondToLastIterationContext
-            );
+            this.iterationContexts.set(iterationContexts.size() - 2, newSecondToLastIterationContext);
             return newSecondToLastIterationContext;
         }
 
@@ -591,17 +787,11 @@ public abstract class OptimizationContext {
             return (LoopSubplan) this.loopSubplanContext.getOperator();
         }
 
-        public OptimizationContext createAggregateContext() {
-            return this.createAggregateContext(0, this.iterationContexts.size());
-        }
-
-        public OptimizationContext createAggregateContext(int fromIteration, int toIteration) {
-            return new AggregateOptimizationContext(
-                    this,
-                    fromIteration == 0 && toIteration == this.iterationContexts.size() ?
-                            this.iterationContexts :
-                            this.iterationContexts.subList(fromIteration, toIteration)
-            );
+        public AggregateOptimizationContext getAggregateContext() {
+            if (this.aggregateOptimizationContext == null) {
+                this.aggregateOptimizationContext = new AggregateOptimizationContext(this);
+            }
+            return this.aggregateOptimizationContext;
         }
     }
 

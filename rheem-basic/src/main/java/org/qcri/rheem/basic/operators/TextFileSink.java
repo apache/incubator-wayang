@@ -2,6 +2,7 @@ package org.qcri.rheem.basic.operators;
 
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.costs.DefaultLoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.types.DataSetType;
 
@@ -29,8 +30,10 @@ public class TextFileSink<T> extends UnarySink<T> {
                         Objects::toString,
                         typeClass,
                         String.class,
-                        new DefaultLoadEstimator<>(1, 1, .99d, (in, out) -> 10 * in[0]),
-                        new DefaultLoadEstimator<>(1, 1, .99d, (in, out) -> 1000)
+                        new NestableLoadProfileEstimator(
+                                new DefaultLoadEstimator(1, 1, .99d, (in, out) -> 10 * in[0]),
+                                new DefaultLoadEstimator(1, 1, .99d, (in, out) -> 1000)
+                        )
                 )
         );
     }

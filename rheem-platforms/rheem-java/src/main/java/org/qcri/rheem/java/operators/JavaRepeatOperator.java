@@ -6,7 +6,9 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
@@ -42,12 +44,16 @@ public class JavaRepeatOperator<Type>
 
     @Override
     @SuppressWarnings("unchecked")
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    JavaExecutor javaExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            JavaExecutor javaExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+
+        final ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
 
         final JavaChannelInstance input;
         switch (this.getState()) {
@@ -77,7 +83,7 @@ public class JavaRepeatOperator<Type>
             this.setState(State.RUNNING);
         }
 
-        return Collections.singletonList(operatorContext);
+        return executionLineageNode.collectAndMark();
     }
 
     @Override

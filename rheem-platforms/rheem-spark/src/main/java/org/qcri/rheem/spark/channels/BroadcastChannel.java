@@ -15,12 +15,8 @@ import org.qcri.rheem.spark.execution.SparkExecutor;
  */
 public class BroadcastChannel extends Channel {
 
-    private static final boolean IS_REUSABLE = true;
-
-    private static final boolean IS_INTERNAL = true;
-
     public static final ChannelDescriptor DESCRIPTOR = new ChannelDescriptor(
-            BroadcastChannel.class, IS_REUSABLE, IS_REUSABLE, !IS_INTERNAL && IS_REUSABLE);
+            BroadcastChannel.class, true, true);
 
     public BroadcastChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
         super(descriptor, outputSlot);

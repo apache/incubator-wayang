@@ -21,18 +21,12 @@ import java.util.OptionalLong;
  */
 public class RddChannel extends Channel {
 
-    private static final boolean IS_UNCACHED_REUSABLE = false;
-
-    private static final boolean IS_CACHED_REUSABLE = true;
-
-    private static final boolean IS_INTERNAL = true;
-
     public static final ChannelDescriptor UNCACHED_DESCRIPTOR = new ChannelDescriptor(
-            RddChannel.class, IS_UNCACHED_REUSABLE, IS_UNCACHED_REUSABLE, !IS_INTERNAL && IS_UNCACHED_REUSABLE
+            RddChannel.class, false, false
     );
 
     public static final ChannelDescriptor CACHED_DESCRIPTOR = new ChannelDescriptor(
-            RddChannel.class, IS_CACHED_REUSABLE, IS_CACHED_REUSABLE, !IS_INTERNAL && IS_CACHED_REUSABLE
+            RddChannel.class, true, true
     );
 
     public RddChannel(ChannelDescriptor descriptor, OutputSlot<?> outputSlot) {
@@ -72,7 +66,7 @@ public class RddChannel extends Channel {
         }
 
         public void accept(JavaRDD<?> rdd, SparkExecutor sparkExecutor) throws RheemException {
-            if (this.isMarkedForInstrumentation()) {
+            if (this.isMarkedForInstrumentation() && !this.isRddCached()) {
                 final Accumulator<Integer> accumulator = sparkExecutor.sc.accumulator(0);
                 this.rdd = rdd.filter(dataQuantum -> {
                     accumulator.add(1);
@@ -93,6 +87,7 @@ public class RddChannel extends Channel {
         @Override
         protected void doDispose() {
             if (this.accumulator != null) {
+                this.setMeasuredCardinality(this.accumulator.value());
                 this.accumulator = null;
             }
             if (this.isRddCached() && this.rdd != null) {

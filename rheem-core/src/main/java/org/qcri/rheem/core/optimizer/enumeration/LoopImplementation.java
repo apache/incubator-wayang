@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
@@ -55,8 +56,53 @@ public class LoopImplementation {
         return timeEstimate;
     }
 
+    /**
+     * Retrieve the cost estimate for this instance. Fix costs are not excluded.
+     *
+     * @return the cost estimate
+     */
+    public ProbabilisticDoubleInterval getCostEstimate() {
+        // What about the Junctions? Are they already included?
+        // Yes, in-loop Junctions are contained in the body implementations and the surrounding Junctions are
+        // contained in the top-level PlanImplementation.
+        ProbabilisticDoubleInterval costEstimate = ProbabilisticDoubleInterval.zero;
+        for (int i = 0; i < this.iterationImplementations.size(); i++) {
+            costEstimate = costEstimate.plus(this.iterationImplementations.get(i).getCostEstimate());
+        }
+        return costEstimate;
+    }
+
+    /**
+     * Retrieve the squashed cost estimate for this instance. Fix costs are not excluded.
+     *
+     * @return the squashed cost estimate
+     */
+    public double getSquashedCostEstimate() {
+        // What about the Junctions? Are they already included?
+        // Yes, in-loop Junctions are contained in the body implementations and the surrounding Junctions are
+        // contained in the top-level PlanImplementation.
+        double costEstimate = 0d;
+        for (int i = 0; i < this.iterationImplementations.size(); i++) {
+            costEstimate += this.iterationImplementations.get(i).getSquashedCostEstimate();
+        }
+        return costEstimate;
+    }
+
     public List<IterationImplementation> getIterationImplementations() {
         return this.iterationImplementations;
+    }
+
+    /**
+     * Originally, only a single {@link IterationImplementation} is supported by Rheem. This method explicitly
+     * captures this assumption.
+     *
+     * @return the single {@link IterationImplementation}
+     */
+    public IterationImplementation getSingleIterationImplementation() {
+        if (this.iterationImplementations.size() != 1) {
+            throw new AssertionError("Expected only a single iteration implementation. Has this changed?");
+        }
+        return this.iterationImplementations.get(0);
     }
 
     /**
@@ -66,7 +112,7 @@ public class LoopImplementation {
      */
     Stream<ExecutionOperator> streamOperators() {
         // It is sufficient to take the first IterationImplementation to see all ExecutionOperators.
-        return this.getIterationImplementations().get(0).streamOperators();
+        return this.getSingleIterationImplementation().streamOperators();
     }
 
     /**
@@ -171,6 +217,24 @@ public class LoopImplementation {
          */
         public TimeEstimate getTimeEstimate() {
             return this.bodyImplementation.getTimeEstimate(false);
+        }
+
+        /**
+         * Retrieve the cost estimate for this instance. Global overhead is not included.
+         *
+         * @return the cost estimate
+         */
+        public ProbabilisticDoubleInterval getCostEstimate() {
+            return this.bodyImplementation.getCostEstimate(false);
+        }
+
+        /**
+         * Retrieve the cost estimate for this instance. Global overhead is not included.
+         *
+         * @return the cost estimate
+         */
+        public double getSquashedCostEstimate() {
+            return this.bodyImplementation.getSquashedCostEstimate(false);
         }
 
         /**

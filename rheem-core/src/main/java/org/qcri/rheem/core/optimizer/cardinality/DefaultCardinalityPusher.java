@@ -47,7 +47,10 @@ public class DefaultCardinalityPusher extends CardinalityPusher {
         for (int outputIndex : this.relevantOutputIndices) {
             final CardinalityEstimator estimator = this.cardinalityEstimators[outputIndex];
             if (estimator != null) {
-                opCtx.setOutputCardinality(outputIndex, estimator.estimate(configuration, opCtx.getInputCardinalities()));
+                opCtx.setOutputCardinality(
+                        outputIndex,
+                        estimator.estimate(opCtx.getOptimizationContext(), opCtx.getInputCardinalities())
+                );
             }
         }
     }

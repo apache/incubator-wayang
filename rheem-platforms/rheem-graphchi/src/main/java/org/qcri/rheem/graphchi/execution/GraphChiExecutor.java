@@ -6,8 +6,10 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.platform.*;
-import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.graphchi.operators.GraphChiExecutionOperator;
+import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
 
 import java.util.*;
 
@@ -20,8 +22,11 @@ public class GraphChiExecutor extends ExecutorTemplate {
 
     private final Configuration configuration;
 
+    private final Job job;
+
     public GraphChiExecutor(GraphChiPlatform platform, Job job) {
-        super(job == null ? null : job.getCrossPlatformExecutor());
+        super(job.getCrossPlatformExecutor());
+        this.job = job;
         this.platform = platform;
         this.configuration = job.getConfiguration();
     }
@@ -53,18 +58,29 @@ public class GraphChiExecutor extends ExecutorTemplate {
         for (int i = 0; i < inputChannelInstances.length; i++) {
             inputChannelInstances[i] = executionState.getChannelInstance(task.getInputChannel(i));
         }
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(graphChiExecutionOperator);
         ChannelInstance[] outputChannelInstances = new ChannelInstance[task.getNumOuputChannels()];
         for (int i = 0; i < outputChannelInstances.length; i++) {
-            outputChannelInstances[i] = task
-                    .getOutputChannel(i)
-                    .createInstance(this, optimizationContext.getOperatorContext(graphChiExecutionOperator), i);
+            outputChannelInstances[i] = task.getOutputChannel(i).createInstance(this, operatorContext, i);
         }
-        graphChiExecutionOperator.execute(inputChannelInstances, outputChannelInstances, this.configuration);
+
+        long startTime = System.currentTimeMillis();
+        final Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> results =
+                graphChiExecutionOperator.execute(inputChannelInstances, outputChannelInstances, operatorContext);
+        long endTime = System.currentTimeMillis();
+
+        final Collection<ExecutionLineageNode> executionLineageNodes = results.getField0();
+        final Collection<ChannelInstance> producedChannelInstances = results.getField1();
+
         for (ChannelInstance outputChannelInstance : outputChannelInstances) {
             if (outputChannelInstance != null) {
                 executionState.register(outputChannelInstance);
             }
         }
+
+        final PartialExecution partialExecution = this.createPartialExecution(executionLineageNodes, endTime - startTime);
+        executionState.add(partialExecution);
+        this.registerMeasuredCardinalities(producedChannelInstances);
     }
 
     @Override

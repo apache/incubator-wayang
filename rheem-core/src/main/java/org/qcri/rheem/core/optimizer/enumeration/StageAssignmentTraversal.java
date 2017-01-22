@@ -15,9 +15,10 @@ import java.util.stream.Collectors;
 
 /**
  * Builds an {@link ExecutionPlan} from a {@link ExecutionTaskFlow}.
- * <p>Specifically, subdivides the {@link ExecutionTask}s into {@link PlatformExecution} and {@link ExecutionStage}s,
- * thereby discarding already executed {@link ExecutionTask}s. As of now, these are recognized as producers of
- * {@link Channel}s that are copied. This is because of {@link ExecutionTaskFlowCompiler} that copies {@link Channel}s
+ * <p>Specifically, subdivides the {@link ExecutionTask}s into {@link PlatformExecution}s and {@link ExecutionStage}s,
+ * thereby discarding already executed {@link ExecutionTask}s.</p>
+ * <p>As of now, these are recognized as producers of
+ * {@link Channel}s that are copied (see {@link Channel#isCopy()}). This is because of {@link ExecutionTaskFlowCompiler} that copies {@link Channel}s
  * to different alternative {@link ExecutionPlan}s on top of existing fixed {@link ExecutionTask}s.</p>
  */
 public class StageAssignmentTraversal extends OneTimeExecutable {
@@ -93,6 +94,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
         // Do some initialization.
         this.executionTaskFlow = executionTaskFlow;
         // TODO: The following criterion isolates LoopHeadOperators into own ExecutionStages, so as to avoid problems connected to circular dependencies. But this might not be as performant as it gets.
+        this.splittingCriteria.add(StageAssignmentTraversal::isSuitableForBreakpoint);
         this.splittingCriteria.add(StageAssignmentTraversal::isLoopHeadInvolved);
         this.splittingCriteria.add(StageAssignmentTraversal::isLoopBoarder); // Loop boards need be split always.
         this.splittingCriteria.addAll(Arrays.asList(splittingCriteria));
@@ -109,6 +111,16 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
                                              StageSplittingCriterion... additionalSplittingCriteria) {
         final StageAssignmentTraversal instance = new StageAssignmentTraversal(executionTaskFlow, additionalSplittingCriteria);
         return instance.buildExecutionPlan();
+    }
+
+    /**
+     * Tells whether the given {@link Channel} lends itself to a {@link org.qcri.rheem.core.platform.Breakpoint}. In
+     * that case, we might want to split an {@link ExecutionStage} here.
+     *
+     * @see StageSplittingCriterion#shouldSplit(ExecutionTask, Channel, ExecutionTask)
+     */
+    private static boolean isSuitableForBreakpoint(ExecutionTask producer, Channel channel, ExecutionTask consumer) {
+        return channel.isSuitableForBreakpoint();
     }
 
     /**
@@ -237,7 +249,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
      * If a {@link PlatformExecution} is provided, the {@link InterimStage} will be associated with it.
      */
     private void createStageFor(ExecutionTask task, PlatformExecution platformExecution) {
-        assert task.getStage() == null;
+        assert task.getStage() == null : String.format("%s has already stage %s.", task, task.getStage());
 
         // See if there is already an InterimStage.
         if (this.assignedInterimStages.containsKey(task)) {
@@ -289,6 +301,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
      */
     private void expandDownstream(ExecutionTask task, InterimStage expandableStage) {
         for (Channel channel : task.getOutputChannels()) {
+            assert channel != null : String.format("%s has null output channels.", task);
             if (channel.isExecutionBreaker()) {
                 expandableStage.setOutbound(task);
             }
@@ -786,7 +799,7 @@ public class StageAssignmentTraversal extends OneTimeExecutable {
                             .anyMatch(consumer -> !this.allTasks.contains(consumer));
                     if (!isInterStageRequired) continue;
                     this.outboundTasks.add(task);
-                    if (outputChannel.isInterStageCapable()) continue;
+//                    if (outputChannel.isInterStageCapable()) continue;
                     // TODO: We cannot "exchange" Channels so easily any more.
 //                    if (!task.getOperator().getPlatform().getChannelManager()
 //                            .exchangeWithInterstageCapable(outputChannel)) {

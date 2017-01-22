@@ -2,9 +2,12 @@ package org.qcri.rheem.profiler.log;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.qcri.rheem.core.optimizer.costs.EstimationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.AtomicExecution;
+import org.qcri.rheem.core.platform.AtomicExecutionGroup;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.profiling.ExecutionLog;
@@ -12,6 +15,11 @@ import org.qcri.rheem.core.util.Bitmask;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.graphchi.GraphChi;
+import org.qcri.rheem.java.Java;
+import org.qcri.rheem.postgres.Postgres;
+import org.qcri.rheem.spark.Spark;
+import org.qcri.rheem.sqlite3.Sqlite3;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,10 +47,15 @@ public class GeneticOptimizerApp {
     List<PartialExecution> partialExecutions;
 
     /**
-     * Maintains a {@link LoadProfileEstimator} for every type of {@link ExecutionOperator} in the
+     * The {@link #partialExecutions} grouped by their containing {@link ExecutionOperator}s.
+     */
+    private final List<List<PartialExecution>> partialExecutionGroups;
+
+    /**
+     * Maintains a {@link DynamicLoadProfileEstimator} for every {@link Configuration} key in the
      * {@link #partialExecutions}.
      */
-    Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators;
+    Map<String, DynamicLoadProfileEstimator> estimators;
 
     /**
      * Maintains variables that quantify the overhead for initializing a {@link Platform}.
@@ -57,14 +70,75 @@ public class GeneticOptimizerApp {
     public GeneticOptimizerApp(Configuration configuration) {
         this.configuration = configuration;
 
+        // Initialize platforms.
+        Java.platform();
+        Spark.platform();
+        Sqlite3.platform();
+        Postgres.platform();
+        GraphChi.platform();
+
         // Load the ExecutionLog.
-        final double samplingFactor = 1d;
+        double samplingFactor = this.configuration.getDoubleProperty("rheem.profiler.ga.sampling", 1d);
+        double maxCardinalitySpread = this.configuration.getDoubleProperty("rheem.profiler.ga.max-cardinality-spread", 1d);
+        double minCardinalityConfidence = this.configuration.getDoubleProperty("rheem.profiler.ga.min-cardinality-confidence", 1d);
+        long minExecutionTime = this.configuration.getLongProperty("rheem.profiler.ga.min-exec-time", 1);
         try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
-            this.partialExecutions = executionLog.stream()
-                    .filter(partialExecution -> new Random().nextDouble() < samplingFactor)
-                    .collect(Collectors.toList());
+            this.partialExecutions = executionLog.stream().collect(Collectors.toList());
+
+            int lastSize = this.partialExecutions.size();
+            this.partialExecutions.removeIf(partialExecution -> !this.checkEstimatorTemplates(partialExecution));
+            int newSize = this.partialExecutions.size();
+            System.out.printf("Removed %d executions with no template-based estimators.\n", lastSize - newSize);
+            lastSize = newSize;
+
+            this.partialExecutions.removeIf(partialExecution -> !this.checkSpread(partialExecution, maxCardinalitySpread));
+            newSize = this.partialExecutions.size();
+            System.out.printf("Removed %d executions with a too large cardinality spread (> %.2f).\n", lastSize - newSize, minCardinalityConfidence);
+            lastSize = newSize;
+
+            this.partialExecutions.removeIf(partialExecution -> !this.checkNonEmptyCardinalities(partialExecution));
+            newSize = this.partialExecutions.size();
+            System.out.printf("Removed %d executions with zero cardinalities.\n", lastSize - newSize);
+            lastSize = newSize;
+
+            this.partialExecutions.removeIf(partialExecution -> !this.checkConfidence(partialExecution, minCardinalityConfidence));
+            newSize = this.partialExecutions.size();
+            System.out.printf("Removed %d executions with a too low cardinality confidence (< %.2f).\n", lastSize - newSize, minCardinalityConfidence);
+            lastSize = newSize;
+
+            this.partialExecutions.removeIf(partialExecution -> partialExecution.getMeasuredExecutionTime() < minExecutionTime);
+            newSize = this.partialExecutions.size();
+            System.out.printf("Removed %d executions with a too short runtime (< %,d ms).\n", lastSize - newSize, minExecutionTime);
+            lastSize = newSize;
+
+            this.partialExecutions.removeIf(partialExecution -> new Random().nextDouble() > samplingFactor);
+            newSize = this.partialExecutions.size();
+            System.out.printf("Removed %d executions due to sampling.\n", lastSize - newSize);
         } catch (Exception e) {
             throw new RheemException("Could not evaluate execution log.", e);
+        }
+
+        // Group the PartialExecutions.
+        this.partialExecutionGroups = this.groupPartialExecutions(this.partialExecutions).entrySet().stream()
+                .sorted((e1, e2) -> Integer.compare(e1.getKey().size(), e2.getKey().size()))
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+
+        // Apply binning if requested.
+        double binningStretch = this.configuration.getDoubleProperty("rheem.profiler.ga.binning", 1.1d);
+        if (binningStretch > 1d) {
+            System.out.print("Applying binning... ");
+            int numOriginalPartialExecutions = this.partialExecutions.size();
+            this.partialExecutions.clear();
+            for (List<PartialExecution> group : this.partialExecutionGroups) {
+                final Collection<PartialExecution> reducedGroup = this.binByExecutionTime(group, binningStretch);
+                group.retainAll(reducedGroup);
+                this.partialExecutions.addAll(reducedGroup);
+            }
+            System.out.printf(
+                    "reduced the number of partial executions from %d to %d.\n",
+                    numOriginalPartialExecutions, this.partialExecutions.size()
+            );
         }
 
         // Initialize the optimization space with its LoadProfileEstimators and associated Variables.
@@ -72,25 +146,12 @@ public class GeneticOptimizerApp {
         this.estimators = new HashMap<>();
         this.platformOverheads = new HashMap<>();
 
-        Map<Set<Class<? extends ExecutionOperator>>, List<PartialExecution>> partialExecutionClasses = new HashMap<>();
         for (PartialExecution partialExecution : this.partialExecutions) {
-
-            // Index the PartialExecution by its ExecutionOperators.
-            final Set<Class<? extends ExecutionOperator>> execOpClasses = getExecutionOperatorClasses(partialExecution);
-            partialExecutionClasses
-                    .computeIfAbsent(execOpClasses, key -> new LinkedList<>())
-                    .add(partialExecution);
-
-            // Initialize an LoadProfileEstimator for each of the ExecutionOperators.
-            for (PartialExecution.OperatorExecution execution : partialExecution.getOperatorExecutions()) {
-                this.estimators.computeIfAbsent(
-                        execution.getOperator().getClass(),
-                        key -> DynamicLoadProfileEstimators.createSuitableEstimator(
-                                execution.getOperator(),
-                                this.optimizationSpace,
-                                this.configuration
-                        )
-                );
+            // Instrument the partial executions.
+            for (AtomicExecutionGroup executionGroup : partialExecution.getAtomicExecutionGroups()) {
+                for (AtomicExecution atomicExecution : executionGroup.getAtomicExecutions()) {
+                    this.instrument(atomicExecution);
+                }
             }
 
             for (Platform platform : partialExecution.getInitializedPlatforms()) {
@@ -102,10 +163,126 @@ public class GeneticOptimizerApp {
         }
 
         System.out.printf(
-                "Loaded %d execution records with %d execution operator types and %d platform overheads.\n",
+                "Loaded %d execution records with %d template-based estimators types and %d platform overheads.\n",
                 this.partialExecutions.size(), estimators.keySet().size(), this.platformOverheads.size()
         );
     }
+
+    /**
+     * Check if all {@link CardinalityEstimate}s for the {@link PartialExecution} are sufficiently confident.
+     *
+     * @param partialExecution         whose {@link CardinalityEstimate}s should be checked
+     * @param minCardinalityConfidence the minimum confidence
+     * @return whether the {@link CardinalityEstimate}s are sufficiently confident
+     */
+    private boolean checkConfidence(PartialExecution partialExecution, double minCardinalityConfidence) {
+        return partialExecution.getAtomicExecutionGroups().stream().allMatch(
+                executionGroup -> {
+                    final EstimationContext estimationContext = executionGroup.getEstimationContext();
+                    for (CardinalityEstimate cardinality : estimationContext.getInputCardinalities()) {
+                        if (cardinality == null) continue;
+                        if (cardinality.getCorrectnessProbability() < minCardinalityConfidence) return false;
+                    }
+                    for (CardinalityEstimate cardinality : estimationContext.getOutputCardinalities()) {
+                        if (cardinality == null) continue;
+                        if (cardinality.getCorrectnessProbability() < minCardinalityConfidence) return false;
+                    }
+                    return true;
+                }
+        );
+    }
+
+    /**
+     * Check if all {@link CardinalityEstimate}s for the {@link PartialExecution} are greater than zero.
+     *
+     * @param partialExecution whose {@link CardinalityEstimate}s should be checked
+     * @return whether the {@link CardinalityEstimate}s are not equal to zero
+     */
+    private boolean checkNonEmptyCardinalities(PartialExecution partialExecution) {
+        return partialExecution.getAtomicExecutionGroups().stream().allMatch(
+                executionGroup -> {
+                    final EstimationContext estimationContext = executionGroup.getEstimationContext();
+                    for (CardinalityEstimate cardinality : estimationContext.getInputCardinalities()) {
+                        if (cardinality == null) continue;
+                        if (cardinality.getUpperEstimate() == 0) {
+                            return false;
+                        }
+                    }
+                    for (CardinalityEstimate cardinality : estimationContext.getOutputCardinalities()) {
+                        if (cardinality == null) continue;
+                        if (cardinality.getUpperEstimate() == 0) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+        );
+    }
+
+    /**
+     * Check if this {@link PartialExecution} contains any template-based {@link LoadProfileEstimator}s.
+     *
+     * @param partialExecution that should be checked
+     * @return whether the {@code partialExecution} contains at least one template
+     */
+    private boolean checkEstimatorTemplates(PartialExecution partialExecution) {
+        return !this.getLoadProfileEstimatorTemplateKeys(partialExecution).isEmpty();
+    }
+
+    /**
+     * Check if all {@link CardinalityEstimate}s for the {@link PartialExecution} are sufficiently narrow.
+     *
+     * @param partialExecution     whose {@link CardinalityEstimate}s should be checked
+     * @param maxCardinalitySpread the maximum spread of the {@link CardinalityEstimate}s
+     * @return whether the {@link CardinalityEstimate}s are sufficiently narrow
+     */
+    private boolean checkSpread(PartialExecution partialExecution, double maxCardinalitySpread) {
+        return partialExecution.getAtomicExecutionGroups().stream().allMatch(
+                executionGroup -> {
+                    final EstimationContext estimationContext = executionGroup.getEstimationContext();
+                    for (CardinalityEstimate cardinality : estimationContext.getInputCardinalities()) {
+                        if (cardinality == null) continue;
+                        if (cardinality.getLowerEstimate() * maxCardinalitySpread < cardinality.getUpperEstimate()) {
+                            return false;
+                        }
+                    }
+                    for (CardinalityEstimate cardinality : estimationContext.getOutputCardinalities()) {
+                        if (cardinality == null) continue;
+                        if (cardinality.getLowerEstimate() * maxCardinalitySpread < cardinality.getUpperEstimate()) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+        );
+    }
+
+    /**
+     * Wrap the {@link LoadProfileEstimator}s of the given {@link AtomicExecution} with {@link DynamicLoadEstimator}s
+     * where possible.
+     *
+     * @param atomicExecution that should be instrumented
+     */
+    private void instrument(AtomicExecution atomicExecution) {
+        final DynamicLoadProfileEstimator dynamicLoadProfileEstimator = DynamicLoadProfileEstimators.createEstimatorFor(
+                atomicExecution.getLoadProfileEstimator(),
+                this.configuration,
+                this.optimizationSpace
+        );
+        atomicExecution.setLoadProfileEstimator(dynamicLoadProfileEstimator);
+
+        // Keep track of the estimators.
+        Queue<LoadProfileEstimator> instrumentedEstimators = new LinkedList<>();
+        instrumentedEstimators.add(dynamicLoadProfileEstimator);
+        while (!instrumentedEstimators.isEmpty()) {
+            final LoadProfileEstimator estimator = instrumentedEstimators.poll();
+            if (estimator instanceof DynamicLoadProfileEstimator && estimator.getConfigurationKey() != null) {
+                this.estimators.put(estimator.getConfigurationKey(), (DynamicLoadProfileEstimator) estimator);
+            }
+            instrumentedEstimators.addAll(estimator.getNestedEstimators());
+        }
+    }
+
 
     public void run() {
         if (this.optimizationSpace.getNumDimensions() == 0) {
@@ -113,65 +290,101 @@ public class GeneticOptimizerApp {
             System.exit(0);
         }
 
-        // Get execution groups.
-        List<List<PartialExecution>> executionGroups = this.groupPartialExecutions(this.partialExecutions).entrySet().stream()
-                .sorted((e1, e2) -> Integer.compare(e1.getKey().size(), e2.getKey().size()))
-                .map(Map.Entry::getValue)
-                .collect(Collectors.toList());
-
+        // Initialize form the configuration.
+        int maxGen = (int) this.configuration.getLongProperty("rheem.profiler.ga.maxgenerations", 5000);
+        int maxStableGen = (int) this.configuration.getLongProperty("rheem.profiler.ga.maxstablegenerations", 2000);
+        double minFitness = this.configuration.getDoubleProperty("rheem.profiler.ga.minfitness", .0d);
+        int superOptimizations = (int) this.configuration.getLongProperty("rheem.profiler.ga.superoptimizations", 3);
+        boolean isBlocking = this.configuration.getBooleanProperty("rheem.profiler.ga.blocking", false);
+        long maxPartialExecutionRemovals = this.configuration.getLongProperty("rheem.profiler.ga.noise-filter.max", 3);
+        double partialExecutionRemovalThreshold = this.configuration.getDoubleProperty("rheem.profiler.ga.noise-filter.threshold", 2);
 
         // Create the root optimizer and an initial population.
         GeneticOptimizer generalOptimizer = this.createOptimizer(this.partialExecutions);
         List<Individual> population = generalOptimizer.createInitialPopulation();
         int generation = 0;
 
-        int maxGen = (int) this.configuration.getLongProperty("rheem.profiler.ga.maxgenerations", 5000);
-        int maxStableGen = (int) this.configuration.getLongProperty("rheem.profiler.ga.maxstablegenerations", 2000);
-        double minFitness = this.configuration.getDoubleProperty("rheem.profiler.ga.minfitness", .9d);
-        int superOptimizations = (int) this.configuration.getLongProperty("rheem.profiler.ga.superoptimizations", 3);
-
         // Optimize on blocks.
-        if (this.configuration.getBooleanProperty("rheem.profiler.ga.block", false)) {
-            for (List<PartialExecution> group : executionGroups) {
-                final Collection<PartialExecution> reducedGroup = this.reduceByExecutionTime(group, 1.5);
-                final PartialExecution representative = RheemCollections.getAny(reducedGroup);
-                final List<String> subjects = Stream.concat(
-                        representative.getOperatorExecutions().stream().map(operatorExecution -> operatorExecution.getOperator().getClass().getSimpleName()),
-                        representative.getInitializedPlatforms().stream().map(Platform::getName)
-                ).collect(Collectors.toList());
-                if (reducedGroup.size() < 2) {
-                    System.out.printf("Few measurement points for %s\n", subjects);
+        if (isBlocking) {
+            for (List<PartialExecution> group : this.partialExecutionGroups) {
+                final PartialExecution representative = RheemCollections.getAny(group);
+                final Set<String> templateKeys = this.getLoadProfileEstimatorTemplateKeys(representative);
+                if (group.size() < 2) {
+                    System.out.printf("Few measurement points for %s\n", templateKeys);
                 }
-                if (representative.getOperatorExecutions().size() > 3) {
-                    System.out.printf("Many subjects for %s\n", subjects);
+                if (representative.getAtomicExecutionGroups().size() > 3) {
+                    System.out.printf("Many subjects for %s\n", templateKeys);
                 }
 
-                long minExecTime = reducedGroup.stream().mapToLong(PartialExecution::getMeasuredExecutionTime).min().getAsLong();
-                long maxExecTime = reducedGroup.stream().mapToLong(PartialExecution::getMeasuredExecutionTime).max().getAsLong();
+                long minExecTime = group.stream().mapToLong(PartialExecution::getMeasuredExecutionTime).min().getAsLong();
+                long maxExecTime = group.stream().mapToLong(PartialExecution::getMeasuredExecutionTime).max().getAsLong();
                 if (maxExecTime - minExecTime < 1000) {
-                    System.out.printf("Narrow training data for %s\n", subjects);
+                    System.out.printf("Narrow training data for %s\n", templateKeys);
                     continue;
                 }
 
                 final Tuple<Integer, List<Individual>> newGeneration = this.superOptimize(
-                        superOptimizations, population, reducedGroup, generation, maxGen, maxStableGen, minFitness
+                        superOptimizations, population, group, generation, maxGen, maxStableGen, minFitness
                 );
                 generation = newGeneration.getField0();
                 population = newGeneration.getField1();
 
-                final GeneticOptimizer tempOptimizer = this.createOptimizer(reducedGroup);
+                final GeneticOptimizer tempOptimizer = this.createOptimizer(group);
                 this.printResults(tempOptimizer, population.get(0));
             }
         }
 
-        // Optimize on the complete training data.
-        final Tuple<Integer, List<Individual>> newGeneration = this.optimize(
-                population, generalOptimizer, generation, maxGen, maxStableGen, minFitness
-        );
-        generation = newGeneration.getField0();
-        population = newGeneration.getField1();
-        Individual fittestIndividual = population.get(0);
-        printResults(generalOptimizer, fittestIndividual);
+        while (true) {
+            // Optimize on the complete training data.
+            final Tuple<Integer, List<Individual>> newGeneration = this.optimize(
+                    population, generalOptimizer, generation, maxGen, maxStableGen, minFitness
+            );
+            generation = newGeneration.getField0();
+            population = newGeneration.getField1();
+            Individual fittestIndividual = population.get(0);
+            printResults(generalOptimizer, fittestIndividual);
+
+            if (maxPartialExecutionRemovals > 0) {
+                // Gather the PartialExecutions that are not well explained by the learned model.
+                List<Tuple<PartialExecution, Double>> partialExecutionDeviations = new ArrayList<>();
+                for (PartialExecution partialExecution : partialExecutions) {
+                    final double timeEstimate = fittestIndividual.estimateTime(
+                            partialExecution, this.platformOverheads, this.configuration
+                    );
+                    double deviation = (Math.max(timeEstimate, partialExecution.getMeasuredExecutionTime()) + 500) /
+                            (Math.min(timeEstimate, partialExecution.getMeasuredExecutionTime()) + 500);
+                    if (deviation > partialExecutionRemovalThreshold) {
+                        partialExecutionDeviations.add(new Tuple<>(partialExecution, deviation));
+                    }
+                }
+
+                // Check if we actually have a good model.
+                if (partialExecutionDeviations.isEmpty()) {
+                    System.out.printf("All %d executions are explained well by the current model.\n", this.partialExecutions.size());
+                    break;
+                }
+
+                // Remove the worst PartialExecutions.
+                System.out.printf("The current model is not explaining well %d of %d measured executions.\n",
+                        partialExecutionDeviations.size(),
+                        this.partialExecutions.size()
+                );
+                partialExecutionDeviations.sort((ped1, ped2) -> ped2.getField1().compareTo(ped1.getField1()));
+                long numRemovables = maxPartialExecutionRemovals;
+                for (Tuple<PartialExecution, Double> partialExecutionDeviation : partialExecutionDeviations) {
+                    if (numRemovables-- <= 0) break;
+                    final PartialExecution partialExecution = partialExecutionDeviation.getField0();
+                    final double deviation = partialExecutionDeviation.getField1();
+                    final double timeEstimate = fittestIndividual.estimateTime(
+                            partialExecution, this.platformOverheads, this.configuration
+                    );
+                    System.out.printf("Removing %s... (estimated %s, deviation %,.2f)\n",
+                            format(partialExecution), Formats.formatDuration(Math.round(timeEstimate)), deviation
+                    );
+                    this.partialExecutions.remove(partialExecution);
+                }
+            }
+        }
     }
 
     private void printResults(GeneticOptimizer optimizer, Individual individual) {
@@ -184,13 +397,13 @@ public class GeneticOptimizerApp {
         List<PartialExecution> data = new ArrayList<>(optimizer.getData());
         data.sort((e1, e2) -> Long.compare(e2.getMeasuredExecutionTime(), e1.getMeasuredExecutionTime()));
         for (PartialExecution partialExecution : data) {
-            final TimeEstimate timeEstimate = individual.estimateTime(partialExecution, this.estimators, this.platformOverheads, this.configuration);
-            System.out.printf("Actual %13s | Estimated: %72s | %3d operators | %s\n",
+            final double timeEstimate = individual.estimateTime(partialExecution, this.platformOverheads, this.configuration);
+            System.out.printf("Actual %13s | Estimated: %72s | %3d execution groups | %s\n",
                     Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
-                    timeEstimate,
-                    partialExecution.getOperatorExecutions().size(),
+                    Formats.formatDuration(Math.round(timeEstimate)),
+                    partialExecution.getAtomicExecutionGroups().size(),
                     Stream.concat(
-                            partialExecution.getOperatorExecutions().stream().map(operatorExecution -> operatorExecution.getOperator().getClass().getSimpleName()),
+                            partialExecution.getAtomicExecutionGroups().stream().map(AtomicExecutionGroup::toString),
                             partialExecution.getInitializedPlatforms().stream().map(Platform::getName)
                     ).collect(Collectors.toList())
             );
@@ -213,7 +426,7 @@ public class GeneticOptimizerApp {
                     Math.round(overhead.getValue(individual))
             );
         }
-        for (LoadProfileEstimator<Individual> estimator : estimators.values()) {
+        for (LoadProfileEstimator estimator : estimators.values()) {
             if (estimator instanceof DynamicLoadProfileEstimator) {
                 final DynamicLoadProfileEstimator dynamicLoadProfileEstimator = (DynamicLoadProfileEstimator) estimator;
                 if (!optimizedVariables.containsAll(dynamicLoadProfileEstimator.getEmployedVariables())) continue;
@@ -229,7 +442,13 @@ public class GeneticOptimizerApp {
      * @return the {@link GeneticOptimizer}
      */
     private GeneticOptimizer createOptimizer(Collection<PartialExecution> partialExecutions) {
-        return new GeneticOptimizer(this.optimizationSpace, partialExecutions, this.estimators, this.platformOverheads, this.configuration);
+        return new GeneticOptimizer(
+                this.optimizationSpace,
+                partialExecutions,
+                this.estimators,
+                this.platformOverheads,
+                this.configuration
+        );
     }
 
     private Tuple<Integer, List<Individual>> superOptimize(
@@ -279,15 +498,15 @@ public class GeneticOptimizerApp {
             return new Tuple<>(currentGeneration, individuals);
         }
 
-        int updateFrequency = (int) this.configuration.getLongProperty("rheem.profiler.ga.intermediateupdate", -1);
+        int updateFrequency = (int) this.configuration.getLongProperty("rheem.profiler.ga.intermediateupdate", 10000);
         System.out.printf("Optimizing %d variables on %d partial executions (e.g., %s).\n",
                 optimizer.getActivatedGenes().cardinality(),
                 optimizer.getData().size(),
-                RheemCollections.getAny(optimizer.getData()).getOperatorExecutions()
+                RheemCollections.getAny(optimizer.getData()).getAtomicExecutionGroups()
         );
 
         optimizer.updateFitness(individuals);
-        double checkpointFitness = Double.NEGATIVE_INFINITY;
+        double checkpointedFitness = Double.NEGATIVE_INFINITY;
         int i;
         for (i = 0; i < maxGenerations; i++, currentGeneration++) {
             // Print status.
@@ -303,16 +522,17 @@ public class GeneticOptimizerApp {
             individuals = optimizer.evolve(individuals);
 
             if (updateFrequency > 0 && i > 0 && i % updateFrequency == 0) {
+                System.out.println("Intermediate update:");
                 this.printResults(optimizer, individuals.get(0));
             }
 
             // Check whether we seem to be stuck in a (local) optimum.
             if (i % maxStableGenerations == 0) {
-                final double bestFitness = individuals.get(0).getFitness();
-                if (checkpointFitness >= bestFitness && bestFitness >= minFitness && i > 0) {
+                final double currentFitness = individuals.get(0).getFitness();
+                if (!(currentFitness >= checkpointedFitness + 0.001) && currentFitness >= minFitness && i > 0) {
                     break;
                 } else {
-                    checkpointFitness = bestFitness;
+                    checkpointedFitness = currentFitness;
                 }
             }
         }
@@ -328,47 +548,61 @@ public class GeneticOptimizerApp {
     }
 
     /**
-     * Group {@link PartialExecution}s by their comprised {@link ExecutionOperator}s.
+     * Group {@link PartialExecution}s by their comprised {@link LoadProfileEstimator}s template.
      *
      * @param partialExecutions the {@link PartialExecution}s
      * @return the grouping of the {@link #partialExecutions}
      */
-    private Map<Set<Class<? extends ExecutionOperator>>, List<PartialExecution>> groupPartialExecutions(
-            Collection<PartialExecution> partialExecutions) {
-        Map<Set<Class<? extends ExecutionOperator>>, List<PartialExecution>> groups = new HashMap<>();
+    private Map<Set<String>, List<PartialExecution>> groupPartialExecutions(Collection<PartialExecution> partialExecutions) {
+        Map<Set<String>, List<PartialExecution>> groups = new HashMap<>();
         for (PartialExecution partialExecution : partialExecutions) {
 
             // Determine the ExecutionOperator classes in the partialExecution.
-            final Set<Class<? extends ExecutionOperator>> execOpClasses = getExecutionOperatorClasses(partialExecution);
+            final Set<String> templateKeys = this.getLoadProfileEstimatorTemplateKeys(partialExecution);
 
             // Index the partialExecution.
-            groups.computeIfAbsent(execOpClasses, key -> new LinkedList<>())
-                    .add(partialExecution);
+            groups.computeIfAbsent(templateKeys, key -> new LinkedList<>()).add(partialExecution);
         }
 
         return groups;
     }
 
     /**
-     * Extract the {@link ExecutionOperator} {@link Class}es in the given {@link PartialExecution}.
+     * Extract the {@link LoadProfileEstimator} template keys in the given {@link PartialExecution}.
      *
      * @param partialExecution the {@link PartialExecution}
      * @return the {@link ExecutionOperator} {@link Class}es
      */
-    private Set<Class<? extends ExecutionOperator>> getExecutionOperatorClasses(PartialExecution partialExecution) {
-        return partialExecution.getOperatorExecutions().stream()
-                .map(PartialExecution.OperatorExecution::getOperator)
-                .map(ExecutionOperator::getClass)
+    private Set<String> getLoadProfileEstimatorTemplateKeys(PartialExecution partialExecution) {
+        return partialExecution.getAtomicExecutionGroups().stream()
+                .flatMap(group -> group.getAtomicExecutions().stream())
+                .flatMap(execution -> execution.getLoadProfileEstimator().getTemplateKeys().stream())
                 .collect(Collectors.toSet());
     }
 
-    private Collection<PartialExecution> reduceByExecutionTime(Collection<PartialExecution> partialExecutions, double densityFactor) {
+    /**
+     * Bin given {@link PartialExecution}s by their execution time and retain one representative per bin.
+     *
+     * @param partialExecutions the {@link PartialExecution}s
+     * @param densityFactor     the stretch of each bin
+     * @return the binned {@link PartialExecution}s
+     */
+    private Collection<PartialExecution> binByExecutionTime(Collection<PartialExecution> partialExecutions, double densityFactor) {
         Map<Integer, PartialExecution> resultBins = new HashMap<>();
         for (PartialExecution partialExecution : partialExecutions) {
             int key = (int) Math.round(Math.log1p(partialExecution.getMeasuredExecutionTime()) / Math.log(densityFactor));
             resultBins.put(key, partialExecution);
         }
         return resultBins.values();
+    }
+
+    private static String format(PartialExecution partialExecution) {
+        return String.format("[%d atomic execution groups in %s: %s, %s]",
+                partialExecution.getAtomicExecutionGroups().size(),
+                Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
+                partialExecution.getAtomicExecutionGroups(),
+                partialExecution.getInitializedPlatforms()
+        );
     }
 
     public static void main(String[] args) {

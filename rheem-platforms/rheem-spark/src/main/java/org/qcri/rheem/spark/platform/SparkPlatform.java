@@ -8,6 +8,7 @@ import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.LoadToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.core.platform.Platform;
@@ -157,6 +158,14 @@ public class SparkPlatform extends Platform {
                 LoadToTimeConverter.createLinearCoverter(networkMsPerMb / 1000000d),
                 (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate),
                 stretch
+        );
+    }
+
+    @Override
+    public TimeToCostConverter createTimeToCostConverter(Configuration configuration) {
+        return new TimeToCostConverter(
+                configuration.getDoubleProperty("rheem.spark.costs.fix"),
+                configuration.getDoubleProperty("rheem.spark.costs.per-ms")
         );
     }
 

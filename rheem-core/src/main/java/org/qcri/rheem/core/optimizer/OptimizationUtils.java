@@ -26,7 +26,7 @@ public class OptimizationUtils {
         do {
             final ExecutionTask producer = tracedChannel.getProducer();
             final ExecutionOperator producerOperator = producer.getOperator();
-            if (checkIfRheemPlanOperator(producerOperator)) {
+            if (!producerOperator.isAuxiliary()) {
                 producerOutput = producer.getOutputSlotFor(tracedChannel);
             } else {
                 assert producer.getNumInputChannels() == 1;
@@ -34,26 +34,6 @@ public class OptimizationUtils {
             }
         } while (producerOutput == null);
         return producerOutput;
-    }
-
-    /**
-     * Heuristically determines if an {@link ExecutionOperator} was specified in a {@link RheemPlan} or if
-     * it has been inserted by Rheem in a later stage.
-     *
-     * @param operator should be checked
-     * @return whether the {@code operator} is deemed to be user-specified
-     */
-    public static boolean checkIfRheemPlanOperator(ExecutionOperator operator) {
-        // A non-RheemPlan operator is presumed to be "free floating" and completely unconnected. Connections are only
-        // maintained via ExecutionTasks and Channels.
-        return !(operator.getParent() == null
-                && Arrays.stream(operator.getAllInputs())
-                .map(InputSlot::getOccupant)
-                .allMatch(Objects::isNull)
-                && Arrays.stream(operator.getAllOutputs())
-                .flatMap(outputSlot -> outputSlot.getOccupiedSlots().stream())
-                .allMatch(Objects::isNull)
-        );
     }
 
     /**
@@ -148,13 +128,12 @@ public class OptimizationUtils {
 
     /**
      * Uses the right part of the logistic regression curve to model a strictly growing function between
-     *
+     * {@code g0} and 1.
      * @param g0      the starting value at {@code x = 0}
      * @param epsilon the function should have a value {@code >= 1 - epsilon} for {@code x >= x0}
      * @param x0      the convergence {@code x} value
      * @param x       the actual input value to the function
      * @return the function value
-     * @{code g0} and 1.
      */
     public static double logisticGrowth(double g0, double epsilon, double x0, double x) {
         double a = 2 * (1 - g0);

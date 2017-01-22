@@ -2,30 +2,23 @@ package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
-import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * {@link Executor} implementation that employs a push model, i.e., data quanta are "pushed"
  * through the {@link ExecutionStage}.
  */
 public abstract class PushExecutorTemplate extends ExecutorTemplate {
-
-    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     protected final Job job;
 
@@ -46,42 +39,17 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
     /**
      * Executes an {@link ExecutionTask}.
      *
-     * @param taskActivator    provides the {@link ExecutionTask} and its input dependenchannelInstancees.
-     * @param isForceExecution whether execution is forced, i.e., lazy execution of {@link ExecutionTask} is prohibited
+     * @param taskActivator           provides the {@link ExecutionTask} and its input dependenchannelInstancees.
+     * @param isRequestEagerExecution whether the {@link ExecutionTask} should be executed eagerly if possible
      * @return the output {@link ChannelInstance}s of the {@link ExecutionTask}
      */
-    private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator taskActivator, boolean isForceExecution) {
+    private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator taskActivator, boolean isRequestEagerExecution) {
         return this.execute(
                 taskActivator.getTask(),
                 taskActivator.getInputChannelInstances(),
                 taskActivator.getOperatorContext(),
-                isForceExecution
+                isRequestEagerExecution
         );
-    }
-
-    /**
-     * Utility method to create the output {@link ChannelInstance}s for a certain {@link ExecutionTask}.
-     *
-     * @param task                    the {@link ExecutionTask}
-     * @param producerOperatorContext the {@link OptimizationContext.OperatorContext} for the {@link ExecutionTask}
-     * @param inputChannelInstances   the input {@link ChannelInstance}s for the {@code task}
-     * @return
-     */
-    protected ChannelInstance[] createOutputChannelInstances(ExecutionTask task,
-                                                             OptimizationContext.OperatorContext producerOperatorContext,
-                                                             List<ChannelInstance> inputChannelInstances) {
-        ChannelInstance[] channelInstances = new ChannelInstance[task.getNumOuputChannels()];
-        for (int outputIndex = 0; outputIndex < channelInstances.length; outputIndex++) {
-            final Channel outputChannel = task.getOutputChannel(outputIndex);
-            final ChannelInstance outputChannelInstance = outputChannel.createInstance(this, producerOperatorContext, outputIndex);
-            channelInstances[outputIndex] = outputChannelInstance;
-            for (ChannelInstance inputChannelInstance : inputChannelInstances) {
-                if (inputChannelInstance != null) {
-                    outputChannelInstance.addPredecessor(inputChannelInstance);
-                }
-            }
-        }
-        return channelInstances;
     }
 
     /**
@@ -90,62 +58,13 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
      * @param task                    that should be executed
      * @param inputChannelInstances   inputs into the {@code task}
      * @param producerOperatorContext
-     * @param isForceExecution        forbids lazy execution  @return the {@link ChannelInstance}s created as output of {@code task}
+     * @param isRequestEagerExecution whether the {@link ExecutionTask} should be executed eagerly if possible
+     * @return the {@link ChannelInstance}s created as output of {@code task}
      */
     protected abstract Tuple<List<ChannelInstance>, PartialExecution> execute(ExecutionTask task,
                                                                               List<ChannelInstance> inputChannelInstances,
                                                                               OptimizationContext.OperatorContext producerOperatorContext,
-                                                                              boolean isForceExecution);
-
-
-    /**
-     * Create a {@link PartialExecution} according to the given parameters.
-     *
-     * @param executedOperatorContexts {@link ExecutionOperator}s' {@link OptimizationContext.OperatorContext}s that
-     *                                 have been executed
-     * @param executionDuration        the measured execution duration in milliseconds
-     * @return the {@link PartialExecution} or {@link null} if nothing has been executed
-     */
-    protected PartialExecution createPartialExecution(
-            Collection<OptimizationContext.OperatorContext> executedOperatorContexts,
-            long executionDuration) {
-
-        if (executedOperatorContexts.isEmpty()) return null;
-
-        final PartialExecution partialExecution = new PartialExecution(executionDuration, executedOperatorContexts);
-        if (this.logger.isInfoEnabled()) {
-            this.logger.info(
-                    "Executed {} operator(s) in {} (estimated {}): {}",
-                    executedOperatorContexts.size(),
-                    Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
-                    partialExecution.getOverallTimeEstimate(),
-                    partialExecution.getOperatorContexts().stream()
-                            .map(opCtx -> String.format(
-                                    "%s(time=%s, cards=%s)",
-                                    opCtx.getOperator(), opCtx.getTimeEstimate(), formatCardinalities(opCtx)
-                            ))
-                            .collect(Collectors.toList())
-            );
-        }
-
-        return partialExecution;
-    }
-
-    private static String formatCardinalities(OptimizationContext.OperatorContext opCtx) {
-        StringBuilder sb = new StringBuilder().append('[');
-        String separator = "";
-        final CardinalityEstimate[] inputCardinalities = opCtx.getInputCardinalities();
-        for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
-            if (inputCardinalities[inputIndex] != null) {
-                String slotName = opCtx.getOperator().getNumInputs() > inputIndex ?
-                        opCtx.getOperator().getInput(inputIndex).getName() :
-                        "(none)";
-                sb.append(separator).append(slotName).append(": ").append(inputCardinalities[inputIndex]);
-                separator = ", ";
-            }
-        }
-        return sb.append(']').toString();
-    }
+                                                                              boolean isRequestEagerExecution);
 
     /**
      * Keeps track of state that is required within the execution of a single {@link ExecutionStage}. Specifically,
@@ -177,7 +96,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
             this.optimizationContext = optimizationContext;
 
             // Initialize the readyActivators.
-            assert !stage.getStartTasks().isEmpty() : String.format("No start tasks for {}.", stage);
+            assert !stage.getStartTasks().isEmpty() : String.format("No start tasks for %s.", stage);
             stage.getStartTasks().forEach(this::scheduleStartTask);
 
             // Initialize the terminalTasks.
@@ -221,7 +140,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                 final Tuple<List<ChannelInstance>, PartialExecution> executionResult = this.execute(readyActivator, task);
                 readyActivator.dispose();
 
-                // Register the outputChannelInstances (to obtain cardinality measurements and for furhter stages).
+                // Register the outputChannelInstances (to obtain cardinality measurements and for further stages).
                 final List<ChannelInstance> outputChannelInstances = executionResult.getField0();
                 outputChannelInstances.stream().filter(Objects::nonNull).forEach(this::store);
 
@@ -233,6 +152,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
                 // Activate successor ExecutionTasks.
                 this.activateSuccessorTasks(task, outputChannelInstances);
+                outputChannelInstances.stream().filter(Objects::nonNull).forEach(ChannelInstance::disposeIfUnreferenced);
             }
         }
 
@@ -245,8 +165,8 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
          * {@code null} if something has been actually executed
          */
         private Tuple<List<ChannelInstance>, PartialExecution> execute(TaskActivator readyActivator, ExecutionTask task) {
-            final boolean isForceExecution = this.terminalTasks.contains(task);
-            return this.executor().execute(readyActivator, isForceExecution);
+            final boolean isRequestEagerExecution = this.terminalTasks.contains(task);
+            return this.executor().execute(readyActivator, isRequestEagerExecution);
         }
 
         /**
@@ -299,9 +219,6 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
                         .anyMatch(consumer -> consumer.getOperator().isLoopHead())) {
                     this.executionState.register(channelInstance);
                 }
-
-                // Try to store cardinalities.
-                PushExecutorTemplate.this.addCardinalityIfNotInLoop(channelInstance);
 
                 // Release the ChannelInstance.
                 channelInstance.noteDiscardedReference(true);
@@ -447,5 +364,14 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
             }
             return true;
         }
+    }
+
+    /**
+     * Provide the {@link Job} that is processed by this instance.
+     *
+     * @return the {@link Job}
+     */
+    public Job getJob() {
+        return this.job;
     }
 }

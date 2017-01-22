@@ -11,26 +11,19 @@ import org.qcri.rheem.core.monitor.FileMonitor;
 import org.qcri.rheem.core.monitor.Monitor;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.optimizer.enumeration.*;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.*;
-import org.qcri.rheem.core.profiling.CardinalityRepository;
-import org.qcri.rheem.core.profiling.ExecutionLog;
-import org.qcri.rheem.core.profiling.InstrumentationStrategy;
-import org.qcri.rheem.core.util.*;
-import org.qcri.rheem.core.util.fs.FileSystem;
-import org.qcri.rheem.core.util.fs.FileSystems;
-import org.qcri.rheem.core.util.fs.LocalFileSystem;
-import org.qcri.rheem.core.profiling.PartialExecutionMeasurement;
+import org.qcri.rheem.core.profiling.*;
 import org.qcri.rheem.core.util.Formats;
 import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.ReflectionUtils;
@@ -76,7 +69,12 @@ public class Job extends OneTimeExecutable {
     /**
      * {@link OptimizationContext} for the {@link #rheemPlan}.
      */
-    private OptimizationContext optimizationContext;
+    private DefaultOptimizationContext optimizationContext;
+
+    /**
+     * General purpose cache.
+     */
+    private Map<String, Object> cache = new HashMap<>();
 
     /**
      * Executes the optimized {@link ExecutionPlan}.
@@ -99,11 +97,6 @@ public class Job extends OneTimeExecutable {
     private final StopWatch stopWatch;
 
     /**
-     * Provides IDs for {@link PartialExecutionMeasurement}s.
-     */
-    private int nextPartialExecutionMeasurementId = 0;
-
-    /**
      * {@link TimeMeasurement}s for the optimization and the execution phases.
      */
     private final TimeMeasurement optimizationRound, executionRound;
@@ -112,6 +105,11 @@ public class Job extends OneTimeExecutable {
      * Collects the {@link TimeEstimate}s of all (partially) executed {@link PlanImplementation}s.
      */
     private List<TimeEstimate> timeEstimates = new LinkedList<>();
+
+    /**
+     * Collects the cost estimates of all (partially) executed {@link PlanImplementation}s.
+     */
+    private List<ProbabilisticDoubleInterval> costEstimates = new LinkedList<>();
 
     /**
      * JAR files that are needed to execute the UDFs.
@@ -132,6 +130,18 @@ public class Job extends OneTimeExecutable {
             (producerTask, channel, consumerTask) -> false;
 
     /**
+     * The {@link PlanImplementation} that is being executed.
+     */
+    private PlanImplementation planImplementation;
+
+    /**
+     * Controls at which {@link CardinalityEstimate}s the execution should be interrupted.
+     */
+    private final CardinalityBreakpoint cardinalityBreakpoint;
+
+    private final boolean isProactiveReoptimization;
+
+    /**
      * Creates a new instance.
      *
      * @param name       name for this instance or {@code null} if a default name should be picked
@@ -145,6 +155,16 @@ public class Job extends OneTimeExecutable {
         this.rheemPlan = rheemPlan;
         for (String udfJar : udfJars) {
             this.addUdfJar(udfJar);
+        }
+
+        // Prepare re-optimization.
+        if (this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize")) {
+            this.cardinalityBreakpoint = new CardinalityBreakpoint(this.configuration);
+            this.isProactiveReoptimization =
+                    this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize.proactive", false);
+        } else {
+            this.cardinalityBreakpoint = null;
+            this.isProactiveReoptimization = false;
         }
 
         // Prepare instrumentation.
@@ -240,8 +260,7 @@ public class Job extends OneTimeExecutable {
             int executionId = 0;
             while (!this.execute(executionPlan, executionId)) {
                 this.optimizationRound.start();
-                this.postProcess(executionPlan, executionId);
-                executionId++;
+                if (this.postProcess(executionPlan, executionId)) executionId++;
                 this.optimizationRound.stop();
             }
 
@@ -267,6 +286,7 @@ public class Job extends OneTimeExecutable {
      * {@link PlanTransformation}s.
      */
     private void prepareRheemPlan() {
+        this.logger.info("Preparing plan...");
 
         // Prepare the RheemPlan for the optimization.
         this.optimizationRound.start("Prepare", "Prune&Isolate");
@@ -303,10 +323,12 @@ public class Job extends OneTimeExecutable {
      * {@link Operator}s and the execution profile and time of {@link ExecutionOperator}s.
      */
     private void estimateKeyFigures() {
+        this.logger.info("Estimating cardinalities and execution load...");
+
         this.optimizationRound.start("Cardinality&Load Estimation");
         if (this.cardinalityEstimatorManager == null) {
             this.optimizationRound.start("Cardinality&Load Estimation", "Create OptimizationContext");
-            this.optimizationContext = new DefaultOptimizationContext(this.rheemPlan, this.configuration);
+            this.optimizationContext = DefaultOptimizationContext.createFrom(this);
             this.optimizationRound.stop("Cardinality&Load Estimation", "Create OptimizationContext");
 
             this.optimizationRound.start("Cardinality&Load Estimation", "Create CardinalityEstimationManager");
@@ -327,16 +349,17 @@ public class Job extends OneTimeExecutable {
      * Determine a good/the best execution plan from a given {@link RheemPlan}.
      */
     private ExecutionPlan createInitialExecutionPlan() {
-        this.optimizationRound.start("Create Initial Execution Plan");
+        this.logger.info("Enumerating execution plans...");
 
-        // Defines the plan that we want to use in the end.
-        final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
+        this.optimizationRound.start("Create Initial Execution Plan");
 
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator();
 
-        this.optimizationRound.start("Create Initial Execution Plan", "Enumerate");
+        final TimeMeasurement enumerateMeasurment = this.optimizationRound.start("Create Initial Execution Plan", "Enumerate");
+        planEnumerator.setTimeMeasurement(enumerateMeasurment);
         final PlanEnumeration comprehensiveEnumeration = planEnumerator.enumerate(true);
+        planEnumerator.setTimeMeasurement(null);
         this.optimizationRound.stop("Create Initial Execution Plan", "Enumerate");
 
         final Collection<PlanImplementation> executionPlans = comprehensiveEnumeration.getPlanImplementations();
@@ -348,18 +371,20 @@ public class Job extends OneTimeExecutable {
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
         this.optimizationRound.start("Create Initial Execution Plan", "Pick Best Plan");
-        final PlanImplementation planImplementation = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, null, null, null);
+        this.pickBestExecutionPlan(executionPlans, null, null, null);
         this.timeEstimates.add(planImplementation.getTimeEstimate());
+        this.costEstimates.add(planImplementation.getCostEstimate());
         this.optimizationRound.stop("Create Initial Execution Plan", "Pick Best Plan");
 
+        this.logger.info("Compiling execution plan...");
         this.optimizationRound.start("Create Initial Execution Plan", "Split Stages");
-        final ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.createFrom(planImplementation);
+        final ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.createFrom(this.planImplementation);
         final ExecutionPlan executionPlan = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         this.optimizationRound.stop("Create Initial Execution Plan", "Split Stages");
 
-        planImplementation.mergeJunctionOptimizationContexts();
+        this.planImplementation.mergeJunctionOptimizationContexts();
 
-        planImplementation.logTimeEstimates();
+        this.planImplementation.logTimeEstimates();
 
         //assert executionPlan.isSane();
 
@@ -369,29 +394,30 @@ public class Job extends OneTimeExecutable {
     }
 
 
-    private PlanImplementation pickBestExecutionPlan(Comparator<TimeEstimate> timeEstimateComparator,
-                                                     Collection<PlanImplementation> executionPlans,
+    private PlanImplementation pickBestExecutionPlan(Collection<PlanImplementation> executionPlans,
                                                      ExecutionPlan existingPlan,
                                                      Set<Channel> openChannels,
                                                      Set<ExecutionStage> executedStages) {
 
         final PlanImplementation bestPlanImplementation = executionPlans.stream()
                 .reduce((p1, p2) -> {
-                    final TimeEstimate t1 = p1.getTimeEstimate();
-                    final TimeEstimate t2 = p2.getTimeEstimate();
-                    return timeEstimateComparator.compare(t1, t2) < 0 ? p1 : p2;
+                    final double t1 = p1.getSquashedCostEstimate();
+                    final double t2 = p2.getSquashedCostEstimate();
+                    return t1 < t2 ? p1 : p2;
                 })
                 .orElseThrow(() -> new RheemException("Could not find an execution plan."));
         this.logger.info("Picked {} as best plan.", bestPlanImplementation);
-        return bestPlanImplementation;
+        return this.planImplementation = bestPlanImplementation;
     }
 
     /**
      * Go over the given {@link RheemPlan} and update the cardinalities of data being passed between its
      * {@link Operator}s using the given {@link ExecutionState}.
+     *
+     * @return whether any cardinalities have been updated
      */
-    private void reestimateCardinalities(ExecutionState executionState) {
-        this.cardinalityEstimatorManager.pushCardinalityUpdates(executionState);
+    private boolean reestimateCardinalities(ExecutionState executionState) {
+        return this.cardinalityEstimatorManager.pushCardinalityUpdates(executionState, this.planImplementation);
     }
 
     /**
@@ -470,7 +496,7 @@ public class Job extends OneTimeExecutable {
         }
         this.crossPlatformExecutor.setBreakpoint(new ConjunctiveBreakpoint(
                 immediateBreakpoint,
-                new CardinalityBreakpoint(this.configuration),
+                this.cardinalityBreakpoint,
                 new NoIterationBreakpoint() // Avoid re-optimization inside of loops.
         ));
         breakpointRound.stop();
@@ -498,19 +524,36 @@ public class Job extends OneTimeExecutable {
     /**
      * Injects the cardinalities obtained from {@link Channel} instrumentation, potentially updates the {@link ExecutionPlan}
      * through re-optimization, and collects measured data.
+     *
+     * @return whether the {@link ExecutionPlan} has been re-optimized
      */
-    private void postProcess(ExecutionPlan executionPlan, int executionId) {
+    private boolean postProcess(ExecutionPlan executionPlan, int executionId) {
+        if (this.crossPlatformExecutor.isVetoingPlanChanges()) {
+            this.logger.info("The cross-platform executor is currently not allowing re-optimization.");
+            return false;
+        }
+
         final TimeMeasurement round = this.optimizationRound.start(String.format("Post-processing %d", executionId));
 
         round.start("Reestimate Cardinalities&Time");
-        this.reestimateCardinalities(this.crossPlatformExecutor);
+        boolean isCardinalitiesUpdated = this.reestimateCardinalities(this.crossPlatformExecutor);
         round.stop("Reestimate Cardinalities&Time");
 
         round.start("Update Execution Plan");
-        this.updateExecutionPlan(executionPlan);
+        if (isCardinalitiesUpdated) {
+            this.logger.info("Re-optimizing execution plan.");
+            this.updateExecutionPlan(executionPlan);
+        } else {
+            this.logger.info("Skipping re-optimization: no new insights on cardinalities.");
+            this.timeEstimates.add(this.timeEstimates.get(this.timeEstimates.size() - 1));
+            this.costEstimates.add(this.costEstimates.get(this.costEstimates.size() - 1));
+
+        }
         round.stop("Update Execution Plan");
 
         round.stop();
+
+        return true;
     }
 
     /**
@@ -518,23 +561,14 @@ public class Job extends OneTimeExecutable {
      */
     private void updateExecutionPlan(ExecutionPlan executionPlan) {
         // Defines the plan that we want to use in the end.
-        final Comparator<TimeEstimate> timeEstimateComparator = this.configuration.getTimeEstimateComparatorProvider().provide();
-
         // Find and copy the open Channels.
         final Set<ExecutionStage> completedStages = this.crossPlatformExecutor.getCompletedStages();
         final Set<ExecutionTask> completedTasks = completedStages.stream()
                 .flatMap(stage -> stage.getAllTasks().stream())
                 .collect(Collectors.toSet());
 
-        // Find Channels that have yet to be consumed by unexecuted ExecutionTasks.
-        // This must be done before scrapping the unexecuted ExecutionTasks!
-        final Set<Channel> openChannels = completedTasks.stream()
-                .flatMap(task -> Arrays.stream(task.getOutputChannels()))
-                .filter(channel -> channel.getConsumers().stream().anyMatch(consumer -> !completedTasks.contains(consumer)))
-                .collect(Collectors.toSet());
-
-        // Scrap unexecuted bits of the plan.
-        executionPlan.retain(completedStages);
+        // Find Channels that have yet to be consumed by unexecuted ExecutionTasks and scrap unexecuted bits of the plan.
+        final Set<Channel> openChannels = executionPlan.retain(completedStages);
 
         // Enumerate all possible plan.
         final PlanEnumerator planEnumerator = this.createPlanEnumerator(executionPlan, openChannels);
@@ -547,8 +581,9 @@ public class Job extends OneTimeExecutable {
 
         // Pick an execution plan.
         // Make sure that an execution plan can be created.
-        final PlanImplementation planImplementation = this.pickBestExecutionPlan(timeEstimateComparator, executionPlans, executionPlan,
-                openChannels, completedStages);
+        this.pickBestExecutionPlan(executionPlans, executionPlan, openChannels, completedStages);
+        this.timeEstimates.add(this.planImplementation.getTimeEstimate());
+        this.costEstimates.add(this.planImplementation.getCostEstimate());
 
         ExecutionTaskFlow executionTaskFlow = ExecutionTaskFlow.recreateFrom(
                 planImplementation, executionPlan, openChannels, completedStages
@@ -556,7 +591,7 @@ public class Job extends OneTimeExecutable {
         final ExecutionPlan executionPlanExpansion = ExecutionPlan.createFrom(executionTaskFlow, this.stageSplittingCriterion);
         executionPlan.expand(executionPlanExpansion);
 
-        planImplementation.mergeJunctionOptimizationContexts();
+        this.planImplementation.mergeJunctionOptimizationContexts();
 
         assert executionPlan.isSane();
     }
@@ -578,8 +613,42 @@ public class Job extends OneTimeExecutable {
         final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
         cardinalityRepository.storeAll(this.crossPlatformExecutor, this.optimizationContext);
 
-        // Log the execution time.
+        // Execution times.
         final Collection<PartialExecution> partialExecutions = this.crossPlatformExecutor.getPartialExecutions();
+
+        // Add the execution times to the experiment.
+        int nextPartialExecutionMeasurementId = 0;
+        for (PartialExecution partialExecution : partialExecutions) {
+            if (this.logger.isDebugEnabled()) {
+                for (AtomicExecutionGroup atomicExecutionGroup : partialExecution.getAtomicExecutionGroups()) {
+                    if (!(atomicExecutionGroup.getEstimationContext() instanceof OptimizationContext.OperatorContext)) {
+                        continue;
+                    }
+                    OptimizationContext.OperatorContext operatorContext =
+                            (OptimizationContext.OperatorContext) atomicExecutionGroup.getEstimationContext();
+
+                    for (CardinalityEstimate cardinality : operatorContext.getInputCardinalities()) {
+                        if (cardinality != null && !cardinality.isExact()) {
+                            this.logger.debug(
+                                    "Inexact input cardinality estimate {} for {}.",
+                                    cardinality, operatorContext.getOperator()
+                            );
+                        }
+                    }
+                    for (CardinalityEstimate cardinality : operatorContext.getOutputCardinalities()) {
+                        if (cardinality != null && !cardinality.isExact()) {
+                            this.logger.debug(
+                                    "Inexact output cardinality estimate {} for {}.",
+                                    cardinality, operatorContext.getOperator()
+                            );
+                        }
+                    }
+                }
+            }
+            String id = String.format("par-ex-%03d", nextPartialExecutionMeasurementId++);
+            final PartialExecutionMeasurement measurement = new PartialExecutionMeasurement(id, partialExecution, this.configuration);
+            this.experiment.addMeasurement(measurement);
+        }
 
         // Feed the execution log.
         try (ExecutionLog executionLog = ExecutionLog.open(this.configuration)) {
@@ -589,6 +658,7 @@ public class Job extends OneTimeExecutable {
         }
         this.optimizationRound.stop("Post-processing", "Log measurements");
 
+        // Log the execution time.
         long effectiveExecutionMillis = partialExecutions.stream()
                 .map(PartialExecution::getMeasuredExecutionTime)
                 .reduce(0L, (a, b) -> a + b);
@@ -600,7 +670,7 @@ public class Job extends OneTimeExecutable {
                 Formats.formatDuration(measuredExecutionMillis - effectiveExecutionMillis, true)
         );
         int i = 1;
-        for (TimeEstimate timeEstimate : timeEstimates) {
+        for (TimeEstimate timeEstimate : this.timeEstimates) {
             this.logger.info("Estimated execution time (plan {}): {}", i, timeEstimate);
             TimeMeasurement lowerEstimate = new TimeMeasurement(String.format("Estimate %d (lower)", i));
             lowerEstimate.setMillis(timeEstimate.getLowerEstimate());
@@ -610,6 +680,78 @@ public class Job extends OneTimeExecutable {
             this.stopWatch.getExperiment().addMeasurement(upperEstimate);
             i++;
         }
+
+        // Log the cost settings.
+        final Collection<Platform> consideredPlatforms = this.configuration.getPlatformProvider().provideAll();
+        for (Platform consideredPlatform : consideredPlatforms) {
+            final TimeToCostConverter timeToCostConverter = this.configuration
+                    .getTimeToCostConverterProvider()
+                    .provideFor(consideredPlatform);
+            this.experiment.getSubject().addConfiguration(
+                    String.format("Costs per ms (%s)", consideredPlatform.getName()),
+                    timeToCostConverter.getCostsPerMillisecond()
+            );
+            this.experiment.getSubject().addConfiguration(
+                    String.format("Fix costs (%s)", consideredPlatform.getName()),
+                    timeToCostConverter.getFixCosts()
+            );
+        }
+
+
+        // Log the execution costs.
+        double fixCosts = partialExecutions.stream()
+                .flatMap(partialExecution -> partialExecution.getInvolvedPlatforms().stream())
+                .map(platform -> this.configuration.getTimeToCostConverterProvider().provideFor(platform).getFixCosts())
+                .reduce(0d, (a, b) -> a + b);
+        double effectiveLowerCosts = fixCosts + partialExecutions.stream()
+                .map(PartialExecution::getMeasuredLowerCost)
+                .reduce(0d, (a, b) -> a + b);
+        double effectiveUpperCosts = fixCosts + partialExecutions.stream()
+                .map(PartialExecution::getMeasuredUpperCost)
+                .reduce(0d, (a, b) -> a + b);
+        this.logger.info("Accumulated costs: {} .. {}",
+                String.format("%,.2f", effectiveLowerCosts),
+                String.format("%,.2f", effectiveUpperCosts)
+        );
+        this.experiment.addMeasurement(
+                new CostMeasurement("Measured cost", effectiveLowerCosts, effectiveUpperCosts, 1d)
+        );
+        i = 1;
+        for (ProbabilisticDoubleInterval costEstimate : this.costEstimates) {
+            this.logger.info("Estimated costs (plan {}): {}", i, costEstimate);
+            this.experiment.addMeasurement(new CostMeasurement(
+                    String.format("Estimated costs (%d)", i),
+                    costEstimate.getLowerEstimate(),
+                    costEstimate.getUpperEstimate(),
+                    costEstimate.getCorrectnessProbability()
+            ));
+            i++;
+        }
+
+        // Log some plan metrics.
+        final PlanMetrics planMetrics = PlanMetrics.createFor(this.rheemPlan, "Plan Metrics");
+        this.logger.info("Plan metrics: {} virtual operators, {} execution operators, {} alternatives, {} combinations",
+                planMetrics.getNumVirtualOperators(),
+                planMetrics.getNumExecutionOperators(),
+                planMetrics.getNumAlternatives(),
+                planMetrics.getNumCombinations()
+        );
+        this.experiment.addMeasurement(planMetrics);
+    }
+
+    /**
+     * Whether a {@link Breakpoint} is requested for the given {@link OutputSlot}.
+     *
+     * @param output          the {@link OutputSlot}
+     * @param operatorContext the {@link OptimizationContext.OperatorContext} for the {@link OutputSlot} owner
+     * @return whether a {@link Breakpoint} is requested
+     */
+    public boolean isRequestBreakpointFor(OutputSlot<?> output, OptimizationContext.OperatorContext operatorContext) {
+        return this.isProactiveReoptimization
+                && output.getOwner().getInnermostLoop() == null
+                && this.cardinalityBreakpoint != null
+                && !this.cardinalityBreakpoint.approves(operatorContext.getOutputCardinality(output.getIndex())
+        );
     }
 
     /**
@@ -632,8 +774,8 @@ public class Job extends OneTimeExecutable {
         return this.crossPlatformExecutor;
     }
 
-    public OptimizationContext getOptimizationContext() {
-        return optimizationContext;
+    public DefaultOptimizationContext getOptimizationContext() {
+        return this.optimizationContext;
     }
 
     /**
@@ -660,15 +802,29 @@ public class Job extends OneTimeExecutable {
     }
 
     /**
-     * Adds a new {@link PartialExecutionMeasurement} to the {@link Experiment} of this instance.
+     * Provide the {@link RheemPlan} executed by this instance.
      *
-     * @param partialExecution provided data for the {@link PartialExecutionMeasurement}
-     * @return the {@link PartialExecutionMeasurement}
+     * @return the {@link RheemPlan}
      */
-    public PartialExecutionMeasurement addPartialExecutionMeasurement(PartialExecution partialExecution) {
-        String id = String.format("par-ex-%03d", this.nextPartialExecutionMeasurementId++);
-        final PartialExecutionMeasurement measurement = new PartialExecutionMeasurement(id, partialExecution);
-        this.experiment.addMeasurement(measurement);
-        return measurement;
+    public RheemPlan getRheemPlan() {
+        return this.rheemPlan;
+    }
+
+    /**
+     * Provide the {@link StopWatch} that is used to instrument the execution of this instance.
+     *
+     * @return the {@link StopWatch}
+     */
+    public StopWatch getStopWatch() {
+        return this.stopWatch;
+    }
+
+    /**
+     * Provides a general-purpose cache. Can be used to communicate job-global information.
+     *
+     * @return the cache
+     */
+    public Map<String, Object> getCache() {
+        return this.cache;
     }
 }

@@ -14,7 +14,9 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutor;
@@ -49,10 +51,11 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    SparkExecutor sparkExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            SparkExecutor sparkExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -108,8 +111,8 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator> optEstimator =
                 SparkExecutionOperator.super.createLoadProfileEstimator(configuration);
         LoadProfileEstimators.nestUdfEstimator(optEstimator, this.keyDescriptor0, configuration);
         LoadProfileEstimators.nestUdfEstimator(optEstimator, this.keyDescriptor1, configuration);
@@ -126,6 +129,11 @@ public class SparkJoinOperator<InputType0, InputType1, KeyType>
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         assert index <= this.getNumOutputs() || (index == 0 && this.getNumOutputs() == 0);
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
+    }
+
+    @Override
+    public boolean containsAction() {
+        return false;
     }
 
 }

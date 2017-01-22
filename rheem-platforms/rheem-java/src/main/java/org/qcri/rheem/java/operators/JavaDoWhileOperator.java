@@ -9,7 +9,9 @@ import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
@@ -52,12 +54,16 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
     @Override
     @SuppressWarnings("unchecked")
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    JavaExecutor javaExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            JavaExecutor javaExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
+
+        ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
+        executionLineageNode.addAtomicExecutionFromOperatorContext();
 
         final Predicate<Collection<ConvergenceType>> stoppingCondition =
                 javaExecutor.getCompiler().compile(this.criterionDescriptor);
@@ -65,7 +71,6 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
 
         boolean endloop = false;
 
-        Collection<OptimizationContext.OperatorContext> executedOperatorContexts = new LinkedList<>();
         final Collection<ConvergenceType> convergenceCollection;
         final JavaChannelInstance input;
         switch (this.getState()) {
@@ -79,9 +84,8 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
                 assert inputs[CONVERGENCE_INPUT_INDEX] != null;
 
                 convergenceCollection = ((CollectionChannel.Instance) inputs[CONVERGENCE_INPUT_INDEX]).provideCollection();
+                executionLineageNode.addPredecessor(inputs[CONVERGENCE_INPUT_INDEX].getLineage());
                 endloop = stoppingCondition.test(convergenceCollection);
-                executedOperatorContexts.add(operatorContext);
-                inputs[CONVERGENCE_INPUT_INDEX].getLazyChannelLineage().collectAndMark(executedOperatorContexts);
                 input = (JavaChannelInstance) inputs[ITERATION_INPUT_INDEX];
                 break;
             default:
@@ -100,7 +104,7 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
             this.setState(State.RUNNING);
         }
 
-        return executedOperatorContexts;
+        return executionLineageNode.collectAndMark();
     }
 
     @Override
@@ -109,8 +113,8 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
     }
 
     @Override
-    public Optional<LoadProfileEstimator<ExecutionOperator>> createLoadProfileEstimator(Configuration configuration) {
-        final Optional<LoadProfileEstimator<ExecutionOperator>> optEstimator =
+    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
+        final Optional<LoadProfileEstimator> optEstimator =
                 JavaExecutionOperator.super.createLoadProfileEstimator(configuration);
         LoadProfileEstimators.nestUdfEstimator(optEstimator, this.criterionDescriptor, configuration);
         return optEstimator;

@@ -3,10 +3,12 @@ package org.qcri.rheem.core.optimizer.cardinality;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 
 import java.util.function.ToLongFunction;
 
-
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 /**
@@ -16,8 +18,8 @@ public class DefaultCardinalityEstimatorTest {
 
     @Test
     public void testBinaryInputEstimation() {
-        // Mock Configuration so as to not depend on rheem-basic, which is loaded by default by RheemContext.
-        Configuration configuration = new Configuration();
+        OptimizationContext optimizationContext = mock(OptimizationContext.class);
+        when(optimizationContext.getConfiguration()).thenReturn(new Configuration());
 
         CardinalityEstimate inputEstimate1 = new CardinalityEstimate(50, 60, 0.8);
         CardinalityEstimate inputEstimate2 = new CardinalityEstimate(10, 100, 0.4);
@@ -32,7 +34,7 @@ public class DefaultCardinalityEstimatorTest {
                 singlePointEstimator
         );
 
-        CardinalityEstimate estimate = estimator.estimate(configuration, inputEstimate1, inputEstimate2);
+        CardinalityEstimate estimate = estimator.estimate(optimizationContext, inputEstimate1, inputEstimate2);
 
         Assert.assertEquals(0.9 * 0.4, estimate.getCorrectnessProbability(), 0.001);
         Assert.assertEquals(singlePointEstimator.applyAsLong(new long[]{50, 10}), estimate.getLowerEstimate());

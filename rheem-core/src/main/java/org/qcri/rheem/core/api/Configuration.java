@@ -6,6 +6,7 @@ import org.qcri.rheem.core.api.configuration.*;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.FlatMapDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.MapPartitionsDescriptor;
 import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
@@ -34,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
+import java.util.function.ToDoubleFunction;
 
 import static org.qcri.rheem.core.util.ReflectionUtils.instantiateDefault;
 
@@ -66,15 +68,19 @@ public class Configuration {
 
     private KeyValueProvider<OutputSlot<?>, CardinalityEstimator> cardinalityEstimatorProvider;
 
-    private KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> predicateSelectivityProvider;
+    private KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> udfSelectivityProvider;
 
-    private KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> multimapSelectivityProvider;
-
-    private KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> operatorLoadProfileEstimatorProvider;
+    private KeyValueProvider<ExecutionOperator, LoadProfileEstimator> operatorLoadProfileEstimatorProvider;
 
     private KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider;
 
+    private MapBasedKeyValueProvider<String, LoadProfileEstimator> loadProfileEstimatorCache;
+
     private KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider;
+
+    private KeyValueProvider<Platform, TimeToCostConverter> timeToCostConverterProvider;
+
+    private ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> costSquasherProvider;
 
     private KeyValueProvider<Platform, Long> platformStartUpTimeProvider;
 
@@ -83,8 +89,6 @@ public class Configuration {
     private ExplicitCollectionProvider<Mapping> mappingProvider;
 
     private ExplicitCollectionProvider<ChannelConversion> channelConversionProvider;
-
-    private ValueProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider;
 
     private CollectionProvider<Class<PlanEnumerationPruningStrategy>> pruningStrategyClassProvider;
 
@@ -132,24 +136,27 @@ public class Configuration {
             // Providers for cardinality estimation.
             this.cardinalityEstimatorProvider =
                     new MapBasedKeyValueProvider<>(this.parent.cardinalityEstimatorProvider, this);
-            this.predicateSelectivityProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.predicateSelectivityProvider, this);
-            this.multimapSelectivityProvider =
-                    new MapBasedKeyValueProvider<>(this.parent.multimapSelectivityProvider, this);
+            this.udfSelectivityProvider =
+                    new MapBasedKeyValueProvider<>(this.parent.udfSelectivityProvider, this);
 
             // Providers for cost functions.
             this.operatorLoadProfileEstimatorProvider =
                     new MapBasedKeyValueProvider<>(this.parent.operatorLoadProfileEstimatorProvider, this);
             this.functionLoadProfileEstimatorProvider =
                     new MapBasedKeyValueProvider<>(this.parent.functionLoadProfileEstimatorProvider, this);
+            this.loadProfileEstimatorCache =
+                    new MapBasedKeyValueProvider<>(this.parent.loadProfileEstimatorCache, this);
             this.loadProfileToTimeConverterProvider =
                     new MapBasedKeyValueProvider<>(this.parent.loadProfileToTimeConverterProvider, this);
+            this.timeToCostConverterProvider =
+                    new MapBasedKeyValueProvider<>(this.parent.timeToCostConverterProvider, this);
             this.platformStartUpTimeProvider =
                     new MapBasedKeyValueProvider<>(this.parent.platformStartUpTimeProvider, this);
+            this.costSquasherProvider =
+                    new ConstantValueProvider<>(this, this.parent.costSquasherProvider);
 
             // Providers for plan enumeration.
             this.pruningStrategyClassProvider = new ExplicitCollectionProvider<>(this, this.parent.pruningStrategyClassProvider);
-            this.timeEstimateComparatorProvider = new ConstantValueProvider<>(this, this.parent.timeEstimateComparatorProvider);
             this.instrumentationStrategyProvider = new ConstantValueProvider<>(this, this.parent.instrumentationStrategyProvider);
 
             // Properties.
@@ -220,8 +227,27 @@ public class Configuration {
      * @param value the property's value
      */
     private void handleConfigurationFileEntry(String key, String value) {
-        // For now, we just add each entry into the #properties.
-        this.setProperty(key, value);
+        switch (key) {
+            case "rheem.core.optimizer.cost.squash":
+                if (!(this.costSquasherProvider instanceof ConstantValueProvider)) {
+                    logger.warn("Cannot update cost estimate provider.");
+                } else if ("expectation".equals(value)) {
+                    ((ConstantValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>>) this.costSquasherProvider).setValue(
+                            ProbabilisticDoubleInterval::getGeometricMeanEstimate
+                    );
+                } else if ("random".equals(value)) {
+                    final int salt = new Random().nextInt();
+                    ((ConstantValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>>) this.costSquasherProvider).setValue(
+                            cost -> cost.hashCode() * salt + cost.hashCode()
+                    );
+                } else {
+                    logger.warn("Cannot set unknown cost comparator \"{}\".", value);
+                }
+                break;
+            default:
+                this.setProperty(key, value);
+                break;
+        }
     }
 
 
@@ -281,59 +307,48 @@ public class Configuration {
     }
 
     private static void bootstrapSelectivityProviders(Configuration configuration) {
-        // Selectivity of PredicateDescriptors
+        // Selectivity of UDFs
         {
             // Safety net: provide a fallback selectivity.
-            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> fallbackProvider =
-                    new FunctionalKeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval>(
-                            predicateClass -> new ProbabilisticDoubleInterval(0.1, 1, 0.9d),
+            KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> fallbackProvider =
+                    new FunctionalKeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval>(
+                            functionDescriptor -> {
+                                if (functionDescriptor instanceof PredicateDescriptor) {
+                                    return new ProbabilisticDoubleInterval(0.1, 1, 0.9d);
+                                } else if (functionDescriptor instanceof FlatMapDescriptor) {
+                                    return new ProbabilisticDoubleInterval(0.1, 1, 0.9d);
+                                } else if (functionDescriptor instanceof MapPartitionsDescriptor) {
+                                    return new ProbabilisticDoubleInterval(0.1, 1, 0.9d);
+                                } else {
+                                    throw new RheemException("Cannot provide fallback selectivity for " + functionDescriptor);
+                                }
+                            },
                             configuration
                     ).withSlf4jWarning("Using fallback selectivity for {}.");
 
             // Built-in option: Let the PredicateDescriptor provide its selectivity.
-            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> builtInProvider =
+            KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> builtInProvider =
                     new FunctionalKeyValueProvider<>(
                             fallbackProvider,
-                            predicateDescriptor -> predicateDescriptor.getSelectivity().orElse(null)
+                            functionDescriptor -> FunctionDescriptor.getSelectivity(functionDescriptor).orElse(null)
                     );
 
             // Customizable layer: Users can override manually.
-            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> overrideProvider =
+            KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> overrideProvider =
                     new MapBasedKeyValueProvider<>(builtInProvider);
 
-            configuration.setPredicateSelectivityProvider(overrideProvider);
-        }
-        {
-            // Safety net: provide a fallback selectivity.
-            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> fallbackProvider =
-                    new FunctionalKeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval>(
-                            flatMapDescriptor -> new ProbabilisticDoubleInterval(0.1, 100, 0.9d),
-                            configuration
-                    ).withSlf4jWarning("Using fallback selectivity for {}.");
-
-            // Built-in option: Let the FlatMapDescriptor provide its selectivity.
-            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> builtInProvider =
-                    new FunctionalKeyValueProvider<>(
-                            fallbackProvider,
-                            flatMapDescriptor -> flatMapDescriptor.getSelectivity().orElse(null)
-                    );
-
-            // Customizable layer: Users can override manually.
-            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> overrideProvider =
-                    new MapBasedKeyValueProvider<>(builtInProvider, false);
-
-            configuration.setMultimapSelectivityProvider(overrideProvider);
+            configuration.setUdfSelectivityProvider(overrideProvider);
         }
     }
 
     private static void bootstrapLoadAndTimeEstimatorProviders(Configuration configuration) {
         {
             // Safety net: provide a fallback selectivity.
-            KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> fallbackProvider =
-                    new FunctionalKeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>>(
+            KeyValueProvider<ExecutionOperator, LoadProfileEstimator> fallbackProvider =
+                    new FunctionalKeyValueProvider<ExecutionOperator, LoadProfileEstimator>(
                             (operator, requestee) -> {
                                 final Configuration conf = requestee.getConfiguration();
-                                return new NestableLoadProfileEstimator<>(
+                                return new NestableLoadProfileEstimator(
                                         IntervalLoadEstimator.createIOLinearEstimator(
                                                 null,
                                                 conf.getLongProperty("rheem.core.fallback.udf.cpu.lower"),
@@ -354,14 +369,14 @@ public class Configuration {
                     ).withSlf4jWarning("Creating fallback load estimator for {}.");
 
             // Built-in option: let the ExecutionOperators provide the LoadProfileEstimator.
-            KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> builtInProvider =
+            KeyValueProvider<ExecutionOperator, LoadProfileEstimator> builtInProvider =
                     new FunctionalKeyValueProvider<>(
                             fallbackProvider,
                             (operator, requestee) -> operator.createLoadProfileEstimator(requestee.getConfiguration()).orElse(null)
                     );
 
             // Customizable layer: Users can override manually.
-            KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> overrideProvider =
+            KeyValueProvider<ExecutionOperator, LoadProfileEstimator> overrideProvider =
                     new MapBasedKeyValueProvider<>(builtInProvider);
 
             configuration.setOperatorLoadProfileEstimatorProvider(overrideProvider);
@@ -372,7 +387,7 @@ public class Configuration {
                     new FunctionalKeyValueProvider<FunctionDescriptor, LoadProfileEstimator>(
                             (operator, requestee) -> {
                                 final Configuration conf = requestee.getConfiguration();
-                                return new NestableLoadProfileEstimator<>(
+                                return new NestableLoadProfileEstimator(
                                         IntervalLoadEstimator.createIOLinearEstimator(
                                                 null,
                                                 conf.getLongProperty("rheem.core.fallback.operator.cpu.lower"),
@@ -441,11 +456,25 @@ public class Configuration {
             configuration.setLoadProfileToTimeConverterProvider(overrideProvider);
         }
         {
-            ValueProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantValueProvider<>(TimeEstimate.expectationValueComparator(), configuration);
-            ValueProvider<Comparator<TimeEstimate>> overrideProvider =
-                    new ConstantValueProvider<>(defaultProvider);
-            configuration.setTimeEstimateComparatorProvider(overrideProvider);
+            // Safety net: provide a fallback start up costs.
+            final KeyValueProvider<Platform, TimeToCostConverter> fallbackProvider =
+                    new FunctionalKeyValueProvider<Platform, TimeToCostConverter>(
+                            platform -> new TimeToCostConverter(0d, 1d),
+                            configuration
+                    ).withSlf4jWarning("Using fallback time-to-cost converter for {}.");
+            final KeyValueProvider<Platform, TimeToCostConverter> builtInProvider =
+                    new FunctionalKeyValueProvider<>(
+                            fallbackProvider,
+                            (platform, requestee) -> platform.createTimeToCostConverter(
+                                    requestee.getConfiguration()
+                            )
+                    );
+            final KeyValueProvider<Platform, TimeToCostConverter> overrideProvider =
+                    new MapBasedKeyValueProvider<>(builtInProvider, false);
+            configuration.setTimeToCostConverterProvider(overrideProvider);
+        }
+        {
+            configuration.setLoadProfileEstimatorCache(new MapBasedKeyValueProvider<>(configuration, true));
         }
     }
 
@@ -478,11 +507,11 @@ public class Configuration {
             configuration.setPruningStrategyClassProvider(overrideProvider);
         }
         {
-            ValueProvider<Comparator<TimeEstimate>> defaultProvider =
-                    new ConstantValueProvider<>(TimeEstimate.expectationValueComparator(), configuration);
-            ValueProvider<Comparator<TimeEstimate>> overrideProvider =
+            ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> defaultProvider =
+                    new ConstantValueProvider<>(ProbabilisticDoubleInterval::getGeometricMeanEstimate, configuration);
+            ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> overrideProvider =
                     new ConstantValueProvider<>(defaultProvider);
-            configuration.setTimeEstimateComparatorProvider(overrideProvider);
+            configuration.setCostSquasherProvider(overrideProvider);
         }
         {
             ValueProvider<InstrumentationStrategy> defaultProvider =
@@ -555,29 +584,20 @@ public class Configuration {
         this.cardinalityEstimatorProvider = cardinalityEstimatorProvider;
     }
 
-    public KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> getPredicateSelectivityProvider() {
-        return this.predicateSelectivityProvider;
+    public KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> getUdfSelectivityProvider() {
+        return this.udfSelectivityProvider;
     }
 
-    public void setPredicateSelectivityProvider(
-            KeyValueProvider<PredicateDescriptor<?>, ProbabilisticDoubleInterval> predicateSelectivityProvider) {
-        this.predicateSelectivityProvider = predicateSelectivityProvider;
+    public void setUdfSelectivityProvider(
+            KeyValueProvider<FunctionDescriptor, ProbabilisticDoubleInterval> udfSelectivityProvider) {
+        this.udfSelectivityProvider = udfSelectivityProvider;
     }
 
-    public KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> getMultimapSelectivityProvider() {
-        return this.multimapSelectivityProvider;
-    }
-
-    public void setMultimapSelectivityProvider(
-            KeyValueProvider<FlatMapDescriptor<?, ?>, ProbabilisticDoubleInterval> multimapSelectivityProvider) {
-        this.multimapSelectivityProvider = multimapSelectivityProvider;
-    }
-
-    public KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> getOperatorLoadProfileEstimatorProvider() {
+    public KeyValueProvider<ExecutionOperator, LoadProfileEstimator> getOperatorLoadProfileEstimatorProvider() {
         return this.operatorLoadProfileEstimatorProvider;
     }
 
-    public void setOperatorLoadProfileEstimatorProvider(KeyValueProvider<ExecutionOperator, LoadProfileEstimator<ExecutionOperator>> operatorLoadProfileEstimatorProvider) {
+    public void setOperatorLoadProfileEstimatorProvider(KeyValueProvider<ExecutionOperator, LoadProfileEstimator> operatorLoadProfileEstimatorProvider) {
         this.operatorLoadProfileEstimatorProvider = operatorLoadProfileEstimatorProvider;
     }
 
@@ -587,6 +607,14 @@ public class Configuration {
 
     public void setFunctionLoadProfileEstimatorProvider(KeyValueProvider<FunctionDescriptor, LoadProfileEstimator> functionLoadProfileEstimatorProvider) {
         this.functionLoadProfileEstimatorProvider = functionLoadProfileEstimatorProvider;
+    }
+
+    public MapBasedKeyValueProvider<String, LoadProfileEstimator> getLoadProfileEstimatorCache() {
+        return this.loadProfileEstimatorCache;
+    }
+
+    public void setLoadProfileEstimatorCache(MapBasedKeyValueProvider<String, LoadProfileEstimator> loadProfileEstimatorCache) {
+        this.loadProfileEstimatorCache = loadProfileEstimatorCache;
     }
 
     public ExplicitCollectionProvider<Platform> getPlatformProvider() {
@@ -611,14 +639,6 @@ public class Configuration {
 
     public void setChannelConversionProvider(ExplicitCollectionProvider<ChannelConversion> channelConversionProvider) {
         this.channelConversionProvider = channelConversionProvider;
-    }
-
-    public ValueProvider<Comparator<TimeEstimate>> getTimeEstimateComparatorProvider() {
-        return this.timeEstimateComparatorProvider;
-    }
-
-    public void setTimeEstimateComparatorProvider(ValueProvider<Comparator<TimeEstimate>> timeEstimateComparatorProvider) {
-        this.timeEstimateComparatorProvider = timeEstimateComparatorProvider;
     }
 
     public CollectionProvider<Class<PlanEnumerationPruningStrategy>> getPruningStrategyClassProvider() {
@@ -676,6 +696,22 @@ public class Configuration {
 
     public void setLoadProfileToTimeConverterProvider(KeyValueProvider<Platform, LoadProfileToTimeConverter> loadProfileToTimeConverterProvider) {
         this.loadProfileToTimeConverterProvider = loadProfileToTimeConverterProvider;
+    }
+
+    public KeyValueProvider<Platform, TimeToCostConverter> getTimeToCostConverterProvider() {
+        return timeToCostConverterProvider;
+    }
+
+    public void setTimeToCostConverterProvider(KeyValueProvider<Platform, TimeToCostConverter> timeToCostConverterProvider) {
+        this.timeToCostConverterProvider = timeToCostConverterProvider;
+    }
+
+    public ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> getCostSquasherProvider() {
+        return this.costSquasherProvider;
+    }
+
+    public void setCostSquasherProvider(ValueProvider<ToDoubleFunction<ProbabilisticDoubleInterval>> costSquasherProvider) {
+        this.costSquasherProvider = costSquasherProvider;
     }
 
     public OptionalLong getOptionalLongProperty(String key) {

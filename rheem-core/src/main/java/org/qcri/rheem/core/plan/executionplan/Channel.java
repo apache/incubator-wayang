@@ -57,11 +57,6 @@ public abstract class Channel {
     private Set<Channel> siblings = new HashSet<>(2);
 
     /**
-     * This flag indicates whether this instance must not be used to halt at a {@link Breakpoint}.
-     */
-    private boolean isBreakingProhibited = false;
-
-    /**
      * Creates a new, non-hierarchical instance and registers it with the given {@link ExecutionTask}.
      *
      * @param descriptor used to create this instance
@@ -83,10 +78,6 @@ public abstract class Channel {
         assert this.original == null || !this.original.isCopy();
         this.producer = original.getProducer();
         this.producerSlot = original.getProducerSlot();
-    }
-
-    public static CardinalityEstimate extractCardinalityEstimate(ExecutionTask task, int outputIndex) {
-        return task.getOperator().getOutput(outputIndex).getCardinalityEstimate();
     }
 
     /**
@@ -115,18 +106,17 @@ public abstract class Channel {
     }
 
     /**
-     * Declares whether this instance can be shared among two different {@link ExecutionStage}s (of the same
-     * {@link PlatformExecution}, though).
+     * Tells whether this instance lends itself for {@link Breakpoint}s. That is particularly the case if:
+     * <ol>
+     * <li>it is produced immediately by its producer ({@link #getProducer()};</li>
+     * <li>the contained data are at rest;</li>
+     * <li>and, as a bonus, the cardinality of the data can be observed.</li>
+     * </ol>
+     *
+     * @return whether this instance lends itself for {@link Breakpoint}s
      */
-    public boolean isInterStageCapable() {
-        return this.getDescriptor().isInterStageCapable();
-    }
-
-    /**
-     * Declares whether this instance can be shared among two different {@link PlatformExecution}s.
-     */
-    public boolean isInterPlatformCapable() {
-        return this.getDescriptor().isInterPlatformCapable();
+    public boolean isSuitableForBreakpoint() {
+        return this.getDescriptor().isSuitableForBreakpoint();
     }
 
     /**
@@ -302,10 +292,13 @@ public abstract class Channel {
     /**
      * Scrap any consumer {@link ExecutionTask}s and sibling {@link Channel}s that are not within the given
      * {@link ExecutionStage}s.
+     *
+     * @return whether consumer {@link ExecutionTask}s have been removed
      */
-    public void retain(Set<ExecutionStage> retainableStages) {
-        this.consumers.removeIf(consumer -> !retainableStages.contains(consumer.getStage()));
+    public boolean retain(Set<ExecutionStage> retainableStages) {
+        boolean isConsumersRemoved = this.consumers.removeIf(consumer -> !retainableStages.contains(consumer.getStage()));
         this.removeSiblingsWhere((sibling) -> !retainableStages.contains(sibling.getProducer().getStage()));
+        return isConsumersRemoved;
     }
 
     /**
@@ -442,24 +435,6 @@ public abstract class Channel {
             }
         }
         return false;
-    }
-
-    /**
-     * We use this flag to indicate that we cannot re-optimize starting from this instance for various reasons.
-     *
-     * @return whether halting execution at this instance is prohibited
-     */
-    public boolean isBreakingProhibited() {
-        return this.isBreakingProhibited;
-    }
-
-    /**
-     * We use this flag to indicate that we cannot re-optimize starting from this instance for various reasons.
-     *
-     * @param breakingProhibited whether halting execution at this instance is prohibited
-     */
-    public void setBreakingProhibited(boolean breakingProhibited) {
-        this.isBreakingProhibited = breakingProhibited;
     }
 
 }

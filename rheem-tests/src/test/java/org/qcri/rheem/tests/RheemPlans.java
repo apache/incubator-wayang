@@ -15,6 +15,8 @@ import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.java.operators.JavaCollectionSource;
+import org.qcri.rheem.java.operators.JavaDoWhileOperator;
 import org.qcri.rheem.sqlite3.Sqlite3;
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource;
 
@@ -318,7 +320,9 @@ public class RheemPlans {
         CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
         source.setName("source");
 
-        SampleOperator<Integer> sampleOperator = new SampleOperator<>(3, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM);
+        SampleOperator<Integer> sampleOperator = new SampleOperator<>(
+                3, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM, SampleOperator.randomSeed()
+        );
         sampleOperator.setName("sample");
 
         MapOperator<Integer, Integer> mapOperator = new MapOperator<>(n -> 2 * n, Integer.class, Integer.class);
@@ -647,6 +651,35 @@ public class RheemPlans {
         pageRank.connectTo(0, sink, 0);
 
         return new RheemPlan(sink);
+    }
+
+    /**
+     * Creates and executed a {@link RheemPlan} that counts the number of even and odd numbers using a
+     * {@link MapPartitionsOperator} to pre-aggregate partitions.
+     *
+     * @param rheemContext provide the execution environment
+     * @param inputValues  that should be dissected and counted
+     */
+    public static Collection<Tuple2<String, Integer>> mapPartitions(RheemContext rheemContext, int... inputValues) {
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+
+        // Execute the job.
+        return builder
+                .loadCollection(RheemArrays.asList(inputValues))
+                .mapPartitions(partition -> {
+                    int numEvens = 0, numOdds = 0;
+                    for (Integer value : partition) {
+                        if ((value & 1) == 0) numEvens++;
+                        else numOdds++;
+                    }
+                    return Arrays.asList(
+                            new Tuple2<>("odd", numOdds),
+                            new Tuple2<>("even", numEvens)
+                    );
+                })
+                .reduceByKey(Tuple2::getField0, (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1()))
+                .collect();
+
     }
 
     /**

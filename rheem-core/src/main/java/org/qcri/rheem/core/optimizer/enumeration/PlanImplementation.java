@@ -1,20 +1,23 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.optimizer.costs.TimeToCostConverter;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Canonicalizer;
-import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -65,9 +68,9 @@ public class PlanImplementation {
     private final OptimizationContext optimizationContext;
 
     /**
-     * The {@link TimeEstimate} to execute this instance.
+     * The squashed cost estimate to execute this instance. This will be used to select the best plan!
      */
-    private TimeEstimate timeEstimateCache, timeEstimateWithOverheadCache;
+    private double squashedCostEstimateCache = Double.NaN, squashedCostEstimateWithoutOverheadCache = Double.NaN;
 
     /**
      * Create a new instance.
@@ -265,43 +268,6 @@ public class PlanImplementation {
 
 
     /**
-     * Creates a {@link Junction} between the {@link OutputSlot} and {@link InputSlot}s and with this concatenates
-     * the {@link PlanImplementation}s.
-     *
-     * @param existingChannel an existing {@link Channel} from that all {@code inputs} must be served or {@code null} otherwise
-     * @return the concatenated {@link PlanImplementation} or {@code null} if the inputs do not fit
-     * @deprecated {@link Junction}s should be created at {@link PlanEnumeration} level to reduce overhead
-     */
-    PlanImplementation concatenate(OutputSlot<?> output,
-                                   Channel existingChannel,
-                                   List<PlanImplementation> targets,
-                                   List<InputSlot<?>> inputs,
-                                   PlanEnumeration concatenationEnumeration,
-                                   OptimizationContext optimizationContext) {
-
-        // Construct the Junction between the PlanImplementations.
-        final Tuple<OutputSlot<?>, PlanImplementation> execOutputWithContext =
-                RheemCollections.getSingle(this.findExecutionOperatorOutputWithContext(output));
-        final List<InputSlot<?>> execInputs = RheemCollections.map(
-                inputs,
-                (index, input) -> {
-                    PlanImplementation targetImpl = targets.get(index);
-                    return RheemCollections.getSingle(targetImpl.findExecutionOperatorInputs(input));
-                }
-        );
-        final Junction junction = optimizationContext.getChannelConversionGraph().findMinimumCostJunction(
-                execOutputWithContext.getField0(), existingChannel, execInputs, execOutputWithContext.getField1().getOptimizationContext()
-        );
-        if (junction == null) {
-            return null;
-        }
-
-        // Delegate.
-        return this.concatenate(targets, junction, execOutputWithContext.getField1(), concatenationEnumeration);
-
-    }
-
-    /**
      * Creates a new instance that forms the concatenation of this instance with the {@code targetPlans} via the
      * {@code junction}.
      *
@@ -427,6 +393,22 @@ public class PlanImplementation {
                 return true;
             }
         }
+        for (Map.Entry<LoopSubplan, LoopImplementation> entry : this.loopImplementations.entrySet()) {
+            final LoopSubplan loop = entry.getKey();
+            final LoopImplementation thisLoopImplementation = entry.getValue();
+            final LoopImplementation thatLoopImplementation = that.loopImplementations.get(loop);
+            if (thatLoopImplementation == null) continue;
+            if (thisLoopImplementation
+                    .getSingleIterationImplementation()
+                    .getBodyImplementation()
+                    .isSettledAlternativesContradicting(
+                            thatLoopImplementation
+                                    .getIterationImplementations().get(0)
+                                    .getBodyImplementation()
+                    )) {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -535,36 +517,128 @@ public class PlanImplementation {
         return this.settledAlternatives.get(operatorAlternative);
     }
 
+    /**
+     * Retrieves the {@link TimeEstimate} for this instance, including platform overhead.
+     *
+     * @return the {@link TimeEstimate}
+     */
     public TimeEstimate getTimeEstimate() {
         return this.getTimeEstimate(true);
     }
 
     /**
-     * Retrieves the {@link TimeEstimate} for this instance.
+     * Retrieves the {@link TimeEstimate} for this instance, including platform overhead.
      *
-     * @param isIncludeOverhead whether to include global overhead in the {@link TimeEstimate} (to avoid repeating
-     *                          overhead in nested instances)
+     * @param isIncludeOverhead whether to include any incurring global overhead
      * @return the {@link TimeEstimate}
      */
-    TimeEstimate getTimeEstimate(boolean isIncludeOverhead) {
-        assert (this.timeEstimateCache == null) == (this.timeEstimateWithOverheadCache == null);
-        if (this.timeEstimateCache == null) {
-            final TimeEstimate operatorTimeEstimate = this.operators.stream()
-                    .map(op -> this.optimizationContext.getOperatorContext(op).getTimeEstimate())
-                    .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
-            final TimeEstimate junctionTimeEstimate = this.optimizationContext.getDefaultOptimizationContexts().stream()
-                    .flatMap(optCtx -> this.junctions.values().stream().map(jct -> jct.getTimeEstimate(optCtx)))
-                    .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
-            final TimeEstimate loopTimeEstimate = this.loopImplementations.values().stream()
-                    .map(LoopImplementation::getTimeEstimate)
-                    .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
-            this.timeEstimateCache = operatorTimeEstimate.plus(junctionTimeEstimate).plus(loopTimeEstimate);
+    public TimeEstimate getTimeEstimate(boolean isIncludeOverhead) {
+        final TimeEstimate operatorTimeEstimate = this.operators.stream()
+                .map(op -> this.optimizationContext.getOperatorContext(op).getTimeEstimate())
+                .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+        final TimeEstimate junctionTimeEstimate = this.optimizationContext.getDefaultOptimizationContexts().stream()
+                .flatMap(optCtx -> this.junctions.values().stream().map(jct -> jct.getTimeEstimate(optCtx)))
+                .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+        final TimeEstimate loopTimeEstimate = this.loopImplementations.values().stream()
+                .map(LoopImplementation::getTimeEstimate)
+                .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+        TimeEstimate timeEstimate = operatorTimeEstimate.plus(junctionTimeEstimate).plus(loopTimeEstimate);
+
+        if (isIncludeOverhead) {
             final long platformInitializationTime = this.getUtilizedPlatforms().stream()
                     .map(platform -> this.optimizationContext.getConfiguration().getPlatformStartUpTimeProvider().provideFor(platform))
                     .reduce(0L, (a, b) -> a + b);
-            this.timeEstimateWithOverheadCache = this.timeEstimateCache.plus(platformInitializationTime);
+            timeEstimate = timeEstimate.plus(platformInitializationTime);
         }
-        return isIncludeOverhead ? this.timeEstimateWithOverheadCache : this.timeEstimateCache;
+
+        return timeEstimate;
+    }
+
+    /**
+     * Retrieves the cost estimate for this instance including any overhead.
+     *
+     * @return the cost estimate
+     */
+    public ProbabilisticDoubleInterval getCostEstimate() {
+        return this.getCostEstimate(true);
+    }
+
+    /**
+     * Retrieves the cost estimate for this instance.
+     *
+     * @param isIncludeOverhead whether to include global overhead in the {@link TimeEstimate} (to avoid repeating
+     *                          overhead in nested instances)
+     * @return the cost estimate
+     */
+    ProbabilisticDoubleInterval getCostEstimate(boolean isIncludeOverhead) {
+        ProbabilisticDoubleInterval costEstimateWithoutOverheadCache, costEstimateCache;
+        final ProbabilisticDoubleInterval operatorCosts = this.operators.stream()
+                .map(op -> this.optimizationContext.getOperatorContext(op).getCostEstimate())
+                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
+        final ProbabilisticDoubleInterval junctionCosts = this.optimizationContext.getDefaultOptimizationContexts().stream()
+                .flatMap(optCtx -> this.junctions.values().stream().map(jct -> jct.getCostEstimate(optCtx)))
+                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
+        final ProbabilisticDoubleInterval loopCosts = this.loopImplementations.values().stream()
+                .map(LoopImplementation::getCostEstimate)
+                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
+        costEstimateWithoutOverheadCache = operatorCosts.plus(junctionCosts).plus(loopCosts);
+        ProbabilisticDoubleInterval overheadCosts = this.getUtilizedPlatforms().stream()
+                .map(platform -> {
+                    Configuration configuraiton = this.optimizationContext.getConfiguration();
+                    long startUpTime = configuraiton.getPlatformStartUpTimeProvider().provideFor(platform);
+                    TimeToCostConverter timeToCostConverter = configuraiton.getTimeToCostConverterProvider().provideFor(platform);
+                    return timeToCostConverter.convert(new TimeEstimate(startUpTime, startUpTime, 1d));
+                })
+                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
+        costEstimateCache = costEstimateWithoutOverheadCache.plus(overheadCosts);
+        return isIncludeOverhead ? costEstimateCache : costEstimateWithoutOverheadCache;
+    }
+
+    /**
+     * Retrieves the cost estimate for this instance including any overhead.
+     *
+     * @return the cost estimate
+     */
+    public double getSquashedCostEstimate() {
+        return this.getSquashedCostEstimate(true);
+    }
+
+    /**
+     * Retrieves the cost estimate for this instance.
+     *
+     * @param isIncludeOverhead whether to include global overhead in the {@link TimeEstimate} (to avoid repeating
+     *                          overhead in nested instances)
+     * @return the squashed cost estimate
+     */
+    double getSquashedCostEstimate(boolean isIncludeOverhead) {
+        assert Double.isNaN(this.squashedCostEstimateCache) == Double.isNaN(this.squashedCostEstimateWithoutOverheadCache);
+        if (Double.isNaN(this.squashedCostEstimateCache)) {
+            final double operatorCosts = this.operators.stream()
+                    .mapToDouble(op -> this.optimizationContext.getOperatorContext(op).getSquashedCostEstimate())
+                    .sum();
+            final double junctionCosts = this.optimizationContext.getDefaultOptimizationContexts().stream()
+                    .flatMapToDouble(optCtx -> this.junctions.values().stream().mapToDouble(jct -> jct.getSquashedCostEstimate(optCtx)))
+                    .sum();
+            final double loopCosts = this.loopImplementations.values().stream()
+                    .mapToDouble(LoopImplementation::getSquashedCostEstimate)
+                    .sum();
+            this.squashedCostEstimateWithoutOverheadCache = operatorCosts + junctionCosts + loopCosts;
+            double overheadCosts = this.getUtilizedPlatforms().stream()
+                    .mapToDouble(platform -> {
+                        Configuration configuration = this.optimizationContext.getConfiguration();
+
+                        long startUpTime = configuration.getPlatformStartUpTimeProvider().provideFor(platform);
+
+                        TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
+                        ProbabilisticDoubleInterval costs = timeToCostConverter.convert(new TimeEstimate(startUpTime, startUpTime, 1d));
+
+                        final ToDoubleFunction<ProbabilisticDoubleInterval> squasher = configuration.getCostSquasherProvider().provide();
+                        return squasher.applyAsDouble(costs);
+                    })
+                    .sum();
+            this.squashedCostEstimateCache = this.squashedCostEstimateWithoutOverheadCache + overheadCosts;
+        }
+        return isIncludeOverhead ? this.squashedCostEstimateCache : this.squashedCostEstimateWithoutOverheadCache;
     }
 
     public Junction getJunction(OutputSlot<?> output) {
@@ -627,6 +701,11 @@ public class PlanImplementation {
         }
     }
 
+    /**
+     * Retrieve the {@link Platform}s that are utilized by this instance.
+     *
+     * @return the {@link Platform}s
+     */
     public Set<Platform> getUtilizedPlatforms() {
         if (this.platformCache == null) {
             this.platformCache = this.streamOperators()
@@ -657,6 +736,8 @@ public class PlanImplementation {
 
     @Override
     public String toString() {
-        return String.format("PlanImplementation[%s, %s]", this.getUtilizedPlatforms(), this.getTimeEstimate());
+        return String.format("PlanImplementation[%s, %s, costs=%s]",
+                this.getUtilizedPlatforms(), this.getTimeEstimate(), this.getCostEstimate()
+        );
     }
 }

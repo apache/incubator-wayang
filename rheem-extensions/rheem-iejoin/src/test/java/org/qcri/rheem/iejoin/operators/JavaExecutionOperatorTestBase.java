@@ -25,11 +25,17 @@ import static org.mockito.Mockito.when;
  */
 public class JavaExecutionOperatorTestBase {
 
+    protected static Job job;
+
     protected static Configuration configuration;
 
     @BeforeClass
     public static void init() {
         configuration = new Configuration();
+        job = mock(Job.class);
+        when(job.getConfiguration()).thenReturn(configuration);
+        DefaultOptimizationContext optimizationContext = new DefaultOptimizationContext(job);
+        when(job.getOptimizationContext()).thenReturn(optimizationContext);
     }
 
     protected static JavaExecutor createExecutor() {
@@ -39,8 +45,7 @@ public class JavaExecutionOperatorTestBase {
     }
 
     protected static OptimizationContext.OperatorContext createOperatorContext(Operator operator) {
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
-        return optimizationContext.addOneTimeOperator(operator);
+        return job.getOptimizationContext().addOneTimeOperator(operator);
     }
 
     protected static void evaluate(JavaExecutionOperator operator,

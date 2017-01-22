@@ -1,6 +1,6 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
-import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +18,7 @@ public class SwitchForwardCardinalityEstimator implements CardinalityEstimator {
     }
 
     @Override
-    public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
+    public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
         CardinalityEstimate forwardEstimate = null;
         for (int switchInputIndex : this.switchInputIndices) {
             final CardinalityEstimate inputEstimate = inputEstimates[switchInputIndex];
@@ -26,7 +26,9 @@ public class SwitchForwardCardinalityEstimator implements CardinalityEstimator {
                 if (forwardEstimate != null) {
                     LoggerFactory.getLogger(this.getClass()).error("Conflicting estimates {} and {}.", forwardEstimate, inputEstimate);
                 }
-                forwardEstimate = inputEstimate;
+                if (forwardEstimate == null || forwardEstimate.getCorrectnessProbability() > inputEstimate.getCorrectnessProbability()) {
+                    forwardEstimate = inputEstimate;
+                }
             }
         }
         assert forwardEstimate != null;

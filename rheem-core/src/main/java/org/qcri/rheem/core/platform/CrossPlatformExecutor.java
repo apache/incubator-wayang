@@ -7,6 +7,7 @@ import org.qcri.rheem.core.plan.executionplan.*;
 import org.qcri.rheem.core.plan.rheemplan.InputSlot;
 import org.qcri.rheem.core.plan.rheemplan.LoopHeadOperator;
 import org.qcri.rheem.core.plan.rheemplan.LoopSubplan;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
 import org.qcri.rheem.core.profiling.InstrumentationStrategy;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
 import org.qcri.rheem.core.util.Formats;
@@ -49,9 +50,9 @@ public class CrossPlatformExecutor implements ExecutionState {
     private final Map<ExecutionStage, StageActivator> pendingStageActivators = new HashMap<>();
 
     /**
-     * Maintains the {@link Executor}s for each {@link PlatformExecution}.
+     * Maintains the {@link Executor}s for each {@link Platform}.
      */
-    private final Map<PlatformExecution, Executor> executors = new HashMap<>();
+    private final Map<Platform, Executor> executors = new HashMap<>();
 
     /**
      * We keep them around if we want to go on without re-optimization.
@@ -76,9 +77,9 @@ public class CrossPlatformExecutor implements ExecutionState {
     private Set<ExecutionStage> completedStages = new HashSet<>();
 
     /**
-     * Keeps track of {@link Channel} cardinalities.
+     * Keeps track of {@link ChannelInstance} cardinalities.
      */
-    private final Map<Channel, Long> cardinalities = new HashMap<>();
+    private final Collection<ChannelInstance> cardinalityMeasurements = new LinkedList<>();
 
     /**
      * Maintains {@link ExecutionResource}s that are "global" w.r.t. to this instance, i.e., they will not be
@@ -181,9 +182,13 @@ public class CrossPlatformExecutor implements ExecutionState {
      */
     private boolean tryToActivate(StageActivator activator) {
         if (activator.updateInputChannelInstances()) {
+            logger.info("Activating {}.", activator.getStage());
             // Activate the activator by moving it.
             this.pendingStageActivators.remove(activator.getStage());
+            assert this.activatedStageActivators.stream().noneMatch(a -> a.getStage().equals(activator.getStage())) :
+                    String.format("Must not activate %s twice.", activator.getStage());
             this.activatedStageActivators.add(activator);
+            activator.noteActivation();
             return true;
         }
         return false;
@@ -290,16 +295,20 @@ public class CrossPlatformExecutor implements ExecutionState {
 
         // Remember that we have executed the stage.
         this.completedStages.add(stage);
+
+        if (stage.isLoopHead()) {
+            this.getOrCreateLoopContext(stage.getLoop()).scrapPreviousTransitionContext();
+        }
     }
 
     private Executor getOrCreateExecutorFor(ExecutionStage stage) {
         return this.executors.computeIfAbsent(
-                stage.getPlatformExecution(),
-                pe -> {
+                stage.getPlatformExecution().getPlatform(),
+                platform -> {
                     // It is important to register the Executor. This way, we ensure that it will also not be disposed
                     // among disconnected PlatformExecutions. The downside is, that we only remove it, once the
                     // execution is done.
-                    final Executor executor = pe.getPlatform().getExecutorFactory().create(this.job);
+                    final Executor executor = platform.getExecutorFactory().create(this.job);
                     this.registerGlobal(executor);
                     return executor;
                 }
@@ -319,11 +328,11 @@ public class CrossPlatformExecutor implements ExecutionState {
         final Collection<Channel> outboundChannels = processedStage.getOutboundChannels();
         Set<ExecutionStage> successorStages = new HashSet<>(outboundChannels.size());
         for (Channel outboundChannel : outboundChannels) {
-            if (this.getChannelInstance(outboundChannel) != null) {
-                for (ExecutionTask consumer : outboundChannel.getConsumers()) {
+            for (ExecutionTask consumer : outboundChannel.getConsumers()) {
+                if (this.getChannelInstance(outboundChannel, consumer.isFeedbackInput(outboundChannel)) != null) {
                     final ExecutionStage consumerStage = consumer.getStage();
                     // We must be careful: outbound Channels still can have consumers within the producer's ExecutionStage.
-                    if (consumerStage != processedStage) {
+                    if (consumerStage != processedStage && !consumerStage.isInFinishedLoop()) {
                         successorStages.add(consumerStage);
                     }
                 }
@@ -409,15 +418,49 @@ public class CrossPlatformExecutor implements ExecutionState {
 
     @Override
     public ChannelInstance getChannelInstance(Channel channel) {
-        return this.channelInstances.get(channel);
+        return this.getChannelInstance(channel, false);
+    }
+
+    public ChannelInstance getChannelInstance(Channel channel, boolean isPeekingToNextTransition) {
+        final ExecutionStageLoop loop = getExecutionStageLoop(channel);
+        if (loop == null) {
+            return this.channelInstances.get(channel);
+        } else {
+            final ExecutionStageLoopContext loopContext = this.getOrCreateLoopContext(loop);
+            return loopContext.getChannelInstance(channel, isPeekingToNextTransition);
+        }
+    }
+
+    /**
+     * Determine the {@link ExecutionStageLoop} the given {@link Channel} belongs to.
+     *
+     * @param channel the {@link Channel}
+     * @return the {@link ExecutionStageLoop} or {@code null} if none
+     */
+    private static ExecutionStageLoop getExecutionStageLoop(Channel channel) {
+        final ExecutionStage producerStage = channel.getProducer().getStage();
+        if (producerStage.getLoop() == null) return null;
+        final OutputSlot<?> output = channel.getProducer().getOutputSlotFor(channel);
+        if (output != null
+                && output.getOwner().isLoopHead()
+                && ((LoopHeadOperator) output.getOwner()).getFinalLoopOutputs().contains(output)) {
+            return null;
+        }
+        return producerStage.getLoop();
     }
 
     @Override
     public void register(ChannelInstance channelInstance) {
-        final ChannelInstance oldChannelInstance = this.channelInstances.put(channelInstance.getChannel(), channelInstance);
-        channelInstance.noteObtainedReference();
-        if (oldChannelInstance != null) {
-            oldChannelInstance.noteDiscardedReference(true);
+        final ExecutionStageLoop loop = getExecutionStageLoop(channelInstance.getChannel());
+        if (loop == null) {
+            final ChannelInstance oldChannelInstance = this.channelInstances.put(channelInstance.getChannel(), channelInstance);
+            channelInstance.noteObtainedReference();
+            if (oldChannelInstance != null) {
+                oldChannelInstance.noteDiscardedReference(true);
+            }
+        } else {
+            final ExecutionStageLoopContext loopContext = this.getOrCreateLoopContext(loop);
+            loopContext.register(channelInstance);
         }
     }
 
@@ -436,40 +479,26 @@ public class CrossPlatformExecutor implements ExecutionState {
     }
 
     @Override
-    public void addCardinalityMeasurement(Channel channel, long cardinality) {
-        final Long oldCardinality = this.cardinalities.putIfAbsent(channel, cardinality);
-        // TODO: The cardinality measurements are not very reliable (due to lazy execution mechanisms).
-        // For now, we just take the most "credible" cardinality measurement.
-        if (oldCardinality != null && !oldCardinality.equals(cardinality)) {
-            if (oldCardinality == 0 || cardinality < oldCardinality) {
-                // We take the new cardinality.
-            } else {
-                this.cardinalities.put(channel, oldCardinality);
-            }
-            this.logger.warn("Conflicting cardinality measurements ({} and {}) for {}. Using {}.",
-                    oldCardinality, cardinality, channel, this.cardinalities.get(channel)
-            );
-        }
-//        assert oldCardinality == null || oldCardinality == cardinality : String.format(
-//                "Replacing cardinality measurement of %s with %d (was %d).",
-//                channel, cardinality, oldCardinality
-//        );
+    public void addCardinalityMeasurement(ChannelInstance channelInstance) {
+        this.cardinalityMeasurements.add(channelInstance);
     }
 
     @Override
-    public OptionalLong getCardinalityMeasurement(Channel channel) {
-        final Long cardinality = this.cardinalities.get(channel);
-        return cardinality == null ? OptionalLong.empty() : OptionalLong.of(cardinality);
-    }
-
-    @Override
-    public Map<Channel, Long> getCardinalityMeasurements() {
-        return Collections.unmodifiableMap(this.cardinalities);
+    public Collection<ChannelInstance> getCardinalityMeasurements() {
+        return this.cardinalityMeasurements;
     }
 
     @Override
     public void add(PartialExecution partialExecution) {
         this.partialExecutions.add(partialExecution);
+        if (this.logger.isInfoEnabled()) {
+            this.logger.info(
+                    "Executed {} items in {} (estimated {}).",
+                    partialExecution.getAtomicExecutionGroups().size(),
+                    Formats.formatDuration(partialExecution.getMeasuredExecutionTime()),
+                    partialExecution.getOverallTimeEstimate(this.getConfiguration())
+            );
+        }
     }
 
     @Override
@@ -486,6 +515,14 @@ public class CrossPlatformExecutor implements ExecutionState {
         this.breakpoint = breakpoint;
     }
 
+    /**
+     * Allows to inhibit changes to the {@link ExecutionPlan}, such as on re-optimization.
+     *
+     * @return whether this instance is vetoing on changes
+     */
+    public boolean isVetoingPlanChanges() {
+        return !this.loopContexts.isEmpty();
+    }
 
     public void shutdown() {
         // Release global resources.
@@ -639,9 +676,9 @@ public class CrossPlatformExecutor implements ExecutionState {
          * @return whether the activation is possible
          */
         boolean updateInputChannelInstances() {
-            return this.updateChannelInstances(this.miscInboundChannels) & (
-                    this.updateChannelInstances(this.initializationInboundChannels) |
-                            this.updateChannelInstances(this.iterationInboundChannels)
+            return this.updateChannelInstances(this.miscInboundChannels, false) & (
+                    this.updateChannelInstances(this.initializationInboundChannels, false) |
+                            this.updateChannelInstances(this.iterationInboundChannels, true)
             );
         }
 
@@ -651,14 +688,14 @@ public class CrossPlatformExecutor implements ExecutionState {
          * @param channels for that the {@link ChannelInstance}s are requested
          * @return whether there are {@link ChannelInstance}s for all {@link Channel}s available
          */
-        private boolean updateChannelInstances(Collection<Channel> channels) {
+        private boolean updateChannelInstances(Collection<Channel> channels, boolean isFeedback) {
             boolean isAllChannelsAvailable = true;
             for (Channel channel : channels) {
                 // Check if the ChannelInstance is already known.
                 if (this.inputChannelInstances.containsKey(channel)) continue;
 
                 // Otherwise, check if it is available now.
-                final ChannelInstance channelInstance = CrossPlatformExecutor.this.getChannelInstance(channel);
+                final ChannelInstance channelInstance = CrossPlatformExecutor.this.getChannelInstance(channel, isFeedback);
                 if (channelInstance != null) {
                     // If so, reference it.
                     this.inputChannelInstances.put(channel, channelInstance);
@@ -704,6 +741,13 @@ public class CrossPlatformExecutor implements ExecutionState {
                 this.loopContext.noteDiscardedReference(true);
             }
         }
+
+        /**
+         * Notifies this instance that it has been activated.
+         */
+        public void noteActivation() {
+            if (this.stage.isLoopHead()) this.loopContext.activateNextIteration();
+        }
     }
 
 
@@ -721,6 +765,8 @@ public class CrossPlatformExecutor implements ExecutionState {
          * Maintains the loop invariant {@link ExecutionResource}s.
          */
         private Set<ExecutionResource> loopInvariants = new HashSet<>(4);
+
+        private ExecutionStageLoopIterationContext currentIteration, prevTransition, nextTransition;
 
         /**
          * Creates a new instance.
@@ -742,6 +788,37 @@ public class CrossPlatformExecutor implements ExecutionState {
             }
         }
 
+        /**
+         * Switch the state of this instance: Age the next to the previous transition and create a new
+         * current {@link ExecutionStageLoopIterationContext}.
+         */
+        public void activateNextIteration() {
+            logger.info("Activating next iteration.");
+            if (this.currentIteration != null) this.currentIteration.noteDiscardedReference(true);
+            this.currentIteration = this.createIterationContext();
+
+            if (this.prevTransition != null) this.prevTransition.noteDiscardedReference(true);
+            this.prevTransition = this.nextTransition;
+            this.nextTransition = null;
+        }
+
+        private ExecutionStageLoopIterationContext createIterationContext() {
+            final ExecutionStageLoopIterationContext iteration = new ExecutionStageLoopIterationContext(this);
+            iteration.noteObtainedReference();
+            return iteration;
+        }
+
+        /**
+         * Create a new {@link ExecutionStageLoopIterationContext} for the next transition if it does not exist.
+         * @return the {@link ExecutionStageLoopIterationContext} for the next transition
+         */
+        public ExecutionStageLoopIterationContext getOrCreateNextTransition() {
+            if (this.nextTransition == null) {
+                this.nextTransition = this.createIterationContext();
+            }
+            return this.nextTransition;
+        }
+
         @Override
         protected void disposeUnreferenced() {
             for (ExecutionResource loopInvariant : this.loopInvariants) {
@@ -749,11 +826,112 @@ public class CrossPlatformExecutor implements ExecutionState {
             }
             this.loopInvariants = null;
             CrossPlatformExecutor.this.removeLoopContext(this.loop);
+            if (this.prevTransition != null) this.prevTransition.noteDiscardedReference(true);
+            if (this.currentIteration != null) this.currentIteration.noteDiscardedReference(true);
+            if (this.nextTransition != null) this.nextTransition.noteDiscardedReference(true);
         }
 
         @Override
         public boolean isDisposed() {
             return this.loopInvariants == null;
+        }
+
+        /**
+         * Registers the given {@link ChannelInstance} with appropriate {@link ExecutionStageLoopIterationContext}s.
+         *
+         * @param channelInstance the {@link ChannelInstance}
+         */
+        public void register(ChannelInstance channelInstance) {
+            final Channel channel = channelInstance.getChannel();
+            boolean isFeedback = false, isIterationLocal = false;
+            for (ExecutionTask consumer : channel.getConsumers()) {
+                if (consumer.isFeedbackInput(channel)) {
+                    isFeedback = true;
+                } else {
+                    isIterationLocal = true;
+                }
+            }
+            if (isIterationLocal) this.currentIteration.register(channelInstance);
+            if (isFeedback) this.getOrCreateNextTransition().register(channelInstance);
+        }
+
+        /**
+         * Provide a {@link ChannelInstance} from this instance. The instance can be provided from the previous or
+         * next transition or the current {@link ExecutionStageLoopIterationContext}.
+         * @param channel whose {@link ChannelInstance} should be provided
+         * @param isPeekingToNextTransition whether the next transition {@link ExecutionStageLoopIterationContext}
+         *                                  may be accessed
+         * @return the {@link ChannelInstance} or {@code null} if it cannot be found
+         */
+        public ChannelInstance getChannelInstance(Channel channel,
+                                                  boolean isPeekingToNextTransition) {
+            if (isPeekingToNextTransition) {
+                return this.getOrCreateNextTransition().getChannelInstance(channel);
+            }
+
+            if (this.prevTransition != null) {
+                final ChannelInstance channelInstance = this.prevTransition.getChannelInstance(channel);
+                if (channelInstance != null) return channelInstance;
+            }
+
+            if (this.currentIteration != null) {
+                return this.currentIteration.getChannelInstance(channel);
+            }
+            return null;
+        }
+
+        /**
+         * Removes the previous transition {@link ExecutionStageLoopIterationContext}. Included resources
+         * will not be provided anymore by this instance.
+         */
+        public void scrapPreviousTransitionContext() {
+            this.prevTransition = null;
+        }
+    }
+
+    /**
+     * Keeps track of {@link ExecutionResource}s of an {@link ExecutionStageLoop}.
+     */
+    private class ExecutionStageLoopIterationContext extends AbstractReferenceCountable {
+
+        /**
+         * The hosting {@link ExecutionStageLoopContext}.
+         */
+        private final ExecutionStageLoopContext loopContext;
+
+        /**
+         * Maintains {@link ChannelInstance}s produced in this iteration.
+         */
+        private Map<Channel, ChannelInstance> channelInstances = new HashMap<>(8);
+
+        /**
+         * Creates a new instance.
+         */
+        private ExecutionStageLoopIterationContext(ExecutionStageLoopContext loopContext) {
+            this.loopContext = loopContext;
+        }
+
+        @Override
+        protected void disposeUnreferenced() {
+            for (ChannelInstance channelInstance : channelInstances.values()) {
+                channelInstance.noteDiscardedReference(true);
+            }
+            this.channelInstances = null;
+        }
+
+        /**
+         * Registers the given {@link ChannelInstance} with this instance.
+         *
+         * @param channelInstance that should be registered
+         */
+        public void register(ChannelInstance channelInstance) {
+            channelInstance.noteObtainedReference();
+            final ChannelInstance oldInstance = this.channelInstances.put(channelInstance.getChannel(), channelInstance);
+            if (oldInstance != null) oldInstance.noteDiscardedReference(true);
+        }
+
+        public ChannelInstance getChannelInstance(Channel channel) {
+            return this.channelInstances.get(channel);
         }
     }
 

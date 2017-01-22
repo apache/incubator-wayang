@@ -6,7 +6,9 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.spark.channels.BroadcastChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
@@ -29,10 +31,11 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    SparkExecutor sparkExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            SparkExecutor sparkExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -44,6 +47,11 @@ public class SparkBroadcastOperator<Type> extends UnaryToUnaryOperator<Type, Typ
         output.accept(broadcast);
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
+    }
+
+    @Override
+    public boolean containsAction() {
+        return true;
     }
 
     @SuppressWarnings("unchecked")

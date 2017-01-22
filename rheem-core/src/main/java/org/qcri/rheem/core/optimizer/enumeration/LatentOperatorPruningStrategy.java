@@ -1,7 +1,7 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Slot;
 import org.qcri.rheem.core.platform.Platform;
@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,22 +23,22 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
 
     private static final Logger logger = LoggerFactory.getLogger(LatentOperatorPruningStrategy.class);
 
-    private Comparator<TimeEstimate> timeEstimateComparator;
-
     @Override
     public void configure(Configuration configuration) {
-        this.timeEstimateComparator = configuration.getTimeEstimateComparatorProvider().provide();
     }
 
     @Override
     public void prune(PlanEnumeration planEnumeration) {
+        // Skip if there is nothing to do...
+        if (planEnumeration.getPlanImplementations().size() < 2) return;
+
         // Group plans.
         final Collection<List<PlanImplementation>> competingPlans =
                 planEnumeration.getPlanImplementations().stream()
                         .collect(Collectors.groupingBy(LatentOperatorPruningStrategy::getInterestingProperties))
                         .values();
         final List<PlanImplementation> bestPlans = competingPlans.stream()
-                .map(plans -> this.selectBestPlanNary(plans, this.timeEstimateComparator))
+                .map(this::selectBestPlanNary)
                 .collect(Collectors.toList());
         planEnumeration.getPlanImplementations().retainAll(bestPlans);
     }
@@ -57,20 +56,18 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
         );
     }
 
-    private PlanImplementation selectBestPlanNary(List<PlanImplementation> planImplementation,
-                                                  Comparator<TimeEstimate> timeEstimateComparator) {
+    private PlanImplementation selectBestPlanNary(List<PlanImplementation> planImplementation) {
         assert !planImplementation.isEmpty();
         return planImplementation.stream()
-                .reduce((plan1, plan2) -> this.selectBestPlanBinary(plan1, plan2, timeEstimateComparator))
-                .get();
+                .reduce(this::selectBestPlanBinary)
+                .orElseThrow(() -> new RheemException("No plan was selected."));
     }
 
     private PlanImplementation selectBestPlanBinary(PlanImplementation p1,
-                                                    PlanImplementation p2,
-                                                    Comparator<TimeEstimate> timeEstimateComparator) {
-        final TimeEstimate t1 = p1.getTimeEstimate();
-        final TimeEstimate t2 = p2.getTimeEstimate();
-        final boolean isPickP1 = timeEstimateComparator.compare(t1, t2) <= 0;
+                                                    PlanImplementation p2) {
+        final double t1 = p1.getSquashedCostEstimate(true);
+        final double t2 = p2.getSquashedCostEstimate(true);
+        final boolean isPickP1 = t1 <= t2;
         if (logger.isDebugEnabled()) {
             if (isPickP1) {
                 LoggerFactory.getLogger(LatentOperatorPruningStrategy.class).debug(

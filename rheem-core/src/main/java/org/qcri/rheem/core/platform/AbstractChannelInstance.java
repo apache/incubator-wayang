@@ -3,6 +3,7 @@ package org.qcri.rheem.core.platform;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.lineage.ChannelLineageNode;
 import org.slf4j.LoggerFactory;
 
 import java.util.OptionalLong;
@@ -16,7 +17,13 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
 
     private boolean wasProduced = false;
 
-    private LazyChannelLineage lazyChannelLineage;
+    /**
+     * The {@link OptimizationContext.OperatorContext} of the {@link ExecutionOperator} that is producing this
+     * instance.
+     */
+    private final OptimizationContext.OperatorContext producerOperatorContext;
+
+    private ChannelLineageNode lineage;
 
     /**
      * Creates a new instance and registers it with its {@link Executor}.
@@ -30,7 +37,8 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
                                       OptimizationContext.OperatorContext producerOperatorContext,
                                       int producerOutputIndex) {
         super(executor);
-        this.lazyChannelLineage = new LazyChannelLineage(this, producerOperatorContext, producerOutputIndex);
+        this.lineage = new ChannelLineageNode(this);
+        this.producerOperatorContext = producerOperatorContext;
     }
 
     @Override
@@ -40,20 +48,22 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
 
     @Override
     public void setMeasuredCardinality(long cardinality) {
-        this.measuredCardinality.ifPresent(oldCardinality ->
+        this.measuredCardinality.ifPresent(oldCardinality -> {
+            if (oldCardinality != cardinality) {
                 LoggerFactory.getLogger(this.getClass()).warn(
                         "Replacing existing measured cardinality of {} with {} (was {}).",
                         this.getChannel(),
                         cardinality,
                         oldCardinality
-                )
-        );
+                );
+            }
+        });
         this.measuredCardinality = OptionalLong.of(cardinality);
     }
 
     @Override
-    public LazyChannelLineage getLazyChannelLineage() {
-        return this.lazyChannelLineage;
+    public ChannelLineageNode getLineage() {
+        return this.lineage;
     }
 
     @Override
@@ -64,6 +74,11 @@ public abstract class AbstractChannelInstance extends ExecutionResourceTemplate 
     @Override
     public void markProduced() {
         this.wasProduced = true;
+    }
+
+    @Override
+    public OptimizationContext.OperatorContext getProducerOperatorContext() {
+        return this.producerOperatorContext;
     }
 
     @Override

@@ -278,7 +278,7 @@ public abstract class SparkOperatorProfiler {
     protected void evaluate(SparkExecutionOperator operator,
                            ChannelInstance[] inputs,
                            ChannelInstance[] outputs) {
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.sparkExecutor.getConfiguration());
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.sparkExecutor.getJob());
         final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(operator);
         operator.evaluate(inputs, outputs, this.sparkExecutor, operatorContext);
     }

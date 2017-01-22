@@ -8,8 +8,10 @@ import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Copyable;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.iejoin.data.Data;
 import org.qcri.rheem.iejoin.operators.spark_helpers.*;
 import org.qcri.rheem.spark.channels.RddChannel;
@@ -37,10 +39,11 @@ public class SparkIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends 
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    SparkExecutor sparkExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            SparkExecutor sparkExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
@@ -205,4 +208,9 @@ public class SparkIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends 
         return Collections.singletonList(RddChannel.UNCACHED_DESCRIPTOR);
     }
 
+    @Override
+    public boolean containsAction() {
+        // TODO: Check if RDD.partition() is an action.
+        return false;
+    }
 }

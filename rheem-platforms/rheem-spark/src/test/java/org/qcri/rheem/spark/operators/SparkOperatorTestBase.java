@@ -44,7 +44,7 @@ public class SparkOperatorTestBase {
     }
 
     protected OptimizationContext.OperatorContext createOperatorContext(Operator operator) {
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(mockJob());
         return optimizationContext.addOneTimeOperator(operator);
     }
 

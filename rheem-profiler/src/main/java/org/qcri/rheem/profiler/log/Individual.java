@@ -1,18 +1,20 @@
 package org.qcri.rheem.profiler.log;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.LoadProfile;
+import org.qcri.rheem.core.optimizer.costs.EstimationContext;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
 import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
-import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.platform.AtomicExecutionGroup;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Bitmask;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 import java.util.function.ToDoubleFunction;
-import java.util.stream.Stream;
+import java.util.stream.DoubleStream;
 
 /**
  * Context for the optimization of {@link LoadProfileEstimator}s.
@@ -111,70 +113,67 @@ public class Individual {
         return offspring;
     }
 
-    /**
-     * Calculate the fitness as the arithmetic mean the individual fitnesses of the estimation subjects.
-     *
-     * @param partialExecutions on which this instance should be evaluated
-     * @param estimators        the {@link LoadProfileEstimator}s being configured by this instance
-     * @param platformOverheads
-     * @param configuration     the {@link Configuration}  @see #getFitness()
-     */
-    double calcluateSubjectbasedFitness(Collection<PartialExecution> partialExecutions,
-                                        Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
-                                        Map<Platform, Variable> platformOverheads,
-                                        Configuration configuration) {
+//    /**
+//     * Calculate the fitness as the arithmetic mean the individual fitnesses of the estimation subjects.
+//     */
+//    double calcluateSubjectbasedFitness(GeneticOptimizer geneticOptimizer) {
+//
+//        Map<Object, FitnessAggregator> subjectAggregators = new HashMap<>();
+//        for (PartialExecution partialExecution : geneticOptimizer.getData()) {
+//            // Calculate values for the given partialExecution
+//            double timeEstimate = this.estimateTime(
+//                    partialExecution,
+//                    geneticOptimizer.getEstimators(),
+//                    geneticOptimizer.getPlatformOverheads(),
+//                    geneticOptimizer.getConfiguration()
+//            );
+//            double partialFitness = this.calculateRelativeDelta(timeEstimate, partialExecution.getMeasuredExecutionTime());
+//            double weight = Math.log(Math.max(timeEstimate, partialExecution.getMeasuredExecutionTime()) + 2d) / Math.log(2);
+////            double weight = Math.max(timeEstimate.getGeometricMeanEstimate(), partialExecution.getMeasuredExecutionTime()) + 1;
+//
+//            // Attribute the fitness to all involved subjects.
+//            for (PartialExecution.OperatorExecution operatorExecution : partialExecution.getOperatorExecutions()) {
+//                Object subject = operatorExecution.getOperator().getClass();
+//                final FitnessAggregator aggregator = subjectAggregators.computeIfAbsent(subject, k -> new FitnessAggregator(0, 0));
+//                aggregator.fitnessAccumulator += weight * partialFitness;
+//                aggregator.weightAccumulator += weight;
+//                aggregator.numObservations++;
+//            }
+//            for (Platform subject : partialExecution.getInitializedPlatforms()) {
+//                final FitnessAggregator aggregator = subjectAggregators.computeIfAbsent(subject, k -> new FitnessAggregator(0, 0));
+//                aggregator.fitnessAccumulator += weight * partialFitness;
+//                aggregator.weightAccumulator += weight;
+//                aggregator.numObservations++;
+//            }
+//        }
+//
+//        // Aggregate the fitness values of the different subjects.
+//        FitnessAggregator aggregator = new FitnessAggregator(0, 0);
+//        for (FitnessAggregator subjectAggregator : subjectAggregators.values()) {
+//            double subjectFitness = subjectAggregator.fitnessAccumulator / subjectAggregator.weightAccumulator;
+//            double subjectWeight = 1;//Math.log(1 + subjectAggregator.numObservations);
+//            aggregator.fitnessAccumulator += subjectWeight * subjectFitness;
+//            aggregator.weightAccumulator += subjectWeight;
+//            aggregator.numObservations++;
+//        }
+//
+//        return aggregator.fitnessAccumulator / aggregator.weightAccumulator;
+//
+//    }
 
-        Map<Object, FitnessAggregator> subjectAggregators = new HashMap<>();
-        for (PartialExecution partialExecution : partialExecutions) {
-            // Calculate values for the given partialExecution
-            TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, platformOverheads, configuration);
-            double partialFitness = this.calculateRelativePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
-            double weight = Math.log(Math.max(timeEstimate.getGeometricMeanEstimate(), partialExecution.getMeasuredExecutionTime()) + 2d) / Math.log(2);
-//            double weight = Math.max(timeEstimate.getGeometricMeanEstimate(), partialExecution.getMeasuredExecutionTime()) + 1;
-
-            // Attribute the fitness to all involved subjects.
-            for (PartialExecution.OperatorExecution operatorExecution : partialExecution.getOperatorExecutions()) {
-                Object subject = operatorExecution.getOperator().getClass();
-                final FitnessAggregator aggregator = subjectAggregators.computeIfAbsent(subject, k -> new FitnessAggregator(0, 0));
-                aggregator.fitnessAccumulator += weight * partialFitness;
-                aggregator.weightAccumulator += weight;
-                aggregator.numObservations++;
-            }
-            for (Platform subject : partialExecution.getInitializedPlatforms()) {
-                final FitnessAggregator aggregator = subjectAggregators.computeIfAbsent(subject, k -> new FitnessAggregator(0, 0));
-                aggregator.fitnessAccumulator += weight * partialFitness;
-                aggregator.weightAccumulator += weight;
-                aggregator.numObservations++;
-            }
-        }
-
-        // Aggregate the fitness values of the different subjects.
-        FitnessAggregator aggregator = new FitnessAggregator(0, 0);
-        for (FitnessAggregator subjectAggregator : subjectAggregators.values()) {
-            double subjectFitness = subjectAggregator.fitnessAccumulator / subjectAggregator.weightAccumulator;
-            double subjectWeight = 1;//Math.log(1 + subjectAggregator.numObservations);
-            aggregator.fitnessAccumulator += subjectWeight * subjectFitness;
-            aggregator.weightAccumulator += subjectWeight;
-            aggregator.numObservations++;
-        }
-
-        return aggregator.fitnessAccumulator / aggregator.weightAccumulator;
-
-    }
-
-    private static class FitnessAggregator {
-
-        private double fitnessAccumulator;
-
-        private double weightAccumulator;
-
-        private int numObservations = 0;
-
-        public FitnessAggregator(double fitnessAccumulator, double weightAccumulator) {
-            this.fitnessAccumulator = fitnessAccumulator;
-            this.weightAccumulator = weightAccumulator;
-        }
-    }
+//    private static class FitnessAggregator {
+//
+//        private double fitnessAccumulator;
+//
+//        private double weightAccumulator;
+//
+//        private int numObservations = 0;
+//
+//        public FitnessAggregator(double fitnessAccumulator, double weightAccumulator) {
+//            this.fitnessAccumulator = fitnessAccumulator;
+//            this.weightAccumulator = weightAccumulator;
+//        }
+//    }
 
     public void updateMaturity(Bitmask activatedGenes) {
         final double newMaturity = this.getFitness();
@@ -207,101 +206,98 @@ public class Individual {
 
     /**
      * Calculate the fitness as weighted harmonic mean of the relative prediction accuracies.
-     *
-     * @param partialExecutions on which this instance should be evaluated
-     * @param estimators        the {@link LoadProfileEstimator}s being configured by this instance
-     * @param platformOverheads
-     * @param configuration     the {@link Configuration}  @see #getFitness()
      */
-    double calculateRelativeFitness(Collection<PartialExecution> partialExecutions,
-                                    Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
-                                    Map<Platform, Variable> platformOverheads,
-                                    Configuration configuration) {
+    double calculateRelativeFitness(GeneticOptimizer geneticOptimizer) {
+        // Some settings.
         double harmonicSmoothing = .1d;
         double weightSum = 0d;
         double fitnessSum = 0d;
-        for (PartialExecution partialExecution : partialExecutions) {
-            TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, platformOverheads, configuration);
-            double weight = Math.log(partialExecution.getMeasuredExecutionTime() + 2d) / Math.log(2);
-            double partialFitness = this.calculateRelativePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
 
-            fitnessSum += weight / (partialFitness + harmonicSmoothing);
+        // Calculate the arithmetic mean of the partial fitnesses for each data point.
+        for (PartialExecution partialExecution : geneticOptimizer.getData()) {
+            // Estimate the time with the current variables.
+            double timeEstimate = this.estimateTime(
+                    partialExecution,
+                    geneticOptimizer.getPlatformOverheads(),
+                    geneticOptimizer.getConfiguration()
+            );
+
+            // Calculate the weight.
+//            double weight = Math.log(partialExecution.getMeasuredExecutionTime() + 2d) / Math.log(2);
+//            double weight = Math.sqrt(Math.max(timeEstimate, partialExecution.getMeasuredExecutionTime())) + 1;
+            double weight = geneticOptimizer.calculateObservationBasedWeight(partialExecution);
+//                    + geneticOptimizer.calculateRuntimeBasedWeight(partialExecution);
+
+            // Calculate the partial fitness.
+            double relativeDelta = this.calculateRelativeDelta(timeEstimate, partialExecution.getMeasuredExecutionTime());
+
+            // Prepare mean calculation.
+//            fitnessSum += weight / (partialFitness + harmonicSmoothing);
+            fitnessSum += weight * (relativeDelta * relativeDelta);
             weightSum += weight;
         }
-        return (weightSum / fitnessSum) - harmonicSmoothing;
+//        return (weightSum / fitnessSum) - harmonicSmoothing;
+        return -Math.sqrt(fitnessSum) / weightSum;
     }
 
-    private double calculateRelativePartialFitness(TimeEstimate timeEstimate, long actualTime) {
-        final long smoothing = 10L;
-        final long meanEstimate = timeEstimate.getGeometricMeanEstimate() + smoothing;
-        actualTime = actualTime + smoothing;
-        if (meanEstimate > actualTime) {
-            return actualTime / (double) meanEstimate;
-        } else {
-            return meanEstimate / (double) actualTime;
-        }
+    private double calculateRelativeDelta(double timeEstimate, long actualTime) {
+        // Get important values.
+        final double smoothing = 1000d;
+        final long meanEstimate = Math.round(timeEstimate);
+        final long delta = Math.abs(meanEstimate - actualTime);
+        return (delta + smoothing) / (actualTime + smoothing);
     }
 
     /**
      * Calculate the fitness as weighted arithmetic mean of the absolute prediction accuracies.
-     *
-     * @param partialExecutions on which this instance should be evaluated
-     * @param estimators        the {@link LoadProfileEstimator}s being configured by this instance
-     * @param platformOverheads
-     * @param configuration     the {@link Configuration}  @see #getFitness()
      */
-    double calculateAbsoluteFitness(Collection<PartialExecution> partialExecutions,
-                                    Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
-                                    Map<Platform, Variable> platformOverheads,
-                                    Configuration configuration) {
+    double calculateAbsoluteFitness(GeneticOptimizer geneticOptimizer) {
         double weightSum = 0d;
         double fitnessSum = 0d;
-        for (PartialExecution partialExecution : partialExecutions) {
-            TimeEstimate timeEstimate = this.estimateTime(partialExecution, estimators, platformOverheads, configuration);
-            double weight = Math.log(partialExecution.getMeasuredExecutionTime() + 2d) / Math.log(2);
+        for (PartialExecution partialExecution : geneticOptimizer.getData()) {
+            double timeEstimate = this.estimateTime(
+                    partialExecution,
+                    geneticOptimizer.getPlatformOverheads(),
+                    geneticOptimizer.getConfiguration()
+            );
+            double weight = geneticOptimizer.calculateObservationBasedWeight(partialExecution)
+                    + 3 * geneticOptimizer.calculateRuntimeBasedWeight(partialExecution);
             double partialFitness = this.calculateAbsolutePartialFitness(timeEstimate, partialExecution.getMeasuredExecutionTime());
             weightSum += weight;
-            fitnessSum += weight * partialFitness;
+            fitnessSum += weight * -(partialFitness * partialFitness);
         }
-        return fitnessSum;
+        return fitnessSum / weightSum;
     }
 
-
-    private double calculateAbsolutePartialFitness(TimeEstimate timeEstimate, long actualTime) {
-        final long meanEstimate = timeEstimate.getGeometricMeanEstimate();
-        final long delta = Math.abs(meanEstimate - actualTime);
+    private double calculateAbsolutePartialFitness(double timeEstimate, long actualTime) {
+        final long delta = Math.abs(Math.round(timeEstimate) - actualTime);
         return -delta;
     }
 
-    TimeEstimate estimateTime(PartialExecution partialExecution,
-                              Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
-                              Map<Platform, Variable> platformOverheads,
-                              Configuration configuration) {
-        final Stream<TimeEstimate> operatorEstimates = partialExecution.getOperatorExecutions().stream()
-                .map(operatorExecution -> this.estimateTime(operatorExecution, estimators, configuration));
-        final Stream<TimeEstimate> platformEstimates = partialExecution.getInitializedPlatforms().stream()
-                .map(p -> {
+    double estimateTime(PartialExecution partialExecution,
+                        Map<Platform, Variable> platformOverheads,
+                        Configuration configuration) {
+        final DoubleStream operatorEstimates = partialExecution.getAtomicExecutionGroups().stream()
+                .map(atomicExecutionGroup -> this.estimateTime(atomicExecutionGroup, configuration))
+                .mapToDouble(TimeEstimate::getGeometricMeanEstimate);
+        final DoubleStream platformEstimates = partialExecution.getInitializedPlatforms().stream()
+                .mapToDouble(p -> {
                     final Variable variable = platformOverheads.get(p);
-                    return variable == null ? TimeEstimate.ZERO : new TimeEstimate(Math.round(variable.getValue(this)));
+                    return variable == null ? 0d : variable.getValue(this);
                 });
-        return Stream.concat(operatorEstimates, platformEstimates)
-                .reduce(TimeEstimate.ZERO, TimeEstimate::plus);
+        return DoubleStream.concat(operatorEstimates, platformEstimates).sum();
     }
 
-    private TimeEstimate estimateTime(PartialExecution.OperatorExecution operatorExecution,
-                                      Map<Class<? extends ExecutionOperator>, LoadProfileEstimator<Individual>> estimators,
+    /**
+     * Estimates the execution time for the given {@link AtomicExecutionGroup} with the genome of this instance.
+     *
+     * @param executionGroup the {@link AtomicExecutionGroup}
+     * @param configuration  provides estimation context
+     * @return the {@link TimeEstimate}
+     */
+    private TimeEstimate estimateTime(AtomicExecutionGroup executionGroup,
                                       Configuration configuration) {
-        final ExecutionOperator operator = operatorExecution.getOperator();
-        final LoadProfileEstimator<Individual> estimator = estimators.get(operator.getClass());
-        final LoadProfile loadProfile = estimator.estimate(
-                this, operatorExecution.getInputCardinalities(), operatorExecution.getOutputCardinalities()
-        );
-        if (operatorExecution.getNestedLoadProfile() != null) {
-            loadProfile.nest(operatorExecution.getNestedLoadProfile());
-        }
-        final LoadProfileToTimeConverter timeConverter = configuration
-                .getLoadProfileToTimeConverterProvider()
-                .provideFor(operator.getPlatform());
-        return timeConverter.convert(loadProfile);
+        final EstimationContext estimationContext = executionGroup.getEstimationContext();
+        return executionGroup.estimateExecutionTime(new DynamicEstimationContext(this, estimationContext));
     }
 }

@@ -8,7 +8,7 @@ import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, DefaultCardinalityEstimator, FixedSizeCardinalityEstimator}
-import org.qcri.rheem.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator}
+import org.qcri.rheem.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator, LoadProfileEstimator, NestableLoadProfileEstimator}
 import org.qcri.rheem.core.plan.rheemplan.ElementaryOperator
 import org.qcri.rheem.core.types.{BasicDataUnitType, DataSetType, DataUnitGroupType, DataUnitType}
 
@@ -43,6 +43,12 @@ package object api {
       override def apply(t: In) = scalaFunc(t)
     }
 
+  implicit def toSerializablePartitionFunction[In, Out](scalaFunc: Iterable[In] => Iterable[Out]):
+  SerializableFunction[JavaIterable[In], JavaIterable[Out]] =
+    new SerializableFunction[JavaIterable[In], JavaIterable[Out]] {
+      override def apply(t: JavaIterable[In]) = JavaConversions.asJavaIterable(scalaFunc(JavaConversions.iterableAsScalaIterable(t)))
+    }
+
   implicit def toSerializablePredicate[T](scalaFunc: T => Boolean): SerializablePredicate[T] =
     new SerializablePredicate[T] {
       override def test(t: T) = scalaFunc(t)
@@ -71,38 +77,45 @@ package object api {
     new FixedSizeCardinalityEstimator(fixCardinality, true)
 
   implicit def toCardinalityEstimator(f: Long => Long): CardinalityEstimator =
-    new DefaultCardinalityEstimator(1d, 1, true, new ToLongFunction[Array[Long]] {
+    new DefaultCardinalityEstimator(.99d, 1, true, new ToLongFunction[Array[Long]] {
       override def applyAsLong(inCards: Array[Long]): Long = f.apply(inCards(0))
     })
 
   implicit def toCardinalityEstimator(f: (Long, Long) => Long): CardinalityEstimator =
-    new DefaultCardinalityEstimator(1d, 1, true, new ToLongFunction[Array[Long]] {
+    new DefaultCardinalityEstimator(.99d, 1, true, new ToLongFunction[Array[Long]] {
       override def applyAsLong(inCards: Array[Long]): Long = f.apply(inCards(0), inCards(1))
     })
 
-  implicit def toLoadEstimator[T](f: (Long, Long) => Long): LoadEstimator[T] =
+  implicit def toLoadEstimator(f: (Long, Long) => Long): LoadEstimator =
     new DefaultLoadEstimator(
       1,
       1,
-      1d,
+      .99d,
       CardinalityEstimate.EMPTY_ESTIMATE,
       new ToLongBiFunction[Array[Long], Array[Long]] {
         override def applyAsLong(t: Array[Long], u: Array[Long]): Long = f.apply(t(0), u(0))
       }
     )
 
-  implicit def toLoadEstimator[T](f: (Long, Long, Long) => Long): LoadEstimator[T] =
+  implicit def toLoadEstimator(f: (Long, Long, Long) => Long): LoadEstimator =
     new DefaultLoadEstimator(
       2,
       1,
-      1d,
+      .99d,
       CardinalityEstimate.EMPTY_ESTIMATE,
       new ToLongBiFunction[Array[Long], Array[Long]] {
         override def applyAsLong(t: Array[Long], u: Array[Long]): Long = f.apply(t(0), t(1), u(0))
       }
     )
 
-  implicit def toInterval(double: Double): ProbabilisticDoubleInterval = ProbabilisticDoubleInterval.ofExactly(double)
+  implicit def toLoadProfileEstimator(f: (Long, Long) => Long): LoadProfileEstimator =
+    new NestableLoadProfileEstimator(f, (in: Long, out: Long) => 0L)
+
+  implicit def toLoadProfileEstimator(f: (Long, Long, Long) => Long): LoadProfileEstimator =
+    new NestableLoadProfileEstimator(f, (in0: Long, in1: Long, out: Long) => 0L)
+
+
+  implicit def toInterval(double: Double): ProbabilisticDoubleInterval = new ProbabilisticDoubleInterval(double, double, .99)
 
   implicit def createPlanBuilder(rheemContext: RheemContext): PlanBuilder = new PlanBuilder(rheemContext)
 

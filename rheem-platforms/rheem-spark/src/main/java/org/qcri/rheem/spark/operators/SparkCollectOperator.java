@@ -9,7 +9,9 @@ import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.channels.CollectionChannel;
 import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.spark.channels.RddChannel;
@@ -29,10 +31,11 @@ public class SparkCollectOperator<Type>
     }
 
     @Override
-    public Collection<OptimizationContext.OperatorContext> evaluate(ChannelInstance[] inputs,
-                                                                    ChannelInstance[] outputs,
-                                                                    SparkExecutor sparkExecutor,
-                                                                    OptimizationContext.OperatorContext operatorContext) {
+    public Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> evaluate(
+            ChannelInstance[] inputs,
+            ChannelInstance[] outputs,
+            SparkExecutor sparkExecutor,
+            OptimizationContext.OperatorContext operatorContext) {
         RddChannel.Instance input = (RddChannel.Instance) inputs[0];
         CollectionChannel.Instance output = (CollectionChannel.Instance) outputs[0];
 
@@ -40,7 +43,7 @@ public class SparkCollectOperator<Type>
         final List<Type> collectedRdd = (List<Type>) input.provideRdd().collect();
         output.accept(collectedRdd);
 
-        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
+        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -51,6 +54,11 @@ public class SparkCollectOperator<Type>
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+    }
+
+    @Override
+    public boolean containsAction() {
+        return true;
     }
 
     @Override

@@ -30,14 +30,19 @@ public class OperatorTestBase {
     }
 
     protected static JavaExecutor createJavaExecutor() {
-        final Job job = mock(Job.class);
-        when(job.getConfiguration()).thenReturn(configuration);
-        when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new FullInstrumentationStrategy()));
+        final Job job = createJob();
         return new JavaExecutor(JavaPlatform.getInstance(), job);
     }
 
+    private static Job createJob() {
+        final Job job = mock(Job.class);
+        when(job.getConfiguration()).thenReturn(configuration);
+        when(job.getCrossPlatformExecutor()).thenReturn(new CrossPlatformExecutor(job, new FullInstrumentationStrategy()));
+        return job;
+    }
+
     protected static OptimizationContext.OperatorContext createOperatorContext(Operator operator) {
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(createJob());
         return optimizationContext.addOneTimeOperator(operator);
     }
 

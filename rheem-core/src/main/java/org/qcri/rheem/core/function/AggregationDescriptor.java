@@ -1,6 +1,8 @@
 package org.qcri.rheem.core.function;
 
 import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.types.BasicDataUnitType;
 import org.qcri.rheem.core.types.DataUnitGroupType;
 import org.qcri.rheem.core.types.DataUnitType;
@@ -19,32 +21,30 @@ public abstract class AggregationDescriptor<InputType, OutputType> extends Funct
     // TODO: What about aggregation functions?
 
     public AggregationDescriptor(DataUnitGroupType<InputType> inputType, BasicDataUnitType<OutputType> outputType) {
-        this(inputType, outputType,
+        this(inputType, outputType, new NestableLoadProfileEstimator(
                 LoadEstimator.createFallback(1, 1),
-                LoadEstimator.createFallback(1, 1));
+                LoadEstimator.createFallback(1, 1)
+        ));
     }
 
     public AggregationDescriptor(Class<InputType> inputTypeClass, Class<OutputType> outputTypeClass) {
-        this(inputTypeClass,
-                outputTypeClass,
+        this(inputTypeClass, outputTypeClass, new NestableLoadProfileEstimator(
                 LoadEstimator.createFallback(1, 1),
-                LoadEstimator.createFallback(1, 1));
+                LoadEstimator.createFallback(1, 1)
+        ));
     }
 
     public AggregationDescriptor(Class<InputType> inputTypeClass,
                                  Class<OutputType> outputTypeClass,
-                                 LoadEstimator cpuLoadEstimator,
-                                 LoadEstimator memoryLoadEstimator) {
+                                 LoadProfileEstimator loadProfileEstimator) {
         this(DataUnitType.createGrouped(inputTypeClass),
                 DataUnitType.createBasic(outputTypeClass),
-                cpuLoadEstimator,
-                memoryLoadEstimator);
+                loadProfileEstimator);
     }
 
     public AggregationDescriptor(DataUnitGroupType<InputType> inputType, BasicDataUnitType<OutputType> outputType,
-                                 LoadEstimator cpuLoadEstimator,
-                                 LoadEstimator memoryLoadEstimator) {
-        super(cpuLoadEstimator, memoryLoadEstimator);
+                                 LoadProfileEstimator loadProfileEstimator) {
+        super(loadProfileEstimator);
         this.inputType = inputType;
         this.outputType = outputType;
     }

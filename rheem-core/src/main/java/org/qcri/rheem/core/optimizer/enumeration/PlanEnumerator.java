@@ -1,5 +1,6 @@
 package org.qcri.rheem.core.optimizer.enumeration;
 
+import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,7 +39,14 @@ public class PlanEnumerator {
     /**
      * {@link ConcatenationActivator}s that are activated and should be executed.
      */
-    private final Queue<ConcatenationActivator> activatedConcatenations = new LinkedList<>();
+    private final Queue<ConcatenationActivator> activatedConcatenations = new PriorityQueue<>(
+            (activator0, activator1) -> Double.compare(activator0.priority, activator1.priority)
+    );
+
+    /**
+     * Determines how to calculate the priority of {@link ConcatenationActivator}s.
+     */
+    private final ToDoubleFunction<ConcatenationActivator> concatenationPriorityFunction;
 
     /**
      * TODO
@@ -81,12 +90,22 @@ public class PlanEnumerator {
     /**
      * {@link Channel}s that are existing and must be reused when re-optimizing.
      */
-    private final Map<OutputSlot<?>, Channel> existingChannels;
+    private final Map<OutputSlot<?>, Collection<Channel>> openChannels;
 
     /**
      * {@link OptimizationContext} that holds all relevant task data.
      */
     private final OptimizationContext optimizationContext;
+
+    /**
+     * Keeps track of the execution time.
+     */
+    private TimeMeasurement timeMeasurement;
+
+    /**
+     * Tells whether branches should be enumerated first.
+     */
+    private boolean isEnumeratingBranchesFirst;
 
     /**
      * Creates a new instance.
@@ -136,12 +155,12 @@ public class PlanEnumerator {
         for (Channel openChannel : openChannels) {
             final OutputSlot<?> outputSlot = OptimizationUtils.findRheemPlanOutputSlotFor(openChannel);
             if (outputSlot != null) {
-                for (OutputSlot<?> outputOutput : outputSlot.getOwner().getOutermostOutputSlots(outputSlot)) {
-                    final Channel otherExistingChannel = this.existingChannels.put(outputOutput, openChannel);
-                    assert otherExistingChannel == null :
-                            String.format("The two existing channels %s and %s represent the same output slot.",
-                                    openChannel, otherExistingChannel);
+                for (OutputSlot<?> outerOutput : outputSlot.getOwner().getOutermostOutputSlots(outputSlot)) {
+                    final Collection<Channel> channelSet = this.openChannels.computeIfAbsent(outerOutput, k -> new HashSet<>(1));
+                    channelSet.add(openChannel);
                 }
+            } else {
+                this.logger.error("Could not find the output slot for the open channel {}.", openChannel);
             }
         }
 
@@ -155,19 +174,61 @@ public class PlanEnumerator {
                            OperatorAlternative.Alternative enumeratedAlternative,
                            Map<OperatorAlternative, OperatorAlternative.Alternative> presettledAlternatives,
                            Map<ExecutionOperator, ExecutionTask> executedTasks,
-                           Map<OutputSlot<?>, Channel> existingChannels) {
+                           Map<OutputSlot<?>, Collection<Channel>> openChannels) {
 
         this.optimizationContext = optimizationContext;
         this.enumeratedAlternative = enumeratedAlternative;
         this.presettledAlternatives = presettledAlternatives;
         this.executedTasks = executedTasks;
-        this.existingChannels = existingChannels;
+        this.openChannels = openChannels;
 
 
         // Set up start Operators.
         for (Operator startOperator : startOperators) {
             this.scheduleForEnumeration(startOperator, optimizationContext);
         }
+
+        // Configure the enumeration.
+        final Configuration configuration = this.optimizationContext.getConfiguration();
+        this.isEnumeratingBranchesFirst = configuration.getBooleanProperty(
+                "rheem.core.optimizer.enumeration.branchesfirst", true
+        );
+
+        // Configure the concatenations.
+        final String priorityFunctionName = configuration.getStringProperty(
+                "rheem.core.optimizer.enumeration.concatenationprio"
+        );
+        ToDoubleFunction<ConcatenationActivator> concatenationPriorityFunction;
+        switch (priorityFunctionName) {
+            case "slots":
+                concatenationPriorityFunction = ConcatenationActivator::countNumOfOpenSlots;
+                break;
+            case "plans":
+                concatenationPriorityFunction = ConcatenationActivator::estimateNumConcatenatedPlanImplementations;
+                break;
+            case "random":
+                // Randomly generate a priority. However, avoid re-generate priorities, because that would increase
+                // of a concatenation activator being processed, the longer it is in the queue (I guess).
+                concatenationPriorityFunction = activator -> {
+                    if (!Double.isNaN(activator.priority)) return activator.priority;
+                    return Math.random();
+                };
+                break;
+            case "none":
+                concatenationPriorityFunction = activator -> 0d;
+                break;
+            default:
+                throw new RheemException("Unknown concatenation priority function: " + priorityFunctionName);
+        }
+
+        boolean isInvertConcatenationPriorities = configuration.getBooleanProperty(
+                "rheem.core.optimizer.enumeration.invertconcatenations", false
+        );
+        this.concatenationPriorityFunction = isInvertConcatenationPriorities ?
+                activator -> -concatenationPriorityFunction.applyAsDouble(activator) :
+                concatenationPriorityFunction;
+
+
     }
 
     private void scheduleForEnumeration(Operator operator, OptimizationContext optimizationContext) {
@@ -219,18 +280,7 @@ public class PlanEnumerator {
      */
     private synchronized void run() {
         if (this.resultReference == null) {
-            while (!this.activatedEnumerations.isEmpty() || !this.activatedConcatenations.isEmpty()) {
-                ConcatenationActivator concatenationActivator;
-                while ((concatenationActivator = this.activatedConcatenations.poll()) != null) {
-                    if (this.isTopLevel()) {
-                        this.logger.debug("Execute {} (open inputs: {}).",
-                                concatenationActivator,
-                                concatenationActivator.getBaseEnumeration().getRequestedInputSlots()
-                        );
-                    }
-                    this.concatenate(concatenationActivator);
-                }
-
+            while (!this.activatedEnumerations.isEmpty()) {
                 // Try to enumerate branches.
                 EnumerationActivator enumerationActivator;
                 if ((enumerationActivator = this.activatedEnumerations.poll()) != null) {
@@ -239,6 +289,17 @@ public class PlanEnumerator {
                     }
                     this.enumerateBranchStartingFrom(enumerationActivator);
                 }
+            }
+
+            ConcatenationActivator concatenationActivator;
+            while ((concatenationActivator = this.activatedConcatenations.poll()) != null) {
+                if (this.isTopLevel()) {
+                    this.logger.debug("Execute {} (open inputs: {}).",
+                            concatenationActivator,
+                            concatenationActivator.getBaseEnumeration().getRequestedInputSlots()
+                    );
+                }
+                this.concatenate(concatenationActivator);
             }
 
             this.constructResultEnumeration();
@@ -299,6 +360,10 @@ public class PlanEnumerator {
                 return null;
             }
             branch.add(currentOperator);
+
+            // Cut branches if requested.
+            if (!this.isEnumeratingBranchesFirst) break;
+
             // Try to advance. This requires certain conditions, though.
             OutputSlot<?> followableOutput;
             if (currentOperator.isLoopHead()) {
@@ -375,15 +440,16 @@ public class PlanEnumerator {
                 final OutputSlot<?> output = lastOperator.getOutput(0);
                 branchEnumeration = branchEnumeration.concatenate(
                         output,
-                        this.existingChannels.get(output),
+                        this.openChannels.get(output),
                         Collections.singletonMap(operator.getInput(0), operatorEnumeration),
-                        optimizationContext
-                );
+                        optimizationContext,
+                        this.timeMeasurement);
+
                 if (branchEnumeration.getPlanImplementations().isEmpty()) {
                     if (this.isTopLevel()) {
-                        throw new RheemException(String.format("Could not concatenate %s in %s.", operator, branch));
+                        throw new RheemException(String.format("Could not concatenate %s to %s.", lastOperator, operator));
                     } else {
-                        this.logger.warn("Could not concatenate {} in {}.", operator, branch);
+                        this.logger.warn("Could not concatenate {} to {}.", lastOperator, operator);
                     }
                 }
                 this.prune(branchEnumeration);
@@ -431,24 +497,28 @@ public class PlanEnumerator {
      * @return the new instance
      */
     private PlanEnumerator forkFor(OperatorAlternative.Alternative alternative, OptimizationContext optimizationContext) {
-        return new PlanEnumerator(Operators.collectStartOperators(alternative),
+        final PlanEnumerator fork = new PlanEnumerator(Operators.collectStartOperators(alternative),
                 optimizationContext,
                 alternative,
                 this.presettledAlternatives,
                 this.executedTasks,
-                this.existingChannels);
+                this.openChannels);
+        fork.setTimeMeasurement(this.timeMeasurement);
+        return fork;
     }
 
     /**
      * Fork a new instance for the {@code optimizationContext}.
      */
     PlanEnumerator forkFor(LoopHeadOperator loopHeadOperator, OptimizationContext optimizationContext) {
-        return new PlanEnumerator(Operators.collectStartOperators(loopHeadOperator.getContainer()),
+        final PlanEnumerator fork = new PlanEnumerator(Operators.collectStartOperators(loopHeadOperator.getContainer()),
                 optimizationContext,
                 null,
                 this.presettledAlternatives,
                 this.executedTasks,
-                this.existingChannels);
+                this.openChannels);
+        fork.setTimeMeasurement(this.timeMeasurement);
+        return fork;
     }
 
     /**
@@ -465,9 +535,10 @@ public class PlanEnumerator {
 
         final PlanEnumeration concatenatedEnumeration = concatenationActivator.baseEnumeration.concatenate(
                 concatenationActivator.outputSlot,
-                this.existingChannels.get(concatenationActivator.outputSlot),
+                this.openChannels.get(concatenationActivator.outputSlot),
                 concatenationActivator.getAdjacentEnumerations(),
-                concatenationActivator.getOptimizationContext()
+                concatenationActivator.getOptimizationContext(),
+                this.timeMeasurement
         );
 
         if (concatenatedEnumeration.getPlanImplementations().isEmpty()) {
@@ -634,7 +705,7 @@ public class PlanEnumerator {
 
     private ConcatenationActivator getOrCreateConcatenationActivator(OutputSlot<?> output,
                                                                      OptimizationContext optimizationCtx) {
-        Tuple<OutputSlot<?>, OptimizationContext> concatKey = ConcatenationActivator.createKey(output, optimizationCtx);
+        Tuple<OutputSlot<?>, OptimizationContext> concatKey = createConcatenationKey(output, optimizationCtx);
         return this.concatenationActivators.computeIfAbsent(
                 concatKey, key -> new ConcatenationActivator(key.getField0(), key.getField1()));
     }
@@ -658,10 +729,9 @@ public class PlanEnumerator {
      * @param planEnumeration to which the pruning should be applied
      */
     private void prune(final PlanEnumeration planEnumeration) {
-        if (planEnumeration.getPlanImplementations().size() < 2) {
-            this.logger.trace("Skip pruning: Too few plan implementations.");
-            return;
-        }
+        TimeMeasurement pruneMeasurement =
+                this.timeMeasurement == null ? null : this.timeMeasurement.start("Prune");
+
 
         if (this.logger.isDebugEnabled()) {
             this.logger.debug("{} implementations for scope {}.", planEnumeration.getPlanImplementations().size(), planEnumeration.getScope());
@@ -676,6 +746,8 @@ public class PlanEnumerator {
                 numPlanImplementations,
                 planEnumeration.getPlanImplementations().size()
         );
+
+        if (pruneMeasurement != null) pruneMeasurement.stop();
     }
 
     /**
@@ -790,7 +862,7 @@ public class PlanEnumerator {
     /**
      * TODO. Waiting for all {@link InputSlot}s for an {@link OutputSlot} in order to join.
      */
-    public static class ConcatenationActivator {
+    public class ConcatenationActivator {
 
         /**
          * Base plan that provides the {@link #outputSlot}. May change.
@@ -819,6 +891,12 @@ public class PlanEnumerator {
 
         protected boolean wasExecuted = false;
 
+        /**
+         * The priority of this instance.
+         */
+        private double priority = Double.NaN;
+
+
         private ConcatenationActivator(OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
             assert !outputSlot.getOccupiedSlots().isEmpty();
             this.outputSlot = outputSlot;
@@ -838,6 +916,8 @@ public class PlanEnumerator {
             assert openInputSlot.getOccupant() == this.outputSlot;
             this.activationCollector.put(openInputSlot, planEnumeration);
             assert this.numRequiredActivations >= this.activationCollector.size();
+
+            this.updatePriority();
         }
 
         public PlanEnumeration getBaseEnumeration() {
@@ -849,6 +929,68 @@ public class PlanEnumerator {
             assert this.baseEnumeration == null || baseEnumeration.getScope().containsAll(this.baseEnumeration.getScope());
             this.baseEnumeration = baseEnumeration;
             // }
+
+            this.updatePriority();
+        }
+
+        /**
+         * Update the {@link #priority} of this instance.
+         */
+        private void updatePriority() {
+            // If this instance is not ready for activation, it does not have or need a priority.
+            if (!this.canBeActivated()) return;
+
+            // Calculate the new priority.
+            double oldPriority = this.priority;
+            this.priority = PlanEnumerator.this.concatenationPriorityFunction.applyAsDouble(this);
+
+            // Update the priority queue if needed.
+            if (this.priority != oldPriority && PlanEnumerator.this.activatedConcatenations.remove(this)) {
+                PlanEnumerator.this.activatedConcatenations.add(this);
+            }
+        }
+
+        /**
+         * Estimates the number of {@link PlanImplementation}s in the concatenated {@link PlanEnumeration}. Can be used
+         * as {@link #concatenationPriorityFunction}.
+         *
+         * @return the number of {@link PlanImplementation}s
+         */
+        private double estimateNumConcatenatedPlanImplementations() {
+            // We use the product of all concatenatable PlanImplementations as an estimate of the size of the
+            // concatenated PlanEnumeration.
+            long num = this.baseEnumeration.getPlanImplementations().size();
+            for (PlanEnumeration successorEnumeration : activationCollector.values()) {
+                num *= successorEnumeration.getPlanImplementations().size();
+            }
+            return num;
+        }
+
+        /**
+         * Calculates the number of open {@link Slot}s in the concatenated {@link PlanEnumeration}. Can be used
+         * as {@link #concatenationPriorityFunction}.
+         *
+         * @return the number of open {@link Slot}s
+         */
+        private double countNumOfOpenSlots() {
+            // We use the number of open slots in the concatenated PlanEnumeration.
+            Set<Slot<?>> openSlots = new HashSet<>();
+            // Add all the slots from the baseEnumeration.
+            openSlots.addAll(this.baseEnumeration.getRequestedInputSlots());
+            for (Tuple<OutputSlot<?>, InputSlot<?>> outputInput : this.baseEnumeration.getServingOutputSlots()) {
+                openSlots.add(outputInput.getField0());
+            }
+            // Add all the slots from the successor enumerations.
+            for (PlanEnumeration successorEnumeration : this.activationCollector.values()) {
+                openSlots.addAll(successorEnumeration.getRequestedInputSlots());
+                for (Tuple<OutputSlot<?>, InputSlot<?>> outputInput : successorEnumeration.getServingOutputSlots()) {
+                    openSlots.add(outputInput.getField0());
+                }
+            }
+            // Remove all the slots that are being connected.
+            openSlots.remove(this.outputSlot);
+            openSlots.removeAll(this.activationCollector.keySet());
+            return openSlots.size();
         }
 
         public Map<InputSlot<?>, PlanEnumeration> getAdjacentEnumerations() {
@@ -860,12 +1002,9 @@ public class PlanEnumerator {
         }
 
         public Tuple<OutputSlot<?>, OptimizationContext> getKey() {
-            return createKey(this.outputSlot, this.optimizationContext);
+            return createConcatenationKey(this.outputSlot, this.optimizationContext);
         }
 
-        public static Tuple<OutputSlot<?>, OptimizationContext> createKey(OutputSlot<?> outputSlot, OptimizationContext optimizationContext) {
-            return new Tuple<>(outputSlot, optimizationContext);
-        }
 
         public OptimizationContext getOptimizationContext() {
             return this.optimizationContext;
@@ -890,4 +1029,18 @@ public class PlanEnumerator {
 
     }
 
+    public static Tuple<OutputSlot<?>, OptimizationContext> createConcatenationKey(
+            OutputSlot<?> outputSlot,
+            OptimizationContext optimizationContext) {
+        return new Tuple<>(outputSlot, optimizationContext);
+    }
+
+    /**
+     * Provide a {@link TimeMeasurement} allowing this instance to time internally.
+     *
+     * @param timeMeasurement the {@link TimeMeasurement}
+     */
+    public void setTimeMeasurement(TimeMeasurement timeMeasurement) {
+        this.timeMeasurement = timeMeasurement;
+    }
 }

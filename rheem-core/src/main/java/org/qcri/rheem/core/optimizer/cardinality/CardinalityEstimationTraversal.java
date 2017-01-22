@@ -104,18 +104,21 @@ public class CardinalityEstimationTraversal {
      * @param optimizationContext provides input {@link CardinalityEstimate}s and stores all produces
      *                            {@link CardinalityEstimate}s alongside the push traversal
      * @param configuration       provides the applicable {@link Configuration}
+     * @return whether any {@link CardinalityEstimate}s have been updated
      */
-    public void traverse(OptimizationContext optimizationContext, Configuration configuration) {
+    public boolean traverse(OptimizationContext optimizationContext, Configuration configuration) {
+        boolean isUpdated = false;
         try {
             final Queue<Activator> activators = this.initializeActivatorQueue();
             do {
                 assert !activators.isEmpty() : String.format("No source activators. (input activations: %s)", this.inputActivations);
                 final Activator activator = activators.poll();
-                activator.process(optimizationContext, configuration, activators);
+                isUpdated |= activator.process(optimizationContext, configuration, activators);
             } while (!activators.isEmpty());
         } finally {
             this.reset();
         }
+        return isUpdated;
     }
 
     /**
@@ -183,18 +186,20 @@ public class CardinalityEstimationTraversal {
          * @param optimizationContext the current {@link OptimizationContext} in which the push should take place
          * @param activatorQueue      accepts newly activated {@link CardinalityEstimator}s
          */
-        void process(OptimizationContext optimizationContext, Configuration configuration, Queue<Activator> activatorQueue) {
+        boolean process(OptimizationContext optimizationContext, Configuration configuration, Queue<Activator> activatorQueue) {
             OptimizationContext.OperatorContext opCtx = optimizationContext.getOperatorContext(this.operator);
             assert opCtx != null : String.format("Could not find OperatorContext for %s.", this.operator);
 
             // Do the local estimation.
-            this.pusher.push(opCtx, configuration);
+            boolean isUpdated = this.pusher.push(opCtx, configuration);
             opCtx.pushCardinalitiesForward();
 
             for (int outputIndex = 0; outputIndex < this.operator.getNumOutputs(); outputIndex++) {
                 // Trigger follow-up operators.
                 this.processDependentActivations(this.dependentActivations[outputIndex], activatorQueue);
             }
+
+            return isUpdated;
         }
 
         /**

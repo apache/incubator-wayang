@@ -1,17 +1,19 @@
 package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStageLoop;
+import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
+import org.qcri.rheem.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.OptionalLong;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * Implements the {@link ExecutionResource} handling as defined by {@link Executor}.
@@ -69,12 +71,31 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
     }
 
     /**
+     * Select the produced {@link ChannelInstance}s that are marked for instrumentation and register them if they
+     * contain a measured cardinality.
+     *
+     * @param producedChannelInstances the {@link ChannelInstance}s
+     */
+    protected void registerMeasuredCardinalities(Collection<ChannelInstance> producedChannelInstances) {
+        for (ChannelInstance producedChannelInstance : producedChannelInstances) {
+            if (!producedChannelInstance.wasProduced()) {
+                this.logger.error("Expected {} to be produced, but is not flagged as such.", producedChannelInstance);
+                continue;
+            }
+
+            if (producedChannelInstance.isMarkedForInstrumentation()) {
+                this.registerMeasuredCardinality(producedChannelInstance);
+            }
+        }
+    }
+
+    /**
      * If the given {@link ChannelInstance} has a measured cardinality, then register this cardinality in the
      * {@link #crossPlatformExecutor} with the corresponding {@link Channel} and all its siblings.
      *
      * @param channelInstance the said {@link ChannelInstance}
      */
-    protected void addCardinalityIfNotInLoop(ChannelInstance channelInstance) {
+    protected void registerMeasuredCardinality(ChannelInstance channelInstance) {
         // Check if a cardinality was measured in the first place.
         final OptionalLong optionalCardinality = channelInstance.getMeasuredCardinality();
         if (!optionalCardinality.isPresent()) {
@@ -85,15 +106,7 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
             }
             return;
         }
-        final long cardinality = optionalCardinality.getAsLong();
-
-        // Make sure that the channelInstance is not inside of a loop.
-        final Channel channel = channelInstance.getChannel();
-        channel.withSiblings().forEach(c -> {
-            if (!checkIfIsInLoopChannel(c)) {
-                this.crossPlatformExecutor.addCardinalityMeasurement(c, cardinality);
-            }
-        });
+        this.crossPlatformExecutor.addCardinalityMeasurement(channelInstance);
     }
 
     /**
@@ -107,6 +120,42 @@ public abstract class ExecutorTemplate extends AbstractReferenceCountable implem
         return producerLoop != null && channel.getConsumers().stream().anyMatch(
                 consumer -> consumer.getStage().getLoop() == producerLoop
         );
+    }
+
+    /**
+     * Create a {@link PartialExecution} according to the given parameters.
+     *
+     * @param executionLineageNodes {@link ExecutionLineageNode}s reflecting what has been executed
+     * @param executionDuration     the measured execution duration in milliseconds
+     * @return the {@link PartialExecution} or {@code null} if nothing has been executed
+     */
+    protected PartialExecution createPartialExecution(
+            Collection<ExecutionLineageNode> executionLineageNodes,
+            long executionDuration) {
+
+        if (executionLineageNodes.isEmpty()) return null;
+
+        final PartialExecution partialExecution = PartialExecution.createFromMeasurement(
+                executionDuration, executionLineageNodes, this.getConfiguration()
+        );
+
+        return partialExecution;
+    }
+
+    private static String formatCardinalities(OptimizationContext.OperatorContext opCtx) {
+        StringBuilder sb = new StringBuilder().append('[');
+        String separator = "";
+        final CardinalityEstimate[] inputCardinalities = opCtx.getInputCardinalities();
+        for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
+            if (inputCardinalities[inputIndex] != null) {
+                String slotName = opCtx.getOperator().getNumInputs() > inputIndex ?
+                        opCtx.getOperator().getInput(inputIndex).getName() :
+                        "(none)";
+                sb.append(separator).append(slotName).append(": ").append(inputCardinalities[inputIndex]);
+                separator = ", ";
+            }
+        }
+        return sb.append(']').toString();
     }
 
     @Override

@@ -1,7 +1,7 @@
 package org.qcri.rheem.core.optimizer.cardinality;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.optimizer.OptimizationContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,11 +19,11 @@ public class AggregatingCardinalityEstimator implements CardinalityEstimator {
     }
 
     @Override
-    public CardinalityEstimate estimate(Configuration configuration, CardinalityEstimate... inputEstimates) {
+    public CardinalityEstimate estimate(OptimizationContext optimizationContext, CardinalityEstimate... inputEstimates) {
         // Simply use the estimate with the highest correctness probability.
         // TODO: Check if this is a good way. There are other palpable approaches (e.g., weighted average).
         return this.alternativeEstimators.stream()
-                .map(alternativeEstimator -> alternativeEstimator.estimate(configuration, inputEstimates))
+                .map(alternativeEstimator -> alternativeEstimator.estimate(optimizationContext, inputEstimates))
                 .sorted((estimate1, estimate2) ->
                         Double.compare(estimate2.getCorrectnessProbability(), estimate1.getCorrectnessProbability()))
                 .findFirst()

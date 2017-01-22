@@ -36,8 +36,7 @@ public class LoopEnumerator extends OneTimeExecutable {
     @Override
     protected void doExecute() {
         // Create aggregate iteration contexts.
-        OptimizationContext aggregateContext =
-                this.loopContext.createAggregateContext();
+        OptimizationContext aggregateContext = this.loopContext.getAggregateContext();
         LoopSubplan loop = this.loopContext.getLoop();
 
         // Create the end result.
@@ -131,7 +130,7 @@ public class LoopEnumerator extends OneTimeExecutable {
                 execLoopBodyInputs.addAll(existingJunction.getTargetInputs());
             }
             final Junction junction = optimizationContext.getChannelConversionGraph().findMinimumCostJunction(
-                    execOutput, execLoopBodyInputs, optimizationContext
+                    execOutput, execLoopBodyInputs, optimizationContext, false
             );
             if (junction == null) return false;
 

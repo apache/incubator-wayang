@@ -59,18 +59,17 @@ public class MapBasedKeyValueProvider<Key, Value> extends KeyValueProvider<Key, 
     }
 
     @Override
-    public Value provideFor(Key key) {
-        final Value value = super.provideFor(key);
-        if (this.isCaching && value != null) {
-            this.storedValues.putIfAbsent(key, value);
-        }
-        return value;
-    }
-
-    @Override
     public Value tryToProvide(Key key, KeyValueProvider<Key, Value> requestee) {
         Validate.notNull(key);
         return this.storedValues.get(key);
+    }
+
+    @Override
+    protected void processParentEntry(Key key, Value value) {
+        super.processParentEntry(key, value);
+        if (this.isCaching && value != null) {
+            this.storedValues.putIfAbsent(key, value);
+        }
     }
 
     @Override

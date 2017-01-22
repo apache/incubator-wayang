@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.qcri.rheem.core.api.Configuration;
+import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.configuration.FunctionalKeyValueProvider;
 import org.qcri.rheem.core.api.configuration.KeyValueProvider;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
@@ -14,12 +15,15 @@ import org.qcri.rheem.core.plan.rheemplan.Subplan;
 import org.qcri.rheem.core.plan.rheemplan.test.TestJoin;
 import org.qcri.rheem.core.plan.rheemplan.test.TestMapOperator;
 import org.qcri.rheem.core.plan.rheemplan.test.TestSource;
+import org.qcri.rheem.core.test.MockFactory;
 import org.qcri.rheem.core.types.DataSetType;
 
 /**
  * Test suite for {@link SubplanCardinalityPusher}.
  */
 public class SubplanCardinalityPusherTest {
+
+    private Job job;
 
     private Configuration configuration;
 
@@ -37,6 +41,7 @@ public class SubplanCardinalityPusherTest {
                         },
                         this.configuration);
         this.configuration.setCardinalityEstimatorProvider(estimatorProvider);
+        this.job = MockFactory.createJob(this.configuration);
     }
 
 
@@ -54,7 +59,7 @@ public class SubplanCardinalityPusherTest {
         op1.connectTo(0, op2, 0);
 
         Subplan subplan = (Subplan) Subplan.wrap(op1, op2);
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(subplan, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job, subplan);
         final OptimizationContext.OperatorContext subplanCtx = optimizationContext.getOperatorContext(subplan);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(123, 321, 0.123d);
         subplanCtx.setInputCardinality(0, inputCardinality);
@@ -70,7 +75,7 @@ public class SubplanCardinalityPusherTest {
     public void testSourceSubplan() {
         TestSource<String> source = new TestSource<>(DataSetType.createDefault(String.class));
         final CardinalityEstimate sourceCardinality = new CardinalityEstimate(123, 321, 0.123d);
-        source.setCardinalityEstimators((configuration1, inputEstimates) -> sourceCardinality);
+        source.setCardinalityEstimators((optimizationContext, inputEstimates) -> sourceCardinality);
 
         TestMapOperator<String, String> op = new TestMapOperator<>(
                 DataSetType.createDefault(String.class),
@@ -80,7 +85,7 @@ public class SubplanCardinalityPusherTest {
         source.connectTo(0, op, 0);
 
         Subplan subplan = (Subplan) Subplan.wrap(source, op);
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(subplan, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job, subplan);
         final OptimizationContext.OperatorContext subplanCtx = optimizationContext.getOperatorContext(subplan);
 
         final CardinalityPusher pusher = SubplanCardinalityPusher.createFor(subplan, this.configuration);
@@ -113,7 +118,7 @@ public class SubplanCardinalityPusherTest {
         join1.connectTo(0, map4, 0);
 
         Subplan subplan = (Subplan) Subplan.wrap(map1, map4);
-        OptimizationContext optimizationContext = new DefaultOptimizationContext(subplan, this.configuration);
+        OptimizationContext optimizationContext = new DefaultOptimizationContext(this.job, subplan);
         final OptimizationContext.OperatorContext subplanCtx = optimizationContext.getOperatorContext(subplan);
         final CardinalityEstimate inputCardinality = new CardinalityEstimate(10, 100, 0.9d);
         subplanCtx.setInputCardinality(0, inputCardinality);

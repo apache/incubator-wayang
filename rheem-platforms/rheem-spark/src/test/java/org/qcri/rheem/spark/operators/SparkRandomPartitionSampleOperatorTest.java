@@ -26,8 +26,37 @@ public class SparkRandomPartitionSampleOperatorTest extends SparkOperatorTestBas
         // Build the distinct operator.
         SparkRandomPartitionSampleOperator<Integer> sampleOperator =
                 new SparkRandomPartitionSampleOperator<>(
-                        sampleSize,
-                        DataSetType.createDefaultUnchecked(Integer.class)
+                        iterationNumber -> sampleSize,
+                        DataSetType.createDefaultUnchecked(Integer.class),
+                        42L
+                );
+
+        // Set up the ChannelInstances.
+        final ChannelInstance[] inputs = new ChannelInstance[]{input};
+        final ChannelInstance[] outputs = new ChannelInstance[]{output};
+
+        // Execute.
+        this.evaluate(sampleOperator, inputs, outputs);
+
+        // Verify the outcome.
+        final List<Integer> result = RheemCollections.asList(output.provideCollection());
+        Assert.assertEquals(sampleSize, result.size());
+
+    }
+
+    @Test
+    public void testUDFExecution() {
+        // Prepare test data.
+        RddChannel.Instance input = this.createRddChannelInstance(Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+        CollectionChannel.Instance output = this.createCollectionChannelInstance();
+
+
+        // Build the distinct operator.
+        SparkRandomPartitionSampleOperator<Integer> sampleOperator =
+                new SparkRandomPartitionSampleOperator<>(
+                        iterationNumber -> iterationNumber + 3,
+                        DataSetType.createDefaultUnchecked(Integer.class),
+                        42L
                 );
 
         // Set up the ChannelInstances.
@@ -40,7 +69,7 @@ public class SparkRandomPartitionSampleOperatorTest extends SparkOperatorTestBas
         // Verify the outcome.
         final List<Integer> result = RheemCollections.asList(output.provideCollection());
         System.out.println(result);
-        Assert.assertEquals(sampleSize, result.size());
+        Assert.assertEquals(2, result.size());
 
     }
 

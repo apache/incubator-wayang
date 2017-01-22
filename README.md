@@ -22,7 +22,7 @@ Rheem is available via Maven Central. To use it with Maven, for instance, includ
 <dependency> 
   <groupId>org.qcri.rheem</groupId>
   <artifactId>rheem-***</artifactId>
-  <version>0.2.0</version> 
+  <version>0.2.1</version> 
 </dependency>
 ```
 Note the `***`: Rheem ships with multiple modules that can be included in your app, depending on how you want to use it:
@@ -30,6 +30,7 @@ Note the `***`: Rheem ships with multiple modules that can be included in your a
 * `rheem-basic`: provides common operators and data types for your apps (recommended)
 * `rheem-api`: provides an easy-to-use Scala and Java API to assemble Rheem plans (recommended)
 * `rheem-java`, `rheem-spark`, `rheem-graphchi`, `rheem-sqlite3`, `rheem-postgres`: adapters for the various supported processing platforms
+* `rheem-profiler`: provides functionality to learn operator and UDF cost functions from historical execution data
 
 For the sake of version flexibility, you still have to include your Hadoop (`hadoop-hdfs` and `hadoop-common`) and Spark (`spark-core` and `spark-graphx`) version of choice.
 
@@ -45,9 +46,18 @@ In addition, you can obtain the most recent snapshot version of Rheem via Sonaty
 ```
 
 If you need to rebuild Rheem, e.g., to use a different Scala version, you can simply do so via Maven:
-```shell
-$ mvn clean install
-```
+
+1. Adapt the version variables (e.g., `spark.version`) in the main `pom.xml` file.
+2. Build Rheem with the adapted versions.
+	```shell
+	$ mvn clean install
+	```
+	Note the `standalone` profile to fix Hadoop and Spark versions, so that Rheem apps do not explicitly need to declare the corresponding dependencies.
+	Also, note the `distro` profile, which assembles a binary Rheem distribution.
+	To activate these profiles, you need to specify them when running maven, i.e.,
+	 ```shell
+	 mvn clean install -P<profile name>
+	 ```
 
 **Configure Rheem.** In order for Rheem to work properly, it is necessary to tell Rheem about the capacities of your processing platforms and how to reach them. While there is a default configuration that allows to test Rheem right away, we recommend to create a properties file to adapt the configuration where necessary. To have Rheem use that configuration transparently, just run you app via
 ```shell
@@ -86,6 +96,35 @@ You can find the most relevant settings in the following:
   * `rheem.postgres.cpu.cores (= 2)`: number of cores PostgreSQL runs on
 
 **Code with Rheem.** The recommended way to specify your apps with Rheem is via its Scala or Java API from the `rheem-api` module. You can find examples below.
+
+**Learn cost functions.**
+Rheem provides a utility to learn cost functions from historical execution data.
+Specifically, Rheem can learn configurations for load profile estimators (that estimate CPU load, disk load etc.) for both operators and UDFs, as long as the configuration provides a template for those estimators.
+As an example, the `JavaMapOperator` draws its load profile estimator configuration via the configuration key `rheem.java.map.load`.
+Now, it is possible to specify a load profile estimator template in the configuration under the key `<original key>.template`, e.g.:
+```xml
+rheem.java.map.load.template = {\
+  "in":1, "out":1,\
+  "cpu":"?*in0"\
+}
+```
+This template specifies a load profile estimator that expects (at least) one input cardinality and one output cardinality.
+Further, it models a CPU load that is proportional to the input cardinality.
+However, more complex functions are possible.
+In particular, you can use
+* the variables `in0`, `in1`, ... and `out0`, `out1`, ... to incorporate the input and output cardinalities, respectively;
+* operator properties, such as `numIterations` for the `PageRankOperator` implementations;
+* the operators `+`, `-`, `*`, `/`, `%`, `^`, and parantheses;
+* the functions `min(x0, x1, ...))`, `max(x0, x1, ...)`, `abs(x)`, `log(x, base)`, `ln(x)`, `ld(x)`;
+* and the constants `e` and `pi`.
+
+While Rheem specifies templates for all execution operators, you will need to specify that your UDFs are modelled by some configuration-based cost function (see the k-means example below) and create the according initial specification and template yourself.
+Once, you gathered execution data, you can run
+```shell
+java ... org.qcri.rheem.profiler.ga.GeneticOptimizerApp [configuration URL [execution log]]
+```
+This app will try to find appropriate values for the question marks (`?`) in the load profile estimator templates to fit the gathered execution data and ready-made configuration entries for the load profile estimators.
+You can then copy them into your configuration.
 
 ## Examples
 
@@ -266,7 +305,9 @@ val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
   points
 	.mapJava(
 	  new SelectNearestCentroid,
-	  udfCpuLoad = (in1: Long, in2: Long, out: Long) => in1 * in2 * 100L
+	  udfLoad = LoadProfileEstimators.createFromSpecification(
+	  	"my.udf.costfunction.key", configuration
+	  )
 	)
 	.withBroadcast(currentCentroids, "centroids").withName("Find nearest centroid")
 	.reduceByKey(_.cluster, _ + _).withName("Add up points")

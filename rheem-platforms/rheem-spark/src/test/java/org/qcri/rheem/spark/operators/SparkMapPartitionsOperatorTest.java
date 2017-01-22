@@ -2,11 +2,14 @@ package org.qcri.rheem.spark.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.core.function.MapPartitionsDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.spark.channels.RddChannel;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -23,7 +26,13 @@ public class SparkMapPartitionsOperatorTest extends SparkOperatorTestBase {
         // Create the mapPartitions operator.
         SparkMapPartitionsOperator<Integer, Integer> mapPartitionsOperator =
                 new SparkMapPartitionsOperator<>(
-                        new TransformationDescriptor<>(item -> item + 1, Integer.class, Integer.class)
+                        new MapPartitionsDescriptor<>(items -> {
+                            Collection<Integer> result = new LinkedList<>();
+                            for (Integer item : items) {
+                                result.add(item + 1);
+                            }
+                            return result;
+                        }, Integer.class, Integer.class)
                 );
 
         // Set up the ChannelInstances.

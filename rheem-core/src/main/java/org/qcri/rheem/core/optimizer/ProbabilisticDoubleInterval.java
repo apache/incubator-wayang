@@ -9,6 +9,11 @@ import java.util.Objects;
 public class ProbabilisticDoubleInterval {
 
     /**
+     * Instance that basically represents the value {@code 0d}.
+     */
+    public static final ProbabilisticDoubleInterval zero = ProbabilisticDoubleInterval.ofExactly(0d);
+
+    /**
      * Probability of correctness between in the interval [0, 1]. This helps
      * Rheem in situations with many estimates to pick the best one.
      */
@@ -79,6 +84,20 @@ public class ProbabilisticDoubleInterval {
         return this.correctnessProb == 1d && this.lowerEstimate == this.upperEstimate && this.upperEstimate == exactEstimate;
     }
 
+    /**
+     * Creates a new instance that represents the sum of the {@code this} and {@code that} instance.
+     *
+     * @param that the other summand
+     * @return the sum
+     */
+    public ProbabilisticDoubleInterval plus(ProbabilisticDoubleInterval that) {
+        return new ProbabilisticDoubleInterval(
+                this.getLowerEstimate() + that.getLowerEstimate(),
+                this.getUpperEstimate() + that.getUpperEstimate(),
+                Math.min(this.getCorrectnessProbability(), that.getCorrectnessProbability())
+        );
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -112,7 +131,8 @@ public class ProbabilisticDoubleInterval {
 
     @Override
     public String toString() {
-        return String.format("%s[%.2f..%.2f, %.1f%%]", this.getClass().getSimpleName(),
+        return String.format("(%,.2f..%,.2f ~ %.1f%%)",
                 this.lowerEstimate, this.upperEstimate, this.correctnessProb * 100d);
     }
+
 }
