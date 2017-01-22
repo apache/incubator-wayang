@@ -13,16 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// TODO: Rerwrite properly to be more generic, and register properly with application.
-public class FileMonitor {
-    private HashMap<String, Integer> progress = new HashMap<>();
-    private List<Map> initialExecutionPlan;
-    private String exPlanUrl;
-    private String progressUrl;
-    private String runId;
-
-    public static final String DEFAULT_RUNS_DIR = "file:///var/tmp/rheem/runs";
-    public static final String DEFAULT_RUNS_DIR_PROPERTY_KEY = "rheem.basic.runsdir";
+public class FileMonitor extends Monitor {
 
     public void initialize(Configuration config, String runId, List<Map> initialExecutionPlan) throws IOException {
         this.initialExecutionPlan = initialExecutionPlan;
