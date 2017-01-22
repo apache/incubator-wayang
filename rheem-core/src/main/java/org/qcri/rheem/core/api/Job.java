@@ -118,7 +118,7 @@ public class Job extends OneTimeExecutable {
      */
     private final Set<String> udfJarPaths = new HashSet<>();
 
-    private Monitor monitor = new FileMonitor();
+    private Monitor monitor;
     
     /**
      * Name for this instance.
