@@ -43,7 +43,7 @@ public class SparkShufflePartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public SparkShufflePartitionSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {
+    public SparkShufflePartitionSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
         super(sampleSizeFunction, type, Methods.SHUFFLE_PARTITION_FIRST, seed);
     }
 

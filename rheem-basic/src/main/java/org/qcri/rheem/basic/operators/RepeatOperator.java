@@ -22,7 +22,7 @@ public class RepeatOperator<Type> extends OperatorBase implements ElementaryOper
     public static final int ITERATION_OUTPUT_INDEX = 0;
     public static final int FINAL_OUTPUT_INDEX = 1;
 
-    private final int numIterations;
+    private final Integer numIterations;
 
     private State state = State.NOT_STARTED;
 
@@ -43,7 +43,7 @@ public class RepeatOperator<Type> extends OperatorBase implements ElementaryOper
      * @param numIterations number of iterations to be performed
      * @param typeClass     of the "circulated" dataset
      */
-    public RepeatOperator(int numIterations, Class<Type> typeClass) {
+    public RepeatOperator(Integer numIterations, Class<Type> typeClass) {
         this(numIterations, DataSetType.createDefault(typeClass));
     }
 
@@ -53,7 +53,7 @@ public class RepeatOperator<Type> extends OperatorBase implements ElementaryOper
      * @param numIterations number of iterations to be performed
      * @param type          of the "circulated" dataset
      */
-    public RepeatOperator(int numIterations, DataSetType<Type> type) {
+    public RepeatOperator(Integer numIterations, DataSetType<Type> type) {
         super(2, 2, false);
         this.initializeSlots(type);
         this.numIterations = numIterations;

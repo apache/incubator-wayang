@@ -64,12 +64,12 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     /**
      * Optionally sets the seed for the sample.
      */
-    protected final long seed;
+    protected final Long seed;
 
     /**
      * Size of the dataset to be sampled or {@value #UNKNOWN_DATASET_SIZE} if a dataset size is not known.
      */
-    protected long datasetSize = UNKNOWN_DATASET_SIZE;
+    protected Long datasetSize = UNKNOWN_DATASET_SIZE;
 
     private Methods sampleMethod;
 
@@ -79,7 +79,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
      * @param sampleSize size of the sample
      * @param type       {@link DataSetType} of the sampled dataset
      */
-    public SampleOperator(int sampleSize, DataSetType<Type> type) {
+    public SampleOperator(Integer sampleSize, DataSetType<Type> type) {
         this(iterationNumber -> sampleSize, type);
     }
 
@@ -96,7 +96,7 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     /**
      * Creates a new instance given the sample size.
      */
-    public SampleOperator(int sampleSize, DataSetType<Type> type, Methods sampleMethod, long seed) {
+    public SampleOperator(Integer sampleSize, DataSetType<Type> type, Methods sampleMethod, long seed) {
         this(iterationNumber -> sampleSize, type, sampleMethod, seed);
     }
 
