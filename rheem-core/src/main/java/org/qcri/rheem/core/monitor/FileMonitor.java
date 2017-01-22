@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 // TODO: Rerwrite properly to be more generic, and register properly with application.
-public class Monitor {
+public class FileMonitor {
     private HashMap<String, Integer> progress = new HashMap<>();
     private List<Map> initialExecutionPlan;
     private String exPlanUrl;

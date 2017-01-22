@@ -6,7 +6,7 @@ import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
-import org.qcri.rheem.core.monitor.Monitor;
+import org.qcri.rheem.core.monitor.FileMonitor;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
@@ -116,7 +116,7 @@ public class Job extends OneTimeExecutable {
      */
     private final Set<String> udfJarPaths = new HashSet<>();
 
-    private Monitor monitor = new Monitor();
+    private FileMonitor monitor = new FileMonitor();
     
     /**
      * Name for this instance.
