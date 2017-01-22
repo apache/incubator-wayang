@@ -15,10 +15,11 @@ import java.util.Map;
 
 public class FileMonitor extends Monitor {
 
+    @Override
     public void initialize(Configuration config, String runId, List<Map> initialExecutionPlan) throws IOException {
         this.initialExecutionPlan = initialExecutionPlan;
         this.runId = runId;
-        String runsDir = config.getStringProperty(DEFAULT_RUNS_DIR_PROPERTY_KEY, DEFAULT_RUNS_DIR);
+        String runsDir = config.getStringProperty(DEFAULT_MONITOR_BASE_URL_PROPERTY_KEY, DEFAULT_MONITOR_BASE_URL);
         final String path = runsDir + "/" + runId;
         this.exPlanUrl = path + "/execplan.json";
         this.progressUrl = path + "/progress.json";
@@ -44,6 +45,7 @@ public class FileMonitor extends Monitor {
 
     }
 
+    @Override
     public void updateProgress(HashMap<String, Integer> partialProgress) throws IOException {
         HashMap<String, Object> progressBar = new HashMap<>();
         Integer overall = 0;

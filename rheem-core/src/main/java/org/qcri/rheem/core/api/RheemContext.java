@@ -3,6 +3,7 @@ package org.qcri.rheem.core.api;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.Subject;
 import org.apache.commons.lang3.StringUtils;
+import org.qcri.rheem.core.monitor.Monitor;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator;
 import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
@@ -90,7 +91,19 @@ public class RheemContext {
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
     public void execute(String jobName, RheemPlan rheemPlan, String... udfJars) {
-        this.createJob(jobName, rheemPlan, udfJars).execute();
+        this.execute(jobName, null, rheemPlan, udfJars);
+    }
+
+    /**
+     * Execute a plan.
+     *
+     * @param jobName   name of the {@link Job} or {@code null}
+     * @param rheemPlan the plan to execute
+     * @param udfJars   JARs that declare the code for the UDFs
+     * @see ReflectionUtils#getDeclaringJar(Class)
+     */
+    public void execute(String jobName, Monitor monitor, RheemPlan rheemPlan, String... udfJars) {
+        this.createJob(jobName, monitor, rheemPlan, udfJars).execute();
     }
 
     /**
@@ -106,14 +119,6 @@ public class RheemContext {
         this.createJob(jobName, rheemPlan, experiment, udfJars).execute();
     }
 
-    /**
-     * Create a new {@link Job} that should execute the given {@link RheemPlan} eventually.
-     *
-     * @see ReflectionUtils#getDeclaringJar(Class)
-     */
-    public Job createJob(String jobName, RheemPlan rheemPlan, String... udfJars) {
-        return new Job(this, jobName, rheemPlan, new Experiment("unknown", new Subject("unknown", "unknown")), udfJars);
-    }
 
     /**
      * Build an execution plan.
@@ -123,7 +128,7 @@ public class RheemContext {
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
     public ExecutionPlan buildInitialExecutionPlan(String jobName, RheemPlan rheemPlan, String... udfJars) {
-        return this.createJob(jobName, rheemPlan, udfJars).buildInitialExecutionPlan();
+        return this.createJob(jobName, null, rheemPlan, udfJars).buildInitialExecutionPlan();
     }
 
     /**
@@ -133,7 +138,25 @@ public class RheemContext {
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
     public Job createJob(String jobName, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
-        return new Job(this, jobName, rheemPlan, experiment, udfJars);
+        return new Job(this, jobName, null, rheemPlan, experiment, udfJars);
+    }
+
+    /**
+     * Create a new {@link Job} that should execute the given {@link RheemPlan} eventually.
+     *
+     * @see ReflectionUtils#getDeclaringJar(Class)
+     */
+    public Job createJob(String jobName, RheemPlan rheemPlan, String... udfJars) {
+        return this.createJob(jobName, null, rheemPlan, udfJars);
+    }
+
+    /**
+     * Create a new {@link Job} that should execute the given {@link RheemPlan} eventually.
+     *
+     * @see ReflectionUtils#getDeclaringJar(Class)
+     */
+    public Job createJob(String jobName, Monitor monitor, RheemPlan rheemPlan, String... udfJars) {
+        return new Job(this, jobName, monitor, rheemPlan, new Experiment("unknown", new Subject("unknown", "unknown")), udfJars);
     }
 
     public Configuration getConfiguration() {

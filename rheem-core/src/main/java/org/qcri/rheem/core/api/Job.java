@@ -6,6 +6,7 @@ import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.monitor.DisabledMonitor;
 import org.qcri.rheem.core.monitor.FileMonitor;
 import org.qcri.rheem.core.monitor.Monitor;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
@@ -137,7 +138,7 @@ public class Job extends OneTimeExecutable {
      * @param experiment an {@link Experiment} for that profiling entries will be created
      * @param udfJars    paths to JAR files needed to run the UDFs (see {@link ReflectionUtils#getDeclaringJar(Class)})
      */
-    Job(RheemContext rheemContext, String name, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
+    Job(RheemContext rheemContext, String name, Monitor monitor, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
         this.rheemContext = rheemContext;
         this.name = name == null ? "Rheem app" : name;
         this.configuration = this.rheemContext.getConfiguration().fork(this.name);
@@ -151,6 +152,14 @@ public class Job extends OneTimeExecutable {
         this.stopWatch = new StopWatch(experiment);
         this.optimizationRound = this.stopWatch.getOrCreateRound("Optimization");
         this.executionRound = this.stopWatch.getOrCreateRound("Execution");
+
+        // Configure job monitor.
+        if (Monitor.isEnabled(this.configuration)) {
+            this.monitor = monitor==null ? new FileMonitor() : monitor;
+        }
+        else {
+            this.monitor = new DisabledMonitor();
+        }
     }
 
     /**
