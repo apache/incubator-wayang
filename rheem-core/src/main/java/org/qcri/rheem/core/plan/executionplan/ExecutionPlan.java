@@ -69,6 +69,31 @@ public class ExecutionPlan {
         return sb.toString();
     }
 
+    public List<Map> toJsonList() {
+        Counter<ExecutionStage> stageActivationCounter = new Counter<>();
+        Queue<ExecutionStage> activatedStages = new LinkedList<>(this.startingStages);
+        Set<ExecutionStage> seenStages = new HashSet<>();
+        ArrayList<Map> allStages = new ArrayList<>();
+
+        while (!activatedStages.isEmpty()) {
+            final ExecutionStage stage = activatedStages.poll();
+            if (!seenStages.add(stage)) continue;
+            Map stageMap = stage.toJsonMap();
+
+            // Better way to put sequence number ?
+            stageMap.put("sequence_number", allStages.size());
+            allStages.add(stageMap);
+            for (ExecutionStage successor : stage.getSuccessors()) {
+                final int count = stageActivationCounter.add(successor, 1);
+                if (count == successor.getPredecessors().size() || successor.isLoopHead()) {
+                    activatedStages.add(successor);
+                }
+            }
+        }
+
+        return allStages;
+    }
+
     /**
      * Scrap {@link Channel}s and {@link ExecutionTask}s that are not within the given {@link ExecutionStage}s.
      *

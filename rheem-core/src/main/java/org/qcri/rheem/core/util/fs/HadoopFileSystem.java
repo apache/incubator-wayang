@@ -86,6 +86,12 @@ public class HadoopFileSystem implements FileSystem {
     }
 
     @Override
+    public OutputStream create(String url, Boolean forceCreateParentDirs) throws IOException {
+        // TODO implement properly.
+        return this.create(url);
+    }
+
+    @Override
     public boolean isDirectory(String url) {
         try {
             final FileStatus fileStatus = this.getHdfs(url).getFileStatus(new Path(url));

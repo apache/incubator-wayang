@@ -36,7 +36,7 @@ public class JavaRandomSampleOperator<Type>
      *
      * @param sampleSizeFunction udf-based size of sample
      */
-    public JavaRandomSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {
+    public JavaRandomSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
         super(sampleSizeFunction, type, Methods.RANDOM, seed);
     }
 
@@ -59,8 +59,9 @@ public class JavaRandomSampleOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        int sampleSize = (int) this.getSampleSize(operatorContext);
-        long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() :
+
+        Integer sampleSize = (Integer) this.getSampleSize(operatorContext);
+        Long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() :
                 ((CollectionChannel.Instance) inputs[0]).provideCollection().size();
 
         if (sampleSize >= datasetSize) { //return all
@@ -71,9 +72,9 @@ public class JavaRandomSampleOperator<Type>
         final int[] sampleIndices = new int[sampleSize];
         final BitSet data = new BitSet();
         for (int i = 0; i < sampleSize; i++) {
-            sampleIndices[i] = rand.nextInt((int) datasetSize);
+            sampleIndices[i] = rand.nextInt(datasetSize.intValue());
             while (data.get(sampleIndices[i])) //without replacement
-                sampleIndices[i] = rand.nextInt((int) datasetSize);
+                sampleIndices[i] = rand.nextInt(datasetSize.intValue());
             data.set(sampleIndices[i]);
         }
         Arrays.sort(sampleIndices);

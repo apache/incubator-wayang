@@ -1,10 +1,14 @@
 package org.qcri.rheem.core.api;
 
+import org.json.JSONObject;
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.monitor.DisabledMonitor;
+import org.qcri.rheem.core.monitor.FileMonitor;
+import org.qcri.rheem.core.monitor.Monitor;
 import org.qcri.rheem.core.optimizer.DefaultOptimizationContext;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
@@ -27,6 +31,10 @@ import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -108,6 +116,8 @@ public class Job extends OneTimeExecutable {
      */
     private final Set<String> udfJarPaths = new HashSet<>();
 
+    private Monitor monitor;
+    
     /**
      * Name for this instance.
      */
@@ -138,7 +148,7 @@ public class Job extends OneTimeExecutable {
      * @param experiment an {@link Experiment} for that profiling entries will be created
      * @param udfJars    paths to JAR files needed to run the UDFs (see {@link ReflectionUtils#getDeclaringJar(Class)})
      */
-    Job(RheemContext rheemContext, String name, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
+    Job(RheemContext rheemContext, String name, Monitor monitor, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
         this.rheemContext = rheemContext;
         this.name = name == null ? "Rheem app" : name;
         this.configuration = this.rheemContext.getConfiguration().fork(this.name);
@@ -162,6 +172,14 @@ public class Job extends OneTimeExecutable {
         this.stopWatch = new StopWatch(experiment);
         this.optimizationRound = this.stopWatch.getOrCreateRound("Optimization");
         this.executionRound = this.stopWatch.getOrCreateRound("Execution");
+
+        // Configure job monitor.
+        if (Monitor.isEnabled(this.configuration)) {
+            this.monitor = monitor==null ? new FileMonitor() : monitor;
+        }
+        else {
+            this.monitor = new DisabledMonitor();
+        }
     }
 
     /**
@@ -189,6 +207,26 @@ public class Job extends OneTimeExecutable {
         }
     }
 
+    public ExecutionPlan buildInitialExecutionPlan() throws RheemException {
+        this.prepareRheemPlan();
+        this.estimateKeyFigures();
+
+        // Get initial execution plan.
+        ExecutionPlan executionPlan = this.createInitialExecutionPlan();
+        return  executionPlan;
+    }
+
+    // TODO: Move outside of Job class
+    public void reportProgress(String opName, Integer progress) {
+        HashMap<String, Integer> partialProgress = new HashMap<>();
+        partialProgress.put(opName, progress);
+        try {
+            this.monitor.updateProgress(partialProgress);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     protected void doExecute() {
         // Make sure that each job is only executed once.
@@ -208,6 +246,15 @@ public class Job extends OneTimeExecutable {
             // Get an execution plan.
             ExecutionPlan executionPlan = this.createInitialExecutionPlan();
             this.optimizationRound.stop();
+
+            // TODO: generate run ID. For now we fix this because we can't handle multiple jobs, neither in montoring nor execution.
+            String runId = "1";
+            try {
+                monitor.initialize(this.configuration, runId, executionPlan.toJsonList());
+            }catch (Exception e) {
+                this.logger.warn("Failed to initalize monitor: {}", e);
+            }
+
 
             // Take care of the execution.
             int executionId = 0;

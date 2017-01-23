@@ -27,7 +27,7 @@ public class JavaRandomSampleOperatorTest extends JavaExecutionOperatorTestBase 
                 new JavaRandomSampleOperator<>(
                         iteration -> sampleSize,
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        42
+                        42L
                 );
 
         JavaChannelInstance[] inputs = new JavaChannelInstance[]{createCollectionChannelInstance(inputCollection)};
@@ -52,7 +52,7 @@ public class JavaRandomSampleOperatorTest extends JavaExecutionOperatorTestBase 
                 new JavaRandomSampleOperator<>(
                         iterationNumber -> iterationNumber + 3, // iterationNumber=-1, hence sampleSize=2
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        42
+                        42L
                 );
         sampleOperator.setDatasetSize(10);
 

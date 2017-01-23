@@ -44,7 +44,7 @@ public class SparkRandomPartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public SparkRandomPartitionSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {
+    public SparkRandomPartitionSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
         super(sampleSizeFunction, type, Methods.RANDOM, seed);
     }
 

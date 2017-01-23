@@ -32,7 +32,7 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
      */
     protected final PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor;
 
-    private int numExpectedIterations;
+    private Integer numExpectedIterations = 0;
 
     private State state;
 
@@ -50,7 +50,7 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
 
     public LoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
                         PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
-                        int numExpectedIterations) {
+                        Integer numExpectedIterations) {
         this(inputType,
                 convergenceType,
                 new PredicateDescriptor<>(criterionPredicate, ReflectionUtils.specify(Collection.class)),
@@ -64,7 +64,7 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
     public LoopOperator(DataSetType<InputType> inputType,
                         DataSetType<ConvergenceType> convergenceType,
                         PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
-                        int numExpectedIterations) {
+                        Integer numExpectedIterations) {
         super(4, 3, true);
         this.criterionDescriptor = criterionDescriptor;
         this.numExpectedIterations = numExpectedIterations;

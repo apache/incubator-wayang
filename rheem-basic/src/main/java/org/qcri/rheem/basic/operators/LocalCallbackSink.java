@@ -64,6 +64,13 @@ public class LocalCallbackSink<T> extends UnarySink<T> {
         this(callback, DataSetType.createDefault(typeClass));
     }
 
+    /**
+     *  Convnience constructor, defaults to StdoutSink
+     */
+    public LocalCallbackSink(Class<T> typeClass ){
+        this(System.out::println, typeClass);
+    }
+
     public Consumer<T> getCallback() {
         return this.callback;
     }

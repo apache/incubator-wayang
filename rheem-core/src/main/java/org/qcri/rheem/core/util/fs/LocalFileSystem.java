@@ -123,9 +123,16 @@ public class LocalFileSystem implements FileSystem {
 
     @Override
     public OutputStream create(String url) throws IOException {
+        return this.create(url, false);
+    }
+
+    @Override
+    public OutputStream create(String url, Boolean forceCreateParentDirs) throws IOException {
         File file = null;
         try {
             file = toFile(url);
+            if (forceCreateParentDirs && file.getParentFile()!=null)
+                file.getParentFile().mkdirs();
             return new FileOutputStream(file, false);
         } catch (URISyntaxException e) {
             throw new IOException("Could not process the given URL.", e);

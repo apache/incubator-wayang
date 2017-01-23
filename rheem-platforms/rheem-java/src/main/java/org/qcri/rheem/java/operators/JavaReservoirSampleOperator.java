@@ -33,7 +33,7 @@ public class JavaReservoirSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public JavaReservoirSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {
+    public JavaReservoirSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
         super(sampleSizeFunction, type, Methods.RESERVOIR, seed);
     }
 

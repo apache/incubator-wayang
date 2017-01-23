@@ -43,6 +43,16 @@ public interface FileSystem {
      */
     OutputStream create(String url) throws IOException;
 
+    /**
+     * Opens the file specified in the given {@code url} for (over-)writing.
+     *
+     * @param url points to the file to be created
+     * @param forceCreateParentDirs if true, will create parent directories if they don't exist.
+     * @return an {@link OutputStream} that allows writing to the specified file
+     * @throws IOException if the file cannot be created properly for whatever reason
+     */
+    OutputStream create(String url, Boolean forceCreateParentDirs) throws IOException;
+
     boolean isDirectory(String url);
 
     Collection<String> listChildren(String url);
