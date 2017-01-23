@@ -249,7 +249,7 @@ public class CrossPlatformExecutor implements ExecutionState {
 
         // Create execution threads
         for(int i=1; i<=numActiveStages; ++i){
-           Thread thread = new Thread(new ParallelExecutionThread(isBreakpointsDisabled,"T" + String.valueOf(i), this));
+            Thread thread = new Thread(new ParallelExecutionThread(isBreakpointsDisabled,"T" + String.valueOf(i), this));
             // Start thread execution
             thread.start();
             this.parallelExecutionThreads.add(thread);
@@ -263,7 +263,7 @@ public class CrossPlatformExecutor implements ExecutionState {
                 CrossPlatformExecutor.this.logger.info("Join thread ended" );
 
             } catch (InterruptedException e) {
-                CrossPlatformExecutor.this.logger.info("Thread Interrupted : Return to Main Thread");
+                CrossPlatformExecutor.this.logger.info("Thread Interrupted!");
             }
         }
 
@@ -278,12 +278,13 @@ public class CrossPlatformExecutor implements ExecutionState {
     private void runToBreakpoint() {
         // Start execution traversal.
         final long startTime = System.currentTimeMillis();
+        int numPriorExecutedStages = this.completedStages.size();
         boolean isBreakpointsDisabled = false;
         do {
             // Execute and activate as long as possible.
             while (!this.activatedStageActivators.isEmpty()) {
                 // Check if there is multiple activated stages to start parallelization
-                if (this.activatedStageActivators.size()>1){
+                if (this.activatedStageActivators.size()>1 && this.getConfiguration().getBooleanProperty("rheem.core.platform.parallelizeexecution")){
                     // Run multiple threads for each independant stage
                     this.runParallelExecution(isBreakpointsDisabled);
                 } else {
@@ -304,11 +305,13 @@ public class CrossPlatformExecutor implements ExecutionState {
             }
         } while (!this.activatedStageActivators.isEmpty());
 
+        // Get the number of executed stages in current runToBreakpoint
+        int numExecutedStages = this.completedStages.size() - numPriorExecutedStages;
         final long finishTime = System.currentTimeMillis();
         CrossPlatformExecutor.this.logger.info("Executed {} stages in {}.",
-                this.completedStages.size(), Formats.formatDuration(finishTime - startTime, true));
+                numExecutedStages, Formats.formatDuration(finishTime - startTime, true));
 
-        assert this.completedStages.size() > 0 : "Did not execute a single stage.";
+        assert numExecutedStages  > 0 : "Did not execute a single stage.";
     }
 
     /**
@@ -1036,25 +1039,69 @@ public class CrossPlatformExecutor implements ExecutionState {
         @Override
         public void run() {
 
+            StageActivator stageActivator;
             this.crossPlatformExecutor.logger.info("Thread " + String.valueOf(this.threadId) + " started" );
             // Loop until there is no activated stage or only one thread running
             do {
                 // Get the stageActivator for the stage to execute
-                final StageActivator stageActivator;
                 synchronized (this.crossPlatformExecutor) {
-                    stageActivator = CrossPlatformExecutor.this.activatedStageActivators.poll();
+                    stageActivator = this.crossPlatformExecutor.activatedStageActivators.poll();
                 }
                 this.crossPlatformExecutor.logger.info(this.threadId +" started executing Stage: {}:", stageActivator.getStage());
 
+                // Check if #breakpoint permits the execution.
+                if (!this.thread_isBreakpointDisabled && this.crossPlatformExecutor.suspendIfBreakpointRequest(stageActivator)) {
+                    return;
+                }
 
-                //synchronized (this.crossPlatformExecutor){
+                // Otherwise, execute the stage.
 
-                    // Execute single stage
-                    executeSingleStage(this.thread_isBreakpointDisabled, stageActivator);
-                //synchronized (CrossPlatformExecutor.this){
-                //}
+                final ExecutionStage stage = stageActivator.getStage();
+                final OptimizationContext optimizationContext = stageActivator.getOptimizationContext();
+
+                // Find parts of the stage to instrument.
+                this.crossPlatformExecutor.instrumentationStrategy.applyTo(stage);
+
+                // Obtain an Executor for the stage.
+                Executor executor = this.crossPlatformExecutor.getOrCreateExecutorFor(stage);
+
+                // Have the execution done.
+                CrossPlatformExecutor.this.logger.info("Having {} execute {}:\n{}", executor, stage, stage.getPlanAsString("> "));
+                long startTime = System.currentTimeMillis();
+
+                synchronized (this.crossPlatformExecutor) {
+                    executor.execute(stage, optimizationContext, this.crossPlatformExecutor);
+                    long finishTime = System.currentTimeMillis();
+                    CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime, true));
+
+                    // Remember that we have executed the stage.
+                    this.crossPlatformExecutor.completedStages.add(stage);
+                    if (stage.isLoopHead()) {
+                        this.crossPlatformExecutor.getOrCreateLoopContext(stage.getLoop()).scrapPreviousTransitionContext();
+                    }
+
+                    // Try to activate the successor stages.
+                    this.crossPlatformExecutor.tryToActivateSuccessors(stageActivator);
+                }
+                // We can now dispose the stageActivator that collected the input ChannelInstances.
+                stageActivator.dispose();
+
+
+                // Dispose obsolete ChannelInstances.
+                final Iterator<Map.Entry<Channel, ChannelInstance>> iterator = this.crossPlatformExecutor.channelInstances.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    final Map.Entry<Channel, ChannelInstance> channelInstanceEntry = iterator.next();
+                    final ChannelInstance channelInstance = channelInstanceEntry.getValue();
+
+                    // If this is instance is the only one to still use this ChannelInstance, discard it.
+                    if (channelInstance.getNumReferences() == 1) {
+                        channelInstance.noteDiscardedReference(true);
+                        iterator.remove();
+                    }
+
+                }
+
                 this.crossPlatformExecutor.logger.info(this.threadId  + " completed executing Stage : {}:", stageActivator.getStage());
-
 
                 // Create new threads for more than one activated stages recursively
                 if (CrossPlatformExecutor.this.activatedStageActivators.size()>1) {
@@ -1063,10 +1110,13 @@ public class CrossPlatformExecutor implements ExecutionState {
                         // Create parallel stage execution thread
                         Thread thread = new Thread(new ParallelExecutionThread(this.thread_isBreakpointDisabled, "T" + String.valueOf(i) + "@" + this.threadId, this.crossPlatformExecutor));
                         thread.start();
-                        //Add the created thread to {@link #parallelExecutionThreads}
-                        CrossPlatformExecutor.this.parallelExecutionThreads.add(thread);
+                        synchronized (this.crossPlatformExecutor) {
+                            //Add the created thread to {@link #parallelExecutionThreads}
+                            CrossPlatformExecutor.this.parallelExecutionThreads.add(thread);
+                        }
                     }
                 }
+
             }while (CrossPlatformExecutor.this.activatedStageActivators.size()>=1 && CrossPlatformExecutor.this.parallelExecutionThreads.size()-CrossPlatformExecutor.this.completedThreads>1);
 
             // Increment a global variable of completed threads
