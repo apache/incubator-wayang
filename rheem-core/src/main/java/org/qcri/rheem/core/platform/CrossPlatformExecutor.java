@@ -284,7 +284,7 @@ public class CrossPlatformExecutor implements ExecutionState {
             // Execute and activate as long as possible.
             while (!this.activatedStageActivators.isEmpty()) {
                 // Check if there is multiple activated stages to start parallelization
-                if (this.activatedStageActivators.size()>1 && this.getConfiguration().getBooleanProperty("rheem.core.platform.parallelizeexecution")){
+                if (this.activatedStageActivators.size()>1 && this.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallelism")){
                     // Run multiple threads for each independant stage
                     this.runParallelExecution(isBreakpointsDisabled);
                 } else {
@@ -1046,6 +1046,8 @@ public class CrossPlatformExecutor implements ExecutionState {
                 // Get the stageActivator for the stage to execute
                 synchronized (this.crossPlatformExecutor) {
                     stageActivator = this.crossPlatformExecutor.activatedStageActivators.poll();
+                    if (stageActivator==null)
+                        break;
                 }
                 this.crossPlatformExecutor.logger.info(this.threadId +" started executing Stage: {}:", stageActivator.getStage());
 
@@ -1069,9 +1071,11 @@ public class CrossPlatformExecutor implements ExecutionState {
                 CrossPlatformExecutor.this.logger.info("Having {} execute {}:\n{}", executor, stage, stage.getPlanAsString("> "));
                 long startTime = System.currentTimeMillis();
 
-                synchronized (this.crossPlatformExecutor) {
+                // synchronize(this.crossplateform) can be used here to avoid error when we have two stages running same operators even on the same platform but still with different executors
+                synchronized (executor) {
                     executor.execute(stage, optimizationContext, this.crossPlatformExecutor);
                     long finishTime = System.currentTimeMillis();
+
                     CrossPlatformExecutor.this.logger.info("Executed {} in {}.", stage, Formats.formatDuration(finishTime - startTime, true));
 
                     // Remember that we have executed the stage.
@@ -1079,6 +1083,7 @@ public class CrossPlatformExecutor implements ExecutionState {
                     if (stage.isLoopHead()) {
                         this.crossPlatformExecutor.getOrCreateLoopContext(stage.getLoop()).scrapPreviousTransitionContext();
                     }
+
 
                     // Try to activate the successor stages.
                     this.crossPlatformExecutor.tryToActivateSuccessors(stageActivator);
