@@ -571,7 +571,7 @@ public class PlanImplementation {
      */
     public ProbabilisticDoubleInterval getCostEstimate() {
 
-        if(this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallelizecost")) {
+        if(this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")) {
             return this.getParallelCostEstimate(true);
         } else {
             return this.getCostEstimate(true);
@@ -615,7 +615,7 @@ public class PlanImplementation {
      */
     public double getSquashedCostEstimate() {
         // Check if the parallel cost calculation is enabled in the configuration file
-        if(this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallelizecost")){
+        if(this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")){
             return this.getSquashedParallelCostEstimate(true);
         } else {
             return this.getSquashedCostEstimate(true);
