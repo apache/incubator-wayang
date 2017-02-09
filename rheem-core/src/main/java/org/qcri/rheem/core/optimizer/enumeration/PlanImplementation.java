@@ -73,6 +73,16 @@ public class PlanImplementation {
     private double squashedCostEstimateCache = Double.NaN, squashedCostEstimateWithoutOverheadCache = Double.NaN;
 
     /**
+     * The parallel cost estimate . This will store both calculated squashed cost and cost that will be used to select the best enumerated plan!
+     */
+    private Tuple<List<ProbabilisticDoubleInterval>,List<Double>> parallelCostEstimateCache = null;
+
+    /**
+     * This will be used to store the parallel cost of each operator.
+     */
+    private List<Tuple<Operator,Tuple<List<ProbabilisticDoubleInterval>,List<Double>>>> calculatedParallelOperatorCostCache = new ArrayList<>();
+
+    /**
      * Create a new instance.
      */
     PlanImplementation(
@@ -560,9 +570,13 @@ public class PlanImplementation {
      * @return the cost estimate
      */
     public ProbabilisticDoubleInterval getCostEstimate() {
-        return this.getCostEstimate(true);
-    }
 
+        if(this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")) {
+            return this.getParallelCostEstimate(true);
+        } else {
+            return this.getCostEstimate(true);
+        }
+    }
     /**
      * Retrieves the cost estimate for this instance.
      *
@@ -600,7 +614,12 @@ public class PlanImplementation {
      * @return the cost estimate
      */
     public double getSquashedCostEstimate() {
-        return this.getSquashedCostEstimate(true);
+        // Check if the parallel cost calculation is enabled in the configuration file
+        if(this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")){
+            return this.getSquashedParallelCostEstimate(true);
+        } else {
+            return this.getSquashedCostEstimate(true);
+        }
     }
 
     /**
@@ -640,6 +659,218 @@ public class PlanImplementation {
         }
         return isIncludeOverhead ? this.squashedCostEstimateCache : this.squashedCostEstimateWithoutOverheadCache;
     }
+
+
+    /**
+     * Retrieves the cost estimate of input {@link Operator} and input {@link Junction} and recurse if there is input Operators
+     *
+     * @param operator {@link Operator} that will be used to retreive the cost/squashed costs
+     * @return list of probabilisticDoubleInterval where First element is the operator cost and second element is the junction cost; and
+     * list of double retreived where First element is the operator squashed cost and second element is the junction squashed cost
+     *
+     * PS: This function will start with the sink operator
+     *
+     */
+
+
+    private Tuple<List<ProbabilisticDoubleInterval>,List<Double>> getParallelOperatorJunctionAllCostEstimate(Operator operator){
+
+        Set<Operator> inputOperators = new HashSet<>();
+        Set<Junction> inputJunction = new HashSet<>();
+
+        List<ProbabilisticDoubleInterval> probalisticCost = new ArrayList<>();
+        List<Double> squashedCost = new ArrayList<>();
+
+        // check if the operator cost was already calculated and cached
+        for (Tuple<Operator, Tuple<List<ProbabilisticDoubleInterval>,List<Double>>> t:calculatedParallelOperatorCostCache){
+            if(t.field0 == operator)
+                return t.field1;
+        }
+
+        if (this.optimizationContext.getOperatorContext(operator) != null) {
+            // Get input junctions
+            this.junctions.values()
+                .forEach(j -> {
+                    for(int itr=0;itr<j.getNumTargets();itr++) {
+                        if(j.getTargetOperator(itr) == operator)
+                            inputJunction.add(j);
+                    }
+                });
+            // Get input operators associated with input junctions
+            inputJunction
+                .forEach((Junction j) -> {
+                    inputOperators.add(j.getSourceOperator());
+                });
+
+            if (inputOperators.size() == 0) {
+                // If there is no input operator, only the cost of the current operator is returned
+                probalisticCost.add(this.optimizationContext.getOperatorContext(operator).getCostEstimate());
+                probalisticCost.add(new ProbabilisticDoubleInterval(0f, 0f, 0f));
+                squashedCost.add(this.optimizationContext.getOperatorContext(operator).getSquashedCostEstimate());
+                squashedCost.add(.0);
+                Tuple<List<ProbabilisticDoubleInterval>,List<Double>> returnedCost = new Tuple(probalisticCost, squashedCost) ;
+                this.calculatedParallelOperatorCostCache.add(new Tuple(operator,returnedCost));
+                return returnedCost;
+            } else if (inputOperators.size() == 1) {
+                // If there is only one input operator the cost of the current operator plus the cost of the input operator is returned
+
+                // Get the operator probalistic cost and put it as a first element in probalisticCost
+                probalisticCost.add(this.optimizationContext.getOperatorContext(operator).getCostEstimate()
+                        .plus(this.getParallelOperatorJunctionAllCostEstimate(inputOperators.iterator().next()).field0.get(0)));
+                // Get the junction probalistic cost and put it as a second element in probalisticCost
+                probalisticCost.add(inputJunction.iterator().next().getCostEstimate(this.optimizationContext.getDefaultOptimizationContexts().get(0))
+                        .plus(this.getParallelOperatorJunctionAllCostEstimate(inputOperators.iterator().next()).field0.get(1)));
+                // Get the operator squashed cost and put it as a first element in squashedCost
+                squashedCost.add(this.optimizationContext.getOperatorContext(operator).getSquashedCostEstimate()
+                        + this.getParallelOperatorJunctionAllCostEstimate(inputOperators.iterator().next()).field1.get(0));
+                // Get the junction squashed cost and put it as a second element in squashedCost
+                squashedCost.add(inputJunction.iterator().next().getSquashedCostEstimate(this.optimizationContext.getDefaultOptimizationContexts().get(0))
+                        + this.getParallelOperatorJunctionAllCostEstimate(inputOperators.iterator().next()).field1.get(1));
+
+                Tuple<List<ProbabilisticDoubleInterval>,List<Double>> returnedCost = new Tuple(probalisticCost, squashedCost) ;
+                this.calculatedParallelOperatorCostCache.add(new Tuple(operator,returnedCost));
+                return returnedCost;
+            } else {
+                // If multiple input operators, the cost returned is the max of input operators
+                ProbabilisticDoubleInterval maxControlProbabilistic = new ProbabilisticDoubleInterval(0f, 0f, 0f);
+                ProbabilisticDoubleInterval maxJunctionProbabilistic = new ProbabilisticDoubleInterval(0f, 0f, 0f);
+
+                double maxControlSquash = 0;
+                double maxJunctionSquash = 0;
+
+                for (Iterator<Operator> op = inputOperators.iterator(); op.hasNext(); ) {
+                    Tuple<List<ProbabilisticDoubleInterval>, List<Double>> val = this.getParallelOperatorJunctionAllCostEstimate(op.next());
+                    List<ProbabilisticDoubleInterval> valProbalistic = val.field0;
+                    List<Double> valSquash = val.field1;
+                    // Take the max of the probalistic cost
+                    if (valProbalistic.get(0).getAverageEstimate() + valProbalistic.get(1).getAverageEstimate() >
+                            maxControlProbabilistic.getAverageEstimate() + maxJunctionProbabilistic.getAverageEstimate()) {
+                        // Get the control probalistic cost
+                        maxControlProbabilistic = valProbalistic.get(0);
+                        // Get the junction probalistic cost
+                        maxJunctionProbabilistic = valProbalistic.get(1);
+                    }
+                    // Take the cost of the squashed cost
+                    if (valSquash.get(0) > maxControlSquash) {
+                        maxControlSquash = valSquash.get(0);
+                    }
+                    if (valSquash.get(1) > maxJunctionSquash) {
+                        maxJunctionSquash = valSquash.get(1);
+                    }
+                }
+                // Get the operator probalistic cost and put it as a first element in probalisticCost
+                probalisticCost.add(this.optimizationContext.getOperatorContext(operator).getCostEstimate().plus(maxControlProbabilistic));
+                // Get the junction probalistic cost and put it as a second element in probalisticCost
+                probalisticCost.add(inputJunction.iterator().next().getCostEstimate(this.optimizationContext.getDefaultOptimizationContexts().get(0))
+                        .plus(maxJunctionProbabilistic));
+                // Get the operator squashed cost and put it as a first element in squashedCost
+                squashedCost.add(this.optimizationContext.getOperatorContext(operator).getSquashedCostEstimate()
+                        + maxControlSquash);
+                // Get the junction squashed cost and put it as a second element in squashedCost
+                squashedCost.add(inputJunction.iterator().next().getSquashedCostEstimate(this.optimizationContext.getDefaultOptimizationContexts().get(0))
+                        + maxJunctionSquash);
+
+                Tuple<List<ProbabilisticDoubleInterval>,List<Double>> returnedCost = new Tuple(probalisticCost, squashedCost) ;
+                this.calculatedParallelOperatorCostCache.add(new Tuple(operator,returnedCost));
+                return returnedCost;
+            }
+        } else {
+            // Handle the case of a control not defined in this.operators (exp: loop operators)
+            double controlSquash = 0;
+            double junctionSquash = 0;
+            ProbabilisticDoubleInterval controlProbabilistic = new ProbabilisticDoubleInterval(0f, 0f, 0f);
+            ProbabilisticDoubleInterval junctionProbabilistic = new ProbabilisticDoubleInterval(0f, 0f, 0f);
+
+            probalisticCost.add(controlProbabilistic);
+            probalisticCost.add(junctionProbabilistic);
+            squashedCost.add(controlSquash);
+            squashedCost.add(junctionSquash);
+
+            return new Tuple<>(probalisticCost,squashedCost);
+        }
+    }
+
+    /**
+     * Retrieves the cost estimate for this instance taking into account parallel stage execution.
+     *
+     * @param isIncludeOverhead whether to include global overhead in the {@link TimeEstimate} (to avoid repeating
+     *                          overhead in nested instances)
+     * @return the cost estimate taking into account parallel stage execution
+     */
+    ProbabilisticDoubleInterval getParallelCostEstimate(boolean isIncludeOverhead) {
+        ProbabilisticDoubleInterval parallelCostEstimateWithoutOverhead, parallelCostEstimate;
+
+        if (this.parallelCostEstimateCache == null) {
+            // It means that the squashed cost is not yet called, might be only one possible execution plan
+            this.getSquashedParallelCostEstimate(true);
+        }
+
+        final ProbabilisticDoubleInterval loopCosts = this.loopImplementations.values().stream()
+                .map(LoopImplementation::getCostEstimate)
+                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
+        parallelCostEstimateWithoutOverhead = this.parallelCostEstimateCache.field0.get(0).plus(this.parallelCostEstimateCache.field0.get(1)).plus(loopCosts);
+        ProbabilisticDoubleInterval overheadCosts = this.getUtilizedPlatforms().stream()
+                .map(platform -> {
+                    Configuration configuration = this.optimizationContext.getConfiguration();
+                    long startUpTime = configuration.getPlatformStartUpTimeProvider().provideFor(platform);
+                    TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
+                    return timeToCostConverter.convert(new TimeEstimate(startUpTime, startUpTime, 1d));
+                })
+                .reduce(ProbabilisticDoubleInterval.zero, ProbabilisticDoubleInterval::plus);
+        parallelCostEstimate = parallelCostEstimateWithoutOverhead.plus(overheadCosts);
+        return isIncludeOverhead ? parallelCostEstimate : parallelCostEstimateWithoutOverhead;
+    }
+
+    /**
+     * Retrieves the cost estimate for this instance taking into account parallel stage execution.
+     *
+     * @param isIncludeOverhead whether to include global overhead in the {@link TimeEstimate} (to avoid repeating
+     *                          overhead in nested instances)
+     * @return the squashed cost estimate taking into account parallel stage execution
+     */
+    double getSquashedParallelCostEstimate(boolean isIncludeOverhead) {
+        // Collect sink operators by Removing all operators that have an output
+        Set<Operator> sinkOperators;
+        sinkOperators = this.operators.stream()
+                .filter(op -> op.getNumOutputs() == 0)
+                .collect(Collectors.toSet());
+
+        // Retrieve operator and junction cost with parallel stage consideration
+        double parallelOperatorCosts = 0f;
+        double parallelJunctionCosts = 0f;
+
+        // Iterate through all sinks to find the expensive sink
+        for (Operator op : sinkOperators){
+            Tuple<List<ProbabilisticDoubleInterval>,List<Double>> tempParallelCostEstimate = this.getParallelOperatorJunctionAllCostEstimate(op);
+            List<Double> tempSquashedCost = tempParallelCostEstimate.field1;
+
+            if (tempSquashedCost.get(0) + tempSquashedCost.get(1) > parallelOperatorCosts + parallelJunctionCosts){
+                parallelOperatorCosts = tempSquashedCost.get(0);
+                parallelJunctionCosts = tempSquashedCost.get(1);
+                this.parallelCostEstimateCache = tempParallelCostEstimate;
+            }
+        }
+        final double loopCosts = this.loopImplementations.values().stream()
+                .mapToDouble(LoopImplementation::getSquashedCostEstimate)
+                .sum();
+        final double parallelSquashedCostEstimateWithoutOverhead = parallelOperatorCosts + parallelJunctionCosts + loopCosts;
+        double overheadCosts = this.getUtilizedPlatforms().stream()
+                .mapToDouble(platform -> {
+                    Configuration configuration = this.optimizationContext.getConfiguration();
+
+                    long startUpTime = configuration.getPlatformStartUpTimeProvider().provideFor(platform);
+
+                    TimeToCostConverter timeToCostConverter = configuration.getTimeToCostConverterProvider().provideFor(platform);
+                    ProbabilisticDoubleInterval costs = timeToCostConverter.convert(new TimeEstimate(startUpTime, startUpTime, 1d));
+
+                    final ToDoubleFunction<ProbabilisticDoubleInterval> squasher = configuration.getCostSquasherProvider().provide();
+                    return squasher.applyAsDouble(costs);
+                })
+                .sum();
+        final double parallelSquashedCostEstimate = parallelSquashedCostEstimateWithoutOverhead + overheadCosts;
+        return isIncludeOverhead ? parallelSquashedCostEstimate : parallelSquashedCostEstimateWithoutOverhead;
+    }
+
 
     public Junction getJunction(OutputSlot<?> output) {
         return this.junctions.get(output);
