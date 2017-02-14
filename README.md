@@ -140,53 +140,59 @@ import org.qcri.rheem.api.JavaPlanBuilder;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval;
 import org.qcri.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.java.Java;
 import org.qcri.rheem.spark.Spark;
 import java.util.Collection;
 import java.util.Arrays;
 
-// Settings
-String inputUrl = "hdfs://my/file.txt";
+public class WordcountJava {
 
-// Get a plan builder.
-RheemContext rheemContext = new RheemContext(new Configuration())
-	.withPlugin(Java.basicPlugin())
-	.withPlugin(Spark.basicPlugin());
-JavaPlanBuilder planBuilder = new JavaPlanBuilder(rheemContext)
-	.withJobName(String.format("WordCount (%s)", inputUrl))
-	.withUdfJarOf(this.getClass());
+    public static void main(String[] args){
 
-// Start building the RheemPlan.
-Collection<Tuple2<String, Integer>> wordcounts = planBuilder
-	// Read the text file.
-	.readTextFile(inputUrl).withName("Load file")
+        // Settings
+        String inputUrl = "file:/tmp.txt";
 
-	// Split each line by non-word characters.
-	.flatMap(line -> Arrays.asList(line.split("\\W+")))
-	.withSelectivity(10, 100, 0.9)
-	.withName("Split words")
+        // Get a plan builder.
+        RheemContext rheemContext = new RheemContext(new Configuration())
+                .withPlugin(Java.basicPlugin())
+                .withPlugin(Spark.basicPlugin());
+        JavaPlanBuilder planBuilder = new JavaPlanBuilder(rheemContext)
+                .withJobName(String.format("WordCount (%s)", inputUrl))
+                .withUdfJarOf(WordcountJava.class);
 
-	// Filter empty tokens.
-	.filter(token -> !token.isEmpty())
-	.withSelectivity(0.99, 0.99, 0.99)
-	.withName("Filter empty words")
+        // Start building the RheemPlan.
+        Collection<Tuple2<String, Integer>> wordcounts = planBuilder
+                // Read the text file.
+                .readTextFile(inputUrl).withName("Load file")
 
-	// Attach counter to each word.
-	.map(word -> new Tuple2<>(word.toLowerCase(), 1)).withName("To lower case, add counter")
+                // Split each line by non-word characters.
+                .flatMap(line -> Arrays.asList(line.split("\\W+")))
+                .withSelectivity(10, 100, 0.9)
+                .withName("Split words")
 
-	// Sum up counters for every word.
-	.reduceByKey(
-			Tuple2::getField0,
-			(t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1())
-	)
-	.withCardinalityEstimator(new DefaultCardinalityEstimator(0.9, 1, false, in -> Math.round(0.01 * in[0])))
-	.withName("Add counters")
+                // Filter empty tokens.
+                .filter(token -> !token.isEmpty())
+                .withSelectivity(0.99, 0.99, 0.99)
+                .withName("Filter empty words")
 
-	// Execute the plan and collect the results.
-	.collect();
+                // Attach counter to each word.
+                .map(word -> new Tuple2<>(word.toLowerCase(), 1)).withName("To lower case, add counter")
+
+                // Sum up counters for every word.
+                .reduceByKey(
+                        Tuple2::getField0,
+                        (t1, t2) -> new Tuple2<>(t1.getField0(), t1.getField1() + t2.getField1())
+                )
+                .withCardinalityEstimator(new DefaultCardinalityEstimator(0.9, 1, false, in -> Math.round(0.01 * in[0])))
+                .withName("Add counters")
+
+                // Execute the plan and collect the results.
+                .collect();
+
+        System.out.println(wordcounts);
+    }
+}
 ```
 
 #### Scala API
@@ -197,36 +203,43 @@ import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.spark.Spark
 
-// Settings
-val inputUrl = "hdfs://my/file.txt"
+object WordcountScala {
+  def main(args: Array[String]) {
 
-// Get a plan builder.
-val rheemContext = new RheemContext(new Configuration)
-	.withPlugin(Java.basicPlugin)
-	.withPlugin(Spark.basicPlugin)
-val planBuilder = new PlanBuilder(rheemContext)
-	.withJobName(s"WordCount ($inputUrl)")
-	.withUdfJarsOf(this.getClass)
+    // Settings
+    val inputUrl = "file:/tmp.txt"
 
-val wordcounts = planBuilder
-	// Read the text file.
-	.readTextFile(inputUrl).withName("Load file")
+    // Get a plan builder.
+    val rheemContext = new RheemContext(new Configuration)
+      .withPlugin(Java.basicPlugin)
+      .withPlugin(Spark.basicPlugin)
+    val planBuilder = new PlanBuilder(rheemContext)
+      .withJobName(s"WordCount ($inputUrl)")
+      .withUdfJarsOf(this.getClass)
 
-	// Split each line by non-word characters.
-	.flatMap(_.split("\\W+"), selectivity = 10).withName("Split words")
+    val wordcounts = planBuilder
+      // Read the text file.
+      .readTextFile(inputUrl).withName("Load file")
 
-	// Filter empty tokens.
-	.filter(_.nonEmpty, selectivity = 0.99).withName("Filter empty words")
+      // Split each line by non-word characters.
+      .flatMap(_.split("\\W+"), selectivity = 10).withName("Split words")
 
-	// Attach counter to each word.
-	.map(word => (word.toLowerCase, 1)).withName("To lower case, add counter")
+      // Filter empty tokens.
+      .filter(_.nonEmpty, selectivity = 0.99).withName("Filter empty words")
 
-	// Sum up counters for every word.
-	.reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 + c2._2)).withName("Add counters")
-	.withCardinalityEstimator((in: Long) => math.round(in * 0.01))
+      // Attach counter to each word.
+      .map(word => (word.toLowerCase, 1)).withName("To lower case, add counter")
 
-	// Execute the plan and collect the results.
-	.collect()
+      // Sum up counters for every word.
+      .reduceByKey(_._1, (c1, c2) => (c1._1, c1._2 + c2._2)).withName("Add counters")
+      .withCardinalityEstimator((in: Long) => math.round(in * 0.01))
+
+      // Execute the plan and collect the results.
+      .collect()
+
+    println(wordcounts)
+  }
+}
 ```
 
 ### k-means
@@ -236,87 +249,92 @@ Rheem is also capable of iterative processing, which is, e.g., very important fo
 #### Scala API
 
 ```scala
-
 import org.qcri.rheem.api._
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
+import org.qcri.rheem.core.function.ExecutionContext
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.spark.Spark
 import scala.util.Random
-import scala.collections.JavaConversions._
+import scala.collection.JavaConversions._
 
-// Settings
-val inputUrl = "hdfs://my/file.txt"
-val iterations = 20
+object kmeans {
+  def main(args: Array[String]) {
 
-// Get a plan builder.
-val rheemContext = new RheemContext(new Configuration)
-	.withPlugin(Java.basicPlugin)
-	.withPlugin(Spark.basicPlugin)
-val planBuilder = new PlanBuilder(rheemContext)
-  .withJobName(s"k-means ($inputFile, k=$k, $iterations iterations)")
-  .withUdfJarsOf(this.getClass)
+    // Settings
+    val inputUrl = "file:/tmp_kmeans.txt"
+    val k = 5
+    val iterations = 100
 
-// Read and parse the input file(s).
-val points = planBuilder
-  .readTextFile(inputUrl).withName("Read file")
-  .map { line =>
-	val fields = line.split(",")
-	Point(fields(0).toDouble, fields(1).toDouble)
-  }.withName("Create points")
+    // Get a plan builder.
+    val rheemContext = new RheemContext(new Configuration)
+      .withPlugin(Java.basicPlugin)
+      .withPlugin(Spark.basicPlugin)
+    val planBuilder = new PlanBuilder(rheemContext)
+      .withJobName(s"k-means ($inputUrl, k=$k, $iterations iterations)")
+      .withUdfJarsOf(this.getClass)
 
-case class Point(x: Double, y: Double)
-case class TaggedPoint(x: Double, y: Double, cluster: Int)
-case class TaggedPointCounter(x: Double, y: Double, cluster: Int, count: Long) {
-  def +(that: TaggedPointCounter) = TaggedPointCounter(this.x + that.x, this.y + that.y, this.cluster, this.count + that.count)
-  def average = TaggedPoint(x / count, y / count, cluster)
-}
+    case class Point(x: Double, y: Double)
+    case class TaggedPoint(x: Double, y: Double, cluster: Int)
+    case class TaggedPointCounter(x: Double, y: Double, cluster: Int, count: Long) {
+      def add_points(that: TaggedPointCounter) = TaggedPointCounter(this.x + that.x, this.y + that.y, this.cluster, this.count + that.count)
+      def average = TaggedPointCounter(x / count, y / count, cluster, 0)
+    }
 
-// Create initial centroids.
-val random = new Random
-val initialCentroids = planBuilder
-  .loadCollection(for (i <- 1 to n) yield TaggedPoint(random.nextGaussian(), random.nextGaussian(), i)).withName("Load random centroids")
+    // Read and parse the input file(s).
+    val points = planBuilder
+      .readTextFile(inputUrl).withName("Read file")
+      .map { line =>
+        val fields = line.split(",")
+        Point(fields(0).toDouble, fields(1).toDouble)
+      }.withName("Create points")
 
-// Declare UDF to select centroid for each data point.
-class SelectNearestCentroid extends ExtendedSerializableFunction[Point, TaggedPoint] {
 
-  /** Keeps the broadcasted centroids. */
-  var centroids: Iterable[TaggedPoint] = _
+    // Create initial centroids.
+    val random = new Random
+    val initialCentroids = planBuilder
+      .loadCollection(for (i <- 1 to k) yield TaggedPointCounter(random.nextGaussian(), random.nextGaussian(), i, 0)).withName("Load random centroids")
 
-  override def open(executionCtx: ExecutionContext) = {
-    centroids = executionCtx.getBroadcast[TaggedPoint]("centroids")
-  }
+    // Declare UDF to select centroid for each data point.
+    class SelectNearestCentroid extends ExtendedSerializableFunction[Point, TaggedPointCounter] {
 
-  override def apply(point: Point): TaggedPointCounter = {
-    var minDistance = Double.PositiveInfinity
-    var nearestCentroidId = -1
-    for (centroid <- centroids) {
-      val distance = point.distanceTo(centroid)
-      if (distance < minDistance) {
-        minDistance = distance
-        nearestCentroidId = centroid.centroidId
+      /** Keeps the broadcasted centroids. */
+      var centroids: Iterable[TaggedPointCounter] = _
+
+      override def open(executionCtx: ExecutionContext) = {
+        centroids = executionCtx.getBroadcast[TaggedPointCounter]("centroids")
+      }
+
+      override def apply(point: Point): TaggedPointCounter = {
+        var minDistance = Double.PositiveInfinity
+        var nearestCentroidId = -1
+        for (centroid <- centroids) {
+          val distance = Math.pow(Math.pow(point.x - centroid.x, 2) + Math.pow(point.y - centroid.y, 2), 0.5)
+          if (distance < minDistance) {
+            minDistance = distance
+            nearestCentroidId = centroid.cluster
+          }
+        }
+        new TaggedPointCounter(point.x, point.y, nearestCentroidId, 1)
       }
     }
-    new TaggedPointCounter(point.x, point.y, nearestCentroidId, 1)
+
+    // Do the k-means loop.
+    val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
+      points
+        .mapJava(new SelectNearestCentroid)
+        .withBroadcast(currentCentroids, "centroids").withName("Find nearest centroid")
+        .reduceByKey(_.cluster, _.add_points(_)).withName("Add up points")
+        .withCardinalityEstimator(k)
+        .map(_.average).withName("Average points")
+    }).withName("Loop")
+
+      // Collect the results.
+      .collect()
+
+    println(finalCentroids)
   }
 }
-
-// Do the k-means loop.
-val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
-  points
-	.mapJava(
-	  new SelectNearestCentroid,
-	  udfLoad = LoadProfileEstimators.createFromSpecification(
-	  	"my.udf.costfunction.key", configuration
-	  )
-	)
-	.withBroadcast(currentCentroids, "centroids").withName("Find nearest centroid")
-	.reduceByKey(_.cluster, _ + _).withName("Add up points")
-	.withCardinalityEstimator(k)
-	.map(_.average).withName("Average points")
-}).withName("Loop")
-
-// Collect the results.
-.collect()
 ```
 
 ## License
