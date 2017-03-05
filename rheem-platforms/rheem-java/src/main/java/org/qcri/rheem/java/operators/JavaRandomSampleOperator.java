@@ -8,6 +8,7 @@ import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.qcri.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
@@ -20,6 +21,7 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
 import java.util.function.IntUnaryOperator;
+import java.util.function.LongUnaryOperator;
 import java.util.function.Predicate;
 
 /**
@@ -29,15 +31,15 @@ public class JavaRandomSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
-    private final Random rand = new Random(seed);
+    private final Random rand = new Random();
 
     /**
      * Creates a new instance.
      *
      * @param sampleSizeFunction udf-based size of sample
      */
-    public JavaRandomSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
-        super(sampleSizeFunction, type, Methods.RANDOM, seed);
+    public JavaRandomSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, LongUnaryOperator seedFunction) {
+        super(sampleSizeFunction, type, Methods.RANDOM, seedFunction);
     }
 
     /**

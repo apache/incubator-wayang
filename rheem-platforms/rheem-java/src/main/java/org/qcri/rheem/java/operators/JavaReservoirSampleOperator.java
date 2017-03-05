@@ -20,6 +20,7 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
 import java.util.function.IntUnaryOperator;
+import java.util.function.LongUnaryOperator;
 
 /**
  * Java implementation of the {@link JavaReservoirSampleOperator}.
@@ -28,12 +29,12 @@ public class JavaReservoirSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
-    private final Random rand = new Random(seed);
+    private final Random rand = new Random();
 
     /**
      * Creates a new instance.
      */
-    public JavaReservoirSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
+    public JavaReservoirSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, LongUnaryOperator seed) {
         super(sampleSizeFunction, type, Methods.RESERVOIR, seed);
     }
 

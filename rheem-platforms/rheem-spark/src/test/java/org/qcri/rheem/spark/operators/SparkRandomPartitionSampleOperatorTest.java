@@ -28,7 +28,7 @@ public class SparkRandomPartitionSampleOperatorTest extends SparkOperatorTestBas
                 new SparkRandomPartitionSampleOperator<>(
                         iterationNumber -> sampleSize,
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        42L
+                        iterationNumber -> 42L
                 );
 
         // Set up the ChannelInstances.
@@ -56,7 +56,7 @@ public class SparkRandomPartitionSampleOperatorTest extends SparkOperatorTestBas
                 new SparkRandomPartitionSampleOperator<>(
                         iterationNumber -> iterationNumber + 3,
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        42L
+                        iterationNumber -> 42L
                 );
 
         // Set up the ChannelInstances.

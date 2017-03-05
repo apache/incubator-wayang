@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.IntUnaryOperator;
+import java.util.function.LongUnaryOperator;
 
 
 /**
@@ -33,7 +34,7 @@ public class SparkRandomPartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
-    private final Random rand = new Random(seed);
+    private Random rand;
 
     private int nb_partitions = 0;
 
@@ -44,8 +45,8 @@ public class SparkRandomPartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public SparkRandomPartitionSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
-        super(sampleSizeFunction, type, Methods.RANDOM, seed);
+    public SparkRandomPartitionSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, LongUnaryOperator seedFunction) {
+        super(sampleSizeFunction, type, Methods.RANDOM, seedFunction);
     }
 
     /**
@@ -75,6 +76,8 @@ public class SparkRandomPartitionSampleOperator<Type>
                 inputRdd.cache().count();
 
         int sampleSize = this.getSampleSize(operatorContext);
+        long seed = this.getSeed(operatorContext);
+        rand = new Random(seed);
 
         if (sampleSize >= datasetSize) { //return whole dataset
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
