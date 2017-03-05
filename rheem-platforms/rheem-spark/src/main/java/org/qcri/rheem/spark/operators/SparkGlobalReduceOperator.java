@@ -66,14 +66,8 @@ public class SparkGlobalReduceOperator<Type>
                 sparkExecutor.getCompiler().compile(this.reduceDescriptor, this, operatorContext, inputs);
 
         final JavaRDD<Type> inputRdd = input.provideRdd();
-        try {
-            List<Type> outputList = Collections.singletonList(inputRdd.reduce(reduceFunction));
-//        List<Type> outputList = Collections.singletonList(inputRdd.fold(, reduceFunction));
-            output.accept(outputList);
-        } catch (Exception e) {
-            List<Type> outputList = Collections.singletonList(null);
-            output.accept(outputList);
-        }
+        List<Type> outputList = Collections.singletonList(inputRdd.reduce(reduceFunction));
+        output.accept(outputList);
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
