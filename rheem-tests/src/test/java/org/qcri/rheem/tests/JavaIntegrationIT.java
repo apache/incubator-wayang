@@ -362,7 +362,20 @@ public class JavaIntegrationIT {
     public void testSample() throws URISyntaxException {
         // Build the RheemPlan.
         final List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.simpleSample(collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+        RheemPlan rheemPlan = RheemPlans.simpleSample(3, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+
+        // Instantiate Rheem and activate the Java backend.
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+
+        rheemContext.execute(rheemPlan);
+        System.out.println(collector);
+    }
+
+    @Test
+    public void testLargerSample() throws URISyntaxException {
+        // Build the RheemPlan.
+        final List<Integer> collector = new LinkedList<>();
+        RheemPlan rheemPlan = RheemPlans.simpleSample(15, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
 
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());

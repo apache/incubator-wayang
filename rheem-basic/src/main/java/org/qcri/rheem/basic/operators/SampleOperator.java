@@ -102,6 +102,13 @@ public class SampleOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     }
 
     /**
+     * Creates a new instance given the sample size and the method.
+     */
+    public SampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Methods sampleMethod) {
+        this(sampleSizeFunction, type, sampleMethod, iterationNumber -> randomSeed());
+    }
+
+    /**
      * Creates a new instance given a user-defined sample size.
      */
     public SampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Methods sampleMethod, long seed) {

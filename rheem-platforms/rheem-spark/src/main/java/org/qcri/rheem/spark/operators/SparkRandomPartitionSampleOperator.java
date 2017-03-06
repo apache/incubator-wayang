@@ -76,13 +76,13 @@ public class SparkRandomPartitionSampleOperator<Type>
                 inputRdd.cache().count();
 
         int sampleSize = this.getSampleSize(operatorContext);
-        long seed = this.getSeed(operatorContext);
-        rand = new Random(seed);
-
         if (sampleSize >= datasetSize) { //return whole dataset
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
             return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
         }
+
+        long seed = this.getSeed(operatorContext);
+        rand = new Random(seed);
 
         List<Type> result;
         final SparkContext sparkContext = inputRdd.context();

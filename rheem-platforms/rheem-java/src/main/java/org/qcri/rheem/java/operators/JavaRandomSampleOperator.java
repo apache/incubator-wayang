@@ -31,7 +31,7 @@ public class JavaRandomSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
-    private final Random rand = new Random();
+    private Random rand;
 
     /**
      * Creates a new instance.
@@ -68,37 +68,40 @@ public class JavaRandomSampleOperator<Type>
 
         if (sampleSize >= datasetSize) { //return all
             ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).provideStream());
-            return null;
         }
+        else {
+            long seed = this.getSeed(operatorContext);
+            rand = new Random(seed);
 
-        final int[] sampleIndices = new int[sampleSize];
-        final BitSet data = new BitSet();
-        for (int i = 0; i < sampleSize; i++) {
-            sampleIndices[i] = rand.nextInt(datasetSize.intValue());
-            while (data.get(sampleIndices[i])) //without replacement
+            final int[] sampleIndices = new int[sampleSize];
+            final BitSet data = new BitSet();
+            for (int i = 0; i < sampleSize; i++) {
                 sampleIndices[i] = rand.nextInt(datasetSize.intValue());
-            data.set(sampleIndices[i]);
-        }
-        Arrays.sort(sampleIndices);
+                while (data.get(sampleIndices[i])) //without replacement
+                    sampleIndices[i] = rand.nextInt(datasetSize.intValue());
+                data.set(sampleIndices[i]);
+            }
+            Arrays.sort(sampleIndices);
 
-        ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<Type>provideStream().filter(new Predicate<Type>() {
-                    int streamIndex = 0;
-                    int sampleIndex = 0;
+            ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<Type>provideStream().filter(new Predicate<Type>() {
+                        int streamIndex = 0;
+                        int sampleIndex = 0;
 
-                    @Override
-                    public boolean test(Type element) {
-                        if (sampleIndex == sampleIndices.length) //we already picked all our samples
-                            return false;
-                        if (streamIndex == sampleIndices[sampleIndex]) {
-                            sampleIndex++;
+                @Override
+                        public boolean test(Type element) {
+                            if (sampleIndex == sampleIndices.length) //we already picked all our samples
+                                return false;
+                            if (streamIndex == sampleIndices[sampleIndex]) {
+                                sampleIndex++;
+                                streamIndex++;
+                                return true;
+                            }
                             streamIndex++;
-                            return true;
+                            return false;
                         }
-                        streamIndex++;
-                        return false;
-                    }
-                })
-        );
+                    })
+            );
+        }
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }

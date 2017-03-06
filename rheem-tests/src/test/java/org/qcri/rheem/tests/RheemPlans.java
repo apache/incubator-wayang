@@ -315,13 +315,13 @@ public class RheemPlans {
      * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link SampleOperator}. It will
      * then map each value to its double and output the results in the {@code collector}.
      */
-    public static RheemPlan simpleSample(Collection<Integer> collector, final int... values)
+    public static RheemPlan simpleSample(int sampleSize, Collection<Integer> collector, final int... values)
             throws URISyntaxException {
         CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
         source.setName("source");
 
         SampleOperator<Integer> sampleOperator = new SampleOperator<>(
-                3, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM, SampleOperator.randomSeed()
+                sampleSize, DataSetType.createDefault(Integer.class), SampleOperator.Methods.RANDOM, SampleOperator.randomSeed()
         );
         sampleOperator.setName("sample");
 
