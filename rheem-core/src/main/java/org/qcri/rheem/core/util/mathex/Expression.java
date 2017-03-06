@@ -14,7 +14,7 @@ public interface Expression {
      *
      * @param specification a mathematical expression
      * @return the result of the evaluation
-     * @throws if the evaluation failed
+     * @throws EvaluationException if the evaluation failed
      */
     static double evaluate(String specification) throws EvaluationException {
         final Expression expression = ExpressionBuilder.parse(specification);
@@ -27,7 +27,7 @@ public interface Expression {
      * @param specification a mathematical expression
      * @param context       provides contextual information
      * @return the result of the evaluation
-     * @throws if the evaluation failed
+     * @throws EvaluationException if the evaluation failed
      */
     static double evaluate(String specification, Context context) throws EvaluationException {
         final Expression expression = ExpressionBuilder.parse(specification);

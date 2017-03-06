@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link PageRankOperator} to {@link org.qcri.rheem.spark.operators.graph.SparkPageRankOperator}.
+ * Mapping from {@link PageRankOperator} to org.qcri.rheem.spark.operators.graph.SparkPageRankOperator .
  */
 public class PageRankMapping implements Mapping {
 

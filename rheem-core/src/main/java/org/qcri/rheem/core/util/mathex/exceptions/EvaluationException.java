@@ -1,6 +1,8 @@
 package org.qcri.rheem.core.util.mathex.exceptions;
 
 
+import org.qcri.rheem.core.util.mathex.Expression;
+
 /**
  * This exception signals a failed {@link Expression} evaluation.
  *

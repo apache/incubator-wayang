@@ -140,7 +140,7 @@ public class ExecutionStage {
     /**
      * Tells whether this instance is in a {@link ExecutionStageLoop} that has finished iterating.
      *
-     * @return whether this instance is in a finished {@Link ESL}
+     * @return whether this instance is in a finished {@link ExecutionStageLoop}
      * @see #isLoopHead()
      */
     public boolean isInFinishedLoop() {
