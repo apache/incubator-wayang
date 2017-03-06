@@ -34,14 +34,14 @@ public class JavaDoWhileOperator<InputType, ConvergenceType>
     public JavaDoWhileOperator(DataSetType<InputType> inputType,
                                DataSetType<ConvergenceType> convergenceType,
                                PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
-                               int numExpectedIterations) {
+                               Integer numExpectedIterations) {
         super(inputType, convergenceType, criterionPredicate, numExpectedIterations);
     }
 
     public JavaDoWhileOperator(DataSetType<InputType> inputType,
                                DataSetType<ConvergenceType> convergenceType,
                                PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
-                               int numExpectedIterations) {
+                               Integer numExpectedIterations) {
         super(inputType, convergenceType, criterionDescriptor, numExpectedIterations);
     }
 

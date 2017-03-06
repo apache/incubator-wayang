@@ -30,7 +30,7 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
      */
     protected final PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor;
 
-    private int numExpectedIterations;
+    private Integer numExpectedIterations = 0;
 
     private State state;
 
@@ -49,7 +49,7 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
     public DoWhileOperator(DataSetType<InputType> inputType,
                            DataSetType<ConvergenceType> convergenceType,
                            PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
-                           int numExpectedIterations) {
+                           Integer numExpectedIterations) {
         this(inputType,
                 convergenceType,
                 new PredicateDescriptor<>(criterionPredicate, ReflectionUtils.specify(Collection.class)),
@@ -63,7 +63,7 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
     public DoWhileOperator(DataSetType<InputType> inputType,
                            DataSetType<ConvergenceType> convergenceType,
                            PredicateDescriptor<Collection<ConvergenceType>> criterionDescriptor,
-                           int numExpectedIterations) {
+                           Integer numExpectedIterations) {
         super(3, 2, true);
         this.criterionDescriptor = criterionDescriptor;
         this.numExpectedIterations = numExpectedIterations;

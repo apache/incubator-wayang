@@ -56,6 +56,8 @@ public class JavaExecutor extends PushExecutorTemplate {
         // Execute.
         final Collection<ExecutionLineageNode> executionLineageNodes;
         final Collection<ChannelInstance> producedChannelInstances;
+        // TODO: Use proper progress estimator.
+        this.job.reportProgress(task.getOperator().getName(), 50);
         long startTime = System.currentTimeMillis();
         try {
             final Tuple<Collection<ExecutionLineageNode>, Collection<ChannelInstance>> results =
@@ -65,6 +67,7 @@ public class JavaExecutor extends PushExecutorTemplate {
                             this,
                             producerOperatorContext
                     );
+            //Thread.sleep(1000);
             executionLineageNodes = results.getField0();
             producedChannelInstances = results.getField1();
         } catch (Exception e) {
@@ -72,6 +75,8 @@ public class JavaExecutor extends PushExecutorTemplate {
         }
         long endTime = System.currentTimeMillis();
         long executionDuration = endTime - startTime;
+
+        this.job.reportProgress(task.getOperator().getName(), 100);
 
         // Check how much we executed.
         PartialExecution partialExecution = this.createPartialExecution(executionLineageNodes, executionDuration);

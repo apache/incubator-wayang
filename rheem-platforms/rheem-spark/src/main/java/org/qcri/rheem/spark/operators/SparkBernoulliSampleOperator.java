@@ -31,7 +31,7 @@ public class SparkBernoulliSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public SparkBernoulliSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, long seed) {
+    public SparkBernoulliSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
         super(sampleSizeFunction, type, Methods.BERNOULLI, seed);
     }
 

@@ -45,7 +45,7 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public GraphChiPageRankOperator(int numIterations) {
+    public GraphChiPageRankOperator(Integer numIterations) {
         super(numIterations);
     }
 

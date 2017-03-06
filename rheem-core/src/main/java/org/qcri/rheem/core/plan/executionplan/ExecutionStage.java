@@ -53,6 +53,7 @@ public class ExecutionStage {
      */
     private final int sequenceNumber;
 
+
     /**
      * Create a new instance and register it with the given {@link PlatformExecution}.
      */
@@ -281,6 +282,54 @@ public class ExecutionStage {
                             .append(" => ")
                             .append(this.prettyPrint(channel)).append('\n');
                 }
+            }
+        }
+    }
+
+    public Map toJsonMap() {
+        HashMap<String, Object> jsonMap = new HashMap<>();
+        ArrayList<Map> operators = new ArrayList<>();
+
+        jsonMap.put("platform", this.getPlatformExecution().getPlatform().getName());
+        jsonMap.put("operators", operators);
+        Set<ExecutionTask> seenTasks = new HashSet<>();
+        for (ExecutionTask startTask : this.startTasks) {
+            this.toJsonMapAux(startTask, seenTasks, operators);
+        }
+        return  jsonMap;
+    }
+
+    private void toJsonMapAux(ExecutionTask task, Set<ExecutionTask> seenTasks, ArrayList operators) {
+        if (!seenTasks.add(task)) {
+            return;
+        }
+        HashMap operator = new HashMap();
+        HashMap<String, ArrayList<HashMap<String, Object>>>  jsonConnectsTo = new HashMap<>();
+        operator.put("name", task.getOperator().getName());
+        operator.put("is_terminal", this.terminalTasks.contains(task) ? 1:0);
+        operator.put("is_start", this.startTasks.contains(task) ? 1:0);
+        operator.put("java_class", task.getOperator().getClass().getName());
+
+        /*
+            connects_to should look like this:
+            "connects_to": {"0": [{"via": "CollectionChannel", "javaFlatMapOperator": 0}]}
+         */
+        operator.put("connects_to", jsonConnectsTo);
+        operators.add(operator);
+
+        for (Channel channel : task.getOutputChannels()) {
+            ArrayList<HashMap<String, Object>> perOutputThatList = new ArrayList<>();
+            Integer thisOutIndex = channel.getProducerSlot()==null ? 0 : channel.getProducerSlot().getIndex();
+            jsonConnectsTo.put(thisOutIndex.toString(), perOutputThatList);
+
+            for (ExecutionTask consumer : channel.getConsumers()) {
+                HashMap<String, Object> jsonThatOp = new HashMap<>();
+                jsonThatOp.put(consumer.getOperator().getName(),
+                        (consumer.getInputSlotFor(channel)==null) ? 0 : consumer.getInputSlotFor(channel).getIndex());
+                jsonThatOp.put("via", prettyPrint(channel));
+                perOutputThatList.add(jsonThatOp);
+                if (consumer.getStage() == this)
+                    this.toJsonMapAux(consumer, seenTasks, operators);
             }
         }
     }

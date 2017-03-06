@@ -24,7 +24,7 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, T
     public static final ProbabilisticDoubleInterval DEFAULT_GRAPH_DENSITIY = new ProbabilisticDoubleInterval(.0001d, .5d, .5d);
 
     @EstimationContextProperty
-    protected final int numIterations;
+    protected final Integer numIterations;
 
     protected final float dampingFactor;
 
@@ -35,7 +35,7 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, T
      *
      * @param numIterations the number of PageRank iterations that this instance should perform
      */
-    public PageRankOperator(int numIterations) {
+    public PageRankOperator(Integer numIterations) {
         this(numIterations, DEFAULT_DAMPING_FACTOR, DEFAULT_GRAPH_DENSITIY);
     }
 
@@ -44,12 +44,12 @@ public class PageRankOperator extends UnaryToUnaryOperator<Tuple2<Long, Long>, T
      *
      * @param numIterations the number of PageRank iterations that this instance should perform
      */
-    public PageRankOperator(int numIterations, double dampingFactor, ProbabilisticDoubleInterval graphDensitiy) {
+    public PageRankOperator(Integer numIterations, Double dampingFactor, ProbabilisticDoubleInterval graphDensitiy) {
         super(DataSetType.createDefaultUnchecked(Tuple2.class),
                 DataSetType.createDefaultUnchecked(Tuple2.class),
                 false);
         this.numIterations = numIterations;
-        this.dampingFactor = (float) dampingFactor;
+        this.dampingFactor = dampingFactor.floatValue();
         this.graphDensity = graphDensitiy;
     }
 

@@ -28,7 +28,7 @@ public class SampleMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern<>(
-                "sample", new SampleOperator<>(0, DataSetType.none(), null, 0), false
+                "sample", new SampleOperator<>(0, DataSetType.none(), null, 0L), false
         ).withAdditionalTest(op ->
                 op.getSampleMethod() == SampleOperator.Methods.RANDOM
                         || op.getSampleMethod() == SampleOperator.Methods.RESERVOIR
