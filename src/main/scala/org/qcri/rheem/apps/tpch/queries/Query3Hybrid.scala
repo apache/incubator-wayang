@@ -6,7 +6,10 @@ import org.qcri.rheem.apps.tpch.CsvUtils
 import org.qcri.rheem.apps.tpch.data.{Customer, LineItem, Order}
 import org.qcri.rheem.apps.util.ExperimentDescriptor
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
+import org.qcri.rheem.core.platform.Platform
 import org.qcri.rheem.core.plugin.Plugin
+import org.qcri.rheem.jdbc.operators.JdbcTableSource
+import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource
 
 /**
@@ -42,6 +45,8 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
   override def version = "0.1.0"
 
   def apply(configuration: Configuration,
+            jdbcPlatform: JdbcPlatformTemplate,
+            createTableSource: (String, String*) => JdbcTableSource,
             segment: String = "BUILDING",
             date: String = "1995-03-15")
            (implicit experiment: Experiment) = {
@@ -55,7 +60,7 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
 
     val lineitemFile = configuration.getStringProperty("rheem.apps.tpch.csv.lineitem")
 
-    experiment.getSubject.addConfiguration("jdbcUrl", configuration.getStringProperty("rheem.sqlite3.jdbc.url"))
+    experiment.getSubject.addConfiguration("jdbcUrl", configuration.getStringProperty(jdbcPlatform.jdbcUrlProperty))
     experiment.getSubject.addConfiguration("lineitemInput", lineitemFile)
     experiment.getSubject.addConfiguration("segment", segment)
     experiment.getSubject.addConfiguration("date", date)
@@ -63,7 +68,7 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
     // Read, filter, and project the customer data.
     val _segment = segment
     val customerKeys = planBuilder
-      .readTable(new Sqlite3TableSource("CUSTOMER", Customer.fields: _*))
+      .readTable(createTableSource("CUSTOMER", Customer.fields: _*))
       .withName("Load CUSTOMER table")
 
       .filter(_.getString(6) == _segment, sqlUdf = s"c_mktsegment LIKE '$segment%'", selectivity = .25)
@@ -78,7 +83,7 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
     // Read, filter, and project the order data.
     val _date = CsvUtils.parseDate(date)
     val orders = planBuilder
-      .load(new Sqlite3TableSource("ORDERS", Order.fields: _*))
+      .load(createTableSource("ORDERS", Order.fields: _*))
       .withName("Load ORDERS table")
 
       .filter(t => CsvUtils.parseDate(t.getString(4)) > _date, sqlUdf = s"o_orderdate < date('$date')")

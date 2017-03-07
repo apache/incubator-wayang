@@ -48,7 +48,7 @@ class Query3File(plugins: Plugin*) extends ExperimentDescriptor {
     val rheemCtx = new RheemContext(configuration)
     plugins.foreach(rheemCtx.register)
     val planBuilder = new PlanBuilder(rheemCtx)
-      .withUdfJarsOf(classOf[Query3Sqlite])
+      .withUdfJarsOf(classOf[Query3Database])
       .withExperiment(experiment)
       .withJobName(s"TPC-H (${this.getClass.getSimpleName})")
 
