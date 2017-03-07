@@ -3,7 +3,7 @@ package org.qcri.rheem
 import _root_.java.lang.{Class => JavaClass, Iterable => JavaIterable}
 import _root_.java.util.function.{Consumer, ToLongBiFunction, ToLongFunction}
 
-import org.qcri.rheem.basic.data.Record
+import org.qcri.rheem.basic.data.{Record, Tuple2 => RheemTuple2}
 import org.qcri.rheem.core.api.RheemContext
 import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
@@ -42,6 +42,10 @@ package object api {
     new SerializableFunction[In, Out] {
       override def apply(t: In) = scalaFunc(t)
     }
+
+  implicit def toJoinedDataQuanta[Out0: ClassTag, Out1: ClassTag](dataQuanta: DataQuanta[RheemTuple2[Out0, Out1]]):
+  JoinedDataQuanta[Out0, Out1] =
+    new JoinedDataQuanta(dataQuanta)
 
   implicit def toSerializablePartitionFunction[In, Out](scalaFunc: Iterable[In] => Iterable[Out]):
   SerializableFunction[JavaIterable[In], JavaIterable[Out]] =

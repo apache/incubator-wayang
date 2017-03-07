@@ -7,6 +7,7 @@ import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 
 import java.io.Serializable;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -69,6 +70,13 @@ public abstract class FunctionDescriptor {
      */
     @FunctionalInterface
     public interface SerializableFunction<Input, Output> extends Function<Input, Output>, Serializable {
+    }
+
+    /**
+     * Decorates the default {@link Function} with {@link Serializable}, which is required by some distributed frameworks.
+     */
+    @FunctionalInterface
+    public interface SerializableBiFunction<Input0, Input1, Output> extends BiFunction<Input0, Input1, Output>, Serializable {
     }
 
 
