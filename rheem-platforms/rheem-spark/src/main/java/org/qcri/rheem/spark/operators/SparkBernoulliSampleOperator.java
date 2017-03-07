@@ -19,6 +19,7 @@ import org.qcri.rheem.spark.execution.SparkExecutor;
 
 import java.util.*;
 import java.util.function.IntUnaryOperator;
+import java.util.function.LongUnaryOperator;
 
 
 /**
@@ -31,8 +32,8 @@ public class SparkBernoulliSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public SparkBernoulliSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
-        super(sampleSizeFunction, type, Methods.BERNOULLI, seed);
+    public SparkBernoulliSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, LongUnaryOperator seedFunction) {
+        super(sampleSizeFunction, type, Methods.BERNOULLI, seedFunction);
     }
 
     /**
@@ -61,6 +62,7 @@ public class SparkBernoulliSampleOperator<Type>
         final JavaRDD<Type> inputRdd = input.provideRdd();
         long datasetSize = this.isDataSetSizeKnown() ? this.getDatasetSize() : inputRdd.count();
         int sampleSize = this.getSampleSize(operatorContext);
+        long seed = this.getSeed(operatorContext);
 
         double sampleFraction = ((double) sampleSize) / datasetSize;
         final JavaRDD<Type> outputRdd = inputRdd.sample(false, sampleFraction, seed);

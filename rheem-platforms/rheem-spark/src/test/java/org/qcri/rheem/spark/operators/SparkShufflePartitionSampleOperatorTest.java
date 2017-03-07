@@ -28,7 +28,7 @@ public class SparkShufflePartitionSampleOperatorTest extends SparkOperatorTestBa
                 new SparkShufflePartitionSampleOperator<>(
                         iterationNumber -> sampleSize,
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        42L
+                        iterationNumber -> 42L
                 );
         sampleOperator.setDatasetSize(10);
 
@@ -58,7 +58,7 @@ public class SparkShufflePartitionSampleOperatorTest extends SparkOperatorTestBa
                 new SparkShufflePartitionSampleOperator<>(
                         iterationNumber -> sampleSize,
                         DataSetType.createDefaultUnchecked(Integer.class),
-                        42L
+                        iterationNumber -> 42L
                 );
         // Set up the ChannelInstances.
         final ChannelInstance[] inputs = new ChannelInstance[]{input};

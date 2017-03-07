@@ -237,15 +237,27 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                         datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
                         seed: Option[Long] = None,
                         sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] = {
-    val sampleOperator = new SampleOperator(
-      sampleSizeFunction,
-      dataSetType[Out],
-      sampleMethod,
-      seed.getOrElse(SampleOperator.randomSeed)
-    )
-    sampleOperator.setDatasetSize(datasetSize)
-    this.connectTo(sampleOperator, 0)
-    sampleOperator
+    if (seed.isEmpty) {
+      val sampleOperator = new SampleOperator(
+        sampleSizeFunction,
+        dataSetType[Out],
+        sampleMethod
+      )
+      sampleOperator.setDatasetSize(datasetSize)
+      this.connectTo(sampleOperator, 0)
+      sampleOperator
+    }
+    else {
+      val sampleOperator = new SampleOperator(
+        sampleSizeFunction,
+        dataSetType[Out],
+        sampleMethod,
+        seed.get
+      )
+      sampleOperator.setDatasetSize(datasetSize)
+      this.connectTo(sampleOperator, 0)
+      sampleOperator
+    }
   }
 
   /**

@@ -20,6 +20,8 @@ import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
 import java.util.function.IntUnaryOperator;
+import java.util.function.LongUnaryOperator;
+import java.util.stream.Collectors;
 
 /**
  * Java implementation of the {@link JavaReservoirSampleOperator}.
@@ -28,12 +30,12 @@ public class JavaReservoirSampleOperator<Type>
         extends SampleOperator<Type>
         implements JavaExecutionOperator {
 
-    private final Random rand = new Random(seed);
+    private Random rand;
 
     /**
      * Creates a new instance.
      */
-    public JavaReservoirSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
+    public JavaReservoirSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, LongUnaryOperator seed) {
         super(sampleSizeFunction, type, Methods.RESERVOIR, seed);
     }
 
@@ -59,8 +61,15 @@ public class JavaReservoirSampleOperator<Type>
 
         int sampleSize = this.getSampleSize(operatorContext);
 
-        ((CollectionChannel.Instance) outputs[0]).accept(reservoirSample(rand, ((JavaChannelInstance) inputs[0]).<Type>provideStream().iterator(), sampleSize));
+        if (sampleSize >= datasetSize) { //return all
+            ((CollectionChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).provideStream().collect(Collectors.toList()));
+        }
+        else {
+            long seed = this.getSeed(operatorContext);
+            rand = new Random(seed);
 
+            ((CollectionChannel.Instance) outputs[0]).accept(reservoirSample(rand, ((JavaChannelInstance) inputs[0]).<Type>provideStream().iterator(), sampleSize));
+        }
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 

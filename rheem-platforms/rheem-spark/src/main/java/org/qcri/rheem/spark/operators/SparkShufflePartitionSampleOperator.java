@@ -25,6 +25,7 @@ import scala.runtime.AbstractFunction1;
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.IntUnaryOperator;
+import java.util.function.LongUnaryOperator;
 
 
 /**
@@ -34,7 +35,7 @@ public class SparkShufflePartitionSampleOperator<Type>
         extends SampleOperator<Type>
         implements SparkExecutionOperator {
 
-    private final Random rand = new Random(seed);
+    private Random rand;
 
     private int partitionID = 0;
 
@@ -43,8 +44,8 @@ public class SparkShufflePartitionSampleOperator<Type>
     /**
      * Creates a new instance.
      */
-    public SparkShufflePartitionSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, Long seed) {
-        super(sampleSizeFunction, type, Methods.SHUFFLE_PARTITION_FIRST, seed);
+    public SparkShufflePartitionSampleOperator(IntUnaryOperator sampleSizeFunction, DataSetType<Type> type, LongUnaryOperator seedFunction) {
+        super(sampleSizeFunction, type, Methods.SHUFFLE_PARTITION_FIRST, seedFunction);
     }
 
     /**
@@ -77,6 +78,8 @@ public class SparkShufflePartitionSampleOperator<Type>
             ((CollectionChannel.Instance) outputs[0]).accept(inputRdd.collect());
             return null;
         }
+        long seed = this.getSeed(operatorContext);
+        rand = new Random(seed);
 
         List<Type> result;
         final SparkContext sparkContext = inputRdd.context();
