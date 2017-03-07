@@ -1,7 +1,7 @@
 package org.qcri.rheem.apps.tpch
 
 import de.hpi.isg.profiledb.store.model.Experiment
-import org.qcri.rheem.apps.tpch.queries.{Query3Database, Query3File, Query3Hybrid}
+import org.qcri.rheem.apps.tpch.queries.{Query1, Query3Database, Query3File, Query3Hybrid}
 import org.qcri.rheem.apps.util.{Parameters, ProfileDBHelper, StdOut}
 import org.qcri.rheem.core.api.Configuration
 import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate
@@ -9,7 +9,6 @@ import org.qcri.rheem.postgres.Postgres
 import org.qcri.rheem.postgres.operators.PostgresTableSource
 import org.qcri.rheem.sqlite3.Sqlite3
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource
-
 import scala.collection.JavaConversions._
 
 /**
@@ -37,17 +36,27 @@ object TpcH {
       else throw new IllegalArgumentException(s"Detected multiple databases: ${jdbcPlatforms.mkString(", ")}.")
     }
 
-    val createTableSource = jdbcPlatform match {
-      case Sqlite3.platform => (table: String, columns: String*) => new Sqlite3TableSource(table, columns: _*)
-      case Postgres.platform => (table: String, columns: String*) => new PostgresTableSource(table, columns: _*)
-      case _ => throw new IllegalArgumentException(s"Unsupported database: $jdbcPlatform.")
-    }
+    val createTableSource =
+      if (jdbcPlatform.equals(Sqlite3.platform)) {
+        (table: String, columns: Seq[String]) => new Sqlite3TableSource(table, columns: _*)
+      } else if (jdbcPlatform.equals(Postgres.platform)) {
+        (table: String, columns: Seq[String]) => new PostgresTableSource(table, columns: _*)
+      } else {
+        throw new IllegalArgumentException(s"Unsupported database: $jdbcPlatform.")
+      }
 
     val configuration = new Configuration
     configuration.load(configUrl)
 
     var experiment: Experiment = null
     queryName match {
+      case "Q1" =>
+        val query = new Query1(plugins: _*)
+        experiment = Parameters.createExperiment(experimentArg, query)
+        experiment.getSubject.addConfiguration("plugins", args(1))
+        experiment.getSubject.addConfiguration("query", args(3))
+        val result = query(configuration, jdbcPlatform, createTableSource)(experiment)
+        StdOut.printLimited(result, 10)
       case "Q3File" =>
         val query = new Query3File(plugins: _*)
         experiment = Parameters.createExperiment(experimentArg, query)

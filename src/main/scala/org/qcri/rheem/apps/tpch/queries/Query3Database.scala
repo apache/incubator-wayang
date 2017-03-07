@@ -9,7 +9,6 @@ import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.plugin.Plugin
 import org.qcri.rheem.jdbc.operators.JdbcTableSource
 import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate
-import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource
 
 /**
   * Rheem implementation of TPC-H Query 3.
@@ -45,10 +44,10 @@ class Query3Database(plugins: Plugin*) extends ExperimentDescriptor {
 
   def apply(configuration: Configuration,
             jdbcPlatform: JdbcPlatformTemplate,
-            createTableSource: (String, String*) => JdbcTableSource,
+            createTableSource: (String, Seq[String]) => JdbcTableSource,
             segment: String = "BUILDING",
             date: String = "1995-03-15")
-           (implicit experiment: Experiment)= {
+           (implicit experiment: Experiment) = {
 
     val rheemCtx = new RheemContext(configuration)
     plugins.foreach(rheemCtx.register)
@@ -64,7 +63,7 @@ class Query3Database(plugins: Plugin*) extends ExperimentDescriptor {
     // Read, filter, and project the customer data.
     val _segment = segment
     val customerKeys = planBuilder
-      .readTable(createTableSource("CUSTOMER", Customer.fields: _*))
+      .readTable(createTableSource("CUSTOMER", Customer.fields))
       .withName("Load CUSTOMER table")
 
       .filter(_.getString(6) == _segment, sqlUdf = s"c_mktsegment LIKE '$segment%'", selectivity = .25)
@@ -79,7 +78,7 @@ class Query3Database(plugins: Plugin*) extends ExperimentDescriptor {
     // Read, filter, and project the order data.
     val _date = CsvUtils.parseDate(date)
     val orders = planBuilder
-      .load(createTableSource("ORDERS", Order.fields: _*))
+      .load(createTableSource("ORDERS", Order.fields))
       .withName("Load ORDERS table")
 
       .filter(t => CsvUtils.parseDate(t.getString(4)) > _date, sqlUdf = s"o_orderdate < date('$date')")
@@ -97,7 +96,7 @@ class Query3Database(plugins: Plugin*) extends ExperimentDescriptor {
 
     // Read, filter, and project the line item data.
     val lineItems = planBuilder
-      .readTable(createTableSource("LINEITEM", LineItem.fields: _*))
+      .readTable(createTableSource("LINEITEM", LineItem.fields))
       .withName("Load LINEITEM table")
 
       .filter(t => CsvUtils.parseDate(t.getString(10)) > _date, sqlUdf = s"l_shipDate > date('$date')")
@@ -109,7 +108,7 @@ class Query3Database(plugins: Plugin*) extends ExperimentDescriptor {
       .map(li => (
         li.getLong(0), //li.orderKey,
         li.getDouble(1) * (1 - li.getDouble(2)) //li.extendedPrice * (1 - li.discount)
-        ))
+      ))
       .withName("Extract line item data")
 
     // Join and aggregate the different datasets.
