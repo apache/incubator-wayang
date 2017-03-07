@@ -385,6 +385,42 @@ public class JavaApiTest {
     }
 
     @Test
+    public void testJoinAndAssemble() {
+        // Set up RheemContext.
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+
+        // Generate test data.
+        final List<Tuple2<String, Integer>> inputValues1 = Arrays.asList(
+                new Tuple2<>("Water", 0),
+                new Tuple2<>("Tonic", 5),
+                new Tuple2<>("Juice", 10)
+        );
+        final List<Tuple2<String, String>> inputValues2 = Arrays.asList(
+                new Tuple2<>("Apple juice", "Juice"),
+                new Tuple2<>("Tap water", "Water"),
+                new Tuple2<>("Orange juice", "Juice")
+        );
+
+        // Execute the job.
+        final LoadCollectionDataQuantaBuilder<Tuple2<String, Integer>> dataQuanta1 = builder.loadCollection(inputValues1);
+        final LoadCollectionDataQuantaBuilder<Tuple2<String, String>> dataQuanta2 = builder.loadCollection(inputValues2);
+        final Collection<Tuple2<String, Integer>> outputValues = dataQuanta1.keyBy(Tuple2::getField0)
+                .join(dataQuanta2.keyBy(Tuple2::getField1))
+                .assemble((val1, val2) -> new Tuple2<>(val2.getField0(), val1.getField1()))
+                .collect();
+
+        // Verify the outcome.
+        Set<Tuple2<String, Integer>> expectedValues = RheemCollections.asSet(
+                new Tuple2<>("Apple juice", 10),
+                new Tuple2<>("Orange juice", 10),
+                new Tuple2<>("Tap water", 0)
+        );
+        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+    }
+
+
+    @Test
     public void testIntersect() {
         // Set up RheemContext.
         RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());

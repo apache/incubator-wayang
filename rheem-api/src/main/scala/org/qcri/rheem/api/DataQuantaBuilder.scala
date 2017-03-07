@@ -9,7 +9,7 @@ import org.qcri.rheem.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaBuil
 import org.qcri.rheem.api.util.{DataQuantaBuilderCache, TypeTrap}
 import org.qcri.rheem.basic.data.{Record, Tuple2 => RT2}
 import org.qcri.rheem.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator}
-import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
+import org.qcri.rheem.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
 import org.qcri.rheem.core.optimizer.ProbabilisticDoubleInterval
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimator
 import org.qcri.rheem.core.optimizer.costs.{LoadEstimator, LoadProfile, LoadProfileEstimator}
@@ -159,7 +159,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @return a [[MapPartitionsDataQuantaBuilder]]
     */
   def mapPartitions[NewOut](udf: SerializableFunction[java.lang.Iterable[Out], java.lang.Iterable[NewOut]]) =
-  new MapPartitionsDataQuantaBuilder(this, udf)
+    new MapPartitionsDataQuantaBuilder(this, udf)
 
   /**
     * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.SampleOperator]].
@@ -181,6 +181,13 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   def sample(sampleSizeFunction: IntUnaryOperator) = new SampleDataQuantaBuilder[Out](this, sampleSizeFunction)
 
   /**
+    * Annotates a key to this instance.
+    * @param keyExtractor extracts the key from the data quanta
+    * @return a [[KeyedDataQuantaBuilder]]
+    */
+  def keyBy[Key](keyExtractor: SerializableFunction[Out, Key]) = new KeyedDataQuantaBuilder[Out, Key](this, keyExtractor)
+
+  /**
     * Feed the built [[DataQuanta]] into a [[GlobalReduceOperator]].
     *
     * @param udf the UDF for the [[GlobalReduceOperator]]
@@ -196,7 +203,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @return a [[ReduceByDataQuantaBuilder]]
     */
   def reduceByKey[Key](keyUdf: SerializableFunction[Out, Key], udf: SerializableBinaryOperator[Out]) =
-  new ReduceByDataQuantaBuilder(this, keyUdf, udf)
+    new ReduceByDataQuantaBuilder(this, keyUdf, udf)
 
   /**
     * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.MaterializedGroupByOperator]].
@@ -205,7 +212,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @return a [[GroupByDataQuantaBuilder]]
     */
   def groupByKey[Key](keyUdf: SerializableFunction[Out, Key]) =
-  new GroupByDataQuantaBuilder(this, keyUdf)
+    new GroupByDataQuantaBuilder(this, keyUdf)
 
   /**
     * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator]].
@@ -244,7 +251,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   def join[ThatOut, Key](thisKeyUdf: SerializableFunction[Out, Key],
                          that: DataQuantaBuilder[_, ThatOut],
                          thatKeyUdf: SerializableFunction[ThatOut, Key]) =
-  new JoinDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
+    new JoinDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
 
   /**
     * Feed the built [[DataQuanta]] of this and the given instance into a
@@ -282,7 +289,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     */
   def doWhile[Conv](conditionUdf: SerializablePredicate[JavaCollection[Conv]],
                     bodyBuilder: JavaFunction[DataQuantaBuilder[_, Out], RheemTuple[DataQuantaBuilder[_, Out], DataQuantaBuilder[_, Conv]]]) =
-  new DoWhileDataQuantaBuilder(this, conditionUdf.asInstanceOf[SerializablePredicate[JavaCollection[Conv]]], bodyBuilder)
+    new DoWhileDataQuantaBuilder(this, conditionUdf.asInstanceOf[SerializablePredicate[JavaCollection[Conv]]], bodyBuilder)
 
   /**
     * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.RepeatOperator]].
@@ -290,7 +297,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @return a [[DoWhileDataQuantaBuilder]]
     */
   def repeat(numRepetitions: Int, bodyBuilder: JavaFunction[DataQuantaBuilder[_, Out], DataQuantaBuilder[_, Out]]) =
-  new RepeatDataQuantaBuilder(this, numRepetitions, bodyBuilder)
+    new RepeatDataQuantaBuilder(this, numRepetitions, bodyBuilder)
 
   /**
     * Feed the built [[DataQuanta]] into a custom [[Operator]] with a single [[org.qcri.rheem.core.plan.rheemplan.InputSlot]]
@@ -335,7 +342,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     * @return the collected data quanta
     */
   def writeTextFile(url: String, formatterUdf: SerializableFunction[Out, String], jobName: String): Unit =
-  this.writeTextFile(url, formatterUdf, jobName, null)
+    this.writeTextFile(url, formatterUdf, jobName, null)
 
   /**
     * Feed the built [[DataQuanta]] into a [[org.qcri.rheem.basic.operators.TextFileSink]]. This triggers
@@ -1161,6 +1168,17 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
     this
   }
 
+  /**
+    * Assemble the joined elements to new elements.
+    *
+    * @param udf produces a joined element from two joinable elements
+    * @return a new [[DataQuantaBuilder]] representing the assembled join product
+    */
+  def assemble[NewOut](udf: SerializableBiFunction[In0, In1, NewOut]) =
+    this.map(new SerializableFunction[RT2[In0, In1], NewOut] {
+      override def apply(joinTuple: RT2[In0, In1]): NewOut = udf.apply(joinTuple.field0, joinTuple.field1)
+    })
+
   override protected def build =
     inputDataQuanta0.dataQuanta().joinJava(keyUdf0, inputDataQuanta1.dataQuanta(), keyUdf1)(inputDataQuanta1.classTag, this.keyTag)
 
@@ -1354,13 +1372,13 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
     * @return the loop body builder
     */
   private def dataQuantaBodyBuilder =
-  new JavaFunction[DataQuanta[T], RheemTuple[DataQuanta[T], DataQuanta[ConvOut]]] {
-    override def apply(loopStart: DataQuanta[T]) = {
-      val loopStartBuilder = new FakeDataQuantaBuilder(loopStart)
-      val loopEndBuilders = bodyBuilder(loopStartBuilder)
-      new RheemTuple(loopEndBuilders.field0.dataQuanta(), loopEndBuilders.field1.dataQuanta())
+    new JavaFunction[DataQuanta[T], RheemTuple[DataQuanta[T], DataQuanta[ConvOut]]] {
+      override def apply(loopStart: DataQuanta[T]) = {
+        val loopStartBuilder = new FakeDataQuantaBuilder(loopStart)
+        val loopEndBuilders = bodyBuilder(loopStartBuilder)
+        new RheemTuple(loopEndBuilders.field0.dataQuanta(), loopEndBuilders.field1.dataQuanta())
+      }
     }
-  }
 
 }
 
@@ -1408,4 +1426,22 @@ class FakeDataQuantaBuilder[T](_dataQuanta: DataQuanta[T])(implicit javaPlanBuil
     * @return the created and partially configured [[DataQuanta]]
     */
   override protected def build: DataQuanta[T] = _dataQuanta
+}
+
+/**
+  * This is not an actual [[DataQuantaBuilder]] but rather decorates such a [[DataQuantaBuilder]] with a key.
+  */
+class KeyedDataQuantaBuilder[Out, Key](private val dataQuantaBuilder: DataQuantaBuilder[_, Out],
+                                       private val keyExtractor: SerializableFunction[Out, Key])
+                                      (implicit javaPlanBuilder: JavaPlanBuilder) {
+
+  /**
+    * Joins this instances with the given one via their keys.
+    *
+    * @param that the instance to join with
+    * @return a [[DataQuantaBuilder]] representing the join product
+    */
+  def join[ThatOut](that: KeyedDataQuantaBuilder[ThatOut, Key]) =
+    dataQuantaBuilder.join(this.keyExtractor, that.dataQuantaBuilder, that.keyExtractor)
+
 }
