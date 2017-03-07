@@ -1,7 +1,7 @@
 package org.qcri.rheem.api
 
 import _root_.java.lang.{Iterable => JavaIterable}
-import _root_.java.util.function.{Consumer, IntUnaryOperator, Function => JavaFunction}
+import _root_.java.util.function.{Consumer, IntUnaryOperator, BiFunction => JavaBiFunction, Function => JavaFunction}
 import _root_.java.util.{Collection => JavaCollection}
 
 import de.hpi.isg.profiledb.store.model.Experiment
@@ -48,7 +48,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def map[NewOut: ClassTag](udf: Out => NewOut,
                             udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] =
-  mapJava(toSerializableFunction(udf), udfLoad)
+    mapJava(toSerializableFunction(udf), udfLoad)
 
   /**
     * Feed this instance into a [[MapOperator]].
@@ -77,7 +77,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def mapPartitions[NewOut: ClassTag](udf: Iterable[Out] => Iterable[NewOut],
                                       selectivity: ProbabilisticDoubleInterval = null,
                                       udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] =
-  mapPartitionsJava(toSerializablePartitionFunction(udf), selectivity, udfLoad)
+    mapPartitionsJava(toSerializablePartitionFunction(udf), selectivity, udfLoad)
 
   /**
     * Feed this instance into a [[MapPartitionsOperator]].
@@ -118,7 +118,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param inputIndex the input index of the [[Operator]]s [[InputSlot]]
     */
   private[api] def connectTo(operator: Operator, inputIndex: Int): Unit =
-  this.operator.connectTo(outputIndex, operator, inputIndex)
+    this.operator.connectTo(outputIndex, operator, inputIndex)
 
 
   /**
@@ -134,7 +134,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
              sqlUdf: String = null,
              selectivity: ProbabilisticDoubleInterval = null,
              udfLoad: LoadProfileEstimator = null) =
-  filterJava(toSerializablePredicate(udf), sqlUdf, selectivity, udfLoad)
+    filterJava(toSerializablePredicate(udf), sqlUdf, selectivity, udfLoad)
 
   /**
     * Feed this instance into a [[FilterOperator]].
@@ -167,7 +167,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def flatMap[NewOut: ClassTag](udf: Out => Iterable[NewOut],
                                 selectivity: ProbabilisticDoubleInterval = null,
                                 udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] =
-  flatMapJava(toSerializableFlatteningFunction(udf), selectivity, udfLoad)
+    flatMapJava(toSerializableFlatteningFunction(udf), selectivity, udfLoad)
 
   /**
     * Feed this instance into a [[FlatMapOperator]].
@@ -200,7 +200,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
              datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
              seed: Option[Long] = None,
              sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] =
-  this.sampleDynamic(_ => sampleSize, datasetSize, seed, sampleMethod)
+    this.sampleDynamic(_ => sampleSize, datasetSize, seed, sampleMethod)
 
   /**
     * Feed this instance into a [[SampleOperator]]. If this operation is inside of a loop, the sampling size
@@ -215,14 +215,14 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                     datasetSize: Long = SampleOperator.UNKNOWN_DATASET_SIZE,
                     seed: Option[Long] = None,
                     sampleMethod: SampleOperator.Methods = SampleOperator.Methods.ANY): DataQuanta[Out] =
-  this.sampleDynamicJava(
-    new IntUnaryOperator {
-      override def applyAsInt(operand: Int): Int = sampleSizeFunction(operand)
-    },
-    datasetSize,
-    seed,
-    sampleMethod
-  )
+    this.sampleDynamicJava(
+      new IntUnaryOperator {
+        override def applyAsInt(operand: Int): Int = sampleSizeFunction(operand)
+      },
+      datasetSize,
+      seed,
+      sampleMethod
+    )
 
 
   /**
@@ -248,6 +248,23 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     sampleOperator
   }
 
+  /**
+    * Assigns this instance a key extractor, which enables some key-based operations.
+    *
+    * @see KeyedDataQuanta
+    * @param keyExtractor extracts the key from the [[DataQuanta]]
+    * @return the [[KeyedDataQuanta]]
+    */
+  def keyBy[Key: ClassTag](keyExtractor: Out => Key) = new KeyedDataQuanta[Out, Key](this, keyExtractor)
+
+  /**
+    * Assigns this instance a key extractor, which enables some key-based operations.
+    *
+    * @see KeyedDataQuanta
+    * @param keyExtractor extracts the key from the [[DataQuanta]]
+    * @return the [[KeyedDataQuanta]]
+    */
+  def keyByJava[Key: ClassTag](keyExtractor: SerializableFunction[Out, Key]) = new KeyedDataQuanta[Out, Key](this, keyExtractor)
 
   /**
     * Feed this instance into a [[ReduceByOperator]].
@@ -260,7 +277,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   def reduceByKey[Key: ClassTag](keyUdf: Out => Key,
                                  udf: (Out, Out) => Out,
                                  udfLoad: LoadProfileEstimator = null): DataQuanta[Out] =
-  reduceByKeyJava(toSerializableFunction(keyUdf), toSerializableBinaryOperator(udf), udfLoad)
+    reduceByKeyJava(toSerializableFunction(keyUdf), toSerializableBinaryOperator(udf), udfLoad)
 
   /**
     * Feed this instance into a [[ReduceByOperator]].
@@ -291,7 +308,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def groupByKey[Key: ClassTag](keyUdf: Out => Key,
                                 keyUdfLoad: LoadProfileEstimator = null): DataQuanta[java.lang.Iterable[Out]] =
-  groupByKeyJava(toSerializableFunction(keyUdf), keyUdfLoad)
+    groupByKeyJava(toSerializableFunction(keyUdf), keyUdfLoad)
 
   /**
     * Feed this instance into a [[MaterializedGroupByOperator]].
@@ -320,7 +337,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def reduce(udf: (Out, Out) => Out,
              udfLoad: LoadProfileEstimator = null): DataQuanta[Out] =
-  reduceJava(toSerializableBinaryOperator(udf), udfLoad)
+    reduceJava(toSerializableBinaryOperator(udf), udfLoad)
 
   /**
     * Feed this instance into a [[GlobalReduceOperator]].
@@ -390,7 +407,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
    that: DataQuanta[ThatOut],
    thatKeyUdf: ThatOut => Key)
   : DataQuanta[org.qcri.rheem.basic.data.Tuple2[Out, ThatOut]] =
-  joinJava(toSerializableFunction(thisKeyUdf), that, toSerializableFunction(thatKeyUdf))
+    joinJava(toSerializableFunction(thisKeyUdf), that, toSerializableFunction(thatKeyUdf))
 
   /**
     * Feeds this and a further instance into a [[JoinOperator]].
@@ -476,16 +493,16 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                                  bodyBuilder: DataQuanta[Out] => (DataQuanta[Out], DataQuanta[ConvOut]),
                                  numExpectedIterations: Int = 20,
                                  udfLoad: LoadProfileEstimator = null) =
-  doWhileJava(
-    toSerializablePredicate((in: JavaCollection[ConvOut]) => udf(JavaConversions.collectionAsScalaIterable(in))),
-    new JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]] {
-      override def apply(t: DataQuanta[Out]) = {
-        val result = bodyBuilder(t)
-        new RheemTuple(result._1, result._2)
-      }
-    },
-    numExpectedIterations, udfLoad
-  )
+    doWhileJava(
+      toSerializablePredicate((in: JavaCollection[ConvOut]) => udf(JavaConversions.collectionAsScalaIterable(in))),
+      new JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]] {
+        override def apply(t: DataQuanta[Out]) = {
+          val result = bodyBuilder(t)
+          new RheemTuple(result._1, result._2)
+        }
+      },
+      numExpectedIterations, udfLoad
+    )
 
   /**
     * Feeds this instance into a do-while loop (guarded by a [[DoWhileOperator]].
@@ -527,11 +544,11 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @return a new instance representing the final output of the [[LoopOperator]]
     */
   def repeat(n: Int, bodyBuilder: DataQuanta[Out] => DataQuanta[Out]) =
-  repeatJava(n,
-    new JavaFunction[DataQuanta[Out], DataQuanta[Out]] {
-      override def apply(t: DataQuanta[Out]) = bodyBuilder(t)
-    }
-  )
+    repeatJava(n,
+      new JavaFunction[DataQuanta[Out], DataQuanta[Out]] {
+        override def apply(t: DataQuanta[Out]) = bodyBuilder(t)
+      }
+    )
 
   /**
     * Feeds this instance into a for-loop (guarded by a [[LoopOperator]].
@@ -590,7 +607,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param broadcastName the name with that the broadcast will be registered
     */
   private def broadcast(receiver: DataQuanta[_], broadcastName: String) =
-  receiver.registerBroadcast(this.operator, this.outputIndex, broadcastName)
+    receiver.registerBroadcast(this.operator, this.outputIndex, broadcastName)
 
   /**
     * Register a further instance as broadcast.
@@ -600,7 +617,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @param broadcastName the name with that the broadcast will be registered
     */
   private def registerBroadcast(sender: Operator, outputIndex: Int, broadcastName: String) =
-  sender.broadcastTo(outputIndex, this.operator, broadcastName)
+    sender.broadcastTo(outputIndex, this.operator, broadcastName)
 
 
   /**
@@ -749,6 +766,55 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   }
 
   override def toString = s"DataQuanta[$output]"
+
+}
+
+/**
+  * This class provides operations on [[DataQuanta]] with additional operations.
+  */
+class KeyedDataQuanta[Out: ClassTag, Key: ClassTag](val dataQuanta: DataQuanta[Out],
+                                                    val keyExtractor: SerializableFunction[Out, Key]) {
+
+  /**
+    * Performs a join. The join fields are governed by the [[KeyedDataQuanta]]'s keys.
+    *
+    * @param that the other [[KeyedDataQuanta]] to join with
+    * @return the join product [[DataQuanta]]
+    */
+  def join[ThatOut: ClassTag](that: KeyedDataQuanta[ThatOut, Key]):
+  DataQuanta[org.qcri.rheem.basic.data.Tuple2[Out, ThatOut]] =
+    dataQuanta.joinJava[ThatOut, Key](this.keyExtractor, that.dataQuanta, that.keyExtractor)
+
+}
+
+/**
+  * This class amends joined [[DataQuanta]] with additional operations.
+  */
+class JoinedDataQuanta[Out0: ClassTag, Out1: ClassTag]
+(val dataQuanta: DataQuanta[org.qcri.rheem.basic.data.Tuple2[Out0, Out1]]) {
+
+  /**
+    * Assembles a new element from a join product tuple.
+    *
+    * @param udf     creates the output data quantum from two joinable data quanta
+    * @param udfLoad optional [[LoadProfileEstimator]] for the `udf`
+    * @return the join product [[DataQuanta]]
+    */
+  def assemble[NewOut: ClassTag](udf: (Out0, Out1) => NewOut,
+                                 udfLoad: LoadProfileEstimator = null):
+  DataQuanta[NewOut] =
+    dataQuanta.map(joinTuple => udf.apply(joinTuple.field0, joinTuple.field1), udfLoad)
+
+  /**
+    * Assembles a new element from a join product tuple.
+    *
+    * @param assembler creates the output data quantum from two joinable data quanta
+    * @param udfLoad optional [[LoadProfileEstimator]] for the `udf`
+    * @return the join product [[DataQuanta]]
+    */
+  def assembleJava[NewOut: ClassTag](assembler: JavaBiFunction[Out0, Out1, NewOut],
+                                     udfLoad: LoadProfileEstimator = null): DataQuanta[NewOut] =
+    dataQuanta.map(join => assembler.apply(join.field0, join.field1), udfLoad)
 
 }
 
