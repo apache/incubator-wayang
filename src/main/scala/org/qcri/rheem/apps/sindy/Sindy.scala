@@ -106,6 +106,9 @@ object Sindy extends apps.util.ExperimentDescriptor {
     val inds = sindy(inputUrls.toSeq).toSeq
 
     // Store experiment data.
+    val inputFileSizes = inputUrls.map(url => FileSystems.getFileSize(url))
+    if (inputFileSizes.forall(_.isPresent))
+      experiment.getSubject.addConfiguration("inputSize", inputFileSizes.map(_.getAsLong).sum)
     ProfileDBHelper.store(experiment, configuration)
 
     // Print the result.

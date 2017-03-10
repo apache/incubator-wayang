@@ -10,6 +10,7 @@ import org.qcri.rheem.core.function.ExecutionContext
 import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators
 import org.qcri.rheem.core.plugin.Plugin
+import org.qcri.rheem.core.util.fs.FileSystems
 
 import scala.collection.JavaConversions._
 import scala.util.Random
@@ -110,6 +111,8 @@ object Kmeans extends ExperimentDescriptor {
     val centroids = kmeans(k, file, numIterations)
 
     // Store experiment data.
+    val fileSize = FileSystems.getFileSize(file)
+    if (fileSize.isPresent) experiment.getSubject.addConfiguration("inputSize", fileSize.getAsLong)
     ProfileDBHelper.store(experiment, configuration)
 
     // Print the result.

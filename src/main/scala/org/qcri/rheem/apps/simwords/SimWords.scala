@@ -145,7 +145,7 @@ object SimWords extends ExperimentDescriptor {
 
     // Store experiment data.
     val inputFileSize = FileSystems.getFileSize(inputFile)
-    experiment.getSubject.addConfiguration("inputSize", inputFileSize)
+    if (inputFileSize.isPresent) experiment.getSubject.addConfiguration("inputSize", inputFileSize.getAsLong)
     ProfileDBHelper.store(experiment, configuration)
 
     // Print the results.

@@ -122,9 +122,9 @@ object CrocoPR extends ExperimentDescriptor {
 
     // Store experiment data.
     val inputFileSize1 = FileSystems.getFileSize(inputUrl1)
-    experiment.getSubject.addConfiguration("inputSize1", inputFileSize1)
+    if (inputFileSize1.isPresent) experiment.getSubject.addConfiguration("inputSize1", inputFileSize1.getAsLong)
     val inputFileSize2 = FileSystems.getFileSize(inputUrl2)
-    experiment.getSubject.addConfiguration("inputSize1", inputFileSize2)
+    if (inputFileSize2.isPresent) experiment.getSubject.addConfiguration("inputSize2", inputFileSize2.getAsLong)
     ProfileDBHelper.store(experiment, configuration)
 
     // Print the result.
