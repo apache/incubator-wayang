@@ -38,8 +38,10 @@ public class SparkShufflePartitionSampleOperator<Type>
     private Random rand;
 
     private int partitionID = 0;
-
     private int tupleID = 0;
+    private int nb_partitions = 0;
+    private List<Integer> partitions;
+
 
     /**
      * Creates a new instance.
@@ -81,31 +83,38 @@ public class SparkShufflePartitionSampleOperator<Type>
         long seed = this.getSeed(operatorContext);
         rand = new Random(seed);
 
-        List<Type> result;
+        List<Type> result = new ArrayList<>();
         final SparkContext sparkContext = inputRdd.context();
 
         boolean miscalculated = false;
         do {
             if (tupleID == 0) {
-                int nb_partitions = inputRdd.partitions().size();
+                if (nb_partitions == 0) { //it's the first time we sample or we read all partitions already, start again
+                    nb_partitions = inputRdd.partitions().size();
+                    partitions = new ArrayList<>();
+                    for (int i = 0; i < nb_partitions; i++)
+                        partitions.add(i, i);
+                }
                 //choose a random partition
-                partitionID = rand.nextInt(nb_partitions);
+                partitionID = partitions.remove(rand.nextInt(nb_partitions--));
+                // shuffle the partition
                 inputRdd = inputRdd.<Type>mapPartitionsWithIndex(new ShufflePartition<>(partitionID, seed), true).cache();
                 miscalculated = false;
             }
-            //read sequentially from partitionID
             List<Integer> pars = new ArrayList<>(1);
             pars.add(partitionID);
+            //read sequentially from partitionID
             Object samples = sparkContext.runJob(inputRdd.rdd(),
                     new TakeSampleFunction(tupleID, tupleID + sampleSize),
-                    (scala.collection.Seq) JavaConversions.asScalaBuffer(pars),
-                    true, scala.reflect.ClassTag$.MODULE$.apply(List.class));
+                    (scala.collection.Seq) JavaConversions.asScalaBuffer(pars), true, scala.reflect.ClassTag$.MODULE$.apply(List.class));
 
             tupleID += sampleSize;
-            result = ((List<Type>[]) samples)[0];
-            if (result == null) { //we reached end of partition, start again
+//            result = ((List<Type>[]) samples)[0];
+            result.addAll(((List<Type>[]) samples)[0]);
+            if (result.size() < sampleSize) { //we reached end of partition, start again
                 miscalculated = true;
                 tupleID = 0;
+                sampleSize = sampleSize - result.size();
             }
         } while (miscalculated);
 
@@ -204,16 +213,18 @@ class TakeSampleFunction<V> extends AbstractFunction1<scala.collection.Iterator<
         int count = 0;
         V element;
 
+        boolean hasElements = false;
         while (iterator.hasNext()) {
+            hasElements = true;
             element = iterator.next();
             if (count >= start_id & count < end_id)
                 list.add(element);
             count++;
-            if (count > end_id)
+            if (count >= end_id)
                 break;
         }
-        if (count < end_id)
-            return null; //miscalculated
+//        if (count < end_id)
+//            return null; //miscalculated
 
         return list;
     }
