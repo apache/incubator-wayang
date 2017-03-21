@@ -36,7 +36,7 @@ object Order {
     * @return the [[Order]]
     */
   def parseCsv(csv: String): Order = {
-    val fields = csv.substring(1, csv.length - 1).split("|")
+    val fields = csv.substring(1, csv.length - 1).split("\\|")
 
     Order(
       fields(0).toLong,
