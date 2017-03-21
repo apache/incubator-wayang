@@ -33,11 +33,14 @@ object TpcH {
         .filter(_.isInstanceOf[JdbcPlatformTemplate])
         .distinct
       if (jdbcPlatforms.size == 1) jdbcPlatforms.head.asInstanceOf[JdbcPlatformTemplate]
+      else if (jdbcPlatforms.isEmpty) null
       else throw new IllegalArgumentException(s"Detected multiple databases: ${jdbcPlatforms.mkString(", ")}.")
     }
 
     val createTableSource =
-      if (jdbcPlatform.equals(Sqlite3.platform)) {
+      if (jdbcPlatform == null) {
+        (table: String, columns: Seq[String]) => throw new IllegalStateException("No database plugin detected.")
+      } else if (jdbcPlatform.equals(Sqlite3.platform)) {
         (table: String, columns: Seq[String]) => new Sqlite3TableSource(table, columns: _*)
       } else if (jdbcPlatform.equals(Postgres.platform)) {
         (table: String, columns: Seq[String]) => new PostgresTableSource(table, columns: _*)
