@@ -1,5 +1,5 @@
 # Rheem
-
+[![Build Status](https://jenkins.qcri.org/buildStatus/icon?job=rheem-build)](https://jenkins.qcri.org/job/rheem-build/)
 [![Gitter chat](https://badges.gitter.im/rheem-ecosystem/Lobby.png)](https://gitter.im/rheem-ecosystem/Lobby)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.qcri.rheem/rheem/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.qcri.rheem/rheem)
 
