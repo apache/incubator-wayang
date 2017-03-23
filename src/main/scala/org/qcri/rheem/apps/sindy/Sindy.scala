@@ -88,7 +88,7 @@ object Sindy extends apps.util.ExperimentDescriptor {
   def main(args: Array[String]): Unit = {
     // Parse parameters.
     if (args.isEmpty) {
-      sys.error(s"Usage: <main class> ${Parameters.experimentHelp} <plugin>(,<plugin>)* <input URL>(;<input URL>)*")
+      sys.error(s"Usage: <main class> ${Parameters.experimentHelp} <plugin>(,<plugin>)* <CSV separator> <input URL>(;<input URL>)*")
       sys.exit(1)
     }
 
@@ -96,14 +96,23 @@ object Sindy extends apps.util.ExperimentDescriptor {
     implicit val experiment = Parameters.createExperiment(args(0), this)
     val plugins = Parameters.loadPlugins(args(1))
     experiment.getSubject.addConfiguration("plugins", args(1))
-    val inputUrls = args(2).split(";")
+    val separator = if (args(2).length == 1) args(2).charAt(0) else args(2) match {
+      case "tab" => '\t'
+      case "\\t" => '\t'
+      case "comma" => ','
+      case "semicolon" => ';'
+      case "\\|" => '|'
+      case "pipe" => '|'
+      case other: String => throw new IllegalArgumentException("Unknown separator.")
+    }
+    val inputUrls = args(3).split(";")
     experiment.getSubject.addConfiguration("inputs", inputUrls)
 
     // Prepare the PageRank.
     val sindy = new Sindy(plugins: _*)
 
     // Run the PageRank.
-    val inds = sindy(inputUrls.toSeq).toSeq
+    val inds = sindy(inputUrls.toSeq, separator).toSeq
 
     // Store experiment data.
     val inputFileSizes = inputUrls.map(url => FileSystems.getFileSize(url))
@@ -123,7 +132,7 @@ object Sindy extends apps.util.ExperimentDescriptor {
   class CellCreator(val offset: Int, val separator: Char) extends SerializableFunction[String, java.lang.Iterable[(String, Int)]] {
 
     override def apply(row: String): Iterable[(String, Int)] = {
-      val fields = row.split(';')
+      val fields = row.split(separator)
       val cells = new util.ArrayList[(String, Int)](fields.length)
       var columnId = offset
       for (field <- fields) {
