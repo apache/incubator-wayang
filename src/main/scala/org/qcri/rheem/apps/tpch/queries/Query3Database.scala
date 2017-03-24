@@ -56,14 +56,21 @@ class Query3Database(plugins: Plugin*) extends ExperimentDescriptor {
       .withUdfJarsOf(classOf[Query3Database])
       .withExperiment(experiment)
 
+    val schema = configuration.getOptionalStringProperty("rheem.apps.tpch.schema").orElse(null)
+    def withSchema(table: String) = schema match {
+      case null => table
+      case str: String => s"$str.$table"
+    }
+
     experiment.getSubject.addConfiguration("jdbcUrl", configuration.getStringProperty(jdbcPlatform.jdbcUrlProperty))
+    if (schema != null) experiment.getSubject.addConfiguration("schema", schema)
     experiment.getSubject.addConfiguration("segment", segment)
     experiment.getSubject.addConfiguration("date", date)
 
     // Read, filter, and project the customer data.
     val _segment = segment
     val customerKeys = planBuilder
-      .readTable(createTableSource("CUSTOMER", Customer.fields))
+      .readTable(createTableSource(withSchema("CUSTOMER"), Customer.fields))
       .withName("Load CUSTOMER table")
 
       .filter(_.getString(6) == _segment, sqlUdf = s"c_mktsegment LIKE '$segment%'", selectivity = .25)
@@ -78,7 +85,7 @@ class Query3Database(plugins: Plugin*) extends ExperimentDescriptor {
     // Read, filter, and project the order data.
     val _date = CsvUtils.parseDate(date)
     val orders = planBuilder
-      .load(createTableSource("ORDERS", Order.fields))
+      .load(createTableSource(withSchema("ORDERS"), Order.fields))
       .withName("Load ORDERS table")
 
       .filter(t => CsvUtils.parseDate(t.getString(4)) > _date, sqlUdf = s"o_orderdate < date('$date')")
@@ -96,7 +103,7 @@ class Query3Database(plugins: Plugin*) extends ExperimentDescriptor {
 
     // Read, filter, and project the line item data.
     val lineItems = planBuilder
-      .readTable(createTableSource("LINEITEM", LineItem.fields))
+      .readTable(createTableSource(withSchema("LINEITEM"), LineItem.fields))
       .withName("Load LINEITEM table")
 
       .filter(t => CsvUtils.parseDate(t.getString(10)) > _date, sqlUdf = s"l_shipDate > date('$date')")

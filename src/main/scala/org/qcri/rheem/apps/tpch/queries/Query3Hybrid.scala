@@ -56,9 +56,15 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
       .withUdfJarsOf(classOf[Query3Hybrid])
       .withExperiment(experiment)
 
+    val schema = configuration.getOptionalStringProperty("rheem.apps.tpch.schema").orElse(null)
+    def withSchema(table: String) = schema match {
+      case null => table
+      case str: String => s"$str.$table"
+    }
     val lineitemFile = configuration.getStringProperty("rheem.apps.tpch.csv.lineitem")
 
     experiment.getSubject.addConfiguration("jdbcUrl", configuration.getStringProperty(jdbcPlatform.jdbcUrlProperty))
+    if (schema != null) experiment.getSubject.addConfiguration("schema", schema)
     experiment.getSubject.addConfiguration("lineitemInput", lineitemFile)
     experiment.getSubject.addConfiguration("segment", segment)
     experiment.getSubject.addConfiguration("date", date)
@@ -66,7 +72,7 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
     // Read, filter, and project the customer data.
     val _segment = segment
     val customerKeys = planBuilder
-      .readTable(createTableSource("CUSTOMER", Customer.fields))
+      .readTable(createTableSource(withSchema("CUSTOMER"), Customer.fields))
       .withName("Load CUSTOMER table")
 
       .filter(_.getString(6) == _segment, sqlUdf = s"c_mktsegment LIKE '$segment%'", selectivity = .25)
@@ -81,7 +87,7 @@ class Query3Hybrid(plugins: Plugin*) extends ExperimentDescriptor {
     // Read, filter, and project the order data.
     val _date = CsvUtils.parseDate(date)
     val orders = planBuilder
-      .load(createTableSource("ORDERS", Order.fields))
+      .load(createTableSource(withSchema("ORDERS"), Order.fields))
       .withName("Load ORDERS table")
 
       .filter(t => CsvUtils.parseDate(t.getString(4)) > _date, sqlUdf = s"o_orderdate < date('$date')")
