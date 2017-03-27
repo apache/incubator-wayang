@@ -57,6 +57,7 @@ public class SGDImpl {
         }
         JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(rheemContext);
         if (experiment != null) javaPlanBuilder.withExperiment(experiment);
+        javaPlanBuilder.withUdfJarOf(this.getClass());
 
         // Create initial weights.
         List<double[]> weights = Arrays.asList(new double[features]);
