@@ -43,12 +43,12 @@ object SGD extends ExperimentDescriptor {
         // Initialize the SGD algorithm.
         val sgd = new SGDImpl(configuration, plugins.toArray)
         // Run the SGD.
-        weights = sgd(datasetUrl, datasetSize, numFeatures, maxIterations, accuracy, sampleSize)
+        weights = sgd(datasetUrl, datasetSize, numFeatures, maxIterations, accuracy, sampleSize, experiment)
       case "preaggregation" =>
         // Initialize the SGD algorithm.
         val sgd = new SGDImprovedImpl(configuration, plugins.toArray)
         // Run the SGD.
-        weights = sgd(datasetUrl, datasetSize, numFeatures, maxIterations, accuracy, sampleSize)
+        weights = sgd(datasetUrl, datasetSize, numFeatures, maxIterations, accuracy, sampleSize, experiment)
       case other => sys.error("Unknown aggregation type: " + other)
     }
 
