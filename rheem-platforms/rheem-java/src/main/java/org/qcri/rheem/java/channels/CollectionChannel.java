@@ -73,6 +73,7 @@ public class CollectionChannel extends Channel {
 
         @Override
         protected void doDispose() {
+            logger.debug("Free {}.", this);
             this.collection = null;
         }
 

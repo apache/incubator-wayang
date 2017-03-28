@@ -165,7 +165,7 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                     this.getOverheadMillis()
             );
         } catch (Exception e) {
-            throw new RheemException(String.format("Failed estimating on %s.", this, context), e);
+             throw new RheemException(String.format("Failed estimating on %s.", this, context), e);
         }
     }
 
