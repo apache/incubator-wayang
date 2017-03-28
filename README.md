@@ -1,4 +1,7 @@
 # Rheem
+[![Build Status](https://jenkins.qcri.org/buildStatus/icon?job=rheem-build)](https://jenkins.qcri.org/job/rheem-build/)
+[![Gitter chat](https://badges.gitter.im/rheem-ecosystem/Lobby.png)](https://gitter.im/rheem-ecosystem/Lobby)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.qcri.rheem/rheem/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.qcri.rheem/rheem)
 
 #### Turning the Zoo of Data Processing Systems into a Circus
 
@@ -61,7 +64,7 @@ If you need to rebuild Rheem, e.g., to use a different Scala version, you can si
 
 **Configure Rheem.** In order for Rheem to work properly, it is necessary to tell Rheem about the capacities of your processing platforms and how to reach them. While there is a default configuration that allows to test Rheem right away, we recommend to create a properties file to adapt the configuration where necessary. To have Rheem use that configuration transparently, just run you app via
 ```shell
-$ java -Drheem.properties=url://to/my/rheem.properties ...
+$ java -Drheem.configuration=url://to/my/rheem.properties ...
 ```
 
 You can find the most relevant settings in the following:

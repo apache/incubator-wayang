@@ -92,6 +92,7 @@ public class RddChannel extends Channel {
             }
             if (this.isRddCached() && this.rdd != null) {
                 Actions.doSafe(this.rdd::unpersist);
+                logger.debug("Unpersisted {}.", this.rdd);
                 this.rdd = null;
             }
         }

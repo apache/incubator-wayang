@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.lang.reflect.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
 import java.util.*;
@@ -423,7 +425,10 @@ public class ReflectionUtils {
         else if (o instanceof Long) return (Long) o;
         else if (o instanceof Short) return (Short) o;
         else if (o instanceof Byte) return (Byte) o;
-        throw new IllegalStateException(String.format("%s cannot be retrieved as double.", o));
+        else if (o instanceof BigDecimal) return ((BigDecimal) o).doubleValue();
+        else if (o instanceof BigInteger) return ((BigInteger) o).doubleValue();
+        throw new IllegalStateException(String.format("%s (%s) cannot be retrieved as double.", o,
+                o == null ? "unknown class" : o.getClass().getCanonicalName()));
 
     }
 }

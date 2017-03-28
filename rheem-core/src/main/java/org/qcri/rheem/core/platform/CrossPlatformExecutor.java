@@ -943,6 +943,7 @@ public class CrossPlatformExecutor implements ExecutionState {
          * will not be provided anymore by this instance.
          */
         public void scrapPreviousTransitionContext() {
+            if (this.prevTransition != null) this.prevTransition.noteDiscardedReference(true);
             this.prevTransition = null;
         }
     }
