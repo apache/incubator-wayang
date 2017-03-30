@@ -41,7 +41,7 @@ public class SparkShufflePartitionSampleOperator<Type>
     private int tupleID = 0;
     private int nb_partitions = 0;
     private List<Integer> partitions;
-
+    private JavaRDD<Type> shuffledRDD;
 
     /**
      * Creates a new instance.
@@ -88,7 +88,6 @@ public class SparkShufflePartitionSampleOperator<Type>
 
         boolean miscalculated = false;
         do {
-            boolean shuffle_first = false;
             if (tupleID == 0) {
                 if (nb_partitions == 0) { //it's the first time we sample or we read all partitions already, start again
                     nb_partitions = inputRdd.partitions().size();
@@ -98,16 +97,15 @@ public class SparkShufflePartitionSampleOperator<Type>
                 }
                 //choose a random partition
                 partitionID = partitions.remove(rand.nextInt(nb_partitions--));
-                shuffle_first = true;
                 // shuffle the partition
-//                inputRdd = inputRdd.<Type>mapPartitionsWithIndex(new ShufflePartition<>(partitionID, seed), true).cache();
+                shuffledRDD = inputRdd.<Type>mapPartitionsWithIndex(new ShufflePartition<>(partitionID, seed), true).cache();
                 miscalculated = false;
             }
             List<Integer> pars = new ArrayList<>(1);
             pars.add(partitionID);
             //read sequentially from partitionID
-            Object samples = sparkContext.runJob(inputRdd.rdd(),
-                    new TakeSampleFunction(tupleID, tupleID + sampleSize, shuffle_first, seed),
+            Object samples = sparkContext.runJob(shuffledRDD.rdd(),
+                    new TakeSampleFunction(tupleID, tupleID + sampleSize),
                     (scala.collection.Seq) JavaConversions.asScalaBuffer(pars), true, scala.reflect.ClassTag$.MODULE$.apply(List.class));
 
             tupleID += sampleSize;
@@ -199,38 +197,19 @@ class TakeSampleFunction<V> extends AbstractFunction1<scala.collection.Iterator<
 
     private int start_id;
     private int end_id;
-    private boolean shuffle_first = false;
-    private Random rand;
 
     TakeSampleFunction(int start_id, int end_id) {
         this.start_id = start_id;
         this.end_id = end_id;
     }
 
-    TakeSampleFunction(int start_id, int end_id, boolean shuffle_first, long seed) {
-        this.start_id = start_id;
-        this.end_id = end_id;
-        this.shuffle_first = shuffle_first;
-        this.rand = new Random(seed);
-    }
-
     @Override
     public List<V> apply(scala.collection.Iterator<V> iterator) {
 
-        if (shuffle_first) {
-            assert start_id == 0;
-            List<V> list = new ArrayList<>();
-            while (iterator.hasNext())
-                list.add(iterator.next());
-            Collections.shuffle(list, rand);
-            return new ArrayList<>(list.subList(0, end_id)); //return first elements
-        }
-
-        //sampling
         List<V> list = new ArrayList<>(end_id - start_id);
         int count = 0;
         V element;
-
+        //sample from start_id to end_id
         while (iterator.hasNext()) {
             element = iterator.next();
             if (count >= start_id & count < end_id)
