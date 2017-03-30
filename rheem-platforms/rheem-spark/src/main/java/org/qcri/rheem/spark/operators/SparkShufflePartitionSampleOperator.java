@@ -38,8 +38,10 @@ public class SparkShufflePartitionSampleOperator<Type>
     private Random rand;
 
     private int partitionID = 0;
-
     private int tupleID = 0;
+    private int nb_partitions = 0;
+    private List<Integer> partitions;
+    private JavaRDD<Type> shuffledRDD;
 
     /**
      * Creates a new instance.
@@ -81,31 +83,37 @@ public class SparkShufflePartitionSampleOperator<Type>
         long seed = this.getSeed(operatorContext);
         rand = new Random(seed);
 
-        List<Type> result;
+        List<Type> result = new ArrayList<>();
         final SparkContext sparkContext = inputRdd.context();
 
         boolean miscalculated = false;
         do {
             if (tupleID == 0) {
-                int nb_partitions = inputRdd.partitions().size();
+                if (nb_partitions == 0) { //it's the first time we sample or we read all partitions already, start again
+                    nb_partitions = inputRdd.partitions().size();
+                    partitions = new ArrayList<>();
+                    for (int i = 0; i < nb_partitions; i++)
+                        partitions.add(i, i);
+                }
                 //choose a random partition
-                partitionID = rand.nextInt(nb_partitions);
-                inputRdd = inputRdd.<Type>mapPartitionsWithIndex(new ShufflePartition<>(partitionID, seed), true).cache();
+                partitionID = partitions.remove(rand.nextInt(nb_partitions--));
+                // shuffle the partition
+                shuffledRDD = inputRdd.<Type>mapPartitionsWithIndex(new ShufflePartition<>(partitionID, seed), true).cache();
                 miscalculated = false;
             }
-            //read sequentially from partitionID
             List<Integer> pars = new ArrayList<>(1);
             pars.add(partitionID);
-            Object samples = sparkContext.runJob(inputRdd.rdd(),
+            //read sequentially from partitionID
+            Object samples = sparkContext.runJob(shuffledRDD.rdd(),
                     new TakeSampleFunction(tupleID, tupleID + sampleSize),
-                    (scala.collection.Seq) JavaConversions.asScalaBuffer(pars),
-                    true, scala.reflect.ClassTag$.MODULE$.apply(List.class));
+                    (scala.collection.Seq) JavaConversions.asScalaBuffer(pars), true, scala.reflect.ClassTag$.MODULE$.apply(List.class));
 
             tupleID += sampleSize;
-            result = ((List<Type>[]) samples)[0];
-            if (result == null) { //we reached end of partition, start again
+            result.addAll(((List<Type>[]) samples)[0]);
+            if (result.size() < sampleSize) { //we reached end of partition, start again
                 miscalculated = true;
                 tupleID = 0;
+                sampleSize = sampleSize - result.size();
             }
         } while (miscalculated);
 
@@ -188,7 +196,6 @@ class ShufflePartition<V, T, R> implements Function2<V, T, R> {
 class TakeSampleFunction<V> extends AbstractFunction1<scala.collection.Iterator<V>, List<V>> implements Serializable {
 
     private int start_id;
-
     private int end_id;
 
     TakeSampleFunction(int start_id, int end_id) {
@@ -199,22 +206,18 @@ class TakeSampleFunction<V> extends AbstractFunction1<scala.collection.Iterator<
     @Override
     public List<V> apply(scala.collection.Iterator<V> iterator) {
 
-        //sampling
         List<V> list = new ArrayList<>(end_id - start_id);
         int count = 0;
         V element;
-
+        //sample from start_id to end_id
         while (iterator.hasNext()) {
             element = iterator.next();
             if (count >= start_id & count < end_id)
                 list.add(element);
             count++;
-            if (count > end_id)
+            if (count >= end_id)
                 break;
         }
-        if (count < end_id)
-            return null; //miscalculated
-
         return list;
     }
 }
