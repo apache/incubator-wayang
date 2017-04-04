@@ -19,7 +19,7 @@ import org.qcri.rheem.core.util.ReflectionUtils;
  */
 public abstract class Platform {
 
-    private final String name;
+    private final String name, configName;
 
     /**
      * Loads a specific {@link Platform} implementation. For platforms to interoperate with this method, they must
@@ -36,8 +36,9 @@ public abstract class Platform {
         }
     }
 
-    protected Platform(String name) {
+    protected Platform(String name, String configName) {
         this.name = name;
+        this.configName = configName;
         this.configureDefaults(Configuration.getDefaultConfiguration());
     }
 
@@ -61,6 +62,15 @@ public abstract class Platform {
 
     public String getName() {
         return this.name;
+    }
+
+    /**
+     * Retrieve the name of this instance as it is used in {@link Configuration} keys.
+     *
+     * @return the configuration name of this instance
+     */
+    public String getConfigurationName() {
+        return this.configName;
     }
 
     // TODO: Return some more descriptors about the state of the platform (e.g., available machines, RAM, ...)?
@@ -137,5 +147,4 @@ public abstract class Platform {
             return ReflectionUtils.evaluate(cls.getCanonicalName() + ".getInstance()");
         }
     };
-
 }

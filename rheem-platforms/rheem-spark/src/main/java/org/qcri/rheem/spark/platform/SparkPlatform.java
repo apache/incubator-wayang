@@ -32,7 +32,11 @@ public class SparkPlatform extends Platform {
 
     private static final String PLATFORM_NAME = "Apache Spark";
 
+    private static final String CONFIG_NAME = "spark";
+
     private static final String DEFAULT_CONFIG_FILE = "rheem-spark-defaults.properties";
+
+    public static final String INITIALIZATION_MS_CONFIG_KEY = "rheem.spark.init.ms";
 
     private static SparkPlatform instance = null;
 
@@ -77,7 +81,7 @@ public class SparkPlatform extends Platform {
     }
 
     private SparkPlatform() {
-        super(PLATFORM_NAME);
+        super(PLATFORM_NAME, CONFIG_NAME);
     }
 
     /**
@@ -202,6 +206,6 @@ public class SparkPlatform extends Platform {
 
     @Override
     public long getInitializeMillis(Configuration configuration) {
-        return configuration.getLongProperty("rheem.spark.init.ms");
+        return configuration.getLongProperty(INITIALIZATION_MS_CONFIG_KEY);
     }
 }

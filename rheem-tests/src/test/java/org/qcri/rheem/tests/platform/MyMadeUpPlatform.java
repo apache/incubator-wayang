@@ -29,7 +29,7 @@ public class MyMadeUpPlatform extends Platform implements Plugin {
     }
 
     public MyMadeUpPlatform() {
-        super("My made up platform");
+        super("My made up platform", "my_made_up_platform");
     }
 
     @Override

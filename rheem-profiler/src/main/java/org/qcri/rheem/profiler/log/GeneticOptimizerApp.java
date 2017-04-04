@@ -11,10 +11,7 @@ import org.qcri.rheem.core.platform.AtomicExecutionGroup;
 import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.profiling.ExecutionLog;
-import org.qcri.rheem.core.util.Bitmask;
-import org.qcri.rheem.core.util.Formats;
-import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.core.util.*;
 import org.qcri.rheem.graphchi.GraphChi;
 import org.qcri.rheem.java.Java;
 import org.qcri.rheem.postgres.Postgres;
@@ -421,8 +418,9 @@ public class GeneticOptimizerApp {
             final Platform platform = entry.getKey();
             final Variable overhead = entry.getValue();
             if (!optimizedVariables.contains(overhead)) continue;
-            System.out.printf("(overhead of %s) = %d\n",
-                    platform.getName(),
+
+            System.out.printf("rheem.%s.init.ms = %d\n",
+                    platform.getConfigurationName(),
                     Math.round(overhead.getValue(individual))
             );
         }

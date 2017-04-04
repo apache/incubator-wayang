@@ -10,6 +10,8 @@ public class Sqlite3Platform extends JdbcPlatformTemplate {
 
     private static final String PLATFORM_NAME = "SQLite3";
 
+    private static final String CONFIG_NAME = "sqlite3";
+
     private static Sqlite3Platform instance = null;
 
     public static Sqlite3Platform getInstance() {
@@ -20,12 +22,7 @@ public class Sqlite3Platform extends JdbcPlatformTemplate {
     }
 
     protected Sqlite3Platform() {
-        super(PLATFORM_NAME);
-    }
-
-    @Override
-    public String getPlatformId() {
-        return "sqlite3";
+        super(PLATFORM_NAME, CONFIG_NAME);
     }
 
     @Override

@@ -10,6 +10,8 @@ public class PostgresPlatform extends JdbcPlatformTemplate {
 
     private static final String PLATFORM_NAME = "PostgreSQL";
 
+    private static final String CONFIG_NAME = "postgres";
+
     private static PostgresPlatform instance = null;
 
     public static PostgresPlatform getInstance() {
@@ -20,12 +22,7 @@ public class PostgresPlatform extends JdbcPlatformTemplate {
     }
 
     protected PostgresPlatform() {
-        super(PLATFORM_NAME);
-    }
-
-    @Override
-    public String getPlatformId() {
-        return "postgres";
+        super(PLATFORM_NAME, CONFIG_NAME);
     }
 
     @Override

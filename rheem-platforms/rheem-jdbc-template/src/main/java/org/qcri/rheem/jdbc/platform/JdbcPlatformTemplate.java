@@ -44,8 +44,8 @@ public abstract class JdbcPlatformTemplate extends Platform {
 
     private Connection connection = null;
 
-    protected JdbcPlatformTemplate(String platformName) {
-        super(platformName);
+    protected JdbcPlatformTemplate(String platformName, String configName) {
+        super(platformName, configName);
     }
 
     @Override
@@ -83,7 +83,9 @@ public abstract class JdbcPlatformTemplate extends Platform {
      *
      * @return the platform ID
      */
-    public abstract String getPlatformId();
+    public String getPlatformId() {
+        return this.getConfigurationName();
+    }
 
     /**
      * Provide the name of the JDBC driver {@link Class} for this instance.
