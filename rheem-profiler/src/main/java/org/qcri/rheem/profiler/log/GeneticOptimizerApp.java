@@ -17,7 +17,12 @@ import org.qcri.rheem.java.Java;
 import org.qcri.rheem.postgres.Postgres;
 import org.qcri.rheem.spark.Spark;
 import org.qcri.rheem.sqlite3.Sqlite3;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -27,6 +32,8 @@ import java.util.stream.Stream;
  * {@link ExecutionLog}.
  */
 public class GeneticOptimizerApp {
+
+    private static final Logger logger = LoggerFactory.getLogger(GeneticOptimizerApp.class);
 
     /**
      * {@link Configuration} to be used.
@@ -117,7 +124,7 @@ public class GeneticOptimizerApp {
 
         // Group the PartialExecutions.
         this.partialExecutionGroups = this.groupPartialExecutions(this.partialExecutions).entrySet().stream()
-                .sorted((e1, e2) -> Integer.compare(e1.getKey().size(), e2.getKey().size()))
+                .sorted(Comparator.comparingInt(e -> e.getKey().size()))
                 .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
 
@@ -288,6 +295,8 @@ public class GeneticOptimizerApp {
         }
 
         // Initialize form the configuration.
+        long timeLimit = this.configuration.getLongProperty("rheem.profiler.ga.timelimit.ms", -1);
+        long stopMillis = timeLimit > 0 ? System.currentTimeMillis() + timeLimit : -1L;
         int maxGen = (int) this.configuration.getLongProperty("rheem.profiler.ga.maxgenerations", 5000);
         int maxStableGen = (int) this.configuration.getLongProperty("rheem.profiler.ga.maxstablegenerations", 2000);
         double minFitness = this.configuration.getDoubleProperty("rheem.profiler.ga.minfitness", .0d);
@@ -321,7 +330,7 @@ public class GeneticOptimizerApp {
                 }
 
                 final Tuple<Integer, List<Individual>> newGeneration = this.superOptimize(
-                        superOptimizations, population, group, generation, maxGen, maxStableGen, minFitness
+                        superOptimizations, population, group, generation, maxGen, maxStableGen, minFitness, stopMillis
                 );
                 generation = newGeneration.getField0();
                 population = newGeneration.getField1();
@@ -334,7 +343,7 @@ public class GeneticOptimizerApp {
         while (true) {
             // Optimize on the complete training data.
             final Tuple<Integer, List<Individual>> newGeneration = this.optimize(
-                    population, generalOptimizer, generation, maxGen, maxStableGen, minFitness
+                    population, generalOptimizer, generation, maxGen, maxStableGen, minFitness, stopMillis
             );
             generation = newGeneration.getField0();
             population = newGeneration.getField1();
@@ -361,6 +370,9 @@ public class GeneticOptimizerApp {
                     break;
                 }
 
+                // Check if we ran out of time.
+                if (stopMillis > 0 && System.currentTimeMillis() >= stopMillis) break;
+
                 // Remove the worst PartialExecutions.
                 System.out.printf("The current model is not explaining well %d of %d measured executions.\n",
                         partialExecutionDeviations.size(),
@@ -382,6 +394,17 @@ public class GeneticOptimizerApp {
                 }
             }
         }
+
+        String outputFile = this.configuration.getStringProperty("rheem.profiler.ga.output-file", null);
+        if (outputFile != null) {
+            Individual fittestIndividual = population.get(0);
+            try (PrintStream printStream = new PrintStream(new FileOutputStream(outputFile))) {
+                this.printLearnedConfiguration(generalOptimizer, fittestIndividual, printStream);
+            } catch (FileNotFoundException e) {
+                logger.error("Could not save learned configuration to output file.", e);
+            }
+        }
+
     }
 
     private void printResults(GeneticOptimizer optimizer, Individual individual) {
@@ -409,6 +432,10 @@ public class GeneticOptimizerApp {
         System.out.println();
         System.out.println("Configuration file");
         System.out.println("==================");
+        this.printLearnedConfiguration(optimizer, individual, System.out);
+    }
+
+    private void printLearnedConfiguration(GeneticOptimizer optimizer, Individual individual, PrintStream out) {
         final Bitmask genes = optimizer.getActivatedGenes();
         Set<Variable> optimizedVariables = new HashSet<>(genes.cardinality());
         for (int gene = genes.nextSetBit(0); gene != -1; gene = genes.nextSetBit(gene + 1)) {
@@ -419,7 +446,7 @@ public class GeneticOptimizerApp {
             final Variable overhead = entry.getValue();
             if (!optimizedVariables.contains(overhead)) continue;
 
-            System.out.printf("rheem.%s.init.ms = %d\n",
+            out.printf("rheem.%s.init.ms = %d\n",
                     platform.getConfigurationName(),
                     Math.round(overhead.getValue(individual))
             );
@@ -428,7 +455,7 @@ public class GeneticOptimizerApp {
             if (estimator instanceof DynamicLoadProfileEstimator) {
                 final DynamicLoadProfileEstimator dynamicLoadProfileEstimator = (DynamicLoadProfileEstimator) estimator;
                 if (!optimizedVariables.containsAll(dynamicLoadProfileEstimator.getEmployedVariables())) continue;
-                System.out.println(dynamicLoadProfileEstimator.toJsonConfig(individual));
+                out.println(dynamicLoadProfileEstimator.toJsonConfig(individual));
             }
         }
     }
@@ -456,14 +483,15 @@ public class GeneticOptimizerApp {
             int currentGeneration,
             int maxGenerations,
             int maxStableGenerations,
-            double minFitness) {
+            double minFitness,
+            long stopMillis) {
 
         int individualsPerTribe = (individuals.size() + numTribes - 1) / numTribes;
         List<Individual> superpopulation = new ArrayList<>(individuals.size() * numTribes);
         int maxGeneration = 0;
         for (int i = 0; i < numTribes; i++) {
             final Tuple<Integer, List<Individual>> population = this.optimize(
-                    individuals, partialExecutions, currentGeneration, maxGenerations, maxStableGenerations, minFitness
+                    individuals, partialExecutions, currentGeneration, maxGenerations, maxStableGenerations, minFitness, stopMillis
             );
             maxGeneration = Math.max(maxGeneration, population.getField0());
             superpopulation.addAll(population.getField1().subList(0, individualsPerTribe));
@@ -478,9 +506,10 @@ public class GeneticOptimizerApp {
             int currentGeneration,
             int maxGenerations,
             int maxStableGenerations,
-            double minFitness) {
+            double minFitness,
+            long stopMillis) {
         GeneticOptimizer optimizer = this.createOptimizer(partialExecutions);
-        return this.optimize(individuals, optimizer, currentGeneration, maxGenerations, maxStableGenerations, minFitness);
+        return this.optimize(individuals, optimizer, currentGeneration, maxGenerations, maxStableGenerations, minFitness, stopMillis);
     }
 
     private Tuple<Integer, List<Individual>> optimize(
@@ -489,7 +518,8 @@ public class GeneticOptimizerApp {
             int currentGeneration,
             int maxGenerations,
             int maxStableGenerations,
-            double minFitness) {
+            double minFitness,
+            long stopMillis) {
 
         if (optimizer.getActivatedGenes().isEmpty()) {
             System.out.println("There is an optimization task without optimizable genes. It will be skipped");
@@ -523,6 +553,9 @@ public class GeneticOptimizerApp {
                 System.out.println("Intermediate update:");
                 this.printResults(optimizer, individuals.get(0));
             }
+
+            // Check if the time limit has passed.
+            if (stopMillis > 0 && stopMillis <= System.currentTimeMillis()) break;
 
             // Check whether we seem to be stuck in a (local) optimum.
             if (i % maxStableGenerations == 0) {
