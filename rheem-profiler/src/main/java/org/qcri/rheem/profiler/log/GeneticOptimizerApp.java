@@ -392,6 +392,8 @@ public class GeneticOptimizerApp {
                     );
                     this.partialExecutions.remove(partialExecution);
                 }
+            } else {
+                break;
             }
         }
 
