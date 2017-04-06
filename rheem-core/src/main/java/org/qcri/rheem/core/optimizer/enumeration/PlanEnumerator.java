@@ -40,7 +40,7 @@ public class PlanEnumerator {
      * {@link ConcatenationActivator}s that are activated and should be executed.
      */
     private final Queue<ConcatenationActivator> activatedConcatenations = new PriorityQueue<>(
-            (activator0, activator1) -> Double.compare(activator0.priority, activator1.priority)
+            Comparator.comparingDouble(activator0 -> activator0.priority)
     );
 
     /**

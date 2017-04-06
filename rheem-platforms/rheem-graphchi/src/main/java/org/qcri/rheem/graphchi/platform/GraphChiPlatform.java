@@ -26,7 +26,7 @@ public class GraphChiPlatform extends Platform {
     private static GraphChiPlatform instance;
 
     protected GraphChiPlatform() {
-        super("GraphChi");
+        super("GraphChi", "graphchi");
         this.initialize();
     }
 

@@ -12,10 +12,7 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Junction;
-import org.qcri.rheem.core.util.Bitmask;
-import org.qcri.rheem.core.util.OneTimeExecutable;
-import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.core.util.Tuple;
+import org.qcri.rheem.core.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,6 +35,11 @@ public class ChannelConversionGraph {
      */
     private final ToDoubleFunction<ProbabilisticDoubleInterval> costSquasher;
 
+    /**
+     * On the face of competing {@link Tree}s, picks the one to use for converting {@link Channel}s.
+     */
+    private final TreeSelectionStrategy treeSelectionStrategy;
+
     private static final Logger logger = LoggerFactory.getLogger(ChannelConversionGraph.class);
 
     /**
@@ -48,6 +50,11 @@ public class ChannelConversionGraph {
     public ChannelConversionGraph(Configuration configuration) {
         this.costSquasher = configuration.getCostSquasherProvider().provide();
         configuration.getChannelConversionProvider().provideAll().forEach(this::add);
+        String treeSelectionStrategyClassName = configuration.getStringProperty(
+                "rheem.core.optimizer.channels.selection",
+                this.getClass().getCanonicalName() + '$' + CostbasedTreeSelectionStrategy.class.getSimpleName()
+        );
+        this.treeSelectionStrategy = ReflectionUtils.instantiateDefault(treeSelectionStrategyClassName);
     }
 
     /**
@@ -103,10 +110,12 @@ public class ChannelConversionGraph {
     }
 
     /**
-     * Given two {@link Tree}s, choose the one with lower costs.
+     * Given two {@link Tree}s, select the preferred one.
      */
-    private Tree selectCheaperTree(Tree t1, Tree t2) {
-        return t2 == null || (t1 != null && t1.costs <= t2.costs) ? t1 : t2;
+    private Tree selectPreferredTree(Tree t1, Tree t2) {
+        if (t1 == null) return t2;
+        if (t2 == null) return t1;
+        return this.treeSelectionStrategy.select(t1, t2);
     }
 
     /**
@@ -151,6 +160,48 @@ public class ChannelConversionGraph {
         mergedTree.costs = costs;
         mergedTree.employedChannelDescriptors.addAll(employedChannelDescriptors);
         return mergedTree;
+    }
+
+    /**
+     * Designates a strategy of which conversion tree to prefer when there are competing trees.
+     */
+    private interface TreeSelectionStrategy {
+
+        /**
+         * Select the preferred {@link Tree}.
+         *
+         * @param t1 the first {@link Tree} (not {@code null}
+         * @param t2 the second {@link Tree} (not {@code null}
+         * @return the preferred {@link Tree}
+         */
+        Tree select(Tree t1, Tree t2);
+
+    }
+
+    /**
+     * Prefers {@link Tree}s with lower cost.
+     */
+    public static class CostbasedTreeSelectionStrategy implements TreeSelectionStrategy {
+
+        @Override
+        public Tree select(Tree t1, Tree t2) {
+            return t1.costs <= t2.costs ? t1 : t2;
+        }
+
+    }
+
+    /**
+     * Prefers {@link Tree}s with lower cost.
+     */
+    public static class RandomTreeSelectionStrategy implements TreeSelectionStrategy {
+
+        private final Random random = new Random();
+
+        @Override
+        public Tree select(Tree t1, Tree t2) {
+            return this.random.nextBoolean() ? t1 : t2;
+        }
+
     }
 
     /**
@@ -614,7 +665,7 @@ public class ChannelConversionGraph {
                 for (Collection<Tree> trees : childSolutionSets) {
                     for (Tree tree : trees) {
                         if (this.allDestinationChannelIndices.isSubmaskOf(tree.settledDestinationIndices)) {
-                            bestBreakpointSolution = selectCheaperTree(bestBreakpointSolution, tree);
+                            bestBreakpointSolution = selectPreferredTree(bestBreakpointSolution, tree);
                         }
                     }
                 }
@@ -629,7 +680,7 @@ public class ChannelConversionGraph {
                 // Each childSolutionSet its has a mapping from settled indices to trees.
                 for (Tree tree : childSolutionSet) {
                     // Update newSolutions if the current tree is cheaper or settling new indices.
-                    newSolutions.merge(tree.settledDestinationIndices, tree, ChannelConversionGraph.this::selectCheaperTree);
+                    newSolutions.merge(tree.settledDestinationIndices, tree, ChannelConversionGraph.this::selectPreferredTree);
                 }
             }
 
@@ -655,7 +706,7 @@ public class ChannelConversionGraph {
                     for (List<Tree> solutionCombination : RheemCollections.streamedCrossProduct(childSolutionSets)) {
                         final Tree tree = ChannelConversionGraph.this.mergeTrees(solutionCombination);
                         if (tree != null) {
-                            newSolutions.merge(tree.settledDestinationIndices, tree, ChannelConversionGraph.this::selectCheaperTree);
+                            newSolutions.merge(tree.settledDestinationIndices, tree, ChannelConversionGraph.this::selectPreferredTree);
                         }
                     }
                 }

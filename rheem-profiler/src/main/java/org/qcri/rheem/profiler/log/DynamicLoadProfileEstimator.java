@@ -112,6 +112,7 @@ public class DynamicLoadProfileEstimator implements LoadProfileEstimator {
     public String toJsonConfig(Individual individual) {
         StringBuilder sb = new StringBuilder();
         sb.append(this.configKey).append(" = {\\\n");
+        sb.append(" \"type\":\"mathex\",\\\n");
         sb.append(" \"in\":").append(this.numInputs).append(",\\\n");
         sb.append(" \"out\":").append(this.numOutputs).append(",\\\n");
         sb.append(" \"cpu\":\"").append(this.cpuEstimator.toMathEx(individual)).append("\",\\\n");
