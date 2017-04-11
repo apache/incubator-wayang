@@ -10,16 +10,11 @@ public class HsqldbPlatform extends JdbcPlatformTemplate {
     private static final HsqldbPlatform instance = new HsqldbPlatform();
 
     public HsqldbPlatform() {
-        super("HSQLDB (test)");
+        super("HSQLDB (test)", "hsqldb");
     }
 
     public static HsqldbPlatform getInstance() {
         return instance;
-    }
-
-    @Override
-    public String getPlatformId() {
-        return "hsqldb";
     }
 
     @Override

@@ -16,6 +16,8 @@ public class JavaPlatform extends Platform {
 
     private static final String PLATFORM_NAME = "Java Streams";
 
+    private static final String CONFIG_NAME = "java";
+
     private static final String DEFAULT_CONFIG_FILE = "rheem-java-defaults.properties";
 
     private static JavaPlatform instance = null;
@@ -28,7 +30,7 @@ public class JavaPlatform extends Platform {
     }
 
     private JavaPlatform() {
-        super(PLATFORM_NAME);
+        super(PLATFORM_NAME, CONFIG_NAME);
     }
 
     @Override

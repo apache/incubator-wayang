@@ -13,7 +13,7 @@ public class DummyPlatform extends Platform {
     private static DummyPlatform INSTANCE;
 
     private DummyPlatform() {
-        super("Dummy Platform");
+        super("Dummy Platform", "dummy");
     }
 
     public static DummyPlatform getInstance() {
