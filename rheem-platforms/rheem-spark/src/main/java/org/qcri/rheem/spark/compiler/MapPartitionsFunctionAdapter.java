@@ -20,7 +20,7 @@ public class MapPartitionsFunctionAdapter<InputType, OutputType> implements Flat
     }
 
     @Override
-    public Iterable<OutputType> call(Iterator<InputType> it) throws Exception {
+    public Iterator<OutputType> call(Iterator<InputType> it) throws Exception {
         List<OutputType> out = new ArrayList<>();
         while (it.hasNext()) {
             final Iterable<OutputType> mappedPartition = this.function.apply(Iterators.wrapWithIterable(it));
@@ -28,6 +28,6 @@ public class MapPartitionsFunctionAdapter<InputType, OutputType> implements Flat
                 out.add(dataQuantum);
             }
         }
-        return out;
+        return out.iterator();
     }
 }

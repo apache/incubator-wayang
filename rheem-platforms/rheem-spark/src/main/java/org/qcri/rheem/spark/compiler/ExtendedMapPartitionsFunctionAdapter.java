@@ -28,7 +28,7 @@ public class ExtendedMapPartitionsFunctionAdapter<InputType, OutputType>
     }
 
     @Override
-    public Iterable<OutputType> call(Iterator<InputType> it) throws Exception {
+    public Iterator<OutputType> call(Iterator<InputType> it) throws Exception {
         this.impl.open(executionContext);
         List<OutputType> out = new ArrayList<>();
         while (it.hasNext()) {
@@ -37,6 +37,6 @@ public class ExtendedMapPartitionsFunctionAdapter<InputType, OutputType>
                 out.add(dataQuantum);
             }
         }
-        return out;
+        return out.iterator();
     }
 }

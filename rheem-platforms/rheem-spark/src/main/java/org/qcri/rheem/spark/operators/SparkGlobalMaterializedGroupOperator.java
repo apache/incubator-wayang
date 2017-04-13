@@ -61,7 +61,7 @@ public class SparkGlobalMaterializedGroupOperator<Type>
                     while (partitionIterator.hasNext()) {
                         dataUnitGroup.add(partitionIterator.next());
                     }
-                    return Collections.singleton(dataUnitGroup);
+                    return (Iterator)Collections.singleton(dataUnitGroup).iterator();
                 });
         this.name(outputRdd);
 

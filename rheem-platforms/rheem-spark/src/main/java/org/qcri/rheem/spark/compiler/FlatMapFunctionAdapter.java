@@ -2,6 +2,8 @@ package org.qcri.rheem.spark.compiler;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 
+import java.util.Iterator;
+
 /**
  * Wraps a {@link java.util.function.Function} as a {@link FlatMapFunction}.
  */
@@ -14,7 +16,7 @@ public class FlatMapFunctionAdapter<InputType, OutputType> implements FlatMapFun
     }
 
     @Override
-    public Iterable<OutputType> call(InputType dataQuantum) throws Exception {
-        return this.function.apply(dataQuantum);
+    public Iterator<OutputType> call(InputType dataQuantum) throws Exception {
+        return this.function.apply(dataQuantum).iterator();
     }
 }

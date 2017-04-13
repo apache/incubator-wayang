@@ -80,7 +80,7 @@ public class SparkIESelfJoinOperator<Type0 extends Comparable<Type0>, Type1 exte
                         i++;
                     }
                     out.add(i);
-                    return out;
+                    return out.iterator();
                 }
                 , true).reduce((input1, input2) -> Math.max(input1, input2));
 
