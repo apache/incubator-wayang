@@ -2,6 +2,7 @@ package org.qcri.rheem.core.platform.lineage;
 
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.Tuple;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -61,6 +62,7 @@ public abstract class LazyExecutionLineageNode {
      * Mark that this instance should not be traversed any more.
      */
     protected void markAsExecuted() {
+        LoggerFactory.getLogger(this.getClass()).debug("Marking {} as executed.", this);
         this.isExecuted = true;
     }
 
