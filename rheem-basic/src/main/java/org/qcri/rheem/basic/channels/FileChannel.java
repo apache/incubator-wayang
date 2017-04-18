@@ -177,6 +177,7 @@ public class FileChannel extends Channel {
         @Override
         public void doDispose() throws RheemException {
             Actions.doSafe(() -> {
+                logger.info("Deleting file channel instances {}.", this.paths);
                 final String path = this.getSinglePath();
                 final Optional<FileSystem> fileSystemOptional = FileSystems.getFileSystem(path);
                 fileSystemOptional.ifPresent(fs -> {
