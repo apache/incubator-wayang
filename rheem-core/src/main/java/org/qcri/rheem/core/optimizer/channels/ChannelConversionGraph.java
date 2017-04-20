@@ -648,7 +648,7 @@ public class ChannelConversionGraph {
                                     this.getCostEstimate(channelConversion)
                             )
                     );
-                    childSolutionSets.add(childSolutions.values());
+                    if (!childSolutions.isEmpty()) childSolutionSets.add(childSolutions.values());
 
                     visitedChannelDescriptors.remove(targetChannelDescriptor);
                 }
@@ -699,14 +699,16 @@ public class ChannelConversionGraph {
                     }
                 }
 
-                if (numUnreachedDestinationSets >= 2) {
+                if (numUnreachedDestinationSets >= 2) { // only combine when there is more than one destination left
                     final Collection<List<Collection<Tree>>> childSolutionSetCombinations =
                             RheemCollections.createPowerList(childSolutionSets, numUnreachedDestinationSets);
-                    childSolutionSetCombinations.removeIf(e -> e.size() < 2);
-                    for (List<Tree> solutionCombination : RheemCollections.streamedCrossProduct(childSolutionSets)) {
-                        final Tree tree = ChannelConversionGraph.this.mergeTrees(solutionCombination);
-                        if (tree != null) {
-                            newSolutions.merge(tree.settledDestinationIndices, tree, ChannelConversionGraph.this::selectPreferredTree);
+                    for (List<Collection<Tree>> childSolutionSetCombination : childSolutionSetCombinations) {
+                        if (childSolutionSetCombination.size() < 2) continue; // only combine when we have more than on child solution
+                        for (List<Tree> solutionCombination : RheemCollections.streamedCrossProduct(childSolutionSetCombination)) {
+                            final Tree tree = ChannelConversionGraph.this.mergeTrees(solutionCombination);
+                            if (tree != null) {
+                                newSolutions.merge(tree.settledDestinationIndices, tree, ChannelConversionGraph.this::selectPreferredTree);
+                            }
                         }
                     }
                 }
