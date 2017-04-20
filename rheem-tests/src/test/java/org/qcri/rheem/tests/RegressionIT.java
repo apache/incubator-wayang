@@ -23,9 +23,9 @@ public class RegressionIT {
      * This plan revealed an issue with the {@link org.qcri.rheem.core.optimizer.channels.ChannelConversionGraph.ShortestTreeSearcher}.
      */
     @Test
-    public void testCollectionToRddAndBroadcasts() {
+    public void testCollectionToRddAndBroadcast() {
         RheemContext rheemContext = new RheemContext().with(Spark.basicPlugin()).with(Java.basicPlugin());
-        JavaPlanBuilder planBuilder = new JavaPlanBuilder(rheemContext, "testCollectionToRddAndBroadcasts");
+        JavaPlanBuilder planBuilder = new JavaPlanBuilder(rheemContext, "testCollectionToRddAndBroadcast");
 
         LoadCollectionDataQuantaBuilder<String> collection = planBuilder
                 .loadCollection(Arrays.asList("a", "bc", "def"))
@@ -47,7 +47,7 @@ public class RegressionIT {
 
         result.sort(Integer::compareTo);
         Assert.assertEquals(
-                RheemArrays.asList(-2, -1, 1, 2, 3),
+                RheemArrays.asList(-1, 1, 2, 3),
                 result
         );
     }
