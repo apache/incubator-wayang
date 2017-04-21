@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.SortOperator;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -13,16 +14,14 @@ import org.qcri.rheem.java.channels.JavaChannelInstance;
 import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * Java implementation of the {@link SortOperator}.
  */
-public class JavaSortOperator<Type>
-        extends SortOperator<Type>
+public class JavaSortOperator<Type, Key>
+        extends SortOperator<Type, Key>
         implements JavaExecutionOperator {
 
 
@@ -31,8 +30,8 @@ public class JavaSortOperator<Type>
      *
      * @param type type of the dataset elements
      */
-    public JavaSortOperator(DataSetType<Type> type) {
-        super(type);
+    public JavaSortOperator(TransformationDescriptor<Type, Key> keyDescriptor, DataSetType<Type> type) {
+        super(keyDescriptor, type);
     }
 
     /**
@@ -40,7 +39,7 @@ public class JavaSortOperator<Type>
      *
      * @param that that should be copied
      */
-    public JavaSortOperator(SortOperator<Type> that) {
+    public JavaSortOperator(SortOperator<Type, Key> that) {
         super(that);
     }
 
@@ -53,7 +52,10 @@ public class JavaSortOperator<Type>
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).provideStream().sorted());
+        final Function<Type, Key> keyExtractor = javaExecutor.getCompiler().compile(this.keyDescriptor);
+
+        ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<Type>provideStream()
+                .sorted((e1, e2) -> ((Comparable)keyExtractor.apply(e1)).compareTo(keyExtractor.apply(e2))));
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
@@ -65,7 +67,7 @@ public class JavaSortOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaSortOperator<>(this.getInputType());
+        return new JavaSortOperator<>(this.getKeyDescriptor(), this.getInputType());
     }
 
     @Override

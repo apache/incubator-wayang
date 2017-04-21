@@ -441,6 +441,25 @@ public class JavaApiTest {
     }
 
     @Test
+    public void testSort() {
+        // Set up RheemContext.
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+
+        // Generate test data.
+        final List<Integer> inputValues1 = Arrays.asList(3, 4, 5, 2, 1);
+
+        // Execute the job.
+        final LoadCollectionDataQuantaBuilder<Integer> dataQuanta1 = builder.loadCollection(inputValues1);
+        final Collection<Integer> outputValues = dataQuanta1.sort(r->r).collect();
+
+        // Verify the outcome.
+        List<Integer> expectedValues = Arrays.asList(1, 2, 3, 4, 5);
+        Assert.assertEquals(expectedValues, RheemCollections.asList(outputValues));
+    }
+
+
+    @Test
     public void testPageRank() {
         // Set up RheemContext.
         RheemContext rheemContext = new RheemContext()
