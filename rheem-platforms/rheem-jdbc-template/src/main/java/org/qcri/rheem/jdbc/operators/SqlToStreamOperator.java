@@ -140,9 +140,9 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
          */
         ResultSetIterator(Connection connection, String sqlQuery) {
             try {
-                connection.setAutoCommit(false);
+                //connection.setAutoCommit(false);
                 Statement st = connection.createStatement();
-                st.setFetchSize(100000000);
+                //st.setFetchSize(100000000);
                 this.resultSet = st.executeQuery(sqlQuery);
             } catch (SQLException e) {
                 this.close();
