@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.channels.RddChannel;
@@ -22,8 +23,9 @@ public class SparkSortOperatorTest extends SparkOperatorTestBase {
 
 
         // Build the sort operator.
-        SparkSortOperator<Integer> sortOperator =
+        SparkSortOperator<Integer, Integer> sortOperator =
                 new SparkSortOperator<>(
+                        new TransformationDescriptor(r->r, Integer.class, Integer.class),
                         DataSetType.createDefaultUnchecked(Integer.class)
                 );
 

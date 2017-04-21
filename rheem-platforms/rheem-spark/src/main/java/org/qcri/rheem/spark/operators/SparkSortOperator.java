@@ -3,6 +3,7 @@ package org.qcri.rheem.spark.operators;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.qcri.rheem.basic.operators.SortOperator;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -22,8 +23,8 @@ import java.util.List;
 /**
  * Spark implementation of the {@link SortOperator}.
  */
-public class SparkSortOperator<Type>
-        extends SortOperator<Type>
+public class SparkSortOperator<Type, Key>
+        extends SortOperator<Type, Key>
         implements SparkExecutionOperator {
 
 
@@ -32,8 +33,8 @@ public class SparkSortOperator<Type>
      *
      * @param type type of the dataset elements
      */
-    public SparkSortOperator(DataSetType<Type> type) {
-        super(type);
+    public SparkSortOperator(TransformationDescriptor<Type, Key> keyDescriptor, DataSetType<Type> type) {
+        super(keyDescriptor, type);
     }
 
     /**
@@ -41,7 +42,7 @@ public class SparkSortOperator<Type>
      *
      * @param that that should be copied
      */
-    public SparkSortOperator(SortOperator<Type> that) {
+    public SparkSortOperator(SortOperator<Type, Key> that) {
         super(that);
     }
 
@@ -74,7 +75,7 @@ public class SparkSortOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new SparkSortOperator<>(this.getInputType());
+        return new SparkSortOperator<>(this.getKeyDescriptor(), this.getInputType());
     }
 
     @Override

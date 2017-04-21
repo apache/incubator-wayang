@@ -193,7 +193,8 @@ public class OperatorProfilers {
     }
 
     public static <T> UnaryOperatorProfiler createJavaSortProfiler(Supplier<T> dataGenerator, Class<T> inClass) {
-        return new UnaryOperatorProfiler(() -> new JavaSortOperator<>(DataSetType.createDefault(inClass)), dataGenerator);
+        return new UnaryOperatorProfiler(() -> new JavaSortOperator<>(new TransformationDescriptor<>(in->in, inClass, inClass),
+                DataSetType.createDefault(inClass)), dataGenerator);
     }
 
     public static BinaryOperatorProfiler createJavaJoinProfiler() {

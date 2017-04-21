@@ -25,7 +25,7 @@ public class SortMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "sort", new SortOperator<>(DataSetType.none()), false
+                "sort", new SortOperator<>(null, DataSetType.none()), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }
