@@ -15,6 +15,7 @@ import org.qcri.rheem.java.channels.StreamChannel;
 import org.qcri.rheem.java.execution.JavaExecutor;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Java implementation of the {@link SortOperator}.
@@ -50,8 +51,11 @@ public class JavaSortOperator<Type, Key>
             OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
-        ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).provideStream()
-                .sorted((e1, e2) -> ((Comparable)e1).compareTo(e2)));
+
+        final Function<Type, Key> keyExtractor = javaExecutor.getCompiler().compile(this.keyDescriptor);
+
+        ((StreamChannel.Instance) outputs[0]).accept(((JavaChannelInstance) inputs[0]).<Type>provideStream()
+                .sorted((e1, e2) -> ((Comparable)keyExtractor.apply(e1)).compareTo(keyExtractor.apply(e2))));
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
