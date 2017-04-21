@@ -732,10 +732,23 @@ public class CrossPlatformExecutor implements ExecutionState {
          * @return whether the activation is possible
          */
         boolean updateInputChannelInstances() {
-            return this.updateChannelInstances(this.miscInboundChannels, false) & (
-                    this.updateChannelInstances(this.initializationInboundChannels, false) |
-                            this.updateChannelInstances(this.iterationInboundChannels, true)
-            );
+            boolean isMiscChannelsReady = this.updateChannelInstances(this.miscInboundChannels, false);
+            boolean isLoopChannelsReady = true;
+            if (this.stage.isLoopHead()) {
+                LoopHeadOperator loopOperator = (LoopHeadOperator) this.stage.getLoopHeadTask().getOperator();
+                switch (loopOperator.getState()) {
+                    case NOT_STARTED:
+                        isLoopChannelsReady = this.updateChannelInstances(this.initializationInboundChannels, false);
+                        break;
+                    case RUNNING:
+                        isLoopChannelsReady = this.updateChannelInstances(this.iterationInboundChannels, true);
+                        break;
+                    default:
+                        logger.warn("Tried to update input channel instances for finished {}.", this.stage);
+                        isLoopChannelsReady = false;
+                }
+            }
+            return isMiscChannelsReady && isLoopChannelsReady;
         }
 
         /**

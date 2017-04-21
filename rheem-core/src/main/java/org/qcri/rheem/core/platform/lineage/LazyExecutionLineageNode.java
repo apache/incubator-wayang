@@ -2,6 +2,7 @@ package org.qcri.rheem.core.platform.lineage;
 
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.util.Tuple;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -17,6 +18,12 @@ public abstract class LazyExecutionLineageNode {
      */
     private final Collection<LazyExecutionLineageNode> predecessors = new LinkedList<>();
 
+    /**
+     * Pinned down {@link ChannelInstance}s that must not be disposed before this instance has been marked as
+     * executed.
+     */
+    private final Collection<ChannelInstance> pinnedDownChannelInstances = new LinkedList<>();
+
     private boolean isExecuted = false;
 
     /**
@@ -28,6 +35,15 @@ public abstract class LazyExecutionLineageNode {
         assert !this.predecessors.contains(predecessor) :
                 String.format("Lineage predecessor %s is already present.", predecessor);
         this.predecessors.add(predecessor);
+
+        // TODO: Pinning the input ChannelInstances down like this is not very elegant.
+        // A better solution would be to incorporate all LazyExecutionLineageNodes into the
+        // reference counting scheme. However, this would imply considerable effort to get it right.
+        if (!this.isExecuted && predecessor instanceof ChannelLineageNode) {
+            ChannelInstance channelInstance = ((ChannelLineageNode) predecessor).getChannelInstance();
+            this.pinnedDownChannelInstances.add(channelInstance);
+            channelInstance.noteObtainedReference();
+        }
     }
 
 
@@ -61,7 +77,14 @@ public abstract class LazyExecutionLineageNode {
      * Mark that this instance should not be traversed any more.
      */
     protected void markAsExecuted() {
+        LoggerFactory.getLogger(this.getClass()).debug("Marking {} as executed.", this);
         this.isExecuted = true;
+
+        // Free pinned down ChannelInstances.
+        for (ChannelInstance channelInstance : this.pinnedDownChannelInstances) {
+            channelInstance.noteDiscardedReference(true);
+        }
+        this.pinnedDownChannelInstances.clear();
     }
 
     public <T> T traverseAndMark(T accumulator, Aggregator<T> aggregator) {

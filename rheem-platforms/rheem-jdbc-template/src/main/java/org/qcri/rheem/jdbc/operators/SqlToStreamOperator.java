@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -139,7 +140,10 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
          */
         ResultSetIterator(Connection connection, String sqlQuery) {
             try {
-                this.resultSet = connection.createStatement().executeQuery(sqlQuery);
+                connection.setAutoCommit(false);
+                Statement st = connection.createStatement();
+                st.setFetchSize(100000000);
+                this.resultSet = st.executeQuery(sqlQuery);
             } catch (SQLException e) {
                 this.close();
                 throw new RheemException("Could not execute SQL.", e);
