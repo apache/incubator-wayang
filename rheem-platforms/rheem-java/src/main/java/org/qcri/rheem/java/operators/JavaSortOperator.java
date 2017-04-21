@@ -1,6 +1,7 @@
 package org.qcri.rheem.java.operators;
 
 import org.qcri.rheem.basic.operators.SortOperator;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -18,8 +19,8 @@ import java.util.*;
 /**
  * Java implementation of the {@link SortOperator}.
  */
-public class JavaSortOperator<Type>
-        extends SortOperator<Type>
+public class JavaSortOperator<Type, Key>
+        extends SortOperator<Type, Key>
         implements JavaExecutionOperator {
 
 
@@ -28,8 +29,8 @@ public class JavaSortOperator<Type>
      *
      * @param type type of the dataset elements
      */
-    public JavaSortOperator(DataSetType<Type> type) {
-        super(type);
+    public JavaSortOperator(TransformationDescriptor<Type, Key> keyDescriptor, DataSetType<Type> type) {
+        super(keyDescriptor, type);
     }
 
     /**
@@ -37,7 +38,7 @@ public class JavaSortOperator<Type>
      *
      * @param that that should be copied
      */
-    public JavaSortOperator(SortOperator<Type> that) {
+    public JavaSortOperator(SortOperator<Type, Key> that) {
         super(that);
     }
 
@@ -62,7 +63,7 @@ public class JavaSortOperator<Type>
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new JavaSortOperator<>(this.getInputType());
+        return new JavaSortOperator<>(this.getKeyDescriptor(), this.getInputType());
     }
 
     @Override

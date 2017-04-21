@@ -21,8 +21,8 @@ public class JavaSortOperatorTest extends JavaExecutionOperatorTestBase {
         Stream<Integer> inputStream = Arrays.asList(6, 0, 1, 1, 5, 2).stream();
 
         // Build the sort operator.
-        JavaSortOperator<Integer> sortOperator =
-                new JavaSortOperator<>(
+        JavaSortOperator<Integer, Integer> sortOperator =
+                new JavaSortOperator<>(null,
                         DataSetType.createDefaultUnchecked(Integer.class)
                 );
 
