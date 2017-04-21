@@ -347,6 +347,25 @@ class ApiTest {
     Assert.assertEquals(expectedValues, result.toSet)
   }
 
+
+  @Test
+  def testSort() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+
+    val inputValues1 = Array(3, 4, 5, 2, 1)
+
+    val builder = new PlanBuilder(rheem)
+    val dataQuanta1 = builder.loadCollection(inputValues1)
+    val result = dataQuanta1
+      .sort(r=>r)
+      .collect()
+
+    val expectedValues = Array(1, 2, 3, 4, 5)
+    Assert.assertArrayEquals(expectedValues, result.toArray)
+  }
+
+
   @Test
   def testPageRank() = {
     // Set up RheemContext.

@@ -253,6 +253,17 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
                          thatKeyUdf: SerializableFunction[ThatOut, Key]) =
     new JoinDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
 
+
+  /**
+    * Feed the built [[DataQuanta]] of this and the given instance into a
+    * [[org.qcri.rheem.basic.operators.SortOperator]].
+    *
+    * @param keyUdf the key extraction UDF for this instance
+    * @return a [[SortDataQuantaBuilder]]
+    */
+  def sort[Key](keyUdf: SerializableFunction[Out, Key]) =
+    new SortDataQuantaBuilder(this, keyUdf)
+
   /**
     * Feed the built [[DataQuanta]] of this and the given instance into a
     * [[org.qcri.rheem.basic.operators.CartesianOperator]].
@@ -684,6 +695,76 @@ class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: 
   )
 
 }
+
+
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.SortOperator]]s.
+  *
+  * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
+  * @param keyUdf             UDF for the [[org.qcri.rheem.basic.operators.SortOperator]]
+  */
+class SortDataQuantaBuilder[T, Key](inputDataQuanta: DataQuantaBuilder[_, T],
+                                    keyUdf: SerializableFunction[T, Key])
+                                   (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[SortDataQuantaBuilder[T, Key], T] {
+
+  // Reuse the input TypeTrap to enforce type equality between input and output.
+  override def getOutputTypeTrap: TypeTrap = inputDataQuanta.outputTypeTrap
+
+  /** [[ClassTag]] or surrogate of [[Key]] */
+  implicit var keyTag: ClassTag[Key] = _
+
+  /** [[LoadEstimator]] to estimate the CPU load of the [[keyUdf]]. */
+  private var keyUdfCpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf]]. */
+  private var keyUdfRamEstimator: LoadEstimator = _
+
+
+  // Try to infer the type classes from the UDFs.
+  locally {
+    val parameters = ReflectionUtils.getTypeParameters(keyUdf.getClass, classOf[SerializableFunction[_, _]])
+    parameters.get("Input") match {
+      case cls: Class[T] => inputDataQuanta.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      case _ => logger.warn("Could not infer types from {}.", keyUdf)
+    }
+
+    this.keyTag = parameters.get("Output") match {
+      case cls: Class[Key] => ClassTag(cls)
+      case _ =>
+        logger.warn("Could not infer types from {}.", keyUdf)
+        ClassTag(DataSetType.none.getDataUnitType.getTypeClass)
+    }
+  }
+
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the first key extraction UDF. Currently effectless.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withThisKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.keyUdfCpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of first the key extraction UDF. Currently effectless.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withThisKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.keyUdfRamEstimator = udfRamEstimator
+    this
+  }
+
+  override protected def build =
+    inputDataQuanta.dataQuanta().sortJava(keyUdf)(this.keyTag)
+
+}
+
 
 /**
   * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.FlatMapOperator]]s.
