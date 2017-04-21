@@ -44,6 +44,12 @@
             <organization>Hasso-Plattner-Institut</organization>
             <organizationUrl>http://hpi.de/naumann/home.html</organizationUrl>
         </developer>
+        <developer>
+            <name>Yasser Idris</name>
+            <email>yidris@hbku.edu.qa</email>
+            <organization>Qatar Computing Research Institute</organization>
+            <organizationUrl>http://qcri.com/</organizationUrl>
+        </developer>
     </developers>
 
     <scm>
