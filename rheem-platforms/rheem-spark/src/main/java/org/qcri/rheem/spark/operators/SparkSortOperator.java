@@ -2,6 +2,7 @@ package org.qcri.rheem.spark.operators;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.PairFunction;
 import org.qcri.rheem.basic.operators.SortOperator;
 import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
@@ -12,6 +13,7 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.spark.channels.RddChannel;
+import org.qcri.rheem.spark.compiler.FunctionCompiler;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 import scala.Tuple2;
 
@@ -59,13 +61,15 @@ public class SparkSortOperator<Type, Key>
         RddChannel.Instance output = (RddChannel.Instance) outputs[0];
 
         final JavaRDD<Type> inputRdd = input.provideRdd();
+        
+        FunctionCompiler compiler = sparkExecutor.getCompiler();
+        final PairFunction<Type, Key, Type> keyExtractor = compiler.compileToKeyExtractor(this.keyDescriptor);
 
-        // TODO: Better sort function!
-        final JavaPairRDD<Type, Boolean> keyedRdd = inputRdd.mapToPair(x -> new Tuple2<>(x, true));
+        final JavaPairRDD<Key, Type> keyedRdd = inputRdd.mapToPair(keyExtractor);
         this.name(keyedRdd);
-        final JavaPairRDD<Type, Boolean> sortedKeyedRdd = keyedRdd.sortByKey(true, sparkExecutor.getNumDefaultPartitions());
+        final JavaPairRDD<Key, Type> sortedKeyedRdd = keyedRdd.sortByKey(true, sparkExecutor.getNumDefaultPartitions());
         this.name(sortedKeyedRdd);
-        final JavaRDD<Type> outputRdd = sortedKeyedRdd.map(y -> y._1);
+        final JavaRDD<Type> outputRdd = sortedKeyedRdd.map(y -> y._2);
         this.name(outputRdd);
 
         output.accept(outputRdd, sparkExecutor);
