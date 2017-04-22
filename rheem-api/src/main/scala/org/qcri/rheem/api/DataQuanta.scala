@@ -444,6 +444,35 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     joinOperator
   }
 
+
+  /**
+    * Feeds this and a further instance into a [[SortOperator]].
+    *
+    * @param keyUdf UDF to extract key from data quanta in this instance
+    * @return a new instance representing the [[SortOperator]]'s output
+    */
+  def sort[Key: ClassTag]
+  (keyUdf: Out => Key)
+  : DataQuanta[Out] =
+    sortJava(toSerializableFunction(keyUdf))
+
+  /**
+    * Feeds this and a further instance into a [[SortOperator]].
+    *
+    * @param keyUdf UDF to extract key from data quanta in this instance
+    * @return a new instance representing the [[SortOperator]]'s output
+    */
+  def sortJava[Key: ClassTag]
+  (keyUdf: SerializableFunction[Out, Key])
+  : DataQuanta[Out] = {
+    val sortOperator = new SortOperator(new TransformationDescriptor(
+      keyUdf, basicDataUnitType[Out], basicDataUnitType[Key]))
+    this.connectTo(sortOperator, 0)
+    sortOperator
+  }
+
+
+
   /**
     * Feeds this and a further instance into a [[CartesianOperator]].
     *

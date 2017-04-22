@@ -252,7 +252,8 @@ public class OperatorProfilers {
                                                                             Class<Type> inOutClass,
                                                                             Configuration configuration) {
         return new SparkUnaryOperatorProfiler(
-                () -> new SparkSortOperator<>(DataSetType.createDefault(inOutClass)),
+                () -> new SparkSortOperator<>(new TransformationDescriptor<>(in->in, inOutClass, inOutClass),
+                        DataSetType.createDefault(inOutClass)),
                 configuration,
                 dataGenerator
         );

@@ -2,6 +2,7 @@ package org.qcri.rheem.java.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.channels.JavaChannelInstance;
 
@@ -21,8 +22,10 @@ public class JavaSortOperatorTest extends JavaExecutionOperatorTestBase {
         Stream<Integer> inputStream = Arrays.asList(6, 0, 1, 1, 5, 2).stream();
 
         // Build the sort operator.
-        JavaSortOperator<Integer> sortOperator =
-                new JavaSortOperator<>(
+        JavaSortOperator<Integer, Integer> sortOperator =
+                new JavaSortOperator<>(new TransformationDescriptor<Integer, Integer>(
+                        r->r,
+                        Integer.class, Integer.class),
                         DataSetType.createDefaultUnchecked(Integer.class)
                 );
 

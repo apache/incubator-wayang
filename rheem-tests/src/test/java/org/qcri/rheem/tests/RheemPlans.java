@@ -166,7 +166,7 @@ public class RheemPlans {
         // Build a Rheem plan.
         TextFileSource textFileSource = new TextFileSource(inputFileUri.toString());
         textFileSource.setName("Load input file");
-        SortOperator<String> sortOperator = new SortOperator<>(String.class);
+        SortOperator<String, String> sortOperator = new SortOperator<>(in->in, String.class, String.class);
         sortOperator.setName("Sort lines");
         MapOperator<String, String> upperCaseOperator = new MapOperator<>(
                 String::toUpperCase, String.class, String.class
@@ -202,7 +202,7 @@ public class RheemPlans {
                 String::toUpperCase, String.class, String.class
         );
         UnionAllOperator<String> unionOperator = new UnionAllOperator<>(String.class);
-        SortOperator<String> sortOperator = new SortOperator<>(String.class);
+        SortOperator<String, String> sortOperator = new SortOperator<>(r->r, String.class, String.class);
         DistinctOperator<String> distinctLinesOperator = new DistinctOperator<>(String.class);
         LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
 
@@ -697,7 +697,7 @@ public class RheemPlans {
         unionOperator.setName("Union");
         LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
         stdoutSink.setName("Print");
-        SortOperator<String> sortOperator = new SortOperator<>(String.class);
+        SortOperator<String, String> sortOperator = new SortOperator<>(r->r, String.class, String.class);
         sortOperator.setName("Sort");
         CountOperator<String> countLines = new CountOperator<>(String.class);
         countLines.setName("Count");
