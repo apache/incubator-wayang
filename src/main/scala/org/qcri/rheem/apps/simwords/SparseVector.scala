@@ -119,6 +119,13 @@ case class SparseVector(indices: Array[Int], values: Array[Double]) {
       .mkString(", ")
   })"
 
+  def toDictionaryString = s"{${
+    this.indices
+      .zip(this.values)
+      .map(component => s"${component._1}:${component._2}")
+      .mkString(",")
+  }}"
+
   override def hashCode = java.util.Arrays.hashCode(this.values) ^ java.util.Arrays.hashCode(this.indices)
 
   override def equals(o: Any): Boolean = {
