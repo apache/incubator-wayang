@@ -101,6 +101,7 @@ public class BitmaskTest {
         testSetBits(420);
         testSetBits(1, 420);
         testSetBits(1, 420, 421, 500);
+        testSetBits(1, 2, 3, 65);
     }
 
     private void testSetBits(int... setBits) {

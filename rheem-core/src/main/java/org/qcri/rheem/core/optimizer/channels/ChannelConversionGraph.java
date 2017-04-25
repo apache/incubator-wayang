@@ -799,6 +799,15 @@ public class ChannelConversionGraph {
                 }
             }
 
+            assert tree.settledDestinationIndices.stream().allMatch(i -> junction.getTargetChannel(i) != null) :
+                    String.format("Junction from %s to %s has no target channels.",
+                            junction.getSourceOutput(),
+                            tree.settledDestinationIndices.stream()
+                                    .filter(idx -> junction.getTargetChannel(idx) == null)
+                                    .mapToObj(idx -> String.format("%s (index=%d)", this.destInputs.get(idx), idx))
+                                    .collect(Collectors.joining(" and "))
+                    );
+
             // CHECK: We don't need to worry about entering loops, because in this case #resolveSupportedChannels(...)
             // does all the magic!?
 

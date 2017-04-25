@@ -1,9 +1,13 @@
 package org.qcri.rheem.core.util;
 
+import java.util.*;
+import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
+
 /**
  * A mutable bit-mask.
  */
-public class Bitmask implements Cloneable {
+public class Bitmask implements Cloneable, Iterable<Integer> {
 
     /**
      * An instance without any bits set.
@@ -316,8 +320,45 @@ public class Bitmask implements Cloneable {
                 return longPos << WORD_ADDRESS_BITS | nextOffset;
             }
             longPos++;
+            offset = 0;
         }
         return -1;
+    }
+
+    @Override
+    public PrimitiveIterator.OfInt iterator() {
+        return new PrimitiveIterator.OfInt() {
+
+            private int next = Bitmask.this.nextSetBit(0);
+
+            @Override
+            public boolean hasNext() {
+                return this.next != -1;
+            }
+
+            @Override
+            public int nextInt() {
+                if (!this.hasNext()) throw new NoSuchElementException();
+                int result = this.next;
+                this.next = Bitmask.this.nextSetBit(this.next + 1);
+                return result;
+            }
+
+            @Override
+            public Integer next() {
+                return this.nextInt();
+            }
+
+        };
+    }
+
+    @Override
+    public Spliterator.OfInt spliterator() {
+        return Spliterators.spliteratorUnknownSize(this.iterator(), 0);
+    }
+
+    public IntStream stream() {
+        return StreamSupport.intStream(this.spliterator(), false);
     }
 
     @Override
