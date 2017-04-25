@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.util;
 
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
@@ -65,5 +66,18 @@ public class RheemArrays {
             array[i++] = value;
         }
         return array;
+    }
+
+    /**
+     * Converts a {@link BitSet} to an array that contains all indices set in this {@link BitSet}.
+     */
+    public static int[] toArray(BitSet bitSet) {
+       int[] array = new int[bitSet.cardinality()];
+       for (int i = 0, index = bitSet.nextSetBit(0);
+               index != -1;
+               i++, index = bitSet.nextSetBit(index + 1)) {
+           array[i] = index;
+       }
+       return array;
     }
 }
