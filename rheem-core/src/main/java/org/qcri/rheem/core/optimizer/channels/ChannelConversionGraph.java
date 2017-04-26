@@ -288,6 +288,11 @@ public class ChannelConversionGraph {
         private Map<ChannelConversion, Double> conversionCostCache = new HashMap<>();
 
         /**
+         * Caches whether {@link ChannelConversion}s should be filtered.
+         */
+        private Map<ChannelConversion, Boolean> conversionFilterCache = new HashMap<>();
+
+        /**
          * Caches the result of {@link #getJunction()}.
          */
         private Junction result = null;
@@ -633,6 +638,12 @@ public class ChannelConversionGraph {
                     continue;
                 }
 
+                // Check if the channelConversion can be filtered.
+                if (successorChannelDescriptors == null && this.isFiltered(channelConversion)) {
+                    logger.info("Filtering conversion {} between {} and {}.", channelConversion, this.sourceOutput, this.destInputs);
+                    continue;
+                }
+
                 if (visitedChannelDescriptors.add(targetChannelDescriptor)) {
                     final Map<Bitmask, Tree> childSolutions = this.enumerate(
                             visitedChannelDescriptors,
@@ -703,7 +714,8 @@ public class ChannelConversionGraph {
                     final Collection<List<Collection<Tree>>> childSolutionSetCombinations =
                             RheemCollections.createPowerList(childSolutionSets, numUnreachedDestinationSets);
                     for (List<Collection<Tree>> childSolutionSetCombination : childSolutionSetCombinations) {
-                        if (childSolutionSetCombination.size() < 2) continue; // only combine when we have more than on child solution
+                        if (childSolutionSetCombination.size() < 2)
+                            continue; // only combine when we have more than on child solution
                         for (List<Tree> solutionCombination : RheemCollections.streamedCrossProduct(childSolutionSetCombination)) {
                             final Tree tree = ChannelConversionGraph.this.mergeTrees(solutionCombination);
                             if (tree != null) {
@@ -755,6 +767,19 @@ public class ChannelConversionGraph {
                         );
                         return costSquasher.applyAsDouble(costEstimate);
                     }
+            );
+        }
+
+        /**
+         * Determine whether the given {@link ChannelConversion} should be filtered.
+         *
+         * @param channelConversion which should be checked for filtering
+         * @return whether to filter the {@link ChannelConversion}
+         */
+        private boolean isFiltered(ChannelConversion channelConversion) {
+            return this.conversionFilterCache.computeIfAbsent(
+                    channelConversion,
+                    key -> key.isFiltered(this.cardinality, this.numExecutions, this.optimizationContextCopy)
             );
         }
 

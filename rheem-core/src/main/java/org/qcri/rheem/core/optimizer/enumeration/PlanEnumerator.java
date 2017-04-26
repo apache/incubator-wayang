@@ -424,6 +424,13 @@ public class PlanEnumerator {
             } else {
                 assert operator.isExecutionOperator();
                 operatorEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) operator, optimizationContext);
+
+                // Check if the operator is filtered.
+                OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(operator);
+                if (operatorContext != null && ((ExecutionOperator) operator).isFiltered(operatorContext)) {
+                    this.logger.info("Filtered {} with context {}.", operator, operatorContext);
+                    operatorEnumeration.getPlanImplementations().clear();
+                }
             }
 
             if (operatorEnumeration.getPlanImplementations().isEmpty()) {

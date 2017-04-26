@@ -176,6 +176,19 @@ public class DefaultChannelConversion extends ChannelConversion {
         return operatorContext.getCostEstimate();
     }
 
+    @Override
+    public boolean isFiltered(CardinalityEstimate cardinality, int numExecutions, OptimizationContext optimizationContext) {
+        // Create OperatorContext.
+        final ExecutionOperator executionOperator = this.executionOperatorFactory.apply(null, optimizationContext.getConfiguration());
+        final OptimizationContext.OperatorContext operatorContext = optimizationContext.addOneTimeOperator(executionOperator);
+
+        // Initialize cardinality and number of executions.
+        operatorContext.setNumExecutions(numExecutions);
+        this.setCardinality(operatorContext, cardinality);
+
+        return executionOperator.isFiltered(operatorContext);
+    }
+
     private void setCardinality(OptimizationContext.OperatorContext operatorContext, CardinalityEstimate cardinality) {
         final int numInputs = operatorContext.getOperator().getNumInputs();
         for (int inputIndex = 0; inputIndex < numInputs; inputIndex++) {

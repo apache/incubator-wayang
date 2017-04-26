@@ -91,6 +91,21 @@ public interface ExecutionOperator extends ElementaryOperator {
     }
 
     /**
+     * Tells whether this instance should not be executed on the face of the given
+     * {@link OptimizationContext.OperatorContext}. For instance, when this instance
+     * might not be able to handle the amount of data.
+     *
+     * @param operatorContext an {@link OptimizationContext.OperatorContext} within which this instance might be
+     *                        executed
+     * @return whether this instance should <b>not</b> be used for execution
+     */
+    default boolean isFiltered(OptimizationContext.OperatorContext operatorContext) {
+        assert operatorContext.getOperator() == this;
+
+        return false;
+    }
+
+    /**
      * Display the supported {@link Channel}s for a certain {@link InputSlot}.
      *
      * @param index the index of the {@link InputSlot}
