@@ -96,6 +96,13 @@ public interface ExecutionOperator extends ElementaryOperator {
      * @return the limit base key or {@code null}
      */
     default String getLimitBaseKey() {
+        // By default, try to infer the key.
+        String loadProfileEstimatorConfigurationKey = this.getLoadProfileEstimatorConfigurationKey();
+        if (loadProfileEstimatorConfigurationKey != null && loadProfileEstimatorConfigurationKey.endsWith(".load")) {
+            return loadProfileEstimatorConfigurationKey
+                    .substring(0, loadProfileEstimatorConfigurationKey.length() - 5)
+                    .concat(".limit");
+        }
         return null;
     }
 
