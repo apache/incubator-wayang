@@ -38,9 +38,11 @@ object OptimizerScalabilityTest extends ExperimentDescriptor {
 
     // Initialize the rheemContext.
     val rheemContext = createRheemContext(args(1))
+    experiment.getSubject.addConfiguration("plugins", args(1))
 
     // Create the planGenerator.
     val planType = args(2)
+    experiment.getSubject.addConfiguration("planType", planType)
     val planGenerator: PlanGenerator = planType match {
       case "pipeline" => new PipelinePlanGenerator(args(3).toInt)
       case "fanout" => new FanoutPlanGenerator(args(3).toInt)
