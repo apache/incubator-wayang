@@ -279,72 +279,128 @@ public class PlanEnumeration {
         // Preparatory initializations.
         final ChannelConversionGraph channelConversionGraph = optimizationContext.getChannelConversionGraph();
 
-        // Group the base and target PlanImplementations by their operator.
-        final MultiMap<OutputSlot<?>, Tuple<PlanImplementation, PlanImplementation>> basePlanGroups =
-                this.groupImplementationsByOutput(openOutputSlot);
-        final List<MultiMap<Set<InputSlot<?>>, PlanImplementation>> targetPlanGroupList =
-                groupImplementationsByInput(targetEnumerations);
-
-
         // Allocate result collector.
         Collection<PlanImplementation> result = new LinkedList<>();
 
-        // Iterate all InputSlot/OutputSlot combinations.
-        List<Set<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>>> targetPlanGroupEntrySet =
-                RheemCollections.map(targetPlanGroupList, MultiMap::entrySet);
-        final Iterable<List<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>>> targetPlanGroupCrossProduct =
-                RheemCollections.streamedCrossProduct(targetPlanGroupEntrySet);
-        for (List<Map.Entry<Set<InputSlot<?>>, Set<PlanImplementation>>> targetPlanGroupEntries : targetPlanGroupCrossProduct) {
-            // Flatten the requested InputSlots.
-            final List<InputSlot<?>> inputs = targetPlanGroupEntries.stream()
-                    .map(Map.Entry::getKey)
-                    .flatMap(Collection::stream)
-                    .distinct()
-                    .collect(Collectors.toCollection(() -> new ArrayList<>(4)));
+        // Bring the InputSlots to fixed order.
+        List<InputSlot<?>> inputs = new ArrayList<>(targetEnumerations.keySet());
 
-            for (Map.Entry<OutputSlot<?>, Set<Tuple<PlanImplementation, PlanImplementation>>> basePlanGroupEntry : basePlanGroups.entrySet()) {
-                final OutputSlot<?> output = basePlanGroupEntry.getKey();
-                final PlanImplementation innerPlanImplementation = RheemCollections.getAny(basePlanGroupEntry.getValue()).getField1();
-                // The output should reside in the same OptimizationContext in all PlanImplementations.
-                assert basePlanGroupEntry.getValue().stream()
-                        .map(Tuple::getField1)
-                        .map(PlanImplementation::getOptimizationContext)
-                        .collect(Collectors.toSet()).size() == 1;
+        // Identify identical PlanEnumerations among the targetEnumerations and baseEnumeration.
+        MultiMap<PlanEnumeration, InputSlot<?>> targetEnumerationGroups = new MultiMap<>();
+        for (Map.Entry<InputSlot<?>, PlanEnumeration> entry : targetEnumerations.entrySet()) {
+            targetEnumerationGroups.putSingle(entry.getValue(), entry.getKey());
+        }
 
-                // Construct a Junction between the ExecutionOperators.
-                final Operator outputOperator = output.getOwner();
-                assert outputOperator.isExecutionOperator()
-                        : String.format("Expected execution operator, found %s.", outputOperator);
-                TimeMeasurement channelConversionMeasurement = concatenationMeasurement == null ?
-                        null : concatenationMeasurement.start("Channel Conversion");
-                final Junction junction = openChannels == null || openChannels.isEmpty() ?
-                        channelConversionGraph.findMinimumCostJunction(
-                                output,
-                                inputs,
-                                innerPlanImplementation.getOptimizationContext(),
-                                isRequestBreakpoint
-                        ) :
-                        channelConversionGraph.findMinimumCostJunction(
-                                output,
-                                openChannels,
-                                inputs,
-                                innerPlanImplementation.getOptimizationContext());
-                if (channelConversionMeasurement != null) channelConversionMeasurement.stop();
-                if (junction == null) continue;
+        // Group the PlanImplementations within each enumeration group.
+        MultiMap<PlanEnumeration, PlanImplementation.ConcatenationGroupDescriptor> enum2concatGroup = new MultiMap<>();
+        MultiMap<PlanImplementation.ConcatenationGroupDescriptor, PlanImplementation.ConcatenationDescriptor>
+                concatGroup2concatDescriptor = new MultiMap<>();
+        for (Map.Entry<PlanEnumeration, Set<InputSlot<?>>> entry : targetEnumerationGroups.entrySet()) {
+            PlanEnumeration planEnumeration = entry.getKey();
+            OutputSlot<?> groupOutput = planEnumeration == this ? openOutputSlot : null;
+            Set<InputSlot<?>> groupInputSet = entry.getValue();
+            List<InputSlot<?>> groupInputs = new ArrayList<>(inputs.size());
+            for (InputSlot<?> input : inputs) {
+                groupInputs.add(groupInputSet.contains(input) ? input : null);
+            }
+            for (PlanImplementation planImplementation : planEnumeration.getPlanImplementations()) {
+                PlanImplementation.ConcatenationDescriptor concatDescriptor =
+                        planImplementation.createConcatenationDescriptor(groupOutput, groupInputs);
+                concatGroup2concatDescriptor.putSingle(concatDescriptor.groupDescriptor, concatDescriptor);
+                enum2concatGroup.putSingle(planImplementation.getPlanEnumeration(), concatDescriptor.groupDescriptor);
+            }
+        }
 
-                // If we found a junction, then we can enumerate all PlanImplementation combinations.
-                final List<Set<PlanImplementation>> targetPlans = RheemCollections.map(targetPlanGroupEntries, Map.Entry::getValue);
-                for (List<PlanImplementation> targetPlanList : RheemCollections.streamedCrossProduct(targetPlans)) {
-                    for (Tuple<PlanImplementation, PlanImplementation> basePlanImplementations : basePlanGroupEntry.getValue()) {
-                        PlanImplementation basePlan = basePlanImplementations.getField0();
-                        PlanImplementation concatenatedPlan = basePlan.concatenate(targetPlanList, junction, basePlan, concatenationEnumeration);
-                        if (concatenatedPlan != null) {
-                            result.add(concatenatedPlan);
+        // Handle cases where this instance is not a target enumeration.
+        if (!targetEnumerationGroups.containsKey(this)) {
+            List<InputSlot<?>> emptyGroupInputs = RheemCollections.createNullFilledArrayList(inputs.size());
+            for (PlanImplementation planImplementation : this.getPlanImplementations()) {
+                PlanImplementation.ConcatenationDescriptor concatDescriptor =
+                        planImplementation.createConcatenationDescriptor(openOutputSlot, emptyGroupInputs);
+                concatGroup2concatDescriptor.putSingle(concatDescriptor.groupDescriptor, concatDescriptor);
+                enum2concatGroup.putSingle(planImplementation.getPlanEnumeration(), concatDescriptor.groupDescriptor);
+            }
+        }
+
+        if (logger.isInfoEnabled()) {
+            logger.info("Concatenating {}={} concatenation groups ({} -> {} inputs).",
+                    enum2concatGroup.values().stream().map(groups -> String.valueOf(groups.size())).collect(Collectors.joining("*")),
+                    enum2concatGroup.values().stream().mapToInt(Set::size).reduce(1, (a, b) -> a * b),
+                    openOutputSlot,
+                    targetEnumerations.size()
+            );
+        }
+
+        // Enumerate all combinations of the PlanEnumerations.
+        List<PlanEnumeration> orderedEnumerations = new ArrayList<>(enum2concatGroup.keySet());
+        orderedEnumerations.remove(this);
+        orderedEnumerations.add(0, this); // Make sure that the base enumeration is in the beginning.
+        List<Set<PlanImplementation.ConcatenationGroupDescriptor>> orderedConcatGroups = new ArrayList<>(orderedEnumerations.size());
+        for (PlanEnumeration enumeration : orderedEnumerations) {
+            orderedConcatGroups.add(enum2concatGroup.get(enumeration));
+        }
+        for (List<PlanImplementation.ConcatenationGroupDescriptor> concatGroupCombo : RheemCollections.streamedCrossProduct(orderedConcatGroups)) {
+            // Determine the execution output along with its OptimizationContext.
+            PlanImplementation.ConcatenationGroupDescriptor baseConcatGroup = concatGroupCombo.get(0);
+            final OutputSlot<?> execOutput = baseConcatGroup.execOutput;
+            Set<PlanImplementation.ConcatenationDescriptor> baseConcatDescriptors = concatGroup2concatDescriptor.get(baseConcatGroup);
+            final PlanImplementation innerPlanImplementation = RheemCollections.getAny(baseConcatDescriptors).execOutputPlanImplementation;
+            // The output should reside in the same OptimizationContext in all PlanImplementations.
+            assert baseConcatDescriptors.stream()
+                    .map(cd -> cd.execOutputPlanImplementation)
+                    .map(PlanImplementation::getOptimizationContext)
+                    .collect(Collectors.toSet()).size() == 1;
+
+            // Determine the execution OutputSlots.
+            List<InputSlot<?>> execInputs = new ArrayList<>(inputs.size());
+            for (PlanImplementation.ConcatenationGroupDescriptor concatGroup : concatGroupCombo) {
+                for (Set<InputSlot<?>> execInputSet : concatGroup.execInputs) {
+                    if (execInputSet != null) execInputs.addAll(execInputSet);
+                }
+            }
+
+            // Construct a Junction between the ExecutionOperators.
+            final Operator outputOperator = execOutput.getOwner();
+            assert outputOperator.isExecutionOperator() : String.format("Expected execution operator, found %s.", outputOperator);
+            TimeMeasurement channelConversionMeasurement = concatenationMeasurement == null ?
+                    null : concatenationMeasurement.start("Channel Conversion");
+            final Junction junction = openChannels == null || openChannels.isEmpty() ?
+                    channelConversionGraph.findMinimumCostJunction(
+                            execOutput,
+                            execInputs,
+                            innerPlanImplementation.getOptimizationContext(),
+                            isRequestBreakpoint
+                    ) :
+                    channelConversionGraph.findMinimumCostJunction(
+                            execOutput,
+                            openChannels,
+                            execInputs,
+                            innerPlanImplementation.getOptimizationContext());
+            if (channelConversionMeasurement != null) channelConversionMeasurement.stop();
+            if (junction == null) continue;
+
+            // If we found a junction, then we can enumerate all PlanImplementation combinations.
+            final List<Set<PlanImplementation>> groupPlans = RheemCollections.map(
+                    concatGroupCombo,
+                    concatGroup -> {
+                        Set<PlanImplementation.ConcatenationDescriptor> concatDescriptors = concatGroup2concatDescriptor.get(concatGroup);
+                        Set<PlanImplementation> planImplementations = new HashSet<>(concatDescriptors.size());
+                        for (PlanImplementation.ConcatenationDescriptor concatDescriptor : concatDescriptors) {
+                            planImplementations.add(concatDescriptor.getPlanImplementation());
                         }
-                    }
+                        return planImplementations;
+                    });
+
+            for (List<PlanImplementation> planCombo : RheemCollections.streamedCrossProduct(groupPlans)) {
+                PlanImplementation basePlan = planCombo.get(0);
+                List<PlanImplementation> targetPlans = planCombo.subList(0, planCombo.size());
+                PlanImplementation concatenatedPlan = basePlan.concatenate(targetPlans, junction, basePlan, concatenationEnumeration);
+                if (concatenatedPlan != null) {
+                    result.add(concatenatedPlan);
                 }
             }
         }
+
         return result;
     }
 
