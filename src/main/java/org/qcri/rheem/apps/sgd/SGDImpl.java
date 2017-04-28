@@ -87,7 +87,7 @@ public class SGDImpl {
                 }).collect();
 
         // Return the results.
-        return RheemCollections.getSingle(results);
+        return RheemCollections.getSingleOrNull(results); // null to support experiments with skipped execution
     }
 }
 

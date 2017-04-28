@@ -89,7 +89,7 @@ public class SGDImprovedImpl {
                 }).collect();
 
         // Return the results.
-        return RheemCollections.getSingle(results);
+        return RheemCollections.getSingleOrNull(results); // Support null for when execution is skipped.
 
     }
 }

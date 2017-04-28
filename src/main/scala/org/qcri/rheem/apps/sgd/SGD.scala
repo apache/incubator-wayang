@@ -56,7 +56,7 @@ object SGD extends ExperimentDescriptor {
     ProfileDBHelper.store(experiment, configuration)
 
     // Print the result.
-    println(s"Determined weights: ${weights.map(w => f"$w%,.5f").mkString(", ")}")
+    if (weights != null) println(s"Determined weights: ${weights.map(w => f"$w%,.5f").mkString(", ")}")
   }
 
 }
