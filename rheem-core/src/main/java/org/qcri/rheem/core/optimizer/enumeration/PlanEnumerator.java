@@ -206,6 +206,9 @@ public class PlanEnumerator {
             case "plans":
                 concatenationPriorityFunction = ConcatenationActivator::estimateNumConcatenatedPlanImplementations;
                 break;
+            case "plans2":
+                concatenationPriorityFunction = ConcatenationActivator::estimateNumConcatenatedPlanImplementations2;
+                break;
             case "random":
                 // Randomly generate a priority. However, avoid re-generate priorities, because that would increase
                 // of a concatenation activator being processed, the longer it is in the queue (I guess).
@@ -981,6 +984,18 @@ public class PlanEnumerator {
                 num *= successorEnumeration.getPlanImplementations().size();
             }
             return num;
+        }
+
+        /**
+         * Estimates the number of {@link PlanImplementation}s in the concatenated {@link PlanEnumeration}. Can be used
+         * as {@link #concatenationPriorityFunction}.
+         *
+         * @return the number of {@link PlanImplementation}s
+         */
+        private double estimateNumConcatenatedPlanImplementations2() {
+            // We use the product of all concatenatable PlanImplementations as an estimate of the size of the
+            // concatenated PlanEnumeration.
+            return Stream.concat(Stream.of(this.baseEnumeration), activationCollector.values().stream()).distinct().count();
         }
 
         /**
