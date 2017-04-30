@@ -110,6 +110,11 @@ object Kmeans extends ExperimentDescriptor {
     // Run k-means.
     val centroids = kmeans(k, file, numIterations)
 
+    // Store experiment data.
+    val fileSize = FileSystems.getFileSize(file)
+    if (fileSize.isPresent) experiment.getSubject.addConfiguration("inputSize", fileSize.getAsLong)
+    ProfileDBHelper.store(experiment, configuration)
+
     // Print the result.
     println(s"Found ${centroids.size} centroids:")
 
