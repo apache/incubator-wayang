@@ -89,7 +89,7 @@ object Kmeans extends ExperimentDescriptor {
   def main(args: Array[String]): Unit = {
     // Parse args.
     if (args.length == 0) {
-      println(s"Usage: scala <main class> ${Parameters.experimentHelp} <plugin(,plugin)*> <point file> <k> <#iterations>")
+      println(s"Usage: scala <main class> ${Parameters.experimentHelp} <plugin(,plugin)*> <table> <k> <#iterations>")
       sys.exit(1)
     }
 
@@ -109,11 +109,6 @@ object Kmeans extends ExperimentDescriptor {
 
     // Run k-means.
     val centroids = kmeans(k, file, numIterations)
-
-    // Store experiment data.
-    val fileSize = FileSystems.getFileSize(file)
-    if (fileSize.isPresent) experiment.getSubject.addConfiguration("inputSize", fileSize.getAsLong)
-    ProfileDBHelper.store(experiment, configuration)
 
     // Print the result.
     println(s"Found ${centroids.size} centroids:")
