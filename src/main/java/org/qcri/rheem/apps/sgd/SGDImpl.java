@@ -84,7 +84,7 @@ public class SGDImpl {
                             .map(new ComputeNorm()).withBroadcast(w, "weights");
 
                     return new Tuple<>(newWeightsDataset, convergenceDataset);
-                }).collect();
+                }).withExpectedNumberOfIterations(maxIterations).collect();
 
         // Return the results.
         return RheemCollections.getSingleOrNull(results); // null to support experiments with skipped execution
