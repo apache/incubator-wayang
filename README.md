@@ -93,10 +93,14 @@ You can find the most relevant settings in the following:
   * `rheem.graphchi.hdfs.ms-per-mb (= 2.7)`: average throughput from HDFS to GraphChi in ms/MB
 * SQLite
   * `rheem.sqlite3.jdbc.url`: JDBC URL to use SQLite
+  * `rheem.sqlite3.jdbc.user`: optional user name
+  * `rheem.sqlite3.jdbc.password`: optional password
   * `rheem.sqlite3.cpu.mhz (= 2700)`: clock frequency of processor SQLite runs on in MHz
   * `rheem.sqlite3.cpu.cores (= 2)`: number of cores SQLite runs on
 * PostgreSQL
   * `rheem.postgres.jdbc.url`: JDBC URL to use PostgreSQL
+  * `rheem.postgres.jdbc.user`: optional user name
+  * `rheem.postgres.jdbc.password`: optional password
   * `rheem.postgres.cpu.mhz (= 2700)`: clock frequency of processor PostgreSQL runs on in MHz
   * `rheem.postgres.cpu.cores (= 2)`: number of cores PostgreSQL runs on
 
