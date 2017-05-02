@@ -2,7 +2,9 @@
 
 [![Gitter chat](https://badges.gitter.im/rheem-ecosystem/Lobby.png)](https://gitter.im/rheem-ecosystem/Lobby)
 
-This repository provides example applications and further benchmarking tools to evaluate and get started with [Rheem](http://da.qcri.org/rheem/). More information is to come soon...
+This repository provides example applications and further benchmarking tools to evaluate and get started with [Rheem](http://da.qcri.org/rheem/).
+
+Below we provide detailed information on our various benchmark components, including running instructions. For the configuration of Rheem itself, please consult the [Rheem repository](https://github.com/rheem-ecosystem/rheem) or feel free to reach out on [Gitter](https://gitter.im/rheem-ecosystem/Lobby).
 
 ## Rheem applications
 
