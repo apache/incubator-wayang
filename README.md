@@ -77,6 +77,7 @@ Even though this app is written in Scala, you can launch it in a regular JVM. Ru
 ### k-means
 
 **Description.** Being a well-known method to cluster data points in a Euclidian space. As many other machine learning techniques, k-means is an iterative algorithm.
+
 **Running the app.** To run the app, launch the main class:
 ```java
 org.qcri.rheem.apps.kmeans.Kmeans
@@ -90,5 +91,17 @@ Even though this app is written in Scala, you can launch it in a regular JVM. Ru
 
 **Datasets.** We provide a [data generator](https://github.com/rheem-ecosystem/rheem-benchmark/blob/master/src/test/resources/kmeans-datagenerator.py) to generate files that can be clustered. You can further load these files into the database assuming the following schema:
 ```sql
-CREATE TABLE <table name of your choice> (x float8, y float8);
+CREATE TABLE "<table_name_of_your_choice>" (x float8, y float8);
 ```
+
+### CrocoPR
+
+**Description.** This app implements the cross-community PageRank: It takes as input two graphs, merges them, and runs a standard PageRank on the resulting graph. The preprocessing and PageRank steps typically lend themselves to be executed on different platforms.
+
+**Running the app.** To run the app, launch the main class:
+```java
+org.qcri.rheem.apps.crocopr.CrocoPR
+```
+Even though this app is written in Scala, you can launch it in a regular JVM. Run the app without parameters to get a description of the required parameters.
+
+**Datasets.** This app works on RDF files, more specifically the [Wikipedia pagelinks via DBpedia](http://wiki.dbpedia.org/Downloads2015-10). Note that this app requires two input files. For the purpose of benchmarking, it is fine to use the same input file twice.
