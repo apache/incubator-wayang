@@ -31,3 +31,18 @@ Even though this app is written in Scala, you can launch it in a regular JVM. Ru
 
 **Datasets.** Find below a list of datasets that can be used to benchmark Rheem in combination with this app:
 * [DBpedia - Long abstracts](http://wiki.dbpedia.org/Downloads2015-10) _NB: Consider stripping of the RDF container around the abstracts. It's not necessary, though._
+
+### TPC-H Query 3
+
+**Description.** This app executes a query from the established TPC-H benchmark. We provide several variants that work either on data in databases, in files, or in a mixture of both. Thus, this app requires cross-platform execution.
+
+**Running the app.** To run the app, launch the main class:
+```java
+org.qcri.rheem.apps.tpch.TpcH
+```
+Even though this app is written in Scala, you can launch it in a regular JVM. Run the app without parameters to get a description of the required parameters. Note that you will have to configure Rheem, such that can access the database. Furthermore, this app depends on the following configuration keys:
+* `rheem.apps.tpch.csv.customer`: URL to the `CUSTOMER` file
+* `rheem.apps.tpch.csv.orders`: URL to the `ORDERS` file
+* `rheem.apps.tpch.csv.lineitem`: URL to the `LINEITEM` file
+
+**Datasets.** The datasets for this app can be generated with the [TPC-H tools](http://www.tpc.org/tpch/). The generated datasets can then be either put into a database and/or a filesystem.
