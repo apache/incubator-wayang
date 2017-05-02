@@ -105,3 +105,23 @@ org.qcri.rheem.apps.crocopr.CrocoPR
 Even though this app is written in Scala, you can launch it in a regular JVM. Run the app without parameters to get a description of the required parameters.
 
 **Datasets.** This app works on RDF files, more specifically the [Wikipedia pagelinks via DBpedia](http://wiki.dbpedia.org/Downloads2015-10). Note that this app requires two input files. For the purpose of benchmarking, it is fine to use the same input file twice.
+
+## Optimizer experiments
+
+### Optimizer scalability
+
+**Description.** This app generates Rheem plans with specific predefined topologies but of arbitrary size. This allows to experimentally determine the scalability of Rheem's optimizer to large plans.
+
+**Running the app.** To run the app, launch the main class:
+```java
+org.qcri.rheem.apps.benchmark.OptimizerScalabilityTest
+```
+Even though this app is written in Scala, you can launch it in a regular JVM. Run the app without parameters to get a description of the required parameters. Furthermore, the following configuration can be interesting:
+- `rheem.core.optimizer.pruning.strategies`: controls the pruning strategy to be used when enumerating alternative plans
+  - admissible values: empty or comma-separated list of `org.qcri.rheem.core.optimizer.enumeration.LatentOperatorPruningStrategy` (default), `org.qcri.rheem.core.optimizer.enumeration.TopKPruningStrategy`, `org.qcri.rheem.core.optimizer.enumeration.RandomPruningStrategy`, and `org.qcri.rheem.core.optimizer.enumeration.SinglePlatformPruningStrategy` (order-sensitive)
+- `rheem.core.optimizer.pruning.topk`: controls the _k_ for the top-k pruning
+- `rheem.core.optimizer.enumeration.concatenationprio`: controls the order of the enumeration
+  - admissible values: `slots`, `plans`, `plans2`, `none`, `random`
+- `rheem.core.optimizer.enumeration.invertconcatenations` invert the above mentioned enumeration order
+  - admissible value: `false` (default), `true`
+  
