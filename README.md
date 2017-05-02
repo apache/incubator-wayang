@@ -46,3 +46,17 @@ Even though this app is written in Scala, you can launch it in a regular JVM. Ru
 * `rheem.apps.tpch.csv.lineitem`: URL to the `LINEITEM` file
 
 **Datasets.** The datasets for this app can be generated with the [TPC-H tools](http://www.tpc.org/tpch/). The generated datasets can then be either put into a database and/or a filesystem.
+
+### SINDY
+
+**Description.** This app provides the data profiling algorithm [SINDY](https://subs.emis.de/LNI/Proceedings/Proceedings241/article24.html) that discovers inclusion dependencies in a relational database.
+
+**Running the app.** To run the app, launch the main class:
+```java
+org.qcri.rheem.apps.sindy.Sindy
+```
+Even though this app is written in Scala, you can launch it in a regular JVM. Run the app without parameters to get a description of the required parameters.
+
+**Datasets.** Find below a list of datasets that can be used to benchmark Rheem in combination with this app:
+* CSV files generated with the [TPC-H tools](http://www.tpc.org/tpch/)
+* [other CSV files](https://hpi.de/naumann/projects/repeatability/data-profiling/metanome-ind-algorithms.html)
