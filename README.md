@@ -60,3 +60,16 @@ Even though this app is written in Scala, you can launch it in a regular JVM. Ru
 **Datasets.** Find below a list of datasets that can be used to benchmark Rheem in combination with this app:
 * CSV files generated with the [TPC-H tools](http://www.tpc.org/tpch/)
 * [other CSV files](https://hpi.de/naumann/projects/repeatability/data-profiling/metanome-ind-algorithms.html)
+
+### SGD
+
+**Description.** This app implements the stochastic gradient descent and batch gradient descent algorithms. Both are regression techniques from the area of supervised machine learning, that can learn some linear function given example input and outputs. 
+
+**Running the app.** To run the app, launch the main class:
+```java
+org.qcri.rheem.apps.sgd.SGD
+```
+Even though this app is written in Scala, you can launch it in a regular JVM. Run the app without parameters to get a description of the required parameters.
+
+**Datasets.** Find below a list of datasets that can be used to benchmark Rheem in combination with this app:
+* [HIGGS](https://archive.ics.uci.edu/ml/datasets/HIGGS)
