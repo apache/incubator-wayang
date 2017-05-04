@@ -65,7 +65,7 @@ Even though this app is written in Scala, you can launch it in a regular JVM. Ru
 
 ### SGD
 
-**Description.** This app implements the stochastic gradient descent and batch gradient descent algorithms. Both are regression techniques from the area of supervised machine learning, that can learn some linear function given example input and outputs. As many other machine learning techniques, SGD is a highly iterative algorithm.
+**Description.** This app implements the stochastic gradient descent algorithm. SGD is an optimization algorithm that minimizes a loss function and can be used in many tasks of supervised machine learning. The current implementation uses the logistic loss and can thus, be used for classification. As many other machine learning techniques, SGD is a highly iterative algorithm.
 
 **Running the app.** To run the app, launch the main class:
 ```java
@@ -75,6 +75,7 @@ Even though this app is written in Scala, you can launch it in a regular JVM. Ru
 
 **Datasets.** Find below a list of datasets that can be used to benchmark Rheem in combination with this app:
 * [HIGGS](https://archive.ics.uci.edu/ml/datasets/HIGGS)
+* [Other datasets](http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html)
 
 ### k-means
 
@@ -88,7 +89,7 @@ or
 ```java
 org.qcri.rheem.apps.kmeans.postgres.Kmeans
 ```
-The latter assumes data to reside in a filesystem, while the other assumes data to reside in PostgreSQL. For the latter case, you will have to configure Rheem, such that can access the database.
+The latter assumes data to reside in a filesystem, while the other assumes data to reside in PostgreSQL. For the latter case, you will have to configure Rheem, such that it can access the database.
 Even though this app is written in Scala, you can launch it in a regular JVM. Run the app without parameters to get a description of the required parameters.
 
 **Datasets.** We provide a [data generator](https://github.com/rheem-ecosystem/rheem-benchmark/blob/master/src/test/resources/kmeans-datagenerator.py) to generate files that can be clustered. You can further load these files into the database assuming the following schema:
