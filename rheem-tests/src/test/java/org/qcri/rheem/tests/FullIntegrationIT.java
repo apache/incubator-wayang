@@ -1,12 +1,10 @@
 package org.qcri.rheem.tests;
 
-import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.qcri.rheem.basic.RheemBasics;
 import org.qcri.rheem.basic.data.Record;
-import org.qcri.rheem.basic.data.RecordDinamic;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
@@ -521,107 +519,5 @@ public class FullIntegrationIT {
                 .map(r -> new Record(new Object[]{r.getField(0)}))
                 .collect(Collectors.toList());
         Assert.assertEquals(expected, collector);
-    }
-
-    @Test
-    public void testReadJSONwithJava() throws URISyntaxException, IOException {
-        // Build a Rheem plan.
-        List<RecordDinamic> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.readJSON(RheemPlans.TWITTER_TXT, collector);
-
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
-                .with(Java.basicPlugin());
-
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
-
-        // Verify the plan result.
-        StringBuilder content = new StringBuilder();
-        Files.lines(Paths.get(RheemPlans.TWITTER_TXT)).forEach(content::append);
-        JSONObject json = new JSONObject(content.toString());
-        Assert.assertTrue(
-                ValidJSON.comparateJSON(json, collector.get(0))
-        );
-
-    }
-
-    @Test
-    public void testReadJSONwithSpark() throws URISyntaxException, IOException {
-        // Build a Rheem plan.
-        List<RecordDinamic> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.readJSON(RheemPlans.TWITTER_TXT, collector);
-
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
-                .with(Spark.basicPlugin());
-
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
-
-        // Verify the plan result.
-        StringBuilder content = new StringBuilder();
-        Files.lines(Paths.get(RheemPlans.TWITTER_TXT)).forEach(content::append);
-        JSONObject json = new JSONObject(content.toString());
-
-        Assert.assertTrue(
-                ValidJSON.comparateJSON(json, collector.get(0))
-        );
-    }
-
-    @Test
-    public void testReadJSON() throws URISyntaxException, IOException {
-        // Build a Rheem plan.
-        List<RecordDinamic> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.readJSON(RheemPlans.TWITTER_TXT, collector);
-
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
-                .with(Java.basicPlugin())
-                .with(Spark.basicPlugin());
-
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
-
-        // Verify the plan result.
-        StringBuilder content = new StringBuilder();
-        Files.lines(Paths.get(RheemPlans.TWITTER_TXT)).forEach(content::append);
-        JSONObject json = new JSONObject(content.toString());
-
-        Assert.assertTrue(
-                ValidJSON.comparateJSON(json, collector.get(0))
-        );
-    }
-
-    @Test
-    public void testReadJSONwithTokens() throws URISyntaxException, IOException {
-        List<String> list_tokens = Files.lines(Paths.get(RheemPlans.TOKENS_JSON)).collect(Collectors.toList());
-        System.out.println(list_tokens);
-        String[] tokens = list_tokens.toArray(new String[0]);
-        // Build a Rheem plan.
-        List<RecordDinamic> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.readJSON(RheemPlans.TWITTER_TXT, collector, tokens);
-
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
-                .with(Java.basicPlugin())
-                .with(Spark.basicPlugin());
-
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
-
-        // Verify the plan result.
-        StringBuilder content = new StringBuilder();
-        Files.lines(Paths.get(RheemPlans.TWITTER_TXT)).forEach(content::append);
-        JSONObject json = new JSONObject(content.toString());
-
-        for(String token: list_tokens){
-            Assert.assertTrue(
-                ValidJSON.compare(
-                    ValidJSON.getkeyJSON(json, token),
-                    collector.get(0).getField(token)
-                )
-            );
-        }
     }
 }

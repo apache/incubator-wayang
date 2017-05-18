@@ -3,7 +3,6 @@ package org.qcri.rheem.tests;
 import org.qcri.rheem.api.DataQuantaBuilder;
 import org.qcri.rheem.api.JavaPlanBuilder;
 import org.qcri.rheem.basic.data.Record;
-import org.qcri.rheem.basic.data.RecordDinamic;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.*;
 import org.qcri.rheem.basic.types.RecordType;
@@ -40,10 +39,6 @@ public class RheemPlans {
     public static final URI FILE_OTHER_LINES_TXT = createUri("/other-lines.txt");
 
     public static final URI ULYSSES_TXT = createUri("/ulysses.txt");
-
-    public static final URI TWITTER_TXT = createUri("/twitter_example.json");
-
-    public static final URI TOKENS_JSON = createUri("/tokens_json.txt");
 
     public static URI createUri(String resourcePath) {
         try {
@@ -862,15 +857,6 @@ public class RheemPlans {
 
     }
 
-    /**
-     * Creates a {@link RheemPlan} consisting of a {@link JSONSource} and a {@link LocalCallbackSink}.
-     */
-    public static RheemPlan readJSON(URI inputFileUri, List<RecordDinamic> collector, String ... token_words) {
-        JSONSource jsonSource = new JSONSource(inputFileUri.toString(), token_words);
-        LocalCallbackSink<RecordDinamic> sink = LocalCallbackSink.createCollectingSink(collector, RecordDinamic.class);
-        jsonSource.connectTo(0, sink, 0);
-        return new RheemPlan(sink);
-    }
 
 }
 

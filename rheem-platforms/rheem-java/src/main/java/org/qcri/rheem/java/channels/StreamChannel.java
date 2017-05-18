@@ -105,7 +105,7 @@ public class StreamChannel extends Channel {
 
 
         public <T> void accept(Stream<T> stream) {
-        //    assert this.stream == null;
+            assert this.stream == null;
             this.stream = stream;
             if (this.isMarkedForInstrumentation()) {
                 this.stream = this.stream.filter(dataQuantum -> {
