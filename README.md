@@ -274,6 +274,7 @@ object kmeans {
     val inputUrl = "file:/tmp_kmeans.txt"
     val k = 5
     val iterations = 100
+    implicit val configuration = new Configuration
 
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -331,7 +332,10 @@ object kmeans {
     // Do the k-means loop.
     val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
       points
-        .mapJava(new SelectNearestCentroid)
+        .mapJava(new SelectNearestCentroid,
+          udfLoad = LoadProfileEstimators.createFromSpecification(
+            "my.udf.costfunction.key", configuration
+          ))
         .withBroadcast(currentCentroids, "centroids").withName("Find nearest centroid")
         .reduceByKey(_.cluster, _.add_points(_)).withName("Add up points")
         .withCardinalityEstimator(k)
