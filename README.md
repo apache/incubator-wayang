@@ -262,8 +262,10 @@ import org.qcri.rheem.api._
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
 import org.qcri.rheem.core.function.ExecutionContext
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.spark.Spark
+
 import scala.util.Random
 import scala.collection.JavaConversions._
 
@@ -271,10 +273,10 @@ object kmeans {
   def main(args: Array[String]) {
 
     // Settings
-    val inputUrl = "file:/tmp_kmeans.txt"
+    val inputUrl = "file:/kmeans.txt"
     val k = 5
     val iterations = 100
-    implicit val configuration = new Configuration
+    val configuration = new Configuration
 
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
