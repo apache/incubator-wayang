@@ -262,8 +262,10 @@ import org.qcri.rheem.api._
 import org.qcri.rheem.core.api.{Configuration, RheemContext}
 import org.qcri.rheem.core.function.FunctionDescriptor.ExtendedSerializableFunction
 import org.qcri.rheem.core.function.ExecutionContext
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators
 import org.qcri.rheem.java.Java
 import org.qcri.rheem.spark.Spark
+
 import scala.util.Random
 import scala.collection.JavaConversions._
 
@@ -271,9 +273,10 @@ object kmeans {
   def main(args: Array[String]) {
 
     // Settings
-    val inputUrl = "file:/tmp_kmeans.txt"
+    val inputUrl = "file:/kmeans.txt"
     val k = 5
     val iterations = 100
+    val configuration = new Configuration
 
     // Get a plan builder.
     val rheemContext = new RheemContext(new Configuration)
@@ -331,7 +334,10 @@ object kmeans {
     // Do the k-means loop.
     val finalCentroids = initialCentroids.repeat(iterations, { currentCentroids =>
       points
-        .mapJava(new SelectNearestCentroid)
+        .mapJava(new SelectNearestCentroid,
+          udfLoad = LoadProfileEstimators.createFromSpecification(
+            "my.udf.costfunction.key", configuration
+          ))
         .withBroadcast(currentCentroids, "centroids").withName("Find nearest centroid")
         .reduceByKey(_.cluster, _.add_points(_)).withName("Add up points")
         .withCardinalityEstimator(k)
