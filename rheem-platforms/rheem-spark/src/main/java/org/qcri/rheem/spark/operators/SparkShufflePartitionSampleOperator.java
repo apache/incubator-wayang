@@ -129,18 +129,8 @@ public class SparkShufflePartitionSampleOperator<Type>
     }
 
     @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        // NB: This was not measured but is guesswork, adapted from SparkFilterOperator.
-        final NestableLoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                (in, out) -> 0.23d,
-                550
-        );
-
-        return Optional.of(mainEstimator);
+    public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
+        return Collections.singleton("rheem.spark.shuffle-partition-sample.load");
     }
 
     @Override

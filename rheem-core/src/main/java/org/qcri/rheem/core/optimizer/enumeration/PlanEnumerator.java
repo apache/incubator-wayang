@@ -427,6 +427,23 @@ public class PlanEnumerator {
             } else {
                 assert operator.isExecutionOperator();
                 operatorEnumeration = PlanEnumeration.createSingleton((ExecutionOperator) operator, optimizationContext);
+
+                // Check if the operator is filtered.
+                // However, we must not filter operators that are pre-settled (i.e., that have been executed already).
+                boolean isPresettled = false;
+                OperatorContainer container = operator.getContainer();
+                if (container instanceof OperatorAlternative.Alternative) {
+                    OperatorAlternative.Alternative alternative = (OperatorAlternative.Alternative) container;
+                    OperatorAlternative operatorAlternative = alternative.getOperatorAlternative();
+                    isPresettled = this.presettledAlternatives.get(operatorAlternative) == alternative;
+                }
+                if (!isPresettled) {
+                    OptimizationContext.OperatorContext operatorContext = optimizationContext.getOperatorContext(operator);
+                    if (operatorContext != null && ((ExecutionOperator) operator).isFiltered(operatorContext)) {
+                        this.logger.info("Filtered {} with context {}.", operator, operatorContext);
+                        operatorEnumeration.getPlanImplementations().clear();
+                    }
+                }
             }
 
             if (operatorEnumeration.getPlanImplementations().isEmpty()) {

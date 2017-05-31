@@ -43,16 +43,16 @@ public class SampleMapping implements Mapping {
         return new ReplacementSubplanFactory.OfSingleOperators<SampleOperator>(
                 (matchedOperator, epoch) -> {
                     switch (matchedOperator.getSampleMethod()) {
-                        case ANY:
                         case RANDOM:
                             return new SparkRandomPartitionSampleOperator<>(matchedOperator);
+                        case ANY:
                         case SHUFFLE_PARTITION_FIRST:
                             return new SparkShufflePartitionSampleOperator<>(matchedOperator);
                         case BERNOULLI:
                             return new SparkBernoulliSampleOperator<>(matchedOperator);
                         default:
                             throw new RheemException(String.format(
-                                    "%s sample method is not yet supported in Java platform.",
+                                    "%s sample method is not yet supported in Sample platform.",
                                     matchedOperator.getSampleMethod()
                             ));
                     }

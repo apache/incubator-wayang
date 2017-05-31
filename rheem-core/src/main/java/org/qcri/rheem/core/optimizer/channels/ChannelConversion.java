@@ -84,6 +84,18 @@ public abstract class ChannelConversion {
                                                                        int numExecutions,
                                                                        OptimizationContext optimizationContext);
 
+    /**
+     * Determine whether this instance is suitable to handle the given conversion.
+     *
+     * @param cardinality         the {@link CardinalityEstimate} of data to be converted
+     * @param numExecutions       expected number of executions of this instance
+     * @param optimizationContext provides a {@link Configuration} and keeps around generated optimization information
+     * @return whether this instance should be filtered
+     */
+    public abstract boolean isFiltered(CardinalityEstimate cardinality,
+                                       int numExecutions,
+                                       OptimizationContext optimizationContext);
+
     @Override
     public String toString() {
         return String.format("%s[%s->%s]",
