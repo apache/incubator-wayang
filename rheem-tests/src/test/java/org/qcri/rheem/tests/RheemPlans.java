@@ -17,6 +17,9 @@ import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.java.operators.JavaCollectionSource;
 import org.qcri.rheem.java.operators.JavaDoWhileOperator;
+import org.qcri.rheem.spark.operators.SparkBernoulliSampleOperator;
+import org.qcri.rheem.spark.operators.SparkRandomPartitionSampleOperator;
+import org.qcri.rheem.spark.operators.SparkShufflePartitionSampleOperator;
 import org.qcri.rheem.sqlite3.Sqlite3;
 import org.qcri.rheem.sqlite3.operators.Sqlite3TableSource;
 
@@ -336,6 +339,48 @@ public class RheemPlans {
         mapOperator.connectTo(0, sink, 0);
 
         // Create the RheemPlan.
+        return new RheemPlan(sink);
+    }
+
+    public static RheemPlan sampleInLoop(int sampleSize, int iterations, Collection<Integer> collector, final int... inputValues) {
+
+        // Prepare test data.
+        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(inputValues), Integer.class);
+        source.setName("source");
+
+        CollectionSource<Integer> convergenceSource = new CollectionSource<>(RheemArrays.asList(0), Integer.class);
+        convergenceSource.setName("convergenceSource");
+
+
+        LoopOperator<Integer, Integer> loopOperator = new LoopOperator<>(DataSetType.createDefault(Integer.class),
+                DataSetType.createDefault(Integer.class),
+                (PredicateDescriptor.SerializablePredicate<Collection<Integer>>) collection ->
+                        collection.iterator().next() >= iterations, iterations
+        );
+        loopOperator.setName("loop");
+        loopOperator.initialize(source, convergenceSource);
+
+        // Build the sample operator.
+        SparkShufflePartitionSampleOperator<Integer> sampleOperator =
+                new SparkShufflePartitionSampleOperator<>(
+                        iterationNumber -> sampleSize,
+                        DataSetType.createDefaultUnchecked(Integer.class),
+                        iterationNumber -> 42 + iterationNumber
+                );
+        sampleOperator.setDatasetSize(10);
+        sampleOperator.setName("sample");
+
+        MapOperator<Integer, Integer> counter = new MapOperator<>(
+                new TransformationDescriptor<>(n -> n + 1, Integer.class, Integer.class)
+        );
+        counter.setName("counter");
+        loopOperator.beginIteration(sampleOperator, counter);
+        loopOperator.endIteration(sampleOperator, counter);
+
+        LocalCallbackSink<Integer> sink = LocalCallbackSink.createCollectingSink(collector, Integer.class);
+        sink.setName("sink");
+        loopOperator.outputConnectTo(sink);
+
         return new RheemPlan(sink);
     }
 

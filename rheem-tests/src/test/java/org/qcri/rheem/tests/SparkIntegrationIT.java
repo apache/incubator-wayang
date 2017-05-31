@@ -4,18 +4,23 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.RheemBasics;
 import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.basic.operators.CollectionSource;
-import org.qcri.rheem.basic.operators.FilterOperator;
-import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.basic.operators.*;
+import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.java.Java;
+import org.qcri.rheem.java.operators.JavaLoopOperator;
 import org.qcri.rheem.spark.Spark;
+import org.qcri.rheem.spark.operators.SparkBernoulliSampleOperator;
+import org.qcri.rheem.spark.operators.SparkShufflePartitionSampleOperator;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
 import java.io.IOException;
@@ -363,6 +368,19 @@ public class SparkIntegrationIT {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext().with(Spark.basicPlugin());
 
+        rheemContext.execute(rheemPlan);
+        System.out.println(collector);
+    }
+
+    @Test
+    public void testSampleInLoop() {
+        final List<Integer> collector = new ArrayList<>();
+        RheemPlan rheemPlan = RheemPlans.sampleInLoop(2, 10, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+
+        Configuration config = new Configuration();
+        config.setProperty("spark.executor.cores", "1");
+        RheemContext rheemContext = new RheemContext(config)
+                .with(Spark.basicPlugin());
         rheemContext.execute(rheemPlan);
         System.out.println(collector);
     }
