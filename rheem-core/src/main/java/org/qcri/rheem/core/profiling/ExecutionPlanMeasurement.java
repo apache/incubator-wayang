@@ -83,7 +83,7 @@ public class ExecutionPlanMeasurement extends Measurement {
                     channelNode = new ChannelNode(
                             nextNodeId++,
                             inputChannel.getClass().getCanonicalName(),
-                            inputChannel.getDataSetType().getDataUnitType().getTypeClass().getCanonicalName()
+                            inputChannel.getDataSetType().getDataUnitType().getTypeClass().getName()
                     );
                     channelNodeMap.put(inputChannel, channelNode);
                     instance.channels.add(channelNode);
@@ -101,7 +101,7 @@ public class ExecutionPlanMeasurement extends Measurement {
                     channelNode = new ChannelNode(
                             nextNodeId++,
                             outputChannel.getClass().getCanonicalName(),
-                            outputChannel.getDataSetType().getDataUnitType().getTypeClass().getCanonicalName()
+                            outputChannel.getDataSetType().getDataUnitType().getTypeClass().getName()
                     );
                     channelNodeMap.put(outputChannel, channelNode);
                     instance.channels.add(channelNode);
