@@ -114,6 +114,17 @@ public class ExecutionPlanMeasurement extends Measurement {
         return instance;
     }
 
+    public List<ChannelNode> getChannels() {
+        return channels;
+    }
+
+    public List<OperatorNode> getOperators() {
+        return operators;
+    }
+
+    public List<Link> getLinks() {
+        return links;
+    }
 
     /**
      * Encapsulates a {@link Channel} of the {@link ExecutionPlan}.
@@ -246,7 +257,7 @@ public class ExecutionPlanMeasurement extends Measurement {
     /**
      * A directed link between an {@link OperatorNode} and a {@link ChannelNode} (in any order).
      */
-    private static class Link {
+    public static class Link {
 
         private int source, destination;
 
