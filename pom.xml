@@ -21,7 +21,7 @@
     <groupId>org.qcri.rheem</groupId>
     <artifactId>rheem</artifactId>
     <packaging>pom</packaging>
-    <version>0.2.2-SNAPSHOT</version>
+    <version>0.3.0-SNAPSHOT</version>
 
     <name>Rheem</name>
     <description>Rheem is a tool to build platform-agnostic data processing apps and have them both optimized for and
