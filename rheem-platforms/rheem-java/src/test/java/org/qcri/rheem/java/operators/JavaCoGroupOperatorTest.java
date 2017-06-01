@@ -1,35 +1,43 @@
-package org.qcri.rheem.spark.operators;
+package org.qcri.rheem.java.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
-import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
-import org.qcri.rheem.spark.channels.RddChannel;
+import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.channels.JavaChannelInstance;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
- * Test suite for {@link SparkJoinOperator}.
+ * Test suite for {@link JavaJoinOperator}.
  */
-public class SparkCoGroupOperatorTest extends SparkOperatorTestBase {
+public class JavaCoGroupOperatorTest extends JavaExecutionOperatorTestBase {
 
     @Test
     public void testExecution() {
         // Prepare test data.
-        RddChannel.Instance input0 = this.createRddChannelInstance(Arrays.asList(
-                new Tuple2<>(1, "b"), new Tuple2<>(1, "c"), new Tuple2<>(2, "d"), new Tuple2<>(3, "e")));
-        RddChannel.Instance input1 = this.createRddChannelInstance(Arrays.asList(
+        CollectionChannel.Instance input0 = createCollectionChannelInstance(Arrays.asList(
+                new Tuple2<>(1, "b"),
+                new Tuple2<>(1, "c"),
+                new Tuple2<>(2, "d"),
+                new Tuple2<>(3, "e")
+        ));
+        CollectionChannel.Instance input1 = this.createCollectionChannelInstance(Arrays.asList(
                 new Tuple2<>("x", 1), new Tuple2<>("y", 1), new Tuple2<>("z", 2), new Tuple2<>("w", 4)));
-        RddChannel.Instance output = this.createRddChannelInstance();
+        CollectionChannel.Instance output = createCollectionChannelInstance();
 
-        // Build the operator.
-        SparkCoGroupOperator<Tuple2, Tuple2, Integer> coGroup =
-                new SparkCoGroupOperator<>(
+        // Build the Cartesian operator.
+        JavaCoGroupOperator<Tuple2<Integer, String>, Tuple2<String, Integer>, Integer> coGroup =
+                new JavaCoGroupOperator<>(
+                        DataSetType.createDefaultUnchecked(Tuple2.class),
+                        DataSetType.createDefaultUnchecked(Tuple2.class),
                         new ProjectionDescriptor<>(
                                 DataUnitType.createBasicUnchecked(Tuple2.class),
                                 DataUnitType.createBasic(Integer.class),
@@ -37,21 +45,16 @@ public class SparkCoGroupOperatorTest extends SparkOperatorTestBase {
                         new ProjectionDescriptor<>(
                                 DataUnitType.createBasicUnchecked(Tuple2.class),
                                 DataUnitType.createBasic(Integer.class),
-                                "field1"),
-                        DataSetType.createDefaultUnchecked(Tuple2.class),
-                        DataSetType.createDefaultUnchecked(Tuple2.class)
-                );
-
-        // Set up the ChannelInstances.
-        final ChannelInstance[] inputs = new ChannelInstance[]{input0, input1};
-        final ChannelInstance[] outputs = new ChannelInstance[]{output};
+                                "field1"));
 
         // Execute.
-        this.evaluate(coGroup, inputs, outputs);
+        JavaChannelInstance[] inputs = new JavaChannelInstance[]{input0, input1};
+        JavaChannelInstance[] outputs = new JavaChannelInstance[]{output};
+        evaluate(coGroup, inputs, outputs);
 
         // Verify the outcome.
-        final List<Tuple2<Iterable<Tuple2<Integer, String>>, Iterable<Tuple2<String, Integer>>>> result =
-                output.<Tuple2<Iterable<Tuple2<Integer, String>>, Iterable<Tuple2<String, Integer>>>>provideRdd().collect();
+        final Collection<Tuple2<Iterable<Tuple2<Integer, String>>, Iterable<Tuple2<String, Integer>>>> result =
+                output.provideCollection();
         Collection<Tuple<Collection<Tuple2<Integer, String>>, Collection<Tuple2<String, Integer>>>> expectedGroups =
                 new ArrayList<>(Arrays.asList(
                         new Tuple<Collection<Tuple2<Integer, String>>, Collection<Tuple2<String, Integer>>>(
