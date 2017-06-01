@@ -31,6 +31,7 @@ public class Mappings {
             new IntersectMapping(),
             new CartesianMapping(),
             new JoinMapping(),
+            new CoGroupMapping(),
             new LoopMapping(),
             new DoWhileMapping(),
             new RepeatMapping(),
