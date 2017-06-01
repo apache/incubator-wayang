@@ -444,6 +444,43 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     joinOperator
   }
 
+  /**
+    * Feeds this and a further instance into a [[CoGroupOperator]].
+    *
+    * @param thisKeyUdf UDF to extract keys from data quanta in this instance
+    * @param that       the other instance
+    * @param thatKeyUdf UDF to extract keys from data quanta from `that` instance
+    * @return a new instance representing the [[CoGroupOperator]]'s output
+    */
+  def coGroup[ThatOut: ClassTag, Key: ClassTag]
+  (thisKeyUdf: Out => Key,
+   that: DataQuanta[ThatOut],
+   thatKeyUdf: ThatOut => Key)
+  : DataQuanta[org.qcri.rheem.basic.data.Tuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] =
+    coGroupJava(toSerializableFunction(thisKeyUdf), that, toSerializableFunction(thatKeyUdf))
+
+  /**
+    * Feeds this and a further instance into a [[CoGroupOperator]].
+    *
+    * @param thisKeyUdf UDF to extract keys from data quanta in this instance
+    * @param that       the other instance
+    * @param thatKeyUdf UDF to extract keys from data quanta from `that` instance
+    * @return a new instance representing the [[CoGroupOperator]]'s output
+    */
+  def coGroupJava[ThatOut: ClassTag, Key: ClassTag]
+  (thisKeyUdf: SerializableFunction[Out, Key],
+   that: DataQuanta[ThatOut],
+   thatKeyUdf: SerializableFunction[ThatOut, Key])
+  : DataQuanta[org.qcri.rheem.basic.data.Tuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] = {
+    require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
+    val coGroupOperator = new CoGroupOperator(
+      new TransformationDescriptor(thisKeyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
+      new TransformationDescriptor(thatKeyUdf, basicDataUnitType[ThatOut], basicDataUnitType[Key])
+    )
+    this.connectTo(coGroupOperator, 0)
+    that.connectTo(coGroupOperator, 1)
+    coGroupOperator
+  }
 
   /**
     * Feeds this and a further instance into a [[SortOperator]].
@@ -825,6 +862,16 @@ class KeyedDataQuanta[Out: ClassTag, Key: ClassTag](val dataQuanta: DataQuanta[O
   def join[ThatOut: ClassTag](that: KeyedDataQuanta[ThatOut, Key]):
   DataQuanta[org.qcri.rheem.basic.data.Tuple2[Out, ThatOut]] =
     dataQuanta.joinJava[ThatOut, Key](this.keyExtractor, that.dataQuanta, that.keyExtractor)
+
+  /**
+    * Performs a co-group. The grouping fields are governed by the [[KeyedDataQuanta]]'s keys.
+    *
+    * @param that the other [[KeyedDataQuanta]] to co-group with
+    * @return the co-grouped [[DataQuanta]]
+    */
+  def coGroup[ThatOut: ClassTag](that: KeyedDataQuanta[ThatOut, Key]):
+  DataQuanta[org.qcri.rheem.basic.data.Tuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] =
+    dataQuanta.coGroupJava[ThatOut, Key](this.keyExtractor, that.dataQuanta, that.keyExtractor)
 
 }
 

@@ -328,6 +328,32 @@ class ApiTest {
     Assert.assertEquals(expectedValues, result.toSet)
   }
 
+
+  @Test
+  def testCoGroup() = {
+    // Set up RheemContext.
+    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+
+    val inputValues1 = Array(("Water", 0), ("Cola", 5), ("Juice", 10))
+    val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
+
+    val builder = new PlanBuilder(rheem)
+    val dataQuanta1 = builder.loadCollection(inputValues1)
+    val dataQuanta2 = builder.loadCollection(inputValues2)
+    val result = dataQuanta1
+      .coGroup[(String, String), String](_._1, dataQuanta2, _._2)
+      .collect()
+
+    import scala.collection.JavaConversions._
+    val actualValues = result.map(coGroup => (coGroup.field0.toSet, coGroup.field1.toSet)).toSet
+    val expectedValues = Set(
+      (Set(("Water", 0)), Set(("Tap water", "Water"))),
+      (Set(("Cola", 5)), Set()),
+      (Set(("Juice", 10)), Set(("Apple juice", "Juice"), ("Orange juice", "Juice")))
+    )
+    Assert.assertEquals(expectedValues, actualValues)
+  }
+
   @Test
   def testIntersect() = {
     // Set up RheemContext.
