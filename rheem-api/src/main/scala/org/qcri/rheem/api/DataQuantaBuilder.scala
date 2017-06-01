@@ -253,6 +253,20 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
                          thatKeyUdf: SerializableFunction[ThatOut, Key]) =
     new JoinDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
 
+  /**
+    * Feed the built [[DataQuanta]] of this and the given instance into a
+    * [[org.qcri.rheem.basic.operators.CoGroupOperator]].
+    *
+    * @param thisKeyUdf the key extraction UDF for this instance
+    * @param that       the other [[DataQuantaBuilder]] to join with
+    * @param thatKeyUdf the key extraction UDF for `that` instance
+    * @return a [[CoGroupDataQuantaBuilder]]
+    */
+  def coGroup[ThatOut, Key](thisKeyUdf: SerializableFunction[Out, Key],
+                         that: DataQuantaBuilder[_, ThatOut],
+                         thatKeyUdf: SerializableFunction[ThatOut, Key]) =
+    new CoGroupDataQuantaBuilder(this, that, thisKeyUdf, thatKeyUdf)
+
 
   /**
     * Feed the built [[DataQuanta]] of this and the given instance into a
@@ -1265,6 +1279,119 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
 
 }
 
+/**
+  * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CoGroupOperator]]s.
+  *
+  * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+  * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
+  * @param keyUdf0          first key extraction UDF for the [[org.qcri.rheem.basic.operators.CoGroupOperator]]
+  * @param keyUdf1          first key extraction UDF for the [[org.qcri.rheem.basic.operators.CoGroupOperator]]
+  */
+class CoGroupDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_, In0],
+                                           inputDataQuanta1: DataQuantaBuilder[_, In1],
+                                           keyUdf0: SerializableFunction[In0, Key],
+                                           keyUdf1: SerializableFunction[In1, Key])
+                                          (implicit javaPlanBuilder: JavaPlanBuilder)
+  extends BasicDataQuantaBuilder[CoGroupDataQuantaBuilder[In0, In1, Key], RT2[java.lang.Iterable[In0], java.lang.Iterable[In1]]] {
+
+  /** [[ClassTag]] or surrogate of [[Key]] */
+  implicit var keyTag: ClassTag[Key] = _
+
+  /** [[LoadEstimator]] to estimate the CPU load of the [[keyUdf0]]. */
+  private var keyUdf0CpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf0]]. */
+  private var keyUdf0RamEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the CPU load of the [[keyUdf1]]. */
+  private var keyUdf1CpuEstimator: LoadEstimator = _
+
+  /** [[LoadEstimator]] to estimate the RAM load of the [[keyUdf1]]. */
+  private var keyUdf1RamEstimator: LoadEstimator = _
+
+  // Try to infer the type classes from the UDFs.
+  locally {
+    val parameters = ReflectionUtils.getTypeParameters(keyUdf0.getClass, classOf[SerializableFunction[_, _]])
+    parameters.get("Input") match {
+      case cls: Class[In0] => inputDataQuanta0.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      case _ => logger.warn("Could not infer types from {}.", keyUdf0)
+    }
+
+    this.keyTag = parameters.get("Output") match {
+      case cls: Class[Key] => ClassTag(cls)
+      case _ =>
+        logger.warn("Could not infer types from {}.", keyUdf0)
+        ClassTag(DataSetType.none.getDataUnitType.getTypeClass)
+    }
+  }
+  locally {
+    val parameters = ReflectionUtils.getTypeParameters(keyUdf1.getClass, classOf[SerializableFunction[_, _]])
+    parameters.get("Input") match {
+      case cls: Class[In1] => inputDataQuanta1.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      case _ => logger.warn("Could not infer types from {}.", keyUdf0)
+    }
+
+    this.keyTag = parameters.get("Output") match {
+      case cls: Class[Key] => ClassTag(cls)
+      case _ =>
+        logger.warn("Could not infer types from {}.", keyUdf0)
+        ClassTag(DataSetType.none.getDataUnitType.getTypeClass)
+    }
+  }
+  // Since we are currently not looking at type parameters, we can statically determine the output type.
+  locally {
+    this.outputTypeTrap.dataSetType = dataSetType[RT2[_, _]]
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the first key extraction UDF. Currently effectless.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withThisKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.keyUdf0CpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of first the key extraction UDF. Currently effectless.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withThisKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.keyUdf0RamEstimator = udfRamEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the CPU load of the second key extraction UDF. Currently effectless.
+    *
+    * @param udfCpuEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withThatKeyUdfCpuEstimator(udfCpuEstimator: LoadEstimator) = {
+    this.keyUdf1CpuEstimator = udfCpuEstimator
+    this
+  }
+
+  /**
+    * Set a [[LoadEstimator]] for the RAM load of the second key extraction UDF. Currently effectless.
+    *
+    * @param udfRamEstimator the [[LoadEstimator]]
+    * @return this instance
+    */
+  def withThatKeyUdfRamEstimator(udfRamEstimator: LoadEstimator) = {
+    this.keyUdf1RamEstimator = udfRamEstimator
+    this
+  }
+
+  override protected def build =
+    inputDataQuanta0.dataQuanta().coGroupJava(keyUdf0, inputDataQuanta1.dataQuanta(), keyUdf1)(inputDataQuanta1.classTag, this.keyTag)
+
+}
+
 
 /**
   * [[DataQuantaBuilder]] implementation for [[org.qcri.rheem.basic.operators.CartesianOperator]]s.
@@ -1517,12 +1644,21 @@ class KeyedDataQuantaBuilder[Out, Key](private val dataQuantaBuilder: DataQuanta
                                       (implicit javaPlanBuilder: JavaPlanBuilder) {
 
   /**
-    * Joins this instances with the given one via their keys.
+    * Joins this instance with the given one via their keys.
     *
     * @param that the instance to join with
     * @return a [[DataQuantaBuilder]] representing the join product
     */
   def join[ThatOut](that: KeyedDataQuantaBuilder[ThatOut, Key]) =
     dataQuantaBuilder.join(this.keyExtractor, that.dataQuantaBuilder, that.keyExtractor)
+
+  /**
+    * Co-groups this instance with the given one via their keys.
+    *
+    * @param that the instance to join with
+    * @return a [[DataQuantaBuilder]] representing the co-group product
+    */
+  def coGroup[ThatOut](that: KeyedDataQuantaBuilder[ThatOut, Key]) =
+    dataQuantaBuilder.coGroup(this.keyExtractor, that.dataQuantaBuilder, that.keyExtractor)
 
 }
