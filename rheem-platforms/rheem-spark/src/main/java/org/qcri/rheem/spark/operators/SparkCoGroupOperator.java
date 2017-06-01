@@ -108,7 +108,7 @@ public class SparkCoGroupOperator<In0, In1, Key> extends CoGroupOperator<In0, In
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.spark.intersect.load";
+        return "rheem.spark.cogroup.load";
     }
 
     @Override
