@@ -36,6 +36,20 @@ public class RheemCollections {
     }
 
     /**
+     * Provides the given {@code iterable} as {@link Set}, thereby checking if it is already a {@link Set}.
+     */
+    public static <T> Set<T> asSet(Iterable<T> iterable) {
+        if (iterable instanceof Set<?>) {
+            return (Set<T>) iterable;
+        }
+        Set<T> set = new HashSet<>();
+        for (T t : iterable) {
+            set.add(t);
+        }
+        return set;
+    }
+
+    /**
      * Provides the given {@code values} as {@link Set}.
      */
     public static <T> Set<T> asSet(T... values) {

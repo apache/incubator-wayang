@@ -15,7 +15,7 @@ import java.util.Optional;
 
 /**
  * This operator groups both inputs by some key and then matches groups with the same key. If a key appears in only
- * one of the input datasets, then the according group is matched with {@code null}.
+ * one of the input datasets, then the according group is matched with an empty group.
  */
 public class CoGroupOperator<InputType0, InputType1, Key>
         extends BinaryToUnaryOperator<InputType0, InputType1, Tuple2<Iterable<InputType0>, Iterable<InputType1>>> {
