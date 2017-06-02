@@ -61,8 +61,8 @@
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
-            <artifactId>rheem-profiler</artifactId>
-            <version>0.3.0-SNAPSHOT</version>
+            <artifactId>rheem-profiler_2.11</artifactId>
+            <version>0.3.0-RC1</version>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>

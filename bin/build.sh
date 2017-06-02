@@ -34,6 +34,8 @@ failures=()
 successes=()
 
 for scala_version in "${scala_versions[@]}"; do
+	echo "Running 'mvn ${mvn_opts[@]}' with Scala $scala_version..."
+
 	"$basedir/bin/change-scala-version.sh" "$scala_version"
 	if mvn "${mvn_opts[@]}"; then
 		successes+=("$scala_version")
