@@ -27,7 +27,7 @@ Rheem is available via Maven Central. To use it with Maven, for instance, includ
 <dependency> 
   <groupId>org.qcri.rheem</groupId>
   <artifactId>rheem-***</artifactId>
-  <version>0.2.1</version> 
+  <version>0.3.0</version> 
 </dependency>
 ```
 Note the `***`: Rheem ships with multiple modules that can be included in your app, depending on how you want to use it:
