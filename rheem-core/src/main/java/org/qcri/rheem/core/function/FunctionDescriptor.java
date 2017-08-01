@@ -7,10 +7,7 @@ import org.qcri.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
 
 import java.io.Serializable;
 import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 /**
  * A function operates on single data units or collections of those.
@@ -105,6 +102,20 @@ public abstract class FunctionDescriptor {
     }
 
     public interface ExtendedSerializablePredicate<T> extends SerializablePredicate<T>, ExtendedFunction {
+
+    }
+
+    /**
+     * Decorates the default {@link Consumer} with {@link Serializable}, which is required by some distributed frameworks.
+     */
+    @FunctionalInterface
+    public interface SerializableConsumer<T> extends Consumer<T>, Serializable {
+
+    }
+    /**
+     * Extends a {@link SerializableConsumer} to an {@link ExtendedFunction}.
+     */
+    public interface ExtendedSerializableConsumer<T> extends SerializableConsumer<T>, ExtendedFunction{
 
     }
 }

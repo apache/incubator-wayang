@@ -43,6 +43,10 @@ public class RheemPlans {
 
     public static final URI ULYSSES_TXT = createUri("/ulysses.txt");
 
+    public static final URI FILE_WITH_KEY_1 = createUri("/lines-with-key1.txt");
+
+    public static final URI FILE_WITH_KEY_2 = createUri("/lines-with-key2.txt");
+
     public static URI createUri(String resourcePath) {
         try {
             return Thread.currentThread().getClass().getResource(resourcePath).toURI();

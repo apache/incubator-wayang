@@ -18,6 +18,7 @@
         <module>rheem-graphchi</module>
         <module>rheem-jdbc-template</module>
         <module>rheem-sqlite3</module>
+        <module>rheem-flink</module>
     </modules>
 
 
