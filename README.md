@@ -1,4 +1,4 @@
-# Rheem Benchmarks <img align="right" width="128px" src="http://da.qcri.org/rheem/images/rheem.png" alt="Rheem logo">
+# Rheem Benchmarks <img align="right" width="128px" src="http://da.qcri.org/rheem/img/logo.png" alt="Rheem logo">
 
 [![Gitter chat](https://badges.gitter.im/rheem-ecosystem/Lobby.png)](https://gitter.im/rheem-ecosystem/Lobby)
 
