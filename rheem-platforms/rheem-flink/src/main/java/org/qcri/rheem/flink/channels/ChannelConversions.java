@@ -5,24 +5,23 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.flink.operators.FlinkCollectionSink;
-import org.qcri.rheem.flink.operators.FlinkCollectionSource;
-import org.qcri.rheem.flink.operators.FlinkObjectFileSink;
-import org.qcri.rheem.flink.operators.FlinkObjectFileSource;
+import org.qcri.rheem.flink.operators.*;
+import org.qcri.rheem.flink.platform.FlinkPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
+import org.qcri.rheem.java.operators.JavaTsvFileSink;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Created by bertty on 12-07-17.
+ * {@link ChannelConversion}s used by the {@link FlinkPlatform}.
  */
 public class ChannelConversions {
 
-      /*  public static final ChannelConversion COLLECTION_TO_DATASET = new DefaultChannelConversion(
+        public static final ChannelConversion COLLECTION_TO_DATASET = new DefaultChannelConversion(
                 CollectionChannel.DESCRIPTOR,
                 DataSetChannel.DESCRIPTOR,
-                () -> new FlinkCollectionSource<>(DataSetType.createDefault(Void.class));
+                () -> new FlinkCollectionSource<>(DataSetType.createDefault(Void.class))
         );
 
         public static final ChannelConversion DATASET_TO_COLLECTION = new DefaultChannelConversion(
@@ -42,12 +41,17 @@ public class ChannelConversions {
                 FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR,
                 () -> new FlinkObjectFileSink<>(DataSetType.createDefault(Void.class))
         );
-        */
+        public static final ChannelConversion DATASET_TO_HDFS_TSV = new DefaultChannelConversion(
+                DataSetChannel.DESCRIPTOR,
+                FileChannel.HDFS_TSV_DESCRIPTOR,
+                () -> new FlinkTsvFileSink<>(DataSetType.createDefaultUnchecked(Tuple2.class))
+        );
 
         public static Collection<ChannelConversion> ALL = Arrays.asList(
-         /*   COLLECTION_TO_DATASET,
+            COLLECTION_TO_DATASET,
             DATASET_TO_COLLECTION,
             OBJECT_FILE_TO_DATASET,
-            DATASET_TO_OBJECT_FILE*/
+            DATASET_TO_OBJECT_FILE,
+            DATASET_TO_HDFS_TSV
         );
 }

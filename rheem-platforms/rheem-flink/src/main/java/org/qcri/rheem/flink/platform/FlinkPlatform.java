@@ -20,8 +20,8 @@ import org.qcri.rheem.flink.execution.FlinkExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * {@link Platform} for Apache Spark.
@@ -41,14 +41,13 @@ public class FlinkPlatform extends Platform {
     };
 
     private static final String[] OPTIONAL_FLINK_PROPERTIES = {
-
     };
 
     /**
      * <i>Lazy-initialized.</i> Maintains a reference to a {@link ExecutionEnvironment}. This instance's reference, however,
      * does not hold a counted reference, so it might be disposed.
      */
-    private FlinkContextReference flinkContextReference;
+    private FlinkContextReference flinkContextReference = null;
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -69,39 +68,39 @@ public class FlinkPlatform extends Platform {
      * @return a {@link FlinkContextReference} wrapping the {@link ExecutionEnvironment}
      */
     public FlinkContextReference getFlinkContext(Job job) {
-        //load of parameters HERE!!!!1
         Configuration conf = job.getConfiguration();
-        if(this.flinkContextReference == null) {
-
+        if(this.flinkContextReference == null)
             switch (conf.getStringProperty("rheem.flink.mode.run")) {
-                case "local":
-                    this.flinkContextReference = new FlinkContextReference(
-                                                        job.getCrossPlatformExecutor(),
-                                                        ExecutionEnvironment.createLocalEnvironment()
-                                                );
-                    break;
-                case "distribution":
-                    this.flinkContextReference = new FlinkContextReference(
-                                                        job.getCrossPlatformExecutor(),
-                                                        ExecutionEnvironment.getExecutionEnvironment()
-                                                );
-                    break;
-                case "collection":
-                default:
-                    this.flinkContextReference = new FlinkContextReference(
-                                                        job.getCrossPlatformExecutor(),
-                                                        new CollectionEnvironment()
-                                                );
-                    break;
-            }
+            case "local":
+                this.flinkContextReference = new FlinkContextReference(
+                        job.getCrossPlatformExecutor(),
+                        ExecutionEnvironment.createLocalEnvironment(),
+                        (int)conf.getLongProperty("rheem.flink.paralelism")
+                );
+                break;
+            case "distribution":
+                String[] jars = getJars(job);
+                this.flinkContextReference = new FlinkContextReference(
+                        job.getCrossPlatformExecutor(),
+                        ExecutionEnvironment.createRemoteEnvironment(
+                                conf.getStringProperty("rheem.flink.master"),
+                                Integer.parseInt(conf.getStringProperty("rheem.flink.port")),
+                                jars
+                        ),
+                        (int)conf.getLongProperty("rheem.flink.paralelism")
+                );
+                break;
+            case "collection":
+            default:
+                this.flinkContextReference = new FlinkContextReference(
+                        job.getCrossPlatformExecutor(),
+                        new CollectionEnvironment(),
+                        1
+                );
+                break;
         }
-
         return this.flinkContextReference;
 
-    }
-
-    private void registerJarIfNotNull(String path) {
-        if (path != null);
     }
 
     @Override
@@ -116,13 +115,47 @@ public class FlinkPlatform extends Platform {
 
     @Override
     public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
-        return null;
+        int cpuMhz = (int) configuration.getLongProperty("rheem.flink.cpu.mhz");
+        int numCores = (int) ( configuration.getLongProperty("rheem.flink.paralelism"));
+        double hdfsMsPerMb = configuration.getDoubleProperty("rheem.flink.hdfs.ms-per-mb");
+        double networkMsPerMb = configuration.getDoubleProperty("rheem.flink.network.ms-per-mb");
+        double stretch = configuration.getDoubleProperty("rheem.flink.stretch");
+        return LoadProfileToTimeConverter.createTopLevelStretching(
+                LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000d)),
+                LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000d),
+                LoadToTimeConverter.createLinearCoverter(networkMsPerMb / 1000000d),
+                (cpuEstimate, diskEstimate, networkEstimate) -> cpuEstimate.plus(diskEstimate).plus(networkEstimate),
+                stretch
+        );
     }
 
     @Override
     public TimeToCostConverter createTimeToCostConverter(Configuration configuration) {
-        return null;
+        return new TimeToCostConverter(
+                configuration.getDoubleProperty("rheem.flink.costs.fix"),
+                configuration.getDoubleProperty("rheem.flink.costs.per-ms")
+        );
     }
 
 
+    private String[] getJars(Job job){
+        List<String> jars = new ArrayList<>(5);
+        List<Class> clazzs = Arrays.asList(new Class[]{FlinkPlatform.class, RheemBasic.class, RheemContext.class});
+
+        clazzs.stream().map(
+                ReflectionUtils::getDeclaringJar
+        ).filter(
+                element -> element != null
+        ).forEach(jars::add);
+
+
+        final Set<String> udfJarPaths = job.getUdfJarPaths();
+        if (udfJarPaths.isEmpty()) {
+            this.logger.warn("Non-local SparkContext but not UDF JARs have been declared.");
+        } else {
+            udfJarPaths.stream().filter(a -> a != null).forEach(jars::add);
+        }
+
+        return jars.toArray(new String[0]);
+    }
 }

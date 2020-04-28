@@ -88,7 +88,7 @@ public class FileSystems {
 
             // Look for Spark-like directory structure.
             if (children.stream().anyMatch(child -> child.endsWith("_SUCCESS"))) {
-                return children.stream().filter(child -> child.matches(".*/part-\\d+")).collect(Collectors.toList());
+                return children.stream().filter(child -> child.matches(".*/part-[m|r|M|R|-]{0,2}\\d+")).collect(Collectors.toList());
             } else {
                 throw new RheemException("Could not identify directory structure: " + children);
             }

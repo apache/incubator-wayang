@@ -1,6 +1,7 @@
 package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.common.functions.MapPartitionFunction;
+import org.apache.flink.api.common.functions.RichMapPartitionFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.util.Collector;
 import org.qcri.rheem.basic.operators.MapPartitionsOperator;
@@ -16,6 +17,7 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
+import org.qcri.rheem.flink.execution.FlinkExecutionContext;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
 import java.util.*;
@@ -66,17 +68,47 @@ public class FlinkMapPartitionsOperator<InputType, OutputType>
         final DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         final DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
 
-        final MapPartitionFunction<InputType, OutputType> mapFunction =
-            flinkExecutor.compiler.compile(this.getFunctionDescriptor());
-
+        final DataSet dataSetInput = input.provideDataSet();
         final Class class_output = this.getOutput().getType().getDataUnitType().getTypeClass();
+        DataSet dataSetOutput;
+        if( this.getNumBroadcastInputs() > 0 ) {
+            Tuple<String, DataSet> names = searchBroadcast(inputs);
 
-        final DataSet<InputType> dataSetInput = input.provideDataSet();
-        final DataSet<OutputType> dataSetOutput = dataSetInput.mapPartition(mapFunction).returns(class_output);
+            FlinkExecutionContext fex = new FlinkExecutionContext(this, inputs, 0);
+
+            final RichMapPartitionFunction<InputType, OutputType> richFunction =
+                    flinkExecutor.compiler.compile(
+                            this.getFunctionDescriptor(),
+                            fex
+                    );
+
+            fex.setRichFunction(richFunction);
+
+            dataSetOutput = dataSetInput
+                    .mapPartition(richFunction)
+                    .withBroadcastSet(names.field1, names.field0)
+                    .returns(class_output);
+
+        }else{
+            final MapPartitionFunction<InputType, OutputType> mapFunction =
+                    flinkExecutor.compiler.compile(this.getFunctionDescriptor());
+
+            dataSetOutput = dataSetInput.mapPartition(mapFunction).returns(class_output);
+        }
 
         output.accept(dataSetOutput, flinkExecutor);
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
+    }
+
+    private Tuple<String, DataSet> searchBroadcast(ChannelInstance[] inputs) {
+        for(int i = 0; i < this.inputSlots.length; i++){
+            if( this.inputSlots[i].isBroadcast() ){
+                DataSetChannel.Instance dataSetChannel = (DataSetChannel.Instance)inputs[inputSlots[i].getIndex()];
+                return new Tuple<>(inputSlots[i].getName(), dataSetChannel.provideDataSet());
+            }
+        }
+        return null;
     }
 
     @Override

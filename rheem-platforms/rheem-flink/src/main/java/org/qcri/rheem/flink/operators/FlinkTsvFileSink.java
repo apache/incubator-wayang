@@ -1,16 +1,11 @@
 package org.qcri.rheem.flink.operators;
 
-import org.apache.flink.api.common.io.BinaryOutputFormat;
-import org.apache.flink.api.common.io.FileOutputFormat;
-import org.apache.flink.api.java.operators.DataSink;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.core.fs.FileSystem;
-import org.apache.flink.core.fs.Path;
-import org.apache.flink.core.memory.DataOutputView;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.DataSet;
 import org.qcri.rheem.basic.channels.FileChannel;
+import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -18,33 +13,28 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
-import org.qcri.rheem.flink.compiler.RheemFileOutputFormat;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
-import org.qcri.rheem.flink.platform.FlinkPlatform;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * {@link Operator} for the {@link FlinkPlatform} that creates a sequence file.
- *
- * @see FlinkObjectFileSink
+ * Created by bertty on 31-10-17.
  */
-public class FlinkObjectFileSink<Type> extends UnarySink<Type> implements FlinkExecutionOperator {
+public class FlinkTsvFileSink<Type extends Tuple2<?, ?>> extends UnarySink<Type> implements FlinkExecutionOperator {
 
     private final String targetPath;
 
-
-    public FlinkObjectFileSink(DataSetType<Type> type) {
+    public FlinkTsvFileSink(DataSetType<Type> type) {
         this(null, type);
     }
 
-    public FlinkObjectFileSink(String targetPath, DataSetType<Type> type) {
+    public FlinkTsvFileSink(String targetPath, DataSetType<Type> type) {
         super(type);
+        assert type.equals(DataSetType.createDefault(Tuple2.class)) :
+                String.format("Illegal type for %s: %s", this, type);
         this.targetPath = targetPath;
     }
 
@@ -53,19 +43,26 @@ public class FlinkObjectFileSink<Type> extends UnarySink<Type> implements FlinkE
             ChannelInstance[] inputs,
             ChannelInstance[] outputs,
             FlinkExecutor flinkExecutor,
-            OptimizationContext.OperatorContext operatorContext
-    ) throws Exception {
-
+            OptimizationContext.OperatorContext operatorContext) {
         assert inputs.length == this.getNumInputs();
-        assert outputs.length <= 1;
 
         final FileChannel.Instance output = (FileChannel.Instance) outputs[0];
         final String targetPath = output.addGivenOrTempPath(this.targetPath, flinkExecutor.getConfiguration());
 
-        DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
-        final DataSink<Type> tDataSink = input.<Type>provideDataSet()
-                .write(new RheemFileOutputFormat<Type>(targetPath), targetPath, FileSystem.WriteMode.OVERWRITE)
-                .setParallelism(1);
+        final DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
+
+        DataSet<String> map = input.<Type>provideDataSet()
+                .map(new MapFunction<Type, String>() {
+                    private Type dataQuantum;
+
+                    @Override
+                    public String map(Type dataQuantum) throws Exception {
+                        this.dataQuantum = dataQuantum;
+                        Tuple2 tuple2 = (Tuple2) dataQuantum;
+                        return String.valueOf(tuple2.field0) + '\t' + String.valueOf(tuple2.field1);                    }
+                }).setParallelism(flinkExecutor.getNumDefaultPartitions());
+
+        map.writeAsText(targetPath).setParallelism(1);
 
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
@@ -73,26 +70,27 @@ public class FlinkObjectFileSink<Type> extends UnarySink<Type> implements FlinkE
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new FlinkObjectFileSink<>(targetPath, this.getType());
+        return new FlinkTsvFileSink<>(this.targetPath, this.getType());
     }
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.flink.objectfilesink.load";
+        return "rheem.flink.tsvfilesink.load";
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        return Collections.singletonList(DataSetChannel.DESCRIPTOR);
+        return Arrays.asList(DataSetChannel.DESCRIPTOR);
     }
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        return Collections.singletonList(FileChannel.HDFS_OBJECT_FILE_DESCRIPTOR);
+        return Collections.singletonList(FileChannel.HDFS_TSV_DESCRIPTOR);
     }
 
     @Override
     public boolean containsAction() {
         return true;
     }
+
 }

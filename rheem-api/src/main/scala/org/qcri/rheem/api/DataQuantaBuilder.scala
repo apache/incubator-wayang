@@ -1,6 +1,7 @@
 package org.qcri.rheem.api
 
 
+import java.lang.reflect.ParameterizedType
 import java.util.function.{Consumer, IntUnaryOperator, Function => JavaFunction}
 import java.util.{Collection => JavaCollection}
 
@@ -805,8 +806,13 @@ class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In
       case cls: Class[In] => inputDataQuanta.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
       case _ => logger.warn("Could not infer types from {}.", udf)
     }
-
-    // TODO: Extract the "T" from "Iterable[T]"
+    val originalClass = ReflectionUtils.getWrapperClass(parameters.get("Output"), 0)
+    originalClass match {
+      case cls: Class[Out] => {
+        this.outputTypeTrap.dataSetType= DataSetType.createDefault(cls)
+      }
+      case _ => logger.warn("Could not infer types from {}.", udf)
+    }
   }
 
   /**
@@ -856,7 +862,24 @@ class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder
   /** Selectivity of the filter predicate. */
   private var selectivity: ProbabilisticDoubleInterval = _
 
-  // TODO: Try to infer the type classes from the udf.
+  // Try to infer the type classes from the udf.
+  locally {
+    val parameters = ReflectionUtils.getTypeParameters(udf.getClass, classOf[SerializableFunction[_, _]])
+    parameters.get("Input") match {
+      case cls: Class[In] => {
+        inputDataQuanta.outputTypeTrap.dataSetType = DataSetType.createDefault(cls)
+      }
+      case _ => logger.warn("Could not infer types from {}.", udf)
+    }
+    val originalClass = ReflectionUtils.getWrapperClass(parameters.get("Output"), 0)
+    originalClass match {
+      case cls: Class[Out] => {
+        this.outputTypeTrap.dataSetType= DataSetType.createDefault(cls)
+      }
+      case _ => logger.warn("Could not infer types from {}.", udf)
+    }
+  }
+
 
   /**
     * Set a [[LoadProfileEstimator]] for the load of the UDF.

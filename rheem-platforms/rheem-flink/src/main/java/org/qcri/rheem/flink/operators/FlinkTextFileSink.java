@@ -26,15 +26,15 @@ import java.util.Optional;
 /**
  * Implementation of the {@link TextFileSink} operator for the Flink platform.
  */
-public class FlinkTextFileSink<T> extends TextFileSink<T> implements FlinkExecutionOperator{
+public class FlinkTextFileSink<Type> extends TextFileSink<Type> implements FlinkExecutionOperator{
 
 
 
-    public FlinkTextFileSink(String textFileUrl, TransformationDescriptor<T, String> formattingDescriptor) {
+    public FlinkTextFileSink(String textFileUrl, TransformationDescriptor<Type, String> formattingDescriptor) {
         super(textFileUrl, formattingDescriptor);
     }
 
-    public FlinkTextFileSink(TextFileSink<T> that) {
+    public FlinkTextFileSink(TextFileSink<Type> that) {
         super(that);
     }
 
@@ -47,16 +47,11 @@ public class FlinkTextFileSink<T> extends TextFileSink<T> implements FlinkExecut
         assert inputs.length == 1;
         assert outputs.length == 0;
 
-        DataSet<T> inputDataset = ((DataSetChannel.Instance) inputs[0]).provideDataSet();
+        DataSet<Type> inputDataset = ((DataSetChannel.Instance) inputs[0]).provideDataSet();
 
-    //   final MapFunction<T, String> formattingFunction =
-    //            flinkExecutor.getCompiler().compile(this.formattingDescriptor);
-
-        final TextOutputFormat.TextFormatter<T> fileOutputFormat = flinkExecutor.getCompiler().compileOutput(this.formattingDescriptor);
-
+        final TextOutputFormat.TextFormatter<Type> fileOutputFormat = flinkExecutor.getCompiler().compileOutput(this.formattingDescriptor);
 
         inputDataset.writeAsFormattedText(this.textFileUrl, fileOutputFormat);
-       // inputDataset.map(formattingFunction).writeAsText(this.textFileUrl);
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }

@@ -1,7 +1,11 @@
 package org.qcri.rheem.flink.operators;
 
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.functions.KeySelector;
+import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.qcri.rheem.basic.operators.DistinctOperator;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -10,19 +14,21 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
+import org.qcri.rheem.flink.compiler.KeySelectorDistinct;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.*;
+import java.util.function.Function;
 
 
 /**
  * Flink implementation of the {@link DistinctOperator}.
  */
-public class FlinkDistinctOperator<T>
-        extends DistinctOperator<T>
+public class FlinkDistinctOperator<Type>
+        extends DistinctOperator<Type>
         implements FlinkExecutionOperator {
 
 
@@ -31,7 +37,7 @@ public class FlinkDistinctOperator<T>
      *
      * @param type type of the dataset elements
      */
-    public FlinkDistinctOperator(DataSetType<T> type) {
+    public FlinkDistinctOperator(DataSetType<Type> type) {
         super(type);
     }
 
@@ -40,7 +46,7 @@ public class FlinkDistinctOperator<T>
      *
      * @param that that should be copied
      */
-    public FlinkDistinctOperator(DistinctOperator<T> that) {
+    public FlinkDistinctOperator(DistinctOperator<Type> that) {
         super(that);
     }
 
@@ -56,10 +62,12 @@ public class FlinkDistinctOperator<T>
         final DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         final DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
 
-        final DataSet<T> dataSetInput = input.provideDataSet();
-        final DataSet<T> dataSetOutput = dataSetInput.distinct();
+        final DataSet<Type> dataSetInput = input.provideDataSet();
+
+        final DataSet<Type> dataSetOutput = dataSetInput.distinct(new KeySelectorDistinct<Type>());
 
         output.accept(dataSetOutput, flinkExecutor);
+
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
@@ -88,5 +96,6 @@ public class FlinkDistinctOperator<T>
     public boolean containsAction() {
         return false;
     }
+
 
 }

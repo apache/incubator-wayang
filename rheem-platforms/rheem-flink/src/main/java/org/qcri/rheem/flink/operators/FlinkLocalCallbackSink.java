@@ -1,9 +1,14 @@
 package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.common.JobExecutionResult;
+import org.apache.flink.api.common.io.OutputFormat;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.io.LocalCollectionOutputFormat;
 import org.apache.flink.api.java.io.PrintingOutputFormat;
+import org.apache.flink.api.java.operators.DataSink;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.core.fs.FileSystem;
+import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.function.ConsumerDescriptor;
 import org.qcri.rheem.core.function.FunctionDescriptor.SerializableConsumer;
@@ -15,17 +20,17 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
+import org.qcri.rheem.flink.compiler.RheemFileOutputFormat;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
+import java.io.IOException;
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Implementation of the {@link LocalCallbackSink} operator for the Flink platform.
  */
-public class FlinkLocalCallbackSink <T extends Serializable> extends LocalCallbackSink<T> implements FlinkExecutionOperator {
+public class FlinkLocalCallbackSink <Type extends Serializable> extends LocalCallbackSink<Type> implements FlinkExecutionOperator {
 
     /**
      * Creates a new instance.
@@ -33,7 +38,7 @@ public class FlinkLocalCallbackSink <T extends Serializable> extends LocalCallba
      * @param callback callback that is executed locally for each incoming data unit
      * @param type     type of the incoming elements
      */
-    public FlinkLocalCallbackSink(ConsumerDescriptor.SerializableConsumer<T> callback, DataSetType type) {
+    public FlinkLocalCallbackSink(ConsumerDescriptor.SerializableConsumer<Type> callback, DataSetType type) {
         super(callback, type);
     }
 
@@ -42,7 +47,7 @@ public class FlinkLocalCallbackSink <T extends Serializable> extends LocalCallba
      *
      * @param that that should be copied
      */
-    public FlinkLocalCallbackSink(LocalCallbackSink<T> that) {
+    public FlinkLocalCallbackSink(LocalCallbackSink<Type> that) {
         super(that);
     }
 
@@ -56,23 +61,25 @@ public class FlinkLocalCallbackSink <T extends Serializable> extends LocalCallba
         assert outputs.length == this.getNumOutputs();
 
         final DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
-        final DataSet<T> inputDataSet = input.provideDataSet();
+        final DataSet<Type> inputDataSet = input.provideDataSet();
 
+        try {
+            if (this.collector != null) {
 
-        if(this.collector != null){
-            inputDataSet.output(new LocalCollectionOutputFormat<T>(this.collector));
-        }else{
-            //inputDataSet.output(flinkExecutor.getCompiler().compile( this.getCallbackDescriptor()));
-            inputDataSet.output(new PrintingOutputFormat<T>());
+                this.collector.addAll(inputDataSet.filter(a -> true).setParallelism(1).collect());
+
+            } else {
+                inputDataSet.output(new PrintingOutputFormat<Type>()).setParallelism(1);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
     }
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new FlinkLocalCallbackSink<T>(this);
+        return new FlinkLocalCallbackSink<Type>(this);
     }
 
     @Override

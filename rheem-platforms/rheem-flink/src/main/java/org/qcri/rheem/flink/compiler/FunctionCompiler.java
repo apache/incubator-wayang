@@ -1,19 +1,25 @@
 package org.qcri.rheem.flink.compiler;
 
+import org.apache.flink.api.common.aggregators.ConvergenceCriterion;
 import org.apache.flink.api.common.functions.*;
 import org.apache.flink.api.common.io.FileOutputFormat;
 import org.apache.flink.api.common.io.OutputFormat;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.io.TextOutputFormat;
 import org.apache.flink.api.java.operators.FlatMapOperator;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
 import org.qcri.rheem.core.function.*;
+import org.qcri.rheem.flink.compiler.criterion.RheemConvergenceCriterion;
+import org.qcri.rheem.flink.execution.FlinkExecutionContext;
 
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Created by bertty on 13-07-17.
@@ -75,7 +81,7 @@ public class FunctionCompiler {
 
 
     public <T, K> KeySelector<T, K> compileKeySelector(TransformationDescriptor<T, K> descriptor){
-        return new KeySelectorFunction<>(descriptor);
+        return new KeySelectorFunction<T, K>(descriptor);
     }
 
     public <T0, T1, O> CoGroupFunction<T0, T1, O> compileCoGroup(){
@@ -107,12 +113,74 @@ public class FunctionCompiler {
         return new MapPartitionFunction<I, O>() {
             @Override
             public void mapPartition(Iterable<I> iterable, Collector<O> collector) throws Exception {
+                System.out.println(collector.getClass());
+                Iterable<O> out = function.apply(iterable);
+                for(O element: out){
+                    collector.collect(element);
+                }
+
+            }
+        };
+    }
+
+    public <T> RheemConvergenceCriterion compile(PredicateDescriptor<Collection<T>> descriptor){
+        FunctionDescriptor.SerializablePredicate<Collection<T>> predicate = descriptor.getJavaImplementation();
+        return new RheemConvergenceCriterion(predicate);
+    }
+
+
+    public <I, O> RichFlatMapFunction<I, O> compile(FunctionDescriptor.ExtendedSerializableFunction<I, Iterable<O>> flatMapDescriptor, FlinkExecutionContext exe) {
+
+        return new RichFlatMapFunction<I, O>() {
+            @Override
+            public void open(Configuration parameters) throws Exception {
+                flatMapDescriptor.open(exe);
+            }
+
+            @Override
+            public void flatMap(I value, Collector<O> out) throws Exception {
+                flatMapDescriptor.apply(value).forEach(out::collect);
+            }
+        };
+    }
+
+
+    public <I, O> RichMapFunction<I, O> compile(TransformationDescriptor<I, O> mapDescriptor, FlinkExecutionContext fex ) {
+
+        FunctionDescriptor.ExtendedSerializableFunction<I, O> map = (FunctionDescriptor.ExtendedSerializableFunction) mapDescriptor.getJavaImplementation();
+        return new RichMapFunction<I, O>() {
+            @Override
+            public O map(I value) throws Exception {
+                return map.apply(value);
+            }
+
+            @Override
+            public void open(Configuration parameters) throws Exception {
+                map.open(fex);
+            }
+        };
+    }
+
+
+
+    public <I, O> RichMapPartitionFunction<I, O> compile(MapPartitionsDescriptor<I, O> descriptor, FlinkExecutionContext fex){
+        FunctionDescriptor.ExtendedSerializableFunction<Iterable<I>, Iterable<O>> function =
+                (FunctionDescriptor.ExtendedSerializableFunction<Iterable<I>, Iterable<O>>)
+                        descriptor.getJavaImplementation();
+        return new RichMapPartitionFunction<I, O>() {
+            @Override
+            public void mapPartition(Iterable<I> iterable, Collector<O> collector) throws Exception {
                 function.apply(iterable).forEach(
                         element -> {
                             collector.collect(element);
                         }
                 );
 
+            }
+
+            @Override
+            public void open(Configuration parameters) throws Exception {
+                function.open(fex);
             }
         };
     }

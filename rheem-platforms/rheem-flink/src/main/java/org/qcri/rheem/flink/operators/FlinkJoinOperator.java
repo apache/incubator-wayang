@@ -87,7 +87,7 @@ public class FlinkJoinOperator<InputType0, InputType1, KeyType>
                         return new Tuple2<>(inputType0, inputType1);
                     }
                 }
-            );
+            ).setParallelism(flinkExecutor.getNumDefaultPartitions());
 
 
         output.accept(dataSetOutput, flinkExecutor);

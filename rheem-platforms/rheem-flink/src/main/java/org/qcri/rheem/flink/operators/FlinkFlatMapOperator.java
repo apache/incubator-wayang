@@ -1,6 +1,8 @@
 package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.RichFlatMapFunction;
+import org.apache.flink.api.common.functions.RichFunction;
 import org.apache.flink.api.java.DataSet;
 import org.qcri.rheem.basic.operators.FlatMapOperator;
 import org.qcri.rheem.core.api.Configuration;
@@ -16,10 +18,10 @@ import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
+import org.qcri.rheem.flink.execution.FlinkExecutionContext;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Flink implementation of the {@link FlatMapOperator}.
@@ -33,7 +35,7 @@ public class FlinkFlatMapOperator<InputType, OutputType>
      *
      * @param functionDescriptor
      */
-    public FlinkFlatMapOperator(DataSetType inputType, DataSetType outputType,
+    public FlinkFlatMapOperator(DataSetType<InputType> inputType, DataSetType<OutputType> outputType,
                                 FlatMapDescriptor<InputType, OutputType> functionDescriptor) {
         super(functionDescriptor, inputType, outputType);
     }
@@ -45,6 +47,10 @@ public class FlinkFlatMapOperator<InputType, OutputType>
      */
     public FlinkFlatMapOperator(FlatMapOperator<InputType, OutputType> that) {
         super(that);
+    }
+
+    public FlinkFlatMapOperator(){
+        super((FlatMapOperator<InputType, OutputType>) null);
     }
 
     @Override
@@ -59,15 +65,49 @@ public class FlinkFlatMapOperator<InputType, OutputType>
         final DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         final DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
 
-        final FlatMapFunction<InputType, OutputType> flatMapFunction =
-                flinkExecutor.getCompiler().compile((FunctionDescriptor.SerializableFunction<InputType, Iterable<OutputType>>)this.functionDescriptor.getJavaImplementation());
 
         final DataSet<InputType>  dataSetInput  = input.provideDataSet();
-        final DataSet<OutputType> dataSetOutput = dataSetInput.flatMap(flatMapFunction).returns(this.functionDescriptor.getOutputType().getTypeClass());
 
+        final DataSet<OutputType> dataSetOutput;
+        if( this.getNumBroadcastInputs() > 0 ){
+
+            Tuple<String, DataSet> names = searchBroadcast(inputs);
+
+            FlinkExecutionContext fex = new FlinkExecutionContext(this, inputs, 0);
+
+            RichFlatMapFunction<InputType, OutputType> richFunction = flinkExecutor.compiler
+                    .compile(
+                            (FunctionDescriptor.ExtendedSerializableFunction)
+                                    this.functionDescriptor.getJavaImplementation(),
+                            fex
+                    );
+            fex.setRichFunction(richFunction);
+
+            dataSetOutput = dataSetInput
+                    .flatMap(richFunction)
+                    .returns(this.functionDescriptor.getOutputType().getTypeClass())
+                    .withBroadcastSet(names.field1, names.field0);
+
+        }else {
+
+            final FlatMapFunction<InputType, OutputType> flatMapFunction =
+                    flinkExecutor.getCompiler().compile((FunctionDescriptor.SerializableFunction<InputType, Iterable<OutputType>>)this.functionDescriptor.getJavaImplementation());
+
+            dataSetOutput = dataSetInput.flatMap(flatMapFunction).returns(this.functionDescriptor.getOutputType().getTypeClass());
+        }
         output.accept(dataSetOutput, flinkExecutor);
 
         return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
+    }
+
+    private Tuple<String, DataSet> searchBroadcast(ChannelInstance[] inputs) {
+        for(int i = 0; i < this.inputSlots.length; i++){
+            if( this.inputSlots[i].isBroadcast() ){
+                DataSetChannel.Instance dataSetChannel = (DataSetChannel.Instance)inputs[inputSlots[i].getIndex()];
+                return new Tuple<>(inputSlots[i].getName(), dataSetChannel.provideDataSet());
+            }
+        }
+        return null;
     }
 
     @Override
@@ -102,4 +142,5 @@ public class FlinkFlatMapOperator<InputType, OutputType>
     public boolean containsAction() {
         return false;
     }
+
 }

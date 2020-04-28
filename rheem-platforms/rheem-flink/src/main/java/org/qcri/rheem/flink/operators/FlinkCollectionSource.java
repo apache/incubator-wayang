@@ -11,6 +11,7 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
+import org.qcri.rheem.java.channels.CollectionChannel;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -20,9 +21,12 @@ import java.util.List;
 /**
  * This is execution operator implements the {@link CollectionSource}.
  */
-public class FlinkCollectionSource<T> extends CollectionSource<T> implements FlinkExecutionOperator{
+public class FlinkCollectionSource<Type> extends CollectionSource<Type> implements FlinkExecutionOperator{
+    public FlinkCollectionSource(DataSetType<Type> type) {
+        this(null, type);
+    }
 
-    public FlinkCollectionSource(Collection<T> collection, DataSetType<T> type) {
+    public FlinkCollectionSource(Collection<Type> collection, DataSetType<Type> type) {
         super(collection, type);
     }
 
@@ -31,7 +35,7 @@ public class FlinkCollectionSource<T> extends CollectionSource<T> implements Fli
      *
      * @param that that should be copied
      */
-    public FlinkCollectionSource(CollectionSource<T> that) {
+    public FlinkCollectionSource(CollectionSource<Type> that) {
         super(that);
     }
 
@@ -45,10 +49,17 @@ public class FlinkCollectionSource<T> extends CollectionSource<T> implements Fli
         assert inputs.length == 0;
         assert outputs.length == 1;
 
-        final DataSet<T> datasetOutput = flinkExecutor.fee.fromCollection(this.getCollection());
+        final Collection<Type> collection;
+        if (this.collection != null) {
+            collection = this.collection;
+        } else {
+            collection = ((CollectionChannel.Instance)inputs[0]).provideCollection();
+        }
+
+        final DataSet<Type> datasetOutput = flinkExecutor.fee.fromCollection(collection);
         ((DataSetChannel.Instance) outputs[0]).accept(datasetOutput, flinkExecutor);
 
-        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -69,7 +80,8 @@ public class FlinkCollectionSource<T> extends CollectionSource<T> implements Fli
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {
-        throw new UnsupportedOperationException(String.format("%s does not support input channels.", this));
+        assert index <= this.getNumInputs() || (index == 0 && this.getNumInputs() == 0);
+        return Arrays.asList(CollectionChannel.DESCRIPTOR);
     }
 
     @Override

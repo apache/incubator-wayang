@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * {@link Executor} implementation for the {@link FlinkPlatform}.
  */
-public class FlinkExecutor extends PushExecutorTemplate {
+public class    FlinkExecutor extends PushExecutorTemplate {
     /**
      * Reference to a {@link ExecutionEnvironment} to be used by this instance.
      */
@@ -57,7 +57,8 @@ public class FlinkExecutor extends PushExecutorTemplate {
         this.platform = flinkPlatform;
         this.flinkContextReference = this.platform.getFlinkContext(job);
         this.fee = this.flinkContextReference.get();
-        this.numDefaultPartitions = this.fee.getParallelism();
+        this.numDefaultPartitions = (int)this.getConfiguration().getLongProperty("rheem.flink.paralelism");
+        this.fee.setParallelism(this.numDefaultPartitions);
         this.flinkContextReference.noteObtainedReference();
     }
 
@@ -87,7 +88,6 @@ public class FlinkExecutor extends PushExecutorTemplate {
                             this,
                             producerOperatorContext
                     );
-            //Thread.sleep(1000);
             executionLineageNodes = results.getField0();
             producedChannelInstances = results.getField1();
         } catch (Exception e) {
@@ -99,10 +99,6 @@ public class FlinkExecutor extends PushExecutorTemplate {
 
         // Check how much we executed.
         PartialExecution partialExecution = this.createPartialExecution(executionLineageNodes, executionDuration);
-     /*   if (partialExecution != null && cast(task.getOperator()).containsAction()) {
-            if (this.numActions == 0) partialExecution.addInitializedPlatform(SparkPlatform.getInstance());
-            this.numActions++;
-        }*/
 
         if (partialExecution == null && executionDuration > 10) {
             this.logger.warn("Execution of {} took suspiciously long ({}).", task, Formats.formatDuration(executionDuration));
@@ -111,14 +107,13 @@ public class FlinkExecutor extends PushExecutorTemplate {
         // Collect any cardinality updates.
         this.registerMeasuredCardinalities(producedChannelInstances);
 
-
         // Warn if requested eager execution did not take place.
         if (isRequestEagerExecution ){
             if( partialExecution == null) {
                 this.logger.info("{} was not executed eagerly as requested.", task);
             }else {
                 try {
-                    this.fee.execute();
+                 this.fee.execute();
                 } catch (Exception e) {
                     throw new RheemException(e);
                 }
@@ -157,5 +152,9 @@ public class FlinkExecutor extends PushExecutorTemplate {
      */
     public FunctionCompiler getCompiler() {
         return this.compiler;
+    }
+
+    public int getNumDefaultPartitions(){
+        return this.numDefaultPartitions;
     }
 }

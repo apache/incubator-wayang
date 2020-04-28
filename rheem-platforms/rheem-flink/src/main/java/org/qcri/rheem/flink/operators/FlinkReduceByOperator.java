@@ -28,8 +28,8 @@ import java.util.*;
 /**
  * Flink implementation of the {@link ReduceByOperator}.
  */
-public class FlinkReduceByOperator<InputType0, KeyType>
-        extends ReduceByOperator<InputType0, KeyType>
+public class FlinkReduceByOperator<InputType, KeyType>
+        extends ReduceByOperator<InputType, KeyType>
         implements FlinkExecutionOperator {
 
 
@@ -40,8 +40,8 @@ public class FlinkReduceByOperator<InputType0, KeyType>
      * @param keyDescriptor    describes how to extract the key from data units
      * @param reduceDescriptor describes the reduction to be performed on the elements
      */
-    public FlinkReduceByOperator(DataSetType<InputType0> type, TransformationDescriptor<InputType0, KeyType> keyDescriptor,
-                                 ReduceDescriptor<InputType0> reduceDescriptor) {
+    public FlinkReduceByOperator(DataSetType<InputType> type, TransformationDescriptor<InputType, KeyType> keyDescriptor,
+                                 ReduceDescriptor<InputType> reduceDescriptor) {
         super(keyDescriptor, reduceDescriptor, type);
     }
 
@@ -50,7 +50,7 @@ public class FlinkReduceByOperator<InputType0, KeyType>
      *
      * @param that that should be copied
      */
-    public FlinkReduceByOperator(ReduceByOperator<InputType0, KeyType> that) {
+    public FlinkReduceByOperator(ReduceByOperator<InputType, KeyType> that) {
         super(that);
     }
 
@@ -66,16 +66,20 @@ public class FlinkReduceByOperator<InputType0, KeyType>
         DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
 
-        final DataSet<InputType0> dataSetInput = input.provideDataSet();
+        final DataSet<InputType> dataSetInput = input.provideDataSet();
 
         FunctionCompiler compiler = flinkExecutor.getCompiler();
 
-        KeySelector<InputType0, KeyType> keySelector = compiler.compileKeySelector(this.keyDescriptor);
+        KeySelector<InputType, KeyType> keySelector = compiler.compileKeySelector(this.keyDescriptor);
 
-        ReduceFunction<InputType0> reduceFunction = compiler.compile(this.reduceDescriptor);
+        ReduceFunction<InputType> reduceFunction = compiler.compile(this.reduceDescriptor);
 
-        DataSet<InputType0> dataSetOutput =
-                dataSetInput.groupBy(keySelector).reduce(reduceFunction);
+
+        DataSet<InputType> dataSetOutput =
+                dataSetInput
+                        .groupBy(keySelector)
+                        .reduce(reduceFunction)
+                        .setParallelism(flinkExecutor.getNumDefaultPartitions());
 
         output.accept(dataSetOutput, flinkExecutor);
 

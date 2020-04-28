@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Flink implementation of the {@link CountOperator}.
  */
-public class FlinkCountOperator<T> extends CountOperator<T>
+public class FlinkCountOperator<Type> extends CountOperator<Type>
         implements FlinkExecutionOperator {
 
 
@@ -31,7 +31,7 @@ public class FlinkCountOperator<T> extends CountOperator<T>
      *
      * @param type type of the dataset elements
      */
-    public FlinkCountOperator(DataSetType<T> type) {
+    public FlinkCountOperator(DataSetType<Type> type) {
         super(type);
     }
 
@@ -40,7 +40,7 @@ public class FlinkCountOperator<T> extends CountOperator<T>
      *
      * @param that that should be copied
      */
-    public FlinkCountOperator(CountOperator<T> that) {
+    public FlinkCountOperator(CountOperator<Type> that) {
         super(that);
     }
 

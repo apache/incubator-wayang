@@ -30,8 +30,9 @@ public class SampleMapping implements Mapping{
                 "sample", new SampleOperator<>(0, DataSetType.none(), null, 0L), false
         ).withAdditionalTest(op ->
                 op.getSampleMethod() == SampleOperator.Methods.RANDOM
-                        || op.getSampleMethod() == SampleOperator.Methods.BERNOULLI
-                        || op.getSampleMethod() == SampleOperator.Methods.ANY
+             || op.getSampleMethod() == SampleOperator.Methods.BERNOULLI
+             || op.getSampleMethod() == SampleOperator.Methods.ANY
+             || op.getSampleMethod() == SampleOperator.Methods.RESERVOIR
         ); //TODO: check if the zero here affects execution
         return SubplanPattern.createSingleton(operatorPattern);
     }

@@ -24,8 +24,8 @@ import java.util.List;
 /**
  * Flink implementation of the {@link SortOperator}.
  */
-public class FlinkSortOperator<Type, Key>
-        extends SortOperator<Type, Key>
+public class FlinkSortOperator<InputType, KeyType>
+        extends SortOperator<InputType, KeyType>
         implements FlinkExecutionOperator {
 
 
@@ -34,7 +34,7 @@ public class FlinkSortOperator<Type, Key>
      *
      * @param type type of the dataset elements
      */
-    public FlinkSortOperator(TransformationDescriptor<Type, Key> keyDescriptor, DataSetType<Type> type) {
+    public FlinkSortOperator(TransformationDescriptor<InputType, KeyType> keyDescriptor, DataSetType<InputType> type) {
         super(keyDescriptor, type);
     }
 
@@ -43,7 +43,7 @@ public class FlinkSortOperator<Type, Key>
      *
      * @param that that should be copied
      */
-    public FlinkSortOperator(SortOperator<Type, Key> that) {
+    public FlinkSortOperator(SortOperator<InputType, KeyType> that) {
         super(that);
     }
 
@@ -59,13 +59,13 @@ public class FlinkSortOperator<Type, Key>
         DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
 
-        final DataSet<Type> dataSetInput = input.provideDataSet();
+        final DataSet<InputType> dataSetInput = input.provideDataSet();
 
         FunctionCompiler compiler = flinkExecutor.getCompiler();
 
-        final KeySelector<Type, Key> keyExtractor = compiler.compileKeySelector(this.keyDescriptor);
+        final KeySelector<InputType, KeyType> keyExtractor = compiler.compileKeySelector(this.keyDescriptor);
 
-        final DataSet<Type> dataSetOutput = dataSetInput.sortPartition(keyExtractor, Order.ASCENDING);
+        final DataSet<InputType> dataSetOutput = dataSetInput.sortPartition(keyExtractor, Order.ASCENDING);
 
         output.accept(dataSetOutput, flinkExecutor);
 

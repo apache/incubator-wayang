@@ -59,7 +59,7 @@ public class FlinkGlobalReduceOperator<Type>
         assert outputs.length == this.getNumOutputs();
 
         final DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
-        final CollectionChannel.Instance output = (CollectionChannel.Instance) outputs[0];
+        final DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
 
         final DataSet<Type> dataSetInput = input.provideDataSet();
 
@@ -67,17 +67,15 @@ public class FlinkGlobalReduceOperator<Type>
         final ReduceFunction<Type> reduceFunction = flinkExecutor.getCompiler().compile(this.reduceDescriptor);
 
 
-        List<Type> outputList = null;
+        DataSet<Type> datasetOutput = null;
         try {
-            outputList = dataSetInput.reduce(reduceFunction).collect();
+            datasetOutput = dataSetInput.reduce(reduceFunction);
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-
-        output.accept(outputList);
-
-        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
+        output.accept(datasetOutput, flinkExecutor);
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
@@ -105,7 +103,7 @@ public class FlinkGlobalReduceOperator<Type>
 
     @Override
     public List<ChannelDescriptor> getSupportedOutputChannels(int index) {
-        return Collections.singletonList(CollectionChannel.DESCRIPTOR);
+        return Collections.singletonList(DataSetChannel.DESCRIPTOR);
     }
 
     @Override

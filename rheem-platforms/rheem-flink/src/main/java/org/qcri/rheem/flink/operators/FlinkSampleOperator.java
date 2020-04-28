@@ -2,6 +2,8 @@ package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.utils.DataSetUtils;
+import org.apache.flink.shaded.com.google.common.base.Splitter;
 import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.api.exception.RheemException;
@@ -49,7 +51,10 @@ public class FlinkSampleOperator<Type>
      */
     public FlinkSampleOperator(SampleOperator<Type> that) {
         super(that);
-        assert that.getSampleMethod() == Methods.RANDOM || that.getSampleMethod() == Methods.ANY;
+        assert that.getSampleMethod() == Methods.RANDOM
+                || that.getSampleMethod() == Methods.BERNOULLI
+                || that.getSampleMethod() == Methods.RESERVOIR
+                || that.getSampleMethod() == Methods.ANY;
     }
 
     @Override
@@ -66,33 +71,50 @@ public class FlinkSampleOperator<Type>
 
         final DataSet<Type> dataSetInput = input.provideDataSet();
 
-        PredicateDescriptor.SerializablePredicate<Type> filter;
-        switch (this.getSampleMethod()) {
-            case RANDOM:
-            case ANY:
-                Random random_any = new Random(this.getSeed(operatorContext));
-                filter = dataquantum -> random_any.nextLong() % 2 == 0;
-                break;
-            case BERNOULLI:
-                Random random_bernoulli = new Random(this.getSeed(operatorContext));
-                filter = dataquantum -> random_bernoulli.nextLong() % 100 == 0;
-                break;
-            default:
-                throw new RheemException("The option is bad");
+
+        long size = Long.MAX_VALUE;
+      /*  try {
+            size = dataSetInput.count();
+        } catch (Exception e) {
+            throw new RheemException(e);
+        }*/
+        DataSet<Type> dataSetOutput;
+
+        int sampleSize = this.getSampleSize(operatorContext);
+        long seed = this.getSeed(operatorContext);
+
+        if(this.getSampleSize(operatorContext) >= size){
+            dataSetOutput = dataSetInput;
+        }else {
+            double faction = (size / sampleSize) + 0.01d;
+            switch (this.getSampleMethod()) {
+                case RANDOM:
+                    dataSetOutput = DataSetUtils.sampleWithSize(dataSetInput, true, sampleSize, seed);
+                    break;
+                case ANY:
+                    Random rand = new Random(seed);
+                    dataSetOutput = dataSetInput.filter(a -> {return rand.nextBoolean();}).first(sampleSize);
+                    break;
+                case BERNOULLI:
+                    dataSetOutput = DataSetUtils.sample(dataSetInput, false, faction, seed).first(sampleSize);
+                    break;
+                case RESERVOIR:
+                    dataSetOutput = DataSetUtils.sampleWithSize(dataSetInput, true, sampleSize, seed);
+                    break;
+                default:
+                    throw new RheemException("The option is bad");
+            }
         }
-
-
-        final DataSet<Type> dataSetOutput =  dataSetInput.filter(flinkExecutor.compiler.compile(filter));
 
         // assuming the sample is small better use a collection instance, the optimizer can transform the output if necessary
         output.accept(dataSetOutput, flinkExecutor);
 
-        return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
+        return ExecutionOperator.modelLazyExecution(inputs, outputs, operatorContext);
     }
 
     @Override
     protected ExecutionOperator createCopy() {
-        return new FlinkSampleOperator<>(this);
+        return new FlinkSampleOperator<Type>(this);
     }
 
     @Override
@@ -115,5 +137,6 @@ public class FlinkSampleOperator<Type>
     public boolean containsAction() {
         return true;
     }
+
 
 }

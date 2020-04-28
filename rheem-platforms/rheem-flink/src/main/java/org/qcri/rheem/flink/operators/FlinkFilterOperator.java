@@ -20,16 +20,16 @@ import org.qcri.rheem.flink.execution.FlinkExecutor;
 import java.util.*;
 
 /**
- * Created by bertty on 13-07-17.
+ * Flink implementation of the {@link FilterOperator}.
  */
-public class FlinkFilterOperator<T> extends FilterOperator<T> implements FlinkExecutionOperator{
+public class FlinkFilterOperator<Type> extends FilterOperator<Type> implements FlinkExecutionOperator{
 
     /**
      * Creates a new instance.
      *
      * @param type type of the dataset elements
      */
-    public FlinkFilterOperator(DataSetType<T> type, PredicateDescriptor<T> predicate) {
+    public FlinkFilterOperator(DataSetType<Type> type, PredicateDescriptor<Type> predicate) {
         super(predicate, type);
     }
 
@@ -38,7 +38,7 @@ public class FlinkFilterOperator<T> extends FilterOperator<T> implements FlinkEx
      *
      * @param that that should be copied
      */
-    public FlinkFilterOperator(FilterOperator<T> that) {
+    public FlinkFilterOperator(FilterOperator<Type> that) {
         super(that);
     }
 
@@ -51,10 +51,10 @@ public class FlinkFilterOperator<T> extends FilterOperator<T> implements FlinkEx
         assert inputs.length == this.getNumInputs();
         assert outputs.length == this.getNumOutputs();
 
-        final FilterFunction<T> filterFunction = flinkExecutor.getCompiler().compile(this.predicateDescriptor.getJavaImplementation());
+        final FilterFunction<Type> filterFunction = flinkExecutor.getCompiler().compile(this.predicateDescriptor.getJavaImplementation());
 
-        final DataSet<T> inputDataset = ((DataSetChannel.Instance) inputs[0]).provideDataSet();
-        final DataSet<T> outputDataSet = inputDataset.filter(filterFunction);
+        final DataSet<Type> inputDataset = ((DataSetChannel.Instance) inputs[0]).provideDataSet();
+        final DataSet<Type> outputDataSet = inputDataset.filter(filterFunction);
 
         ((DataSetChannel.Instance) outputs[0]).accept(outputDataSet, flinkExecutor);
 
