@@ -6,7 +6,7 @@ import org.apache.flink.types.Value;
 import java.util.Collection;
 
 /**
- * Created by bertty on 20-09-17.
+ * Is a Wrapper for used in the criterion of the Loops
  */
 public class RheemListValue extends ListValue<RheemValue> {
 

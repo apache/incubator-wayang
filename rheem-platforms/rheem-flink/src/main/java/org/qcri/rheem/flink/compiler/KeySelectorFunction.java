@@ -15,7 +15,7 @@ import java.lang.reflect.Type;
 import java.util.function.Function;
 
 /**
- * Created by bertty on 17-07-17.
+ * Wrapper for {@Link KeySelector}
  */
 public class KeySelectorFunction<T, K> implements KeySelector<T, K>, ResultTypeQueryable<K>, Serializable {
 

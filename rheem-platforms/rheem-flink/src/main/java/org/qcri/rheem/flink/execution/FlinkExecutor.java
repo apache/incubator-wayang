@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * {@link Executor} implementation for the {@link FlinkPlatform}.
  */
-public class    FlinkExecutor extends PushExecutorTemplate {
+public class FlinkExecutor extends PushExecutorTemplate {
     /**
      * Reference to a {@link ExecutionEnvironment} to be used by this instance.
      */
@@ -113,14 +113,12 @@ public class    FlinkExecutor extends PushExecutorTemplate {
                 this.logger.info("{} was not executed eagerly as requested.", task);
             }else {
                 try {
-                 this.fee.execute();
+                    this.fee.execute();
                 } catch (Exception e) {
                     throw new RheemException(e);
                 }
             }
         }
-
-
         return new Tuple<>(Arrays.asList(outputChannelInstances), partialExecution);
     }
 
@@ -134,7 +132,6 @@ public class    FlinkExecutor extends PushExecutorTemplate {
     public Platform getPlatform() {
         return this.platform;
     }
-
 
     private static FlinkExecutionOperator cast(ExecutionOperator executionOperator) {
         return (FlinkExecutionOperator) executionOperator;

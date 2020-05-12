@@ -6,7 +6,9 @@ import org.apache.flink.types.ListValue;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * Class create a {@Link Aggregator} that generate aggregatorWrapper
+ */
 public class RheemAggregator implements Aggregator<ListValue<RheemValue>> {
     private List<RheemValue> elements;
 

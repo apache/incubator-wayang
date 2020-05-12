@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * {@link Platform} for Apache Spark.
+ * {@link Platform} for Apache Flink.
  */
 public class FlinkPlatform extends Platform {
     private static final String PLATFORM_NAME = "Apache Flink";
@@ -151,7 +151,7 @@ public class FlinkPlatform extends Platform {
 
         final Set<String> udfJarPaths = job.getUdfJarPaths();
         if (udfJarPaths.isEmpty()) {
-            this.logger.warn("Non-local SparkContext but not UDF JARs have been declared.");
+            this.logger.warn("Non-local FlinkContext but not UDF JARs have been declared.");
         } else {
             udfJarPaths.stream().filter(a -> a != null).forEach(jars::add);
         }

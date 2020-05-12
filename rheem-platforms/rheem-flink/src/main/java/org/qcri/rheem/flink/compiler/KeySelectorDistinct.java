@@ -8,7 +8,7 @@ import java.io.Serializable;
 import java.util.Base64;
 
 /**
- * Created by bertty on 31-10-17.
+ * Wrapper for {@Link KeySelector}
  */
 public class KeySelectorDistinct<T> implements KeySelector<T, String>, Serializable {
 
@@ -23,8 +23,4 @@ public class KeySelectorDistinct<T> implements KeySelector<T, String>, Serializa
         }
     }
 
-    //@Override
-    //public TypeInformation getProducedType() {
-    //return this.typeInformation;
-    //}
 }

@@ -5,7 +5,7 @@ import org.apache.flink.util.Collector;
 import org.qcri.rheem.basic.data.Tuple2;
 
 /**
- * Created by bertty on 17-07-17.
+ * Wrapper of {@Link CoGroupFunction} of Flink for use in Rheem
  */
 public class FlinkCoGroupFunction<InputType0, InputType1, OutputType> implements CoGroupFunction<InputType0, InputType1, OutputType> {
 

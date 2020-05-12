@@ -8,6 +8,9 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+/**
+ * Class create a {@Link ConvergenceCriterion} that generate aggregatorWrapper
+ */
 public class RheemConvergenceCriterion<T>
         implements ConvergenceCriterion<RheemListValue>, Serializable {
 

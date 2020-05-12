@@ -12,6 +12,7 @@ import org.apache.flink.core.memory.DataOutputViewStreamWrapper;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
+import org.qcri.rheem.core.api.exception.RheemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +21,7 @@ import java.net.URI;
 import java.nio.file.Paths;
 
 /**
- * Created by bertty on 31-10-17.
+ * Wrapper for {@link FileOutputFormat}
  */
 public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements InitializeOnMaster, CleanupWhenUnsuccessful {
 
@@ -129,7 +130,6 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
         if (mode == null) {
             throw new NullPointerException();
         }
-
         this.writeMode = mode;
     }
 
@@ -191,8 +191,7 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
                 throw new UnsupportedOperationException("Currently only block size up to Integer.MAX_VALUE are supported");
             }
         } catch (Exception e){
-            System.out.println("lalalal 4");
-            System.exit(0);
+            throw new RheemException(e);
         }
     }
 
@@ -303,8 +302,7 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
                 }
             }
         }catch (Exception e){
-            System.out.println("lalalal 1");
-            System.exit(0);
+            throw new RheemException(e);
         }
     }
 

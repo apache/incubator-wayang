@@ -15,7 +15,6 @@ import java.util.Collections;
  */
 @SuppressWarnings("unchecked")
 public class SampleMapping implements Mapping{
-
     @Override
     public Collection<PlanTransformation> getTransformations() {
         return Collections.singleton(new PlanTransformation(

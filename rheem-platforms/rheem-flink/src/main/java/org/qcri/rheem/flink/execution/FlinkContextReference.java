@@ -11,8 +11,6 @@ import org.qcri.rheem.core.platform.ExecutionResourceTemplate;
  * Wraps and manages a Flink {@link ExecutionEnvironment} to avoid steady re-creation.
  */
 public class FlinkContextReference extends ExecutionResourceTemplate {
-
-
     /**
      * The wrapped {@link ExecutionEnvironment}.
      */
@@ -39,7 +37,6 @@ public class FlinkContextReference extends ExecutionResourceTemplate {
      * @return the wrapped {@link ExecutionEnvironment}
      */
     public ExecutionEnvironment get() {
-
         return this.flinkEnviroment;
     }
 

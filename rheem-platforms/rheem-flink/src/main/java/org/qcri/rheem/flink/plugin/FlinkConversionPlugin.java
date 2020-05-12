@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Created by bertty on 12-07-17.
+ * This {@link Plugin} provides {@link ChannelConversion}s from the  {@link FlinkPlatform}.
  */
 public class FlinkConversionPlugin implements Plugin {
     @Override

@@ -7,7 +7,7 @@ import org.apache.flink.types.Value;
 
 import java.io.*;
 /**
- * Created by bertty on 18-09-17.
+ * Implementation of {@link Value} of flink for use in Rheem
  */
 public class RheemValue<T> implements Value {
     private static final int HIGH_BIT = 0x1 << 7;

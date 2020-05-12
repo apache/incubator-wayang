@@ -15,8 +15,6 @@ import java.util.Collections;
  * Mapping from {@link PageRankOperator} to {@link FlinkPageRankOperator}.
  */
 public class PageRankMapping implements Mapping {
-
-
     @Override
     public Collection<PlanTransformation> getTransformations() {
         return Collections.singleton(new PlanTransformation(

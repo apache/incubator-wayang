@@ -22,7 +22,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * Created by bertty on 13-07-17.
+ * A compiler translates Rheem functions into executable Flink functions.
  */
 public class FunctionCompiler {
 
@@ -177,7 +177,6 @@ public class FunctionCompiler {
                 );
 
             }
-
             @Override
             public void open(Configuration parameters) throws Exception {
                 function.open(fex);

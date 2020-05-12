@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * This {@link Plugin} enables to use the basic Rheem {@link Operator}s on the {@link JavaPlatform}.
+ * This {@link Plugin} enables to use the basic Rheem {@link Operator}s on the {@link FlinkPlatform}.
  */
 public class FlinkBasicPlugin implements Plugin{
     @Override

@@ -74,7 +74,7 @@ public class FlinkRepeatExpandedOperator<Type>
         if(expanded > 64){
             throw new RheemException(String.format("the maxExpanded (%s) is more that 64.", expanded));
         }
-        // TODO: cuando quedan despues del expanded
+        // TODO: see if the case have a more elements that after the expanded
 
         if(this.iteration_generate <= expanded){
             //final ExecutionLineageNode executionLineageNode = new ExecutionLineageNode(operatorContext);
@@ -136,7 +136,7 @@ public class FlinkRepeatExpandedOperator<Type>
                             output_final.accept(this.iterativeDataSet.setParallelism(flinkExecutor.getNumDefaultPartitions()).closeWith(input_iteration), flinkExecutor);
                             outputs[ITERATION_OUTPUT_INDEX] = null;
 
-                            //TODO: cuando quedan despues del expanded
+                            //TODO: see if after the expanded have another case
                             //if(this.iterationCounter == 0) {
                             this.setState(State.FINISHED);
                             //}

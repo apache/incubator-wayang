@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link DistinctOperator} to {@link FlinkDistinctperator}.
+ * Mapping from {@link DistinctOperator} to {@link FlinkDistinctOperator}.
  */
 @SuppressWarnings("unchecked")
 public class DistinctMapping implements Mapping{

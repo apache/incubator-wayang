@@ -102,7 +102,7 @@ public class FlinkSampleOperator<Type>
                     dataSetOutput = DataSetUtils.sampleWithSize(dataSetInput, true, sampleSize, seed);
                     break;
                 default:
-                    throw new RheemException("The option is bad");
+                    throw new RheemException("The option is not valid");
             }
         }
 

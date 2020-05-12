@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.Serializable;
 
 /**
- * Created by bertty on 16-07-17.
+ * Wrapper for {@Link OutputFormat}
  */
 public class OutputFormatConsumer<T> implements OutputFormat<T>, Serializable {
 
