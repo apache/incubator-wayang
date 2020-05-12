@@ -8,7 +8,7 @@ import java.util.Queue;
 import java.util.Stack;
 
 /**
- * Created by bertty on 25-07-17.
+ * Parameters for Basic PageRank implementation.
  */
 public class PageRankParameters {
 

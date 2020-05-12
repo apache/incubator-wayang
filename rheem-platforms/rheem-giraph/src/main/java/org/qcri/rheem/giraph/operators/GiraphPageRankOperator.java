@@ -1,14 +1,8 @@
 package org.qcri.rheem.giraph.operators;
 
-import com.google.common.collect.Lists;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.giraph.conf.GiraphConfiguration;
-import org.apache.giraph.examples.SimplePageRankComputation;
 import org.apache.giraph.job.GiraphJob;
-import org.apache.giraph.utils.InternalVertexRunner;
 import org.qcri.rheem.basic.channels.FileChannel;
-import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.PageRankOperator;
 import org.qcri.rheem.core.api.Configuration;
@@ -20,12 +14,9 @@ import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
-import org.qcri.rheem.core.util.ConsumerIteratorAdapter;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
-import org.qcri.rheem.core.util.fs.HadoopFileSystem;
-import org.qcri.rheem.core.util.fs.LocalFileSystem;
 import org.qcri.rheem.giraph.Algorithm.PageRankAlgorithm;
 import org.qcri.rheem.giraph.Algorithm.PageRankParameters;
 import org.qcri.rheem.giraph.execution.GiraphExecutor;
@@ -35,16 +26,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * PageRank {@link Operator} implementation for the {@link GiraphPlatform}.
@@ -105,7 +89,7 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
         FileSystem fs = FileSystems.getFileSystem(tempDirPath).orElseThrow(
                 () -> new RheemException(String.format("Cannot access file system of %s.", tempDirPath))
         );
-
+        //delete the file the output if exist
         fs.delete(tempDirPath, true);
 
         final String inputPath = inputFileChannelInstance.getSinglePath();
@@ -113,10 +97,13 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
         GiraphConfiguration conf = giraphExecutor.getGiraphConfiguration();
         //vertex reader
         conf.set("giraph.vertex.input.dir", inputPath);
-        conf.set("giraph.maxWorkers", "1");
+        conf.set("mapred.job.tracker", configuration.getStringProperty("rheem.giraph.job.tracker"));
+        conf.set("mapreduce.job.counters.limit", configuration.getStringProperty("rheem.mapreduce.job.counters.limit"));
+        conf.setWorkerConfiguration((int)configuration.getLongProperty("rheem.giraph.maxWorkers"),
+                (int)configuration.getLongProperty("rheem.giraph.minWorkers"),
+        100.0f);
         conf.set("giraph.SplitMasterWorker", "false");
         conf.set("mapreduce.output.fileoutputformat.outputdir", tempDirPath);
-       // conf.set("mapreduce.output.basename", "rheem");
         conf.setComputationClass(PageRankAlgorithm.class);
         conf.setVertexInputFormatClass(
                 PageRankAlgorithm.PageRankVertexInputFormat.class);
@@ -124,7 +111,7 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
                 PageRankAlgorithm.PageRankWorkerContext.class);
         conf.setMasterComputeClass(
                 PageRankAlgorithm.PageRankMasterCompute.class);
-        conf.setNumComputeThreads(1);
+        conf.setNumComputeThreads((int)configuration.getLongProperty("rheem.giraph.numThread"));
 
         conf.setVertexOutputFormatClass(PageRankAlgorithm.PageRankVertexOutputFormat.class);
 
@@ -189,70 +176,13 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
 
 
     private Stream<Tuple2<Long, Float>> createStream(String path) {
-        return this.streamLines(path).map(line -> {
+        return org.qcri.rheem.core.util.fs.FileUtils.streamLines(path).map(line -> {
             String[] part = line.split("\t");
             return new Tuple2<>(Long.parseLong(part[0]), Float.parseFloat(part[1]));
         });
     }
 
 
-    /**
-     * Creates a {@link Stream} of a lines of the file.
-     *
-     * @param path of the file
-     * @return the {@link Stream}
-     */
-    private Stream<String> streamLines(String path) {
-        final FileSystem fileSystem = FileSystems.getFileSystem(path).orElseThrow(
-                () -> new IllegalStateException(String.format("No file system found for %s", path))
-        );
-        try {
-            Iterator<String> lineIterator = this.createLineIterator(fileSystem, path);
-            return StreamSupport.stream(Spliterators.spliteratorUnknownSize(lineIterator, 0), false);
-        } catch (IOException e) {
-            throw new RheemException(String.format("%s failed to read %s.", this, path), e);
-        }
 
-    }
-
-    /**
-     * Creates an {@link Iterator} over the lines of a given {@code path} (that resides in the given {@code fileSystem}).
-     */
-    private Iterator<String> createLineIterator(FileSystem fileSystem, String path) throws IOException {
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(fileSystem.open(path), "UTF-8"));
-        return new Iterator<String>() {
-
-            String next;
-            {
-                this.advance();
-            }
-
-            private void advance() {
-                try {
-                    this.next = reader.readLine();
-                } catch (IOException e) {
-                    this.next = null;
-                    throw new UncheckedIOException(e);
-                } finally {
-                    if (this.next == null) {
-                        IOUtils.closeQuietly(reader);
-                    }
-                }
-            }
-
-            @Override
-            public boolean hasNext() {
-                return this.next != null;
-            }
-
-            @Override
-            public String next() {
-                assert this.hasNext();
-                final String returnValue = this.next;
-                this.advance();
-                return returnValue;
-            }
-        };
-    }
 
 }

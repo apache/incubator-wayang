@@ -33,6 +33,8 @@ public class GiraphExecutor extends ExecutorTemplate {
         this.configuration = job.getConfiguration();
 
         this.giraphConfiguration = new GiraphConfiguration();
+
+
     }
 
     @Override
