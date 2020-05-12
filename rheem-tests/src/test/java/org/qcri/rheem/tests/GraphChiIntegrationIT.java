@@ -62,7 +62,7 @@ public class GraphChiIntegrationIT {
     private void check(List<Tuple2<Character, Float>> pageRanks) {
         final Map<Character, Float> solutions = RheemPlans.pageRankWithDictionaryCompressionSolution();
         Set<Character> vertices = pageRanks.stream().map(Tuple2::getField0).collect(Collectors.toSet());
-        solutions.forEach((k, v) -> Assert.assertTrue(String.format("Missing page rank for %s.", k), vertices.contains(k)));
+        solutions.forEach((k, v) -> Assert.assertTrue(String.format("Missing page rank for %s (got: %s).", k, pageRanks), vertices.contains(k)));
         Assert.assertEquals(String.format("Illegal number of page ranks in %s.", pageRanks), solutions.size(), pageRanks.size());
         for (int i = 0; i < pageRanks.size(); i++) {
             char ci = pageRanks.get(i).field0;
