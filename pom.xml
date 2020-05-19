@@ -136,9 +136,9 @@
         <pluginManagement>
             <plugins>
                 <plugin>
-                    <groupId>com.atlassian.maven.plugins</groupId>
+                    <groupId>org.openclover</groupId>
                     <artifactId>clover-maven-plugin</artifactId>
-                    <version>4.1.2</version>
+                    <version>4.2.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-assembly-plugin</artifactId>
