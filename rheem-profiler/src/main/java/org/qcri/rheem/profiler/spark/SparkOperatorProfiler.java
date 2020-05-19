@@ -158,7 +158,7 @@ public abstract class SparkOperatorProfiler {
                     for (int i = 0; i < batchSize; i++) {
                         list.add(supplier.get());
                     }
-                    return list;
+                    return list.iterator();
                 });
         // Shuffle and cache the RDD.
         final JavaRDD<T> cachedInputRdd = this.partition(finalInputRdd).cache();

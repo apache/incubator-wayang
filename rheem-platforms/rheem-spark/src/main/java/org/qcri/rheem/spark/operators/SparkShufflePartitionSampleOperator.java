@@ -106,7 +106,7 @@ public class SparkShufflePartitionSampleOperator<Type>
             //read sequentially from partitionID
             Object samples = sparkContext.runJob(shuffledRDD.rdd(),
                     new TakeSampleFunction(tupleID, tupleID + sampleSize),
-                    (scala.collection.Seq) JavaConversions.asScalaBuffer(pars), true, scala.reflect.ClassTag$.MODULE$.apply(List.class));
+                    (scala.collection.Seq) JavaConversions.asScalaBuffer(pars), scala.reflect.ClassTag$.MODULE$.apply(List.class));
 
             tupleID += sampleSize;
             result.addAll(((List<Type>[]) samples)[0]);

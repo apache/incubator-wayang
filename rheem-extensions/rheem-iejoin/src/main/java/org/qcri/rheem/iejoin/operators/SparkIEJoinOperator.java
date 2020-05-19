@@ -90,7 +90,7 @@ public class SparkIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends 
                         i++;
                     }
                     out.add(i);
-                    return out;
+                    return out.iterator();
                 }
                 , true).reduce((input1, input2) -> Math.max(input1, input2));
 
@@ -103,7 +103,7 @@ public class SparkIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends 
                         i++;
                     }
                     out.add(i);
-                    return out;
+                    return out.iterator();
                 }
                 , true).reduce((input1, input2) -> Math.max(input1, input2));
 
