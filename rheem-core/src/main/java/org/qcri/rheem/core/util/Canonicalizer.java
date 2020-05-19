@@ -10,9 +10,14 @@ public class Canonicalizer<T> implements Set<T> {
     /**
      * Contains the objects.
      */
-    private final Map<T, T> entries = new HashMap<>();
+    private final Map<T, T> entries;
+
+    public Canonicalizer(int numExpectedEntries) {
+        this.entries = new HashMap<T, T>(numExpectedEntries);
+    }
 
     public Canonicalizer() {
+        this(32);
     }
 
     public Canonicalizer(Iterable<? extends T> objs) {
@@ -20,8 +25,13 @@ public class Canonicalizer<T> implements Set<T> {
         this.addAll(objs);
     }
 
+    public Canonicalizer(Collection<? extends T> objs) {
+        this(objs.size());
+        this.addAll(objs);
+    }
+
     public Canonicalizer(T... objs) {
-        this();
+        this(objs.length);
         for (T obj : objs) {
             this.add(obj);
         }

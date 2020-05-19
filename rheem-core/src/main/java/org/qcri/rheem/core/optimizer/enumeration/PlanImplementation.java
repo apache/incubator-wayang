@@ -12,6 +12,7 @@ import org.qcri.rheem.core.plan.rheemplan.*;
 import org.qcri.rheem.core.platform.Junction;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Canonicalizer;
+import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,12 +76,12 @@ public class PlanImplementation {
     /**
      * The parallel cost estimate . This will store both calculated squashed cost and cost that will be used to select the best enumerated plan!
      */
-    private Tuple<List<ProbabilisticDoubleInterval>,List<Double>> parallelCostEstimateCache = null;
+    private Tuple<List<ProbabilisticDoubleInterval>, List<Double>> parallelCostEstimateCache = null;
 
     /**
      * This will be used to store the parallel cost of each operator.
      */
-    private List<Tuple<Operator,Tuple<List<ProbabilisticDoubleInterval>,List<Double>>>> calculatedParallelOperatorCostCache = new ArrayList<>();
+    private List<Tuple<Operator, Tuple<List<ProbabilisticDoubleInterval>, List<Double>>>> calculatedParallelOperatorCostCache = new ArrayList<>();
 
     /**
      * Create a new instance.
@@ -571,12 +572,13 @@ public class PlanImplementation {
      */
     public ProbabilisticDoubleInterval getCostEstimate() {
 
-        if(this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")) {
+        if (this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")) {
             return this.getParallelCostEstimate(true);
         } else {
             return this.getCostEstimate(true);
         }
     }
+
     /**
      * Retrieves the cost estimate for this instance.
      *
@@ -615,7 +617,7 @@ public class PlanImplementation {
      */
     public double getSquashedCostEstimate() {
         // Check if the parallel cost calculation is enabled in the configuration file
-        if(this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")){
+        if (this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")) {
             return this.getSquashedParallelCostEstimate(true);
         } else {
             return this.getSquashedCostEstimate(true);
@@ -667,13 +669,12 @@ public class PlanImplementation {
      * @param operator {@link Operator} that will be used to retreive the cost/squashed costs
      * @return list of probabilisticDoubleInterval where First element is the operator cost and second element is the junction cost; and
      * list of double retreived where First element is the operator squashed cost and second element is the junction squashed cost
-     *
+     * <p>
      * PS: This function will start with the sink operator
-     *
      */
 
 
-    private Tuple<List<ProbabilisticDoubleInterval>,List<Double>> getParallelOperatorJunctionAllCostEstimate(Operator operator){
+    private Tuple<List<ProbabilisticDoubleInterval>, List<Double>> getParallelOperatorJunctionAllCostEstimate(Operator operator) {
 
         Set<Operator> inputOperators = new HashSet<>();
         Set<Junction> inputJunction = new HashSet<>();
@@ -682,25 +683,25 @@ public class PlanImplementation {
         List<Double> squashedCost = new ArrayList<>();
 
         // check if the operator cost was already calculated and cached
-        for (Tuple<Operator, Tuple<List<ProbabilisticDoubleInterval>,List<Double>>> t:calculatedParallelOperatorCostCache){
-            if(t.field0 == operator)
+        for (Tuple<Operator, Tuple<List<ProbabilisticDoubleInterval>, List<Double>>> t : calculatedParallelOperatorCostCache) {
+            if (t.field0 == operator)
                 return t.field1;
         }
 
         if (this.optimizationContext.getOperatorContext(operator) != null) {
             // Get input junctions
             this.junctions.values()
-                .forEach(j -> {
-                    for(int itr=0;itr<j.getNumTargets();itr++) {
-                        if(j.getTargetOperator(itr) == operator)
-                            inputJunction.add(j);
-                    }
-                });
+                    .forEach(j -> {
+                        for (int itr = 0; itr < j.getNumTargets(); itr++) {
+                            if (j.getTargetOperator(itr) == operator)
+                                inputJunction.add(j);
+                        }
+                    });
             // Get input operators associated with input junctions
             inputJunction
-                .forEach((Junction j) -> {
-                    inputOperators.add(j.getSourceOperator());
-                });
+                    .forEach((Junction j) -> {
+                        inputOperators.add(j.getSourceOperator());
+                    });
 
             if (inputOperators.size() == 0) {
                 // If there is no input operator, only the cost of the current operator is returned
@@ -708,8 +709,8 @@ public class PlanImplementation {
                 probalisticCost.add(new ProbabilisticDoubleInterval(0f, 0f, 0f));
                 squashedCost.add(this.optimizationContext.getOperatorContext(operator).getSquashedCostEstimate());
                 squashedCost.add(.0);
-                Tuple<List<ProbabilisticDoubleInterval>,List<Double>> returnedCost = new Tuple(probalisticCost, squashedCost) ;
-                this.calculatedParallelOperatorCostCache.add(new Tuple(operator,returnedCost));
+                Tuple<List<ProbabilisticDoubleInterval>, List<Double>> returnedCost = new Tuple(probalisticCost, squashedCost);
+                this.calculatedParallelOperatorCostCache.add(new Tuple(operator, returnedCost));
                 return returnedCost;
             } else if (inputOperators.size() == 1) {
                 // If there is only one input operator the cost of the current operator plus the cost of the input operator is returned
@@ -727,8 +728,8 @@ public class PlanImplementation {
                 squashedCost.add(inputJunction.iterator().next().getSquashedCostEstimate(this.optimizationContext.getDefaultOptimizationContexts().get(0))
                         + this.getParallelOperatorJunctionAllCostEstimate(inputOperators.iterator().next()).field1.get(1));
 
-                Tuple<List<ProbabilisticDoubleInterval>,List<Double>> returnedCost = new Tuple(probalisticCost, squashedCost) ;
-                this.calculatedParallelOperatorCostCache.add(new Tuple(operator,returnedCost));
+                Tuple<List<ProbabilisticDoubleInterval>, List<Double>> returnedCost = new Tuple(probalisticCost, squashedCost);
+                this.calculatedParallelOperatorCostCache.add(new Tuple(operator, returnedCost));
                 return returnedCost;
             } else {
                 // If multiple input operators, the cost returned is the max of input operators
@@ -770,8 +771,8 @@ public class PlanImplementation {
                 squashedCost.add(inputJunction.iterator().next().getSquashedCostEstimate(this.optimizationContext.getDefaultOptimizationContexts().get(0))
                         + maxJunctionSquash);
 
-                Tuple<List<ProbabilisticDoubleInterval>,List<Double>> returnedCost = new Tuple(probalisticCost, squashedCost) ;
-                this.calculatedParallelOperatorCostCache.add(new Tuple(operator,returnedCost));
+                Tuple<List<ProbabilisticDoubleInterval>, List<Double>> returnedCost = new Tuple(probalisticCost, squashedCost);
+                this.calculatedParallelOperatorCostCache.add(new Tuple(operator, returnedCost));
                 return returnedCost;
             }
         } else {
@@ -786,7 +787,7 @@ public class PlanImplementation {
             squashedCost.add(controlSquash);
             squashedCost.add(junctionSquash);
 
-            return new Tuple<>(probalisticCost,squashedCost);
+            return new Tuple<>(probalisticCost, squashedCost);
         }
     }
 
@@ -840,11 +841,11 @@ public class PlanImplementation {
         double parallelJunctionCosts = 0f;
 
         // Iterate through all sinks to find the expensive sink
-        for (Operator op : sinkOperators){
-            Tuple<List<ProbabilisticDoubleInterval>,List<Double>> tempParallelCostEstimate = this.getParallelOperatorJunctionAllCostEstimate(op);
+        for (Operator op : sinkOperators) {
+            Tuple<List<ProbabilisticDoubleInterval>, List<Double>> tempParallelCostEstimate = this.getParallelOperatorJunctionAllCostEstimate(op);
             List<Double> tempSquashedCost = tempParallelCostEstimate.field1;
 
-            if (tempSquashedCost.get(0) + tempSquashedCost.get(1) > parallelOperatorCosts + parallelJunctionCosts){
+            if (tempSquashedCost.get(0) + tempSquashedCost.get(1) > parallelOperatorCosts + parallelJunctionCosts) {
                 parallelOperatorCosts = tempSquashedCost.get(0);
                 parallelJunctionCosts = tempSquashedCost.get(1);
                 this.parallelCostEstimateCache = tempParallelCostEstimate;
@@ -970,5 +971,99 @@ public class PlanImplementation {
         return String.format("PlanImplementation[%s, %s, costs=%s]",
                 this.getUtilizedPlatforms(), this.getTimeEstimate(), this.getCostEstimate()
         );
+    }
+
+    /**
+     * Creates a new {@link ConcatenationDescriptor} for this instance.
+     *
+     * @param output the relevant {@link OutputSlot} or {@code null}
+     * @param inputs the relevant {@link InputSlot}s; components can be {@code null}
+     * @return the {@link ConcatenationDescriptor}
+     */
+    ConcatenationDescriptor createConcatenationDescriptor(OutputSlot<?> output, List<InputSlot<?>> inputs) {
+        return new ConcatenationDescriptor(output, inputs);
+    }
+
+    /**
+     * Amends a {@link ConcatenationGroupDescriptor} by {@link PlanImplementation}-specific information.
+     */
+    class ConcatenationDescriptor {
+
+        final ConcatenationGroupDescriptor groupDescriptor;
+
+        final PlanImplementation execOutputPlanImplementation;
+
+        /**
+         * Creates a new instance.
+         */
+        ConcatenationDescriptor(OutputSlot<?> output, List<InputSlot<?>> inputs) {
+            // Find the ExecutionOperator's corresponding OutputSlot along with the nested PlanImplementation.
+            OutputSlot<?> execOutput = null;
+            PlanImplementation execOutputPlanImplementation = null;
+            if (output != null) {
+                Collection<Tuple<OutputSlot<?>, PlanImplementation>> execOpOutputsWithContext =
+                        PlanImplementation.this.findExecutionOperatorOutputWithContext(output);
+                final Tuple<OutputSlot<?>, PlanImplementation> execOpOutputWithCtx =
+                        RheemCollections.getSingleOrNull(execOpOutputsWithContext);
+                assert execOpOutputsWithContext != null : String.format("No outputs found for %s.", output);
+                execOutput = execOpOutputWithCtx.field0;
+                execOutputPlanImplementation = execOpOutputWithCtx.field1;
+            }
+
+            // Find the ExecutionOperators' corresponding InputSlots.
+            List<Set<InputSlot<?>>> execInputs = new ArrayList<>(inputs.size());
+            for (InputSlot<?> input : inputs) {
+                if (input == null) {
+                    execInputs.add(null);
+                } else {
+                    execInputs.add(RheemCollections.asSet(PlanImplementation.this.findExecutionOperatorInputs(input)));
+                }
+            }
+
+            this.groupDescriptor = new ConcatenationGroupDescriptor(execOutput, execInputs);
+            this.execOutputPlanImplementation = execOutputPlanImplementation;
+        }
+
+        PlanImplementation getPlanImplementation() {
+            return PlanImplementation.this;
+        }
+
+    }
+
+    /**
+     * Describes a group of {@link PlanImplementation}s in terms of their implementations for some {@link OutputSlot} and
+     * {@link InputSlot}s. These {@link Slot}s are not stored in this class and must be clear from the context.
+     */
+    static class ConcatenationGroupDescriptor {
+
+        /**
+         * A corresponding {@link ExecutionOperator}s {@link OutputSlot} or {@code null}.
+         */
+        final OutputSlot<?> execOutput;
+
+        /**
+         * {@link Set}s of corresponding {@link ExecutionOperator}s' {@link InputSlot}s. Individual components can
+         * be {@code null} if the {@link PlanImplementation}s do not implement the corresponding {@link InputSlot}.
+         */
+        final List<Set<InputSlot<?>>> execInputs;
+
+        ConcatenationGroupDescriptor(OutputSlot<?> execOutput, List<Set<InputSlot<?>>> execInputs) {
+            this.execOutput = execOutput;
+            this.execInputs = execInputs;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final ConcatenationGroupDescriptor that = (ConcatenationGroupDescriptor) o;
+            return Objects.equals(execOutput, that.execOutput) &&
+                    Objects.equals(execInputs, that.execInputs);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(execOutput, execInputs);
+        }
     }
 }

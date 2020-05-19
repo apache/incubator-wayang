@@ -78,20 +78,12 @@ public class SparkBernoulliSampleOperator<Type>
         return new SparkBernoulliSampleOperator<>(this);
     }
 
-    @Override
-    public Optional<LoadProfileEstimator> createLoadProfileEstimator(Configuration configuration) {
-        // NB: This was not measured but is guesswork, adapted from SparkFilterOperator.
-        final LoadProfileEstimator mainEstimator = new NestableLoadProfileEstimator(
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 700 * inputCards[0] + 500000000L),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 10000),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                new DefaultLoadEstimator(1, 1, .9d, (inputCards, outputCards) -> 0),
-                (in, out) -> 0.23d,
-                550
-        );
 
-        return Optional.of(mainEstimator);
+    @Override
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.bernoulli-sample.load";
     }
+
 
     @Override
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {

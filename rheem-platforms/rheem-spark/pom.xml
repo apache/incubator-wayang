@@ -5,11 +5,11 @@
     <parent>
         <artifactId>rheem-platforms</artifactId>
         <groupId>org.qcri.rheem</groupId>
-        <version>0.2.2-SNAPSHOT</version>
+        <version>0.3.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rheem-spark</artifactId>
+    <artifactId>rheem-spark_2.11</artifactId>
 
     <packaging>jar</packaging>
 
@@ -32,18 +32,18 @@
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-core</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-basic</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <!-- rheem-java is required to allow for direct communication between spark and java -->
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-java</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>

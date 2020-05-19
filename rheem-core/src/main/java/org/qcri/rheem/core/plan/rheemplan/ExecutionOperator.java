@@ -2,6 +2,7 @@ package org.qcri.rheem.core.plan.rheemplan;
 
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
+import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
 import org.qcri.rheem.core.optimizer.costs.LoadProfile;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
@@ -88,6 +89,64 @@ public interface ExecutionOperator extends ElementaryOperator {
      */
     default String getLoadProfileEstimatorConfigurationKey() {
         return null;
+    }
+
+    /**
+     * Provides a base key for configuring input and output limits.
+     * @return the limit base key or {@code null}
+     */
+    default String getLimitBaseKey() {
+        // By default, try to infer the key.
+        String loadProfileEstimatorConfigurationKey = this.getLoadProfileEstimatorConfigurationKey();
+        if (loadProfileEstimatorConfigurationKey != null && loadProfileEstimatorConfigurationKey.endsWith(".load")) {
+            return loadProfileEstimatorConfigurationKey
+                    .substring(0, loadProfileEstimatorConfigurationKey.length() - 5)
+                    .concat(".limit");
+        }
+        return null;
+    }
+
+    /**
+     * Tells whether this instance should not be executed on the face of the given
+     * {@link OptimizationContext.OperatorContext}. For instance, when this instance
+     * might not be able to handle the amount of data.
+     *
+     * @param operatorContext an {@link OptimizationContext.OperatorContext} within which this instance might be
+     *                        executed
+     * @return whether this instance should <b>not</b> be used for execution
+     */
+    default boolean isFiltered(OptimizationContext.OperatorContext operatorContext) {
+        assert operatorContext.getOperator() == this;
+
+        // By default, we look for configuration keys formed like this:
+        //   <my.operator.limit.key>.<input/output name>
+        // If such a key exists, we compare it to values in the operatorContext.
+        String limitBaseKey = this.getLimitBaseKey();
+        if (limitBaseKey != null) {
+            Configuration configuration = operatorContext.getOptimizationContext().getConfiguration();
+
+            // Check the inputs.
+            for (InputSlot<?> input : this.getAllInputs()) {
+                String key = limitBaseKey + "." + input.getName();
+                long limit = configuration.getLongProperty(key, -1);
+                if (limit >= 0) {
+                    CardinalityEstimate cardinality = operatorContext.getInputCardinality(input.getIndex());
+                    if (cardinality != null && cardinality.getGeometricMeanEstimate() > limit) return true;
+                }
+            }
+
+            // Check the outputs.
+            for (OutputSlot<?> output : this.getAllOutputs()) {
+                String key = limitBaseKey + "." + output.getName();
+                long limit = configuration.getLongProperty(key, -1);
+                if (limit >= 0) {
+                    CardinalityEstimate cardinality = operatorContext.getOutputCardinality(output.getIndex());
+                    if (cardinality != null && cardinality.getGeometricMeanEstimate() > limit) return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

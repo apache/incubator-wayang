@@ -5,33 +5,33 @@
     <parent>
         <artifactId>rheem-extensions</artifactId>
         <groupId>org.qcri.rheem</groupId>
-        <version>0.2.2-SNAPSHOT</version>
+        <version>0.3.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rheem-iejoin</artifactId>
+    <artifactId>rheem-iejoin_2.11</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-core</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-basic</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-java</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
-            <artifactId>rheem-spark</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <artifactId>rheem-spark_2.11</artifactId>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>

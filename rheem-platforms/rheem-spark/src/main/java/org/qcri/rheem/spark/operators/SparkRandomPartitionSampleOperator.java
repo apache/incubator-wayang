@@ -176,6 +176,11 @@ public class SparkRandomPartitionSampleOperator<Type>
         return Collections.singletonList(CollectionChannel.DESCRIPTOR);
     }
 
+    public String getLoadProfileEstimatorConfigurationKey() {
+        return "rheem.spark.random-partition-sample.load";
+    }
+
+
     @Override
     public boolean containsAction() {
         return true;

@@ -2,6 +2,7 @@ package org.qcri.rheem.api;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.api.Configuration;
@@ -419,6 +420,98 @@ public class JavaApiTest {
         Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
     }
 
+    @Test
+    public void testCoGroup() {
+        // Set up RheemContext.
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+
+        // Generate test data.
+        final List<Tuple2<String, Integer>> inputValues1 = Arrays.asList(
+                new Tuple2<>("Water", 0),
+                new Tuple2<>("Cola", 5),
+                new Tuple2<>("Juice", 10)
+        );
+        final List<Tuple2<String, String>> inputValues2 = Arrays.asList(
+                new Tuple2<>("Apple juice", "Juice"),
+                new Tuple2<>("Tap water", "Water"),
+                new Tuple2<>("Orange juice", "Juice")
+        );
+
+        // Execute the job.
+        final LoadCollectionDataQuantaBuilder<Tuple2<String, Integer>> dataQuanta1 = builder.loadCollection(inputValues1);
+        final LoadCollectionDataQuantaBuilder<Tuple2<String, String>> dataQuanta2 = builder.loadCollection(inputValues2);
+        final Collection<Tuple2<Set<Tuple2<String, Integer>>, Set<Tuple2<String, String>>>> outputValues = dataQuanta1
+                .coGroup(Tuple2::getField0, dataQuanta2, Tuple2::getField1)
+                .map(joinTuple -> new Tuple2<>(
+                        RheemCollections.asSet(joinTuple.getField0()),
+                        RheemCollections.asSet(joinTuple.getField1())
+                ))
+                .collect();
+
+        // Verify the outcome.
+        Set<Tuple2<Set<Tuple2<String, Integer>>, Set<Tuple2<String, String>>>> expectedValues = RheemCollections.asSet(
+                new Tuple2<>(
+                        RheemCollections.asSet(new Tuple2<>("Water", 0)),
+                        RheemCollections.asSet(new Tuple2<>("Tap water", "Water"))
+                ),
+                new Tuple2<>(
+                        RheemCollections.asSet(new Tuple2<>("Cola", 5)),
+                        RheemCollections.asSet()
+                ), new Tuple2<>(
+                        RheemCollections.asSet(new Tuple2<>("Juice", 10)),
+                        RheemCollections.asSet(new Tuple2<>("Apple juice", "Juice"), new Tuple2<>("Orange juice", "Juice"))
+                )
+        );
+        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+    }
+
+    @Test
+    public void testCoGroupViaKeyBy() {
+        // Set up RheemContext.
+        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+
+        // Generate test data.
+        final List<Tuple2<String, Integer>> inputValues1 = Arrays.asList(
+                new Tuple2<>("Water", 0),
+                new Tuple2<>("Cola", 5),
+                new Tuple2<>("Juice", 10)
+        );
+        final List<Tuple2<String, String>> inputValues2 = Arrays.asList(
+                new Tuple2<>("Apple juice", "Juice"),
+                new Tuple2<>("Tap water", "Water"),
+                new Tuple2<>("Orange juice", "Juice")
+        );
+
+        // Execute the job.
+        final LoadCollectionDataQuantaBuilder<Tuple2<String, Integer>> dataQuanta1 = builder.loadCollection(inputValues1);
+        final LoadCollectionDataQuantaBuilder<Tuple2<String, String>> dataQuanta2 = builder.loadCollection(inputValues2);
+        final Collection<Tuple2<Set<Tuple2<String, Integer>>, Set<Tuple2<String, String>>>> outputValues =
+                dataQuanta1.keyBy(Tuple2::getField0)
+                        .coGroup(dataQuanta2.keyBy(Tuple2::getField1))
+                        .map(joinTuple -> new Tuple2<>(
+                                RheemCollections.asSet(joinTuple.getField0()),
+                                RheemCollections.asSet(joinTuple.getField1())
+                        ))
+                        .collect();
+
+        // Verify the outcome.
+        Set<Tuple2<Set<Tuple2<String, Integer>>, Set<Tuple2<String, String>>>> expectedValues = RheemCollections.asSet(
+                new Tuple2<>(
+                        RheemCollections.asSet(new Tuple2<>("Water", 0)),
+                        RheemCollections.asSet(new Tuple2<>("Tap water", "Water"))
+                ),
+                new Tuple2<>(
+                        RheemCollections.asSet(new Tuple2<>("Cola", 5)),
+                        RheemCollections.asSet()
+                ), new Tuple2<>(
+                        RheemCollections.asSet(new Tuple2<>("Juice", 10)),
+                        RheemCollections.asSet(new Tuple2<>("Apple juice", "Juice"), new Tuple2<>("Orange juice", "Juice"))
+                )
+        );
+        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+    }
 
     @Test
     public void testIntersect() {
@@ -451,7 +544,7 @@ public class JavaApiTest {
 
         // Execute the job.
         final LoadCollectionDataQuantaBuilder<Integer> dataQuanta1 = builder.loadCollection(inputValues1);
-        final Collection<Integer> outputValues = dataQuanta1.sort(r->r).collect();
+        final Collection<Integer> outputValues = dataQuanta1.sort(r -> r).collect();
 
         // Verify the outcome.
         List<Integer> expectedValues = Arrays.asList(1, 2, 3, 4, 5);
@@ -505,7 +598,8 @@ public class JavaApiTest {
                 .mapPartitions(partition -> {
                     int numEvens = 0, numOdds = 0;
                     for (Integer value : partition) {
-                        if ((value & 1) == 0) numEvens++; else numOdds++;
+                        if ((value & 1) == 0) numEvens++;
+                        else numOdds++;
                     }
                     return Arrays.asList(
                             new Tuple2<>("odd", numOdds),

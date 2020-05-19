@@ -5,11 +5,11 @@
     <parent>
         <artifactId>rheem</artifactId>
         <groupId>org.qcri.rheem</groupId>
-        <version>0.2.2-SNAPSHOT</version>
+        <version>0.3.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rheem-profiler</artifactId>
+    <artifactId>rheem-profiler_2.11</artifactId>
 
     <dependencies>
         <dependency>
@@ -19,28 +19,28 @@
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
-            <artifactId>rheem-spark</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <artifactId>rheem-spark_2.11</artifactId>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-java</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
-            <artifactId>rheem-graphchi</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <artifactId>rheem-graphchi_2.11</artifactId>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-postgres</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.qcri.rheem</groupId>
             <artifactId>rheem-sqlite3</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <version>0.3.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
