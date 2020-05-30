@@ -1,13 +1,9 @@
 package org.qcri.rheem.flink.operators;
 
-import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.utils.DataSetUtils;
-import org.apache.flink.shaded.com.google.common.base.Splitter;
-import org.qcri.rheem.basic.operators.FilterOperator;
 import org.qcri.rheem.basic.operators.SampleOperator;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -17,14 +13,8 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
-import org.qcri.rheem.java.channels.CollectionChannel;
-import scala.collection.JavaConversions;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.function.IntUnaryOperator;
 import java.util.function.LongUnaryOperator;
 

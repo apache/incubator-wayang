@@ -4,7 +4,6 @@ import org.apache.commons.lang3.Validate;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl;
 
 import java.io.InputStream;
 import java.lang.reflect.*;

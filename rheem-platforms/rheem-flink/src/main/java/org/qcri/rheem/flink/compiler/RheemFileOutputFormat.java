@@ -1,7 +1,9 @@
 package org.qcri.rheem.flink.compiler;
 
-import org.apache.flink.api.common.io.*;
-import org.apache.flink.configuration.ConfigConstants;
+import org.apache.flink.api.common.io.FileOutputFormat;
+import org.apache.flink.api.common.io.InitializeOnMaster;
+import org.apache.flink.api.common.io.CleanupWhenUnsuccessful;
+import org.apache.flink.api.common.io.BlockInfo;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.core.fs.FSDataOutputStream;
@@ -18,7 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URI;
-import java.nio.file.Paths;
 
 /**
  * Wrapper for {@link FileOutputFormat}
@@ -42,7 +43,7 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
      * cluster execution, see LocalFlinkMiniCluster.
      * @param configuration The configuration to load defaults from
      */
-    private static void initDefaultsFromConfiguration(Configuration configuration) {
+    public static void initDefaultsFromConfiguration(Configuration configuration) {
 
         DEFAULT_WRITE_MODE = FileSystem.WriteMode.OVERWRITE ;
 

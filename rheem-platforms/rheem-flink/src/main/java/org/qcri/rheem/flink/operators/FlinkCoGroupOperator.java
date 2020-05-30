@@ -1,11 +1,8 @@
 package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.common.functions.CoGroupFunction;
-import org.apache.flink.api.common.typeinfo.TypeHint;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.api.java.typeutils.TypeExtractor;
 import org.apache.flink.util.Collector;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CoGroupOperator;
@@ -24,7 +21,6 @@ import org.qcri.rheem.flink.compiler.FunctionCompiler;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Flink implementation of the {@link CoGroupOperator}.

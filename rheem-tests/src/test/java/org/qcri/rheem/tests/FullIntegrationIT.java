@@ -14,13 +14,13 @@ import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.executionplan.ExecutionPlan;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.types.DataUnitType;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
+import org.qcri.rheem.flink.Flink;
 import org.qcri.rheem.java.Java;
 import org.qcri.rheem.spark.Spark;
 import org.qcri.rheem.sqlite3.Sqlite3;
@@ -65,7 +65,8 @@ public class FullIntegrationIT {
         // Instantiate Rheem and activate the Java backend.
         RheemContext rheemContext = new RheemContext(configuration)
                 .with(Java.basicPlugin())
-                .with(Spark.basicPlugin());
+                .with(Spark.basicPlugin())
+                .with(Flink.basicPlugin());
 
         // Have Rheem execute the plan.
         rheemContext.execute(rheemPlan);

@@ -1,18 +1,17 @@
 package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.DataSet;
+import org.apache.flink.api.java.hadoop.mapred.HadoopInputFormat;
+import org.apache.flink.hadoopcompatibility.HadoopInputs;
 import org.apache.flink.util.Collector;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
-import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
-import org.qcri.rheem.core.plan.rheemplan.UnarySink;
 import org.qcri.rheem.core.plan.rheemplan.UnarySource;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
@@ -69,10 +68,10 @@ public class FlinkObjectFileSource<Type> extends UnarySource<Type> implements Fl
         DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
         flinkExecutor.fee.setParallelism(flinkExecutor.getNumDefaultPartitions());
 
+        HadoopInputFormat<NullWritable, BytesWritable> _file = HadoopInputs.readSequenceFile(NullWritable.class, BytesWritable.class, path);
         final DataSet<Tuple2> dataSet =
                 flinkExecutor
-                        .fee
-                        .readSequenceFile(NullWritable.class, BytesWritable.class, path)
+                        .fee.createInput(_file)
                         .setParallelism(flinkExecutor.getNumDefaultPartitions())
                         .flatMap(new FlatMapFunction<org.apache.flink.api.java.tuple.Tuple2<NullWritable,BytesWritable>, Tuple2>() {
                             @Override
