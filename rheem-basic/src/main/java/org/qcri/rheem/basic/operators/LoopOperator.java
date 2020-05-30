@@ -46,7 +46,15 @@ public class LoopOperator<InputType, ConvergenceType> extends OperatorBase imple
         this.state = state;
     }
 
-    // TODO: Add convenience constructors as in the other operators.
+    public LoopOperator(Class<InputType> inputTypeClass, Class<ConvergenceType> convergenceTypeClass,
+                        PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
+                        Integer numExpectedIterations) {
+        this(DataSetType.createDefault(inputTypeClass),
+                DataSetType.createDefault(convergenceTypeClass),
+                criterionPredicate,
+                numExpectedIterations
+        );
+    }
 
     public LoopOperator(DataSetType<InputType> inputType, DataSetType<ConvergenceType> convergenceType,
                         PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,

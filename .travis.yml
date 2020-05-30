@@ -1,0 +1,24 @@
+language: java
+
+notification:
+  email:
+    on_success: never
+    on_failure: never
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/8eed86a6ecffb667b819
+    on_success: change
+    on_failure: always
+    on_start: false
+
+install: true
+before_script:
+  - mkdir -p travis/tmp
+  - echo "rheem.basic.tempdir = file://$(pwd)/travis/tmp" >> travis/rheem.properties
+  - echo "spark.driver.host = localhost" >> travis/rheem.properties
+  - cat travis/rheem.properties
+  - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Drheem.configuration=file://$(pwd)/travis/rheem.properties")
+script:
+  - bin/change-scala-version.sh 2.10.6 && mvn clean install -Pdistro "${mvn_opts[@]}"
+  - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro "${mvn_opts[@]}"
+

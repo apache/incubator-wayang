@@ -125,7 +125,7 @@ public class SparkPlatform extends Platform {
         final JavaSparkContext sparkContext = this.sparkContextReference.get();
 
         // Set up the JAR files.
-        sparkContext.clearJars();
+        //sparkContext.clearJars();
         if (!sparkContext.isLocal()) {
             // Add Rheem JAR files.
             this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // rheem-spark

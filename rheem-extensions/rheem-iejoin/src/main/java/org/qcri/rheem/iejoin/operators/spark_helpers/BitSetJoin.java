@@ -7,6 +7,7 @@ import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Iterator;
 
 /**
  * Created by khayyzy on 5/28/16.
@@ -83,7 +84,7 @@ public class BitSetJoin<Type0 extends Comparable<Type0>, Type1 extends Comparabl
         return result;
     }
 
-    public Iterable<scala.Tuple2<Long, Long>> call(
+    public Iterator<Tuple2<Long, Long>> call(
             Tuple2<List2AttributesObjectSkinny<Type0, Type1>, List2AttributesObjectSkinny<Type0, Type1>> arg0)
             throws Exception {
         // ArrayList<Tuple2<Long, Long>> output = new ArrayList<Tuple2<Long,
@@ -105,7 +106,7 @@ public class BitSetJoin<Type0 extends Comparable<Type0>, Type1 extends Comparabl
 
             ArrayList<Tuple2<Long, Long>> wilResult = getViolationsSelf(lst1a,
                     permutationArray);
-            return wilResult;
+            return wilResult.iterator();
         } else {
 
             Data[] lst1a = arg0._1().getList1();
@@ -130,7 +131,7 @@ public class BitSetJoin<Type0 extends Comparable<Type0>, Type1 extends Comparabl
             ArrayList<Tuple2<Long, Long>> wilResult = getViolationsNonSelf(
                     list1, permutationArray);
 
-            return wilResult;
+            return wilResult.iterator();
         }
         // return output;
 
