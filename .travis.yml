@@ -19,6 +19,5 @@ before_script:
   - cat travis/rheem.properties
   - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Drheem.configuration=file://$(pwd)/travis/rheem.properties")
 script:
-  - bin/change-scala-version.sh 2.10.6 && mvn clean install -Pdistro "${mvn_opts[@]}"
   - bin/change-scala-version.sh 2.11.8 && mvn clean install -Pdistro "${mvn_opts[@]}"
 
