@@ -16,6 +16,7 @@ before_script:
   - mkdir -p travis/tmp
   - echo "rheem.basic.tempdir = file://$(pwd)/travis/tmp" >> travis/rheem.properties
   - echo "spark.driver.host = localhost" >> travis/rheem.properties
+  - echo "spark.master = local[1]" >> travis/rheem.properties
   - cat travis/rheem.properties
   - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Drheem.configuration=file://$(pwd)/travis/rheem.properties")
 script:
