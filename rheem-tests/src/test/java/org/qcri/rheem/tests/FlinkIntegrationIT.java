@@ -7,6 +7,7 @@ import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.flink.Flink;
 import org.qcri.rheem.java.Java;
