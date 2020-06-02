@@ -1,27 +1,15 @@
 package org.qcri.rheem.tests;
 
-import org.apache.flink.api.java.ExecutionEnvironment;
 import org.junit.Assert;
 import org.junit.Test;
-import org.qcri.rheem.basic.RheemBasics;
 import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.basic.operators.CollectionSource;
-import org.qcri.rheem.basic.operators.FilterOperator;
-import org.qcri.rheem.basic.operators.LocalCallbackSink;
-import org.qcri.rheem.basic.operators.TextFileSource;
-import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.api.RheemContext;
 import org.qcri.rheem.core.api.exception.RheemException;
-import org.qcri.rheem.core.function.ExecutionContext;
-import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
-import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.flink.Flink;
-import org.qcri.rheem.flink.platform.FlinkPlatform;
 import org.qcri.rheem.java.Java;
-import org.qcri.rheem.spark.Spark;
 import org.qcri.rheem.tests.platform.MyMadeUpPlatform;
 
 import java.io.File;
@@ -29,7 +17,13 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 

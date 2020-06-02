@@ -1,11 +1,6 @@
 package org.qcri.rheem.core.api.configuration;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.api.exception.RheemException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 /**
  * Used by {@link Configuration}s to provide some value.

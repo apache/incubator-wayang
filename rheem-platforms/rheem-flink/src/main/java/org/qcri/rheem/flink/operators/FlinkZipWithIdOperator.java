@@ -5,7 +5,6 @@ import org.apache.flink.api.java.utils.DataSetUtils;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.basic.operators.ZipWithIdOperator;
-import org.qcri.rheem.core.mapping.*;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
@@ -16,7 +15,6 @@ import org.qcri.rheem.core.util.ReflectionUtils;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
-import org.qcri.rheem.flink.platform.FlinkPlatform;
 
 import java.util.Arrays;
 import java.util.Collection;

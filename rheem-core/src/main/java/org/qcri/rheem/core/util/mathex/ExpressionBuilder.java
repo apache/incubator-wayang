@@ -1,11 +1,19 @@
 package org.qcri.rheem.core.util.mathex;
 
+import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
 import org.qcri.rheem.core.mathex.MathExBaseVisitor;
 import org.qcri.rheem.core.mathex.MathExLexer;
 import org.qcri.rheem.core.mathex.MathExParser;
 import org.qcri.rheem.core.util.mathex.exceptions.ParseException;
-import org.qcri.rheem.core.util.mathex.model.*;
-import org.antlr.v4.runtime.*;
+import org.qcri.rheem.core.util.mathex.model.BinaryOperation;
+import org.qcri.rheem.core.util.mathex.model.Constant;
+import org.qcri.rheem.core.util.mathex.model.NamedFunction;
+import org.qcri.rheem.core.util.mathex.model.UnaryOperation;
+import org.qcri.rheem.core.util.mathex.model.Variable;
 
 import java.util.List;
 import java.util.stream.Collectors;

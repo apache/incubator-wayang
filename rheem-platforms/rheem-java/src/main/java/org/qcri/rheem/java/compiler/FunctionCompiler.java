@@ -1,7 +1,11 @@
 package org.qcri.rheem.java.compiler;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.function.*;
+import org.qcri.rheem.core.function.FlatMapDescriptor;
+import org.qcri.rheem.core.function.MapPartitionsDescriptor;
+import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 
 import java.util.function.BinaryOperator;
 import java.util.function.Function;

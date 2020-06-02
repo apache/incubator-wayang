@@ -2,7 +2,12 @@ package org.qcri.rheem.basic.mapping;
 
 import org.qcri.rheem.basic.operators.GroupByOperator;
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
-import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.mapping.OperatorPattern;
+import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.mapping.ReplacementSubplanFactory;
+import org.qcri.rheem.core.mapping.SubplanMatch;
+import org.qcri.rheem.core.mapping.SubplanPattern;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.types.DataSetType;
 

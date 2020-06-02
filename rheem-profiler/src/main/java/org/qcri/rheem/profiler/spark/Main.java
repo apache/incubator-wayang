@@ -10,7 +10,11 @@ import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.profiler.data.DataGenerators;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 

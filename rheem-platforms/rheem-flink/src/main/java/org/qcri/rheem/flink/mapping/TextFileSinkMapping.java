@@ -1,13 +1,14 @@
 package org.qcri.rheem.flink.mapping;
 
-import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.TextFileSink;
-import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.mapping.OperatorPattern;
+import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.mapping.ReplacementSubplanFactory;
+import org.qcri.rheem.core.mapping.SubplanPattern;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.flink.operators.FlinkTextFileSink;
-import org.qcri.rheem.flink.operators.FlinkTextFileSource;
 import org.qcri.rheem.flink.platform.FlinkPlatform;
-import org.qcri.rheem.java.operators.JavaTextFileSink;
 
 import java.util.Collection;
 import java.util.Collections;

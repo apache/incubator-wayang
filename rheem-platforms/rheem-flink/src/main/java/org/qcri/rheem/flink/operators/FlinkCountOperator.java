@@ -12,7 +12,6 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
-import org.qcri.rheem.java.channels.CollectionChannel;
 
 import java.util.Arrays;
 import java.util.Collection;

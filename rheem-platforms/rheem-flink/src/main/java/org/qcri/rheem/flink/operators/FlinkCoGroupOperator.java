@@ -20,7 +20,11 @@ import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.compiler.FunctionCompiler;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Flink implementation of the {@link CoGroupOperator}.

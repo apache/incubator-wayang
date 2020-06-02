@@ -10,7 +10,11 @@ import org.qcri.rheem.core.util.OneTimeExecutable;
 import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Enumerator for {@link LoopSubplan}s.

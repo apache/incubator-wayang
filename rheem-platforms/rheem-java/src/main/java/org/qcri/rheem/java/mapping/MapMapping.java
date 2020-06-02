@@ -1,11 +1,13 @@
 package org.qcri.rheem.java.mapping;
 
 import org.qcri.rheem.basic.operators.MapOperator;
-import org.qcri.rheem.basic.operators.TextFileSource;
-import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.mapping.OperatorPattern;
+import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.mapping.ReplacementSubplanFactory;
+import org.qcri.rheem.core.mapping.SubplanPattern;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.java.operators.JavaMapOperator;
-import org.qcri.rheem.java.operators.JavaTextFileSource;
 import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Collection;

@@ -1,7 +1,5 @@
 package org.qcri.rheem.flink.operators;
 
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.io.FileOutputFormat;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.io.TextOutputFormat;
 import org.qcri.rheem.basic.operators.TextFileSink;

@@ -6,9 +6,9 @@ import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.plugin.Plugin;
+import org.qcri.rheem.flink.channels.ChannelConversions;
 import org.qcri.rheem.flink.mapping.Mappings;
 import org.qcri.rheem.flink.platform.FlinkPlatform;
-import org.qcri.rheem.flink.channels.ChannelConversions;
 import org.qcri.rheem.java.platform.JavaPlatform;
 
 import java.util.Arrays;

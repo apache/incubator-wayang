@@ -3,7 +3,6 @@ package org.qcri.rheem.flink.compiler;
 import org.apache.flink.api.common.io.OutputFormat;
 import org.apache.flink.configuration.Configuration;
 import org.qcri.rheem.core.function.ConsumerDescriptor;
-import org.qcri.rheem.core.function.FunctionDescriptor.SerializableConsumer;
 
 import java.io.IOException;
 import java.io.Serializable;

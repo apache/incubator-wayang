@@ -1,11 +1,13 @@
 package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.CoGroupOperator;
-import org.qcri.rheem.basic.operators.JoinOperator;
-import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.mapping.OperatorPattern;
+import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.mapping.ReplacementSubplanFactory;
+import org.qcri.rheem.core.mapping.SubplanPattern;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkCoGroupOperator;
-import org.qcri.rheem.spark.operators.SparkJoinOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;

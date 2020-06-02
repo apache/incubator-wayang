@@ -3,12 +3,10 @@ package org.qcri.rheem.spark.plugin;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.mapping.Mapping;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
-import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.spark.channels.ChannelConversions;
-import org.qcri.rheem.spark.mapping.Mappings;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Arrays;

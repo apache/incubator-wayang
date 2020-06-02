@@ -1,8 +1,6 @@
 package org.qcri.rheem.flink.channels;
 
-import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.java.DataSet;
-import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
@@ -12,9 +10,7 @@ import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.platform.Executor;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
-import java.io.Serializable;
 import java.util.OptionalLong;
-import java.util.function.Predicate;
 
 /**
  * Describes the situation where one {@link DataSet} is operated on, producing a further {@link DataSet}.

@@ -11,7 +11,11 @@ import org.qcri.rheem.java.operators.JavaExecutionOperator;
 import org.qcri.rheem.profiler.data.DataGenerators;
 import org.qcri.rheem.profiler.util.ProfilingUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 

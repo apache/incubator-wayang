@@ -2,7 +2,11 @@ package org.qcri.rheem.profiler.log;
 
 import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Context for the optimization of {@link LoadProfileEstimator}s.

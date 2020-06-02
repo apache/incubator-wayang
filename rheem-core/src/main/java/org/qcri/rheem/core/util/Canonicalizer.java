@@ -1,6 +1,11 @@
 package org.qcri.rheem.core.util;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * This utility maintains canonical sets of objects.

@@ -3,7 +3,11 @@ package org.qcri.rheem.core.mapping;
 import org.qcri.rheem.core.plan.rheemplan.Operator;
 import org.qcri.rheem.core.platform.Platform;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * A subplan match correlates a {@link SubplanPattern} with its actually matched .

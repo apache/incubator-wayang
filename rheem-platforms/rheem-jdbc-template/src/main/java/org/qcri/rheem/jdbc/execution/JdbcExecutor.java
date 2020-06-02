@@ -16,12 +16,12 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.qcri.rheem.core.util.fs.FileSystem;
 import org.qcri.rheem.core.util.fs.FileSystems;
-import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 import org.qcri.rheem.jdbc.channels.SqlQueryChannel;
 import org.qcri.rheem.jdbc.compiler.FunctionCompiler;
 import org.qcri.rheem.jdbc.operators.JdbcExecutionOperator;
 import org.qcri.rheem.jdbc.operators.JdbcFilterOperator;
 import org.qcri.rheem.jdbc.operators.JdbcProjectionOperator;
+import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -3,7 +3,6 @@ package org.qcri.rheem.flink.operators;
 import org.apache.flink.api.common.functions.MapPartitionFunction;
 import org.apache.flink.api.common.functions.RichMapPartitionFunction;
 import org.apache.flink.api.java.DataSet;
-import org.apache.flink.util.Collector;
 import org.qcri.rheem.basic.operators.MapPartitionsOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.MapPartitionsDescriptor;
@@ -20,7 +19,11 @@ import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.execution.FlinkExecutionContext;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Flink implementation of the {@link MapPartitionsOperator}.

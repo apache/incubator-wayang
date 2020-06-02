@@ -1,11 +1,29 @@
 package org.qcri.rheem.profiler.spark;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.function.*;
+import org.qcri.rheem.core.function.FlatMapDescriptor;
+import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.profiler.data.DataGenerators;
-import org.qcri.rheem.spark.operators.*;
+import org.qcri.rheem.spark.operators.SparkCartesianOperator;
+import org.qcri.rheem.spark.operators.SparkCollectionSource;
+import org.qcri.rheem.spark.operators.SparkCountOperator;
+import org.qcri.rheem.spark.operators.SparkDistinctOperator;
+import org.qcri.rheem.spark.operators.SparkFilterOperator;
+import org.qcri.rheem.spark.operators.SparkFlatMapOperator;
+import org.qcri.rheem.spark.operators.SparkGlobalReduceOperator;
+import org.qcri.rheem.spark.operators.SparkJoinOperator;
+import org.qcri.rheem.spark.operators.SparkLocalCallbackSink;
+import org.qcri.rheem.spark.operators.SparkMapOperator;
+import org.qcri.rheem.spark.operators.SparkMaterializedGroupByOperator;
+import org.qcri.rheem.spark.operators.SparkReduceByOperator;
+import org.qcri.rheem.spark.operators.SparkSortOperator;
+import org.qcri.rheem.spark.operators.SparkTextFileSource;
+import org.qcri.rheem.spark.operators.SparkUnionAllOperator;
 
 import java.util.ArrayList;
 import java.util.Random;

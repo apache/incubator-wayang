@@ -5,9 +5,16 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
-import org.qcri.rheem.spark.operators.*;
+import org.qcri.rheem.java.platform.JavaPlatform;
+import org.qcri.rheem.spark.operators.SparkBroadcastOperator;
+import org.qcri.rheem.spark.operators.SparkCacheOperator;
+import org.qcri.rheem.spark.operators.SparkCollectOperator;
+import org.qcri.rheem.spark.operators.SparkCollectionSource;
+import org.qcri.rheem.spark.operators.SparkObjectFileSink;
+import org.qcri.rheem.spark.operators.SparkObjectFileSource;
+import org.qcri.rheem.spark.operators.SparkTsvFileSink;
+import org.qcri.rheem.spark.operators.SparkTsvFileSource;
 
 import java.util.Arrays;
 import java.util.Collection;

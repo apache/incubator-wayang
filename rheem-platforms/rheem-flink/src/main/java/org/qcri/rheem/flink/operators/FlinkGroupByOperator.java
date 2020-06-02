@@ -1,16 +1,9 @@
 package org.qcri.rheem.flink.operators;
 
-import org.apache.flink.api.common.functions.GroupCombineFunction;
 import org.apache.flink.api.common.functions.GroupReduceFunction;
-import org.apache.flink.api.common.functions.MapFunction;
-import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.functions.KeySelector;
-import org.apache.flink.api.java.operators.UnsortedGrouping;
-import org.apache.flink.api.java.operators.translation.CombineToGroupCombineWrapper;
-import org.apache.flink.util.Collector;
 import org.qcri.rheem.basic.operators.GroupByOperator;
-import org.qcri.rheem.basic.operators.MapOperator;
 import org.qcri.rheem.core.api.Configuration;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.function.TransformationDescriptor;
@@ -26,7 +19,12 @@ import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Flink implementation of the {@link GroupByOperator}.

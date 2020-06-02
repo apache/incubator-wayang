@@ -17,7 +17,11 @@ import org.qcri.rheem.core.platform.lineage.LazyExecutionLineageNode;
 import org.qcri.rheem.core.util.Tuple;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * An execution operator is handled by a certain platform.

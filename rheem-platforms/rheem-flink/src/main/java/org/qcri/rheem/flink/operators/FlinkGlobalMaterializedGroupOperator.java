@@ -2,7 +2,6 @@ package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.common.functions.MapPartitionFunction;
 import org.apache.flink.api.java.DataSet;
-import org.apache.flink.util.Collector;
 import org.qcri.rheem.basic.operators.GlobalMaterializedGroupOperator;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -15,7 +14,11 @@ import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.flink.channels.DataSetChannel;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Flink implementation of the {@link GlobalMaterializedGroupOperator}.

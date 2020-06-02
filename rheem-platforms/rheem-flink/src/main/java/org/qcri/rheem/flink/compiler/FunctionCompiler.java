@@ -1,25 +1,31 @@
 package org.qcri.rheem.flink.compiler;
 
-import org.apache.flink.api.common.aggregators.ConvergenceCriterion;
-import org.apache.flink.api.common.functions.*;
-import org.apache.flink.api.common.io.FileOutputFormat;
+import org.apache.flink.api.common.functions.CoGroupFunction;
+import org.apache.flink.api.common.functions.FilterFunction;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.functions.MapPartitionFunction;
+import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.api.common.functions.RichFlatMapFunction;
+import org.apache.flink.api.common.functions.RichMapFunction;
+import org.apache.flink.api.common.functions.RichMapPartitionFunction;
 import org.apache.flink.api.common.io.OutputFormat;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.io.TextOutputFormat;
-import org.apache.flink.api.java.operators.FlatMapOperator;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
-import org.qcri.rheem.core.function.*;
+import org.qcri.rheem.core.function.ConsumerDescriptor;
+import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.MapPartitionsDescriptor;
+import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.flink.compiler.criterion.RheemConvergenceCriterion;
 import org.qcri.rheem.flink.execution.FlinkExecutionContext;
 
-
-import java.io.IOException;
 import java.util.Collection;
 import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 /**
  * A compiler translates Rheem functions into executable Flink functions.

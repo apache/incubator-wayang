@@ -1,7 +1,23 @@
 package org.qcri.rheem.tests;
 
 import org.qcri.rheem.basic.data.Tuple2;
-import org.qcri.rheem.basic.operators.*;
+import org.qcri.rheem.basic.operators.CartesianOperator;
+import org.qcri.rheem.basic.operators.CoGroupOperator;
+import org.qcri.rheem.basic.operators.CollectionSource;
+import org.qcri.rheem.basic.operators.CountOperator;
+import org.qcri.rheem.basic.operators.DistinctOperator;
+import org.qcri.rheem.basic.operators.FilterOperator;
+import org.qcri.rheem.basic.operators.FlatMapOperator;
+import org.qcri.rheem.basic.operators.JoinOperator;
+import org.qcri.rheem.basic.operators.LocalCallbackSink;
+import org.qcri.rheem.basic.operators.MapOperator;
+import org.qcri.rheem.basic.operators.MapPartitionsOperator;
+import org.qcri.rheem.basic.operators.ReduceByOperator;
+import org.qcri.rheem.basic.operators.SortOperator;
+import org.qcri.rheem.basic.operators.TextFileSink;
+import org.qcri.rheem.basic.operators.TextFileSource;
+import org.qcri.rheem.basic.operators.UnionAllOperator;
+import org.qcri.rheem.basic.operators.ZipWithIdOperator;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.util.ReflectionUtils;

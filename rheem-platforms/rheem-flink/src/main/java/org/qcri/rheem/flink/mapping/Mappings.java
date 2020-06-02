@@ -5,8 +5,6 @@ import org.qcri.rheem.core.mapping.Mapping;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static java.util.Arrays.asList;
-
 /**
  * Register for {@link Mapping}s for this platform.
  */

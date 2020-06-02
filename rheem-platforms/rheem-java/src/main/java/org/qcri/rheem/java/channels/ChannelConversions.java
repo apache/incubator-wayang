@@ -5,8 +5,12 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.types.DataSetType;
+import org.qcri.rheem.java.operators.JavaCollectOperator;
+import org.qcri.rheem.java.operators.JavaObjectFileSink;
+import org.qcri.rheem.java.operators.JavaObjectFileSource;
+import org.qcri.rheem.java.operators.JavaTsvFileSink;
+import org.qcri.rheem.java.operators.JavaTsvFileSource;
 import org.qcri.rheem.java.platform.JavaPlatform;
-import org.qcri.rheem.java.operators.*;
 
 import java.util.Arrays;
 import java.util.Collection;

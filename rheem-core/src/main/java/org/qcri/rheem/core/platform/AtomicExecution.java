@@ -4,7 +4,11 @@ import org.apache.commons.lang3.SerializationException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.*;
+import org.qcri.rheem.core.optimizer.costs.ConstantLoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.EstimationContext;
+import org.qcri.rheem.core.optimizer.costs.LoadProfile;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.util.JsonSerializables;
 import org.qcri.rheem.core.util.JsonSerializer;
 

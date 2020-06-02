@@ -10,7 +10,6 @@ import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.spark.mapping.Mappings;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 

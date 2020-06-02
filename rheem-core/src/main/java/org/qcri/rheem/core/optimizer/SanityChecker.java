@@ -1,6 +1,10 @@
 package org.qcri.rheem.core.optimizer;
 
-import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.OperatorAlternative;
+import org.qcri.rheem.core.plan.rheemplan.PlanTraversal;
+import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
+import org.qcri.rheem.core.plan.rheemplan.Subplan;
 import org.qcri.rheem.core.util.RheemCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,7 +1,6 @@
 package org.qcri.rheem.flink.compiler.criterion;
 
 import org.apache.flink.types.ListValue;
-import org.apache.flink.types.Value;
 
 import java.util.Collection;
 

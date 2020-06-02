@@ -3,7 +3,6 @@ package org.qcri.rheem.spark.operators;
 import org.junit.Assert;
 import org.junit.Test;
 import org.qcri.rheem.core.function.MapPartitionsDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.spark.channels.RddChannel;
 

@@ -3,7 +3,6 @@ package org.qcri.rheem.java.channels;
 import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.platform.ChannelInstance;
 
-import java.util.Collection;
 import java.util.stream.Stream;
 
 /**

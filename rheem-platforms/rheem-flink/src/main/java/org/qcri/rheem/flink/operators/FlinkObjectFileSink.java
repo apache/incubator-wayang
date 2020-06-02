@@ -1,12 +1,7 @@
 package org.qcri.rheem.flink.operators;
 
-import org.apache.flink.api.common.io.BinaryOutputFormat;
-import org.apache.flink.api.common.io.FileOutputFormat;
 import org.apache.flink.api.java.operators.DataSink;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.FileSystem;
-import org.apache.flink.core.fs.Path;
-import org.apache.flink.core.memory.DataOutputView;
 import org.qcri.rheem.basic.channels.FileChannel;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
@@ -22,9 +17,6 @@ import org.qcri.rheem.flink.compiler.RheemFileOutputFormat;
 import org.qcri.rheem.flink.execution.FlinkExecutor;
 import org.qcri.rheem.flink.platform.FlinkPlatform;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;

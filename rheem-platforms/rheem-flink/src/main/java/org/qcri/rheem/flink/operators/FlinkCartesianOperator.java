@@ -1,7 +1,6 @@
 package org.qcri.rheem.flink.operators;
 
 import org.apache.flink.api.java.DataSet;
-import org.apache.flink.api.java.operators.CrossOperator;
 import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.basic.operators.CartesianOperator;
 import org.qcri.rheem.core.optimizer.OptimizationContext;

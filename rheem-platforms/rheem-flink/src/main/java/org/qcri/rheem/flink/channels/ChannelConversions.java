@@ -5,10 +5,13 @@ import org.qcri.rheem.basic.data.Tuple2;
 import org.qcri.rheem.core.optimizer.channels.ChannelConversion;
 import org.qcri.rheem.core.optimizer.channels.DefaultChannelConversion;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.flink.operators.*;
+import org.qcri.rheem.flink.operators.FlinkCollectionSink;
+import org.qcri.rheem.flink.operators.FlinkCollectionSource;
+import org.qcri.rheem.flink.operators.FlinkObjectFileSink;
+import org.qcri.rheem.flink.operators.FlinkObjectFileSource;
+import org.qcri.rheem.flink.operators.FlinkTsvFileSink;
 import org.qcri.rheem.flink.platform.FlinkPlatform;
 import org.qcri.rheem.java.channels.CollectionChannel;
-import org.qcri.rheem.java.operators.JavaTsvFileSink;
 
 import java.util.Arrays;
 import java.util.Collection;

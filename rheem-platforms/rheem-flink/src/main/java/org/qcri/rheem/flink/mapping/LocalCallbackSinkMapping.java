@@ -2,7 +2,11 @@ package org.qcri.rheem.flink.mapping;
 
 import org.qcri.rheem.basic.operators.LocalCallbackSink;
 import org.qcri.rheem.core.function.FunctionDescriptor;
-import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.mapping.OperatorPattern;
+import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.mapping.ReplacementSubplanFactory;
+import org.qcri.rheem.core.mapping.SubplanPattern;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.flink.operators.FlinkLocalCallbackSink;
 import org.qcri.rheem.flink.platform.FlinkPlatform;

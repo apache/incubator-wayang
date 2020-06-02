@@ -1,7 +1,6 @@
 package org.qcri.rheem.api
 
 
-import java.lang.reflect.ParameterizedType
 import java.util.function.{Consumer, IntUnaryOperator, Function => JavaFunction}
 import java.util.{Collection => JavaCollection}
 
