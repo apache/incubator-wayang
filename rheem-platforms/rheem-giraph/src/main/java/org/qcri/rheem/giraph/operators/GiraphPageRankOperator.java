@@ -85,7 +85,6 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
 
         PageRankParameters.setParameter(PageRankParameters.PageRankEnum.ITERATION, this.getNumIterations());
 
-
         FileSystem fs = FileSystems.getFileSystem(tempDirPath).orElseThrow(
                 () -> new RheemException(String.format("Cannot access file system of %s.", tempDirPath))
         );
