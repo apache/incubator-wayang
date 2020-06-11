@@ -44,7 +44,16 @@ public class DoWhileOperator<InputType, ConvergenceType> extends OperatorBase im
         this.state = state;
     }
 
-    // TODO: Add convenience constructors as in the other operators.
+    public DoWhileOperator(Class<InputType> inputTypeClass,
+                           Class<ConvergenceType> convergenceTypeClass,
+                           PredicateDescriptor.SerializablePredicate<Collection<ConvergenceType>> criterionPredicate,
+                           Integer numExpectedIterations) {
+        this(DataSetType.createDefault(inputTypeClass),
+                DataSetType.createDefault(convergenceTypeClass),
+                criterionPredicate,
+                numExpectedIterations
+        );
+    }
 
     public DoWhileOperator(DataSetType<InputType> inputType,
                            DataSetType<ConvergenceType> convergenceType,

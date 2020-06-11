@@ -6,6 +6,8 @@ import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.function.FunctionDescriptor;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 
+import java.util.Iterator;
+
 /**
  * Implements a {@link FlatMapFunction} that calls {@link org.qcri.rheem.core.function.ExtendedFunction#open(ExecutionContext)}
  * of its implementation before delegating the very first {@link Function#call(Object)}.
@@ -25,13 +27,13 @@ public class ExtendedFlatMapFunctionAdapter<InputType, OutputType> implements Fl
     }
 
     @Override
-    public Iterable<OutputType> call(InputType v1) throws Exception {
+    public Iterator<OutputType> call(InputType v1) throws Exception {
         if (this.isFirstRun) {
             this.impl.open(this.executionContext);
             this.isFirstRun = false;
         }
 
-        return this.impl.apply(v1);
+        return this.impl.apply(v1).iterator();
     }
 
 }
