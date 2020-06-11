@@ -17,6 +17,10 @@ before_script:
   - echo "rheem.basic.tempdir = file://$(pwd)/travis/tmp" >> travis/rheem.properties
   - echo "spark.driver.host = localhost" >> travis/rheem.properties
   - echo "spark.master = local[1]" >> travis/rheem.properties
+  - echo "rheem.giraph.job.tracker = localhost:50300"
+  - echo "rheem.giraph.maxWorkers = 1"
+  - echo "rheem.giraph.minWorkers = 1"
+  - echo "rheem.mapreduce.job.counters.limit = 200"
   - cat travis/rheem.properties
   - mvn_opts=("-Dorg.slf4j.simpleLogger.defaultLogLevel=error" "-Drheem.configuration=file://$(pwd)/travis/rheem.properties")
 script:
