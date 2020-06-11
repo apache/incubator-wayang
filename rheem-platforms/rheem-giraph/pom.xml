@@ -57,16 +57,34 @@
             <groupId>org.apache.giraph</groupId>
             <artifactId>giraph-core</artifactId>
             <version>1.2.0-hadoop2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.giraph</groupId>
             <artifactId>giraph-block-app</artifactId>
             <version>1.2.0-hadoop2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.giraph</groupId>
             <artifactId>giraph-examples</artifactId>
             <version>1.2.0-hadoop2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
 
