@@ -14,7 +14,11 @@ import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.platform.ChannelDescriptor;
 import org.qcri.rheem.core.platform.Junction;
-import org.qcri.rheem.core.test.*;
+import org.qcri.rheem.core.test.DummyExecutionOperator;
+import org.qcri.rheem.core.test.DummyExternalReusableChannel;
+import org.qcri.rheem.core.test.DummyNonReusableChannel;
+import org.qcri.rheem.core.test.DummyReusableChannel;
+import org.qcri.rheem.core.test.MockFactory;
 import org.qcri.rheem.core.util.RheemCollections;
 
 import java.util.Arrays;

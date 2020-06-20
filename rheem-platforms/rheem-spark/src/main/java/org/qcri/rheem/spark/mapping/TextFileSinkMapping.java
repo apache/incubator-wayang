@@ -2,12 +2,14 @@ package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.CollectionSource;
 import org.qcri.rheem.basic.operators.TextFileSink;
-import org.qcri.rheem.basic.operators.TextFileSource;
-import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.mapping.OperatorPattern;
+import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.mapping.ReplacementSubplanFactory;
+import org.qcri.rheem.core.mapping.SubplanPattern;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkCollectionSource;
 import org.qcri.rheem.spark.operators.SparkTextFileSink;
-import org.qcri.rheem.spark.operators.SparkTextFileSource;
 import org.qcri.rheem.spark.platform.SparkPlatform;
 
 import java.util.Collection;

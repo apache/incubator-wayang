@@ -1,7 +1,13 @@
 package org.qcri.rheem.core.mapping;
 
 import org.apache.commons.lang3.Validate;
-import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.plan.rheemplan.ActualOperator;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.OperatorAlternative;
+import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.Subplan;
 
 import java.util.Map;
 import java.util.function.BiFunction;

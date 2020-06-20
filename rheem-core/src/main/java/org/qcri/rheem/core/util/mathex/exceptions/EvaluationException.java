@@ -1,6 +1,7 @@
 package org.qcri.rheem.core.util.mathex.exceptions;
 
 
+import org.qcri.rheem.core.util.mathex.Context;
 import org.qcri.rheem.core.util.mathex.Expression;
 
 /**

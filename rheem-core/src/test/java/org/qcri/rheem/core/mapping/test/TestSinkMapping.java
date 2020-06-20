@@ -1,6 +1,10 @@
 package org.qcri.rheem.core.mapping.test;
 
-import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.mapping.OperatorPattern;
+import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.mapping.ReplacementSubplanFactory;
+import org.qcri.rheem.core.mapping.SubplanPattern;
 import org.qcri.rheem.core.plan.rheemplan.test.TestSink;
 import org.qcri.rheem.core.plan.rheemplan.test.TestSink2;
 import org.qcri.rheem.core.test.DummyPlatform;

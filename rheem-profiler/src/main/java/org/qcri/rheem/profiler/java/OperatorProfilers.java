@@ -1,13 +1,33 @@
 package org.qcri.rheem.profiler.java;
 
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.function.*;
+import org.qcri.rheem.core.function.FlatMapDescriptor;
+import org.qcri.rheem.core.function.FunctionDescriptor;
+import org.qcri.rheem.core.function.PredicateDescriptor;
+import org.qcri.rheem.core.function.ReduceDescriptor;
+import org.qcri.rheem.core.function.TransformationDescriptor;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.RheemArrays;
-import org.qcri.rheem.java.operators.*;
+import org.qcri.rheem.java.operators.JavaCartesianOperator;
+import org.qcri.rheem.java.operators.JavaCountOperator;
+import org.qcri.rheem.java.operators.JavaDistinctOperator;
+import org.qcri.rheem.java.operators.JavaFilterOperator;
+import org.qcri.rheem.java.operators.JavaFlatMapOperator;
+import org.qcri.rheem.java.operators.JavaGlobalReduceOperator;
+import org.qcri.rheem.java.operators.JavaJoinOperator;
+import org.qcri.rheem.java.operators.JavaLocalCallbackSink;
+import org.qcri.rheem.java.operators.JavaMapOperator;
+import org.qcri.rheem.java.operators.JavaMaterializedGroupByOperator;
+import org.qcri.rheem.java.operators.JavaReduceByOperator;
+import org.qcri.rheem.java.operators.JavaSortOperator;
+import org.qcri.rheem.java.operators.JavaUnionAllOperator;
 import org.qcri.rheem.profiler.data.DataGenerators;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 import java.util.function.Supplier;
 
 /**

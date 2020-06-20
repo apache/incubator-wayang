@@ -29,7 +29,7 @@ if [ "$(pwd)" != "$basedir" ]; then
 fi
 
 
-scala_versions=(2.10.6 2.11.8) # 2.12.2 was not supported as of creating this script
+scala_versions=(2.11.8) # 2.12.2 was not supported as of creating this script
 failures=()
 successes=()
 

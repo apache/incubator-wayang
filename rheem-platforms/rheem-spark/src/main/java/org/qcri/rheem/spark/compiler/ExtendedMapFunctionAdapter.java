@@ -3,7 +3,6 @@ package org.qcri.rheem.spark.compiler;
 import org.apache.spark.api.java.function.Function;
 import org.qcri.rheem.core.function.ExecutionContext;
 import org.qcri.rheem.core.function.FunctionDescriptor;
-import org.qcri.rheem.core.function.PredicateDescriptor;
 import org.qcri.rheem.spark.execution.SparkExecutionContext;
 
 /**

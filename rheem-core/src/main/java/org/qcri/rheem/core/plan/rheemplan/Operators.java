@@ -1,8 +1,12 @@
 package org.qcri.rheem.core.plan.rheemplan;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Utility class for {@link Operator}s.

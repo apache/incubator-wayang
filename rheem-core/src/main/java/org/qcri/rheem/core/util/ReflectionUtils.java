@@ -6,12 +6,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.lang.reflect.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -430,5 +440,14 @@ public class ReflectionUtils {
         throw new IllegalStateException(String.format("%s (%s) cannot be retrieved as double.", o,
                 o == null ? "unknown class" : o.getClass().getCanonicalName()));
 
+    }
+
+
+    public static Type getWrapperClass(Type type, int index) {
+        if (type != null && (type instanceof ParameterizedType)) {
+            ParameterizedType parameterizedType = (ParameterizedType) type;
+            return parameterizedType.getActualTypeArguments()[index];
+        }
+        return null;
     }
 }

@@ -2,8 +2,6 @@ package org.qcri.rheem.core.platform;
 
 import org.qcri.rheem.core.api.exception.RheemException;
 import org.qcri.rheem.core.util.AbstractReferenceCountable;
-import org.qcri.rheem.core.util.Action;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implements various functionalities of an {@link ExecutionResource}.

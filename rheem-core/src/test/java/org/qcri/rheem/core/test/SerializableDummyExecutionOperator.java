@@ -2,7 +2,6 @@ package org.qcri.rheem.core.test;
 
 import org.json.JSONObject;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
-import org.qcri.rheem.core.platform.PartialExecutionTest;
 import org.qcri.rheem.core.util.JsonSerializable;
 
 /**

@@ -3,7 +3,6 @@ package org.qcri.rheem.core.optimizer.costs;
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.qcri.rheem.core.optimizer.OptimizationUtils;
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;

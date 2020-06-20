@@ -1,7 +1,11 @@
 package org.qcri.rheem.spark.mapping;
 
 import org.qcri.rheem.basic.operators.MaterializedGroupByOperator;
-import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.mapping.OperatorPattern;
+import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.mapping.ReplacementSubplanFactory;
+import org.qcri.rheem.core.mapping.SubplanPattern;
 import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.spark.operators.SparkMaterializedGroupByOperator;
 import org.qcri.rheem.spark.platform.SparkPlatform;

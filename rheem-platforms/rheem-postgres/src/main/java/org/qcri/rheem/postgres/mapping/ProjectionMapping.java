@@ -3,10 +3,14 @@ package org.qcri.rheem.postgres.mapping;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.basic.operators.MapOperator;
-import org.qcri.rheem.core.mapping.*;
+import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.mapping.OperatorPattern;
+import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.mapping.ReplacementSubplanFactory;
+import org.qcri.rheem.core.mapping.SubplanPattern;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.postgres.platform.PostgresPlatform;
 import org.qcri.rheem.postgres.operators.PostgresProjectionOperator;
+import org.qcri.rheem.postgres.platform.PostgresPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

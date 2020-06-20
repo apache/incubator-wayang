@@ -8,7 +8,6 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.plugin.Plugin;
 import org.qcri.rheem.java.platform.JavaPlatform;
 import org.qcri.rheem.postgres.channels.ChannelConversions;
-import org.qcri.rheem.postgres.mapping.Mappings;
 import org.qcri.rheem.postgres.platform.PostgresPlatform;
 
 import java.util.Arrays;

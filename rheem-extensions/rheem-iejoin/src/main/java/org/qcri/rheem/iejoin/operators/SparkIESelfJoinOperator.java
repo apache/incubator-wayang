@@ -13,14 +13,24 @@ import org.qcri.rheem.core.types.DataSetType;
 import org.qcri.rheem.core.util.Copyable;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.iejoin.data.Data;
-import org.qcri.rheem.iejoin.operators.spark_helpers.*;
+import org.qcri.rheem.iejoin.operators.spark_helpers.BitSetJoin;
+import org.qcri.rheem.iejoin.operators.spark_helpers.List2AttributesObjectSkinny;
+import org.qcri.rheem.iejoin.operators.spark_helpers.addUniqueID;
+import org.qcri.rheem.iejoin.operators.spark_helpers.build2ListObject;
+import org.qcri.rheem.iejoin.operators.spark_helpers.extractData;
+import org.qcri.rheem.iejoin.operators.spark_helpers.filterUnwantedBlocks;
 import org.qcri.rheem.spark.channels.RddChannel;
 import org.qcri.rheem.spark.execution.SparkExecutor;
 import org.qcri.rheem.spark.operators.SparkExecutionOperator;
 import scala.Tuple2;
 import scala.Tuple5;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Spark implementation of the {@link   IESelfJoinOperator}.

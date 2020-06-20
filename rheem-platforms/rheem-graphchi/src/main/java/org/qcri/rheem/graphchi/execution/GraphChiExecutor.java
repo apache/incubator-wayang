@@ -5,13 +5,22 @@ import org.qcri.rheem.core.api.Job;
 import org.qcri.rheem.core.optimizer.OptimizationContext;
 import org.qcri.rheem.core.plan.executionplan.ExecutionStage;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
-import org.qcri.rheem.core.platform.*;
+import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.ExecutionState;
+import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.ExecutorTemplate;
+import org.qcri.rheem.core.platform.PartialExecution;
 import org.qcri.rheem.core.platform.lineage.ExecutionLineageNode;
 import org.qcri.rheem.core.util.Tuple;
 import org.qcri.rheem.graphchi.operators.GraphChiExecutionOperator;
 import org.qcri.rheem.graphchi.platform.GraphChiPlatform;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * {@link Executor} for the {@link GraphChiPlatform}.

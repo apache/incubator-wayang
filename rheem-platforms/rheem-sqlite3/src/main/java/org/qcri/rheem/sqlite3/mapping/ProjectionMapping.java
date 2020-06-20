@@ -3,9 +3,13 @@ package org.qcri.rheem.sqlite3.mapping;
 import org.qcri.rheem.basic.data.Record;
 import org.qcri.rheem.basic.function.ProjectionDescriptor;
 import org.qcri.rheem.basic.operators.MapOperator;
-import org.qcri.rheem.core.mapping.*;
-import org.qcri.rheem.sqlite3.platform.Sqlite3Platform;
+import org.qcri.rheem.core.mapping.Mapping;
+import org.qcri.rheem.core.mapping.OperatorPattern;
+import org.qcri.rheem.core.mapping.PlanTransformation;
+import org.qcri.rheem.core.mapping.ReplacementSubplanFactory;
+import org.qcri.rheem.core.mapping.SubplanPattern;
 import org.qcri.rheem.sqlite3.operators.Sqlite3ProjectionOperator;
+import org.qcri.rheem.sqlite3.platform.Sqlite3Platform;
 
 import java.util.Collection;
 import java.util.Collections;

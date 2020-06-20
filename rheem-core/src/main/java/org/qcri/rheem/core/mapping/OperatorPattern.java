@@ -1,6 +1,11 @@
 package org.qcri.rheem.core.mapping;
 
-import org.qcri.rheem.core.plan.rheemplan.*;
+import org.qcri.rheem.core.plan.rheemplan.InputSlot;
+import org.qcri.rheem.core.plan.rheemplan.Operator;
+import org.qcri.rheem.core.plan.rheemplan.OperatorBase;
+import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
+import org.qcri.rheem.core.plan.rheemplan.Slot;
+import org.qcri.rheem.core.plan.rheemplan.TopDownPlanVisitor;
 import org.qcri.rheem.core.types.DataSetType;
 
 import java.util.Collection;

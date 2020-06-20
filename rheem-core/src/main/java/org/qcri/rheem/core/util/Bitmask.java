@@ -1,6 +1,9 @@
 package org.qcri.rheem.core.util;
 
-import java.util.*;
+import java.util.NoSuchElementException;
+import java.util.PrimitiveIterator;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 

@@ -5,7 +5,11 @@ import org.qcri.rheem.core.plan.executionplan.Channel;
 import org.qcri.rheem.core.plan.executionplan.ExecutionTask;
 import org.qcri.rheem.core.plan.rheemplan.ExecutionOperator;
 import org.qcri.rheem.core.plan.rheemplan.OutputSlot;
-import org.qcri.rheem.core.platform.*;
+import org.qcri.rheem.core.platform.AbstractChannelInstance;
+import org.qcri.rheem.core.platform.ChannelDescriptor;
+import org.qcri.rheem.core.platform.ChannelInstance;
+import org.qcri.rheem.core.platform.Executor;
+import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.jdbc.platform.JdbcPlatformTemplate;
 
 import java.util.Objects;

@@ -15,7 +15,11 @@ import org.qcri.rheem.core.util.fs.FileSystems;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Random;
 
 /**
  * Represents a {@link Channel} that is realized via a file/set of files.

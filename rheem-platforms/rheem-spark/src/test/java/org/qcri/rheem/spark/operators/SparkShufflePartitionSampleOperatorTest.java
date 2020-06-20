@@ -2,21 +2,14 @@ package org.qcri.rheem.spark.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.qcri.rheem.basic.operators.*;
-import org.qcri.rheem.core.api.RheemContext;
-import org.qcri.rheem.core.function.PredicateDescriptor;
-import org.qcri.rheem.core.function.TransformationDescriptor;
-import org.qcri.rheem.core.plan.rheemplan.RheemPlan;
 import org.qcri.rheem.core.platform.ChannelInstance;
 import org.qcri.rheem.core.types.DataSetType;
-import org.qcri.rheem.core.util.RheemArrays;
 import org.qcri.rheem.core.util.RheemCollections;
-import org.qcri.rheem.java.Java;
 import org.qcri.rheem.java.channels.CollectionChannel;
-import org.qcri.rheem.spark.Spark;
 import org.qcri.rheem.spark.channels.RddChannel;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Test suite for {@link SparkShufflePartitionSampleOperator}.

@@ -2,7 +2,11 @@ package org.qcri.rheem.core.platform;
 
 import org.json.JSONObject;
 import org.qcri.rheem.core.api.Configuration;
-import org.qcri.rheem.core.optimizer.costs.*;
+import org.qcri.rheem.core.optimizer.costs.EstimationContext;
+import org.qcri.rheem.core.optimizer.costs.LoadProfile;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.qcri.rheem.core.optimizer.costs.SimpleEstimationContext;
+import org.qcri.rheem.core.optimizer.costs.TimeEstimate;
 import org.qcri.rheem.core.util.JsonSerializables;
 import org.qcri.rheem.core.util.JsonSerializer;
 

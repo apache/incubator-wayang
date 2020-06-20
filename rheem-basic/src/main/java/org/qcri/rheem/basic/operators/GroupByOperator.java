@@ -54,8 +54,15 @@ public class GroupByOperator<Input, Key> extends UnaryToUnaryOperator<Input, Ite
         this.keyDescriptor = keyDescriptor;
     }
 
+
+    public GroupByOperator(GroupByOperator<Input, Key> that){
+        super(that);
+        this.keyDescriptor = that.keyDescriptor;
+    }
+
     public TransformationDescriptor<Input, Key> getKeyDescriptor() {
         return this.keyDescriptor;
     }
+
 
 }

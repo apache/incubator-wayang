@@ -1,7 +1,11 @@
 package org.qcri.rheem.profiler.log;
 
 import org.qcri.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import org.qcri.rheem.core.optimizer.costs.*;
+import org.qcri.rheem.core.optimizer.costs.EstimationContext;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimate;
+import org.qcri.rheem.core.optimizer.costs.LoadEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.qcri.rheem.core.optimizer.costs.LoadProfileEstimators;
 import org.qcri.rheem.core.util.mathex.Context;
 import org.qcri.rheem.core.util.mathex.DefaultContext;
 import org.qcri.rheem.core.util.mathex.Expression;

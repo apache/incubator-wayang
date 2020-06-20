@@ -10,7 +10,6 @@ import org.qcri.rheem.core.platform.Platform;
 import org.qcri.rheem.core.util.Bitmask;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.function.ToDoubleFunction;
