@@ -1,4 +1,4 @@
-# Rheem <img align="right" width="128px" src="http://da.qcri.org/rheem/img/logo.png">
+# Rheem <img align="right" width="128px" src="http://da.qcri.org/rheem/img/logo.png" alt="Rheem logo">
 
 [![Build Status (Jenkins)](https://jenkins.qcri.org/buildStatus/icon?job=rheem-build)](https://jenkins.qcri.org/job/rheem-build/)
 [![Build Status (Travis)](https://travis-ci.org/rheem-ecosystem/rheem.svg?branch=master)](https://travis-ci.org/rheem-ecosystem/rheem)
