@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
@@ -18,16 +17,16 @@
         <external.platforms.scope>provided</external.platforms.scope>
     </properties>
 
-    <groupId>org.qcri.rheem</groupId>
+    <groupId>io.rheem.rheem</groupId>
     <artifactId>rheem</artifactId>
     <packaging>pom</packaging>
-    <version>0.5.0-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
 
     <name>Rheem</name>
     <description>Rheem is a tool to build platform-agnostic data processing apps and have them both optimized for and
         executed on multiple different execution platforms, such as Java Streams and Apache Spark.
     </description>
-    <url>http://da.qcri.org/rheem/index.html</url>
+    <url>http://rheem.io</url>
 
     <licenses>
         <license>
@@ -38,6 +37,18 @@
     </licenses>
 
     <developers>
+        <developer>
+            <name>Bertty Contreras-Rojas</name>
+            <email>bertty@scalytics.io</email>
+            <organization>Scalytics, Inc</organization>
+            <organizationUrl>https://www.scalytics.io</organizationUrl>
+        </developer>
+        <developer>
+            <name>Rodrigo Pardo-Meza</name>
+            <email>rodrigo@scalytics.io</email>
+            <organization>Scalytics, Inc</organization>
+            <organizationUrl>https://www.scalytics.io</organizationUrl>
+        </developer>
         <developer>
             <name>Sebastian Kruse</name>
             <email>sebastian.kruse@hpi.de</email>
@@ -53,20 +64,10 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/daqcri/rheem.git</connection>
-        <developerConnection>scm:git:https://github.com/daqcri/rheem.git</developerConnection>
-        <url>https://github.com/daqcri/rheem</url>
+        <connection>scm:git:git://github.com/rheem-ecosystem/rheem</connection>
+        <developerConnection>scm:git:https://github.com/rheem-ecosystem/rheem</developerConnection>
+        <url>https://github.com/rheem-ecosystem/rheem</url>
     </scm>
-
-    <repositories>
-        <!-- This repository might be needed for Apache Flink's Gelly.
-        <repository>
-            <id>apache-snapshots</id>
-            <name>Apache Snapshot Repository</name>
-            <url>http://repository.apache.org/snapshots/</url>
-        </repository>
-        -->
-    </repositories>
 
     <distributionManagement>
         <snapshotRepository>
@@ -193,25 +194,9 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.0</version>
+                    <version>3.6</version>
                     <configuration>
-                        <reportPlugins>
-                            <plugin>
-                                <artifactId>maven-project-info-reports-plugin</artifactId>
-                                <version>2.2</version>
-                            </plugin>
-                            <plugin>
-                                <groupId>net.alchim31.maven</groupId>
-                                <artifactId>scala-maven-plugin</artifactId>
-                                <version>3.2.1</version>
-                                <configuration>
-                                    <jvmArgs>
-                                        <jvmArg>-Xms64m</jvmArg>
-                                        <jvmArg>-Xmx1024m</jvmArg>
-                                    </jvmArgs>
-                                </configuration>
-                            </plugin>
-                        </reportPlugins>
+
                     </configuration>
                 </plugin>
                 <plugin>
@@ -279,7 +264,25 @@
             </plugins>
         </pluginManagement>
     </build>
-
+    <reporting>
+        <plugins>
+<!--            <plugin>-->
+<!--                <artifactId>maven-project-info-reports-plugin</artifactId>-->
+<!--                <version>2.2</version>-->
+<!--            </plugin>-->
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>4.4.0</version>
+                <configuration>
+                    <jvmArgs>
+                        <jvmArg>-Xms64m</jvmArg>
+                        <jvmArg>-Xmx1024m</jvmArg>
+                    </jvmArgs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </reporting>
     <dependencies>
         <dependency>
             <groupId>net.sf.trove4j</groupId>
