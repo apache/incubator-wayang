@@ -1,4 +1,4 @@
-package io.rheem.rheem.flink.compiler;
+package org.apache.incubator.wayang.flink.compiler;
 
 import org.apache.flink.api.common.functions.CoGroupFunction;
 import org.apache.flink.api.common.functions.FilterFunction;
@@ -14,21 +14,21 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.io.TextOutputFormat;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
-import io.rheem.rheem.core.function.ConsumerDescriptor;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.MapPartitionsDescriptor;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.function.ReduceDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.flink.compiler.criterion.RheemConvergenceCriterion;
-import io.rheem.rheem.flink.execution.FlinkExecutionContext;
+import org.apache.incubator.wayang.core.function.ConsumerDescriptor;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.MapPartitionsDescriptor;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.function.ReduceDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.flink.compiler.criterion.WayangConvergenceCriterion;
+import org.apache.incubator.wayang.flink.execution.FlinkExecutionContext;
 
 import java.util.Collection;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * A compiler translates Rheem functions into executable Flink functions.
+ * A compiler translates Wayang functions into executable Flink functions.
  */
 public class FunctionCompiler {
 
@@ -129,9 +129,9 @@ public class FunctionCompiler {
         };
     }
 
-    public <T> RheemConvergenceCriterion compile(PredicateDescriptor<Collection<T>> descriptor){
+    public <T> WayangConvergenceCriterion compile(PredicateDescriptor<Collection<T>> descriptor){
         FunctionDescriptor.SerializablePredicate<Collection<T>> predicate = descriptor.getJavaImplementation();
-        return new RheemConvergenceCriterion(predicate);
+        return new WayangConvergenceCriterion(predicate);
     }
 
 

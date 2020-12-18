@@ -1,6 +1,6 @@
-package io.rheem.rheem.giraph.Algorithm;
+package org.apache.incubator.wayang.giraph.Algorithm;
 
-import io.rheem.rheem.core.api.exception.RheemException;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -22,7 +22,7 @@ public class PageRankParameters {
             case ITERATION:
                 return !stack_iteration.isEmpty();
             default:
-                throw new RheemException("Parameter for PageRank not exist");
+                throw new WayangException("Parameter for PageRank not exist");
         }
     }
 
@@ -31,7 +31,7 @@ public class PageRankParameters {
             case ITERATION:
                 return stack_iteration.peek();
             default:
-                throw new RheemException("Parameter for PageRank not exist");
+                throw new WayangException("Parameter for PageRank not exist");
         }
     }
 
@@ -41,7 +41,7 @@ public class PageRankParameters {
                 stack_iteration.add(value);
                 return;
             default:
-                throw new RheemException("Parameter for PageRank not exist");
+                throw new WayangException("Parameter for PageRank not exist");
         }
     }
 

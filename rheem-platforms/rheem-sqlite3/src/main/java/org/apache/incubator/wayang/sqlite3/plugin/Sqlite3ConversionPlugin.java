@@ -1,13 +1,13 @@
-package io.rheem.rheem.sqlite3.plugin;
+package org.apache.incubator.wayang.sqlite3.plugin;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.plugin.Plugin;
-import io.rheem.rheem.java.platform.JavaPlatform;
-import io.rheem.rheem.sqlite3.channels.ChannelConversions;
-import io.rheem.rheem.sqlite3.platform.Sqlite3Platform;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.plugin.Plugin;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.sqlite3.channels.ChannelConversions;
+import org.apache.incubator.wayang.sqlite3.platform.Sqlite3Platform;
 
 import java.util.Arrays;
 import java.util.Collection;

@@ -1,6 +1,6 @@
-package io.rheem.rheem.postgres.mapping;
+package org.apache.incubator.wayang.postgres.mapping;
 
-import io.rheem.rheem.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.Mapping;
 
 import java.util.Arrays;
 import java.util.Collection;

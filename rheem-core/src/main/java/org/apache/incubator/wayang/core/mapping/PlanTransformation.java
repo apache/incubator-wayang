@@ -1,12 +1,12 @@
-package io.rheem.rheem.core.mapping;
+package org.apache.incubator.wayang.core.mapping;
 
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorAlternative;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.PlanTraversal;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.platform.Platform;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.PlanTraversal;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.platform.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Looks for a {@link SubplanPattern} in a {@link RheemPlan} and replaces it with an alternative {@link Operator}s.
+ * Looks for a {@link SubplanPattern} in a {@link WayangPlan} and replaces it with an alternative {@link Operator}s.
  */
 public class PlanTransformation {
 
@@ -57,7 +57,7 @@ public class PlanTransformation {
      * @return the number of applied transformations
      * @see Operator#getEpoch()
      */
-    public int transform(RheemPlan plan, int epoch) {
+    public int transform(WayangPlan plan, int epoch) {
         int numTransformations = 0;
         List<SubplanMatch> matches = this.pattern.match(plan, epoch - 1);
         for (SubplanMatch match : matches) {
@@ -110,7 +110,7 @@ public class PlanTransformation {
         return match.getTargetPlatforms().get().containsAll(this.getTargetPlatforms());
     }
 
-    private void introduceAlternative(RheemPlan plan, SubplanMatch match, Operator replacement) {
+    private void introduceAlternative(WayangPlan plan, SubplanMatch match, Operator replacement) {
         // Wrap the match in an OperatorAlternative.
         final Operator originalOutputOperator = match.getOutputMatch().getOperator();
         boolean wasTopLevel = originalOutputOperator.getParent() == null;
@@ -126,9 +126,9 @@ public class PlanTransformation {
     }
 
     /**
-     * @deprecated use {@link #introduceAlternative(RheemPlan, SubplanMatch, Operator)}
+     * @deprecated use {@link #introduceAlternative(WayangPlan, SubplanMatch, Operator)}
      */
-    private void replace(RheemPlan plan, SubplanMatch match, Operator replacement) {
+    private void replace(WayangPlan plan, SubplanMatch match, Operator replacement) {
         // Disconnect the original input operator and insert the replacement input operator.
         final Operator originalInputOperator = match.getInputMatch().getOperator();
         for (int inputIndex = 0; inputIndex < originalInputOperator.getNumInputs(); inputIndex++) {

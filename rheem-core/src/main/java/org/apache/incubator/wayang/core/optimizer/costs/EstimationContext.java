@@ -1,10 +1,10 @@
-package io.rheem.rheem.core.optimizer.costs;
+package org.apache.incubator.wayang.core.optimizer.costs;
 
 import org.json.JSONObject;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.util.JsonSerializables;
-import io.rheem.rheem.core.util.JsonSerializer;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.util.JsonSerializables;
+import org.apache.incubator.wayang.core.util.JsonSerializer;
 
 import java.util.Arrays;
 import java.util.Collection;

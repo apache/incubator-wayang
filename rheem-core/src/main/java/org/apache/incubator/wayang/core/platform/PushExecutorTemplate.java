@@ -1,16 +1,16 @@
-package io.rheem.rheem.core.platform;
+package org.apache.incubator.wayang.core.platform;
 
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionStage;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.LoopHeadOperator;
-import io.rheem.rheem.core.util.OneTimeExecutable;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.core.util.Tuple;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.incubator.wayang.core.util.OneTimeExecutable;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.core.util.Tuple;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -108,7 +108,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
             stage.getStartTasks().forEach(this::scheduleStartTask);
 
             // Initialize the terminalTasks.
-            this.terminalTasks = RheemCollections.asSet(stage.getTerminalTasks());
+            this.terminalTasks = WayangCollections.asSet(stage.getTerminalTasks());
         }
 
         private void scheduleStartTask(ExecutionTask startTask) {
@@ -253,7 +253,7 @@ public abstract class PushExecutorTemplate extends ExecutorTemplate {
 
             this.task = task;
             this.operatorContext = operatorContext;
-            this.inputChannelInstances = RheemCollections.createNullFilledArrayList(this.getOperator().getNumInputs());
+            this.inputChannelInstances = WayangCollections.createNullFilledArrayList(this.getOperator().getNumInputs());
             this.acceptFrom(executionState);
         }
 

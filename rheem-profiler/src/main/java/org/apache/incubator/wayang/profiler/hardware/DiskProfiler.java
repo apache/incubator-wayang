@@ -1,10 +1,10 @@
-package io.rheem.rheem.profiler.hardware;
+package org.apache.incubator.wayang.profiler.hardware;
 
 import org.apache.commons.lang.Validate;
-import io.rheem.rheem.core.util.Formats;
-import io.rheem.rheem.core.util.fs.FileSystem;
-import io.rheem.rheem.core.util.fs.FileSystems;
-import io.rheem.rheem.profiler.util.ProfilingUtils;
+import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.incubator.wayang.core.util.fs.FileSystem;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.profiler.util.ProfilingUtils;
 
 import java.io.IOException;
 import java.io.InputStream;

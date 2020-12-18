@@ -1,22 +1,22 @@
-package io.rheem.rheem.core.optimizer.cardinality;
+package org.apache.incubator.wayang.core.optimizer.cardinality;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.configuration.FunctionalKeyValueProvider;
-import io.rheem.rheem.core.api.configuration.KeyValueProvider;
-import io.rheem.rheem.core.optimizer.DefaultOptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ElementaryOperator;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.Subplan;
-import io.rheem.rheem.core.plan.rheemplan.test.TestJoin;
-import io.rheem.rheem.core.plan.rheemplan.test.TestMapOperator;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSource;
-import io.rheem.rheem.core.test.MockFactory;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.configuration.FunctionalKeyValueProvider;
+import org.apache.incubator.wayang.core.api.configuration.KeyValueProvider;
+import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ElementaryOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.Subplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestJoin;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestMapOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSource;
+import org.apache.incubator.wayang.core.test.MockFactory;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 /**
  * Test suite for {@link SubplanCardinalityPusher}.

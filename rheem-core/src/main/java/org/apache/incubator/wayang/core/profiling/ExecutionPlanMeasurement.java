@@ -1,11 +1,11 @@
-package io.rheem.rheem.core.profiling;
+package org.apache.incubator.wayang.core.profiling;
 
 import de.hpi.isg.profiledb.store.model.Measurement;
 import de.hpi.isg.profiledb.store.model.Type;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionPlan;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -208,7 +208,7 @@ public class ExecutionPlanMeasurement extends Measurement {
         private String name;
 
         /**
-         * The name of the {@link io.rheem.rheem.core.platform.Platform} of the {@link ExecutionOperator}.
+         * The name of the {@link org.apache.incubator.wayang.core.platform.Platform} of the {@link ExecutionOperator}.
          */
         private String platform;
 

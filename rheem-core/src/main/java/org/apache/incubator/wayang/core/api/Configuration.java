@@ -1,45 +1,45 @@
-package io.rheem.rheem.core.api;
+package org.apache.incubator.wayang.core.api;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import io.rheem.rheem.core.api.configuration.CollectionProvider;
-import io.rheem.rheem.core.api.configuration.ConstantValueProvider;
-import io.rheem.rheem.core.api.configuration.ExplicitCollectionProvider;
-import io.rheem.rheem.core.api.configuration.FunctionalCollectionProvider;
-import io.rheem.rheem.core.api.configuration.FunctionalKeyValueProvider;
-import io.rheem.rheem.core.api.configuration.FunctionalValueProvider;
-import io.rheem.rheem.core.api.configuration.KeyValueProvider;
-import io.rheem.rheem.core.api.configuration.MapBasedKeyValueProvider;
-import io.rheem.rheem.core.api.configuration.ValueProvider;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.function.FlatMapDescriptor;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.MapPartitionsDescriptor;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import io.rheem.rheem.core.optimizer.cardinality.FallbackCardinalityEstimator;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.optimizer.costs.IntervalLoadEstimator;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.LoadToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
-import io.rheem.rheem.core.optimizer.costs.TimeToCostConverter;
-import io.rheem.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
-import io.rheem.rheem.core.plan.rheemplan.ElementaryOperator;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.plugin.Plugin;
-import io.rheem.rheem.core.profiling.InstrumentationStrategy;
-import io.rheem.rheem.core.profiling.OutboundInstrumentationStrategy;
-import io.rheem.rheem.core.util.Actions;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.fs.FileSystem;
-import io.rheem.rheem.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.core.api.configuration.CollectionProvider;
+import org.apache.incubator.wayang.core.api.configuration.ConstantValueProvider;
+import org.apache.incubator.wayang.core.api.configuration.ExplicitCollectionProvider;
+import org.apache.incubator.wayang.core.api.configuration.FunctionalCollectionProvider;
+import org.apache.incubator.wayang.core.api.configuration.FunctionalKeyValueProvider;
+import org.apache.incubator.wayang.core.api.configuration.FunctionalValueProvider;
+import org.apache.incubator.wayang.core.api.configuration.KeyValueProvider;
+import org.apache.incubator.wayang.core.api.configuration.MapBasedKeyValueProvider;
+import org.apache.incubator.wayang.core.api.configuration.ValueProvider;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.MapPartitionsDescriptor;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.incubator.wayang.core.optimizer.cardinality.FallbackCardinalityEstimator;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.optimizer.costs.IntervalLoadEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.incubator.wayang.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
+import org.apache.incubator.wayang.core.plan.wayangplan.ElementaryOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.plugin.Plugin;
+import org.apache.incubator.wayang.core.profiling.InstrumentationStrategy;
+import org.apache.incubator.wayang.core.profiling.OutboundInstrumentationStrategy;
+import org.apache.incubator.wayang.core.util.Actions;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.fs.FileSystem;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,16 +59,16 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.function.ToDoubleFunction;
 
-import static io.rheem.rheem.core.util.ReflectionUtils.instantiateDefault;
+import static org.apache.incubator.wayang.core.util.ReflectionUtils.instantiateDefault;
 
 /**
- * Describes both the configuration of a {@link RheemContext} and {@link Job}s.
+ * Describes both the configuration of a {@link WayangContext} and {@link Job}s.
  */
 public class Configuration {
 
     private static final Logger logger = LoggerFactory.getLogger(Configuration.class);
 
-    private static final String DEFAULT_CONFIGURATION_FILE = "rheem-core-defaults.properties";
+    private static final String DEFAULT_CONFIGURATION_FILE = "wayang-core-defaults.properties";
 
     private static final Configuration defaultConfiguration = new Configuration((Configuration) null);
 
@@ -82,7 +82,7 @@ public class Configuration {
         Actions.doSafe(() -> bootstrapPlugins(defaultConfiguration));
     }
 
-    private static final String BASIC_PLUGIN = "io.rheem.rheem.basic.RheemBasics.defaultPlugin()";
+    private static final String BASIC_PLUGIN = "org.apache.incubator.wayang.basic.WayangBasics.defaultPlugin()";
 
     private String name = "(no name)";
 
@@ -188,13 +188,13 @@ public class Configuration {
     }
 
     private static String findUserConfigurationFile() {
-        final String systemProperty = System.getProperty("rheem.configuration");
+        final String systemProperty = System.getProperty("wayang.configuration");
         if (systemProperty != null) {
             logger.info("Using configuration at {}.", systemProperty);
             return systemProperty;
         }
 
-        final URL classPathResource = ReflectionUtils.getResourceURL("rheem.properties");
+        final URL classPathResource = ReflectionUtils.getResourceURL("wayang.properties");
         if (classPathResource != null) {
             logger.info("Using configuration at {}.", classPathResource);
             return classPathResource.toString();
@@ -212,12 +212,12 @@ public class Configuration {
     public void load(String configurationUrl) {
         final Optional<FileSystem> fileSystem = FileSystems.getFileSystem(configurationUrl);
         if (!fileSystem.isPresent()) {
-            throw new RheemException(String.format("Could not access %s.", configurationUrl));
+            throw new WayangException(String.format("Could not access %s.", configurationUrl));
         }
         try (InputStream configInputStream = fileSystem.get().open(configurationUrl)) {
             this.load(configInputStream);
         } catch (Exception e) {
-            throw new RheemException(String.format("Could not load configuration from %s.", configurationUrl), e);
+            throw new WayangException(String.format("Could not load configuration from %s.", configurationUrl), e);
         }
     }
 
@@ -236,7 +236,7 @@ public class Configuration {
                 this.handleConfigurationFileEntry(key, value);
             }
         } catch (IOException e) {
-            throw new RheemException("Could not load configuration.", e);
+            throw new WayangException("Could not load configuration.", e);
         } finally {
             IOUtils.closeQuietly(configInputStream);
         }
@@ -250,7 +250,7 @@ public class Configuration {
      */
     private void handleConfigurationFileEntry(String key, String value) {
         switch (key) {
-            case "rheem.core.optimizer.cost.squash":
+            case "wayang.core.optimizer.cost.squash":
                 if (!(this.costSquasherProvider instanceof ConstantValueProvider)) {
                     logger.warn("Cannot update cost estimate provider.");
                 } else if ("expectation".equals(value)) {
@@ -342,7 +342,7 @@ public class Configuration {
                                 } else if (functionDescriptor instanceof MapPartitionsDescriptor) {
                                     return new ProbabilisticDoubleInterval(0.1, 1, 0.9d);
                                 } else {
-                                    throw new RheemException("Cannot provide fallback selectivity for " + functionDescriptor);
+                                    throw new WayangException("Cannot provide fallback selectivity for " + functionDescriptor);
                                 }
                             },
                             configuration
@@ -373,16 +373,16 @@ public class Configuration {
                                 return new NestableLoadProfileEstimator(
                                         IntervalLoadEstimator.createIOLinearEstimator(
                                                 null,
-                                                conf.getLongProperty("rheem.core.fallback.udf.cpu.lower"),
-                                                conf.getLongProperty("rheem.core.fallback.udf.cpu.upper"),
-                                                conf.getDoubleProperty("rheem.core.fallback.udf.cpu.confidence"),
+                                                conf.getLongProperty("wayang.core.fallback.udf.cpu.lower"),
+                                                conf.getLongProperty("wayang.core.fallback.udf.cpu.upper"),
+                                                conf.getDoubleProperty("wayang.core.fallback.udf.cpu.confidence"),
                                                 CardinalityEstimate.EMPTY_ESTIMATE
                                         ),
                                         IntervalLoadEstimator.createIOLinearEstimator(
                                                 null,
-                                                conf.getLongProperty("rheem.core.fallback.udf.ram.lower"),
-                                                conf.getLongProperty("rheem.core.fallback.udf.ram.upper"),
-                                                conf.getDoubleProperty("rheem.core.fallback.udf.ram.confidence"),
+                                                conf.getLongProperty("wayang.core.fallback.udf.ram.lower"),
+                                                conf.getLongProperty("wayang.core.fallback.udf.ram.upper"),
+                                                conf.getDoubleProperty("wayang.core.fallback.udf.ram.confidence"),
                                                 CardinalityEstimate.EMPTY_ESTIMATE
                                         )
                                 );
@@ -412,16 +412,16 @@ public class Configuration {
                                 return new NestableLoadProfileEstimator(
                                         IntervalLoadEstimator.createIOLinearEstimator(
                                                 null,
-                                                conf.getLongProperty("rheem.core.fallback.operator.cpu.lower"),
-                                                conf.getLongProperty("rheem.core.fallback.operator.cpu.upper"),
-                                                conf.getDoubleProperty("rheem.core.fallback.operator.cpu.confidence"),
+                                                conf.getLongProperty("wayang.core.fallback.operator.cpu.lower"),
+                                                conf.getLongProperty("wayang.core.fallback.operator.cpu.upper"),
+                                                conf.getDoubleProperty("wayang.core.fallback.operator.cpu.confidence"),
                                                 CardinalityEstimate.EMPTY_ESTIMATE
                                         ),
                                         IntervalLoadEstimator.createIOLinearEstimator(
                                                 null,
-                                                conf.getLongProperty("rheem.core.fallback.operator.ram.lower"),
-                                                conf.getLongProperty("rheem.core.fallback.operator.ram.upper"),
-                                                conf.getDoubleProperty("rheem.core.fallback.operator.ram.confidence"),
+                                                conf.getLongProperty("wayang.core.fallback.operator.ram.lower"),
+                                                conf.getLongProperty("wayang.core.fallback.operator.ram.upper"),
+                                                conf.getDoubleProperty("wayang.core.fallback.operator.ram.confidence"),
                                                 CardinalityEstimate.EMPTY_ESTIMATE
                                         )
                                 );
@@ -502,11 +502,11 @@ public class Configuration {
 
     private static void bootstrapPruningProviders(Configuration configuration) {
         {
-            // By default, load pruning from the rheem.core.optimizer.pruning.strategies property.
+            // By default, load pruning from the wayang.core.optimizer.pruning.strategies property.
             CollectionProvider<Class<PlanEnumerationPruningStrategy>> propertyBasedProvider =
                     new FunctionalCollectionProvider<>(
                             config -> {
-                                final String strategyClassNames = config.getStringProperty("rheem.core.optimizer.pruning.strategies");
+                                final String strategyClassNames = config.getStringProperty("wayang.core.optimizer.pruning.strategies");
                                 if (strategyClassNames == null || strategyClassNames.isEmpty()) {
                                     return Collections.emptySet();
                                 }
@@ -542,7 +542,7 @@ public class Configuration {
                     new FunctionalValueProvider<>(
                             requestee -> {
                                 Optional<String> optInstrumentationtStrategyClass =
-                                        requestee.getConfiguration().getOptionalStringProperty("rheem.core.optimizer.instrumentation");
+                                        requestee.getConfiguration().getOptionalStringProperty("wayang.core.optimizer.instrumentation");
                                 if (!optInstrumentationtStrategyClass.isPresent()) {
                                     return null;
                                 }
@@ -562,12 +562,12 @@ public class Configuration {
         configuration.load(ReflectionUtils.loadResource(DEFAULT_CONFIGURATION_FILE));
 
         // Set some dynamic properties.
-        configuration.setProperty("rheem.core.log.cardinalities", StringUtils.join(
-                Arrays.asList(System.getProperty("user.home"), ".rheem", "cardinalities.json"),
+        configuration.setProperty("wayang.core.log.cardinalities", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".wayang", "cardinalities.json"),
                 File.separator
         ));
-        configuration.setProperty("rheem.core.log.executions", StringUtils.join(
-                Arrays.asList(System.getProperty("user.home"), ".rheem", "executions.json"),
+        configuration.setProperty("wayang.core.log.executions", StringUtils.join(
+                Arrays.asList(System.getProperty("user.home"), ".wayang", "executions.json"),
                 File.separator
         ));
 
@@ -748,7 +748,7 @@ public class Configuration {
     public long getLongProperty(String key) {
         final OptionalLong optionalLongProperty = this.getOptionalLongProperty(key);
         if (!optionalLongProperty.isPresent()) {
-            throw new RheemException(String.format("No value for \"%s\".", key));
+            throw new WayangException(String.format("No value for \"%s\".", key));
         }
         return optionalLongProperty.getAsLong();
     }

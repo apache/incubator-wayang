@@ -1,18 +1,18 @@
-package io.rheem.rheem.java.compiler;
+package org.apache.incubator.wayang.java.compiler;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.function.FlatMapDescriptor;
-import io.rheem.rheem.core.function.MapPartitionsDescriptor;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.function.ReduceDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
+import org.apache.incubator.wayang.core.function.MapPartitionsDescriptor;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.function.ReduceDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
 
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * A compiler translates Rheem functions into executable Java functions.
+ * A compiler translates Wayang functions into executable Java functions.
  */
 public class FunctionCompiler {
 

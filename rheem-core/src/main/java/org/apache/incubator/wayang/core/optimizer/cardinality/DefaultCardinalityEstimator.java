@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.optimizer.cardinality;
+package org.apache.incubator.wayang.core.optimizer.cardinality;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
 
 import java.util.Arrays;
 import java.util.function.ToLongBiFunction;
@@ -30,7 +30,7 @@ public class DefaultCardinalityEstimator implements CardinalityEstimator {
         this(certaintyProb,
                 numInputs,
                 isAllowMoreInputs,
-                (inputCards, rheemContext) -> singlePointEstimator.applyAsLong(inputCards));
+                (inputCards, wayangContext) -> singlePointEstimator.applyAsLong(inputCards));
     }
 
     public DefaultCardinalityEstimator(double certaintyProb,

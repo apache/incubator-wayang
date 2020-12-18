@@ -1,9 +1,9 @@
-package io.rheem.rheem.basic.types;
+package org.apache.incubator.wayang.basic.types;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 /**
  * Tests for the {@link RecordType}.

@@ -1,9 +1,9 @@
-package io.rheem.rheem.api.util
+package org.apache.incubator.wayang.api.util
 
-import io.rheem.rheem.core.types.DataSetType
+import org.apache.incubator.wayang.core.types.DataSetType
 
 /**
-  * This class waits for a [[io.rheem.rheem.core.types.DataSetType]] to be set and verifies that there are no
+  * This class waits for a [[org.apache.incubator.wayang.core.types.DataSetType]] to be set and verifies that there are no
   * two different sets.
   */
 class TypeTrap {

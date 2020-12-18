@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.util;
+package org.apache.incubator.wayang.core.util;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -10,9 +10,9 @@ import java.util.stream.Collectors;
 /**
  * Utility for handling arrays.
  */
-public class RheemArrays {
+public class WayangArrays {
 
-    private RheemArrays() { }
+    private WayangArrays() { }
 
     /**
      * Enumerates in ascending order all integers {@code from <= i < to}.

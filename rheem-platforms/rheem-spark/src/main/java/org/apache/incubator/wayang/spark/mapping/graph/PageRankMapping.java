@@ -1,21 +1,21 @@
-package io.rheem.rheem.spark.mapping.graph;
+package org.apache.incubator.wayang.spark.mapping.graph;
 
-import io.rheem.rheem.basic.operators.PageRankOperator;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.spark.platform.SparkPlatform;
+import org.apache.incubator.wayang.basic.operators.PageRankOperator;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.spark.platform.SparkPlatform;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Mapping from {@link PageRankOperator} to io.rheem.rheem.spark.operators.graph.SparkPageRankOperator .
+ * Mapping from {@link PageRankOperator} to org.apache.incubator.wayang.spark.operators.graph.SparkPageRankOperator .
  */
 public class PageRankMapping implements Mapping {
 
@@ -41,11 +41,11 @@ public class PageRankMapping implements Mapping {
                     // We need to instantiate the SparkPageRankOperator via reflection, because the Scala code will
                     // be compiled only after the Java code, which might cause compile errors.
                     try {
-                        final Class<?> cls = Class.forName("io.rheem.rheem.spark.operators.graph.SparkPageRankOperator");
+                        final Class<?> cls = Class.forName("org.apache.incubator.wayang.spark.operators.graph.SparkPageRankOperator");
                         final Constructor<?> constructor = cls.getConstructor(PageRankOperator.class);
                         return (Operator) constructor.newInstance(matchedOperator);
                     } catch (Exception e) {
-                        throw new RheemException(String.format("Could not apply %s.", this), e);
+                        throw new WayangException(String.format("Could not apply %s.", this), e);
                     }
                 }
         );

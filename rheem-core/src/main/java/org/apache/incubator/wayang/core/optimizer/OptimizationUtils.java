@@ -1,16 +1,16 @@
-package io.rheem.rheem.core.optimizer;
+package org.apache.incubator.wayang.core.optimizer;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plan.rheemplan.Slot;
-import io.rheem.rheem.core.plan.rheemplan.SlotMapping;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Slot;
+import org.apache.incubator.wayang.core.plan.wayangplan.SlotMapping;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -25,10 +25,10 @@ public class OptimizationUtils {
 //    private static final Logger logger = LoggerFactory.getLogger(OptimizationUtils.class);
 
     /**
-     * Determine the producing {@link OutputSlot} of this {@link Channel} that lies within a {@link RheemPlan}.
-     * We follow non-RheemPlan {@link ExecutionOperator}s because they should merely forward data.
+     * Determine the producing {@link OutputSlot} of this {@link Channel} that lies within a {@link WayangPlan}.
+     * We follow non-WayangPlan {@link ExecutionOperator}s because they should merely forward data.
      */
-    public static OutputSlot<?> findRheemPlanOutputSlotFor(Channel openChannel) {
+    public static OutputSlot<?> findWayangPlanOutputSlotFor(Channel openChannel) {
         OutputSlot<?> producerOutput = null;
         Channel tracedChannel = openChannel;
         do {
@@ -69,7 +69,7 @@ public class OptimizationUtils {
             strategy.configure(configuration);
             return strategy;
         } catch (InstantiationException | IllegalAccessException e) {
-            throw new RheemException(String.format("Could not create pruning strategy for %s.", strategyClass.getCanonicalName()), e);
+            throw new WayangException(String.format("Could not create pruning strategy for %s.", strategyClass.getCanonicalName()), e);
         }
     }
 

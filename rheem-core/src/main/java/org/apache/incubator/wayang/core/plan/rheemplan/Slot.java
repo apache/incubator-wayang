@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 import java.util.Collection;
 

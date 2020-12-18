@@ -1,12 +1,12 @@
-package io.rheem.rheem.core.plan.executionplan;
+package org.apache.incubator.wayang.core.plan.executionplan;
 
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.util.Tuple;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.util.Tuple;
 
 /**
  * Sets up the usage of {@link Channel} in an {@link ExecutionPlan} for a given {@link Platform}.

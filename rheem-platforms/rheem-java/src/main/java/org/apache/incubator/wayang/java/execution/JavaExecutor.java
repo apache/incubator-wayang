@@ -1,21 +1,21 @@
-package io.rheem.rheem.java.execution;
+package org.apache.incubator.wayang.java.execution;
 
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.function.ExtendedFunction;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.Executor;
-import io.rheem.rheem.core.platform.PartialExecution;
-import io.rheem.rheem.core.platform.PushExecutorTemplate;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.Formats;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.java.compiler.FunctionCompiler;
-import io.rheem.rheem.java.operators.JavaExecutionOperator;
-import io.rheem.rheem.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.function.ExtendedFunction;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.Executor;
+import org.apache.incubator.wayang.core.platform.PartialExecution;
+import org.apache.incubator.wayang.core.platform.PushExecutorTemplate;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.java.compiler.FunctionCompiler;
+import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -71,7 +71,7 @@ public class JavaExecutor extends PushExecutorTemplate {
             executionLineageNodes = results.getField0();
             producedChannelInstances = results.getField1();
         } catch (Exception e) {
-            throw new RheemException(String.format("Executing %s failed.", task), e);
+            throw new WayangException(String.format("Executing %s failed.", task), e);
         }
         long endTime = System.currentTimeMillis();
         long executionDuration = endTime - startTime;

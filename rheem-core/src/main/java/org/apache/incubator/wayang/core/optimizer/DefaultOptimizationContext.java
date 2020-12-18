@@ -1,15 +1,15 @@
-package io.rheem.rheem.core.optimizer;
+package org.apache.incubator.wayang.core.optimizer;
 
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversionGraph;
-import io.rheem.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorAlternative;
-import io.rheem.rheem.core.plan.rheemplan.PlanTraversal;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plan.rheemplan.Subplan;
-import io.rheem.rheem.core.util.RheemArrays;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversionGraph;
+import org.apache.incubator.wayang.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.incubator.wayang.core.plan.wayangplan.PlanTraversal;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Subplan;
+import org.apache.incubator.wayang.core.util.WayangArrays;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,7 +35,7 @@ public class DefaultOptimizationContext extends OptimizationContext {
     private final Map<LoopSubplan, LoopContext> loopContexts = new HashMap<>();
 
     /**
-     * Create a new instance and adds all {@link Operator}s in the {@link RheemPlan}.
+     * Create a new instance and adds all {@link Operator}s in the {@link WayangPlan}.
      *
      * @param job the optimization task; loops should already be isolated
      */
@@ -43,7 +43,7 @@ public class DefaultOptimizationContext extends OptimizationContext {
         DefaultOptimizationContext instance = new DefaultOptimizationContext(job);
         PlanTraversal.upstream()
                 .withCallback(instance::addOneTimeOperator)
-                .traverse(job.getRheemPlan().getSinks());
+                .traverse(job.getWayangPlan().getSinks());
         return instance;
     }
 
@@ -180,7 +180,7 @@ public class DefaultOptimizationContext extends OptimizationContext {
         for (OperatorContext operatorContext : operatorContexts.values()) {
             if (operatorContext.getOperator().isExecutionOperator()
                     && operatorContext.timeEstimate == null
-                    && RheemArrays.anyMatch(operatorContext.getOutputCardinalities(), Objects::nonNull)) {
+                    && WayangArrays.anyMatch(operatorContext.getOutputCardinalities(), Objects::nonNull)) {
                 this.logger.warn("No TimeEstimate for {}.", operatorContext);
                 isComplete = false;
             }

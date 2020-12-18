@@ -1,7 +1,7 @@
-package io.rheem.rheem.profiler.java;
+package org.apache.incubator.wayang.profiler.java;
 
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.java.operators.JavaCollectionSource;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.java.operators.JavaCollectionSource;
 
 import java.util.ArrayList;
 import java.util.Collection;

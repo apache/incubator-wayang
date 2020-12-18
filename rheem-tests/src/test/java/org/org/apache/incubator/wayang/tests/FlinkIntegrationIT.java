@@ -1,17 +1,17 @@
-package io.rheem.rheem.tests;
+package org.apache.incubator.wayang.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.RheemContext;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plugin.Plugin;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.flink.Flink;
-import io.rheem.rheem.java.Java;
-import io.rheem.rheem.tests.platform.MyMadeUpPlatform;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.WayangContext;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plugin.Plugin;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.flink.Flink;
+import org.apache.incubator.wayang.java.Java;
+import org.apache.incubator.wayang.tests.platform.MyMadeUpPlatform;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Test the Spark integration with Rheem.
+ * Test the Spark integration with Wayang.
  */
 public class FlinkIntegrationIT {
 
@@ -37,53 +37,53 @@ public class FlinkIntegrationIT {
     private static final String FLINK = "JAVA";
     private static final String BOTH  = "BOTH";
 
-    private RheemContext makeContext(String plugin){
-        RheemContext rheemContext = new RheemContext();
+    private WayangContext makeContext(String plugin){
+        WayangContext wayangContext = new WayangContext();
         if(plugin == JAVA || plugin == BOTH)
-            rheemContext.with(Java.basicPlugin());
+            wayangContext.with(Java.basicPlugin());
         if(plugin == FLINK || plugin == BOTH)
-            rheemContext.with(Flink.basicPlugin());
-        return rheemContext;
+            wayangContext.with(Flink.basicPlugin());
+        return wayangContext;
     }
 
-    private void makeAndRun(RheemPlan plan, String plugin){
-        RheemContext rheemContext = this.makeContext(plugin);
-        rheemContext.execute(plan);
+    private void makeAndRun(WayangPlan plan, String plugin){
+        WayangContext wayangContext = this.makeContext(plugin);
+        wayangContext.execute(plan);
     }
 
     @Test
     public void testReadAndWrite() throws URISyntaxException, IOException {
-        // Build a Rheem plan.
+        // Build a Wayang plan.
         List<String> collector = new LinkedList<>();
 
-        makeAndRun(RheemPlans.readWrite(RheemPlans.FILE_SOME_LINES_TXT, collector), FLINK);
+        makeAndRun(WayangPlans.readWrite(WayangPlans.FILE_SOME_LINES_TXT, collector), FLINK);
 
         // Verify the plan result.
-        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
         Assert.assertEquals(lines, collector);
     }
 
 
     @Test
     public void testReadAndTransformAndWrite() throws URISyntaxException {
-        // Build a Rheem plan.
-        final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build a Wayang plan.
+        final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Rheem and activate the Spark backend.
-        makeAndRun(rheemPlan, FLINK);
+        // Instantiate Wayang and activate the Spark backend.
+        makeAndRun(wayangPlan, FLINK);
     }
 
     @Test
     public void testCartesianOperator() throws IOException {
 
         List<Tuple2<String, String>> collector = new ArrayList<>();
-        final RheemPlan rheemPlan = RheemPlansOperators.cartesian(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT, collector);
-        makeAndRun(rheemPlan, FLINK);
+        final WayangPlan wayangPlan = WayangPlansOperators.cartesian(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT, collector);
+        makeAndRun(wayangPlan, FLINK);
 
         // Run in java for test result
         List<Tuple2<String, String>> collectorJava = new ArrayList<>();
-        final RheemPlan rheemPlanJava = RheemPlansOperators.cartesian(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT, collectorJava);
-        makeAndRun(rheemPlanJava, JAVA);
+        final WayangPlan wayangPlanJava = WayangPlansOperators.cartesian(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT, collectorJava);
+        makeAndRun(wayangPlanJava, JAVA);
 
         Assert.assertEquals(collectorJava, collector);
     }
@@ -91,14 +91,14 @@ public class FlinkIntegrationIT {
     @Test
     public void testCoGroupOperator() throws IOException {
         List<Tuple2<?, ?>> collector = new ArrayList<>();
-        final RheemPlan rheemPlan = RheemPlansOperators.coGroup(RheemPlans.FILE_WITH_KEY_1, RheemPlans.FILE_WITH_KEY_2, collector);
-        makeAndRun(rheemPlan, FLINK);
+        final WayangPlan wayangPlan = WayangPlansOperators.coGroup(WayangPlans.FILE_WITH_KEY_1, WayangPlans.FILE_WITH_KEY_2, collector);
+        makeAndRun(wayangPlan, FLINK);
 
 
         // Run in java for test result
         List<Tuple2<?, ?>> collectorJava = new ArrayList<>();
-        final RheemPlan rheemPlanJava = RheemPlansOperators.coGroup(RheemPlans.FILE_WITH_KEY_1, RheemPlans.FILE_WITH_KEY_2, collectorJava);
-        makeAndRun(rheemPlanJava, JAVA);
+        final WayangPlan wayangPlanJava = WayangPlansOperators.coGroup(WayangPlans.FILE_WITH_KEY_1, WayangPlans.FILE_WITH_KEY_2, collectorJava);
+        makeAndRun(wayangPlanJava, JAVA);
 
         Assert.assertEquals(collectorJava, collector);
     }
@@ -108,8 +108,8 @@ public class FlinkIntegrationIT {
         List<String> input = makeList();
         List<String> collector = new ArrayList<>();
 
-        RheemPlan rheemplan = RheemPlansOperators.collectionSourceOperator(input, collector);
-        makeAndRun(rheemplan, FLINK);
+        WayangPlan wayangplan = WayangPlansOperators.collectionSourceOperator(input, collector);
+        makeAndRun(wayangplan, FLINK);
 
         Assert.assertEquals(input, collector);
     }
@@ -119,8 +119,8 @@ public class FlinkIntegrationIT {
         List<String> input = makeList();
         List<Long> collector = new ArrayList<>();
 
-        RheemPlan rheemPlan = RheemPlansOperators.count(input, collector);
-        makeAndRun(rheemPlan, FLINK);
+        WayangPlan wayangPlan = WayangPlansOperators.count(input, collector);
+        makeAndRun(wayangPlan, FLINK);
 
         Assert.assertTrue(input.size() == collector.get(0));
     }
@@ -128,12 +128,12 @@ public class FlinkIntegrationIT {
     @Test
     public void testDistinctOperator(){
         List<String> collector = new ArrayList<>();
-        RheemPlan rheemPlan = RheemPlansOperators.distinct(RheemPlans.FILE_SOME_LINES_TXT, collector);
-        makeAndRun(rheemPlan, FLINK);
+        WayangPlan wayangPlan = WayangPlansOperators.distinct(WayangPlans.FILE_SOME_LINES_TXT, collector);
+        makeAndRun(wayangPlan, FLINK);
 
         List<String> collectorJava = new ArrayList<>();
-        RheemPlan rheemPlanJava = RheemPlansOperators.distinct(RheemPlans.FILE_SOME_LINES_TXT, collectorJava);
-        makeAndRun(rheemPlanJava, JAVA);
+        WayangPlan wayangPlanJava = WayangPlansOperators.distinct(WayangPlans.FILE_SOME_LINES_TXT, collectorJava);
+        makeAndRun(wayangPlanJava, JAVA);
 
         Assert.assertEquals(collectorJava.stream().sorted().toArray(), collector.stream().sorted().toArray());
     }
@@ -141,12 +141,12 @@ public class FlinkIntegrationIT {
     @Test
     public void testFilterOperator(){
         List<String> collector = new ArrayList<>();
-        RheemPlan rheemPlan = RheemPlansOperators.filter(RheemPlans.FILE_SOME_LINES_TXT, collector);
-        makeAndRun(rheemPlan, FLINK);
+        WayangPlan wayangPlan = WayangPlansOperators.filter(WayangPlans.FILE_SOME_LINES_TXT, collector);
+        makeAndRun(wayangPlan, FLINK);
 
         List<String> collectorJava = new ArrayList<>();
-        RheemPlan rheemPlanJava = RheemPlansOperators.filter(RheemPlans.FILE_SOME_LINES_TXT, collectorJava);
-        makeAndRun(rheemPlanJava, JAVA);
+        WayangPlan wayangPlanJava = WayangPlansOperators.filter(WayangPlans.FILE_SOME_LINES_TXT, collectorJava);
+        makeAndRun(wayangPlanJava, JAVA);
 
         Assert.assertEquals(collectorJava, collector);
     }
@@ -154,12 +154,12 @@ public class FlinkIntegrationIT {
     @Test
     public void testFlapMapOperator(){
         List<String> collector = new ArrayList<>();
-        RheemPlan rheemPlan = RheemPlansOperators.flatMap(RheemPlans.FILE_SOME_LINES_TXT, collector);
-        makeAndRun(rheemPlan, FLINK);
+        WayangPlan wayangPlan = WayangPlansOperators.flatMap(WayangPlans.FILE_SOME_LINES_TXT, collector);
+        makeAndRun(wayangPlan, FLINK);
 
         List<String> collectorJava = new ArrayList<>();
-        RheemPlan rheemPlanJava = RheemPlansOperators.flatMap(RheemPlans.FILE_SOME_LINES_TXT, collectorJava);
-        makeAndRun(rheemPlanJava, JAVA);
+        WayangPlan wayangPlanJava = WayangPlansOperators.flatMap(WayangPlans.FILE_SOME_LINES_TXT, collectorJava);
+        makeAndRun(wayangPlanJava, JAVA);
 
         Assert.assertEquals(collectorJava, collector);
     }
@@ -167,12 +167,12 @@ public class FlinkIntegrationIT {
     @Test
     public void testJoinOperator(){
         List<Tuple2<?, ?>> collector = new ArrayList<>();
-        RheemPlan rheemPlan = RheemPlansOperators.join(RheemPlans.FILE_WITH_KEY_1, RheemPlans.FILE_WITH_KEY_2, collector);
-        makeAndRun(rheemPlan, FLINK);
+        WayangPlan wayangPlan = WayangPlansOperators.join(WayangPlans.FILE_WITH_KEY_1, WayangPlans.FILE_WITH_KEY_2, collector);
+        makeAndRun(wayangPlan, FLINK);
 
         List<Tuple2<?, ?>> collectorJava = new ArrayList<>();
-        RheemPlan rheemPlanJava = RheemPlansOperators.join(RheemPlans.FILE_WITH_KEY_1, RheemPlans.FILE_WITH_KEY_2, collectorJava);
-        makeAndRun(rheemPlanJava, JAVA);
+        WayangPlan wayangPlanJava = WayangPlansOperators.join(WayangPlans.FILE_WITH_KEY_1, WayangPlans.FILE_WITH_KEY_2, collectorJava);
+        makeAndRun(wayangPlanJava, JAVA);
 
         Assert.assertEquals(collectorJava, collector);
     }
@@ -181,12 +181,12 @@ public class FlinkIntegrationIT {
     @Test
     public void testReduceByOperator(){
         List<Tuple2<?, ?>> collector = new ArrayList<>();
-        RheemPlan rheemPlan = RheemPlansOperators.reduceBy(RheemPlans.FILE_WITH_KEY_1, collector);
-        makeAndRun(rheemPlan, FLINK);
+        WayangPlan wayangPlan = WayangPlansOperators.reduceBy(WayangPlans.FILE_WITH_KEY_1, collector);
+        makeAndRun(wayangPlan, FLINK);
 
         List<Tuple2<?, ?>> collectorJava = new ArrayList<>();
-        RheemPlan rheemPlanJava = RheemPlansOperators.reduceBy(RheemPlans.FILE_WITH_KEY_1, collectorJava);
-        makeAndRun(rheemPlanJava, JAVA);
+        WayangPlan wayangPlanJava = WayangPlansOperators.reduceBy(WayangPlans.FILE_WITH_KEY_1, collectorJava);
+        makeAndRun(wayangPlanJava, JAVA);
 
         Assert.assertEquals(collectorJava, collector);
     }
@@ -194,12 +194,12 @@ public class FlinkIntegrationIT {
     @Test
     public void testSortOperator(){
         List<String> collector = new ArrayList<>();
-        RheemPlan rheemPlan = RheemPlansOperators.sort(RheemPlans.FILE_SOME_LINES_TXT, collector);
-        makeAndRun(rheemPlan, FLINK);
+        WayangPlan wayangPlan = WayangPlansOperators.sort(WayangPlans.FILE_SOME_LINES_TXT, collector);
+        makeAndRun(wayangPlan, FLINK);
 
         List<String> collectorJava = new ArrayList<>();
-        RheemPlan rheemPlanJava = RheemPlansOperators.sort(RheemPlans.FILE_SOME_LINES_TXT, collectorJava);
-        makeAndRun(rheemPlanJava, JAVA);
+        WayangPlan wayangPlanJava = WayangPlansOperators.sort(WayangPlans.FILE_SOME_LINES_TXT, collectorJava);
+        makeAndRun(wayangPlanJava, JAVA);
 
         Assert.assertEquals(collectorJava, collector);
     }
@@ -211,10 +211,10 @@ public class FlinkIntegrationIT {
 
         temp.delete();
 
-        RheemPlan rheemPlan = RheemPlansOperators.textFileSink(RheemPlans.FILE_SOME_LINES_TXT, temp.toURI());
-        makeAndRun(rheemPlan, FLINK);
+        WayangPlan wayangPlan = WayangPlansOperators.textFileSink(WayangPlans.FILE_SOME_LINES_TXT, temp.toURI());
+        makeAndRun(wayangPlan, FLINK);
 
-        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
         final List<String> linesFlink = Files.lines(Paths.get(temp.toURI())).collect(Collectors.toList());
 
 
@@ -227,12 +227,12 @@ public class FlinkIntegrationIT {
     @Test
     public void testUnionOperator(){
         List<String> collector = new ArrayList<>();
-        RheemPlan rheemPlan = RheemPlansOperators.union(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT, collector);
-        makeAndRun(rheemPlan, FLINK);
+        WayangPlan wayangPlan = WayangPlansOperators.union(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT, collector);
+        makeAndRun(wayangPlan, FLINK);
 
         List<String> collectorJava = new ArrayList<>();
-        RheemPlan rheemPlanJava = RheemPlansOperators.union(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT, collectorJava);
-        makeAndRun(rheemPlanJava, JAVA);
+        WayangPlan wayangPlanJava = WayangPlansOperators.union(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT, collectorJava);
+        makeAndRun(wayangPlanJava, JAVA);
 
         Assert.assertEquals(collectorJava, collector);
     }
@@ -240,12 +240,12 @@ public class FlinkIntegrationIT {
     @Test
     public void testZipWithIdOperator(){
         List<Tuple2<Long, String>> collector = new ArrayList<>();
-        RheemPlan rheemPlan = RheemPlansOperators.zipWithId(RheemPlans.FILE_SOME_LINES_TXT, collector);
-        makeAndRun(rheemPlan, FLINK);
+        WayangPlan wayangPlan = WayangPlansOperators.zipWithId(WayangPlans.FILE_SOME_LINES_TXT, collector);
+        makeAndRun(wayangPlan, FLINK);
 
         List<Tuple2<Long, String>> collectorJava = new ArrayList<>();
-        RheemPlan rheemPlanJava = RheemPlansOperators.zipWithId(RheemPlans.FILE_SOME_LINES_TXT, collectorJava);
-        makeAndRun(rheemPlanJava, JAVA);
+        WayangPlan wayangPlanJava = WayangPlansOperators.zipWithId(WayangPlans.FILE_SOME_LINES_TXT, collectorJava);
+        makeAndRun(wayangPlanJava, JAVA);
 
         Assert.assertEquals(collectorJava, collector);
     }
@@ -268,46 +268,46 @@ public class FlinkIntegrationIT {
 
 
 
-    @Test(expected = RheemException.class)
+    @Test(expected = WayangException.class)
     public void testReadAndTransformAndWriteWithIllegalConfiguration1() throws URISyntaxException {
-        // Build a Rheem plan.
-        final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build a Wayang plan.
+        final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
         // ILLEGAL: This platform is not registered, so this operator will find no implementation.
-        rheemPlan.getSinks().forEach(sink -> sink.addTargetPlatform(MyMadeUpPlatform.getInstance()));
+        wayangPlan.getSinks().forEach(sink -> sink.addTargetPlatform(MyMadeUpPlatform.getInstance()));
 
-        // Instantiate Rheem and activate the Spark backend.
-        RheemContext rheemContext = makeContext(FLINK);
+        // Instantiate Wayang and activate the Spark backend.
+        WayangContext wayangContext = makeContext(FLINK);
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
     }
 
-    @Test(expected = RheemException.class)
+    @Test(expected = WayangException.class)
     public void testReadAndTransformAndWriteWithIllegalConfiguration2() throws URISyntaxException {
-        // Build a Rheem plan.
-        final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build a Wayang plan.
+        final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
-        RheemContext rheemContext = new RheemContext();
+        WayangContext wayangContext = new WayangContext();
         // ILLEGAL: This dummy platform is not sufficient to execute the plan.
-        rheemContext.register(MyMadeUpPlatform.getInstance());
+        wayangContext.register(MyMadeUpPlatform.getInstance());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
     }
 
-    @Test(expected = RheemException.class)
+    @Test(expected = WayangException.class)
     public void testReadAndTransformAndWriteWithIllegalConfiguration3() throws URISyntaxException {
-        // Build a Rheem plan.
-        final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build a Wayang plan.
+        final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Rheem and activate the Spark backend.
-        RheemContext rheemContext = makeContext(FLINK);
+        // Instantiate Wayang and activate the Spark backend.
+        WayangContext wayangContext = makeContext(FLINK);
 
-        // Have Rheem execute the plan.
-        final Job job = rheemContext.createJob(null, rheemPlan);
+        // Have Wayang execute the plan.
+        final Job job = wayangContext.createJob(null, wayangPlan);
         // ILLEGAL: We blacklist the Spark platform, although we need it.
         job.getConfiguration().getPlatformProvider().addToBlacklist(Flink.platform());
         job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());
@@ -321,9 +321,9 @@ public class FlinkIntegrationIT {
         final List<String> collection2 = Arrays.asList("This is source 2.", "This is source 2, too.");
         List<String> collector1 = new LinkedList<>();
         List<String> collector2 = new LinkedList<>();
-        final RheemPlan rheemPlan = RheemPlans.multiSourceMultiSink(collection1, collection2, collector1, collector2);
+        final WayangPlan wayangPlan = WayangPlans.multiSourceMultiSink(collection1, collection2, collector1, collector2);
 
-        makeAndRun(rheemPlan, FLINK);
+        makeAndRun(wayangPlan, FLINK);
 
         // Check the results in both sinks.
         List<String> expectedOutcome1 = Stream.concat(collection1.stream(), collection2.stream())
@@ -346,10 +346,10 @@ public class FlinkIntegrationIT {
         final List<String> collection2 = Arrays.asList("This is source 2.", "This is source 2, too.");
         List<String> collector1 = new LinkedList<>();
         List<String> collector2 = new LinkedList<>();
-        final RheemPlan rheemPlan = RheemPlans.multiSourceHoleMultiSink(collection1, collection2, collector1, collector2);
+        final WayangPlan wayangPlan = WayangPlans.multiSourceHoleMultiSink(collection1, collection2, collector1, collector2);
 
 
-        makeAndRun(rheemPlan, FLINK);
+        makeAndRun(wayangPlan, FLINK);
 
         // Check the results in both sinks.
         List<String> expectedOutcome = Stream.concat(collection1.stream(), collection2.stream())
@@ -364,32 +364,32 @@ public class FlinkIntegrationIT {
 
     @Test
     public void testGlobalMaterializedGroup() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Iterable<Integer>> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.globalMaterializedGroup(collector, 1, 2, 3);
+        WayangPlan wayangPlan = WayangPlans.globalMaterializedGroup(collector, 1, 2, 3);
 
-        // Instantiate Rheem and activate the Java backend.
-        makeAndRun(rheemPlan, FLINK);
+        // Instantiate Wayang and activate the Java backend.
+        makeAndRun(wayangPlan, FLINK);
 
         Assert.assertEquals(1, collector.size());
-        Assert.assertEquals(RheemCollections.asSet(1, 2, 3), RheemCollections.asCollection(collector.get(0), HashSet::new));
+        Assert.assertEquals(WayangCollections.asSet(1, 2, 3), WayangCollections.asCollection(collector.get(0), HashSet::new));
     }
 
     @Test
     public void testIntersect() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
+        WayangPlan wayangPlan = WayangPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
 
-        // Instantiate Rheem and activate the Java backend.
-        makeAndRun(rheemPlan, FLINK);
+        // Instantiate Wayang and activate the Java backend.
+        makeAndRun(wayangPlan, FLINK);
 
-        Assert.assertEquals(RheemCollections.asSet(1, 4, 9), RheemCollections.asSet(collector));
+        Assert.assertEquals(WayangCollections.asSet(1, 4, 9), WayangCollections.asSet(collector));
     }
 
     @Test
     public void testPageRankWithGraphBasic() {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Tuple2<Long, Long>> edges = Arrays.asList(
                 new Tuple2<>(0L, 1L),
                 new Tuple2<>(0L, 2L),
@@ -400,13 +400,13 @@ public class FlinkIntegrationIT {
                 new Tuple2<>(3L, 0L)
         );
         List<Tuple2<Long, Float>> pageRanks = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.pageRank(edges, pageRanks);
+        WayangPlan wayangPlan = WayangPlans.pageRank(edges, pageRanks);
 
         // Execute the plan with a certain backend.
-        RheemContext rheemContext = new RheemContext()
+        WayangContext wayangContext = new WayangContext()
                 .with(Flink.basicPlugin());
-                //.with(RheemBasics.graphPlugin());
-        rheemContext.execute(rheemPlan);
+                //.with(WayangBasics.graphPlugin());
+        wayangContext.execute(wayangPlan);
 
 
         // Check the results.
@@ -421,27 +421,27 @@ public class FlinkIntegrationIT {
 
     @Test
     public void testMapPartitions() throws URISyntaxException {
-        // Execute the Rheem plan.
+        // Execute the Wayang plan.
         final Collection<Tuple2<String, Integer>> result = new ArrayList<>();
 
-        RheemPlan rheemPlan = RheemPlansOperators.mapPartitions(result, 0, 1, 1, 3, 3, 4, 4, 5, 5, 6);
+        WayangPlan wayangPlan = WayangPlansOperators.mapPartitions(result, 0, 1, 1, 3, 3, 4, 4, 5, 5, 6);
 
-        makeAndRun(rheemPlan, FLINK);
+        makeAndRun(wayangPlan, FLINK);
 
         Assert.assertEquals(
-                RheemCollections.asSet(new Tuple2<>("even", 4), new Tuple2<>("odd", 6)),
-                RheemCollections.asSet(result)
+                WayangCollections.asSet(new Tuple2<>("even", 4), new Tuple2<>("odd", 6)),
+                WayangCollections.asSet(result)
         );
     }
 
     @Test
     public void testZipWithId() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Long> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.zipWithId(collector, 0, 10, 20, 30, 30);
+        WayangPlan wayangPlan = WayangPlans.zipWithId(collector, 0, 10, 20, 30, 30);
 
-        // Instantiate Rheem and activate the Java backend.
-        makeAndRun(rheemPlan, FLINK);
+        // Instantiate Wayang and activate the Java backend.
+        makeAndRun(wayangPlan, FLINK);
 
         Assert.assertEquals(1, collector.size());
         Assert.assertEquals(Long.valueOf(5L), collector.get(0));
@@ -449,51 +449,51 @@ public class FlinkIntegrationIT {
 
     @Test
     public void testDiverseScenario1() throws URISyntaxException {
-        // Build the RheemPlan.
-        RheemPlan rheemPlan = RheemPlans.diverseScenario1(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build the WayangPlan.
+        WayangPlan wayangPlan = WayangPlans.diverseScenario1(WayangPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Rheem and activate the Spark backend.
-        makeAndRun(rheemPlan, FLINK);
+        // Instantiate Wayang and activate the Spark backend.
+        makeAndRun(wayangPlan, FLINK);
     }
 
     @Test
     public void testDiverseScenario2() throws URISyntaxException {
-        // Build the RheemPlan.
-        RheemPlan rheemPlan = RheemPlans.diverseScenario2(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+        // Build the WayangPlan.
+        WayangPlan wayangPlan = WayangPlans.diverseScenario2(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
-        // Instantiate Rheem and activate the Spark backend.
-        makeAndRun(rheemPlan, FLINK);
+        // Instantiate Wayang and activate the Spark backend.
+        makeAndRun(wayangPlan, FLINK);
     }
 
     @Test
     public void testDiverseScenario3() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         //TODO: need implement the loop for running this test
-        //RheemPlan rheemPlan = RheemPlans.diverseScenario3(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+        //WayangPlan wayangPlan = WayangPlans.diverseScenario3(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
-        // Instantiate Rheem and activate the Spark backend.
-        //makeAndRun(rheemPlan, FLINK);
+        // Instantiate Wayang and activate the Spark backend.
+        //makeAndRun(wayangPlan, FLINK);
     }
 
     @Test
     public void testDiverseScenario4() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         //TODO: need implement the loop for running this test
-        //RheemPlan rheemPlan = RheemPlans.diverseScenario4(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+        //WayangPlan wayangPlan = WayangPlans.diverseScenario4(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        //makeAndRun(rheemPlan, FLINK);
+        // Instantiate Wayang and activate the Java backend.
+        //makeAndRun(wayangPlan, FLINK);
     }
 
 
     @Test
     public void testSample() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.simpleSample(3, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+        WayangPlan wayangPlan = WayangPlans.simpleSample(3, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
 
-        // Instantiate Rheem and activate the Java backend.
-        makeAndRun(rheemPlan, FLINK);
+        // Instantiate Wayang and activate the Java backend.
+        makeAndRun(wayangPlan, FLINK);
 
         System.out.println(collector);
     }

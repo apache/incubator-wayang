@@ -1,4 +1,4 @@
-package io.rheem.rheem.flink.compiler.criterion;
+package org.apache.incubator.wayang.flink.compiler.criterion;
 
 import org.apache.flink.types.ListValue;
 
@@ -7,13 +7,13 @@ import java.util.Collection;
 /**
  * Is a Wrapper for used in the criterion of the Loops
  */
-public class RheemListValue extends ListValue<RheemValue> {
+public class WayangListValue extends ListValue<WayangValue> {
 
-    public RheemListValue(Collection collection){
+    public WayangListValue(Collection collection){
         super(collection);
     }
 
-    public RheemListValue(){
+    public WayangListValue(){
         super();
     }
 

@@ -1,6 +1,6 @@
-package io.rheem.rheem.profiler.java;
+package org.apache.incubator.wayang.profiler.java;
 
-import io.rheem.rheem.java.operators.JavaTextFileSource;
+import org.apache.incubator.wayang.java.operators.JavaTextFileSource;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -25,7 +25,7 @@ public class JavaTextFileSourceProfiler extends SourceProfiler {
                 this.logger.warn("Could not delete {}.", this.tempFile);
             }
         }
-        this.tempFile = File.createTempFile("rheem-java", "txt");
+        this.tempFile = File.createTempFile("wayang-java", "txt");
         this.tempFile.deleteOnExit();
 
         // Create input data.

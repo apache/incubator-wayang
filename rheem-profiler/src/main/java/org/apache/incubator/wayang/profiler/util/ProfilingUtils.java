@@ -1,18 +1,18 @@
-package io.rheem.rheem.profiler.util;
+package org.apache.incubator.wayang.profiler.util;
 
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.RheemContext;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.util.Formats;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.java.execution.JavaExecutor;
-import io.rheem.rheem.java.platform.JavaPlatform;
-import io.rheem.rheem.spark.execution.SparkExecutor;
-import io.rheem.rheem.spark.platform.SparkPlatform;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.WayangContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.spark.execution.SparkExecutor;
+import org.apache.incubator.wayang.spark.platform.SparkPlatform;
 import org.slf4j.LoggerFactory;
 
 /**
- * Utilities to fake Rheem internals etc..
+ * Utilities to fake Wayang internals etc..
  */
 public class ProfilingUtils {
 
@@ -25,7 +25,7 @@ public class ProfilingUtils {
      * @param udfJars paths to JAR files needed to run the UDFs (see {@link ReflectionUtils#getDeclaringJar(Class)})
      */
     public static Job fakeJob(String... udfJars) {
-        return new RheemContext().createJob("Fake job", new RheemPlan(), udfJars);
+        return new WayangContext().createJob("Fake job", new WayangPlan(), udfJars);
     }
 
     /**

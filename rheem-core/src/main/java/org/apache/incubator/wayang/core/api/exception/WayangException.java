@@ -1,26 +1,26 @@
-package io.rheem.rheem.core.api.exception;
+package org.apache.incubator.wayang.core.api.exception;
 
 /**
- * Exception that declares a problem of Rheem.
+ * Exception that declares a problem of Wayang.
  */
-public class RheemException extends RuntimeException {
+public class WayangException extends RuntimeException {
 
-    public RheemException() {
+    public WayangException() {
     }
 
-    public RheemException(String message) {
+    public WayangException(String message) {
         super(message);
     }
 
-    public RheemException(String message, Throwable cause) {
+    public WayangException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public RheemException(Throwable cause) {
+    public WayangException(Throwable cause) {
         super(cause);
     }
 
-    public RheemException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public WayangException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

@@ -1,9 +1,9 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityPusher;
-import io.rheem.rheem.core.optimizer.cardinality.LoopHeadAlternativeCardinalityPusher;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityPusher;
+import org.apache.incubator.wayang.core.optimizer.cardinality.LoopHeadAlternativeCardinalityPusher;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -45,12 +45,12 @@ public class LoopHeadAlternative extends OperatorAlternative implements LoopHead
                     .collect(Collectors.toList());
             this.loopBodyOutputs = this.originalLoopHead.getLoopBodyOutputs().stream()
                     .map(originalAlternative.getSlotMapping()::resolveDownstream)
-                    .map(RheemCollections::getSingleOrNull)
+                    .map(WayangCollections::getSingleOrNull)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
             this.finalLoopOutputs = this.originalLoopHead.getFinalLoopOutputs().stream()
                     .map(originalAlternative.getSlotMapping()::resolveDownstream)
-                    .map(RheemCollections::getSingleOrNull)
+                    .map(WayangCollections::getSingleOrNull)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
         }

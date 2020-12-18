@@ -1,4 +1,4 @@
-package io.rheem.rheem.flink.compiler;
+package org.apache.incubator.wayang.flink.compiler;
 
 import org.apache.flink.api.common.io.BlockInfo;
 import org.apache.flink.api.common.io.CleanupWhenUnsuccessful;
@@ -14,7 +14,7 @@ import org.apache.flink.core.memory.DataOutputViewStreamWrapper;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
-import io.rheem.rheem.core.api.exception.RheemException;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +29,7 @@ import java.net.URI;
 /**
  * Wrapper for {@link FileOutputFormat}
  */
-public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements InitializeOnMaster, CleanupWhenUnsuccessful {
+public class WayangFileOutputFormat<IT> extends FileOutputFormat<IT> implements InitializeOnMaster, CleanupWhenUnsuccessful {
 
     private static final long serialVersionUID = 1L;
 
@@ -103,19 +103,19 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
     /** The block size to use. */
     private long blockSize = NATIVE_BLOCK_SIZE;
 
-    private transient RheemFileOutputFormat.BlockBasedOutput blockBasedOutput;
+    private transient WayangFileOutputFormat.BlockBasedOutput blockBasedOutput;
 
     private transient DataOutputViewStreamWrapper outView;
 
     // --------------------------------------------------------------------------------------------
 
-    public RheemFileOutputFormat() {}
+    public WayangFileOutputFormat() {}
 
-    public RheemFileOutputFormat(String path){
+    public WayangFileOutputFormat(String path){
         this( new Path(URI.create(path)) );
     }
 
-    public RheemFileOutputFormat(Path outputPath) {
+    public WayangFileOutputFormat(Path outputPath) {
         this.outputFilePath = outputPath;
     }
 
@@ -197,7 +197,7 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
                 throw new UnsupportedOperationException("Currently only block size up to Integer.MAX_VALUE are supported");
             }
         } catch (Exception e){
-            throw new RheemException(e);
+            throw new WayangException(e);
         }
     }
 
@@ -308,7 +308,7 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
                 }
             }
         }catch (Exception e){
-            throw new RheemException(e);
+            throw new WayangException(e);
         }
     }
 
@@ -350,7 +350,7 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
 
         private long firstRecordStartPos = NO_RECORD;
 
-        private BlockInfo blockInfo = RheemFileOutputFormat.this.createBlockInfo();
+        private BlockInfo blockInfo = WayangFileOutputFormat.this.createBlockInfo();
 
         private DataOutputView headerStream;
 
@@ -410,7 +410,7 @@ public class RheemFileOutputFormat<IT> extends FileOutputFormat<IT> implements I
             this.blockInfo.setRecordCount(this.blockCount);
             this.blockInfo.setAccumulatedRecordCount(this.totalCount);
             this.blockInfo.setFirstRecordStart(this.firstRecordStartPos == NO_RECORD ? 0 : this.firstRecordStartPos);
-            RheemFileOutputFormat.this.complementBlockInfo(this.blockInfo);
+            WayangFileOutputFormat.this.complementBlockInfo(this.blockInfo);
             this.blockInfo.write(this.headerStream);
             this.blockPos = 0;
             this.blockCount = 0;

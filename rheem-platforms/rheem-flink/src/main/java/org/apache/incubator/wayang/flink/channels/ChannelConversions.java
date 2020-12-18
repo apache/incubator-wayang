@@ -1,17 +1,17 @@
-package io.rheem.rheem.flink.channels;
+package org.apache.incubator.wayang.flink.channels;
 
-import io.rheem.rheem.basic.channels.FileChannel;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.optimizer.channels.DefaultChannelConversion;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.flink.operators.FlinkCollectionSink;
-import io.rheem.rheem.flink.operators.FlinkCollectionSource;
-import io.rheem.rheem.flink.operators.FlinkObjectFileSink;
-import io.rheem.rheem.flink.operators.FlinkObjectFileSource;
-import io.rheem.rheem.flink.operators.FlinkTsvFileSink;
-import io.rheem.rheem.flink.platform.FlinkPlatform;
-import io.rheem.rheem.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.basic.channels.FileChannel;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.optimizer.channels.DefaultChannelConversion;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.flink.operators.FlinkCollectionSink;
+import org.apache.incubator.wayang.flink.operators.FlinkCollectionSource;
+import org.apache.incubator.wayang.flink.operators.FlinkObjectFileSink;
+import org.apache.incubator.wayang.flink.operators.FlinkObjectFileSource;
+import org.apache.incubator.wayang.flink.operators.FlinkTsvFileSink;
+import org.apache.incubator.wayang.flink.platform.FlinkPlatform;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
 
 import java.util.Arrays;
 import java.util.Collection;

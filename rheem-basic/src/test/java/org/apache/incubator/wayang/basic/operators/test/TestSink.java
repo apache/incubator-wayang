@@ -1,7 +1,7 @@
-package io.rheem.rheem.basic.operators.test;
+package org.apache.incubator.wayang.basic.operators.test;
 
-import io.rheem.rheem.core.plan.rheemplan.UnarySink;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySink;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 /**
  * Dummy sink for testing purposes.

@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.platform.lineage;
+package org.apache.incubator.wayang.core.platform.lineage;
 
-import io.rheem.rheem.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
 
 /**
  * Encapsulates a {@link ChannelInstance} in the lazy execution lineage.

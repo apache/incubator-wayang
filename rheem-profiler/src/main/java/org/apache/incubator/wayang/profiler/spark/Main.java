@@ -1,14 +1,14 @@
-package io.rheem.rheem.profiler.spark;
+package org.apache.incubator.wayang.profiler.spark;
 
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.Subject;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.util.RheemArrays;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.profiler.data.DataGenerators;
-import io.rheem.rheem.spark.platform.SparkPlatform;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.util.WayangArrays;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.profiler.data.DataGenerators;
+import org.apache.incubator.wayang.spark.platform.SparkPlatform;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,7 +102,7 @@ public class Main {
 //            case "word-count-split": {
 //                final Supplier<String> randomStringSupplier = DataGenerators.createRandomStringSupplier(2, 10, new Random(42));
 //                results = profile(
-//                        io.rheem.rheem.profiler.java.OperatorProfilers.createJavaFlatMapProfiler(
+//                        org.apache.incubator.wayang.profiler.java.OperatorProfilers.createJavaFlatMapProfiler(
 //                                () -> String.format("%s %s %s %s %s %s %s %s %s",
 //                                        randomStringSupplier.get(), randomStringSupplier.get(),
 //                                        randomStringSupplier.get(), randomStringSupplier.get(),
@@ -119,7 +119,7 @@ public class Main {
 //            case "word-count-canonicalize": {
 //                final Supplier<String> randomStringSupplier = DataGenerators.createRandomStringSupplier(2, 10, new Random(42));
 //                results = profile(
-//                        io.rheem.rheem.profiler.java.OperatorProfilers.createJavaMapProfiler(
+//                        org.apache.incubator.wayang.profiler.java.OperatorProfilers.createJavaMapProfiler(
 //                                randomStringSupplier,
 //                                word -> new Tuple2<>(word.toLowerCase(), 1),
 //                                String.class,
@@ -132,7 +132,7 @@ public class Main {
 //            case "word-count-count": {
 //                final Supplier<String> stringSupplier = DataGenerators.createReservoirBasedStringSupplier(new ArrayList<>(), 0.7, new Random(42), 2, 10);
 //                results = profile(
-//                        io.rheem.rheem.profiler.java.OperatorProfilers.createJavaReduceByProfiler(
+//                        org.apache.incubator.wayang.profiler.java.OperatorProfilers.createJavaReduceByProfiler(
 //                                () -> new Tuple2<>(stringSupplier.get(), 1),
 //                                pair -> pair.field0,
 //                                (p1, p2) -> {
@@ -152,12 +152,12 @@ public class Main {
         }
 
         System.out.println();
-        System.out.println(RheemCollections.getAny(results).getCsvHeader());
+        System.out.println(WayangCollections.getAny(results).getCsvHeader());
         results.forEach(result -> System.out.println(result.toCsvString()));
     }
 
     private static StopWatch createStopWatch() {
-        Experiment experiment = new Experiment("rheem-profiler", new Subject("Rheem", "0.1"));
+        Experiment experiment = new Experiment("wayang-profiler", new Subject("Wayang", "0.1"));
         return new StopWatch(experiment);
     }
 
@@ -167,8 +167,8 @@ public class Main {
     private static List<SparkOperatorProfiler.Result> profile(SparkOperatorProfiler opProfiler,
                                                               List<List<Long>> allCardinalities) {
 
-        return StreamSupport.stream(RheemCollections.streamedCrossProduct(allCardinalities).spliterator(), false)
-                .map(cardinalities -> profile(opProfiler, RheemArrays.toArray(cardinalities)))
+        return StreamSupport.stream(WayangCollections.streamedCrossProduct(allCardinalities).spliterator(), false)
+                .map(cardinalities -> profile(opProfiler, WayangArrays.toArray(cardinalities)))
                 .collect(Collectors.toList());
 
 
@@ -178,7 +178,7 @@ public class Main {
      * Run the {@code opProfiler} with the given {@code cardinalities}.
      */
     private static SparkOperatorProfiler.Result profile(SparkOperatorProfiler opProfiler, long... cardinalities) {
-        System.out.printf("Profiling %s with %s data quanta.\n", opProfiler, RheemArrays.asList(cardinalities));
+        System.out.printf("Profiling %s with %s data quanta.\n", opProfiler, WayangArrays.asList(cardinalities));
         final StopWatch stopWatch = createStopWatch();
         SparkOperatorProfiler.Result result = null;
 

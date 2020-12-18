@@ -1,10 +1,10 @@
-package io.rheem.rheem.basic.operators;
+package org.apache.incubator.wayang.basic.operators;
 
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.optimizer.costs.DefaultLoadEstimator;
-import io.rheem.rheem.core.optimizer.costs.NestableLoadProfileEstimator;
-import io.rheem.rheem.core.plan.rheemplan.UnarySink;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.optimizer.costs.DefaultLoadEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.NestableLoadProfileEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySink;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 import java.util.Objects;
 

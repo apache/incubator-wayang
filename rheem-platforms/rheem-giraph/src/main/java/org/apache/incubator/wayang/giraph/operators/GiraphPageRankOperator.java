@@ -1,27 +1,27 @@
-package io.rheem.rheem.giraph.operators;
+package org.apache.incubator.wayang.giraph.operators;
 
 import org.apache.giraph.conf.GiraphConfiguration;
 import org.apache.giraph.job.GiraphJob;
-import io.rheem.rheem.basic.channels.FileChannel;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.PageRankOperator;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.core.util.fs.FileSystem;
-import io.rheem.rheem.core.util.fs.FileSystems;
-import io.rheem.rheem.giraph.Algorithm.PageRankAlgorithm;
-import io.rheem.rheem.giraph.Algorithm.PageRankParameters;
-import io.rheem.rheem.giraph.execution.GiraphExecutor;
-import io.rheem.rheem.giraph.platform.GiraphPlatform;
-import io.rheem.rheem.java.channels.StreamChannel;
+import org.apache.incubator.wayang.basic.channels.FileChannel;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.PageRankOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.core.util.fs.FileSystem;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.giraph.Algorithm.PageRankAlgorithm;
+import org.apache.incubator.wayang.giraph.Algorithm.PageRankParameters;
+import org.apache.incubator.wayang.giraph.execution.GiraphExecutor;
+import org.apache.incubator.wayang.giraph.platform.GiraphPlatform;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,13 +62,13 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
         try {
             return this.runGiraph(inputChannel, outputChanne, giraphExecutor, operatorContext);
         } catch (IOException e) {
-            throw new RheemException(String.format("Running %s failed.", this), e);
+            throw new WayangException(String.format("Running %s failed.", this), e);
         } catch (URISyntaxException e) {
-            throw new RheemException(e);
+            throw new WayangException(e);
         } catch (InterruptedException e) {
-            throw new RheemException(e);
+            throw new WayangException(e);
         } catch (ClassNotFoundException e) {
-            throw new RheemException(e);
+            throw new WayangException(e);
         }
     }
 
@@ -86,7 +86,7 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
         PageRankParameters.setParameter(PageRankParameters.PageRankEnum.ITERATION, this.getNumIterations());
 
         FileSystem fs = FileSystems.getFileSystem(tempDirPath).orElseThrow(
-                () -> new RheemException(String.format("Cannot access file system of %s.", tempDirPath))
+                () -> new WayangException(String.format("Cannot access file system of %s.", tempDirPath))
         );
         //delete the file the output if exist
         fs.delete(tempDirPath, true);
@@ -96,10 +96,10 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
         GiraphConfiguration conf = giraphExecutor.getGiraphConfiguration();
         //vertex reader
         conf.set("giraph.vertex.input.dir", inputPath);
-        conf.set("mapred.job.tracker", configuration.getStringProperty("rheem.giraph.job.tracker"));
-        conf.set("mapreduce.job.counters.limit", configuration.getStringProperty("rheem.mapreduce.job.counters.limit"));
-        conf.setWorkerConfiguration((int)configuration.getLongProperty("rheem.giraph.maxWorkers"),
-                (int)configuration.getLongProperty("rheem.giraph.minWorkers"),
+        conf.set("mapred.job.tracker", configuration.getStringProperty("wayang.giraph.job.tracker"));
+        conf.set("mapreduce.job.counters.limit", configuration.getStringProperty("wayang.mapreduce.job.counters.limit"));
+        conf.setWorkerConfiguration((int)configuration.getLongProperty("wayang.giraph.maxWorkers"),
+                (int)configuration.getLongProperty("wayang.giraph.minWorkers"),
         100.0f);
         conf.set("giraph.SplitMasterWorker", "false");
         conf.set("mapreduce.output.fileoutputformat.outputdir", tempDirPath);
@@ -110,11 +110,11 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
                 PageRankAlgorithm.PageRankWorkerContext.class);
         conf.setMasterComputeClass(
                 PageRankAlgorithm.PageRankMasterCompute.class);
-        conf.setNumComputeThreads((int)configuration.getLongProperty("rheem.giraph.numThread"));
+        conf.setNumComputeThreads((int)configuration.getLongProperty("wayang.giraph.numThread"));
 
         conf.setVertexOutputFormatClass(PageRankAlgorithm.PageRankVertexOutputFormat.class);
 
-        GiraphJob job = new GiraphJob(conf, "rheem-giraph");
+        GiraphJob job = new GiraphJob(conf, "wayang-giraph");
         job.run(true);
 
         final String actualInputPath = FileSystems.findActualSingleInputPath(tempDirPath);
@@ -124,13 +124,13 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
 
         final ExecutionLineageNode mainExecutionLineage = new ExecutionLineageNode(operatorContext);
         mainExecutionLineage.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.giraph.pagerank.load.main", configuration
+                "wayang.giraph.pagerank.load.main", configuration
         ));
         mainExecutionLineage.addPredecessor(inputFileChannelInstance.getLineage());
 
         final ExecutionLineageNode outputExecutionLineage = new ExecutionLineageNode(operatorContext);
         outputExecutionLineage.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.giraph.pagerank.load.output", configuration
+                "wayang.giraph.pagerank.load.output", configuration
         ));
         outputChannelInstance.getLineage().addPredecessor(outputExecutionLineage);
 
@@ -145,7 +145,7 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
 
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
-        return Arrays.asList("rheem.giraph.pagerank.load.main", "rheem.giraph.pagerank.load.output");
+        return Arrays.asList("wayang.giraph.pagerank.load.main", "wayang.giraph.pagerank.load.output");
     }
 
     @Override
@@ -161,7 +161,7 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
 
     public void setPathOut(String path, Configuration configuration){
         if(path == null && configuration != null) {
-            path = configuration.getStringProperty("rheem.giraph.hdfs.tempdir");
+            path = configuration.getStringProperty("wayang.giraph.hdfs.tempdir");
         }
         this.path_out = path;
     }
@@ -175,7 +175,7 @@ public class GiraphPageRankOperator extends PageRankOperator implements GiraphEx
 
 
     private Stream<Tuple2<Long, Float>> createStream(String path) {
-        return io.rheem.rheem.core.util.fs.FileUtils.streamLines(path).map(line -> {
+        return org.apache.incubator.wayang.core.util.fs.FileUtils.streamLines(path).map(line -> {
             String[] part = line.split("\t");
             return new Tuple2<>(Long.parseLong(part[0]), Float.parseFloat(part[1]));
         });

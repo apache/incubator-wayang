@@ -1,9 +1,9 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 
 import java.util.Collection;
 
@@ -50,8 +50,8 @@ public class OperatorTest {
         Operator op = new Operator2(0, 1);
         final Collection<String> estimationContextProperties = op.getEstimationContextProperties();
         Assert.assertEquals(
-                RheemCollections.asSet("op1Property", "op2Property"),
-                RheemCollections.asSet(estimationContextProperties)
+                WayangCollections.asSet("op1Property", "op2Property"),
+                WayangCollections.asSet(estimationContextProperties)
         );
     }
 

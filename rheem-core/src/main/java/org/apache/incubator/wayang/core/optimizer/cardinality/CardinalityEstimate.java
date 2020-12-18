@@ -1,13 +1,13 @@
-package io.rheem.rheem.core.optimizer.cardinality;
+package org.apache.incubator.wayang.core.optimizer.cardinality;
 
 import org.json.JSONObject;
-import io.rheem.rheem.core.optimizer.ProbabilisticIntervalEstimate;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.util.Formats;
-import io.rheem.rheem.core.util.JsonSerializable;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticIntervalEstimate;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.incubator.wayang.core.util.JsonSerializable;
 
 /**
- * An estimate of cardinality within a {@link RheemPlan} expressed as a {@link ProbabilisticIntervalEstimate}.
+ * An estimate of cardinality within a {@link WayangPlan} expressed as a {@link ProbabilisticIntervalEstimate}.
  */
 public class CardinalityEstimate extends ProbabilisticIntervalEstimate implements JsonSerializable {
 

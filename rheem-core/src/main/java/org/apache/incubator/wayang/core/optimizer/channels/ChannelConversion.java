@@ -1,12 +1,12 @@
-package io.rheem.rheem.core.optimizer.channels;
+package org.apache.incubator.wayang.core.optimizer.channels;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
 
 import java.util.Collection;
 import java.util.Collections;

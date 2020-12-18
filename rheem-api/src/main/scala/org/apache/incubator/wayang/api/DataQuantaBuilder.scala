@@ -1,29 +1,29 @@
-package io.rheem.rheem.api
+package org.apache.incubator.wayang.api
 
 
 import java.util.function.{Consumer, IntUnaryOperator, Function => JavaFunction}
 import java.util.{Collection => JavaCollection}
 
 import de.hpi.isg.profiledb.store.model.Experiment
-import io.rheem.rheem.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaBuilderDecorator}
-import io.rheem.rheem.api.util.{DataQuantaBuilderCache, TypeTrap}
-import io.rheem.rheem.basic.data.{Record, Tuple2 => RT2}
-import io.rheem.rheem.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator}
-import io.rheem.rheem.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator
-import io.rheem.rheem.core.optimizer.costs.{LoadEstimator, LoadProfile, LoadProfileEstimator}
-import io.rheem.rheem.core.plan.rheemplan.{Operator, OutputSlot, RheemPlan, UnarySource}
-import io.rheem.rheem.core.platform.Platform
-import io.rheem.rheem.core.types.DataSetType
-import io.rheem.rheem.core.util.{Logging, ReflectionUtils, RheemCollections, Tuple => RheemTuple}
+import org.apache.incubator.wayang.api.graph.{Edge, EdgeDataQuantaBuilder, EdgeDataQuantaBuilderDecorator}
+import org.apache.incubator.wayang.api.util.{DataQuantaBuilderCache, TypeTrap}
+import org.apache.incubator.wayang.basic.data.{Record, Tuple2 => RT2}
+import org.apache.incubator.wayang.basic.operators.{GlobalReduceOperator, LocalCallbackSink, MapOperator, SampleOperator}
+import org.apache.incubator.wayang.core.function.FunctionDescriptor.{SerializableBiFunction, SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator
+import org.apache.incubator.wayang.core.optimizer.costs.{LoadEstimator, LoadProfile, LoadProfileEstimator}
+import org.apache.incubator.wayang.core.plan.wayangplan.{Operator, OutputSlot, WayangPlan, UnarySource}
+import org.apache.incubator.wayang.core.platform.Platform
+import org.apache.incubator.wayang.core.types.DataSetType
+import org.apache.incubator.wayang.core.util.{Logging, ReflectionUtils, WayangCollections, Tuple => WayangTuple}
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
 /**
   * Trait/interface for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
-  * Java API for Rheem that compensates for lacking default and named arguments.
+  * Java API for Wayang that compensates for lacking default and named arguments.
   */
 trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging {
 
@@ -38,7 +38,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   protected[api] implicit def javaPlanBuilder: JavaPlanBuilder
 
   /**
-    * Set a name for the [[DataQuanta]] and its associated [[io.rheem.rheem.core.plan.rheemplan.Operator]]s.
+    * Set a name for the [[DataQuanta]] and its associated [[org.apache.incubator.wayang.core.plan.wayangplan.Operator]]s.
     *
     * @param name the name
     * @return this instance
@@ -46,7 +46,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   def withName(name: String): This
 
   /**
-    * Set an [[Experiment]] for the currently built [[io.rheem.rheem.core.api.Job]].
+    * Set an [[Experiment]] for the currently built [[org.apache.incubator.wayang.core.api.Job]].
     *
     * @param experiment the [[Experiment]]
     * @return this instance
@@ -98,7 +98,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   def withTargetPlatform(platform: Platform): This
 
   /**
-    * Register the JAR file containing the given [[Class]] with the currently built [[io.rheem.rheem.core.api.Job]].
+    * Register the JAR file containing the given [[Class]] with the currently built [[org.apache.incubator.wayang.core.api.Job]].
     *
     * @param cls the [[Class]]
     * @return this instance
@@ -106,7 +106,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   def withUdfJarOf(cls: Class[_]): This
 
   /**
-    * Register a JAR file with the currently built [[io.rheem.rheem.core.api.Job]].
+    * Register a JAR file with the currently built [[org.apache.incubator.wayang.core.api.Job]].
     *
     * @param path the path of the JAR file
     * @return this instance
@@ -129,15 +129,15 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   def map[NewOut](udf: SerializableFunction[Out, NewOut]) = new MapDataQuantaBuilder(this, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[MapOperator]] with a [[io.rheem.rheem.basic.function.ProjectionDescriptor]].
+    * Feed the built [[DataQuanta]] into a [[MapOperator]] with a [[org.apache.incubator.wayang.basic.function.ProjectionDescriptor]].
     *
-    * @param fieldNames field names for the [[io.rheem.rheem.basic.function.ProjectionDescriptor]]
+    * @param fieldNames field names for the [[org.apache.incubator.wayang.basic.function.ProjectionDescriptor]]
     * @return a [[MapDataQuantaBuilder]]
     */
   def project[NewOut](fieldNames: Array[String]) = new ProjectionDataQuantaBuilder(this, fieldNames)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.FilterOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.FilterOperator]].
     *
     * @param udf filter UDF
     * @return a [[FilterDataQuantaBuilder]]
@@ -145,24 +145,24 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   def filter(udf: SerializablePredicate[Out]) = new FilterDataQuantaBuilder(this, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.FlatMapOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.FlatMapOperator]].
     *
-    * @param udf the UDF for the [[io.rheem.rheem.basic.operators.FlatMapOperator]]
+    * @param udf the UDF for the [[org.apache.incubator.wayang.basic.operators.FlatMapOperator]]
     * @return a [[FlatMapDataQuantaBuilder]]
     */
   def flatMap[NewOut](udf: SerializableFunction[Out, java.lang.Iterable[NewOut]]) = new FlatMapDataQuantaBuilder(this, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.MapPartitionsOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.MapPartitionsOperator]].
     *
-    * @param udf the UDF for the [[io.rheem.rheem.basic.operators.MapPartitionsOperator]]
+    * @param udf the UDF for the [[org.apache.incubator.wayang.basic.operators.MapPartitionsOperator]]
     * @return a [[MapPartitionsDataQuantaBuilder]]
     */
   def mapPartitions[NewOut](udf: SerializableFunction[java.lang.Iterable[Out], java.lang.Iterable[NewOut]]) =
     new MapPartitionsDataQuantaBuilder(this, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.SampleOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.SampleOperator]].
     *
     * @param sampleSize the absolute size of the sample
     * @return a [[SampleDataQuantaBuilder]]
@@ -173,7 +173,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
 
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.SampleOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.SampleOperator]].
     *
     * @param sampleSizeFunction the absolute size of the sample as a function of the current iteration number
     * @return a [[SampleDataQuantaBuilder]]
@@ -196,26 +196,26 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   def reduce(udf: SerializableBinaryOperator[Out]) = new GlobalReduceDataQuantaBuilder(this, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.ReduceByOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.ReduceByOperator]].
     *
-    * @param keyUdf the key UDF for the [[io.rheem.rheem.basic.operators.ReduceByOperator]]
-    * @param udf    the UDF for the [[io.rheem.rheem.basic.operators.ReduceByOperator]]
+    * @param keyUdf the key UDF for the [[org.apache.incubator.wayang.basic.operators.ReduceByOperator]]
+    * @param udf    the UDF for the [[org.apache.incubator.wayang.basic.operators.ReduceByOperator]]
     * @return a [[ReduceByDataQuantaBuilder]]
     */
   def reduceByKey[Key](keyUdf: SerializableFunction[Out, Key], udf: SerializableBinaryOperator[Out]) =
     new ReduceByDataQuantaBuilder(this, keyUdf, udf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.MaterializedGroupByOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.MaterializedGroupByOperator]].
     *
-    * @param keyUdf the key UDF for the [[io.rheem.rheem.basic.operators.MaterializedGroupByOperator]]
+    * @param keyUdf the key UDF for the [[org.apache.incubator.wayang.basic.operators.MaterializedGroupByOperator]]
     * @return a [[GroupByDataQuantaBuilder]]
     */
   def groupByKey[Key](keyUdf: SerializableFunction[Out, Key]) =
     new GroupByDataQuantaBuilder(this, keyUdf)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.GlobalMaterializedGroupOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.GlobalMaterializedGroupOperator]].
     *
     * @return a [[GlobalGroupDataQuantaBuilder]]
     */
@@ -223,7 +223,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
 
   /**
     * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[io.rheem.rheem.basic.operators.UnionAllOperator]].
+    * [[org.apache.incubator.wayang.basic.operators.UnionAllOperator]].
     *
     * @param that the other [[DataQuantaBuilder]] to union with
     * @return a [[UnionDataQuantaBuilder]]
@@ -232,7 +232,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
 
   /**
     * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[io.rheem.rheem.basic.operators.IntersectOperator]].
+    * [[org.apache.incubator.wayang.basic.operators.IntersectOperator]].
     *
     * @param that the other [[DataQuantaBuilder]] to intersect with
     * @return an [[IntersectDataQuantaBuilder]]
@@ -241,7 +241,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
 
   /**
     * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[io.rheem.rheem.basic.operators.JoinOperator]].
+    * [[org.apache.incubator.wayang.basic.operators.JoinOperator]].
     *
     * @param thisKeyUdf the key extraction UDF for this instance
     * @param that       the other [[DataQuantaBuilder]] to join with
@@ -255,7 +255,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
 
   /**
     * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[io.rheem.rheem.basic.operators.CoGroupOperator]].
+    * [[org.apache.incubator.wayang.basic.operators.CoGroupOperator]].
     *
     * @param thisKeyUdf the key extraction UDF for this instance
     * @param that       the other [[DataQuantaBuilder]] to join with
@@ -270,7 +270,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
 
   /**
     * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[io.rheem.rheem.basic.operators.SortOperator]].
+    * [[org.apache.incubator.wayang.basic.operators.SortOperator]].
     *
     * @param keyUdf the key extraction UDF for this instance
     * @return a [[SortDataQuantaBuilder]]
@@ -280,44 +280,44 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
 
   /**
     * Feed the built [[DataQuanta]] of this and the given instance into a
-    * [[io.rheem.rheem.basic.operators.CartesianOperator]].
+    * [[org.apache.incubator.wayang.basic.operators.CartesianOperator]].
     *
     * @return a [[CartesianDataQuantaBuilder]]
     */
   def cartesian[ThatOut](that: DataQuantaBuilder[_, ThatOut]) = new CartesianDataQuantaBuilder(this, that)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.ZipWithIdOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.ZipWithIdOperator]].
     *
-    * @return a [[ZipWithIdDataQuantaBuilder]] representing the [[io.rheem.rheem.basic.operators.ZipWithIdOperator]]'s output
+    * @return a [[ZipWithIdDataQuantaBuilder]] representing the [[org.apache.incubator.wayang.basic.operators.ZipWithIdOperator]]'s output
     */
   def zipWithId = new ZipWithIdDataQuantaBuilder(this)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.DistinctOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.DistinctOperator]].
     *
-    * @return a [[DistinctDataQuantaBuilder]] representing the [[io.rheem.rheem.basic.operators.DistinctOperator]]'s output
+    * @return a [[DistinctDataQuantaBuilder]] representing the [[org.apache.incubator.wayang.basic.operators.DistinctOperator]]'s output
     */
   def distinct = new DistinctDataQuantaBuilder(this)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.CountOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.CountOperator]].
     *
-    * @return a [[CountDataQuantaBuilder]] representing the [[io.rheem.rheem.basic.operators.CountOperator]]'s output
+    * @return a [[CountDataQuantaBuilder]] representing the [[org.apache.incubator.wayang.basic.operators.CountOperator]]'s output
     */
   def count = new CountDataQuantaBuilder(this)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.DoWhileOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.DoWhileOperator]].
     *
     * @return a [[DoWhileDataQuantaBuilder]]
     */
   def doWhile[Conv](conditionUdf: SerializablePredicate[JavaCollection[Conv]],
-                    bodyBuilder: JavaFunction[DataQuantaBuilder[_, Out], RheemTuple[DataQuantaBuilder[_, Out], DataQuantaBuilder[_, Conv]]]) =
+                    bodyBuilder: JavaFunction[DataQuantaBuilder[_, Out], WayangTuple[DataQuantaBuilder[_, Out], DataQuantaBuilder[_, Conv]]]) =
     new DoWhileDataQuantaBuilder(this, conditionUdf.asInstanceOf[SerializablePredicate[JavaCollection[Conv]]], bodyBuilder)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.RepeatOperator]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.RepeatOperator]].
     *
     * @return a [[DoWhileDataQuantaBuilder]]
     */
@@ -325,7 +325,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
     new RepeatDataQuantaBuilder(this, numRepetitions, bodyBuilder)
 
   /**
-    * Feed the built [[DataQuanta]] into a custom [[Operator]] with a single [[io.rheem.rheem.core.plan.rheemplan.InputSlot]]
+    * Feed the built [[DataQuanta]] into a custom [[Operator]] with a single [[org.apache.incubator.wayang.core.plan.wayangplan.InputSlot]]
     * and a single [[OutputSlot]].
     *
     * @param operator the custom [[Operator]]
@@ -340,7 +340,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
 
   /**
     * Feed the built [[DataQuanta]] into a [[LocalCallbackSink]] that collects all data quanta locally. This triggers
-    * execution of the constructed [[RheemPlan]].
+    * execution of the constructed [[WayangPlan]].
     *
     * @return the collected data quanta
     */
@@ -351,7 +351,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
 
   /**
     * Feed the built [[DataQuanta]] into a [[JavaFunction]] that runs locally. This triggers
-    * execution of the constructed [[RheemPlan]].
+    * execution of the constructed [[WayangPlan]].
     *
     * @param f the [[JavaFunction]]
     * @return the collected data quanta
@@ -359,19 +359,19 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
   def forEach(f: Consumer[Out]): Unit = this.dataQuanta().foreachJava(f)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.TextFileSink]]. This triggers
-    * execution of the constructed [[RheemPlan]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.TextFileSink]]. This triggers
+    * execution of the constructed [[WayangPlan]].
     *
     * @param url     the URL of the file to be written
-    * @param jobName optional name for the [[RheemPlan]]
+    * @param jobName optional name for the [[WayangPlan]]
     * @return the collected data quanta
     */
   def writeTextFile(url: String, formatterUdf: SerializableFunction[Out, String], jobName: String): Unit =
     this.writeTextFile(url, formatterUdf, jobName, null)
 
   /**
-    * Feed the built [[DataQuanta]] into a [[io.rheem.rheem.basic.operators.TextFileSink]]. This triggers
-    * execution of the constructed [[RheemPlan]].
+    * Feed the built [[DataQuanta]] into a [[org.apache.incubator.wayang.basic.operators.TextFileSink]]. This triggers
+    * execution of the constructed [[WayangPlan]].
     *
     * @param url the URL of the file to be written
     * @return the collected data quanta
@@ -423,7 +423,7 @@ trait DataQuantaBuilder[+This <: DataQuantaBuilder[_, Out], Out] extends Logging
 
 /**
   * Abstract base class for builders of [[DataQuanta]]. The purpose of the builders is to provide a convenient
-  * Java API for Rheem that compensates for lacking default and named arguments.
+  * Java API for Wayang that compensates for lacking default and named arguments.
   */
 abstract class BasicDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](implicit _javaPlanBuilder: JavaPlanBuilder)
   extends Logging with DataQuantaBuilder[This, Out] {
@@ -543,7 +543,7 @@ abstract class BasicDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](im
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.core.plan.rheemplan.UnarySource]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.core.plan.wayangplan.UnarySource]]s.
   *
   * @param source          the [[UnarySource]]
   * @param javaPlanBuilder the [[JavaPlanBuilder]]
@@ -557,7 +557,7 @@ class UnarySourceDataQuantaBuilder[This <: DataQuantaBuilder[_, Out], Out](sourc
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.CollectionSource]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.CollectionSource]]s.
   *
   * @param collection      the [[JavaCollection]] to be loaded
   * @param javaPlanBuilder the [[JavaPlanBuilder]]
@@ -568,7 +568,7 @@ class LoadCollectionDataQuantaBuilder[Out](collection: JavaCollection[Out])(impl
   // Try to infer the type class from the collection.
   locally {
     if (!collection.isEmpty) {
-      val any = RheemCollections.getAny(collection)
+      val any = WayangCollections.getAny(collection)
       if (any != null) {
         this.outputTypeTrap.dataSetType = DataSetType.createDefault(any.getClass)
       }
@@ -580,7 +580,7 @@ class LoadCollectionDataQuantaBuilder[Out](collection: JavaCollection[Out])(impl
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.MapOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.MapOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   * @param udf             UDF for the [[MapOperator]]
@@ -622,11 +622,11 @@ class MapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.MapOperator]]s with
-  * [[io.rheem.rheem.basic.function.ProjectionDescriptor]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.MapOperator]]s with
+  * [[org.apache.incubator.wayang.basic.function.ProjectionDescriptor]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param fieldNames      field names for the [[io.rheem.rheem.basic.function.ProjectionDescriptor]]
+  * @param fieldNames      field names for the [[org.apache.incubator.wayang.basic.function.ProjectionDescriptor]]
   */
 class ProjectionDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In], fieldNames: Array[String])
                                           (implicit javaPlanBuilder: JavaPlanBuilder)
@@ -638,7 +638,7 @@ class ProjectionDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_,
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.MapOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.MapOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   * @param udf             UDF for the [[MapOperator]]
@@ -712,10 +712,10 @@ class FilterDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], udf: 
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.SortOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.SortOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param keyUdf             UDF for the [[io.rheem.rheem.basic.operators.SortOperator]]
+  * @param keyUdf             UDF for the [[org.apache.incubator.wayang.basic.operators.SortOperator]]
   */
 class SortDataQuantaBuilder[T, Key](inputDataQuanta: DataQuantaBuilder[_, T],
                                     keyUdf: SerializableFunction[T, Key])
@@ -781,10 +781,10 @@ class SortDataQuantaBuilder[T, Key](inputDataQuanta: DataQuantaBuilder[_, T],
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.FlatMapOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.FlatMapOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param udf             UDF for the [[io.rheem.rheem.basic.operators.FlatMapOperator]]
+  * @param udf             UDF for the [[org.apache.incubator.wayang.basic.operators.FlatMapOperator]]
   */
 class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
                                         udf: SerializableFunction[In, java.lang.Iterable[Out]])
@@ -845,10 +845,10 @@ class FlatMapDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.MapPartitionsOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.MapPartitionsOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param udf             UDF for the [[io.rheem.rheem.basic.operators.MapPartitionsOperator]]
+  * @param udf             UDF for the [[org.apache.incubator.wayang.basic.operators.MapPartitionsOperator]]
   */
 class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder[_, In],
                                               udf: SerializableFunction[java.lang.Iterable[In], java.lang.Iterable[Out]])
@@ -911,7 +911,7 @@ class MapPartitionsDataQuantaBuilder[In, Out](inputDataQuanta: DataQuantaBuilder
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.SampleOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.SampleOperator]]s.
   *
   * @param inputDataQuanta    [[DataQuantaBuilder]] for the input [[DataQuanta]]
   * @param sampleSizeFunction the absolute size of the sample as a function of the current iteration number
@@ -977,11 +977,11 @@ class SampleDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T], sampl
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.ReduceByOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.ReduceByOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param udf             UDF for the [[io.rheem.rheem.basic.operators.ReduceByOperator]]
-  * @param keyUdf          key extraction UDF for the [[io.rheem.rheem.basic.operators.ReduceByOperator]]
+  * @param udf             UDF for the [[org.apache.incubator.wayang.basic.operators.ReduceByOperator]]
+  * @param keyUdf          key extraction UDF for the [[org.apache.incubator.wayang.basic.operators.ReduceByOperator]]
   */
 class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T],
                                         keyUdf: SerializableFunction[T, Key],
@@ -1042,10 +1042,10 @@ class ReduceByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T]
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.MaterializedGroupByOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.MaterializedGroupByOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param keyUdf          key extraction UDF for the [[io.rheem.rheem.basic.operators.MaterializedGroupByOperator]]
+  * @param keyUdf          key extraction UDF for the [[org.apache.incubator.wayang.basic.operators.MaterializedGroupByOperator]]
   */
 class GroupByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T], keyUdf: SerializableFunction[T, Key])
                                       (implicit javaPlanBuilder: JavaPlanBuilder)
@@ -1090,7 +1090,7 @@ class GroupByDataQuantaBuilder[Key, T](inputDataQuanta: DataQuantaBuilder[_, T],
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.GlobalMaterializedGroupOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.GlobalMaterializedGroupOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   */
@@ -1103,10 +1103,10 @@ class GlobalGroupDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])(
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.GlobalReduceOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.GlobalReduceOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param udf             UDF for the [[io.rheem.rheem.basic.operators.GlobalReduceOperator]]
+  * @param udf             UDF for the [[org.apache.incubator.wayang.basic.operators.GlobalReduceOperator]]
   */
 class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
                                        udf: SerializableBinaryOperator[T])
@@ -1144,7 +1144,7 @@ class GlobalReduceDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T],
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.UnionAllOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.UnionAllOperator]]s.
   *
   * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
   * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
@@ -1161,7 +1161,7 @@ class UnionDataQuantaBuilder[T](inputDataQuanta0: DataQuantaBuilder[_, T],
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.IntersectOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.IntersectOperator]]s.
   *
   * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
   * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
@@ -1178,12 +1178,12 @@ class IntersectDataQuantaBuilder[T](inputDataQuanta0: DataQuantaBuilder[_, T],
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.JoinOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.JoinOperator]]s.
   *
   * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
   * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  * @param keyUdf0          first key extraction UDF for the [[io.rheem.rheem.basic.operators.JoinOperator]]
-  * @param keyUdf1          first key extraction UDF for the [[io.rheem.rheem.basic.operators.JoinOperator]]
+  * @param keyUdf0          first key extraction UDF for the [[org.apache.incubator.wayang.basic.operators.JoinOperator]]
+  * @param keyUdf1          first key extraction UDF for the [[org.apache.incubator.wayang.basic.operators.JoinOperator]]
   */
 class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_, In0],
                                            inputDataQuanta1: DataQuantaBuilder[_, In1],
@@ -1302,12 +1302,12 @@ class JoinDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.CoGroupOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.CoGroupOperator]]s.
   *
   * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
   * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
-  * @param keyUdf0          first key extraction UDF for the [[io.rheem.rheem.basic.operators.CoGroupOperator]]
-  * @param keyUdf1          first key extraction UDF for the [[io.rheem.rheem.basic.operators.CoGroupOperator]]
+  * @param keyUdf0          first key extraction UDF for the [[org.apache.incubator.wayang.basic.operators.CoGroupOperator]]
+  * @param keyUdf1          first key extraction UDF for the [[org.apache.incubator.wayang.basic.operators.CoGroupOperator]]
   */
 class CoGroupDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilder[_, In0],
                                            inputDataQuanta1: DataQuantaBuilder[_, In1],
@@ -1416,7 +1416,7 @@ class CoGroupDataQuantaBuilder[In0, In1, Key](inputDataQuanta0: DataQuantaBuilde
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.CartesianOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.CartesianOperator]]s.
   *
   * @param inputDataQuanta0 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
   * @param inputDataQuanta1 [[DataQuantaBuilder]] for the first input [[DataQuanta]]
@@ -1437,7 +1437,7 @@ class CartesianDataQuantaBuilder[In0, In1](inputDataQuanta0: DataQuantaBuilder[_
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.ZipWithIdOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.ZipWithIdOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   */
@@ -1455,7 +1455,7 @@ class ZipWithIdDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.DistinctOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.DistinctOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   */
@@ -1471,7 +1471,7 @@ class DistinctDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.CountOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.CountOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   */
@@ -1490,14 +1490,14 @@ class CountDataQuantaBuilder[T](inputDataQuanta: DataQuantaBuilder[_, T])
 
 
 /**
-  * [[DataQuantaBuilder]] implementation for any [[io.rheem.rheem.core.plan.rheemplan.Operator]]s. Does not offer
+  * [[DataQuantaBuilder]] implementation for any [[org.apache.incubator.wayang.core.plan.wayangplan.Operator]]s. Does not offer
   * any convenience methods, though.
   *
-  * @param operator        the custom [[io.rheem.rheem.core.plan.rheemplan.Operator]]
+  * @param operator        the custom [[org.apache.incubator.wayang.core.plan.wayangplan.Operator]]
   * @param outputIndex     index of the [[OutputSlot]] addressed by the new instance
   * @param buildCache      a [[DataQuantaBuilderCache]] that must be shared across instances addressing the same [[Operator]]
   * @param inputDataQuanta [[DataQuantaBuilder]]s for the input [[DataQuanta]]
-  * @param javaPlanBuilder the [[JavaPlanBuilder]] used to construct the current [[RheemPlan]]
+  * @param javaPlanBuilder the [[JavaPlanBuilder]] used to construct the current [[WayangPlan]]
   */
 class CustomOperatorDataQuantaBuilder[T](operator: Operator,
                                          outputIndex: Int,
@@ -1518,7 +1518,7 @@ class CustomOperatorDataQuantaBuilder[T](operator: Operator,
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.DoWhileOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.DoWhileOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   * @param conditionUdf    UDF for the looping condition
@@ -1526,7 +1526,7 @@ class CustomOperatorDataQuantaBuilder[T](operator: Operator,
   */
 class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_, T],
                                            conditionUdf: SerializablePredicate[JavaCollection[ConvOut]],
-                                           bodyBuilder: JavaFunction[DataQuantaBuilder[_, T], RheemTuple[DataQuantaBuilder[_, T], DataQuantaBuilder[_, ConvOut]]])
+                                           bodyBuilder: JavaFunction[DataQuantaBuilder[_, T], WayangTuple[DataQuantaBuilder[_, T], DataQuantaBuilder[_, ConvOut]]])
                                           (implicit javaPlanBuilder: JavaPlanBuilder)
   extends BasicDataQuantaBuilder[DoWhileDataQuantaBuilder[T, ConvOut], T] {
 
@@ -1580,7 +1580,7 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
   }
 
   /**
-    * Set the number of expected iterations for the built [[io.rheem.rheem.basic.operators.DoWhileOperator]].
+    * Set the number of expected iterations for the built [[org.apache.incubator.wayang.basic.operators.DoWhileOperator]].
     *
     * @param numExpectedIterations the expected number of iterations
     * @return this instance
@@ -1602,18 +1602,18 @@ class DoWhileDataQuantaBuilder[T, ConvOut](inputDataQuanta: DataQuantaBuilder[_,
     * @return the loop body builder
     */
   private def dataQuantaBodyBuilder =
-    new JavaFunction[DataQuanta[T], RheemTuple[DataQuanta[T], DataQuanta[ConvOut]]] {
+    new JavaFunction[DataQuanta[T], WayangTuple[DataQuanta[T], DataQuanta[ConvOut]]] {
       override def apply(loopStart: DataQuanta[T]) = {
         val loopStartBuilder = new FakeDataQuantaBuilder(loopStart)
         val loopEndBuilders = bodyBuilder(loopStartBuilder)
-        new RheemTuple(loopEndBuilders.field0.dataQuanta(), loopEndBuilders.field1.dataQuanta())
+        new WayangTuple(loopEndBuilders.field0.dataQuanta(), loopEndBuilders.field1.dataQuanta())
       }
     }
 
 }
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.DoWhileOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.DoWhileOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   * @param numRepetitions  number of repetitions of the loop

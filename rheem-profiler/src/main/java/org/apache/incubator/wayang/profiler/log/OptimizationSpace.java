@@ -1,6 +1,6 @@
-package io.rheem.rheem.profiler.log;
+package org.apache.incubator.wayang.profiler.log;
 
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,13 +1,13 @@
-package io.rheem.rheem.core.mapping;
+package org.apache.incubator.wayang.core.mapping;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.plan.rheemplan.ActualOperator;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorAlternative;
-import io.rheem.rheem.core.plan.rheemplan.OperatorBase;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.Subplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.ActualOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorBase;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.Subplan;
 
 import java.util.Map;
 import java.util.function.BiFunction;

@@ -1,16 +1,16 @@
-package io.rheem.rheem.spark.operators;
+package org.apache.incubator.wayang.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import io.rheem.rheem.basic.operators.TextFileSource;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.spark.channels.RddChannel;
-import io.rheem.rheem.spark.execution.SparkExecutor;
+import org.apache.incubator.wayang.basic.operators.TextFileSource;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
+import org.apache.incubator.wayang.spark.execution.SparkExecutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,11 +55,11 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
 
         ExecutionLineageNode prepareLineageNode = new ExecutionLineageNode(operatorContext);
         prepareLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.spark.textfilesource.load.prepare", sparkExecutor.getConfiguration()
+                "wayang.spark.textfilesource.load.prepare", sparkExecutor.getConfiguration()
         ));
         ExecutionLineageNode mainLineageNode = new ExecutionLineageNode(operatorContext);
         mainLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.spark.textfilesource.load.main", sparkExecutor.getConfiguration()
+                "wayang.spark.textfilesource.load.main", sparkExecutor.getConfiguration()
         ));
         output.getLineage().addPredecessor(mainLineageNode);
 
@@ -73,7 +73,7 @@ public class SparkTextFileSource extends TextFileSource implements SparkExecutio
 
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
-        return Arrays.asList("rheem.spark.textfilesource.load.prepare", "rheem.spark.textfilesource.load.main");
+        return Arrays.asList("wayang.spark.textfilesource.load.prepare", "wayang.spark.textfilesource.load.main");
     }
 
     @Override

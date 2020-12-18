@@ -1,15 +1,15 @@
-package io.rheem.rheem.core.mapping;
+package org.apache.incubator.wayang.core.mapping;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plan.rheemplan.UnarySink;
-import io.rheem.rheem.core.plan.rheemplan.UnarySource;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSink;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSource;
-import io.rheem.rheem.core.test.TestDataUnit;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySink;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySource;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSink;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSource;
+import org.apache.incubator.wayang.core.test.TestDataUnit;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class SubplanPatternTest {
         UnarySource source = new TestSource(DataSetType.createDefault(TestDataUnit.class));
         UnarySink sink = new TestSink(DataSetType.createDefault(TestDataUnit.class));
         source.connectTo(0, sink, 0);
-        RheemPlan plan = new RheemPlan();
+        WayangPlan plan = new WayangPlan();
         plan.addSink(sink);
 
         // Build the pattern.
@@ -46,7 +46,7 @@ public class SubplanPatternTest {
         UnarySource source = new TestSource(DataSetType.createDefault(TestDataUnit.class));
         UnarySink sink = new TestSink(DataSetType.createDefault(TestDataUnit.class));
         source.connectTo(0, sink, 0);
-        RheemPlan plan = new RheemPlan();
+        WayangPlan plan = new WayangPlan();
         plan.addSink(sink);
 
         // Build the pattern.
@@ -68,7 +68,7 @@ public class SubplanPatternTest {
         UnarySource source = new TestSource(DataSetType.createDefault(TestDataUnit.class));
         UnarySink sink = new TestSink(DataSetType.createDefault(TestDataUnit.class));
         source.connectTo(0, sink, 0);
-        RheemPlan plan = new RheemPlan();
+        WayangPlan plan = new WayangPlan();
         plan.addSink(sink);
 
         // Build the pattern.

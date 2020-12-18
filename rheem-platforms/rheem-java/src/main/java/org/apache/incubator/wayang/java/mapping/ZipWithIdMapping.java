@@ -1,18 +1,18 @@
-package io.rheem.rheem.java.mapping;
+package org.apache.incubator.wayang.java.mapping;
 
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.ZipWithIdOperator;
-import io.rheem.rheem.core.function.ExecutionContext;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.java.operators.JavaMapOperator;
-import io.rheem.rheem.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.ZipWithIdOperator;
+import org.apache.incubator.wayang.core.function.ExecutionContext;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.java.operators.JavaMapOperator;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

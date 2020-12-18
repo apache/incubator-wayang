@@ -1,30 +1,30 @@
-package io.rheem.rheem.tests;
+package org.apache.incubator.wayang.tests;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import io.rheem.rheem.basic.RheemBasics;
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.CollectionSource;
-import io.rheem.rheem.basic.operators.LocalCallbackSink;
-import io.rheem.rheem.basic.operators.MapOperator;
-import io.rheem.rheem.basic.operators.MaterializedGroupByOperator;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.RheemContext;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.types.DataUnitType;
-import io.rheem.rheem.core.util.RheemArrays;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.flink.Flink;
-import io.rheem.rheem.java.Java;
-import io.rheem.rheem.spark.Spark;
-import io.rheem.rheem.sqlite3.Sqlite3;
-import io.rheem.rheem.tests.platform.MyMadeUpPlatform;
+import org.apache.incubator.wayang.basic.WayangBasics;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.CollectionSource;
+import org.apache.incubator.wayang.basic.operators.LocalCallbackSink;
+import org.apache.incubator.wayang.basic.operators.MapOperator;
+import org.apache.incubator.wayang.basic.operators.MaterializedGroupByOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.WayangContext;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.types.DataUnitType;
+import org.apache.incubator.wayang.core.util.WayangArrays;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.flink.Flink;
+import org.apache.incubator.wayang.java.Java;
+import org.apache.incubator.wayang.spark.Spark;
+import org.apache.incubator.wayang.sqlite3.Sqlite3;
+import org.apache.incubator.wayang.tests.platform.MyMadeUpPlatform;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +45,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Test the Java integration with Rheem.
+ * Test the Java integration with Wayang.
  */
 public class FullIntegrationIT {
 
@@ -54,86 +54,86 @@ public class FullIntegrationIT {
     @Before
     public void setUp() throws SQLException, IOException {
         this.configuration = new Configuration();
-        File sqlite3dbFile = File.createTempFile("rheem-sqlite3", "db");
+        File sqlite3dbFile = File.createTempFile("wayang-sqlite3", "db");
         sqlite3dbFile.deleteOnExit();
         this.configuration.setProperty(
-                "rheem.sqlite3.jdbc.url",
+                "wayang.sqlite3.jdbc.url",
                 "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath()
         );
-        RheemPlans.prepareSqlite3Scenarios(this.configuration);
+        WayangPlans.prepareSqlite3Scenarios(this.configuration);
     }
 
     @Test
     public void testReadAndWrite() throws URISyntaxException, IOException {
-        // Build a Rheem plan.
+        // Build a Wayang plan.
         List<String> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.readWrite(RheemPlans.FILE_SOME_LINES_TXT, collector);
+        WayangPlan wayangPlan = WayangPlans.readWrite(WayangPlans.FILE_SOME_LINES_TXT, collector);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin())
                 .with(Flink.basicPlugin());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
 
         // Verify the plan result.
-        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
         Assert.assertEquals(lines, collector);
     }
 
     @Test
     public void testReadAndWriteCrossPlatform() throws URISyntaxException, IOException {
-        // Build a Rheem plan.
+        // Build a Wayang plan.
         List<String> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.readWrite(RheemPlans.FILE_SOME_LINES_TXT, collector);
-        final Operator sink = rheemPlan.getSinks().stream().findFirst().get();
+        WayangPlan wayangPlan = WayangPlans.readWrite(WayangPlans.FILE_SOME_LINES_TXT, collector);
+        final Operator sink = wayangPlan.getSinks().stream().findFirst().get();
         sink.addTargetPlatform(Spark.platform());
         final Operator source = sink.getEffectiveOccupant(0).getOwner();
         source.addTargetPlatform(Java.platform());
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
 
         // Verify the plan result.
-        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
         Assert.assertEquals(lines, collector);
     }
 
     @Test
     public void testReadAndTransformAndWrite() throws URISyntaxException {
-        // Build a Rheem plan.
-        final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build a Wayang plan.
+        final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
     }
 
-    @Test(expected = RheemException.class)
+    @Test(expected = WayangException.class)
     public void testReadAndTransformAndWriteWithIllegalConfiguration1() throws URISyntaxException {
-        // Build a Rheem plan.
-        final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build a Wayang plan.
+        final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
         // ILLEGAL: This platform is not registered, so this operator will find no implementation.
-        rheemPlan.getSinks().forEach(sink -> sink.addTargetPlatform(MyMadeUpPlatform.getInstance()));
+        wayangPlan.getSinks().forEach(sink -> sink.addTargetPlatform(MyMadeUpPlatform.getInstance()));
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
 
     }
 
@@ -144,15 +144,15 @@ public class FullIntegrationIT {
         final List<String> collection2 = Arrays.<String>asList("This is source 2.", "This is source 2, too.");
         List<String> collector1 = new LinkedList<>();
         List<String> collector2 = new LinkedList<>();
-        final RheemPlan rheemPlan = RheemPlans.multiSourceMultiSink(collection1, collection2, collector1, collector2);
+        final WayangPlan wayangPlan = WayangPlans.multiSourceMultiSink(collection1, collection2, collector1, collector2);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
 
         // Check the results in both sinks.
         List<String> expectedOutcome1 = Stream.concat(collection1.stream(), collection2.stream())
@@ -175,15 +175,15 @@ public class FullIntegrationIT {
         final List<String> collection2 = Arrays.<String>asList("This is source 2.", "This is source 2, too.");
         List<String> collector1 = new LinkedList<>();
         List<String> collector2 = new LinkedList<>();
-        final RheemPlan rheemPlan = RheemPlans.multiSourceHoleMultiSink(collection1, collection2, collector1, collector2);
+        final WayangPlan wayangPlan = WayangPlans.multiSourceHoleMultiSink(collection1, collection2, collector1, collector2);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
 
         // Check the results in both sinks.
         List<String> expectedOutcome = Stream.concat(collection1.stream(), collection2.stream())
@@ -198,57 +198,57 @@ public class FullIntegrationIT {
 
     @Test
     public void testGlobalMaterializedGroup() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Iterable<Integer>> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.globalMaterializedGroup(collector, 1, 2, 3);
+        WayangPlan wayangPlan = WayangPlans.globalMaterializedGroup(collector, 1, 2, 3);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
         Assert.assertEquals(1, collector.size());
-        Assert.assertEquals(RheemCollections.asSet(1, 2, 3), RheemCollections.asCollection(collector.get(0), HashSet::new));
+        Assert.assertEquals(WayangCollections.asSet(1, 2, 3), WayangCollections.asCollection(collector.get(0), HashSet::new));
     }
 
     @Test
     public void testIntersect() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
+        WayangPlan wayangPlan = WayangPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
-        Assert.assertEquals(RheemCollections.asSet(1, 4, 9), RheemCollections.asSet(collector));
+        Assert.assertEquals(WayangCollections.asSet(1, 4, 9), WayangCollections.asSet(collector));
     }
 
     @Test
     public void testRepeat() {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.repeat(collector, 5, 0, 10, 20, 30, 45);
+        WayangPlan wayangPlan = WayangPlans.repeat(collector, 5, 0, 10, 20, 30, 45);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
         Assert.assertEquals(5, collector.size());
-        Assert.assertEquals(RheemCollections.asSet(5, 15, 25, 35, 50), RheemCollections.asSet(collector));
+        Assert.assertEquals(WayangCollections.asSet(5, 15, 25, 35, 50), WayangCollections.asSet(collector));
     }
 
     @Test
     public void testPageRankWithGraphBasic() {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Tuple2<Long, Long>> edges = Arrays.asList(
                 new Tuple2<>(0L, 1L),
                 new Tuple2<>(0L, 2L),
@@ -259,14 +259,14 @@ public class FullIntegrationIT {
                 new Tuple2<>(3L, 0L)
         );
         List<Tuple2<Long, Float>> pageRanks = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.pageRank(edges, pageRanks);
+        WayangPlan wayangPlan = WayangPlans.pageRank(edges, pageRanks);
 
         // Execute the plan with a certain backend.
-        RheemContext rheemContext = new RheemContext()
+        WayangContext wayangContext = new WayangContext()
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin())
-                .with(RheemBasics.graphPlugin());
-        rheemContext.execute(rheemPlan);
+                .with(WayangBasics.graphPlugin());
+        wayangContext.execute(wayangPlan);
 
         // Check the results.
         pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
@@ -279,30 +279,30 @@ public class FullIntegrationIT {
 
     @Test
     public void testMapPartitions() throws URISyntaxException {
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
 
-        // Execute the Rheem plan.
-        final Collection<Tuple2<String, Integer>> result = RheemPlans.mapPartitions(rheemContext, 0, 1, 1, 3, 3, 4, 4, 5, 5, 6);
+        // Execute the Wayang plan.
+        final Collection<Tuple2<String, Integer>> result = WayangPlans.mapPartitions(wayangContext, 0, 1, 1, 3, 3, 4, 4, 5, 5, 6);
 
         Assert.assertEquals(
-                RheemCollections.asSet(new Tuple2<>("even", 4), new Tuple2<>("odd", 6)),
-                RheemCollections.asSet(result)
+                WayangCollections.asSet(new Tuple2<>("even", 4), new Tuple2<>("odd", 6)),
+                WayangCollections.asSet(result)
         );
     }
 
     @Test
     public void testZipWithId() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Long> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.zipWithId(collector, 0, 10, 20, 30, 30);
+        WayangPlan wayangPlan = WayangPlans.zipWithId(collector, 0, 10, 20, 30, 30);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
         Assert.assertEquals(1, collector.size());
         Assert.assertEquals(Long.valueOf(5L), collector.get(0));
@@ -310,138 +310,138 @@ public class FullIntegrationIT {
 
     @Test
     public void testDiverseScenario1() throws URISyntaxException {
-        // Build the RheemPlan.
-        RheemPlan rheemPlan = RheemPlans.diverseScenario1(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build the WayangPlan.
+        WayangPlan wayangPlan = WayangPlans.diverseScenario1(WayangPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
     }
 
     @Test
     public void testDiverseScenario2() throws URISyntaxException {
-        // Build the RheemPlan.
-        RheemPlan rheemPlan = RheemPlans.diverseScenario2(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+        // Build the WayangPlan.
+        WayangPlan wayangPlan = WayangPlans.diverseScenario2(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
     }
 
     @Test
     public void testDiverseScenario3() throws URISyntaxException {
-        // Build the RheemPlan.
-        RheemPlan rheemPlan = RheemPlans.diverseScenario2(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+        // Build the WayangPlan.
+        WayangPlan wayangPlan = WayangPlans.diverseScenario2(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
     }
 
     @Test
     public void testDiverseScenario4() throws URISyntaxException {
-        // Build the RheemPlan.
-        RheemPlan rheemPlan = RheemPlans.diverseScenario4(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+        // Build the WayangPlan.
+        WayangPlan wayangPlan = WayangPlans.diverseScenario4(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
     }
 
     @Test
     public void testSimpleSingleStageLoop() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         final Set<Integer> collector = new HashSet<>();
-        RheemPlan rheemPlan = RheemPlans.simpleLoop(3, collector, 0, 1, 2);
+        WayangPlan wayangPlan = WayangPlans.simpleLoop(3, collector, 0, 1, 2);
 
-        rheemPlan.collectTopLevelOperatorByName("source").addTargetPlatform(Spark.platform());
-        rheemPlan.collectTopLevelOperatorByName("convergenceSource").addTargetPlatform(Spark.platform());
-        rheemPlan.collectTopLevelOperatorByName("loop").addTargetPlatform(Java.platform());
-        rheemPlan.collectTopLevelOperatorByName("step").addTargetPlatform(Java.platform());
-        rheemPlan.collectTopLevelOperatorByName("counter").addTargetPlatform(Java.platform());
-        rheemPlan.collectTopLevelOperatorByName("sink").addTargetPlatform(Spark.platform());
+        wayangPlan.collectTopLevelOperatorByName("source").addTargetPlatform(Spark.platform());
+        wayangPlan.collectTopLevelOperatorByName("convergenceSource").addTargetPlatform(Spark.platform());
+        wayangPlan.collectTopLevelOperatorByName("loop").addTargetPlatform(Java.platform());
+        wayangPlan.collectTopLevelOperatorByName("step").addTargetPlatform(Java.platform());
+        wayangPlan.collectTopLevelOperatorByName("counter").addTargetPlatform(Java.platform());
+        wayangPlan.collectTopLevelOperatorByName("sink").addTargetPlatform(Spark.platform());
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
-        final HashSet<Integer> expected = new HashSet<>(RheemArrays.asList(RheemArrays.range(0, 24)));
+        final HashSet<Integer> expected = new HashSet<>(WayangArrays.asList(WayangArrays.range(0, 24)));
         Assert.assertEquals(expected, collector);
     }
 
     @Test
     public void testSimpleMultiStageLoop() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.simpleLoop(3, collector, 0, 1, 2);
+        WayangPlan wayangPlan = WayangPlans.simpleLoop(3, collector, 0, 1, 2);
 
-        rheemPlan.collectTopLevelOperatorByName("source").addTargetPlatform(Spark.platform());
-        rheemPlan.collectTopLevelOperatorByName("convergenceSource").addTargetPlatform(Spark.platform());
-        rheemPlan.collectTopLevelOperatorByName("loop").addTargetPlatform(Java.platform());
-        rheemPlan.collectTopLevelOperatorByName("step").addTargetPlatform(Spark.platform());
-        rheemPlan.collectTopLevelOperatorByName("counter").addTargetPlatform(Java.platform());
-        rheemPlan.collectTopLevelOperatorByName("sink").addTargetPlatform(Spark.platform());
+        wayangPlan.collectTopLevelOperatorByName("source").addTargetPlatform(Spark.platform());
+        wayangPlan.collectTopLevelOperatorByName("convergenceSource").addTargetPlatform(Spark.platform());
+        wayangPlan.collectTopLevelOperatorByName("loop").addTargetPlatform(Java.platform());
+        wayangPlan.collectTopLevelOperatorByName("step").addTargetPlatform(Spark.platform());
+        wayangPlan.collectTopLevelOperatorByName("counter").addTargetPlatform(Java.platform());
+        wayangPlan.collectTopLevelOperatorByName("sink").addTargetPlatform(Spark.platform());
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
-        final HashSet<Integer> expected = new HashSet<>(RheemArrays.asList(RheemArrays.range(0, 24)));
-        Assert.assertEquals(expected, RheemCollections.asSet(collector));
+        final HashSet<Integer> expected = new HashSet<>(WayangArrays.asList(WayangArrays.range(0, 24)));
+        Assert.assertEquals(expected, WayangCollections.asSet(collector));
     }
 
     @Test
     public void testSimpleSample() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.simpleSample(3, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+        WayangPlan wayangPlan = WayangPlans.simpleSample(3, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext(configuration)
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
         System.out.println(collector);
     }
 
     @Test
     public void testCurrentIterationNumber() {
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
-        final Collection<Integer> result = RheemPlans.loopWithIterationNumber(rheemContext, 15, 5, -1, 1, 5);
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+        final Collection<Integer> result = WayangPlans.loopWithIterationNumber(wayangContext, 15, 5, -1, 1, 5);
         int expectedOffset = 10;
         Assert.assertEquals(
-                RheemCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
-                RheemCollections.asSet(result)
+                WayangCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
+                WayangCollections.asSet(result)
         );
     }
 
     @Test
     public void testCurrentIterationNumberWithTooFewExpectedIterations() {
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
-        final Collection<Integer> result = RheemPlans.loopWithIterationNumber(rheemContext, 15, 2, -1, 1, 5);
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+        final Collection<Integer> result = WayangPlans.loopWithIterationNumber(wayangContext, 15, 2, -1, 1, 5);
         int expectedOffset = 10;
         Assert.assertEquals(
-                RheemCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
-                RheemCollections.asSet(result)
+                WayangCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
+                WayangCollections.asSet(result)
         );
     }
 
@@ -469,42 +469,42 @@ public class FullIntegrationIT {
         materializedGroupByOperator.connectTo(0, mapOperator, 0);
         mapOperator.connectTo(0, sink, 0);
 
-        RheemContext rheemContext = new RheemContext(configuration)
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Spark.basicPlugin())
                 .with(Java.basicPlugin());
 
-        rheemContext.execute(new RheemPlan(sink));
+        wayangContext.execute(new WayangPlan(sink));
         System.out.println(collector);
     }
 
     @Test
     public void testSqlite3Scenario1() {
         Collection<Record> collector = new ArrayList<>();
-        final RheemPlan rheemPlan = RheemPlans.sqlite3Scenario1(collector);
+        final WayangPlan wayangPlan = WayangPlans.sqlite3Scenario1(collector);
 
-        RheemContext rheemContext = new RheemContext(configuration)
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin())
                 .with(Sqlite3.plugin());
 
-        rheemContext.execute("SQLite3 scenario 1", rheemPlan);
+        wayangContext.execute("SQLite3 scenario 1", wayangPlan);
 
-        Assert.assertEquals(RheemPlans.getSqlite3Customers(), collector);
+        Assert.assertEquals(WayangPlans.getSqlite3Customers(), collector);
     }
 
     @Test
     public void testSqlite3Scenario2() {
         Collection<Record> collector = new ArrayList<>();
-        final RheemPlan rheemPlan = RheemPlans.sqlite3Scenario2(collector);
+        final WayangPlan wayangPlan = WayangPlans.sqlite3Scenario2(collector);
 
-        RheemContext rheemContext = new RheemContext(configuration)
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin())
                 .with(Sqlite3.plugin());
 
-        rheemContext.execute("SQLite3 scenario 2", rheemPlan);
+        wayangContext.execute("SQLite3 scenario 2", wayangPlan);
 
-        final List<Record> expected = RheemPlans.getSqlite3Customers().stream()
+        final List<Record> expected = WayangPlans.getSqlite3Customers().stream()
                 .filter(r -> (Integer) r.getField(1) >= 18)
                 .collect(Collectors.toList());
         Assert.assertEquals(expected, collector);
@@ -513,16 +513,16 @@ public class FullIntegrationIT {
     @Test
     public void testSqlite3Scenario3() {
         Collection<Record> collector = new ArrayList<>();
-        final RheemPlan rheemPlan = RheemPlans.sqlite3Scenario3(collector);
+        final WayangPlan wayangPlan = WayangPlans.sqlite3Scenario3(collector);
 
-        RheemContext rheemContext = new RheemContext(configuration)
+        WayangContext wayangContext = new WayangContext(configuration)
                 .with(Java.basicPlugin())
                 .with(Spark.basicPlugin())
                 .with(Sqlite3.plugin());
 
-        rheemContext.execute("SQLite3 scenario 3", rheemPlan);
+        wayangContext.execute("SQLite3 scenario 3", wayangPlan);
 
-        final List<Record> expected = RheemPlans.getSqlite3Customers().stream()
+        final List<Record> expected = WayangPlans.getSqlite3Customers().stream()
                 .filter(r -> (Integer) r.getField(1) >= 18)
                 .map(r -> new Record(new Object[]{r.getField(0)}))
                 .collect(Collectors.toList());

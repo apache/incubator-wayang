@@ -1,12 +1,12 @@
-package io.rheem.rheem.core;
+package org.apache.incubator.wayang.core;
 
 import org.junit.Test;
-import io.rheem.rheem.core.plan.rheemplan.Slot;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSink;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSource;
-import io.rheem.rheem.core.test.TestDataUnit;
-import io.rheem.rheem.core.test.TestDataUnit2;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.plan.wayangplan.Slot;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSink;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSource;
+import org.apache.incubator.wayang.core.test.TestDataUnit;
+import org.apache.incubator.wayang.core.test.TestDataUnit2;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 /**
  * Test suite for {@link Slot}s.

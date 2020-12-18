@@ -1,18 +1,18 @@
-package io.rheem.rheem.flink.operators;
+package org.apache.incubator.wayang.flink.operators;
 
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.operators.IterativeDataSet;
-import io.rheem.rheem.basic.operators.RepeatOperator;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.flink.channels.DataSetChannel;
-import io.rheem.rheem.flink.execution.FlinkExecutor;
+import org.apache.incubator.wayang.basic.operators.RepeatOperator;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.flink.channels.DataSetChannel;
+import org.apache.incubator.wayang.flink.execution.FlinkExecutor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -69,9 +69,9 @@ public class FlinkRepeatExpandedOperator<Type>
         assert outputs[ITERATION_OUTPUT_INDEX] != null;
         assert outputs[FINAL_OUTPUT_INDEX] != null;
 
-        int expanded = (int)flinkExecutor.getConfiguration().getLongProperty("rheem.flink.maxExpanded");
+        int expanded = (int)flinkExecutor.getConfiguration().getLongProperty("wayang.flink.maxExpanded");
         if(expanded > 64){
-            throw new RheemException(String.format("the maxExpanded (%s) is more that 64.", expanded));
+            throw new WayangException(String.format("the maxExpanded (%s) is more that 64.", expanded));
         }
         // TODO: see if the case have a more elements that after the expanded
 
@@ -169,7 +169,7 @@ public class FlinkRepeatExpandedOperator<Type>
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.flink.repeat.load";
+        return "wayang.flink.repeat.load";
     }
 
     @Override

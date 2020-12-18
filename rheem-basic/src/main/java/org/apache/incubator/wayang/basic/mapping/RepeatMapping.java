@@ -1,17 +1,17 @@
-package io.rheem.rheem.basic.mapping;
+package org.apache.incubator.wayang.basic.mapping;
 
-import io.rheem.rheem.basic.operators.CollectionSource;
-import io.rheem.rheem.basic.operators.LoopOperator;
-import io.rheem.rheem.basic.operators.MapOperator;
-import io.rheem.rheem.basic.operators.RepeatOperator;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.core.plan.rheemplan.Subplan;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.basic.operators.CollectionSource;
+import org.apache.incubator.wayang.basic.operators.LoopOperator;
+import org.apache.incubator.wayang.basic.operators.MapOperator;
+import org.apache.incubator.wayang.basic.operators.RepeatOperator;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.core.plan.wayangplan.Subplan;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,7 +57,7 @@ public class RepeatMapping implements Mapping {
         final LoopOperator<?, ?> loopOperator = new LoopOperator<>(
                 repeatOperator.getType().unchecked(),
                 DataSetType.createDefault(Integer.class),
-                ints -> RheemCollections.getSingle(ints) >= numIterations,
+                ints -> WayangCollections.getSingle(ints) >= numIterations,
                 numIterations
         );
         loopOperator.setName(repeatOperator.getName());

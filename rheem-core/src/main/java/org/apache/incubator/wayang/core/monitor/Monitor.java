@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.monitor;
+package org.apache.incubator.wayang.core.monitor;
 
-import io.rheem.rheem.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Configuration;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -22,7 +22,7 @@ public abstract class Monitor {
 
     public abstract void updateProgress(HashMap<String, Integer> partialProgress) throws IOException;
 
-    public static final String DEFAULT_MONITOR_BASE_URL = "file:///var/tmp/rheem/runs";
-    public static final String DEFAULT_MONITOR_BASE_URL_PROPERTY_KEY = "rheem.core.monitor.baseurl";
-    public static final String MONITOR_ENABLED_PROPERTY_KEY = "rheem.core.monitor.enabled";
+    public static final String DEFAULT_MONITOR_BASE_URL = "file:///var/tmp/wayang/runs";
+    public static final String DEFAULT_MONITOR_BASE_URL_PROPERTY_KEY = "wayang.core.monitor.baseurl";
+    public static final String MONITOR_ENABLED_PROPERTY_KEY = "wayang.core.monitor.enabled";
 }

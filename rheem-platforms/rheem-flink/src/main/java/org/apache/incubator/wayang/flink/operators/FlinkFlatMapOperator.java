@@ -1,24 +1,24 @@
-package io.rheem.rheem.flink.operators;
+package org.apache.incubator.wayang.flink.operators;
 
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.api.java.DataSet;
-import io.rheem.rheem.basic.operators.FlatMapOperator;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.function.FlatMapDescriptor;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.flink.channels.DataSetChannel;
-import io.rheem.rheem.flink.execution.FlinkExecutionContext;
-import io.rheem.rheem.flink.execution.FlinkExecutor;
+import org.apache.incubator.wayang.basic.operators.FlatMapOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.flink.channels.DataSetChannel;
+import org.apache.incubator.wayang.flink.execution.FlinkExecutionContext;
+import org.apache.incubator.wayang.flink.execution.FlinkExecutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -120,7 +120,7 @@ public class FlinkFlatMapOperator<InputType, OutputType>
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.flink.flatmap.load";
+        return "wayang.flink.flatmap.load";
     }
 
     @Override

@@ -1,12 +1,12 @@
-package io.rheem.rheem.core.test;
+package org.apache.incubator.wayang.core.test;
 
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.OperatorBase;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorBase;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

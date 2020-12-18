@@ -1,14 +1,14 @@
-package io.rheem.rheem.core.platform;
+package org.apache.incubator.wayang.core.platform;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionStage;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.Slot;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.Slot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +34,9 @@ public class CardinalityBreakpoint implements Breakpoint {
      */
     public CardinalityBreakpoint(Configuration configuration) {
         this(
-                configuration.getDoubleProperty("rheem.core.optimizer.cardinality.minconfidence"),
-                configuration.getDoubleProperty("rheem.core.optimizer.cardinality.maxspread"),
-                configuration.getDoubleProperty("rheem.core.optimizer.cardinality.spreadsmoothing")
+                configuration.getDoubleProperty("wayang.core.optimizer.cardinality.minconfidence"),
+                configuration.getDoubleProperty("wayang.core.optimizer.cardinality.maxspread"),
+                configuration.getDoubleProperty("wayang.core.optimizer.cardinality.spreadsmoothing")
         );
     }
 

@@ -1,15 +1,15 @@
-package io.rheem.rheem.basic.operators;
+package org.apache.incubator.wayang.basic.operators;
 
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.plan.rheemplan.UnarySource;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.LimitedInputStream;
-import io.rheem.rheem.core.util.fs.FileSystem;
-import io.rheem.rheem.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySource;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.LimitedInputStream;
+import org.apache.incubator.wayang.core.util.fs.FileSystem;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class TextFileSource extends UnarySource<String> {
     }
 
     @Override
-    public Optional<io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator> createCardinalityEstimator(
+    public Optional<org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
@@ -69,9 +69,9 @@ public class TextFileSource extends UnarySource<String> {
     }
 
     /**
-     * Custom {@link io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator} for {@link FlatMapOperator}s.
+     * Custom {@link org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator} for {@link FlatMapOperator}s.
      */
-    protected class CardinalityEstimator implements io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator {
+    protected class CardinalityEstimator implements org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator {
 
         public final CardinalityEstimate FALLBACK_ESTIMATE = new CardinalityEstimate(1000L, 100000000L, 0.7);
 

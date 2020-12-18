@@ -1,20 +1,20 @@
-package io.rheem.rheem.java.operators;
+package org.apache.incubator.wayang.java.operators;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import io.rheem.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.java.channels.StreamChannel;
-import io.rheem.rheem.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.incubator.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -67,7 +67,7 @@ public class JavaCollectOperator<Type> extends UnaryToUnaryOperator<Type, Type> 
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.java.collect.load";
+        return "wayang.java.collect.load";
     }
 
 }

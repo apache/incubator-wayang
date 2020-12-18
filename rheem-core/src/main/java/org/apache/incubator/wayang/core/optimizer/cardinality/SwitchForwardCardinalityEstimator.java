@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.optimizer.cardinality;
+package org.apache.incubator.wayang.core.optimizer.cardinality;
 
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
 import org.slf4j.LoggerFactory;
 
 /**

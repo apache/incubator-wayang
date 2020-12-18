@@ -1,9 +1,9 @@
-package io.rheem.rheem.api
+package org.apache.incubator.wayang.api
 
-import io.rheem.rheem.basic.data.{Tuple2 => T2}
+import org.apache.incubator.wayang.basic.data.{Tuple2 => T2}
 
 /**
-  * Provides implicits for Rheem's graph API.
+  * Provides implicits for Wayang's graph API.
   */
 package object graph {
 

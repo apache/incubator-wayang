@@ -1,23 +1,23 @@
-package io.rheem.rheem.java.operators;
+package org.apache.incubator.wayang.java.operators;
 
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.JoinOperator;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.java.channels.JavaChannelInstance;
-import io.rheem.rheem.java.channels.StreamChannel;
-import io.rheem.rheem.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.JoinOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.java.channels.JavaChannelInstance;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -74,11 +74,11 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
 
         ExecutionLineageNode indexingExecutionLineageNode = new ExecutionLineageNode(operatorContext);
         indexingExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.java.join.load.indexing", javaExecutor.getConfiguration()
+                "wayang.java.join.load.indexing", javaExecutor.getConfiguration()
         ));
         ExecutionLineageNode probingExecutionLineageNode = new ExecutionLineageNode(operatorContext);
         probingExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.java.join.load.probing", javaExecutor.getConfiguration()
+                "wayang.java.join.load.probing", javaExecutor.getConfiguration()
         ));
 
         final Stream<Tuple2<InputType0, InputType1>> joinStream;
@@ -138,7 +138,7 @@ public class JavaJoinOperator<InputType0, InputType1, KeyType>
 
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
-        return Arrays.asList("rheem.java.join.load.indexing", "rheem.java.join.load.probing");
+        return Arrays.asList("wayang.java.join.load.indexing", "wayang.java.join.load.probing");
     }
 
     @Override

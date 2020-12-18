@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.function;
+package org.apache.incubator.wayang.core.function;
 
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.platform.Platform;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.platform.Platform;
 
 import java.util.Collection;
 

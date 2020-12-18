@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.util;
+package org.apache.incubator.wayang.core.util;
 
 import org.apache.commons.lang3.SerializationException;
 import org.json.JSONObject;

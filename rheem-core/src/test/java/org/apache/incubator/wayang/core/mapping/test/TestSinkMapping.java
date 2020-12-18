@@ -1,14 +1,14 @@
-package io.rheem.rheem.core.mapping.test;
+package org.apache.incubator.wayang.core.mapping.test;
 
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSink;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSink2;
-import io.rheem.rheem.core.test.DummyPlatform;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSink;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSink2;
+import org.apache.incubator.wayang.core.test.DummyPlatform;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 import java.util.Collection;
 import java.util.Collections;

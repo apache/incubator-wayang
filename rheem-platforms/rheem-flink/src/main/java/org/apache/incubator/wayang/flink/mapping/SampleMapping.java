@@ -1,14 +1,14 @@
-package io.rheem.rheem.flink.mapping;
+package org.apache.incubator.wayang.flink.mapping;
 
-import io.rheem.rheem.basic.operators.SampleOperator;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.flink.operators.FlinkSampleOperator;
-import io.rheem.rheem.flink.platform.FlinkPlatform;
+import org.apache.incubator.wayang.basic.operators.SampleOperator;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.flink.operators.FlinkSampleOperator;
+import org.apache.incubator.wayang.flink.platform.FlinkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

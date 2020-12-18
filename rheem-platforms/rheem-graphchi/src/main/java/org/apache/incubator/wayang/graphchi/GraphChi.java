@@ -1,7 +1,7 @@
-package io.rheem.rheem.graphchi;
+package org.apache.incubator.wayang.graphchi;
 
-import io.rheem.rheem.graphchi.platform.GraphChiPlatform;
-import io.rheem.rheem.graphchi.plugin.GraphChiPlugin;
+import org.apache.incubator.wayang.graphchi.platform.GraphChiPlatform;
+import org.apache.incubator.wayang.graphchi.plugin.GraphChiPlugin;
 
 /**
  * Register for relevant components of this module.

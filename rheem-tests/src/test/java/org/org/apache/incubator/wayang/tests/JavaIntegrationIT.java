@@ -1,26 +1,26 @@
-package io.rheem.rheem.tests;
+package org.apache.incubator.wayang.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.basic.RheemBasics;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.CollectionSource;
-import io.rheem.rheem.basic.operators.FilterOperator;
-import io.rheem.rheem.basic.operators.LocalCallbackSink;
-import io.rheem.rheem.basic.operators.MapOperator;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.RheemContext;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.function.ExecutionContext;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.types.DataUnitType;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.java.Java;
-import io.rheem.rheem.tests.platform.MyMadeUpPlatform;
+import org.apache.incubator.wayang.basic.WayangBasics;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.CollectionSource;
+import org.apache.incubator.wayang.basic.operators.FilterOperator;
+import org.apache.incubator.wayang.basic.operators.LocalCallbackSink;
+import org.apache.incubator.wayang.basic.operators.MapOperator;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.WayangContext;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.function.ExecutionContext;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.types.DataUnitType;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.java.Java;
+import org.apache.incubator.wayang.tests.platform.MyMadeUpPlatform;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -38,79 +38,79 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Test the Java integration with Rheem.
+ * Test the Java integration with Wayang.
  */
 public class JavaIntegrationIT {
 
     @Test
     public void testReadAndWrite() throws URISyntaxException, IOException {
-        // Build a Rheem plan.
+        // Build a Wayang plan.
         List<String> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.readWrite(RheemPlans.FILE_SOME_LINES_TXT, collector);
+        WayangPlan wayangPlan = WayangPlans.readWrite(WayangPlans.FILE_SOME_LINES_TXT, collector);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
 
         // Verify the plan result.
-        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
         Assert.assertEquals(lines, collector);
     }
 
     @Test
     public void testReadAndTransformAndWrite() throws URISyntaxException {
-        // Build a Rheem plan.
-        final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build a Wayang plan.
+        final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
     }
 
-    @Test(expected = RheemException.class)
+    @Test(expected = WayangException.class)
     public void testReadAndTransformAndWriteWithIllegalConfiguration1() throws URISyntaxException {
-        // Build a Rheem plan.
-        final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build a Wayang plan.
+        final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
         // ILLEGAL: This platform is not registered, so this operator will find no implementation.
-        rheemPlan.getSinks().forEach(sink -> sink.addTargetPlatform(MyMadeUpPlatform.getInstance()));
+        wayangPlan.getSinks().forEach(sink -> sink.addTargetPlatform(MyMadeUpPlatform.getInstance()));
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
     }
 
-    @Test(expected = RheemException.class)
+    @Test(expected = WayangException.class)
     public void testReadAndTransformAndWriteWithIllegalConfiguration2() throws URISyntaxException {
-        // Build a Rheem plan.
-        final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build a Wayang plan.
+        final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
-        RheemContext rheemContext = new RheemContext();
+        WayangContext wayangContext = new WayangContext();
         // ILLEGAL: This dummy platform is not sufficient to execute the plan.
-        rheemContext.register(MyMadeUpPlatform.getInstance());
+        wayangContext.register(MyMadeUpPlatform.getInstance());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
     }
 
-    @Test(expected = RheemException.class)
+    @Test(expected = WayangException.class)
     public void testReadAndTransformAndWriteWithIllegalConfiguration3() throws URISyntaxException {
-        // Build a Rheem plan.
-        final RheemPlan rheemPlan = RheemPlans.readTransformWrite(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build a Wayang plan.
+        final WayangPlan wayangPlan = WayangPlans.readTransformWrite(WayangPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        // Have Rheem execute the plan.
-        final Job job = rheemContext.createJob(null, rheemPlan);
+        // Have Wayang execute the plan.
+        final Job job = wayangContext.createJob(null, wayangPlan);
         // ILLEGAL: We blacklist the Java platform, although we need it.
         job.getConfiguration().getPlatformProvider().addToBlacklist(Java.platform());
         job.getConfiguration().getPlatformProvider().addToWhitelist(MyMadeUpPlatform.getInstance());
@@ -124,13 +124,13 @@ public class JavaIntegrationIT {
         final List<String> collection2 = Arrays.<String>asList("This is source 2.", "This is source 2, too.");
         List<String> collector1 = new LinkedList<>();
         List<String> collector2 = new LinkedList<>();
-        final RheemPlan rheemPlan = RheemPlans.multiSourceMultiSink(collection1, collection2, collector1, collector2);
+        final WayangPlan wayangPlan = WayangPlans.multiSourceMultiSink(collection1, collection2, collector1, collector2);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
 
         // Check the results in both sinks.
         List<String> expectedOutcome1 = Stream.concat(collection1.stream(), collection2.stream())
@@ -153,13 +153,13 @@ public class JavaIntegrationIT {
         final List<String> collection2 = Arrays.<String>asList("This is source 2.", "This is source 2, too.");
         List<String> collector1 = new LinkedList<>();
         List<String> collector2 = new LinkedList<>();
-        final RheemPlan rheemPlan = RheemPlans.multiSourceHoleMultiSink(collection1, collection2, collector1, collector2);
+        final WayangPlan wayangPlan = WayangPlans.multiSourceHoleMultiSink(collection1, collection2, collector1, collector2);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
 
         // Check the results in both sinks.
         List<String> expectedOutcome = Stream.concat(collection1.stream(), collection2.stream())
@@ -174,53 +174,53 @@ public class JavaIntegrationIT {
 
     @Test
     public void testGlobalMaterializedGroup() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Iterable<Integer>> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.globalMaterializedGroup(collector, 1, 2, 3);
+        WayangPlan wayangPlan = WayangPlans.globalMaterializedGroup(collector, 1, 2, 3);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
         Assert.assertEquals(1, collector.size());
-        Assert.assertEquals(RheemCollections.asSet(1, 2, 3), RheemCollections.asCollection(collector.get(0), HashSet::new));
+        Assert.assertEquals(WayangCollections.asSet(1, 2, 3), WayangCollections.asCollection(collector.get(0), HashSet::new));
     }
 
     @Test
     public void testIntersect() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
+        WayangPlan wayangPlan = WayangPlans.intersectSquares(collector, 0, 1, 2, 3, 3, -1, -1, -2, -3, -3, -4);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext();
+        wayangContext.register(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
-        Assert.assertEquals(RheemCollections.asSet(1, 4, 9), RheemCollections.asSet(collector));
+        Assert.assertEquals(WayangCollections.asSet(1, 4, 9), WayangCollections.asSet(collector));
     }
 
     @Test
     public void testRepeat() {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.repeat(collector, 5, 0, 10, 20, 30, 45);
+        WayangPlan wayangPlan = WayangPlans.repeat(collector, 5, 0, 10, 20, 30, 45);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext()
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext()
                 .with(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
         Assert.assertEquals(5, collector.size());
-        Assert.assertEquals(RheemCollections.asSet(5, 15, 25, 35, 50), RheemCollections.asSet(collector));
+        Assert.assertEquals(WayangCollections.asSet(5, 15, 25, 35, 50), WayangCollections.asSet(collector));
     }
 
     @Test
     public void testPageRankWithGraphBasic() {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Tuple2<Long, Long>> edges = Arrays.asList(
                 new Tuple2<>(0L, 1L),
                 new Tuple2<>(0L, 2L),
@@ -231,13 +231,13 @@ public class JavaIntegrationIT {
                 new Tuple2<>(3L, 0L)
         );
         List<Tuple2<Long, Float>> pageRanks = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.pageRank(edges, pageRanks);
+        WayangPlan wayangPlan = WayangPlans.pageRank(edges, pageRanks);
 
         // Execute the plan with a certain backend.
-        RheemContext rheemContext = new RheemContext()
+        WayangContext wayangContext = new WayangContext()
                 .with(Java.basicPlugin())
-                .with(RheemBasics.graphPlugin());
-        rheemContext.execute(rheemPlan);
+                .with(WayangBasics.graphPlugin());
+        wayangContext.execute(wayangPlan);
 
         // Check the results.
         pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
@@ -250,7 +250,7 @@ public class JavaIntegrationIT {
 
     @Test
     public void testPageRankWithJavaGraph() {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Tuple2<Long, Long>> edges = Arrays.asList(
                 new Tuple2<>(0L, 1L),
                 new Tuple2<>(0L, 2L),
@@ -261,13 +261,13 @@ public class JavaIntegrationIT {
                 new Tuple2<>(3L, 0L)
         );
         List<Tuple2<Long, Float>> pageRanks = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.pageRank(edges, pageRanks);
+        WayangPlan wayangPlan = WayangPlans.pageRank(edges, pageRanks);
 
         // Execute the plan with a certain backend.
-        RheemContext rheemContext = new RheemContext()
+        WayangContext wayangContext = new WayangContext()
                 .with(Java.basicPlugin())
                 .with(Java.graphPlugin());
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
         // Check the results.
         pageRanks.sort((r1, r2) -> Float.compare(r2.getField1(), r1.getField1()));
@@ -280,28 +280,28 @@ public class JavaIntegrationIT {
 
     @Test
     public void testMapPartitions() throws URISyntaxException {
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        // Execute the Rheem plan.
-        final Collection<Tuple2<String, Integer>> result = RheemPlans.mapPartitions(rheemContext, 0, 1, 1, 3, 3, 4, 4, 5, 5, 6);
+        // Execute the Wayang plan.
+        final Collection<Tuple2<String, Integer>> result = WayangPlans.mapPartitions(wayangContext, 0, 1, 1, 3, 3, 4, 4, 5, 5, 6);
 
         Assert.assertEquals(
-                RheemCollections.asSet(new Tuple2<>("even", 4), new Tuple2<>("odd", 6)),
-                RheemCollections.asSet(result)
+                WayangCollections.asSet(new Tuple2<>("even", 4), new Tuple2<>("odd", 6)),
+                WayangCollections.asSet(result)
         );
     }
 
     @Test
     public void testZipWithId() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         List<Long> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.zipWithId(collector, 0, 10, 20, 30, 30);
+        WayangPlan wayangPlan = WayangPlans.zipWithId(collector, 0, 10, 20, 30, 30);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
         Assert.assertEquals(1, collector.size());
         Assert.assertEquals(Long.valueOf(5L), collector.get(0));
@@ -309,107 +309,107 @@ public class JavaIntegrationIT {
 
     @Test
     public void testDiverseScenario1() throws URISyntaxException {
-        // Build the RheemPlan.
-        RheemPlan rheemPlan = RheemPlans.diverseScenario1(RheemPlans.FILE_SOME_LINES_TXT);
+        // Build the WayangPlan.
+        WayangPlan wayangPlan = WayangPlans.diverseScenario1(WayangPlans.FILE_SOME_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext();
+        wayangContext.register(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
     }
 
     @Test
     public void testDiverseScenario2() throws URISyntaxException {
-        // Build the RheemPlan.
-        RheemPlan rheemPlan = RheemPlans.diverseScenario2(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+        // Build the WayangPlan.
+        WayangPlan wayangPlan = WayangPlans.diverseScenario2(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
     }
 
     @Test
     public void testDiverseScenario3() throws URISyntaxException {
-        // Build the RheemPlan.
-        RheemPlan rheemPlan = RheemPlans.diverseScenario3(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+        // Build the WayangPlan.
+        WayangPlan wayangPlan = WayangPlans.diverseScenario3(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
     }
 
     @Test
     public void testDiverseScenario4() throws URISyntaxException {
-        // Build the RheemPlan.
-        RheemPlan rheemPlan = RheemPlans.diverseScenario4(RheemPlans.FILE_SOME_LINES_TXT, RheemPlans.FILE_OTHER_LINES_TXT);
+        // Build the WayangPlan.
+        WayangPlan wayangPlan = WayangPlans.diverseScenario4(WayangPlans.FILE_SOME_LINES_TXT, WayangPlans.FILE_OTHER_LINES_TXT);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
     }
 
     @Test
     public void testSimpleLoop() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.simpleLoop(3, collector, 0, 1, 2);
+        WayangPlan wayangPlan = WayangPlans.simpleLoop(3, collector, 0, 1, 2);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
         System.out.println(collector);
     }
 
     @Test
     public void testSample() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.simpleSample(3, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+        WayangPlan wayangPlan = WayangPlans.simpleSample(3, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
         System.out.println(collector);
     }
 
     @Test
     public void testLargerSample() throws URISyntaxException {
-        // Build the RheemPlan.
+        // Build the WayangPlan.
         final List<Integer> collector = new LinkedList<>();
-        RheemPlan rheemPlan = RheemPlans.simpleSample(15, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+        WayangPlan wayangPlan = WayangPlans.simpleSample(15, collector, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
         System.out.println(collector);
     }
 
     @Test
     public void testCurrentIterationNumber() {
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        final Collection<Integer> result = RheemPlans.loopWithIterationNumber(rheemContext, 15, 5, -1, 1, 5);
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        final Collection<Integer> result = WayangPlans.loopWithIterationNumber(wayangContext, 15, 5, -1, 1, 5);
         int expectedOffset = 5 * 4 / 2;
         Assert.assertEquals(
-                RheemCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
-                RheemCollections.asSet(result)
+                WayangCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
+                WayangCollections.asSet(result)
         );
     }
 
     @Test
     public void testCurrentIterationNumberWithTooFewExpectedIterations() {
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        final Collection<Integer> result = RheemPlans.loopWithIterationNumber(rheemContext, 15, 2, -1, 1, 5);
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        final Collection<Integer> result = WayangPlans.loopWithIterationNumber(wayangContext, 15, 2, -1, 1, 5);
         int expectedOffset = 5 * 4 / 2;
         Assert.assertEquals(
-                RheemCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
-                RheemCollections.asSet(result)
+                WayangCollections.asSet(-1 + expectedOffset, 1 + expectedOffset, 5 + expectedOffset),
+                WayangCollections.asSet(result)
         );
     }
 
@@ -450,12 +450,12 @@ public class JavaIntegrationIT {
         broadcastSource.broadcastTo(0, semijoin, "allowed values");
         semijoin.connectTo(0, collectingSink, 0);
 
-        RheemPlan rheemPlan = new RheemPlan(collectingSink);
+        WayangPlan wayangPlan = new WayangPlan(collectingSink);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
         Collections.sort(collectedValues);
         Assert.assertEquals(expectedValues, collectedValues);
@@ -502,12 +502,12 @@ public class JavaIntegrationIT {
         broadcastSource.broadcastTo(0, mulitply, "allowed values");
         mulitply.connectTo(0, collectingSink, 0);
 
-        RheemPlan rheemPlan = new RheemPlan(collectingSink);
+        WayangPlan wayangPlan = new WayangPlan(collectingSink);
 
-        // Instantiate Rheem and activate the Java backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Instantiate Wayang and activate the Java backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        rheemContext.execute(rheemPlan);
+        wayangContext.execute(wayangPlan);
 
         Collections.sort(collectedValues);
         Assert.assertEquals(expectedValues, collectedValues);

@@ -1,20 +1,20 @@
-package io.rheem.rheem.graphchi.operators;
+package org.apache.incubator.wayang.graphchi.operators;
 
 import org.junit.Before;
 import org.junit.Test;
-import io.rheem.rheem.basic.channels.FileChannel;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.optimizer.DefaultOptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.CrossPlatformExecutor;
-import io.rheem.rheem.core.profiling.FullInstrumentationStrategy;
-import io.rheem.rheem.graphchi.GraphChi;
-import io.rheem.rheem.graphchi.execution.GraphChiExecutor;
-import io.rheem.rheem.graphchi.platform.GraphChiPlatform;
-import io.rheem.rheem.java.channels.StreamChannel;
+import org.apache.incubator.wayang.basic.channels.FileChannel;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.incubator.wayang.core.profiling.FullInstrumentationStrategy;
+import org.apache.incubator.wayang.graphchi.GraphChi;
+import org.apache.incubator.wayang.graphchi.execution.GraphChiExecutor;
+import org.apache.incubator.wayang.graphchi.platform.GraphChiPlatform;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
 
 import java.io.IOException;
 

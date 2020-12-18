@@ -1,10 +1,10 @@
-package io.rheem.rheem.java.operators;
+package org.apache.incubator.wayang.java.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.java.channels.JavaChannelInstance;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.java.channels.JavaChannelInstance;
 
 import java.util.Arrays;
 import java.util.List;

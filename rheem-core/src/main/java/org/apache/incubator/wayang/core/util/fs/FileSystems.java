@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.util.fs;
+package org.apache.incubator.wayang.core.util.fs;
 
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.util.LruCache;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.util.LruCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +42,7 @@ public class FileSystems {
 
     public static FileSystem requireFileSystem(String fileUrl) {
         return getFileSystem(fileUrl).orElseThrow(
-                () -> new RheemException(String.format("Could not identify filesystem for \"%s\".", fileUrl))
+                () -> new WayangException(String.format("Could not identify filesystem for \"%s\".", fileUrl))
         );
     }
 
@@ -94,7 +94,7 @@ public class FileSystems {
             if (children.stream().anyMatch(child -> child.endsWith("_SUCCESS"))) {
                 return children.stream().filter(child -> child.matches(".*/part-[m|r|M|R|-]{0,2}\\d+")).collect(Collectors.toList());
             } else {
-                throw new RheemException("Could not identify directory structure: " + children);
+                throw new WayangException("Could not identify directory structure: " + children);
             }
         }
 
@@ -108,7 +108,7 @@ public class FileSystems {
         final Collection<String> inputPaths = FileSystems.findActualInputPaths(ostensibleInputFile);
 
         if (inputPaths.size() != 1) {
-            throw new RheemException(String.format(
+            throw new WayangException(String.format(
                     "Illegal number of files for \"%s\": %s", ostensibleInputFile, inputPaths
             )); // TODO: Add support.
         }

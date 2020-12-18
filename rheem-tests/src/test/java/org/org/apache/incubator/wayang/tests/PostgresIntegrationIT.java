@@ -1,10 +1,10 @@
-package io.rheem.rheem.tests;
+package org.apache.incubator.wayang.tests;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.postgres.platform.PostgresPlatform;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.postgres.platform.PostgresPlatform;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -12,7 +12,7 @@ import java.sql.Statement;
 
 
 /**
- * Test the Postgres integration with Rheem.
+ * Test the Postgres integration with Wayang.
  */
 @Ignore("Requires specific PostgreSQL installation.")
 public class PostgresIntegrationIT {
@@ -40,7 +40,7 @@ public class PostgresIntegrationIT {
             stmt.close();
 
         } catch (SQLException e) {
-            throw new RheemException(e);
+            throw new WayangException(e);
         }
     }
 
@@ -56,7 +56,7 @@ public class PostgresIntegrationIT {
             stmt.close();
 
         } catch (SQLException e) {
-            throw new RheemException(e);
+            throw new WayangException(e);
         }
     }
 

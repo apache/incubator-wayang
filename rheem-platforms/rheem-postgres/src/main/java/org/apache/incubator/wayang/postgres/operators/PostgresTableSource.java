@@ -1,8 +1,8 @@
-package io.rheem.rheem.postgres.operators;
+package org.apache.incubator.wayang.postgres.operators;
 
-import io.rheem.rheem.basic.operators.TableSource;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.jdbc.operators.JdbcTableSource;
+import org.apache.incubator.wayang.basic.operators.TableSource;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.jdbc.operators.JdbcTableSource;
 
 import java.util.List;
 

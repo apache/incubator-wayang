@@ -1,18 +1,18 @@
-package io.rheem.rheem.flink.operators;
+package org.apache.incubator.wayang.flink.operators;
 
 import org.apache.flink.api.common.functions.MapPartitionFunction;
 import org.apache.flink.api.java.DataSet;
-import io.rheem.rheem.basic.operators.GlobalMaterializedGroupOperator;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.flink.channels.DataSetChannel;
-import io.rheem.rheem.flink.execution.FlinkExecutor;
+import org.apache.incubator.wayang.basic.operators.GlobalMaterializedGroupOperator;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.flink.channels.DataSetChannel;
+import org.apache.incubator.wayang.flink.execution.FlinkExecutor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,7 +80,7 @@ public class FlinkGlobalMaterializedGroupOperator<Type>
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.flink.globalgroup.load";
+        return "wayang.flink.globalgroup.load";
     }
 
     @Override

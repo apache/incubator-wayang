@@ -1,11 +1,11 @@
-package io.rheem.rheem.core.optimizer.enumeration;
+package org.apache.incubator.wayang.core.optimizer.enumeration;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.Slot;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.util.Tuple;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.Slot;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +60,7 @@ public class LatentOperatorPruningStrategy implements PlanEnumerationPruningStra
         assert !planImplementation.isEmpty();
         return planImplementation.stream()
                 .reduce(this::selectBestPlanBinary)
-                .orElseThrow(() -> new RheemException("No plan was selected."));
+                .orElseThrow(() -> new WayangException("No plan was selected."));
     }
 
     private PlanImplementation selectBestPlanBinary(PlanImplementation p1,

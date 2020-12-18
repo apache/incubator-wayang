@@ -1,14 +1,14 @@
-package io.rheem.rheem.profiler.log;
+package org.apache.incubator.wayang.profiler.log;
 
 import org.json.JSONObject;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.costs.EstimationContext;
-import io.rheem.rheem.core.optimizer.costs.LoadEstimate;
-import io.rheem.rheem.core.optimizer.costs.LoadEstimator;
-import io.rheem.rheem.core.optimizer.costs.LoadProfile;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.costs.EstimationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadEstimate;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfile;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -256,7 +256,7 @@ public class DynamicLoadProfileEstimators {
 //            OptimizationSpace optimizationSpace,
 //            Configuration configuration) {
 //        // First check if the configuration already provides an estimator.
-//        final String key = RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys());
+//        final String key = WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys());
 //        final String juelSpec = configuration.getProperties().provideLocally(key);
 //        if (juelSpec != null) {
 //            return wrap(LoadProfileEstimators.createFromJuelSpecification(juelSpec));
@@ -301,8 +301,8 @@ public class DynamicLoadProfileEstimators {
 //                                                                    OptimizationSpace optimizationSpace) {
 //        return createLinearEstimator(
 //                operator,
-//                RheemArrays.range(operator.getNumInputs()),
-//                RheemArrays.range(operator.getNumOutputs()),
+//                WayangArrays.range(operator.getNumInputs()),
+//                WayangArrays.range(operator.getNumOutputs()),
 //                isWithOffset,
 //                optimizationSpace
 //        );
@@ -328,18 +328,18 @@ public class DynamicLoadProfileEstimators {
 //        for (int i = 0; i < inputIndices.length; i++) {
 //            int index = inputIndices[i];
 //            inVars[i] = optimizationSpace.getOrCreateVariable(
-//                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getInput(index).getName()
+//                    WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getInput(index).getName()
 //            );
 //        }
 //        Variable[] outVars = new Variable[outputIndices.length];
 //        for (int i = 0; i < outputIndices.length; i++) {
 //            int index = outputIndices[i];
 //            outVars[i] = optimizationSpace.getOrCreateVariable(
-//                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getOutput(index).getName()
+//                    WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getOutput(index).getName()
 //            );
 //        }
 //        Variable offsetVar = isWithOffset ? optimizationSpace.getOrCreateVariable(
-//                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->offset"
+//                WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->offset"
 //        ) : null;
 //
 //        // Create the estimation function.
@@ -378,7 +378,7 @@ public class DynamicLoadProfileEstimators {
 //
 //        // Assemble the estimator.
 //        return new DynamicLoadProfileEstimator(
-//                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()),
+//                WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()),
 //                operator.getNumInputs(),
 //                operator.getNumOutputs(),
 //                new DynamicLoadEstimator(singlePointEstimator, juelTemplate, employedVariables)
@@ -406,10 +406,10 @@ public class DynamicLoadProfileEstimators {
 //        for (int i = 0; i < inputIndices.length; i++) {
 //            int index = inputIndices[i];
 //            linearInVars[i] = optimizationSpace.getOrCreateVariable(
-//                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getInput(index).getName()
+//                    WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getInput(index).getName()
 //            );
 //            quadraticInVars[i] = optimizationSpace.getOrCreateVariable(
-//                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getInput(index).getName() + "^2"
+//                    WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getInput(index).getName() + "^2"
 //            );
 //        }
 //        Variable[] linearOutVars = new Variable[outputIndices.length];
@@ -417,15 +417,15 @@ public class DynamicLoadProfileEstimators {
 //        for (int i = 0; i < outputIndices.length; i++) {
 //            int index = outputIndices[i];
 //            linearOutVars[i] = optimizationSpace.getOrCreateVariable(
-//                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getOutput(index).getName()
+//                    WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getOutput(index).getName()
 //            );
 //            quadraticOutVars[i] = optimizationSpace.getOrCreateVariable(
-//                    RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getOutput(index).getName() + "^2"
+//                    WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->" + operator.getOutput(index).getName() + "^2"
 //            );
 //        }
 //
 //        Variable offsetVar = isWithOffset ? optimizationSpace.getOrCreateVariable(
-//                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->offset"
+//                WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->offset"
 //        ) : null;
 //
 //        // Create the estimation function.
@@ -475,7 +475,7 @@ public class DynamicLoadProfileEstimators {
 //
 //        // Assemble the estimator.
 //        return new DynamicLoadProfileEstimator(
-//                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()),
+//                WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()),
 //                operator.getNumInputs(),
 //                operator.getNumOutputs(),
 //                new DynamicLoadEstimator(singlePointEstimator, juelTemplate, employedVariables)
@@ -511,15 +511,15 @@ public class DynamicLoadProfileEstimators {
 //
 //        // Create variables.
 //        Variable mainVar = optimizationSpace.getOrCreateVariable(
-//                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->main"
+//                WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->main"
 //        );
 //        Variable convergenceVar = convergenceInputIndices.length > 0 ?
 //                optimizationSpace.getOrCreateVariable(
-//                        RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->convergence"
+//                        WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->convergence"
 //                ) :
 //                null;
 //        Variable offsetVar = optimizationSpace.getOrCreateVariable(
-//                RheemCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->offset"
+//                WayangCollections.getSingle(operator.getLoadProfileEstimatorConfigurationKeys()) + "->offset"
 //        );
 //
 //        // Create the estimation function.
@@ -609,7 +609,7 @@ public class DynamicLoadProfileEstimators {
     /**
      * Creates a new instance from a template {@link String}. Valid specifications are as follows:
      * <pre>
-     *     {"type":&lt;*io.rheem.rheem.core.util.mathex.mathex*&gt;,
+     *     {"type":&lt;*org.apache.incubator.wayang.core.util.mathex.mathex*&gt;,
      *      "cpu":&lt;mathematical expression&gt;,
      *      "ram":&lt;mathematical expression&gt;,
      *      "disk":&lt;mathematical expression&gt;,
@@ -638,10 +638,10 @@ public class DynamicLoadProfileEstimators {
             } else if ("juel".equalsIgnoreCase(spec.getString("type"))) {
                 throw new IllegalStateException("JUEL templates not supported");
             } else {
-                throw new RheemException(String.format("Unknown specification type: %s", spec.get("type")));
+                throw new WayangException(String.format("Unknown specification type: %s", spec.get("type")));
             }
         } catch (Exception e) {
-            throw new RheemException(String.format("Could not initialize from specification \"%s\".", specification), e);
+            throw new WayangException(String.format("Could not initialize from specification \"%s\".", specification), e);
         }
     }
 

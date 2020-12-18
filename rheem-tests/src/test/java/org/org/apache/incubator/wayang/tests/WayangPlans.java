@@ -1,45 +1,45 @@
-package io.rheem.rheem.tests;
+package org.apache.incubator.wayang.tests;
 
-import io.rheem.rheem.api.DataQuantaBuilder;
-import io.rheem.rheem.api.JavaPlanBuilder;
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.CollectionSource;
-import io.rheem.rheem.basic.operators.CountOperator;
-import io.rheem.rheem.basic.operators.DistinctOperator;
-import io.rheem.rheem.basic.operators.DoWhileOperator;
-import io.rheem.rheem.basic.operators.FilterOperator;
-import io.rheem.rheem.basic.operators.FlatMapOperator;
-import io.rheem.rheem.basic.operators.GlobalMaterializedGroupOperator;
-import io.rheem.rheem.basic.operators.IntersectOperator;
-import io.rheem.rheem.basic.operators.LocalCallbackSink;
-import io.rheem.rheem.basic.operators.LoopOperator;
-import io.rheem.rheem.basic.operators.MapOperator;
-import io.rheem.rheem.basic.operators.MapPartitionsOperator;
-import io.rheem.rheem.basic.operators.PageRankOperator;
-import io.rheem.rheem.basic.operators.RepeatOperator;
-import io.rheem.rheem.basic.operators.SampleOperator;
-import io.rheem.rheem.basic.operators.SortOperator;
-import io.rheem.rheem.basic.operators.TextFileSource;
-import io.rheem.rheem.basic.operators.UnionAllOperator;
-import io.rheem.rheem.basic.operators.ZipWithIdOperator;
-import io.rheem.rheem.basic.types.RecordType;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.RheemContext;
-import io.rheem.rheem.core.function.ExecutionContext;
-import io.rheem.rheem.core.function.FlatMapDescriptor;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.types.DataUnitType;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.RheemArrays;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.spark.operators.SparkShufflePartitionSampleOperator;
-import io.rheem.rheem.sqlite3.Sqlite3;
-import io.rheem.rheem.sqlite3.operators.Sqlite3TableSource;
+import org.apache.incubator.wayang.api.DataQuantaBuilder;
+import org.apache.incubator.wayang.api.JavaPlanBuilder;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.CollectionSource;
+import org.apache.incubator.wayang.basic.operators.CountOperator;
+import org.apache.incubator.wayang.basic.operators.DistinctOperator;
+import org.apache.incubator.wayang.basic.operators.DoWhileOperator;
+import org.apache.incubator.wayang.basic.operators.FilterOperator;
+import org.apache.incubator.wayang.basic.operators.FlatMapOperator;
+import org.apache.incubator.wayang.basic.operators.GlobalMaterializedGroupOperator;
+import org.apache.incubator.wayang.basic.operators.IntersectOperator;
+import org.apache.incubator.wayang.basic.operators.LocalCallbackSink;
+import org.apache.incubator.wayang.basic.operators.LoopOperator;
+import org.apache.incubator.wayang.basic.operators.MapOperator;
+import org.apache.incubator.wayang.basic.operators.MapPartitionsOperator;
+import org.apache.incubator.wayang.basic.operators.PageRankOperator;
+import org.apache.incubator.wayang.basic.operators.RepeatOperator;
+import org.apache.incubator.wayang.basic.operators.SampleOperator;
+import org.apache.incubator.wayang.basic.operators.SortOperator;
+import org.apache.incubator.wayang.basic.operators.TextFileSource;
+import org.apache.incubator.wayang.basic.operators.UnionAllOperator;
+import org.apache.incubator.wayang.basic.operators.ZipWithIdOperator;
+import org.apache.incubator.wayang.basic.types.RecordType;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.WayangContext;
+import org.apache.incubator.wayang.core.function.ExecutionContext;
+import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.types.DataUnitType;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.WayangArrays;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.spark.operators.SparkShufflePartitionSampleOperator;
+import org.apache.incubator.wayang.sqlite3.Sqlite3;
+import org.apache.incubator.wayang.sqlite3.operators.Sqlite3TableSource;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -57,7 +57,7 @@ import java.util.stream.Stream;
 /**
  * Provides plans that can be used for integration testing..
  */
-public class RheemPlans {
+public class WayangPlans {
 
     public static final URI FILE_SOME_LINES_TXT = createUri("/some-lines.txt");
 
@@ -79,20 +79,20 @@ public class RheemPlans {
     }
 
     /**
-     * Creates a {@link RheemPlan} consisting of a {@link TextFileSource} and a {@link LocalCallbackSink}.
+     * Creates a {@link WayangPlan} consisting of a {@link TextFileSource} and a {@link LocalCallbackSink}.
      */
-    public static RheemPlan readWrite(URI inputFileUri, List<String> collector) {
+    public static WayangPlan readWrite(URI inputFileUri, List<String> collector) {
         TextFileSource textFileSource = new TextFileSource(inputFileUri.toString());
         LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(collector, String.class);
         textFileSource.connectTo(0, sink, 0);
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
     /**
-     * Creates a {@link RheemPlan} consisting of a {@link TextFileSource}, a {@link MapOperator} (performs
+     * Creates a {@link WayangPlan} consisting of a {@link TextFileSource}, a {@link MapOperator} (performs
      * {@link String#toUpperCase()}), and a {@link LocalCallbackSink}.
      */
-    public static RheemPlan readTransformWrite(URI inputFileUri) {
+    public static WayangPlan readTransformWrite(URI inputFileUri) {
         TextFileSource textFileSource = new TextFileSource(inputFileUri.toString());
         MapOperator<String, String> reverseOperator = new MapOperator<>(
                 String::toUpperCase, String.class, String.class
@@ -100,17 +100,17 @@ public class RheemPlans {
         textFileSource.connectTo(0, reverseOperator, 0);
         LocalCallbackSink<String> stdoutSink = LocalCallbackSink.createStdoutSink(String.class);
         reverseOperator.connectTo(0, stdoutSink, 0);
-        RheemPlan rheemPlan = new RheemPlan();
-        rheemPlan.addSink(stdoutSink);
-        return rheemPlan;
+        WayangPlan wayangPlan = new WayangPlan();
+        wayangPlan.addSink(stdoutSink);
+        return wayangPlan;
     }
 
     /**
-     * Creates a {@link RheemPlan} with two {@link CollectionSource}s and two {@link LocalCallbackSink}s. Both sources
+     * Creates a {@link WayangPlan} with two {@link CollectionSource}s and two {@link LocalCallbackSink}s. Both sources
      * go into a {@link UnionAllOperator} and for the first {@link LocalCallbackSink}, the data quanta are routed
      * via a {@link MapOperator} that applies {@link String#toUpperCase()}.
      */
-    public static RheemPlan multiSourceMultiSink(List<String> inputList1, List<String> inputList2,
+    public static WayangPlan multiSourceMultiSink(List<String> inputList1, List<String> inputList2,
                                                  List<String> collector1, List<String> collector2) {
         CollectionSource<String> source1 = new CollectionSource<>(inputList1, String.class);
         source1.setName("source1");
@@ -136,16 +136,16 @@ public class RheemPlans {
         sink2.setName("sink2");
         coalesceOperator.connectTo(0, sink2, 0);
 
-        return new RheemPlan(sink1, sink2);
+        return new WayangPlan(sink1, sink2);
     }
 
     /**
-     * Creates a {@link RheemPlan} with two {@link CollectionSource}s and two {@link LocalCallbackSink}s. Both sources
+     * Creates a {@link WayangPlan} with two {@link CollectionSource}s and two {@link LocalCallbackSink}s. Both sources
      * go into a {@link UnionAllOperator}. Then, the data flow diverges again and to the branches one {@link MapOperator}
      * is applied with {@link String#toUpperCase()} and {@link String#toLowerCase()}. Finally, the both branches
      * are united via another {@link UnionAllOperator}, which is in turn consumed by the two {@link LocalCallbackSink}s.
      */
-    public static RheemPlan multiSourceHoleMultiSink(List<String> inputList1, List<String> inputList2,
+    public static WayangPlan multiSourceHoleMultiSink(List<String> inputList1, List<String> inputList2,
                                                      List<String> collector1, List<String> collector2) {
 
         CollectionSource<String> source1 = new CollectionSource<>(inputList1, String.class);
@@ -183,16 +183,16 @@ public class RheemPlans {
         sink2.setName("sink2");
         coalesceOperator2.connectTo(0, sink2, 0);
 
-        return new RheemPlan(sink1, sink2);
+        return new WayangPlan(sink1, sink2);
     }
 
     /**
-     * Creates a {@link RheemPlan} with a {@link TextFileSource}, a {@link SortOperator}, a {@link MapOperator},
+     * Creates a {@link WayangPlan} with a {@link TextFileSource}, a {@link SortOperator}, a {@link MapOperator},
      * a {@link DistinctOperator}, a {@link CountOperator}, and finally a {@link LocalCallbackSink} (stdout).
      */
-    public static RheemPlan diverseScenario1(URI inputFileUri) {
+    public static WayangPlan diverseScenario1(URI inputFileUri) {
 
-        // Build a Rheem plan.
+        // Build a Wayang plan.
         TextFileSource textFileSource = new TextFileSource(inputFileUri.toString());
         textFileSource.setName("Load input file");
         SortOperator<String, String> sortOperator = new SortOperator<>(in->in, String.class, String.class);
@@ -214,16 +214,16 @@ public class RheemPlans {
         distinctLinesOperator.connectTo(0, countLinesOperator, 0);
         countLinesOperator.connectTo(0, stdoutSink, 0);
 
-        return new RheemPlan(stdoutSink);
+        return new WayangPlan(stdoutSink);
     }
 
     /**
-     * Creates a {@link RheemPlan} with two {@link TextFileSource}s, of which the first goes through a {@link FilterOperator}
+     * Creates a {@link WayangPlan} with two {@link TextFileSource}s, of which the first goes through a {@link FilterOperator}
      * Then, they are unioned in a {@link UnionAllOperator}, go through a {@link SortOperator}, a {@link MapOperator}
      * (applies {@link String#toUpperCase()}), {@link DistinctOperator}, and finally a {@link LocalCallbackSink} (stdout).
      */
-    public static RheemPlan diverseScenario2(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
-        // Build a Rheem plan.
+    public static WayangPlan diverseScenario2(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
+        // Build a Wayang plan.
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
         TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
         FilterOperator<String> noCommaOperator = new FilterOperator<>(s -> !s.contains(","), String.class);
@@ -244,20 +244,20 @@ public class RheemPlans {
         upperCaseOperator.connectTo(0, distinctLinesOperator, 0);
         distinctLinesOperator.connectTo(0, stdoutSink, 0);
 
-        return new RheemPlan(stdoutSink);
+        return new WayangPlan(stdoutSink);
     }
 
     /**
-     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link LoopOperator}. It will
+     * Creates a {@link WayangPlan} with a {@link CollectionSource} that is fed into a {@link LoopOperator}. It will
      * then {@code k} times map each value to {@code 2n} and {@code 2n+1}. Finally, the outcome of the loop is
      * collected in the {@code collector}.
      */
-    public static RheemPlan simpleLoop(final int numIterations, Collection<Integer> collector, final int... values)
+    public static WayangPlan simpleLoop(final int numIterations, Collection<Integer> collector, final int... values)
             throws URISyntaxException {
-        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(values), Integer.class);
         source.setName("source");
 
-        CollectionSource<Integer> convergenceSource = new CollectionSource<>(RheemArrays.asList(0), Integer.class);
+        CollectionSource<Integer> convergenceSource = new CollectionSource<>(WayangArrays.asList(0), Integer.class);
         convergenceSource.setName("convergenceSource");
 
 
@@ -288,19 +288,19 @@ public class RheemPlans {
         sink.setName("sink");
         loopOperator.outputConnectTo(sink);
 
-        // Create the RheemPlan.
-        return new RheemPlan(sink);
+        // Create the WayangPlan.
+        return new WayangPlan(sink);
     }
 
     /**
-     * Creates a {@link RheemPlan} that goes through a loop thereby incorporating the iteration number.
+     * Creates a {@link WayangPlan} that goes through a loop thereby incorporating the iteration number.
      */
-    public static Collection<Integer> loopWithIterationNumber(RheemContext rheemContext,
+    public static Collection<Integer> loopWithIterationNumber(WayangContext wayangContext,
                                                               final int maxValue,
                                                               final int expectedNumIterations,
                                                               final int... values) {
-        return new JavaPlanBuilder(rheemContext)
-                .loadCollection(RheemArrays.asList(values)).withName("Load values")
+        return new JavaPlanBuilder(wayangContext)
+                .loadCollection(WayangArrays.asList(values)).withName("Load values")
                 .doWhile(
                         vals -> {
                             for (Integer val : vals) {
@@ -341,12 +341,12 @@ public class RheemPlans {
     }
 
     /**
-     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link SampleOperator}. It will
+     * Creates a {@link WayangPlan} with a {@link CollectionSource} that is fed into a {@link SampleOperator}. It will
      * then map each value to its double and output the results in the {@code collector}.
      */
-    public static RheemPlan simpleSample(int sampleSize, Collection<Integer> collector, final int... values)
+    public static WayangPlan simpleSample(int sampleSize, Collection<Integer> collector, final int... values)
             throws URISyntaxException {
-        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(values), Integer.class);
         source.setName("source");
 
         SampleOperator<Integer> sampleOperator = new SampleOperator<>(
@@ -364,17 +364,17 @@ public class RheemPlans {
         sampleOperator.connectTo(0, mapOperator, 0);
         mapOperator.connectTo(0, sink, 0);
 
-        // Create the RheemPlan.
-        return new RheemPlan(sink);
+        // Create the WayangPlan.
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan sampleInLoop(int sampleSize, int iterations, Collection<Integer> collector, final int... inputValues) {
+    public static WayangPlan sampleInLoop(int sampleSize, int iterations, Collection<Integer> collector, final int... inputValues) {
 
         // Prepare test data.
-        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(inputValues), Integer.class);
+        CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(inputValues), Integer.class);
         source.setName("source");
 
-        CollectionSource<Integer> convergenceSource = new CollectionSource<>(RheemArrays.asList(0), Integer.class);
+        CollectionSource<Integer> convergenceSource = new CollectionSource<>(WayangArrays.asList(0), Integer.class);
         convergenceSource.setName("convergenceSource");
 
 
@@ -407,16 +407,16 @@ public class RheemPlans {
         sink.setName("sink");
         loopOperator.outputConnectTo(sink);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
     /**
-     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link GlobalMaterializedGroupOperator}.
+     * Creates a {@link WayangPlan} with a {@link CollectionSource} that is fed into a {@link GlobalMaterializedGroupOperator}.
      * It will then push the results in the {@code collector}.
      */
-    public static RheemPlan globalMaterializedGroup(Collection<Iterable<Integer>> collector, final int... values)
+    public static WayangPlan globalMaterializedGroup(Collection<Iterable<Integer>> collector, final int... values)
             throws URISyntaxException {
-        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(values), Integer.class);
         source.setName("source");
 
         GlobalMaterializedGroupOperator<Integer> globalMaterializedGroupOperator =
@@ -432,18 +432,18 @@ public class RheemPlans {
         source.connectTo(0, globalMaterializedGroupOperator, 0);
         globalMaterializedGroupOperator.connectTo(0, sink, 0);
 
-        // Create the RheemPlan.
-        return new RheemPlan(sink);
+        // Create the WayangPlan.
+        return new WayangPlan(sink);
     }
 
 
     /**
-     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link RepeatOperator}.
+     * Creates a {@link WayangPlan} with a {@link CollectionSource} that is fed into a {@link RepeatOperator}.
      * The input values will be incremented by 1 n times.
      * It will then push the results in the {@code collector}.
      */
-    public static RheemPlan repeat(Collection<Integer> collector, int numIterations, final int... values) {
-        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+    public static WayangPlan repeat(Collection<Integer> collector, int numIterations, final int... values) {
+        CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(values), Integer.class);
         source.setName("source");
 
         RepeatOperator<Integer> repeat = new RepeatOperator<>(numIterations, Integer.class);
@@ -465,17 +465,17 @@ public class RheemPlans {
         repeat.endIteration(increment, 0);
         repeat.connectFinalOutputTo(sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
 
     /**
-     * Creates a {@link RheemPlan} with a {@link CollectionSource} that is fed into a {@link ZipWithIdOperator}.
+     * Creates a {@link WayangPlan} with a {@link CollectionSource} that is fed into a {@link ZipWithIdOperator}.
      * It will then push the results in the {@code collector}.
      */
-    public static RheemPlan zipWithId(Collection<Long> collector, final int... values)
+    public static WayangPlan zipWithId(Collection<Long> collector, final int... values)
             throws URISyntaxException {
-        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(values), Integer.class);
         source.setName("source");
 
         ZipWithIdOperator<Integer> zipWithId = new ZipWithIdOperator<>(Integer.class);
@@ -504,20 +504,20 @@ public class RheemPlans {
         distinctIds.connectTo(0, count, 0);
         count.connectTo(0, sink, 0);
 
-        // Create the RheemPlan.
-        return new RheemPlan(sink);
+        // Create the WayangPlan.
+        return new WayangPlan(sink);
     }
 
 
     /**
-     * Creates a {@link RheemPlan} with a {@link CollectionSource}. The data quanta are separated into negative and
+     * Creates a {@link WayangPlan} with a {@link CollectionSource}. The data quanta are separated into negative and
      * non-negative. Then, their squares are intersected using the {@link IntersectOperator}. The result is
      * pushed to the {@code collector}.
      */
-    public static RheemPlan intersectSquares(Collection<Integer> collector, final int... values)
+    public static WayangPlan intersectSquares(Collection<Integer> collector, final int... values)
             throws URISyntaxException {
 
-        CollectionSource<Integer> source = new CollectionSource<>(RheemArrays.asList(values), Integer.class);
+        CollectionSource<Integer> source = new CollectionSource<>(WayangArrays.asList(values), Integer.class);
         source.setName("source");
 
         FilterOperator<Integer> filterNegative = new FilterOperator<>(i -> i < 0, Integer.class);
@@ -548,14 +548,14 @@ public class RheemPlans {
         sink.setName("sink");
         intersect.connectTo(0, sink, 0);
 
-        // Create the RheemPlan.
-        return new RheemPlan(sink);
+        // Create the WayangPlan.
+        return new WayangPlan(sink);
     }
 
     /**
-     * Creates a cross-community PageRank Rheem plan, that incorporates the {@link PageRankOperator}.
+     * Creates a cross-community PageRank Wayang plan, that incorporates the {@link PageRankOperator}.
      */
-    public static RheemPlan pageRankWithDictionaryCompression(Collection<Tuple2<Character, Float>> pageRankCollector) {
+    public static WayangPlan pageRankWithDictionaryCompression(Collection<Tuple2<Character, Float>> pageRankCollector) {
         // Get some graph data. Use the example from Wikipedia: https://en.wikipedia.org/wiki/PageRank
         Collection<char[]> adjacencies = Arrays.asList(
                 new char[]{'B', 'C'},
@@ -570,7 +570,7 @@ public class RheemPlans {
                 new char[]{'K', 'E'}
         );
 
-        // Create a RheemPlan:
+        // Create a WayangPlan:
 
         // Load the adjacency list.
         final CollectionSource<char[]> adjacencySource = new CollectionSource<>(adjacencies, char[].class);
@@ -682,7 +682,7 @@ public class RheemPlans {
         callbackSink.setName("sink");
         backtranslate.connectTo(0, callbackSink, 0);
 
-        return new RheemPlan(callbackSink);
+        return new WayangPlan(callbackSink);
     }
 
     public static Map<Character, Float> pageRankWithDictionaryCompressionSolution() {
@@ -704,9 +704,9 @@ public class RheemPlans {
     /**
      * Feeds the {@code edges} into a {@link PageRankOperator} and collects the page ranks in the {@code collector}.
      *
-     * @return a {@link RheemPlan} implementing the above described
+     * @return a {@link WayangPlan} implementing the above described
      */
-    public static RheemPlan pageRank(Collection<Tuple2<Long, Long>> edges,
+    public static WayangPlan pageRank(Collection<Tuple2<Long, Long>> edges,
                                      Collection<Tuple2<Long, Float>> collector) {
         CollectionSource<Tuple2<Long, Long>> source = new CollectionSource<>(
                 edges, ReflectionUtils.specify(Tuple2.class)
@@ -721,22 +721,22 @@ public class RheemPlans {
                 LocalCallbackSink.createCollectingSink(collector, ReflectionUtils.specify(Tuple2.class));
         pageRank.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
     /**
-     * Creates and executed a {@link RheemPlan} that counts the number of even and odd numbers using a
+     * Creates and executed a {@link WayangPlan} that counts the number of even and odd numbers using a
      * {@link MapPartitionsOperator} to pre-aggregate partitions.
      *
-     * @param rheemContext provide the execution environment
+     * @param wayangContext provide the execution environment
      * @param inputValues  that should be dissected and counted
      */
-    public static Collection<Tuple2<String, Integer>> mapPartitions(RheemContext rheemContext, int... inputValues) {
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+    public static Collection<Tuple2<String, Integer>> mapPartitions(WayangContext wayangContext, int... inputValues) {
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Execute the job.
         return builder
-                .loadCollection(RheemArrays.asList(inputValues))
+                .loadCollection(WayangArrays.asList(inputValues))
                 .mapPartitions(partition -> {
                     int numEvens = 0, numOdds = 0;
                     for (Integer value : partition) {
@@ -756,8 +756,8 @@ public class RheemPlans {
     /**
      * Same as scenarion2 but repeat 10 times before output.
      */
-    public static RheemPlan diverseScenario3(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
-        // Build a Rheem plan.
+    public static WayangPlan diverseScenario3(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
+        // Build a Wayang plan.
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
         textFileSource1.setName("Source 1");
         TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
@@ -798,8 +798,8 @@ public class RheemPlans {
         loopOperator.outputConnectTo(upperCaseOperator, 0);
         upperCaseOperator.connectTo(0, stdoutSink, 0);
 
-        // Create the RheemPlan.
-        return new RheemPlan(stdoutSink);
+        // Create the WayangPlan.
+        return new WayangPlan(stdoutSink);
     }
 
     public static Integer increment(Integer k) {
@@ -817,8 +817,8 @@ public class RheemPlans {
     /**
      * Simple counter loop .
      */
-    public static RheemPlan diverseScenario4(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
-        // Build a Rheem plan.
+    public static WayangPlan diverseScenario4(URI inputFileUri1, URI inputFileUri2) throws URISyntaxException {
+        // Build a Wayang plan.
         TextFileSource textFileSource1 = new TextFileSource(inputFileUri1.toString());
         textFileSource1.setName("file1");
         TextFileSource textFileSource2 = new TextFileSource(inputFileUri2.toString());
@@ -847,8 +847,8 @@ public class RheemPlans {
         loopOperator.endIteration(unionOperator, counter);
         loopOperator.outputConnectTo(stdoutSink, 0);
 
-        // Create the RheemPlan.
-        return new RheemPlan(stdoutSink);
+        // Create the WayangPlan.
+        return new WayangPlan(stdoutSink);
     }
 
     /**
@@ -879,15 +879,15 @@ public class RheemPlans {
         );
     }
 
-    public static RheemPlan sqlite3Scenario1(Collection<Record> collector) {
+    public static WayangPlan sqlite3Scenario1(Collection<Record> collector) {
         Sqlite3TableSource customers = new Sqlite3TableSource("customer");
         LocalCallbackSink<Record> sink = LocalCallbackSink.createCollectingSink(collector, Record.class);
         customers.connectTo(0, sink, 0);
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
 
     }
 
-    public static RheemPlan sqlite3Scenario2(Collection<Record> collector) {
+    public static WayangPlan sqlite3Scenario2(Collection<Record> collector) {
         Sqlite3TableSource customers = new Sqlite3TableSource("customer", "name", "age");
         FilterOperator<Record> filter = new FilterOperator<>(
                 new PredicateDescriptor<>(
@@ -901,11 +901,11 @@ public class RheemPlans {
         customers.connectTo(0, filter, 0);
         filter.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
 
     }
 
-    public static RheemPlan sqlite3Scenario3(Collection<Record> collector) {
+    public static WayangPlan sqlite3Scenario3(Collection<Record> collector) {
         Sqlite3TableSource customers = new Sqlite3TableSource("customer", "name", "age");
         FilterOperator<Record> filter = new FilterOperator<>(
                 new PredicateDescriptor<>(
@@ -924,7 +924,7 @@ public class RheemPlans {
         filter.connectTo(0, projection, 0);
         projection.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
 
     }
 

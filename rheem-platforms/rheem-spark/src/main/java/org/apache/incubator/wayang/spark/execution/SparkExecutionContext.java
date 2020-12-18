@@ -1,13 +1,13 @@
-package io.rheem.rheem.spark.execution;
+package org.apache.incubator.wayang.spark.execution;
 
 import org.apache.spark.broadcast.Broadcast;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.function.ExecutionContext;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.spark.channels.BroadcastChannel;
-import io.rheem.rheem.spark.operators.SparkExecutionOperator;
-import io.rheem.rheem.spark.platform.SparkPlatform;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.function.ExecutionContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.spark.channels.BroadcastChannel;
+import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator;
+import org.apache.incubator.wayang.spark.platform.SparkPlatform;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -66,7 +66,7 @@ public class SparkExecutionContext implements ExecutionContext, Serializable {
     public <T> Collection<T> getBroadcast(String name) {
         final Broadcast<?> broadcast = this.broadcasts.get(name);
         if (broadcast == null) {
-            throw new RheemException("No such broadcast found: " + name);
+            throw new WayangException("No such broadcast found: " + name);
         }
 
         return (Collection<T>) broadcast.getValue();

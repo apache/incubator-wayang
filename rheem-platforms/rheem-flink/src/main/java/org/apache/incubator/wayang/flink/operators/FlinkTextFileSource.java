@@ -1,16 +1,16 @@
-package io.rheem.rheem.flink.operators;
+package org.apache.incubator.wayang.flink.operators;
 
 import org.apache.flink.api.java.DataSet;
-import io.rheem.rheem.basic.operators.TextFileSource;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.flink.channels.DataSetChannel;
-import io.rheem.rheem.flink.execution.FlinkExecutor;
+import org.apache.incubator.wayang.basic.operators.TextFileSource;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.flink.channels.DataSetChannel;
+import org.apache.incubator.wayang.flink.execution.FlinkExecutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -56,11 +56,11 @@ public class FlinkTextFileSource extends TextFileSource implements FlinkExecutio
 
         ExecutionLineageNode prepareLineageNode = new ExecutionLineageNode(operatorContext);
         prepareLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.flink.textfilesource.load.prepare", flinkExecutor.getConfiguration()
+                "wayang.flink.textfilesource.load.prepare", flinkExecutor.getConfiguration()
         ));
         ExecutionLineageNode mainLineageNode = new ExecutionLineageNode(operatorContext);
         mainLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.flink.textfilesource.load.main", flinkExecutor.getConfiguration()
+                "wayang.flink.textfilesource.load.main", flinkExecutor.getConfiguration()
         ));
         output.getLineage().addPredecessor(mainLineageNode);
 
@@ -74,7 +74,7 @@ public class FlinkTextFileSource extends TextFileSource implements FlinkExecutio
 
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
-        return Arrays.asList("rheem.flink.textfilesource.load.prepare", "rheem.flink.textfilesource.load.main");
+        return Arrays.asList("wayang.flink.textfilesource.load.prepare", "wayang.flink.textfilesource.load.main");
     }
 
     @Override

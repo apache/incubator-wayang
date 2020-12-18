@@ -1,11 +1,11 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.core.plan.rheemplan.test.TestLoopHead;
-import io.rheem.rheem.core.plan.rheemplan.test.TestMapOperator;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSink;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSource;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestLoopHead;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestMapOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSink;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,9 +29,9 @@ public class LoopIsolatorTest {
         TestSink<Integer> sink = new TestSink<>(Integer.class);
         loopHead.connectTo("finalOutput", sink, "in");
 
-        RheemPlan rheemPlan = new RheemPlan(sink);
+        WayangPlan wayangPlan = new WayangPlan(sink);
 
-        LoopIsolator.isolateLoops(rheemPlan);
+        LoopIsolator.isolateLoops(wayangPlan);
 
         // Check the top-level plan.
         final Operator allegedLoopSubplan = sink.getEffectiveOccupant(0).getOwner();
@@ -66,9 +66,9 @@ public class LoopIsolatorTest {
         TestSink<Integer> sink = new TestSink<>(Integer.class);
         loopHead.connectTo("finalOutput", sink, "in");
 
-        RheemPlan rheemPlan = new RheemPlan(sink);
+        WayangPlan wayangPlan = new WayangPlan(sink);
 
-        LoopIsolator.isolateLoops(rheemPlan);
+        LoopIsolator.isolateLoops(wayangPlan);
 
         // Check the top-level plan.
         final Operator allegedLoopSubplan = sink.getEffectiveOccupant(0).getOwner();
@@ -115,9 +115,9 @@ public class LoopIsolatorTest {
         outerLoopHead.connectTo("finalOutput", sink, "in");
         sink.setName("sink");
 
-        RheemPlan rheemPlan = new RheemPlan(sink);
+        WayangPlan wayangPlan = new WayangPlan(sink);
 
-        LoopIsolator.isolateLoops(rheemPlan);
+        LoopIsolator.isolateLoops(wayangPlan);
 
         // Check the top-level plan.
         final Operator allegedOuterLoopSubplan = sink.getEffectiveOccupant(0).getOwner();

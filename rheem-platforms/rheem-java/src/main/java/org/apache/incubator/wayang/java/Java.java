@@ -1,9 +1,9 @@
-package io.rheem.rheem.java;
+package org.apache.incubator.wayang.java;
 
-import io.rheem.rheem.java.platform.JavaPlatform;
-import io.rheem.rheem.java.plugin.JavaBasicPlugin;
-import io.rheem.rheem.java.plugin.JavaChannelConversionPlugin;
-import io.rheem.rheem.java.plugin.JavaGraphPlugin;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.java.plugin.JavaBasicPlugin;
+import org.apache.incubator.wayang.java.plugin.JavaChannelConversionPlugin;
+import org.apache.incubator.wayang.java.plugin.JavaGraphPlugin;
 
 /**
  * Register for relevant components of this module.

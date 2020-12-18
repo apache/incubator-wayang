@@ -1,26 +1,26 @@
-package io.rheem.rheem.core.optimizer.enumeration;
+package org.apache.incubator.wayang.core.optimizer.enumeration;
 
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationUtils;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionPlan;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.LoopHeadOperator;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorAlternative;
-import io.rheem.rheem.core.plan.rheemplan.OperatorContainer;
-import io.rheem.rheem.core.plan.rheemplan.Operators;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plan.rheemplan.Slot;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.core.util.Tuple;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationUtils;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorContainer;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operators;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Slot;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * The plan partitioner recursively dissects a {@link RheemPlan} into {@link PlanEnumeration}s and then assembles
+ * The plan partitioner recursively dissects a {@link WayangPlan} into {@link PlanEnumeration}s and then assembles
  * them.
  */
 public class PlanEnumerator {
@@ -132,11 +132,11 @@ public class PlanEnumerator {
     /**
      * Creates a new instance.
      *
-     * @param rheemPlan a hyperplan that should be used for enumeration.
+     * @param wayangPlan a hyperplan that should be used for enumeration.
      */
-    public PlanEnumerator(RheemPlan rheemPlan,
+    public PlanEnumerator(WayangPlan wayangPlan,
                           OptimizationContext optimizationContext) {
-        this(rheemPlan.collectReachableTopLevelSources(),
+        this(wayangPlan.collectReachableTopLevelSources(),
                 optimizationContext,
                 null,
                 Collections.emptyMap(),
@@ -145,17 +145,17 @@ public class PlanEnumerator {
     }
 
     /**
-     * Creates a new instance, thereby encorporating already executed parts of the {@code rheemPlan}.
+     * Creates a new instance, thereby encorporating already executed parts of the {@code wayangPlan}.
      *
-     * @param rheemPlan a hyperplan that should be used for enumeration.
+     * @param wayangPlan a hyperplan that should be used for enumeration.
      * @param baseplan  an {@link ExecutionPlan} that has been already executed (for re-optimization)
      */
-    public PlanEnumerator(RheemPlan rheemPlan,
+    public PlanEnumerator(WayangPlan wayangPlan,
                           OptimizationContext optimizationContext,
                           ExecutionPlan baseplan,
                           Set<Channel> openChannels) {
 
-        this(rheemPlan.collectReachableTopLevelSources(),
+        this(wayangPlan.collectReachableTopLevelSources(),
                 optimizationContext,
                 null,
                 new HashMap<>(),
@@ -173,9 +173,9 @@ public class PlanEnumerator {
                 .forEach(alternative -> this.presettledAlternatives.put(alternative.toOperator(), alternative));
 
         // Index the existing Channels by their user-specified Operator's OutputSlot.
-        // Note that we must always take the outermost OutputSlots because only those will be connected if the RheemPlan is sane.
+        // Note that we must always take the outermost OutputSlots because only those will be connected if the WayangPlan is sane.
         for (Channel openChannel : openChannels) {
-            final OutputSlot<?> outputSlot = OptimizationUtils.findRheemPlanOutputSlotFor(openChannel);
+            final OutputSlot<?> outputSlot = OptimizationUtils.findWayangPlanOutputSlotFor(openChannel);
             if (outputSlot != null) {
                 for (OutputSlot<?> outerOutput : outputSlot.getOwner().getOutermostOutputSlots(outputSlot)) {
                     final Collection<Channel> channelSet = this.openChannels.computeIfAbsent(outerOutput, k -> new HashSet<>(1));
@@ -213,12 +213,12 @@ public class PlanEnumerator {
         // Configure the enumeration.
         final Configuration configuration = this.optimizationContext.getConfiguration();
         this.isEnumeratingBranchesFirst = configuration.getBooleanProperty(
-                "rheem.core.optimizer.enumeration.branchesfirst", true
+                "wayang.core.optimizer.enumeration.branchesfirst", true
         );
 
         // Configure the concatenations.
         final String priorityFunctionName = configuration.getStringProperty(
-                "rheem.core.optimizer.enumeration.concatenationprio"
+                "wayang.core.optimizer.enumeration.concatenationprio"
         );
         ToDoubleFunction<ConcatenationActivator> concatenationPriorityFunction;
         switch (priorityFunctionName) {
@@ -243,11 +243,11 @@ public class PlanEnumerator {
                 concatenationPriorityFunction = activator -> 0d;
                 break;
             default:
-                throw new RheemException("Unknown concatenation priority function: " + priorityFunctionName);
+                throw new WayangException("Unknown concatenation priority function: " + priorityFunctionName);
         }
 
         boolean isInvertConcatenationPriorities = configuration.getBooleanProperty(
-                "rheem.core.optimizer.enumeration.invertconcatenations", false
+                "wayang.core.optimizer.enumeration.invertconcatenations", false
         );
         this.concatenationPriorityFunction = isInvertConcatenationPriorities ?
                 activator -> -concatenationPriorityFunction.applyAsDouble(activator) :
@@ -284,7 +284,7 @@ public class PlanEnumerator {
                     .filter(activator -> !activator.wasExecuted())
                     .collect(Collectors.toList())
             );
-            throw new RheemException("Could not find a single execution plan.");
+            throw new WayangException("Could not find a single execution plan.");
         }
         return comprehensiveEnumeration;
     }
@@ -396,7 +396,7 @@ public class PlanEnumerator {
                 if (loopHeadOperator.getLoopBodyOutputs().size() != 1) {
                     break;
                 }
-                followableOutput = RheemCollections.getSingle(loopHeadOperator.getLoopBodyOutputs());
+                followableOutput = WayangCollections.getSingle(loopHeadOperator.getLoopBodyOutputs());
 
             } else {
                 if (currentOperator.getNumOutputs() != 1) {
@@ -470,7 +470,7 @@ public class PlanEnumerator {
 
             if (operatorEnumeration.getPlanImplementations().isEmpty()) {
                 if (this.isTopLevel()) {
-                    throw new RheemException(String.format("No implementations enumerated for %s.", operator));
+                    throw new WayangException(String.format("No implementations enumerated for %s.", operator));
                 } else {
                     this.logger.warn("No implementations enumerated for {}.", operator);
                 }
@@ -489,7 +489,7 @@ public class PlanEnumerator {
 
                 if (branchEnumeration.getPlanImplementations().isEmpty()) {
                     if (this.isTopLevel()) {
-                        throw new RheemException(String.format("Could not concatenate %s to %s.", lastOperator, operator));
+                        throw new WayangException(String.format("Could not concatenate %s to %s.", lastOperator, operator));
                     } else {
                         this.logger.warn("Could not concatenate {} to {}.", lastOperator, operator);
                     }
@@ -586,7 +586,7 @@ public class PlanEnumerator {
         if (concatenatedEnumeration.getPlanImplementations().isEmpty()) {
             this.logger.warn("No implementations enumerated after concatenating {}.", concatenationActivator.outputSlot);
             if (this.isTopLevel()) {
-                throw new RheemException(String.format("No implementations that concatenate %s with %s.",
+                throw new WayangException(String.format("No implementations that concatenate %s with %s.",
                         concatenationActivator.outputSlot,
                         concatenationActivator.outputSlot.getOccupiedSlots()
                 ));
@@ -761,7 +761,7 @@ public class PlanEnumerator {
      * did not allow to construct a valid {@link PlanEnumeration}.
      */
     private void constructResultEnumeration() {
-        final PlanEnumeration resultEnumeration = RheemCollections.getSingleOrNull(this.completedEnumerations);
+        final PlanEnumeration resultEnumeration = WayangCollections.getSingleOrNull(this.completedEnumerations);
         this.resultReference = new AtomicReference<>(resultEnumeration);
     }
 

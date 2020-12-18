@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.util;
+package org.apache.incubator.wayang.core.util;
 
 import org.json.JSONObject;
-import io.rheem.rheem.core.api.exception.RheemException;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -54,7 +54,7 @@ public interface JsonSerializable {
                 final Method fromJsonMethod = cls.getMethod("fromJson", JSONObject.class);
                 return (T) fromJsonMethod.invoke(null, json);
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                throw new RheemException(String.format("Could not execute %s.fromJson(...).", cls.getCanonicalName()), e);
+                throw new WayangException(String.format("Could not execute %s.fromJson(...).", cls.getCanonicalName()), e);
             }
         }
     }

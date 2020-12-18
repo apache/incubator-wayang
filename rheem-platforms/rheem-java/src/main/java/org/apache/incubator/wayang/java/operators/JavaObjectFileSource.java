@@ -1,4 +1,4 @@
-package io.rheem.rheem.java.operators;
+package org.apache.incubator.wayang.java.operators;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.Validate;
@@ -7,21 +7,21 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.SequenceFile;
-import io.rheem.rheem.basic.channels.FileChannel;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.UnarySource;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.core.util.fs.FileSystems;
-import io.rheem.rheem.java.channels.StreamChannel;
-import io.rheem.rheem.java.execution.JavaExecutor;
-import io.rheem.rheem.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.basic.channels.FileChannel;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySource;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
@@ -79,7 +79,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
                     StreamSupport.stream(Spliterators.spliteratorUnknownSize(sequenceFileIterator, 0), false);
             ((StreamChannel.Instance) outputs[0]).accept(sequenceFileStream);
         } catch (IOException e) {
-            throw new RheemException(String.format("%s failed to read from %s.", this, path), e);
+            throw new WayangException(String.format("%s failed to read from %s.", this, path), e);
         }
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
@@ -87,7 +87,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.java.objectfilesource.load";
+        return "wayang.java.objectfilesource.load";
     }
 
     @Override
@@ -153,7 +153,7 @@ public class JavaObjectFileSource<T> extends UnarySource<T> implements JavaExecu
             } catch (IOException | ClassNotFoundException e) {
                 this.nextElements = null;
                 IOUtils.closeQuietly(this);
-                throw new RheemException("Reading failed.", e);
+                throw new WayangException("Reading failed.", e);
             }
         }
 

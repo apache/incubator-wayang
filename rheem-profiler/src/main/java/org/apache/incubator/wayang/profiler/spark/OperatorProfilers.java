@@ -1,29 +1,29 @@
-package io.rheem.rheem.profiler.spark;
+package org.apache.incubator.wayang.profiler.spark;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.function.FlatMapDescriptor;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.function.ReduceDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.RheemArrays;
-import io.rheem.rheem.profiler.data.DataGenerators;
-import io.rheem.rheem.spark.operators.SparkCartesianOperator;
-import io.rheem.rheem.spark.operators.SparkCollectionSource;
-import io.rheem.rheem.spark.operators.SparkCountOperator;
-import io.rheem.rheem.spark.operators.SparkDistinctOperator;
-import io.rheem.rheem.spark.operators.SparkFilterOperator;
-import io.rheem.rheem.spark.operators.SparkFlatMapOperator;
-import io.rheem.rheem.spark.operators.SparkGlobalReduceOperator;
-import io.rheem.rheem.spark.operators.SparkJoinOperator;
-import io.rheem.rheem.spark.operators.SparkLocalCallbackSink;
-import io.rheem.rheem.spark.operators.SparkMapOperator;
-import io.rheem.rheem.spark.operators.SparkMaterializedGroupByOperator;
-import io.rheem.rheem.spark.operators.SparkReduceByOperator;
-import io.rheem.rheem.spark.operators.SparkSortOperator;
-import io.rheem.rheem.spark.operators.SparkTextFileSource;
-import io.rheem.rheem.spark.operators.SparkUnionAllOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.function.ReduceDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.WayangArrays;
+import org.apache.incubator.wayang.profiler.data.DataGenerators;
+import org.apache.incubator.wayang.spark.operators.SparkCartesianOperator;
+import org.apache.incubator.wayang.spark.operators.SparkCollectionSource;
+import org.apache.incubator.wayang.spark.operators.SparkCountOperator;
+import org.apache.incubator.wayang.spark.operators.SparkDistinctOperator;
+import org.apache.incubator.wayang.spark.operators.SparkFilterOperator;
+import org.apache.incubator.wayang.spark.operators.SparkFlatMapOperator;
+import org.apache.incubator.wayang.spark.operators.SparkGlobalReduceOperator;
+import org.apache.incubator.wayang.spark.operators.SparkJoinOperator;
+import org.apache.incubator.wayang.spark.operators.SparkLocalCallbackSink;
+import org.apache.incubator.wayang.spark.operators.SparkMapOperator;
+import org.apache.incubator.wayang.spark.operators.SparkMaterializedGroupByOperator;
+import org.apache.incubator.wayang.spark.operators.SparkReduceByOperator;
+import org.apache.incubator.wayang.spark.operators.SparkSortOperator;
+import org.apache.incubator.wayang.spark.operators.SparkTextFileSource;
+import org.apache.incubator.wayang.spark.operators.SparkUnionAllOperator;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -76,7 +76,7 @@ public class OperatorProfilers {
     public static SparkUnaryOperatorProfiler createSparkFlatMapProfiler() {
         return createSparkFlatMapProfiler(
                 DataGenerators.createRandomIntegerSupplier(new Random(42)),
-                RheemArrays::asList,
+                WayangArrays::asList,
                 Integer.class, Integer.class,
                 new Configuration()
         );

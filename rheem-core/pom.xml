@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>rheem</artifactId>
-        <groupId>io.rheem.rheem</groupId>
+        <artifactId>wayang</artifactId>
+        <groupId>org.apache.incubator.wayang</groupId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rheem-core</artifactId>
-    <description>This Rheem module contains all the base code that is used by all other modules.</description>
+    <artifactId>wayang-core</artifactId>
+    <description>This Wayang module contains all the base code that is used by all other modules.</description>
 
     <build>
         <plugins>

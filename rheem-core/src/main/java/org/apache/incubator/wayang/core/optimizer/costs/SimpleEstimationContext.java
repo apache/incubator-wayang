@@ -1,11 +1,11 @@
-package io.rheem.rheem.core.optimizer.costs;
+package org.apache.incubator.wayang.core.optimizer.costs;
 
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.json.JSONObject;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.util.JsonSerializables;
-import io.rheem.rheem.core.util.JsonSerializer;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.util.JsonSerializables;
+import org.apache.incubator.wayang.core.util.JsonSerializer;
 
 import java.util.Collection;
 import java.util.List;

@@ -1,27 +1,27 @@
-package io.rheem.rheem.spark.compiler;
+package org.apache.incubator.wayang.spark.compiler;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
-import io.rheem.rheem.core.function.FlatMapDescriptor;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.MapPartitionsDescriptor;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.function.ReduceDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.spark.execution.SparkExecutionContext;
-import io.rheem.rheem.spark.operators.SparkExecutionOperator;
+import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.MapPartitionsDescriptor;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.function.ReduceDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.spark.execution.SparkExecutionContext;
+import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator;
 
 import java.util.Iterator;
 import java.util.function.BinaryOperator;
 import java.util.function.Predicate;
 
 /**
- * A compiler translates Rheem functions into executable Java functions.
+ * A compiler translates Wayang functions into executable Java functions.
  */
 public class FunctionCompiler {
 
@@ -155,7 +155,7 @@ public class FunctionCompiler {
     /**
      * Spark function for building pair RDDs.
      */
-    public static class KeyExtractor<T, K> implements PairFunction<T, K, T>, RheemSparkFunction {
+    public static class KeyExtractor<T, K> implements PairFunction<T, K, T>, WayangSparkFunction {
 
         private final java.util.function.Function<T, K> impl;
 
@@ -170,7 +170,7 @@ public class FunctionCompiler {
         }
 
         @Override
-        public Object getRheemFunction() {
+        public Object getWayangFunction() {
             return this.impl;
         }
     }
@@ -179,7 +179,7 @@ public class FunctionCompiler {
     /**
      * Spark function for aggregating data quanta.
      */
-    public static class Reducer<Type> implements Function2<Type, Type, Type>, RheemSparkFunction {
+    public static class Reducer<Type> implements Function2<Type, Type, Type>, WayangSparkFunction {
 
         private final BinaryOperator<Type> impl;
 
@@ -193,21 +193,21 @@ public class FunctionCompiler {
         }
 
         @Override
-        public Object getRheemFunction() {
+        public Object getWayangFunction() {
             return this.impl;
         }
     }
 
 
     /**
-     * Describes functions coming from Rheem, designated for Spark.
+     * Describes functions coming from Wayang, designated for Spark.
      */
-    public interface RheemSparkFunction {
+    public interface WayangSparkFunction {
 
         /**
-         * @return the original code object as has been defined in the Rheem API
+         * @return the original code object as has been defined in the Wayang API
          */
-        Object getRheemFunction();
+        Object getWayangFunction();
 
     }
 }

@@ -1,16 +1,16 @@
-package io.rheem.rheem.java.mapping;
+package org.apache.incubator.wayang.java.mapping;
 
-import io.rheem.rheem.basic.operators.SampleOperator;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.java.operators.JavaRandomSampleOperator;
-import io.rheem.rheem.java.operators.JavaReservoirSampleOperator;
-import io.rheem.rheem.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.basic.operators.SampleOperator;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.java.operators.JavaRandomSampleOperator;
+import org.apache.incubator.wayang.java.operators.JavaReservoirSampleOperator;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -51,7 +51,7 @@ public class SampleMapping implements Mapping {
                         case RESERVOIR:
                             return new JavaReservoirSampleOperator<>(matchedOperator).at(epoch);
                         default:
-                            throw new RheemException(String.format(
+                            throw new WayangException(String.format(
                                     "%s sample method is not yet supported in Java platform.",
                                     matchedOperator.getSampleMethod()
                             ));

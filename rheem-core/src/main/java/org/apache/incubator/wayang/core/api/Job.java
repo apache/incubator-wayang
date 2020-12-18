@@ -1,54 +1,54 @@
-package io.rheem.rheem.core.api;
+package org.apache.incubator.wayang.core.api;
 
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.monitor.DisabledMonitor;
-import io.rheem.rheem.core.monitor.FileMonitor;
-import io.rheem.rheem.core.monitor.Monitor;
-import io.rheem.rheem.core.optimizer.DefaultOptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimatorManager;
-import io.rheem.rheem.core.optimizer.costs.TimeEstimate;
-import io.rheem.rheem.core.optimizer.costs.TimeToCostConverter;
-import io.rheem.rheem.core.optimizer.enumeration.ExecutionTaskFlow;
-import io.rheem.rheem.core.optimizer.enumeration.PlanEnumeration;
-import io.rheem.rheem.core.optimizer.enumeration.PlanEnumerator;
-import io.rheem.rheem.core.optimizer.enumeration.PlanImplementation;
-import io.rheem.rheem.core.optimizer.enumeration.StageAssignmentTraversal;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionPlan;
-import io.rheem.rheem.core.plan.executionplan.ExecutionStage;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.PlanMetrics;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.platform.AtomicExecutionGroup;
-import io.rheem.rheem.core.platform.Breakpoint;
-import io.rheem.rheem.core.platform.CardinalityBreakpoint;
-import io.rheem.rheem.core.platform.ConjunctiveBreakpoint;
-import io.rheem.rheem.core.platform.CrossPlatformExecutor;
-import io.rheem.rheem.core.platform.ExecutionState;
-import io.rheem.rheem.core.platform.FixBreakpoint;
-import io.rheem.rheem.core.platform.NoIterationBreakpoint;
-import io.rheem.rheem.core.platform.PartialExecution;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.profiling.CardinalityRepository;
-import io.rheem.rheem.core.profiling.CostMeasurement;
-import io.rheem.rheem.core.profiling.ExecutionLog;
-import io.rheem.rheem.core.profiling.ExecutionPlanMeasurement;
-import io.rheem.rheem.core.profiling.InstrumentationStrategy;
-import io.rheem.rheem.core.profiling.PartialExecutionMeasurement;
-import io.rheem.rheem.core.util.Formats;
-import io.rheem.rheem.core.util.OneTimeExecutable;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.monitor.DisabledMonitor;
+import org.apache.incubator.wayang.core.monitor.FileMonitor;
+import org.apache.incubator.wayang.core.monitor.Monitor;
+import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimatorManager;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.incubator.wayang.core.optimizer.enumeration.ExecutionTaskFlow;
+import org.apache.incubator.wayang.core.optimizer.enumeration.PlanEnumeration;
+import org.apache.incubator.wayang.core.optimizer.enumeration.PlanEnumerator;
+import org.apache.incubator.wayang.core.optimizer.enumeration.PlanImplementation;
+import org.apache.incubator.wayang.core.optimizer.enumeration.StageAssignmentTraversal;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.PlanMetrics;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.platform.AtomicExecutionGroup;
+import org.apache.incubator.wayang.core.platform.Breakpoint;
+import org.apache.incubator.wayang.core.platform.CardinalityBreakpoint;
+import org.apache.incubator.wayang.core.platform.ConjunctiveBreakpoint;
+import org.apache.incubator.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.incubator.wayang.core.platform.ExecutionState;
+import org.apache.incubator.wayang.core.platform.FixBreakpoint;
+import org.apache.incubator.wayang.core.platform.NoIterationBreakpoint;
+import org.apache.incubator.wayang.core.platform.PartialExecution;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.profiling.CardinalityRepository;
+import org.apache.incubator.wayang.core.profiling.CostMeasurement;
+import org.apache.incubator.wayang.core.profiling.ExecutionLog;
+import org.apache.incubator.wayang.core.profiling.ExecutionPlanMeasurement;
+import org.apache.incubator.wayang.core.profiling.InstrumentationStrategy;
+import org.apache.incubator.wayang.core.profiling.PartialExecutionMeasurement;
+import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.incubator.wayang.core.util.OneTimeExecutable;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +65,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
- * Describes a job that is to be executed using Rheem.
+ * Describes a job that is to be executed using Wayang.
  */
 public class Job extends OneTimeExecutable {
 
@@ -77,22 +77,22 @@ public class Job extends OneTimeExecutable {
     private final AtomicBoolean hasBeenExecuted = new AtomicBoolean(false);
 
     /**
-     * References the {@link RheemContext} that spawned this instance.
+     * References the {@link WayangContext} that spawned this instance.
      */
-    private final RheemContext rheemContext;
+    private final WayangContext wayangContext;
 
     /**
-     * {@link Job}-level {@link Configuration} based on the {@link RheemContext}-level configuration.
+     * {@link Job}-level {@link Configuration} based on the {@link WayangContext}-level configuration.
      */
     private final Configuration configuration;
 
     /**
-     * The {@link RheemPlan} to be executed by this instance.
+     * The {@link WayangPlan} to be executed by this instance.
      */
-    private final RheemPlan rheemPlan;
+    private final WayangPlan wayangPlan;
 
     /**
-     * {@link OptimizationContext} for the {@link #rheemPlan}.
+     * {@link OptimizationContext} for the {@link #wayangPlan}.
      */
     private DefaultOptimizationContext optimizationContext;
 
@@ -107,7 +107,7 @@ public class Job extends OneTimeExecutable {
     private CrossPlatformExecutor crossPlatformExecutor;
 
     /**
-     * Manages the {@link CardinalityEstimate}s for the {@link #rheemPlan}.
+     * Manages the {@link CardinalityEstimate}s for the {@link #wayangPlan}.
      */
     private CardinalityEstimatorManager cardinalityEstimatorManager;
 
@@ -173,20 +173,20 @@ public class Job extends OneTimeExecutable {
      * @param experiment an {@link Experiment} for that profiling entries will be created
      * @param udfJars    paths to JAR files needed to run the UDFs (see {@link ReflectionUtils#getDeclaringJar(Class)})
      */
-    Job(RheemContext rheemContext, String name, Monitor monitor, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
-        this.rheemContext = rheemContext;
-        this.name = name == null ? "Rheem app" : name;
-        this.configuration = this.rheemContext.getConfiguration().fork(this.name);
-        this.rheemPlan = rheemPlan;
+    Job(WayangContext wayangContext, String name, Monitor monitor, WayangPlan wayangPlan, Experiment experiment, String... udfJars) {
+        this.wayangContext = wayangContext;
+        this.name = name == null ? "Wayang app" : name;
+        this.configuration = this.wayangContext.getConfiguration().fork(this.name);
+        this.wayangPlan = wayangPlan;
         for (String udfJar : udfJars) {
             this.addUdfJar(udfJar);
         }
 
         // Prepare re-optimization.
-        if (this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize")) {
+        if (this.configuration.getBooleanProperty("wayang.core.optimizer.reoptimize")) {
             this.cardinalityBreakpoint = new CardinalityBreakpoint(this.configuration);
             this.isProactiveReoptimization =
-                    this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize.proactive", false);
+                    this.configuration.getBooleanProperty("wayang.core.optimizer.reoptimize.proactive", false);
         } else {
             this.cardinalityBreakpoint = null;
             this.isProactiveReoptimization = false;
@@ -218,21 +218,21 @@ public class Job extends OneTimeExecutable {
     /**
      * Run this instance. Must only be called once.
      *
-     * @throws RheemException in case the execution fails for any reason
+     * @throws WayangException in case the execution fails for any reason
      */
     @Override
-    public void execute() throws RheemException {
+    public void execute() throws WayangException {
         try {
             super.execute();
-        } catch (RheemException e) {
+        } catch (WayangException e) {
             throw e;
         } catch (Throwable t) {
-            throw new RheemException("Job execution failed.", t);
+            throw new WayangException("Job execution failed.", t);
         }
     }
 
-    public ExecutionPlan buildInitialExecutionPlan() throws RheemException {
-        this.prepareRheemPlan();
+    public ExecutionPlan buildInitialExecutionPlan() throws WayangException {
+        this.prepareWayangPlan();
         this.estimateKeyFigures();
 
         // Get initial execution plan.
@@ -255,16 +255,16 @@ public class Job extends OneTimeExecutable {
     protected void doExecute() {
         // Make sure that each job is only executed once.
         if (this.hasBeenExecuted.getAndSet(true)) {
-            throw new RheemException("Job has already been executed.");
+            throw new WayangException("Job has already been executed.");
         }
 
         try {
 
-            // Prepare the #rheemPlan for the optimization.
+            // Prepare the #wayangPlan for the optimization.
             this.optimizationRound.start();
-            this.prepareRheemPlan();
+            this.prepareWayangPlan();
 
-            // Estimate cardinalities and execution times for the #rheemPlan.
+            // Estimate cardinalities and execution times for the #wayangPlan.
             this.estimateKeyFigures();
 
             // Get an execution plan.
@@ -303,13 +303,13 @@ public class Job extends OneTimeExecutable {
             }
 
             this.stopWatch.start("Post-processing");
-            if (this.configuration.getBooleanProperty("rheem.core.log.enabled")) {
+            if (this.configuration.getBooleanProperty("wayang.core.log.enabled")) {
                 this.logExecution();
             }
-        } catch (RheemException e) {
+        } catch (WayangException e) {
             throw e;
         } catch (Throwable t) {
-            throw new RheemException("Job execution failed.", t);
+            throw new WayangException("Job execution failed.", t);
         } finally {
             this.stopWatch.stopAll();
             this.stopWatch.start("Post-processing", "Release Resources");
@@ -320,25 +320,25 @@ public class Job extends OneTimeExecutable {
     }
 
     /**
-     * Prepares the {@link #rheemPlan}: prunes unused {@link Operator}s, isolates loops, and applies all available
+     * Prepares the {@link #wayangPlan}: prunes unused {@link Operator}s, isolates loops, and applies all available
      * {@link PlanTransformation}s.
      */
-    private void prepareRheemPlan() {
+    private void prepareWayangPlan() {
         this.logger.info("Preparing plan...");
 
-        // Prepare the RheemPlan for the optimization.
+        // Prepare the WayangPlan for the optimization.
         this.optimizationRound.start("Prepare", "Prune&Isolate");
-        this.rheemPlan.prepare();
+        this.wayangPlan.prepare();
         this.optimizationRound.stop("Prepare", "Prune&Isolate");
 
         // Apply the mappings to the plan to form a hyperplan.
         this.optimizationRound.start("Prepare", "Transformations");
         final Collection<PlanTransformation> transformations = this.gatherTransformations();
-        this.rheemPlan.applyTransformations(transformations);
+        this.wayangPlan.applyTransformations(transformations);
         this.optimizationRound.stop("Prepare", "Transformations");
 
         this.optimizationRound.start("Prepare", "Sanity");
-        assert this.rheemPlan.isSane();
+        assert this.wayangPlan.isSane();
         this.optimizationRound.stop("Prepare", "Sanity");
 
         this.optimizationRound.stop("Prepare");
@@ -348,7 +348,7 @@ public class Job extends OneTimeExecutable {
      * Gather all available {@link PlanTransformation}s from the {@link #configuration}.
      */
     private Collection<PlanTransformation> gatherTransformations() {
-        final Set<Platform> platforms = RheemCollections.asSet(this.configuration.getPlatformProvider().provideAll());
+        final Set<Platform> platforms = WayangCollections.asSet(this.configuration.getPlatformProvider().provideAll());
         return this.configuration.getMappingProvider().provideAll().stream()
                 .flatMap(mapping -> mapping.getTransformations().stream())
                 .filter(t -> t.getTargetPlatforms().isEmpty() || platforms.containsAll(t.getTargetPlatforms()))
@@ -357,7 +357,7 @@ public class Job extends OneTimeExecutable {
 
 
     /**
-     * Go over the given {@link RheemPlan} and estimate the cardinalities of data being passed between its
+     * Go over the given {@link WayangPlan} and estimate the cardinalities of data being passed between its
      * {@link Operator}s and the execution profile and time of {@link ExecutionOperator}s.
      */
     private void estimateKeyFigures() {
@@ -371,7 +371,7 @@ public class Job extends OneTimeExecutable {
 
             this.optimizationRound.start("Cardinality&Load Estimation", "Create CardinalityEstimationManager");
             this.cardinalityEstimatorManager = new CardinalityEstimatorManager(
-                    this.rheemPlan, this.optimizationContext, this.configuration);
+                    this.wayangPlan, this.optimizationContext, this.configuration);
             this.optimizationRound.stop("Cardinality&Load Estimation", "Create CardinalityEstimationManager");
         }
 
@@ -384,7 +384,7 @@ public class Job extends OneTimeExecutable {
 
 
     /**
-     * Determine a good/the best execution plan from a given {@link RheemPlan}.
+     * Determine a good/the best execution plan from a given {@link WayangPlan}.
      */
     private ExecutionPlan createInitialExecutionPlan() {
         this.logger.info("Enumerating execution plans...");
@@ -443,13 +443,13 @@ public class Job extends OneTimeExecutable {
                     final double t2 = p2.getSquashedCostEstimate();
                     return t1 < t2 ? p1 : p2;
                 })
-                .orElseThrow(() -> new RheemException("Could not find an execution plan."));
+                .orElseThrow(() -> new WayangException("Could not find an execution plan."));
         this.logger.info("Picked {} as best plan.", bestPlanImplementation);
         return this.planImplementation = bestPlanImplementation;
     }
 
     /**
-     * Go over the given {@link RheemPlan} and update the cardinalities of data being passed between its
+     * Go over the given {@link WayangPlan} and update the cardinalities of data being passed between its
      * {@link Operator}s using the given {@link ExecutionState}.
      *
      * @return whether any cardinalities have been updated
@@ -459,19 +459,19 @@ public class Job extends OneTimeExecutable {
     }
 
     /**
-     * Creates a new {@link PlanEnumerator} for the {@link #rheemPlan} and {@link #configuration}.
+     * Creates a new {@link PlanEnumerator} for the {@link #wayangPlan} and {@link #configuration}.
      */
     private PlanEnumerator createPlanEnumerator() {
         return this.createPlanEnumerator(null, null);
     }
 
     /**
-     * Creates a new {@link PlanEnumerator} for the {@link #rheemPlan} and {@link #configuration}.
+     * Creates a new {@link PlanEnumerator} for the {@link #wayangPlan} and {@link #configuration}.
      */
     private PlanEnumerator createPlanEnumerator(ExecutionPlan existingPlan, Set<Channel> openChannels) {
         return existingPlan == null ?
-                new PlanEnumerator(this.rheemPlan, this.optimizationContext) :
-                new PlanEnumerator(this.rheemPlan, this.optimizationContext, existingPlan, openChannels);
+                new PlanEnumerator(this.wayangPlan, this.optimizationContext) :
+                new PlanEnumerator(this.wayangPlan, this.optimizationContext, existingPlan, openChannels);
     }
 
     /**
@@ -491,10 +491,10 @@ public class Job extends OneTimeExecutable {
             this.crossPlatformExecutor = new CrossPlatformExecutor(this, instrumentation);
         }
 
-        if (this.configuration.getOptionalBooleanProperty("rheem.core.debug.skipexecution").orElse(false)) {
+        if (this.configuration.getOptionalBooleanProperty("wayang.core.debug.skipexecution").orElse(false)) {
             return true;
         }
-        if (this.configuration.getBooleanProperty("rheem.core.optimizer.reoptimize")) {
+        if (this.configuration.getBooleanProperty("wayang.core.optimizer.reoptimize")) {
             this.setUpBreakpoint(executionPlan, currentExecutionRound);
         }
 
@@ -595,7 +595,7 @@ public class Job extends OneTimeExecutable {
     }
 
     /**
-     * Enumerate possible execution plans from the given {@link RheemPlan} and determine the (seemingly) best one.
+     * Enumerate possible execution plans from the given {@link WayangPlan} and determine the (seemingly) best one.
      */
     private void updateExecutionPlan(ExecutionPlan executionPlan) {
         // Defines the plan that we want to use in the end.
@@ -639,7 +639,7 @@ public class Job extends OneTimeExecutable {
      * consistency of accessed resources.
      */
     private void releaseResources() {
-        this.rheemContext.getCardinalityRepository().sleep();
+        this.wayangContext.getCardinalityRepository().sleep();
         if (this.crossPlatformExecutor != null) this.crossPlatformExecutor.shutdown();
     }
 
@@ -648,7 +648,7 @@ public class Job extends OneTimeExecutable {
 
         // For the last time, update the cardinalities and store them.
         this.reestimateCardinalities(this.crossPlatformExecutor);
-        final CardinalityRepository cardinalityRepository = this.rheemContext.getCardinalityRepository();
+        final CardinalityRepository cardinalityRepository = this.wayangContext.getCardinalityRepository();
         cardinalityRepository.storeAll(this.crossPlatformExecutor, this.optimizationContext);
 
         // Execution times.
@@ -767,7 +767,7 @@ public class Job extends OneTimeExecutable {
         }
 
         // Log some plan metrics.
-        final PlanMetrics planMetrics = PlanMetrics.createFor(this.rheemPlan, "Plan Metrics");
+        final PlanMetrics planMetrics = PlanMetrics.createFor(this.wayangPlan, "Plan Metrics");
         this.logger.info("Plan metrics: {} virtual operators, {} execution operators, {} alternatives, {} combinations",
                 planMetrics.getNumVirtualOperators(),
                 planMetrics.getNumExecutionOperators(),
@@ -840,12 +840,12 @@ public class Job extends OneTimeExecutable {
     }
 
     /**
-     * Provide the {@link RheemPlan} executed by this instance.
+     * Provide the {@link WayangPlan} executed by this instance.
      *
-     * @return the {@link RheemPlan}
+     * @return the {@link WayangPlan}
      */
-    public RheemPlan getRheemPlan() {
-        return this.rheemPlan;
+    public WayangPlan getWayangPlan() {
+        return this.wayangPlan;
     }
 
     /**

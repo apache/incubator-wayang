@@ -1,27 +1,27 @@
-package io.rheem.rheem.graphchi.platform;
+package org.apache.incubator.wayang.graphchi.platform;
 
 import edu.cmu.graphchi.io.CompressedIO;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.LoadToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.TimeToCostConverter;
-import io.rheem.rheem.core.platform.Executor;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.graphchi.execution.GraphChiExecutor;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.incubator.wayang.core.platform.Executor;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.graphchi.execution.GraphChiExecutor;
 
 /**
- * GraphChi {@link Platform} for Rheem.
+ * GraphChi {@link Platform} for Wayang.
  */
 public class GraphChiPlatform extends Platform {
 
-    public static final String CPU_MHZ_PROPERTY = "rheem.graphchi.cpu.mhz";
+    public static final String CPU_MHZ_PROPERTY = "wayang.graphchi.cpu.mhz";
 
-    public static final String CORES_PROPERTY = "rheem.graphchi.cores";
+    public static final String CORES_PROPERTY = "wayang.graphchi.cores";
 
-    public static final String HDFS_MS_PER_MB_PROPERTY = "rheem.graphchi.hdfs.ms-per-mb";
+    public static final String HDFS_MS_PER_MB_PROPERTY = "wayang.graphchi.hdfs.ms-per-mb";
 
-    private static final String DEFAULT_CONFIG_FILE = "rheem-graphchi-defaults.properties";
+    private static final String DEFAULT_CONFIG_FILE = "wayang-graphchi-defaults.properties";
 
     private static GraphChiPlatform instance;
 
@@ -73,8 +73,8 @@ public class GraphChiPlatform extends Platform {
     @Override
     public TimeToCostConverter createTimeToCostConverter(Configuration configuration) {
         return new TimeToCostConverter(
-                configuration.getDoubleProperty("rheem.graphchi.costs.fix"),
-                configuration.getDoubleProperty("rheem.graphchi.costs.per-ms")
+                configuration.getDoubleProperty("wayang.graphchi.costs.fix"),
+                configuration.getDoubleProperty("wayang.graphchi.costs.per-ms")
         );
     }
 }

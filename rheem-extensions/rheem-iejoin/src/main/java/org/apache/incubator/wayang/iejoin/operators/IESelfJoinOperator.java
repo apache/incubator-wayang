@@ -1,10 +1,10 @@
-package io.rheem.rheem.iejoin.operators;
+package org.apache.incubator.wayang.iejoin.operators;
 
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.data.Tuple5;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.data.Tuple5;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 /**
  * This operator applies inequality self join on elements of input datasets.

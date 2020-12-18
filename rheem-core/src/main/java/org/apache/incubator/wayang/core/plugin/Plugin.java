@@ -1,16 +1,16 @@
-package io.rheem.rheem.core.plugin;
+package org.apache.incubator.wayang.core.plugin;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.RheemContext;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.platform.Platform;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.WayangContext;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.platform.Platform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * A plugin contributes the following components to a {@link RheemContext}:
+ * A plugin contributes the following components to a {@link WayangContext}:
  * <ul>
  * <li>{@link Mapping}s,</li>
  * <li>{@link ChannelConversion}s, and</li>

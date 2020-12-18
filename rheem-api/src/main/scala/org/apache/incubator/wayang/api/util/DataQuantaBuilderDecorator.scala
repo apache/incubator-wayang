@@ -1,10 +1,10 @@
-package io.rheem.rheem.api.util
+package org.apache.incubator.wayang.api.util
 
 import de.hpi.isg.profiledb.store.model.Experiment
-import io.rheem.rheem.api.{DataQuanta, DataQuantaBuilder, JavaPlanBuilder}
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator
-import io.rheem.rheem.core.platform.Platform
-import io.rheem.rheem.core.types.DataSetType
+import org.apache.incubator.wayang.api.{DataQuanta, DataQuantaBuilder, JavaPlanBuilder}
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator
+import org.apache.incubator.wayang.core.platform.Platform
+import org.apache.incubator.wayang.core.types.DataSetType
 
 /**
   * Utility to extend a [[DataQuantaBuilder]]'s functionality by decoration.

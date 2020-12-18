@@ -1,11 +1,11 @@
-package io.rheem.rheem.java.test;
+package org.apache.incubator.wayang.java.test;
 
 import org.junit.Before;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.java.channels.StreamChannel;
-import io.rheem.rheem.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
 
 import java.util.Collection;
 import java.util.stream.Stream;

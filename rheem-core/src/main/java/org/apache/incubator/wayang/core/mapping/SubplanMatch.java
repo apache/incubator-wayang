@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.mapping;
+package org.apache.incubator.wayang.core.mapping;
 
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.platform.Platform;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.platform.Platform;
 
 import java.util.HashMap;
 import java.util.HashSet;

@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.util.mathex.model;
+package org.apache.incubator.wayang.core.util.mathex.model;
 
-import io.rheem.rheem.core.util.mathex.Context;
-import io.rheem.rheem.core.util.mathex.Expression;
+import org.apache.incubator.wayang.core.util.mathex.Context;
+import org.apache.incubator.wayang.core.util.mathex.Expression;
 
 /**
  * A constant {@link Expression}.

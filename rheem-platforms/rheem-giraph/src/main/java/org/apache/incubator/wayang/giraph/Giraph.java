@@ -1,7 +1,7 @@
-package io.rheem.rheem.giraph;
+package org.apache.incubator.wayang.giraph;
 
-import io.rheem.rheem.giraph.platform.GiraphPlatform;
-import io.rheem.rheem.giraph.plugin.GiraphPlugin;
+import org.apache.incubator.wayang.giraph.platform.GiraphPlatform;
+import org.apache.incubator.wayang.giraph.plugin.GiraphPlugin;
 
 /**
  * Register for relevant components of this module.

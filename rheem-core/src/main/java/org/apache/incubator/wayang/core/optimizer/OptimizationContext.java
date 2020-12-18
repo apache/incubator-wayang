@@ -1,32 +1,32 @@
-package io.rheem.rheem.core.optimizer;
+package org.apache.incubator.wayang.core.optimizer;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversionGraph;
-import io.rheem.rheem.core.optimizer.costs.EstimationContext;
-import io.rheem.rheem.core.optimizer.costs.LoadProfile;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.TimeEstimate;
-import io.rheem.rheem.core.optimizer.costs.TimeToCostConverter;
-import io.rheem.rheem.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
-import io.rheem.rheem.core.plan.rheemplan.CompositeOperator;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.LoopHeadOperator;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorContainer;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.PlanTraversal;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plan.rheemplan.Slot;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversionGraph;
+import org.apache.incubator.wayang.core.optimizer.costs.EstimationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfile;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.incubator.wayang.core.optimizer.enumeration.PlanEnumerationPruningStrategy;
+import org.apache.incubator.wayang.core.plan.wayangplan.CompositeOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorContainer;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.PlanTraversal;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Slot;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,8 +41,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Manages contextual information required during the optimization of a {@link RheemPlan}.
- * <p>A single {@link Operator} can have multiple contexts in a {@link RheemPlan} - namely if it appears in a loop.
+ * Manages contextual information required during the optimization of a {@link WayangPlan}.
+ * <p>A single {@link Operator} can have multiple contexts in a {@link WayangPlan} - namely if it appears in a loop.
  * We manage these contexts in a hierarchical fashion.</p>
  */
 public abstract class OptimizationContext {
@@ -50,7 +50,7 @@ public abstract class OptimizationContext {
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
-     * The {@link Job} whose {@link RheemPlan} is to be optimized.
+     * The {@link Job} whose {@link WayangPlan} is to be optimized.
      */
     protected final Job job;
 
@@ -327,7 +327,7 @@ public abstract class OptimizationContext {
         try {
             return resultClass.cast(value);
         } catch (ClassCastException e) {
-            throw new RheemException("Job-cache value cannot be casted as requested.", e);
+            throw new WayangException("Job-cache value cannot be casted as requested.", e);
         }
     }
 
@@ -537,7 +537,7 @@ public abstract class OptimizationContext {
             try {
                 this.loadProfile = LoadProfileEstimators.estimateLoadProfile(this, loadProfileEstimator);
             } catch (Exception e) {
-                throw new RheemException(String.format("Load profile estimation for %s failed.", this.operator), e);
+                throw new WayangException(String.format("Load profile estimation for %s failed.", this.operator), e);
             }
 
             // Calculate the TimeEstimate.

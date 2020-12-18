@@ -1,8 +1,8 @@
-package io.rheem.rheem.core.optimizer.costs;
+package org.apache.incubator.wayang.core.optimizer.costs;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
 
 import java.util.Collection;
 import java.util.LinkedList;
@@ -165,7 +165,7 @@ public class NestableLoadProfileEstimator implements LoadProfileEstimator {
                     this.getOverheadMillis()
             );
         } catch (Exception e) {
-             throw new RheemException(String.format("Failed estimating on %s.", this, context), e);
+             throw new WayangException(String.format("Failed estimating on %s.", this, context), e);
         }
     }
 

@@ -1,12 +1,12 @@
-package io.rheem.rheem.jdbc.operators;
+package org.apache.incubator.wayang.jdbc.operators;
 
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.operators.FilterOperator;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.jdbc.compiler.FunctionCompiler;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.operators.FilterOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.jdbc.compiler.FunctionCompiler;
 
 import java.sql.Connection;
 import java.util.Optional;
@@ -32,7 +32,7 @@ public abstract class JdbcFilterOperator extends FilterOperator<Record> implemen
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return String.format("rheem.%s.filter.load", this.getPlatform().getPlatformId());
+        return String.format("wayang.%s.filter.load", this.getPlatform().getPlatformId());
     }
 
     @Override

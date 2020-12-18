@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.util.mathex;
+package org.apache.incubator.wayang.core.util.mathex;
 
-import io.rheem.rheem.core.util.mathex.exceptions.EvaluationException;
+import org.apache.incubator.wayang.core.util.mathex.exceptions.EvaluationException;
 
 import java.util.HashMap;
 import java.util.Map;

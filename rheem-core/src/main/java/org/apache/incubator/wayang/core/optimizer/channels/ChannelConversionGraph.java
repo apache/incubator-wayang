@@ -1,26 +1,26 @@
-package io.rheem.rheem.core.optimizer.channels;
+package org.apache.incubator.wayang.core.optimizer.channels;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.DefaultOptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationUtils;
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.optimizer.costs.TimeEstimate;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.LoopHeadOperator;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.Junction;
-import io.rheem.rheem.core.util.Bitmask;
-import io.rheem.rheem.core.util.OneTimeExecutable;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.core.util.Tuple;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationUtils;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.Junction;
+import org.apache.incubator.wayang.core.util.Bitmask;
+import org.apache.incubator.wayang.core.util.OneTimeExecutable;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +70,7 @@ public class ChannelConversionGraph {
         this.costSquasher = configuration.getCostSquasherProvider().provide();
         configuration.getChannelConversionProvider().provideAll().forEach(this::add);
         String treeSelectionStrategyClassName = configuration.getStringProperty(
-                "rheem.core.optimizer.channels.selection",
+                "wayang.core.optimizer.channels.selection",
                 this.getClass().getCanonicalName() + '$' + CostbasedTreeSelectionStrategy.class.getSimpleName()
         );
         this.treeSelectionStrategy = ReflectionUtils.instantiateDefault(treeSelectionStrategyClassName);
@@ -350,7 +350,7 @@ public class ChannelConversionGraph {
 
             if (isOpenChannelsPresent) {
                 // Take any open channel and trace it back to the source channel.
-                Channel existingChannel = RheemCollections.getAny(openChannels);
+                Channel existingChannel = WayangCollections.getAny(openChannels);
                 while (existingChannel.getProducerSlot() != sourceOutput) {
                     existingChannel = OptimizationUtils.getPredecessorChannel(existingChannel);
                 }
@@ -377,7 +377,7 @@ public class ChannelConversionGraph {
 
 
             // Set up the destinations.
-            this.destChannelDescriptorSets = RheemCollections.map(destInputs, this::resolveSupportedChannels);
+            this.destChannelDescriptorSets = WayangCollections.map(destInputs, this::resolveSupportedChannels);
             assert this.destChannelDescriptorSets.stream().noneMatch(Collection::isEmpty);
             this.kernelizeChannelRequests();
 
@@ -461,7 +461,7 @@ public class ChannelConversionGraph {
                 // Loop input is needed in several iterations and must therefore be reusable.
                 return supportedInputChannels.stream().filter(ChannelDescriptor::isReusable).collect(Collectors.toSet());
             } else {
-                return RheemCollections.asSet(supportedInputChannels);
+                return WayangCollections.asSet(supportedInputChannels);
             }
         }
 
@@ -523,7 +523,7 @@ public class ChannelConversionGraph {
                 if (numReusableChannels == 0 && channelDescriptors.size() == 1) {
                     logger.warn(
                             "More than two target operators request only the non-reusable channel {}.",
-                            RheemCollections.getSingle(channelDescriptors)
+                            WayangCollections.getSingle(channelDescriptors)
                     );
                 }
                 if (channelDescriptors.size() - numReusableChannels == 1) {
@@ -731,11 +731,11 @@ public class ChannelConversionGraph {
 
                 if (numUnreachedDestinationSets >= 2) { // only combine when there is more than one destination left
                     final Collection<List<Collection<Tree>>> childSolutionSetCombinations =
-                            RheemCollections.createPowerList(childSolutionSets, numUnreachedDestinationSets);
+                            WayangCollections.createPowerList(childSolutionSets, numUnreachedDestinationSets);
                     for (List<Collection<Tree>> childSolutionSetCombination : childSolutionSetCombinations) {
                         if (childSolutionSetCombination.size() < 2)
                             continue; // only combine when we have more than on child solution
-                        for (List<Tree> solutionCombination : RheemCollections.streamedCrossProduct(childSolutionSetCombination)) {
+                        for (List<Tree> solutionCombination : WayangCollections.streamedCrossProduct(childSolutionSetCombination)) {
                             final Tree tree = ChannelConversionGraph.this.mergeTrees(solutionCombination);
                             if (tree != null) {
                                 newSolutions.merge(tree.settledDestinationIndices, tree, ChannelConversionGraph.this::selectPreferredTree);

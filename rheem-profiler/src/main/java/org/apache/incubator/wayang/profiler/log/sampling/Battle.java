@@ -1,4 +1,4 @@
-package io.rheem.rheem.profiler.log.sampling;
+package org.apache.incubator.wayang.profiler.log.sampling;
 
 /**
  * Implementation of a battle between to elements.

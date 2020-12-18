@@ -1,4 +1,4 @@
-package io.rheem.rheem.flink.compiler.criterion;
+package org.apache.incubator.wayang.flink.compiler.criterion;
 
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.TypeInformation;

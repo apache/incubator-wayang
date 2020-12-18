@@ -1,24 +1,24 @@
-package io.rheem.rheem.java.operators;
+package org.apache.incubator.wayang.java.operators;
 
-import io.rheem.rheem.basic.channels.FileChannel;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.UnarySink;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.core.util.fs.FileSystem;
-import io.rheem.rheem.core.util.fs.FileSystems;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.java.channels.JavaChannelInstance;
-import io.rheem.rheem.java.channels.StreamChannel;
-import io.rheem.rheem.java.execution.JavaExecutor;
-import io.rheem.rheem.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.basic.channels.FileChannel;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySink;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.core.util.fs.FileSystem;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.java.channels.JavaChannelInstance;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -90,7 +90,7 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
                 throw e.getCause();
             }
         } catch (IOException e) {
-            throw new RheemException(String.format("%s failed on writing to %s.", this, this.targetPath), e);
+            throw new WayangException(String.format("%s failed on writing to %s.", this, this.targetPath), e);
         }
 
         return ExecutionOperator.modelEagerExecution(inputs, outputs, operatorContext);
@@ -98,7 +98,7 @@ public class JavaTsvFileSink<T extends Tuple2<?, ?>> extends UnarySink<T> implem
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.java.tsvfilesink.load";
+        return "wayang.java.tsvfilesink.load";
     }
 
     @Override

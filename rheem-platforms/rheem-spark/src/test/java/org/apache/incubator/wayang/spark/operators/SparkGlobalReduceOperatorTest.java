@@ -1,16 +1,16 @@
-package io.rheem.rheem.spark.operators;
+package org.apache.incubator.wayang.spark.operators;
 
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.core.function.ReduceDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.types.DataUnitType;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.spark.channels.RddChannel;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.core.function.ReduceDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.types.DataUnitType;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -45,7 +45,7 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
         this.evaluate(globalReduce, inputs, outputs);
 
         // Verify the outcome.
-        final List<Integer> result = RheemCollections.asList(output.provideCollection());
+        final List<Integer> result = WayangCollections.asList(output.provideCollection());
         Assert.assertEquals(1, result.size());
         Assert.assertEquals(Integer.valueOf((10 + 1) * (10 / 2)), result.get(0)); // Props to Gauss!
 
@@ -76,7 +76,7 @@ public class SparkGlobalReduceOperatorTest extends SparkOperatorTestBase {
         this.evaluate(globalReduce, inputs, outputs);
 
         // Verify the outcome.
-        final List<Integer> result = RheemCollections.asList(output.provideCollection());
+        final List<Integer> result = WayangCollections.asList(output.provideCollection());
         Assert.assertEquals(1, result.size());
         Assert.assertEquals(Integer.valueOf(0), result.get(0));
 

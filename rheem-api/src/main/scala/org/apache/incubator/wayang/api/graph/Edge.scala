@@ -1,4 +1,4 @@
-package io.rheem.rheem.api.graph
+package org.apache.incubator.wayang.api.graph
 
 /**
   * Helper to handle [[Edge]]s.

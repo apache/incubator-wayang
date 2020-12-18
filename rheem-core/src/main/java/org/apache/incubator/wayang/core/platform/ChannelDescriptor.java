@@ -1,9 +1,9 @@
-package io.rheem.rheem.core.platform;
+package org.apache.incubator.wayang.core.platform;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionStage;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
 
 import java.lang.reflect.Constructor;
 import java.util.Objects;

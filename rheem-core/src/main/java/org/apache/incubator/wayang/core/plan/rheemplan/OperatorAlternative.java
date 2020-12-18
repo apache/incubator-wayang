@@ -1,10 +1,10 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityPusher;
-import io.rheem.rheem.core.optimizer.cardinality.OperatorAlternativeCardinalityPusher;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityPusher;
+import org.apache.incubator.wayang.core.optimizer.cardinality.OperatorAlternativeCardinalityPusher;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -175,7 +175,7 @@ public class OperatorAlternative extends OperatorBase implements CompositeOperat
         return String.format("%s[%dx ~%s, %x]",
                 this.getSimpleClassName(),
                 this.alternatives.size(),
-                RheemCollections.getAnyOptional(this.alternatives).orElse(null),
+                WayangCollections.getAnyOptional(this.alternatives).orElse(null),
                 this.hashCode());
     }
 

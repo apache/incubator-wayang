@@ -1,23 +1,23 @@
-package io.rheem.rheem
+package org.apache.incubator.wayang
 
 import _root_.java.lang.{Class => JavaClass, Iterable => JavaIterable}
 import _root_.java.util.function.{Consumer, ToLongBiFunction, ToLongFunction}
 
-import io.rheem.rheem.basic.data.{Record, Tuple2 => RheemTuple2}
-import io.rheem.rheem.core.api.RheemContext
-import io.rheem.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval
-import io.rheem.rheem.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, DefaultCardinalityEstimator, FixedSizeCardinalityEstimator}
-import io.rheem.rheem.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator, LoadProfileEstimator, NestableLoadProfileEstimator}
-import io.rheem.rheem.core.plan.rheemplan.ElementaryOperator
-import io.rheem.rheem.core.types.{BasicDataUnitType, DataSetType, DataUnitGroupType, DataUnitType}
+import org.apache.incubator.wayang.basic.data.{Record, Tuple2 => WayangTuple2}
+import org.apache.incubator.wayang.core.api.WayangContext
+import org.apache.incubator.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval
+import org.apache.incubator.wayang.core.optimizer.cardinality.{CardinalityEstimate, CardinalityEstimator, DefaultCardinalityEstimator, FixedSizeCardinalityEstimator}
+import org.apache.incubator.wayang.core.optimizer.costs.{DefaultLoadEstimator, LoadEstimator, LoadProfileEstimator, NestableLoadProfileEstimator}
+import org.apache.incubator.wayang.core.plan.wayangplan.ElementaryOperator
+import org.apache.incubator.wayang.core.types.{BasicDataUnitType, DataSetType, DataUnitGroupType, DataUnitType}
 
 import scala.collection.JavaConversions
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 
 /**
-  * Provides implicits for the basic Rheem API.
+  * Provides implicits for the basic Wayang API.
   */
 package object api {
 
@@ -43,7 +43,7 @@ package object api {
       override def apply(t: In) = scalaFunc(t)
     }
 
-  implicit def toJoinedDataQuanta[Out0: ClassTag, Out1: ClassTag](dataQuanta: DataQuanta[RheemTuple2[Out0, Out1]]):
+  implicit def toJoinedDataQuanta[Out0: ClassTag, Out1: ClassTag](dataQuanta: DataQuanta[WayangTuple2[Out0, Out1]]):
   JoinedDataQuanta[Out0, Out1] =
     new JoinedDataQuanta(dataQuanta)
 
@@ -121,7 +121,7 @@ package object api {
 
   implicit def toInterval(double: Double): ProbabilisticDoubleInterval = new ProbabilisticDoubleInterval(double, double, .99)
 
-  implicit def createPlanBuilder(rheemContext: RheemContext): PlanBuilder = new PlanBuilder(rheemContext)
+  implicit def createPlanBuilder(wayangContext: WayangContext): PlanBuilder = new PlanBuilder(wayangContext)
 
   implicit private[api] def wrap[Out: ClassTag](op: ElementaryOperator)(implicit planBuilder: PlanBuilder): DataQuanta[Out] =
     new DataQuanta[Out](op)

@@ -1,21 +1,21 @@
-package io.rheem.rheem.flink.plugin;
+package org.apache.incubator.wayang.flink.plugin;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.plugin.Plugin;
-import io.rheem.rheem.flink.channels.ChannelConversions;
-import io.rheem.rheem.flink.mapping.Mappings;
-import io.rheem.rheem.flink.platform.FlinkPlatform;
-import io.rheem.rheem.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.plugin.Plugin;
+import org.apache.incubator.wayang.flink.channels.ChannelConversions;
+import org.apache.incubator.wayang.flink.mapping.Mappings;
+import org.apache.incubator.wayang.flink.platform.FlinkPlatform;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
 
 import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * This {@link Plugin} enables to use the basic Rheem {@link Operator}s on the {@link FlinkPlatform}.
+ * This {@link Plugin} enables to use the basic Wayang {@link Operator}s on the {@link FlinkPlatform}.
  */
 public class FlinkBasicPlugin implements Plugin{
     @Override

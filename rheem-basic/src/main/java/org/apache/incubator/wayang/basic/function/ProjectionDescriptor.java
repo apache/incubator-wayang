@@ -1,10 +1,10 @@
-package io.rheem.rheem.basic.function;
+package org.apache.incubator.wayang.basic.function;
 
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.types.RecordType;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.types.BasicDataUnitType;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.types.RecordType;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.types.BasicDataUnitType;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;

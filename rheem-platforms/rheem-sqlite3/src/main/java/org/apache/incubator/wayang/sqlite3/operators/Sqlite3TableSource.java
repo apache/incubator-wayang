@@ -1,9 +1,9 @@
-package io.rheem.rheem.sqlite3.operators;
+package org.apache.incubator.wayang.sqlite3.operators;
 
-import io.rheem.rheem.basic.operators.TableSource;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.jdbc.operators.JdbcTableSource;
-import io.rheem.rheem.sqlite3.platform.Sqlite3Platform;
+import org.apache.incubator.wayang.basic.operators.TableSource;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.jdbc.operators.JdbcTableSource;
+import org.apache.incubator.wayang.sqlite3.platform.Sqlite3Platform;
 
 import java.util.List;
 

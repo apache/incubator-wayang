@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 /**
  * This operator has a single input and a single output.

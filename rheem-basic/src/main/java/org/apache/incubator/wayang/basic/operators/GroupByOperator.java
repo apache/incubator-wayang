@@ -1,9 +1,9 @@
-package io.rheem.rheem.basic.operators;
+package org.apache.incubator.wayang.basic.operators;
 
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 /**
  * This is the auxiliary GroupBy operator, i.e., it behaves differently depending on its context. If it is followed

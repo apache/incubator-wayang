@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.util.fs;
+package org.apache.incubator.wayang.core.util.fs;
 
-import io.rheem.rheem.core.api.exception.RheemException;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,7 +33,7 @@ public class LocalFileSystem implements FileSystem {
      */
     public static File findTempDir() {
         try {
-            final File tempFile = File.createTempFile("rheem", "probe");
+            final File tempFile = File.createTempFile("wayang", "probe");
             tempFile.deleteOnExit();
             return tempFile.getParentFile();
         } catch (IOException e) {
@@ -52,7 +52,7 @@ public class LocalFileSystem implements FileSystem {
         try {
             return file.toPath().toUri().toURL().toString();
         } catch (MalformedURLException e) {
-            throw new RheemException(String.format("Could not create URI for %s", file), e);
+            throw new WayangException(String.format("Could not create URI for %s", file), e);
         }
     }
 
@@ -64,10 +64,10 @@ public class LocalFileSystem implements FileSystem {
     public static void ensureDir(File file) {
         if (file.exists()) {
             if (!file.isDirectory()) {
-                throw new RheemException(String.format("Could not ensure directory %s: It exists, but is not a directory.", file));
+                throw new WayangException(String.format("Could not ensure directory %s: It exists, but is not a directory.", file));
             }
         } else if (!file.mkdirs()) {
-            throw new RheemException(String.format("Could not ensure directory %s: It does not exist, but could also not be created.", file));
+            throw new WayangException(String.format("Could not ensure directory %s: It does not exist, but could also not be created.", file));
         }
     }
 
@@ -80,7 +80,7 @@ public class LocalFileSystem implements FileSystem {
         ensureDir(file.getParentFile());
         try (FileOutputStream fos = new FileOutputStream(file)) {
         } catch (IOException e) {
-            throw new RheemException(String.format("Could not create %s.", file), e);
+            throw new WayangException(String.format("Could not create %s.", file), e);
         }
     }
 

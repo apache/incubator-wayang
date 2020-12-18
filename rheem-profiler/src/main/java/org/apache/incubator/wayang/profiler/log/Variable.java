@@ -1,4 +1,4 @@
-package io.rheem.rheem.profiler.log;
+package org.apache.incubator.wayang.profiler.log;
 
 import java.util.Random;
 

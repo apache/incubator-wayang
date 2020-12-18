@@ -1,9 +1,9 @@
-package io.rheem.rheem.core.optimizer.cardinality;
+package org.apache.incubator.wayang.core.optimizer.cardinality;
 
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
 
 /**
  * Computes {@link CardinalityEstimate}s.

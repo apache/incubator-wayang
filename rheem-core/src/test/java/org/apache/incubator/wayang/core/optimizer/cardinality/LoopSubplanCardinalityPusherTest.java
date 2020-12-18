@@ -1,25 +1,25 @@
-package io.rheem.rheem.core.optimizer.cardinality;
+package org.apache.incubator.wayang.core.optimizer.cardinality;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.configuration.FunctionalKeyValueProvider;
-import io.rheem.rheem.core.api.configuration.KeyValueProvider;
-import io.rheem.rheem.core.optimizer.DefaultOptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ElementaryOperator;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.LoopIsolator;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.test.TestFilterOperator;
-import io.rheem.rheem.core.plan.rheemplan.test.TestJoin;
-import io.rheem.rheem.core.plan.rheemplan.test.TestLoopHead;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSource;
-import io.rheem.rheem.core.test.MockFactory;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.configuration.FunctionalKeyValueProvider;
+import org.apache.incubator.wayang.core.api.configuration.KeyValueProvider;
+import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ElementaryOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopIsolator;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestFilterOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestJoin;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestLoopHead;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSource;
+import org.apache.incubator.wayang.core.test.MockFactory;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 
 /**
  * Test suite for {@link LoopSubplanCardinalityPusher}.
@@ -134,12 +134,12 @@ public class LoopSubplanCardinalityPusherTest {
         final OptimizationContext.OperatorContext loopCtx = optimizationContext.getOperatorContext(loop);
 
         final CardinalityEstimate mainInputCardinality = new CardinalityEstimate(123, 321, 0.123d);
-        InputSlot<?> mainLoopInput = RheemCollections.getSingle(mainSource.getOutput("out").getOccupiedSlots());
+        InputSlot<?> mainLoopInput = WayangCollections.getSingle(mainSource.getOutput("out").getOccupiedSlots());
         loopCtx.setInputCardinality(mainLoopInput.getIndex(), mainInputCardinality);
         loop.propagateInputCardinality(mainLoopInput.getIndex(), loopCtx);
 
         final CardinalityEstimate sideInputCardinality = new CardinalityEstimate(5, 10, 0.9d);
-        InputSlot<?> sideLoopInput = RheemCollections.getSingle(sideSource.getOutput("out").getOccupiedSlots());
+        InputSlot<?> sideLoopInput = WayangCollections.getSingle(sideSource.getOutput("out").getOccupiedSlots());
         loopCtx.setInputCardinality(sideLoopInput.getIndex(), sideInputCardinality);
         loop.propagateInputCardinality(sideLoopInput.getIndex(), loopCtx);
 

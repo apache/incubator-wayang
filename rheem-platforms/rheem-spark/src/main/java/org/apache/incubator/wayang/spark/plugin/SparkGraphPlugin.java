@@ -1,20 +1,20 @@
-package io.rheem.rheem.spark.plugin;
+package org.apache.incubator.wayang.spark.plugin;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.plugin.Plugin;
-import io.rheem.rheem.java.platform.JavaPlatform;
-import io.rheem.rheem.spark.mapping.Mappings;
-import io.rheem.rheem.spark.platform.SparkPlatform;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.plugin.Plugin;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.spark.mapping.Mappings;
+import org.apache.incubator.wayang.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * This {@link Plugin} enables to use the basic Rheem {@link Operator}s on the {@link JavaPlatform}.
+ * This {@link Plugin} enables to use the basic Wayang {@link Operator}s on the {@link JavaPlatform}.
  */
 public class SparkGraphPlugin implements Plugin {
 

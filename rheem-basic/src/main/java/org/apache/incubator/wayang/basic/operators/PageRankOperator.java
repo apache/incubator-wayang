@@ -1,14 +1,14 @@
-package io.rheem.rheem.basic.operators;
+package org.apache.incubator.wayang.basic.operators;
 
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import io.rheem.rheem.core.plan.rheemplan.EstimationContextProperty;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.EstimationContextProperty;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 import java.util.Optional;
 

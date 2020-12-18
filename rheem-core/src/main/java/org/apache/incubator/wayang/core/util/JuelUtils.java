@@ -1,10 +1,10 @@
-package io.rheem.rheem.core.util;
+package org.apache.incubator.wayang.core.util;
 
 import de.odysseus.el.ExpressionFactoryImpl;
 import de.odysseus.el.TreeValueExpression;
 import de.odysseus.el.util.SimpleContext;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationUtils;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.el.ValueExpression;
@@ -53,11 +53,11 @@ public class JuelUtils {
         private void initializeContext(SimpleContext ctx) {
             try {
                 ctx.setFunction("math", "sqrt", Math.class.getMethod("sqrt", double.class));
-                ctx.setFunction("rheem", "logGrowth", OptimizationUtils.class.getMethod(
+                ctx.setFunction("wayang", "logGrowth", OptimizationUtils.class.getMethod(
                         "logisticGrowth", double.class, double.class, double.class, double.class)
                 );
             } catch (NoSuchMethodException e) {
-                throw new RheemException("Could not initialize JUEL context.", e);
+                throw new WayangException("Could not initialize JUEL context.", e);
             }
         }
 

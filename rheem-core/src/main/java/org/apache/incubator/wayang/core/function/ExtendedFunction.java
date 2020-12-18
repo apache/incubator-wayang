@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.function;
+package org.apache.incubator.wayang.core.function;
 
-import io.rheem.rheem.core.plan.rheemplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
 
 /**
  * Used to enrich regular functions with additional life-cycle methods of {@link Operator}s.

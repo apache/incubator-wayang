@@ -1,13 +1,13 @@
-package io.rheem.rheem.jdbc.operators;
+package org.apache.incubator.wayang.jdbc.operators;
 
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.function.ProjectionDescriptor;
-import io.rheem.rheem.basic.operators.MapOperator;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.jdbc.compiler.FunctionCompiler;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.function.ProjectionDescriptor;
+import org.apache.incubator.wayang.basic.operators.MapOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.jdbc.compiler.FunctionCompiler;
 
 import java.sql.Connection;
 import java.util.Optional;
@@ -54,7 +54,7 @@ public abstract class JdbcProjectionOperator extends MapOperator<Record, Record>
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return String.format("rheem.%s.projection.load", this.getPlatform().getPlatformId());
+        return String.format("wayang.%s.projection.load", this.getPlatform().getPlatformId());
     }
 
     @Override

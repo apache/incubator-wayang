@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.mapping;
+package org.apache.incubator.wayang.core.mapping;
 
 import java.util.Collection;
 

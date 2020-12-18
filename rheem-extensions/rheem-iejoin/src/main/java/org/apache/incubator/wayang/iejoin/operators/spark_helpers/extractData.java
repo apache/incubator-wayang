@@ -1,7 +1,7 @@
-package io.rheem.rheem.iejoin.operators.spark_helpers;
+package org.apache.incubator.wayang.iejoin.operators.spark_helpers;
 
 import org.apache.spark.api.java.function.Function;
-import io.rheem.rheem.iejoin.data.Data;
+import org.apache.incubator.wayang.iejoin.data.Data;
 import scala.Tuple2;
 
 /**

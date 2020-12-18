@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.platform;
+package org.apache.incubator.wayang.core.platform;
 
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.util.AbstractReferenceCountable;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.util.AbstractReferenceCountable;
 
 /**
  * Implements various functionalities of an {@link ExecutionResource}.
@@ -33,11 +33,11 @@ public abstract class ExecutionResourceTemplate extends AbstractReferenceCountab
     }
 
     @Override
-    public void dispose() throws RheemException {
+    public void dispose() throws WayangException {
         try {
             this.doDispose();
         } catch (Throwable t) {
-            throw new RheemException(String.format("Releasing %s failed.", this), t);
+            throw new WayangException(String.format("Releasing %s failed.", this), t);
         } finally {
             if (this.container != null) {
                 this.container.unregister(this);

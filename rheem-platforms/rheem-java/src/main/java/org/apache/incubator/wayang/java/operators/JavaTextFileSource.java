@@ -1,17 +1,17 @@
-package io.rheem.rheem.java.operators;
+package org.apache.incubator.wayang.java.operators;
 
-import io.rheem.rheem.basic.operators.TextFileSource;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.core.util.fs.FileSystem;
-import io.rheem.rheem.core.util.fs.FileSystems;
-import io.rheem.rheem.java.channels.StreamChannel;
-import io.rheem.rheem.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.basic.operators.TextFileSource;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.core.util.fs.FileSystem;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -52,7 +52,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
         String url = this.getInputUrl().trim();
         FileSystem fs = FileSystems.getFileSystem(url).orElseThrow(
-                () -> new RheemException(String.format("Cannot access file system of %s.", url))
+                () -> new WayangException(String.format("Cannot access file system of %s.", url))
         );
 
         try {
@@ -60,16 +60,16 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
             Stream<String> lines = new BufferedReader(new InputStreamReader(inputStream)).lines();
             ((StreamChannel.Instance) outputs[0]).accept(lines);
         } catch (IOException e) {
-            throw new RheemException(String.format("Reading %s failed.", url), e);
+            throw new WayangException(String.format("Reading %s failed.", url), e);
         }
 
         ExecutionLineageNode prepareLineageNode = new ExecutionLineageNode(operatorContext);
         prepareLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.java.textfilesource.load.prepare", javaExecutor.getConfiguration()
+                "wayang.java.textfilesource.load.prepare", javaExecutor.getConfiguration()
         ));
         ExecutionLineageNode mainLineageNode = new ExecutionLineageNode(operatorContext);
         mainLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.java.textfilesource.load.main", javaExecutor.getConfiguration()
+                "wayang.java.textfilesource.load.main", javaExecutor.getConfiguration()
         ));
 
         outputs[0].getLineage().addPredecessor(mainLineageNode);
@@ -79,7 +79,7 @@ public class JavaTextFileSource extends TextFileSource implements JavaExecutionO
 
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
-        return Arrays.asList("rheem.java.textfilesource.load.prepare", "rheem.java.textfilesource.load.main");
+        return Arrays.asList("wayang.java.textfilesource.load.prepare", "wayang.java.textfilesource.load.main");
     }
 
     @Override

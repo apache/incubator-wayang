@@ -1,9 +1,9 @@
-package io.rheem.rheem.core.profiling;
+package org.apache.incubator.wayang.core.profiling;
 
 import de.hpi.isg.profiledb.ProfileDB;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorBase;
-import io.rheem.rheem.core.plan.rheemplan.PlanMetrics;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorBase;
+import org.apache.incubator.wayang.core.plan.wayangplan.PlanMetrics;
 
 /**
  * Utilities to work with {@link de.hpi.isg.profiledb.ProfileDB}s.
@@ -22,7 +22,7 @@ public class ProfileDBs {
     }
 
     /**
-     * Customize a {@link ProfileDB} for use with Rheem.
+     * Customize a {@link ProfileDB} for use with Wayang.
      *
      * @param profileDB the {@link ProfileDB}
      */

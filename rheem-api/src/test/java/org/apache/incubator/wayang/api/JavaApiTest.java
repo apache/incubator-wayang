@@ -1,25 +1,25 @@
-package io.rheem.rheem.api;
+package org.apache.incubator.wayang.api;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.RheemContext;
-import io.rheem.rheem.core.function.ExecutionContext;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.RheemArrays;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.core.util.fs.LocalFileSystem;
-import io.rheem.rheem.java.Java;
-import io.rheem.rheem.java.operators.JavaMapOperator;
-import io.rheem.rheem.spark.Spark;
-import io.rheem.rheem.sqlite3.Sqlite3;
-import io.rheem.rheem.sqlite3.operators.Sqlite3TableSource;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.WayangContext;
+import org.apache.incubator.wayang.core.function.ExecutionContext;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.WayangArrays;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.core.util.fs.LocalFileSystem;
+import org.apache.incubator.wayang.java.Java;
+import org.apache.incubator.wayang.java.operators.JavaMapOperator;
+import org.apache.incubator.wayang.spark.Spark;
+import org.apache.incubator.wayang.sqlite3.Sqlite3;
+import org.apache.incubator.wayang.sqlite3.operators.Sqlite3TableSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,9 +50,9 @@ public class JavaApiTest {
     public void setUp() throws SQLException, IOException {
         // Generate test data.
         this.sqlite3Configuration = new Configuration();
-        File sqlite3dbFile = File.createTempFile("rheem-sqlite3", "db");
+        File sqlite3dbFile = File.createTempFile("wayang-sqlite3", "db");
         sqlite3dbFile.deleteOnExit();
-        this.sqlite3Configuration.setProperty("rheem.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath());
+        this.sqlite3Configuration.setProperty("wayang.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath());
         try (Connection connection = Sqlite3.platform().createDatabaseDescriptor(this.sqlite3Configuration).createJdbcConnection()) {
             Statement statement = connection.createStatement();
             statement.addBatch("DROP TABLE IF EXISTS customer;");
@@ -66,8 +66,8 @@ public class JavaApiTest {
 
     @Test
     public void testMapReduce() {
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(rheemContext);
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(wayangContext);
 
         List<Integer> inputCollection = Arrays.asList(0, 1, 2, 3, 4);
         Collection<Integer> outputCollection = javaPlanBuilder
@@ -76,13 +76,13 @@ public class JavaApiTest {
                 .reduce((a, b) -> a + b).withName("sum")
                 .collect();
 
-        Assert.assertEquals(RheemCollections.asSet(1 + 4 + 9 + 16), RheemCollections.asSet(outputCollection));
+        Assert.assertEquals(WayangCollections.asSet(1 + 4 + 9 + 16), WayangCollections.asSet(outputCollection));
     }
 
     @Test
     public void testMapReduceBy() {
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(rheemContext);
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(wayangContext);
 
         List<Integer> inputCollection = Arrays.asList(0, 1, 2, 3, 4);
         Collection<Integer> outputCollection = javaPlanBuilder
@@ -91,13 +91,13 @@ public class JavaApiTest {
                 .reduceByKey(i -> i & 1, (a, b) -> a + b).withName("sum")
                 .collect();
 
-        Assert.assertEquals(RheemCollections.asSet(4 + 16, 1 + 9), RheemCollections.asSet(outputCollection));
+        Assert.assertEquals(WayangCollections.asSet(4 + 16, 1 + 9), WayangCollections.asSet(outputCollection));
     }
 
     @Test
     public void testBroadcast2() {
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(rheemContext);
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder javaPlanBuilder = new JavaPlanBuilder(wayangContext);
 
         List<Integer> inputCollection = Arrays.asList(0, 1, 2, 3, 4);
         List<Integer> offsetCollection = Collections.singletonList(-2);
@@ -111,18 +111,18 @@ public class JavaApiTest {
                 .map(new AddOffset("offset")).withName("add offset").withBroadcast(offsetDataQuanta, "offset")
                 .collect();
 
-        Assert.assertEquals(RheemCollections.asSet(-2, -1, 0, 1, 2), RheemCollections.asSet(outputCollection));
+        Assert.assertEquals(WayangCollections.asSet(-2, -1, 0, 1, 2), WayangCollections.asSet(outputCollection));
     }
 
     @Test
     public void testCustomOperatorShortCut() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
-        final List<Integer> inputValues = RheemArrays.asList(0, 1, 2, 3);
+        final List<Integer> inputValues = WayangArrays.asList(0, 1, 2, 3);
 
-        // Build and execute a Rheem plan.
-        final Collection<Integer> outputValues = new JavaPlanBuilder(rheemContext)
+        // Build and execute a Wayang plan.
+        final Collection<Integer> outputValues = new JavaPlanBuilder(wayangContext)
                 .loadCollection(inputValues).withName("Load input values")
                 .<Integer>customOperator(new JavaMapOperator<>(
                         DataSetType.createDefault(Integer.class),
@@ -135,19 +135,19 @@ public class JavaApiTest {
                 .collect();
 
         // Check the outcome.
-        final List<Integer> expectedOutputValues = RheemArrays.asList(2, 3, 4, 5);
-        Assert.assertEquals(RheemCollections.asSet(expectedOutputValues), RheemCollections.asSet(outputValues));
+        final List<Integer> expectedOutputValues = WayangArrays.asList(2, 3, 4, 5);
+        Assert.assertEquals(WayangCollections.asSet(expectedOutputValues), WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testWordCount() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
         final List<String> inputValues = Arrays.asList("Big data is big.", "Is data big data?");
 
-        // Build and execute a Rheem plan.
-        final Collection<Tuple2<String, Integer>> outputValues = new JavaPlanBuilder(rheemContext)
+        // Build and execute a Wayang plan.
+        final Collection<Tuple2<String, Integer>> outputValues = new JavaPlanBuilder(wayangContext)
                 .loadCollection(inputValues).withName("Load input values")
                 .flatMap(line -> Arrays.asList(line.split("\\s+"))).withName("Split words")
                 .map(token -> token.replaceAll("\\W+", "").toLowerCase()).withName("To lower case")
@@ -156,23 +156,23 @@ public class JavaApiTest {
                 .collect();
 
         // Check the outcome.
-        final Set<Tuple2<String, Integer>> expectedOutputValues = RheemCollections.asSet(
+        final Set<Tuple2<String, Integer>> expectedOutputValues = WayangCollections.asSet(
                 new Tuple2<>("big", 3),
                 new Tuple2<>("is", 2),
                 new Tuple2<>("data", 3)
         );
-        Assert.assertEquals(RheemCollections.asSet(expectedOutputValues), RheemCollections.asSet(outputValues));
+        Assert.assertEquals(WayangCollections.asSet(expectedOutputValues), WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testWordCountOnSparkAndJava() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
 
         final List<String> inputValues = Arrays.asList("Big data is big.", "Is data big data?");
 
-        // Build and execute a Rheem plan.
-        final Collection<Tuple2<String, Integer>> outputValues = new JavaPlanBuilder(rheemContext)
+        // Build and execute a Wayang plan.
+        final Collection<Tuple2<String, Integer>> outputValues = new JavaPlanBuilder(wayangContext)
                 .loadCollection(inputValues).withName("Load input values")
                 .flatMap(line -> Arrays.asList(line.split("\\s+"))).withName("Split words")
                 .map(token -> token.replaceAll("\\W+", "").toLowerCase()).withName("To lower case")
@@ -181,45 +181,45 @@ public class JavaApiTest {
                 .collect();
 
         // Check the outcome.
-        final Set<Tuple2<String, Integer>> expectedOutputValues = RheemCollections.asSet(
+        final Set<Tuple2<String, Integer>> expectedOutputValues = WayangCollections.asSet(
                 new Tuple2<>("big", 3),
                 new Tuple2<>("is", 2),
                 new Tuple2<>("data", 3)
         );
-        Assert.assertEquals(RheemCollections.asSet(expectedOutputValues), RheemCollections.asSet(outputValues));
+        Assert.assertEquals(WayangCollections.asSet(expectedOutputValues), WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testSample() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
 
         // Create some input values.
-        final List<Integer> inputValues = RheemArrays.asList(RheemArrays.range(100));
+        final List<Integer> inputValues = WayangArrays.asList(WayangArrays.range(100));
 
-        // Build and execute a Rheem plan.
-        final Collection<Integer> outputValues = new JavaPlanBuilder(rheemContext)
+        // Build and execute a Wayang plan.
+        final Collection<Integer> outputValues = new JavaPlanBuilder(wayangContext)
                 .loadCollection(inputValues).withName("Load input values")
                 .sample(10).withName("Sample")
                 .collect();
 
         // Check the outcome.
         Assert.assertEquals(10, outputValues.size());
-        Assert.assertEquals(10, RheemCollections.asSet(outputValues).size());
+        Assert.assertEquals(10, WayangCollections.asSet(outputValues).size());
 
     }
 
     @Test
     public void testDoWhile() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
         // Generate test data.
-        final List<Integer> inputValues = RheemArrays.asList(1, 2);
+        final List<Integer> inputValues = WayangArrays.asList(1, 2);
 
-        // Build and execute a word count RheemPlan.
+        // Build and execute a word count WayangPlan.
 
-        final Collection<Integer> outputValues = new JavaPlanBuilder(rheemContext)
+        final Collection<Integer> outputValues = new JavaPlanBuilder(wayangContext)
                 .loadCollection(inputValues).withName("Load input values")
                 .doWhile(
                         values -> values.stream().mapToInt(i -> i).sum() > 100,
@@ -234,8 +234,8 @@ public class JavaApiTest {
                 ).withConditionClass(Integer.class).withName("While <= 100")
                 .collect();
 
-        Set<Integer> expectedValues = RheemCollections.asSet(1, 2, 3, 6, 12, 24, 48, 96, 192);
-        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+        Set<Integer> expectedValues = WayangCollections.asSet(1, 2, 3, 6, 12, 24, 48, 96, 192);
+        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     private static class AddOffset implements FunctionDescriptor.ExtendedSerializableFunction<Integer, Integer> {
@@ -250,7 +250,7 @@ public class JavaApiTest {
 
         @Override
         public void open(ExecutionContext ctx) {
-            this.offset = RheemCollections.getSingle(ctx.<Integer>getBroadcast(this.broadcastName));
+            this.offset = WayangCollections.getSingle(ctx.<Integer>getBroadcast(this.broadcastName));
         }
 
         @Override
@@ -261,15 +261,15 @@ public class JavaApiTest {
 
     @Test
     public void testRepeat() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
 
         // Generate test data.
-        final List<Integer> inputValues = RheemArrays.asList(1, 2);
+        final List<Integer> inputValues = WayangArrays.asList(1, 2);
 
-        // Build and execute a word count RheemPlan.
+        // Build and execute a word count WayangPlan.
 
-        final Collection<Integer> outputValues = new JavaPlanBuilder(rheemContext)
+        final Collection<Integer> outputValues = new JavaPlanBuilder(wayangContext)
                 .loadCollection(inputValues).withName("Load input values")
                 .repeat(3, start -> start
                         .reduce((a, b) -> a * b).withName("Multiply")
@@ -277,8 +277,8 @@ public class JavaApiTest {
                 ).withName("Repeat 3x")
                 .collect();
 
-        Set<Integer> expectedValues = RheemCollections.asSet(42, 43);
-        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+        Set<Integer> expectedValues = WayangCollections.asSet(42, 43);
+        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     private static class SelectWords implements PredicateDescriptor.ExtendedSerializablePredicate<String> {
@@ -304,9 +304,9 @@ public class JavaApiTest {
 
     @Test
     public void testBroadcast() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Generate test data.
         final List<String> inputValues = Arrays.asList("Hello", "World", "Hi", "Mars");
@@ -321,15 +321,15 @@ public class JavaApiTest {
                 .collect();
 
         // Verify the outcome.
-        Set<String> expectedValues = RheemCollections.asSet("Hello", "World");
-        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+        Set<String> expectedValues = WayangCollections.asSet("Hello", "World");
+        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testGroupBy() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Generate test data.
         final List<Integer> inputValues = Arrays.asList(1, 2, 3, 4, 5, 7, 8, 9, 10);
@@ -350,15 +350,15 @@ public class JavaApiTest {
                 .collect();
 
         // Verify the outcome.
-        Set<Double> expectedValues = RheemCollections.asSet(5d, 6d);
-        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+        Set<Double> expectedValues = WayangCollections.asSet(5d, 6d);
+        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testJoin() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Generate test data.
         final List<Tuple2<String, Integer>> inputValues1 = Arrays.asList(
@@ -381,19 +381,19 @@ public class JavaApiTest {
                 .collect();
 
         // Verify the outcome.
-        Set<Tuple2<String, Integer>> expectedValues = RheemCollections.asSet(
+        Set<Tuple2<String, Integer>> expectedValues = WayangCollections.asSet(
                 new Tuple2<>("Apple juice", 10),
                 new Tuple2<>("Orange juice", 10),
                 new Tuple2<>("Tap water", 0)
         );
-        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testJoinAndAssemble() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Generate test data.
         final List<Tuple2<String, Integer>> inputValues1 = Arrays.asList(
@@ -416,19 +416,19 @@ public class JavaApiTest {
                 .collect();
 
         // Verify the outcome.
-        Set<Tuple2<String, Integer>> expectedValues = RheemCollections.asSet(
+        Set<Tuple2<String, Integer>> expectedValues = WayangCollections.asSet(
                 new Tuple2<>("Apple juice", 10),
                 new Tuple2<>("Orange juice", 10),
                 new Tuple2<>("Tap water", 0)
         );
-        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testCoGroup() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Generate test data.
         final List<Tuple2<String, Integer>> inputValues1 = Arrays.asList(
@@ -448,33 +448,33 @@ public class JavaApiTest {
         final Collection<Tuple2<Set<Tuple2<String, Integer>>, Set<Tuple2<String, String>>>> outputValues = dataQuanta1
                 .coGroup(Tuple2::getField0, dataQuanta2, Tuple2::getField1)
                 .map(joinTuple -> new Tuple2<>(
-                        RheemCollections.asSet(joinTuple.getField0()),
-                        RheemCollections.asSet(joinTuple.getField1())
+                        WayangCollections.asSet(joinTuple.getField0()),
+                        WayangCollections.asSet(joinTuple.getField1())
                 ))
                 .collect();
 
         // Verify the outcome.
-        Set<Tuple2<Set<Tuple2<String, Integer>>, Set<Tuple2<String, String>>>> expectedValues = RheemCollections.asSet(
+        Set<Tuple2<Set<Tuple2<String, Integer>>, Set<Tuple2<String, String>>>> expectedValues = WayangCollections.asSet(
                 new Tuple2<>(
-                        RheemCollections.asSet(new Tuple2<>("Water", 0)),
-                        RheemCollections.asSet(new Tuple2<>("Tap water", "Water"))
+                        WayangCollections.asSet(new Tuple2<>("Water", 0)),
+                        WayangCollections.asSet(new Tuple2<>("Tap water", "Water"))
                 ),
                 new Tuple2<>(
-                        RheemCollections.asSet(new Tuple2<>("Cola", 5)),
-                        RheemCollections.asSet()
+                        WayangCollections.asSet(new Tuple2<>("Cola", 5)),
+                        WayangCollections.asSet()
                 ), new Tuple2<>(
-                        RheemCollections.asSet(new Tuple2<>("Juice", 10)),
-                        RheemCollections.asSet(new Tuple2<>("Apple juice", "Juice"), new Tuple2<>("Orange juice", "Juice"))
+                        WayangCollections.asSet(new Tuple2<>("Juice", 10)),
+                        WayangCollections.asSet(new Tuple2<>("Apple juice", "Juice"), new Tuple2<>("Orange juice", "Juice"))
                 )
         );
-        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testCoGroupViaKeyBy() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin()).with(Spark.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Generate test data.
         final List<Tuple2<String, Integer>> inputValues1 = Arrays.asList(
@@ -495,33 +495,33 @@ public class JavaApiTest {
                 dataQuanta1.keyBy(Tuple2::getField0)
                         .coGroup(dataQuanta2.keyBy(Tuple2::getField1))
                         .map(joinTuple -> new Tuple2<>(
-                                RheemCollections.asSet(joinTuple.getField0()),
-                                RheemCollections.asSet(joinTuple.getField1())
+                                WayangCollections.asSet(joinTuple.getField0()),
+                                WayangCollections.asSet(joinTuple.getField1())
                         ))
                         .collect();
 
         // Verify the outcome.
-        Set<Tuple2<Set<Tuple2<String, Integer>>, Set<Tuple2<String, String>>>> expectedValues = RheemCollections.asSet(
+        Set<Tuple2<Set<Tuple2<String, Integer>>, Set<Tuple2<String, String>>>> expectedValues = WayangCollections.asSet(
                 new Tuple2<>(
-                        RheemCollections.asSet(new Tuple2<>("Water", 0)),
-                        RheemCollections.asSet(new Tuple2<>("Tap water", "Water"))
+                        WayangCollections.asSet(new Tuple2<>("Water", 0)),
+                        WayangCollections.asSet(new Tuple2<>("Tap water", "Water"))
                 ),
                 new Tuple2<>(
-                        RheemCollections.asSet(new Tuple2<>("Cola", 5)),
-                        RheemCollections.asSet()
+                        WayangCollections.asSet(new Tuple2<>("Cola", 5)),
+                        WayangCollections.asSet()
                 ), new Tuple2<>(
-                        RheemCollections.asSet(new Tuple2<>("Juice", 10)),
-                        RheemCollections.asSet(new Tuple2<>("Apple juice", "Juice"), new Tuple2<>("Orange juice", "Juice"))
+                        WayangCollections.asSet(new Tuple2<>("Juice", 10)),
+                        WayangCollections.asSet(new Tuple2<>("Apple juice", "Juice"), new Tuple2<>("Orange juice", "Juice"))
                 )
         );
-        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testIntersect() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Generate test data.
         final List<Integer> inputValues1 = Arrays.asList(1, 2, 3, 4, 5, 7, 8, 9, 10);
@@ -533,15 +533,15 @@ public class JavaApiTest {
         final Collection<Integer> outputValues = dataQuanta1.intersect(dataQuanta2).collect();
 
         // Verify the outcome.
-        Set<Integer> expectedValues = RheemCollections.asSet(2, 3, 4, 5, 7, 8, 9);
-        Assert.assertEquals(expectedValues, RheemCollections.asSet(outputValues));
+        Set<Integer> expectedValues = WayangCollections.asSet(2, 3, 4, 5, 7, 8, 9);
+        Assert.assertEquals(expectedValues, WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testSort() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Generate test data.
         final List<Integer> inputValues1 = Arrays.asList(3, 4, 5, 2, 1);
@@ -552,17 +552,17 @@ public class JavaApiTest {
 
         // Verify the outcome.
         List<Integer> expectedValues = Arrays.asList(1, 2, 3, 4, 5);
-        Assert.assertEquals(expectedValues, RheemCollections.asList(outputValues));
+        Assert.assertEquals(expectedValues, WayangCollections.asList(outputValues));
     }
 
 
     @Test
     public void testPageRank() {
-        // Set up RheemContext.
-        RheemContext rheemContext = new RheemContext()
+        // Set up WayangContext.
+        WayangContext wayangContext = new WayangContext()
                 .with(Java.basicPlugin())
                 .with(Java.graphPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Create a test graph.
         Collection<Tuple2<Long, Long>> edges = Arrays.asList(
@@ -591,11 +591,11 @@ public class JavaApiTest {
 
     @Test
     public void testMapPartitions() {
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Generate test data.
-        List<Integer> inputValues = RheemArrays.asList(0, 1, 2, 3, 4, 6, 8);
+        List<Integer> inputValues = WayangArrays.asList(0, 1, 2, 3, 4, 6, 8);
 
         // Execute the job.
         Collection<Tuple2<String, Integer>> outputValues = builder.loadCollection(inputValues)
@@ -614,16 +614,16 @@ public class JavaApiTest {
                 .collect();
 
         // Check the output.
-        Set<Tuple2<String, Integer>> expectedOutput = RheemCollections.asSet(
+        Set<Tuple2<String, Integer>> expectedOutput = WayangCollections.asSet(
                 new Tuple2<>("even", 5), new Tuple2<>("odd", 2)
         );
-        Assert.assertEquals(expectedOutput, RheemCollections.asSet(outputValues));
+        Assert.assertEquals(expectedOutput, WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testZipWithId() {
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Generate test data.
         List<Integer> inputValues = new ArrayList<>(42 * 100);
@@ -649,13 +649,13 @@ public class JavaApiTest {
 
         // Check the output.
         Set<Tuple2<Integer, Integer>> expectedOutput = Collections.singleton(new Tuple2<>(42, 100));
-        Assert.assertEquals(expectedOutput, RheemCollections.asSet(outputValues));
+        Assert.assertEquals(expectedOutput, WayangCollections.asSet(outputValues));
     }
 
     @Test
     public void testWriteTextFile() throws IOException, URISyntaxException {
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemContext);
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangContext);
 
         // Generate test data.
         List<Double> inputValues = Arrays.asList(0d, 1 / 3d, 2 / 3d, 1d, 4 / 3d, 5 / 3d);
@@ -677,10 +677,10 @@ public class JavaApiTest {
     @Test
     public void testSqlOnJava() throws IOException, SQLException {
         // Execute job.
-        final RheemContext rheemCtx = new RheemContext(this.sqlite3Configuration)
+        final WayangContext wayangCtx = new WayangContext(this.sqlite3Configuration)
                 .with(Java.basicPlugin())
                 .with(Sqlite3.plugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemCtx, "testSqlOnJava()");
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangCtx, "testSqlOnJava()");
         final Collection<String> outputValues = builder
                 .readTable(new Sqlite3TableSource("customer", "name", "age"))
                 .filter(r -> (Integer) r.getField(1) >= 18).withSqlUdf("age >= 18").withTargetPlatform(Java.platform())
@@ -690,18 +690,18 @@ public class JavaApiTest {
 
         // Test the outcome.
         Assert.assertEquals(
-                RheemCollections.asSet("John", "Evelyn"),
-                RheemCollections.asSet(outputValues)
+                WayangCollections.asSet("John", "Evelyn"),
+                WayangCollections.asSet(outputValues)
         );
     }
 
     @Test
     public void testSqlOnSqlite3() throws IOException, SQLException {
         // Execute job.
-        final RheemContext rheemCtx = new RheemContext(this.sqlite3Configuration)
+        final WayangContext wayangCtx = new WayangContext(this.sqlite3Configuration)
                 .with(Java.basicPlugin())
                 .with(Sqlite3.plugin());
-        JavaPlanBuilder builder = new JavaPlanBuilder(rheemCtx, "testSqlOnSqlite3()");
+        JavaPlanBuilder builder = new JavaPlanBuilder(wayangCtx, "testSqlOnSqlite3()");
         final Collection<String> outputValues = builder
                 .readTable(new Sqlite3TableSource("customer", "name", "age"))
                 .filter(r -> (Integer) r.getField(1) >= 18).withSqlUdf("age >= 18")
@@ -711,8 +711,8 @@ public class JavaApiTest {
 
         // Test the outcome.
         Assert.assertEquals(
-                RheemCollections.asSet("John", "Evelyn"),
-                RheemCollections.asSet(outputValues)
+                WayangCollections.asSet("John", "Evelyn"),
+                WayangCollections.asSet(outputValues)
         );
     }
 

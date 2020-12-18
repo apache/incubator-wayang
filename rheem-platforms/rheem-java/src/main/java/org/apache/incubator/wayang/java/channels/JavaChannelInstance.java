@@ -1,7 +1,7 @@
-package io.rheem.rheem.java.channels;
+package org.apache.incubator.wayang.java.channels;
 
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
 
 import java.util.stream.Stream;
 

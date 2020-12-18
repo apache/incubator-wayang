@@ -1,17 +1,17 @@
-package io.rheem.rheem.basic.mapping;
+package org.apache.incubator.wayang.basic.mapping;
 
-import io.rheem.rheem.basic.operators.GlobalReduceOperator;
-import io.rheem.rheem.basic.operators.GroupByOperator;
-import io.rheem.rheem.basic.operators.ReduceByOperator;
-import io.rheem.rheem.basic.operators.ReduceOperator;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanMatch;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.basic.operators.GlobalReduceOperator;
+import org.apache.incubator.wayang.basic.operators.GroupByOperator;
+import org.apache.incubator.wayang.basic.operators.ReduceByOperator;
+import org.apache.incubator.wayang.basic.operators.ReduceOperator;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanMatch;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 import java.util.Collection;
 import java.util.Collections;

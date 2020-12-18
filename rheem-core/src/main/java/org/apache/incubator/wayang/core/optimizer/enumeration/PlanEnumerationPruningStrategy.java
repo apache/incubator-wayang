@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.optimizer.enumeration;
+package org.apache.incubator.wayang.core.optimizer.enumeration;
 
-import io.rheem.rheem.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Configuration;
 
 /**
  * A strategy to prune {@link PlanImplementation}s from a {@link PlanEnumeration}.

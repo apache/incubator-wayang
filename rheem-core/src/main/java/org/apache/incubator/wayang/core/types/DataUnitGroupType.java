@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.types;
+package org.apache.incubator.wayang.core.types;
 
-import io.rheem.rheem.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
 
 import java.util.Objects;
 

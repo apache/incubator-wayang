@@ -1,22 +1,22 @@
-package io.rheem.rheem.flink.operators;
+package org.apache.incubator.wayang.flink.operators;
 
 import org.apache.flink.api.common.aggregators.ConvergenceCriterion;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.operators.IterativeDataSet;
-import io.rheem.rheem.basic.operators.LoopOperator;
-import io.rheem.rheem.basic.operators.RepeatOperator;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.flink.channels.DataSetChannel;
-import io.rheem.rheem.flink.compiler.criterion.RheemAggregator;
-import io.rheem.rheem.flink.compiler.criterion.RheemFilterCriterion;
-import io.rheem.rheem.flink.execution.FlinkExecutor;
+import org.apache.incubator.wayang.basic.operators.LoopOperator;
+import org.apache.incubator.wayang.basic.operators.RepeatOperator;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.flink.channels.DataSetChannel;
+import org.apache.incubator.wayang.flink.compiler.criterion.WayangAggregator;
+import org.apache.incubator.wayang.flink.compiler.criterion.WayangFilterCriterion;
+import org.apache.incubator.wayang.flink.execution.FlinkExecutor;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -72,7 +72,7 @@ public class FlinkLoopOperator<InputType, ConvergenceType>
                 DataSet<InputType> input_initial = ((DataSetChannel.Instance) inputs[INITIAL_INPUT_INDEX]).provideDataSet();
                 DataSetChannel.Instance output_iteration = ((DataSetChannel.Instance) outputs[ITERATION_OUTPUT_INDEX]);
 
-                final ConvergenceCriterion rheemConvergeCriterion = flinkExecutor.getCompiler().compile(this.criterionDescriptor);
+                final ConvergenceCriterion wayangConvergeCriterion = flinkExecutor.getCompiler().compile(this.criterionDescriptor);
 
                 DataSet<InputType> initial_convergence = ((DataSetChannel.Instance) inputs[INITIAL_CONVERGENCE_INPUT_INDEX]).provideDataSet();
                 DataSetChannel.Instance output_convergence = ((DataSetChannel.Instance) outputs[ITERATION_CONVERGENCE_OUTPUT_INDEX]);
@@ -82,8 +82,8 @@ public class FlinkLoopOperator<InputType, ConvergenceType>
                         .iterate( 100)
                         .registerAggregationConvergenceCriterion(
                                 "Iteration_"+this.getName(),
-                                new RheemAggregator(),
-                                rheemConvergeCriterion
+                                new WayangAggregator(),
+                                wayangConvergeCriterion
                         );
 
                 output_iteration.accept(this.iterativeDataSet, flinkExecutor);
@@ -101,7 +101,7 @@ public class FlinkLoopOperator<InputType, ConvergenceType>
                 DataSetChannel.Instance final_output = ((DataSetChannel.Instance) outputs[FINAL_OUTPUT_INDEX]);
 
 
-                DataSet<InputType> filter = input_iteration.filter(new RheemFilterCriterion<>("Iteration_"+this.getName()));
+                DataSet<InputType> filter = input_iteration.filter(new WayangFilterCriterion<>("Iteration_"+this.getName()));
 
 
                 final_output.accept(this.iterativeDataSet.closeWith(filter), flinkExecutor);
@@ -124,7 +124,7 @@ public class FlinkLoopOperator<InputType, ConvergenceType>
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.flink.loop.load";
+        return "wayang.flink.loop.load";
     }
 
     @Override

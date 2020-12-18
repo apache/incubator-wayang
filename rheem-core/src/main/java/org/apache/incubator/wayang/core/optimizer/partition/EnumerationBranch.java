@@ -1,10 +1,10 @@
-package io.rheem.rheem.core.optimizer.partition;
+package org.apache.incubator.wayang.core.optimizer.partition;
 
-import io.rheem.rheem.core.plan.executionplan.ExecutionPlan;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
 
 /**
- * An enumeration branch is the basic unit for enumeration, i.e., translation from a {@link RheemPlan} to an
+ * An enumeration branch is the basic unit for enumeration, i.e., translation from a {@link WayangPlan} to an
  * {@link ExecutionPlan}.
  */
 public class EnumerationBranch {

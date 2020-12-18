@@ -1,12 +1,12 @@
-package io.rheem.rheem.core.test;
+package org.apache.incubator.wayang.core.test;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.costs.LoadProfile;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.TimeEstimate;
-import io.rheem.rheem.core.optimizer.costs.TimeToCostConverter;
-import io.rheem.rheem.core.platform.Executor;
-import io.rheem.rheem.core.platform.Platform;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfile;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.incubator.wayang.core.platform.Executor;
+import org.apache.incubator.wayang.core.platform.Platform;
 
 /**
  * {@link Platform} implementation for test purposes.

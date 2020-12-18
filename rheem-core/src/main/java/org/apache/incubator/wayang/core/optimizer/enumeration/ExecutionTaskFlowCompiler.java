@@ -1,20 +1,20 @@
-package io.rheem.rheem.core.optimizer.enumeration;
+package org.apache.incubator.wayang.core.optimizer.enumeration;
 
-import io.rheem.rheem.core.optimizer.OptimizationUtils;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionPlan;
-import io.rheem.rheem.core.plan.executionplan.ExecutionStage;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorAlternative;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plan.rheemplan.traversal.AbstractTopologicalTraversal;
-import io.rheem.rheem.core.platform.Junction;
-import io.rheem.rheem.core.platform.Platform;
+import org.apache.incubator.wayang.core.optimizer.OptimizationUtils;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.traversal.AbstractTopologicalTraversal;
+import org.apache.incubator.wayang.core.platform.Junction;
+import org.apache.incubator.wayang.core.platform.Platform;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
@@ -106,7 +106,7 @@ public class ExecutionTaskFlowCompiler
         this.startActivations = new LinkedList<>();
         for (Channel channel : openChannels) {
             // Detect the Slot connections that have yet to be fulfilled by this Channel.
-            OutputSlot<?> producerOutput = OptimizationUtils.findRheemPlanOutputSlotFor(channel);
+            OutputSlot<?> producerOutput = OptimizationUtils.findWayangPlanOutputSlotFor(channel);
             assert producerOutput != null : String.format("No producing output for %s.", channel);
 
             final LoopImplementation.IterationImplementation producerIterationImplementation =
@@ -137,7 +137,7 @@ public class ExecutionTaskFlowCompiler
             }
 
 //            // Now find all InputSlots that are fed by the OutputSlot and whose Operators have not yet been executed.
-//            Collection<InputSlot<?>> consumerInputs = this.findRheemPlanInputSlotFor(producerOutput);
+//            Collection<InputSlot<?>> consumerInputs = this.findWayangPlanInputSlotFor(producerOutput);
 //
 //            // Finally, produce Activations.
 //            if (!consumerInputs.isEmpty()) {
@@ -174,7 +174,7 @@ public class ExecutionTaskFlowCompiler
         }
     }
 
-    private Collection<InputSlot<?>> findRheemPlanInputSlotFor(OutputSlot<?> producerOutput) {
+    private Collection<InputSlot<?>> findWayangPlanInputSlotFor(OutputSlot<?> producerOutput) {
         return producerOutput.getOwner().getOutermostOutputSlots(producerOutput).stream()
                 .flatMap(outputSlot -> outputSlot.getOccupiedSlots().stream())
                 .flatMap(this::findExecutionOperatorInputs)
@@ -246,11 +246,11 @@ public class ExecutionTaskFlowCompiler
 
 
     /**
-     * Determine the consuming {@link InputSlot}s of the given {@link Channel} that lie within a {@link RheemPlan} and
+     * Determine the consuming {@link InputSlot}s of the given {@link Channel} that lie within a {@link WayangPlan} and
      * have not been executed yet.
-     * We follow non-RheemPlan {@link ExecutionOperator}s because they should merely forward data.
+     * We follow non-WayangPlan {@link ExecutionOperator}s because they should merely forward data.
      */
-    private Collection<InputSlot<?>> findRheemPlanInputSlotFor(Channel channel, Set<ExecutionStage> executedStages) {
+    private Collection<InputSlot<?>> findWayangPlanInputSlotFor(Channel channel, Set<ExecutionStage> executedStages) {
         Collection<InputSlot<?>> result = new LinkedList<>();
         for (ExecutionTask consumerTask : channel.getConsumers()) {
             if (executedStages.contains(consumerTask.getStage())) continue;
@@ -258,7 +258,7 @@ public class ExecutionTaskFlowCompiler
                 result.add(consumerTask.getInputSlotFor(channel));
             } else {
                 for (Channel consumerOutputChannel : consumerTask.getOutputChannels()) {
-                    result.addAll(this.findRheemPlanInputSlotFor(consumerOutputChannel, executedStages));
+                    result.addAll(this.findWayangPlanInputSlotFor(consumerOutputChannel, executedStages));
                 }
             }
         }

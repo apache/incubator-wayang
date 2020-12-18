@@ -14,7 +14,7 @@ function change_files {
 cd ../
 
 #TODO replace new_one with the new
-rename_structure io io new_one
-rename_structure rheem/rheem rheem new_one
+rename_structure io io org
+rename_structure wayang/wayang wayang  apache
 
-change_files "io\.rheem\.rheem" "new_one\.new_one\.rheem"
+change_files "io\.wayang\.wayang" "new_one\.new_one\.wayang"

@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.monitor;
+package org.apache.incubator.wayang.core.monitor;
 
-import io.rheem.rheem.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Configuration;
 
 import java.io.IOException;
 import java.util.HashMap;

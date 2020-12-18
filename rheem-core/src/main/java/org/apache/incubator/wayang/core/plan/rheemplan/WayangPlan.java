@@ -1,10 +1,10 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.optimizer.SanityChecker;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.optimizer.SanityChecker;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,9 +15,9 @@ import java.util.LinkedList;
 import java.util.Set;
 
 /**
- * A Rheem plan consists of a set of {@link Operator}s.
+ * A Wayang plan consists of a set of {@link Operator}s.
  */
-public class RheemPlan {
+public class WayangPlan {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -29,7 +29,7 @@ public class RheemPlan {
 
 
     /**
-     * Prepares this {@link RheemPlan} for the optimization process if not already done.
+     * Prepares this {@link WayangPlan} for the optimization process if not already done.
      */
     public void prepare() {
         this.prune();
@@ -41,14 +41,14 @@ public class RheemPlan {
      *
      * @param sinks the sinks of the new instance
      */
-    public RheemPlan(Operator... sinks) {
+    public WayangPlan(Operator... sinks) {
         for (Operator sink : sinks) {
             this.addSink(sink);
         }
     }
 
     /**
-     * @deprecated Use {@link RheemPlan#RheemPlan(Operator...)}.
+     * @deprecated Use {@link WayangPlan#WayangPlan(Operator...)}.
      */
     @Deprecated
     public void addSink(Operator sink) {
@@ -105,10 +105,10 @@ public class RheemPlan {
      *
      * @param name the name of the {@link Operator}s
      * @return the matching {@link Operator} or {@code null} if none
-     * @throws RheemException if there is more than one such {@link Operator}
+     * @throws WayangException if there is more than one such {@link Operator}
      */
-    public Operator collectTopLevelOperatorByName(String name) throws RheemException{
-        return RheemCollections.getSingleOrNull(this.collectTopLevelOperatorsByName(name));
+    public Operator collectTopLevelOperatorByName(String name) throws WayangException{
+        return WayangCollections.getSingleOrNull(this.collectTopLevelOperatorsByName(name));
     }
 
     /**
@@ -122,7 +122,7 @@ public class RheemPlan {
                 .withCallback((operator, input, output) -> {
                     reachableOperators.add(operator);
                     if (!operator.isElementary()) {
-                        this.logger.warn("Not yet considering nested operators during Rheem plan pruning.");
+                        this.logger.warn("Not yet considering nested operators during Wayang plan pruning.");
                     }
                 })
                 .traverse(this.sinks);
@@ -143,7 +143,7 @@ public class RheemPlan {
             new ArrayList<>(output.getOccupiedSlots()).stream()
                     .filter(occupiedInput -> !reachableOperators.contains(occupiedInput.getOwner()))
                     .forEach(occupiedInput -> {
-                        this.logger.warn("Pruning unreachable {} from Rheem plan.", occupiedInput.getOwner());
+                        this.logger.warn("Pruning unreachable {} from Wayang plan.", occupiedInput.getOwner());
                         output.unchecked().disconnectFrom(occupiedInput.unchecked());
                     });
         }
@@ -178,7 +178,7 @@ public class RheemPlan {
     }
 
     /**
-     * Check that the given {@link RheemPlan} is as we expect it to be in the following steps.
+     * Check that the given {@link WayangPlan} is as we expect it to be in the following steps.
      */
     public boolean isSane() {
         // We make some assumptions on the hyperplan. Make sure that they hold. After all, the transformations might

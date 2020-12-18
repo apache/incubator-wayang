@@ -1,9 +1,9 @@
-package io.rheem.rheem.core.util.mathex;
+package org.apache.incubator.wayang.core.util.mathex;
 
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.core.util.mathex.exceptions.ParseException;
+import org.apache.incubator.wayang.core.util.mathex.exceptions.ParseException;
 
 import java.util.Arrays;
 import java.util.Collection;

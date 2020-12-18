@@ -1,8 +1,8 @@
-package io.rheem.rheem.core.test;
+package org.apache.incubator.wayang.core.test;
 
 import org.json.JSONObject;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.util.JsonSerializable;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.util.JsonSerializable;
 
 /**
  * Dummy {@link ExecutionOperator} for test purposes.

@@ -1,11 +1,11 @@
-package io.rheem.rheem.core.mapping.test;
+package org.apache.incubator.wayang.core.mapping.test;
 
-import io.rheem.rheem.core.mapping.OperatorMatch;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanMatch;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSink;
-import io.rheem.rheem.core.plan.rheemplan.test.TestSink2;
+import org.apache.incubator.wayang.core.mapping.OperatorMatch;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanMatch;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSink;
+import org.apache.incubator.wayang.core.plan.wayangplan.test.TestSink2;
 
 /**
  * This factory replaces a {@link TestSink} by a

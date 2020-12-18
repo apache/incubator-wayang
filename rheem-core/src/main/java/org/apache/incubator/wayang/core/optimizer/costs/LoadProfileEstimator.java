@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.optimizer.costs;
+package org.apache.incubator.wayang.core.optimizer.costs;
 
-import io.rheem.rheem.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Configuration;
 
 import java.util.Collection;
 import java.util.LinkedList;

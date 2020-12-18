@@ -1,27 +1,27 @@
-package io.rheem.rheem.tests;
+package org.apache.incubator.wayang.tests;
 
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.CartesianOperator;
-import io.rheem.rheem.basic.operators.CoGroupOperator;
-import io.rheem.rheem.basic.operators.CollectionSource;
-import io.rheem.rheem.basic.operators.CountOperator;
-import io.rheem.rheem.basic.operators.DistinctOperator;
-import io.rheem.rheem.basic.operators.FilterOperator;
-import io.rheem.rheem.basic.operators.FlatMapOperator;
-import io.rheem.rheem.basic.operators.JoinOperator;
-import io.rheem.rheem.basic.operators.LocalCallbackSink;
-import io.rheem.rheem.basic.operators.MapOperator;
-import io.rheem.rheem.basic.operators.MapPartitionsOperator;
-import io.rheem.rheem.basic.operators.ReduceByOperator;
-import io.rheem.rheem.basic.operators.SortOperator;
-import io.rheem.rheem.basic.operators.TextFileSink;
-import io.rheem.rheem.basic.operators.TextFileSource;
-import io.rheem.rheem.basic.operators.UnionAllOperator;
-import io.rheem.rheem.basic.operators.ZipWithIdOperator;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.RheemArrays;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.CartesianOperator;
+import org.apache.incubator.wayang.basic.operators.CoGroupOperator;
+import org.apache.incubator.wayang.basic.operators.CollectionSource;
+import org.apache.incubator.wayang.basic.operators.CountOperator;
+import org.apache.incubator.wayang.basic.operators.DistinctOperator;
+import org.apache.incubator.wayang.basic.operators.FilterOperator;
+import org.apache.incubator.wayang.basic.operators.FlatMapOperator;
+import org.apache.incubator.wayang.basic.operators.JoinOperator;
+import org.apache.incubator.wayang.basic.operators.LocalCallbackSink;
+import org.apache.incubator.wayang.basic.operators.MapOperator;
+import org.apache.incubator.wayang.basic.operators.MapPartitionsOperator;
+import org.apache.incubator.wayang.basic.operators.ReduceByOperator;
+import org.apache.incubator.wayang.basic.operators.SortOperator;
+import org.apache.incubator.wayang.basic.operators.TextFileSink;
+import org.apache.incubator.wayang.basic.operators.TextFileSource;
+import org.apache.incubator.wayang.basic.operators.UnionAllOperator;
+import org.apache.incubator.wayang.basic.operators.ZipWithIdOperator;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.WayangArrays;
 
 import java.net.URI;
 import java.util.Arrays;
@@ -31,9 +31,9 @@ import java.util.List;
 /**
  * Provides plans that can be used for integration testing..
  */
-public class RheemPlansOperators extends RheemPlans{
+public class WayangPlansOperators extends WayangPlans{
 
-    public static RheemPlan cartesian(URI inputFileUri1, URI inputFileUri2, List<Tuple2<String, String>> collector){
+    public static WayangPlan cartesian(URI inputFileUri1, URI inputFileUri2, List<Tuple2<String, String>> collector){
         TextFileSource fileSource1 = new TextFileSource(inputFileUri1.toString());
         TextFileSource fileSource2 = new TextFileSource(inputFileUri2.toString());
 
@@ -45,10 +45,10 @@ public class RheemPlansOperators extends RheemPlans{
         fileSource2.connectTo(0, cartesianOperator, 1);
         cartesianOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan coGroup(URI inputFileUri1, URI inputFileUri2, List<Tuple2<?, ?>> collector){
+    public static WayangPlan coGroup(URI inputFileUri1, URI inputFileUri2, List<Tuple2<?, ?>> collector){
         TextFileSource fileSource1 = new TextFileSource(inputFileUri1.toString());
         TextFileSource fileSource2 = new TextFileSource(inputFileUri2.toString());
 
@@ -94,20 +94,20 @@ public class RheemPlansOperators extends RheemPlans{
         mapOperator2.connectTo(0, coGroupOperator, 1);
         coGroupOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan collectionSourceOperator(Collection<String> source, Collection<String> collector){
+    public static WayangPlan collectionSourceOperator(Collection<String> source, Collection<String> collector){
         CollectionSource<String> colSource = new CollectionSource<String>(source, String.class);
 
         LocalCallbackSink<String> sink = LocalCallbackSink.createCollectingSink(collector, String.class);
 
         colSource.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan count(Collection<String> source, Collection<Long> collector){
+    public static WayangPlan count(Collection<String> source, Collection<Long> collector){
         CollectionSource<String> colSource = new CollectionSource<String>(source, String.class);
 
         CountOperator<String> countOperator = new CountOperator<String>(String.class);
@@ -117,10 +117,10 @@ public class RheemPlansOperators extends RheemPlans{
         colSource.connectTo(0, countOperator, 0);
         countOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan distinct(URI inputFileUri1, Collection<String> collector){
+    public static WayangPlan distinct(URI inputFileUri1, Collection<String> collector){
         TextFileSource source = new TextFileSource(inputFileUri1.toString());
 
         MapOperator<String, String> mapOperator = new MapOperator<String, String>(
@@ -139,10 +139,10 @@ public class RheemPlansOperators extends RheemPlans{
         mapOperator.connectTo(0, distinctOperator, 0);
         distinctOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan filter(URI inputFileUri1, Collection<String> collector){
+    public static WayangPlan filter(URI inputFileUri1, Collection<String> collector){
         TextFileSource source = new TextFileSource(inputFileUri1.toString());
 
         FilterOperator<String> filterOperator = new FilterOperator<String>(
@@ -157,10 +157,10 @@ public class RheemPlansOperators extends RheemPlans{
         source.connectTo(0, filterOperator, 0);
         filterOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan flatMap(URI inputFileUri1, Collection<String> collector){
+    public static WayangPlan flatMap(URI inputFileUri1, Collection<String> collector){
         TextFileSource source = new TextFileSource(inputFileUri1.toString());
 
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<String, String>(
@@ -176,10 +176,10 @@ public class RheemPlansOperators extends RheemPlans{
         source.connectTo(0, flatMapOperator, 0);
         flatMapOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan join(URI inputFileUri1, URI inputFileUri2, Collection<Tuple2<?, ?>> collector){
+    public static WayangPlan join(URI inputFileUri1, URI inputFileUri2, Collection<Tuple2<?, ?>> collector){
         TextFileSource source1 = new TextFileSource(inputFileUri1.toString());
         TextFileSource source2 = new TextFileSource(inputFileUri2.toString());
 
@@ -220,11 +220,11 @@ public class RheemPlansOperators extends RheemPlans{
         mapOperator2.connectTo(0, joinOperator, 1);
         joinOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
 
-    public static RheemPlan reduceBy(URI inputFileUri1, Collection<Tuple2<?, ?>> collector){
+    public static WayangPlan reduceBy(URI inputFileUri1, Collection<Tuple2<?, ?>> collector){
         TextFileSource source = new TextFileSource(inputFileUri1.toString());
 
         FunctionDescriptor.SerializableFunction<String, Tuple2<String, String>> mapFunction =
@@ -257,10 +257,10 @@ public class RheemPlansOperators extends RheemPlans{
         mapOperator.connectTo(0, reduceByOperator, 0);
         reduceByOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan sort(URI inputFileUri1, Collection<String> collector){
+    public static WayangPlan sort(URI inputFileUri1, Collection<String> collector){
         TextFileSource source = new TextFileSource(inputFileUri1.toString());
 
         FunctionDescriptor.SerializableFunction<String, Iterable<String>> flatMapFunction =
@@ -287,20 +287,20 @@ public class RheemPlansOperators extends RheemPlans{
         flatMapOperator.connectTo(0, sortOperator, 0);
         sortOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan textFileSink(URI inputFileUri1, URI outputFileUri1){
+    public static WayangPlan textFileSink(URI inputFileUri1, URI outputFileUri1){
         TextFileSource source = new TextFileSource(inputFileUri1.toString());
 
         TextFileSink<String> sink = new TextFileSink<String>(outputFileUri1.toString(), String.class);
 
         source.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan union(URI inputFileUri1, URI inputFileUri2, Collection<String> collector){
+    public static WayangPlan union(URI inputFileUri1, URI inputFileUri2, Collection<String> collector){
         TextFileSource source1 = new TextFileSource(inputFileUri1.toString());
         TextFileSource source2 = new TextFileSource(inputFileUri2.toString());
 
@@ -312,10 +312,10 @@ public class RheemPlansOperators extends RheemPlans{
         source2.connectTo(0, unionAllOperator, 1);
         unionAllOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan zipWithId(URI inputFileUri1, Collection<Tuple2<Long, String>> collector){
+    public static WayangPlan zipWithId(URI inputFileUri1, Collection<Tuple2<Long, String>> collector){
         TextFileSource source1 = new TextFileSource(inputFileUri1.toString());
 
         ZipWithIdOperator<String> zipWithIdOperator = new ZipWithIdOperator<String>(String.class);
@@ -325,11 +325,11 @@ public class RheemPlansOperators extends RheemPlans{
         source1.connectTo(0, zipWithIdOperator, 0);
         zipWithIdOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
     }
 
-    public static RheemPlan mapPartitions(Collection<Tuple2<String, Integer>> collector, int... inputValues) {
-        CollectionSource<Integer> source = new CollectionSource<Integer>(RheemArrays.asList(inputValues), Integer.class);
+    public static WayangPlan mapPartitions(Collection<Tuple2<String, Integer>> collector, int... inputValues) {
+        CollectionSource<Integer> source = new CollectionSource<Integer>(WayangArrays.asList(inputValues), Integer.class);
 
         MapPartitionsOperator<Integer, Tuple2<String, Integer>> mapPartition = new MapPartitionsOperator<Integer, Tuple2<String, Integer>>(
                 partition -> {
@@ -365,7 +365,7 @@ public class RheemPlansOperators extends RheemPlans{
         mapPartition.connectTo(0, reduceByOperator, 0);
         reduceByOperator.connectTo(0, sink, 0);
 
-        return new RheemPlan(sink);
+        return new WayangPlan(sink);
 
     }
 }

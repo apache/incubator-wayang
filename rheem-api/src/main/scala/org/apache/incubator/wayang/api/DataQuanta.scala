@@ -1,4 +1,4 @@
-package io.rheem.rheem.api
+package org.apache.incubator.wayang.api
 
 import _root_.java.lang.{Iterable => JavaIterable}
 import _root_.java.util.function.{Consumer, IntUnaryOperator, BiFunction => JavaBiFunction, Function => JavaFunction}
@@ -6,28 +6,28 @@ import _root_.java.util.{Collection => JavaCollection}
 
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
-import io.rheem.rheem.basic.function.ProjectionDescriptor
-import io.rheem.rheem.basic.operators._
-import io.rheem.rheem.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
-import io.rheem.rheem.core.function._
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator
-import io.rheem.rheem.core.plan.rheemplan._
-import io.rheem.rheem.core.platform.Platform
-import io.rheem.rheem.core.util.{Tuple => RheemTuple}
-import io.rheem.rheem.basic.data.{Tuple2 => RheemTuple2}
+import org.apache.incubator.wayang.basic.function.ProjectionDescriptor
+import org.apache.incubator.wayang.basic.operators._
+import org.apache.incubator.wayang.core.function.FunctionDescriptor.{SerializableBinaryOperator, SerializableFunction, SerializablePredicate}
+import org.apache.incubator.wayang.core.function._
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator
+import org.apache.incubator.wayang.core.plan.wayangplan._
+import org.apache.incubator.wayang.core.platform.Platform
+import org.apache.incubator.wayang.core.util.{Tuple => WayangTuple}
+import org.apache.incubator.wayang.basic.data.{Tuple2 => WayangTuple2}
 
 import scala.collection.JavaConversions
 import scala.collection.JavaConversions._
 import scala.reflect._
 
 /**
-  * Represents an intermediate result/data flow edge in a [[RheemPlan]].
+  * Represents an intermediate result/data flow edge in a [[WayangPlan]].
   *
   * @param operator    a unary [[Operator]] that produces this instance
   * @param ev$1        the data type of the elements in this instance
-  * @param planBuilder keeps track of the [[RheemPlan]] being build
+  * @param planBuilder keeps track of the [[WayangPlan]] being build
   */
 class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: Int = 0)(implicit val planBuilder: PlanBuilder) {
 
@@ -419,7 +419,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   (thisKeyUdf: Out => Key,
    that: DataQuanta[ThatOut],
    thatKeyUdf: ThatOut => Key)
-  : DataQuanta[RheemTuple2[Out, ThatOut]] =
+  : DataQuanta[WayangTuple2[Out, ThatOut]] =
     joinJava(toSerializableFunction(thisKeyUdf), that, toSerializableFunction(thatKeyUdf))
 
   /**
@@ -434,7 +434,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   (thisKeyUdf: SerializableFunction[Out, Key],
    that: DataQuanta[ThatOut],
    thatKeyUdf: SerializableFunction[ThatOut, Key])
-  : DataQuanta[RheemTuple2[Out, ThatOut]] = {
+  : DataQuanta[WayangTuple2[Out, ThatOut]] = {
     require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
     val joinOperator = new JoinOperator(
       new TransformationDescriptor(thisKeyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
@@ -457,7 +457,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   (thisKeyUdf: Out => Key,
    that: DataQuanta[ThatOut],
    thatKeyUdf: ThatOut => Key)
-  : DataQuanta[RheemTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] =
+  : DataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] =
     coGroupJava(toSerializableFunction(thisKeyUdf), that, toSerializableFunction(thatKeyUdf))
 
   /**
@@ -472,7 +472,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
   (thisKeyUdf: SerializableFunction[Out, Key],
    that: DataQuanta[ThatOut],
    thatKeyUdf: SerializableFunction[ThatOut, Key])
-  : DataQuanta[RheemTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] = {
+  : DataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] = {
     require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
     val coGroupOperator = new CoGroupOperator(
       new TransformationDescriptor(thisKeyUdf, basicDataUnitType[Out], basicDataUnitType[Key]),
@@ -518,7 +518,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     * @return a new instance representing the [[CartesianOperator]]'s output
     */
   def cartesian[ThatOut: ClassTag](that: DataQuanta[ThatOut])
-  : DataQuanta[RheemTuple2[Out, ThatOut]] = {
+  : DataQuanta[WayangTuple2[Out, ThatOut]] = {
     require(this.planBuilder eq that.planBuilder, s"$this and $that must use the same plan builders.")
     val cartesianOperator = new CartesianOperator(dataSetType[Out], dataSetType[ThatOut])
     this.connectTo(cartesianOperator, 0)
@@ -531,7 +531,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     *
     * @return a new instance representing the [[ZipWithIdOperator]]'s output
     */
-  def zipWithId: DataQuanta[RheemTuple2[java.lang.Long, Out]] = {
+  def zipWithId: DataQuanta[WayangTuple2[java.lang.Long, Out]] = {
     val zipWithIdOperator = new ZipWithIdOperator(dataSetType[Out])
     this.connectTo(zipWithIdOperator, 0)
     zipWithIdOperator
@@ -574,10 +574,10 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
                                  udfLoad: LoadProfileEstimator = null) =
     doWhileJava(
       toSerializablePredicate((in: JavaCollection[ConvOut]) => udf(JavaConversions.collectionAsScalaIterable(in))),
-      new JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]] {
+      new JavaFunction[DataQuanta[Out], WayangTuple[DataQuanta[Out], DataQuanta[ConvOut]]] {
         override def apply(t: DataQuanta[Out]) = {
           val result = bodyBuilder(t)
-          new RheemTuple(result._1, result._2)
+          new WayangTuple(result._1, result._2)
         }
       },
       numExpectedIterations, udfLoad
@@ -593,7 +593,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
     */
   def doWhileJava[ConvOut: ClassTag](
                                       udf: SerializablePredicate[JavaCollection[ConvOut]],
-                                      bodyBuilder: JavaFunction[DataQuanta[Out], RheemTuple[DataQuanta[Out], DataQuanta[ConvOut]]],
+                                      bodyBuilder: JavaFunction[DataQuanta[Out], WayangTuple[DataQuanta[Out], DataQuanta[ConvOut]]],
                                       numExpectedIterations: Int = 20,
                                       udfLoad: LoadProfileEstimator = null) = {
     // Create the DoWhileOperator.
@@ -823,7 +823,7 @@ class DataQuanta[Out: ClassTag](val operator: ElementaryOperator, outputIndex: I
 
 
   /**
-    * Defines the [[Experiment]] that should collects metrics of the [[RheemPlan]].
+    * Defines the [[Experiment]] that should collects metrics of the [[WayangPlan]].
     *
     * @param experiment the [[Experiment]]
     * @return this instance
@@ -861,7 +861,7 @@ class KeyedDataQuanta[Out: ClassTag, Key: ClassTag](val dataQuanta: DataQuanta[O
     * @return the join product [[DataQuanta]]
     */
   def join[ThatOut: ClassTag](that: KeyedDataQuanta[ThatOut, Key]):
-  DataQuanta[RheemTuple2[Out, ThatOut]] =
+  DataQuanta[WayangTuple2[Out, ThatOut]] =
     dataQuanta.joinJava[ThatOut, Key](this.keyExtractor, that.dataQuanta, that.keyExtractor)
 
   /**
@@ -871,7 +871,7 @@ class KeyedDataQuanta[Out: ClassTag, Key: ClassTag](val dataQuanta: DataQuanta[O
     * @return the co-grouped [[DataQuanta]]
     */
   def coGroup[ThatOut: ClassTag](that: KeyedDataQuanta[ThatOut, Key]):
-  DataQuanta[RheemTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] =
+  DataQuanta[WayangTuple2[java.lang.Iterable[Out], java.lang.Iterable[ThatOut]]] =
     dataQuanta.coGroupJava[ThatOut, Key](this.keyExtractor, that.dataQuanta, that.keyExtractor)
 
 }
@@ -880,7 +880,7 @@ class KeyedDataQuanta[Out: ClassTag, Key: ClassTag](val dataQuanta: DataQuanta[O
   * This class amends joined [[DataQuanta]] with additional operations.
   */
 class JoinedDataQuanta[Out0: ClassTag, Out1: ClassTag]
-(val dataQuanta: DataQuanta[RheemTuple2[Out0, Out1]]) {
+(val dataQuanta: DataQuanta[WayangTuple2[Out0, Out1]]) {
 
   /**
     * Assembles a new element from a join product tuple.

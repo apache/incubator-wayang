@@ -1,16 +1,16 @@
-package io.rheem.rheem.java.operators;
+package org.apache.incubator.wayang.java.operators;
 
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.java.channels.JavaChannelInstance;
-import io.rheem.rheem.java.channels.StreamChannel;
-import io.rheem.rheem.java.execution.JavaExecutor;
-import io.rheem.rheem.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.java.channels.JavaChannelInstance;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.stream.Stream;
@@ -30,7 +30,7 @@ public interface JavaExecutionOperator extends ExecutionOperator {
      * a set of {@link Stream}s according to the operator outputs -- unless the operator is a sink, then it triggers
      * execution.
      * <p>In addition, this method should give feedback of what this instance was doing by wiring the
-     * {@link io.rheem.rheem.core.platform.lineage.LazyExecutionLineageNode}s of input and ouput {@link ChannelInstance}s and
+     * {@link org.apache.incubator.wayang.core.platform.lineage.LazyExecutionLineageNode}s of input and ouput {@link ChannelInstance}s and
      * providing a {@link Collection} of executed {@link OptimizationContext.OperatorContext}s.</p>
      *
      * @param inputs          {@link ChannelInstance}s that satisfy the inputs of this operator
@@ -58,7 +58,7 @@ public interface JavaExecutionOperator extends ExecutionOperator {
         } else if (output instanceof StreamChannel.Instance) {
             ((StreamChannel.Instance) output).accept(((JavaChannelInstance) input).provideStream());
         } else {
-            throw new RheemException(String.format("Cannot forward %s to %s.", input, output));
+            throw new WayangException(String.format("Cannot forward %s to %s.", input, output));
         }
 
         // Manipulate the lineage.

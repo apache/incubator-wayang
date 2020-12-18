@@ -1,13 +1,13 @@
-package io.rheem.rheem.core.optimizer.enumeration;
+package org.apache.incubator.wayang.core.optimizer.enumeration;
 
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import io.rheem.rheem.core.optimizer.costs.TimeEstimate;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.LoopHeadOperator;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.platform.Junction;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.platform.Junction;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -97,7 +97,7 @@ public class LoopImplementation {
     }
 
     /**
-     * Originally, only a single {@link IterationImplementation} is supported by Rheem. This method explicitly
+     * Originally, only a single {@link IterationImplementation} is supported by Wayang. This method explicitly
      * captures this assumption.
      *
      * @return the single {@link IterationImplementation}

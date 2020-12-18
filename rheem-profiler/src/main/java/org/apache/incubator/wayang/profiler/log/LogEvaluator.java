@@ -1,15 +1,15 @@
-package io.rheem.rheem.profiler.log;
+package org.apache.incubator.wayang.profiler.log;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.ProbabilisticIntervalEstimate;
-import io.rheem.rheem.core.optimizer.costs.TimeEstimate;
-import io.rheem.rheem.core.platform.AtomicExecutionGroup;
-import io.rheem.rheem.core.platform.PartialExecution;
-import io.rheem.rheem.core.profiling.ExecutionLog;
-import io.rheem.rheem.core.util.Formats;
-import io.rheem.rheem.java.platform.JavaPlatform;
-import io.rheem.rheem.spark.platform.SparkPlatform;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticIntervalEstimate;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.incubator.wayang.core.platform.AtomicExecutionGroup;
+import org.apache.incubator.wayang.core.platform.PartialExecution;
+import org.apache.incubator.wayang.core.profiling.ExecutionLog;
+import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.spark.platform.SparkPlatform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class LogEvaluator {
         try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
             return executionLog.stream().collect(Collectors.toList());
         } catch (Exception e) {
-            throw new RheemException("Could not evaluate execution log.", e);
+            throw new WayangException("Could not evaluate execution log.", e);
         }
     }
 

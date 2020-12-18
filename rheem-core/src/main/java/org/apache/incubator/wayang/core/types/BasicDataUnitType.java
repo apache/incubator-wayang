@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.types;
+package org.apache.incubator.wayang.core.types;
 
 import java.util.Objects;
 

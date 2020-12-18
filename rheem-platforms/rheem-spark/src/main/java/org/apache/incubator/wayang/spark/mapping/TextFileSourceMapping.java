@@ -1,15 +1,15 @@
-package io.rheem.rheem.spark.mapping;
+package org.apache.incubator.wayang.spark.mapping;
 
-import io.rheem.rheem.basic.operators.CollectionSource;
-import io.rheem.rheem.basic.operators.TextFileSource;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.spark.operators.SparkCollectionSource;
-import io.rheem.rheem.spark.operators.SparkTextFileSource;
-import io.rheem.rheem.spark.platform.SparkPlatform;
+import org.apache.incubator.wayang.basic.operators.CollectionSource;
+import org.apache.incubator.wayang.basic.operators.TextFileSource;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.spark.operators.SparkCollectionSource;
+import org.apache.incubator.wayang.spark.operators.SparkTextFileSource;
+import org.apache.incubator.wayang.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

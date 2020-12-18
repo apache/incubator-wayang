@@ -1,10 +1,10 @@
-package io.rheem.rheem.flink;
+package org.apache.incubator.wayang.flink;
 
 
-import io.rheem.rheem.flink.platform.FlinkPlatform;
-import io.rheem.rheem.flink.plugin.FlinkBasicPlugin;
-import io.rheem.rheem.flink.plugin.FlinkConversionPlugin;
-import io.rheem.rheem.flink.plugin.FlinkGraphPlugin;
+import org.apache.incubator.wayang.flink.platform.FlinkPlatform;
+import org.apache.incubator.wayang.flink.plugin.FlinkBasicPlugin;
+import org.apache.incubator.wayang.flink.plugin.FlinkConversionPlugin;
+import org.apache.incubator.wayang.flink.plugin.FlinkGraphPlugin;
 
 /**
  * Register for relevant components of this module.

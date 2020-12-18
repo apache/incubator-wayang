@@ -1,35 +1,35 @@
-package io.rheem.rheem.api
+package org.apache.incubator.wayang.api
 
 import java.util.{Collection => JavaCollection}
 
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
-import io.rheem.rheem.api.util.DataQuantaBuilderCache
-import io.rheem.rheem.basic.data.Record
-import io.rheem.rheem.basic.operators.{TableSource, TextFileSource}
-import io.rheem.rheem.core.api.RheemContext
-import io.rheem.rheem.core.plan.rheemplan._
-import io.rheem.rheem.core.types.DataSetType
+import org.apache.incubator.wayang.api.util.DataQuantaBuilderCache
+import org.apache.incubator.wayang.basic.data.Record
+import org.apache.incubator.wayang.basic.operators.{TableSource, TextFileSource}
+import org.apache.incubator.wayang.core.api.WayangContext
+import org.apache.incubator.wayang.core.plan.wayangplan._
+import org.apache.incubator.wayang.core.types.DataSetType
 
 import scala.reflect.ClassTag
 
 /**
-  * Utility to build and execute [[RheemPlan]]s.
+  * Utility to build and execute [[WayangPlan]]s.
   */
-class JavaPlanBuilder(rheemCtx: RheemContext, jobName: String) {
+class JavaPlanBuilder(wayangCtx: WayangContext, jobName: String) {
 
-  def this(rheemContext: RheemContext) = this(rheemContext, null)
+  def this(wayangContext: WayangContext) = this(wayangContext, null)
 
   /**
-    * A [[PlanBuilder]] that actually takes care of building [[RheemPlan]]s.
+    * A [[PlanBuilder]] that actually takes care of building [[WayangPlan]]s.
     */
-  protected[api] val planBuilder = new PlanBuilder(rheemCtx, jobName = jobName)
+  protected[api] val planBuilder = new PlanBuilder(wayangCtx, jobName = jobName)
 
   /**
-    * Feed a [[JavaCollection]] into a [[io.rheem.rheem.basic.operators.CollectionSource]].
+    * Feed a [[JavaCollection]] into a [[org.apache.incubator.wayang.basic.operators.CollectionSource]].
     *
     * @param collection the [[JavaCollection]]
-    * @return a [[DataQuantaBuilder]] to further develop and configure the just started [[RheemPlan]]
+    * @return a [[DataQuantaBuilder]] to further develop and configure the just started [[WayangPlan]]
     */
   def loadCollection[T](collection: JavaCollection[T]) = new LoadCollectionDataQuantaBuilder[T](collection)(this)
 
@@ -97,7 +97,7 @@ class JavaPlanBuilder(rheemCtx: RheemContext, jobName: String) {
 
 
   /**
-    * Defines the [[Experiment]] that should collects metrics of the [[RheemPlan]].
+    * Defines the [[Experiment]] that should collects metrics of the [[WayangPlan]].
     *
     * @param experiment the [[Experiment]]
     * @return this instance
@@ -119,7 +119,7 @@ class JavaPlanBuilder(rheemCtx: RheemContext, jobName: String) {
   }
 
   /**
-    * Defines the name for the [[RheemPlan]] that is being created.
+    * Defines the name for the [[WayangPlan]] that is being created.
     *
     * @param jobName the name
     * @return this instance

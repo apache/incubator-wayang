@@ -1,12 +1,12 @@
-package io.rheem.rheem.java.execution;
+package org.apache.incubator.wayang.java.execution;
 
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.function.ExecutionContext;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.java.operators.JavaExecutionOperator;
-import io.rheem.rheem.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.function.ExecutionContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
 
 import java.util.Collection;
 
@@ -38,7 +38,7 @@ public class JavaExecutionContext implements ExecutionContext {
             }
         }
 
-        throw new RheemException("No such broadcast found: " + name);
+        throw new WayangException("No such broadcast found: " + name);
     }
 
     @Override

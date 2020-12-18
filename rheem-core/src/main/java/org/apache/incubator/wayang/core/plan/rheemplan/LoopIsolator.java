@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.util.OneTimeExecutable;
+import org.apache.incubator.wayang.core.util.OneTimeExecutable;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -10,20 +10,20 @@ import java.util.HashSet;
 import java.util.List;
 
 /**
- * Goes over a {@link RheemPlan} and isolates its loops.
+ * Goes over a {@link WayangPlan} and isolates its loops.
  */
 public class LoopIsolator extends OneTimeExecutable {
 
     // Refactor: We don't need the OneTimeExecutable here (as of now).
 
-    private final RheemPlan rheemPlan;
+    private final WayangPlan wayangPlan;
 
-    private LoopIsolator(RheemPlan rheemPlan) {
-        this.rheemPlan = rheemPlan;
+    private LoopIsolator(WayangPlan wayangPlan) {
+        this.wayangPlan = wayangPlan;
     }
 
-    public static void isolateLoops(RheemPlan rheemPlan) {
-        new LoopIsolator(rheemPlan).run();
+    public static void isolateLoops(WayangPlan wayangPlan) {
+        new LoopIsolator(wayangPlan).run();
     }
 
     private void run() {
@@ -32,15 +32,15 @@ public class LoopIsolator extends OneTimeExecutable {
 
     @Override
     protected void doExecute() {
-        if (this.rheemPlan.isLoopsIsolated()) return;
+        if (this.wayangPlan.isLoopsIsolated()) return;
         @SuppressWarnings("unchecked")
         final Collection<LoopHeadOperator> loopHeads =
                 (Collection<LoopHeadOperator>) (Collection) PlanTraversal.upstream()
-                        .traverse(this.rheemPlan.getSinks())
+                        .traverse(this.wayangPlan.getSinks())
                         .getTraversedNodesWith(Operator::isLoopHead);
 
         loopHeads.forEach(LoopIsolator::isolate);
-        this.rheemPlan.setLoopsIsolated();
+        this.wayangPlan.setLoopsIsolated();
     }
 
     /**

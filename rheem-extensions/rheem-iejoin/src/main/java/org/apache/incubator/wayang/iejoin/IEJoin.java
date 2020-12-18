@@ -1,17 +1,17 @@
-package io.rheem.rheem.iejoin;
+package org.apache.incubator.wayang.iejoin;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.plugin.Plugin;
-import io.rheem.rheem.iejoin.mapping.Mappings;
-import io.rheem.rheem.iejoin.operators.IEJoinOperator;
-import io.rheem.rheem.iejoin.operators.IESelfJoinOperator;
-import io.rheem.rheem.java.Java;
-import io.rheem.rheem.java.platform.JavaPlatform;
-import io.rheem.rheem.spark.Spark;
-import io.rheem.rheem.spark.platform.SparkPlatform;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.plugin.Plugin;
+import org.apache.incubator.wayang.iejoin.mapping.Mappings;
+import org.apache.incubator.wayang.iejoin.operators.IEJoinOperator;
+import org.apache.incubator.wayang.iejoin.operators.IESelfJoinOperator;
+import org.apache.incubator.wayang.java.Java;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.spark.Spark;
+import org.apache.incubator.wayang.spark.platform.SparkPlatform;
 
 import java.util.ArrayList;
 import java.util.Arrays;

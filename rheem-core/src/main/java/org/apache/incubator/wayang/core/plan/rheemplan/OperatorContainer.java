@@ -1,8 +1,8 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
@@ -238,7 +238,7 @@ public interface OperatorContainer {
      * @return the encased {@link Operator}s
      */
     default Operator getContainedOperator() {
-        return RheemCollections.getSingleOrNull(this.getContainedOperators());
+        return WayangCollections.getSingleOrNull(this.getContainedOperators());
     }
 
     /**

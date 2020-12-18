@@ -1,25 +1,25 @@
-package io.rheem.rheem.java.operators;
+package org.apache.incubator.wayang.java.operators;
 
 import org.apache.commons.io.IOUtils;
-import io.rheem.rheem.basic.channels.FileChannel;
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.UnarySource;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.core.util.fs.FileSystem;
-import io.rheem.rheem.core.util.fs.FileSystems;
-import io.rheem.rheem.core.util.fs.FileUtils;
-import io.rheem.rheem.java.channels.StreamChannel;
-import io.rheem.rheem.java.execution.JavaExecutor;
-import io.rheem.rheem.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.basic.channels.FileChannel;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySource;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.core.util.fs.FileSystem;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.core.util.fs.FileUtils;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -92,7 +92,7 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
                 return (T) Float.valueOf(line);
             } else if (typeClass == String.class) {
                 return (T) String.valueOf(line);
-            } else throw new RheemException(String.format("Cannot parse TSV file line %s", line));
+            } else throw new WayangException(String.format("Cannot parse TSV file line %s", line));
         } else if (typeClass == Record.class) {
             // TODO: Fix Record parsing.
             return (T) new Record();
@@ -102,13 +102,13 @@ public class JavaTsvFileSource<T> extends UnarySource<T> implements JavaExecutio
                     Integer.valueOf(line.substring(0, tabPos)),
                     Float.valueOf(line.substring(tabPos + 1)));
         } else
-            throw new RheemException(String.format("Cannot parse TSV file line %s", line));
+            throw new WayangException(String.format("Cannot parse TSV file line %s", line));
 
     }
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.java.tsvfilesource.load";
+        return "wayang.java.tsvfilesource.load";
     }
 
     @Override

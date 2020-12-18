@@ -1,6 +1,6 @@
-package io.rheem.rheem.giraph.mappings;
+package org.apache.incubator.wayang.giraph.mappings;
 
-import io.rheem.rheem.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.Mapping;
 
 import java.util.Collection;
 import java.util.Collections;

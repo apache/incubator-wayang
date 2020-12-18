@@ -1,21 +1,21 @@
-package io.rheem.rheem.spark.operators;
+package org.apache.incubator.wayang.spark.operators;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import io.rheem.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.java.platform.JavaPlatform;
-import io.rheem.rheem.spark.channels.RddChannel;
-import io.rheem.rheem.spark.execution.SparkExecutor;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.incubator.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
+import org.apache.incubator.wayang.spark.execution.SparkExecutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -76,7 +76,7 @@ public class SparkCollectOperator<Type>
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.spark.collect.load";
+        return "wayang.spark.collect.load";
     }
 
 }

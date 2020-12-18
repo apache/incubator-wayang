@@ -1,16 +1,16 @@
-package io.rheem.rheem.jdbc.channels;
+package org.apache.incubator.wayang.jdbc.channels;
 
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.platform.AbstractChannelInstance;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.Executor;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.jdbc.platform.JdbcPlatformTemplate;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.platform.AbstractChannelInstance;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.Executor;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.jdbc.platform.JdbcPlatformTemplate;
 
 import java.util.Objects;
 

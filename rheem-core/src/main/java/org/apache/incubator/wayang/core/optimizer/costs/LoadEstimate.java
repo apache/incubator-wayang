@@ -1,9 +1,9 @@
-package io.rheem.rheem.core.optimizer.costs;
+package org.apache.incubator.wayang.core.optimizer.costs;
 
 import org.json.JSONObject;
-import io.rheem.rheem.core.optimizer.ProbabilisticIntervalEstimate;
-import io.rheem.rheem.core.util.JsonSerializable;
-import io.rheem.rheem.core.util.JsonSerializables;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticIntervalEstimate;
+import org.apache.incubator.wayang.core.util.JsonSerializable;
+import org.apache.incubator.wayang.core.util.JsonSerializables;
 
 /**
  * An estimate of costs of some executable code expressed as a {@link ProbabilisticIntervalEstimate}.

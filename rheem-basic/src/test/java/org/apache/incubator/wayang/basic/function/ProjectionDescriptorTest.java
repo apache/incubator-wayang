@@ -1,9 +1,9 @@
-package io.rheem.rheem.basic.function;
+package org.apache.incubator.wayang.basic.function;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.types.RecordType;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.types.RecordType;
 
 import java.util.function.Function;
 

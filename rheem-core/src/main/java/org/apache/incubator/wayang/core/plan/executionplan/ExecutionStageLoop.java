@@ -1,8 +1,8 @@
-package io.rheem.rheem.core.plan.executionplan;
+package org.apache.incubator.wayang.core.plan.executionplan;
 
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.LoopHeadOperator;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
 
 import java.util.Collection;
 import java.util.HashSet;

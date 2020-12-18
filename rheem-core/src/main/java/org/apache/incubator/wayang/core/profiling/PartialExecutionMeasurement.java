@@ -1,10 +1,10 @@
-package io.rheem.rheem.core.profiling;
+package org.apache.incubator.wayang.core.profiling;
 
 import de.hpi.isg.profiledb.store.model.Measurement;
 import de.hpi.isg.profiledb.store.model.Type;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.costs.TimeEstimate;
-import io.rheem.rheem.core.platform.PartialExecution;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.incubator.wayang.core.platform.PartialExecution;
 
 /**
  * This {@link Measurement} adapts a {@link PartialExecutionMeasurement}.

@@ -1,11 +1,11 @@
-package io.rheem.rheem.java.operators;
+package org.apache.incubator.wayang.java.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.java.channels.JavaChannelInstance;
-import io.rheem.rheem.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.java.channels.JavaChannelInstance;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
 
 import java.io.IOException;
 import java.net.URL;

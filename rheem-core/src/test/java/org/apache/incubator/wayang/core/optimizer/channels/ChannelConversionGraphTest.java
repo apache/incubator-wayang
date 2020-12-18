@@ -1,25 +1,25 @@
-package io.rheem.rheem.core.optimizer.channels;
+package org.apache.incubator.wayang.core.optimizer.channels;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.optimizer.DefaultOptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationUtils;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.Junction;
-import io.rheem.rheem.core.test.DummyExecutionOperator;
-import io.rheem.rheem.core.test.DummyExternalReusableChannel;
-import io.rheem.rheem.core.test.DummyNonReusableChannel;
-import io.rheem.rheem.core.test.DummyReusableChannel;
-import io.rheem.rheem.core.test.MockFactory;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationUtils;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.Junction;
+import org.apache.incubator.wayang.core.test.DummyExecutionOperator;
+import org.apache.incubator.wayang.core.test.DummyExternalReusableChannel;
+import org.apache.incubator.wayang.core.test.DummyNonReusableChannel;
+import org.apache.incubator.wayang.core.test.DummyReusableChannel;
+import org.apache.incubator.wayang.core.test.MockFactory;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 
 import java.util.Arrays;
 import java.util.function.Supplier;
@@ -231,7 +231,7 @@ public class ChannelConversionGraphTest {
 
         final Channel sourceChannel = DummyNonReusableChannel.DESCRIPTOR.createChannel(sourceOperator.getOutput(0), configuration);
         final Channel reusableChannel = nonReusableToReusableChannelConversion.convert(sourceChannel, configuration);
-        // We have to pimp the destOperator0 a bit, so that it looks like a regular RheemPlan Operator.
+        // We have to pimp the destOperator0 a bit, so that it looks like a regular WayangPlan Operator.
         destOperator0.setContainer(MockFactory.createCompositeOperator().getContainer());
         ExecutionTask destTask0 = new ExecutionTask(destOperator0);
         reusableChannel.addConsumer(destTask0, 0);
@@ -290,12 +290,12 @@ public class ChannelConversionGraphTest {
         Assert.assertTrue(junction.getSourceChannel() == sourceChannel);
 
         Assert.assertTrue(sourceChannel.getConsumers().size() == 1);
-        ExecutionTask consumer = RheemCollections.getAny(sourceChannel.getConsumers());
+        ExecutionTask consumer = WayangCollections.getAny(sourceChannel.getConsumers());
         Channel nextChannel = consumer.getOutputChannel(0);
         Assert.assertTrue(nextChannel == reusableChannel);
         Assert.assertTrue(junction.getTargetChannel(0).isCopy() && junction.getTargetChannel(0).getOriginal() == nextChannel);
 
-        consumer = RheemCollections.getSingle(nextChannel.getConsumers());
+        consumer = WayangCollections.getSingle(nextChannel.getConsumers());
         nextChannel = consumer.getOutputChannel(0);
         Assert.assertTrue(nextChannel == externalChannel);
         Assert.assertTrue(junction.getTargetChannel(1).isCopy() && junction.getTargetChannel(1).getOriginal() == nextChannel);

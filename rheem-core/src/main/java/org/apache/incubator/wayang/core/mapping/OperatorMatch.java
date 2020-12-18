@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.mapping;
+package org.apache.incubator.wayang.core.mapping;
 
-import io.rheem.rheem.core.plan.rheemplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
 
 /**
  * An operator match correlates an {@link OperatorPattern} to an actually matched {@link Operator}.

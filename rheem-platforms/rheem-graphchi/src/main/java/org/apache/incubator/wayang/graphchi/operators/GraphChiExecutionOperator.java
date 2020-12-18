@@ -1,11 +1,11 @@
-package io.rheem.rheem.graphchi.operators;
+package org.apache.incubator.wayang.graphchi.operators;
 
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.graphchi.execution.GraphChiExecutor;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.graphchi.execution.GraphChiExecutor;
 
 import java.util.Collection;
 
@@ -17,7 +17,7 @@ public interface GraphChiExecutionOperator extends ExecutionOperator {
     /**
      * Evaluates this operator. Takes a set of inputs and produces a set of outputs.
      * <p>In addition, this method should give feedback of what this instance was doing by wiring the
-     * {@link io.rheem.rheem.core.platform.lineage.LazyExecutionLineageNode}s of input and ouput {@link ChannelInstance}s and
+     * {@link org.apache.incubator.wayang.core.platform.lineage.LazyExecutionLineageNode}s of input and ouput {@link ChannelInstance}s and
      * providing a {@link Collection} of executed {@link OptimizationContext.OperatorContext}s.</p>
      *
      * @param inputs          {@link ChannelInstance}s that satisfy the inputs of this operator

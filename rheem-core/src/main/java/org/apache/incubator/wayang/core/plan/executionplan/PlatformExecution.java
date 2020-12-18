@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.plan.executionplan;
+package org.apache.incubator.wayang.core.plan.executionplan;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.platform.Platform;
+import org.apache.incubator.wayang.core.platform.Platform;
 
 import java.util.Collection;
 import java.util.LinkedList;

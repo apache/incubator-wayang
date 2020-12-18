@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.util;
+package org.apache.incubator.wayang.core.util;
 
 import org.apache.commons.lang3.Validate;
 
@@ -19,9 +19,9 @@ import java.util.function.Supplier;
 /**
  * Utilities to operate {@link java.util.Collection}s.
  */
-public class RheemCollections {
+public class WayangCollections {
 
-    private RheemCollections() {
+    private WayangCollections() {
     }
 
     public static <K, V> void put(Map<K, Collection<V>> map, K key, V value) {

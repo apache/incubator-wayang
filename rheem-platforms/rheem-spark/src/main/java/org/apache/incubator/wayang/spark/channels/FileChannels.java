@@ -1,6 +1,6 @@
-package io.rheem.rheem.spark.channels;
+package org.apache.incubator.wayang.spark.channels;
 
-import io.rheem.rheem.basic.channels.FileChannel;
+import org.apache.incubator.wayang.basic.channels.FileChannel;
 
 /**
  * Utilities for {@link FileChannel}s.

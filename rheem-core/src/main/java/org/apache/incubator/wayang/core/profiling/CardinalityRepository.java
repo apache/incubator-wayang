@@ -1,18 +1,18 @@
-package io.rheem.rheem.core.profiling;
+package org.apache.incubator.wayang.core.profiling;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.Slot;
-import io.rheem.rheem.core.platform.CrossPlatformExecutor;
-import io.rheem.rheem.core.platform.ExecutionState;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.Slot;
+import org.apache.incubator.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.incubator.wayang.core.platform.ExecutionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +43,7 @@ public class CardinalityRepository {
     private BufferedWriter writer;
 
     public CardinalityRepository(Configuration configuration) {
-        this.repositoryPath = configuration.getStringProperty("rheem.core.log.cardinalities");
+        this.repositoryPath = configuration.getStringProperty("wayang.core.log.cardinalities");
     }
 
     /**
@@ -51,7 +51,7 @@ public class CardinalityRepository {
      * cardinality.
      *
      * @param executionState      contains the cardinalites of the instrumented {@link Slot}s; those cardinalities should
-     *                            be already injected in the {@code rheemPlan}
+     *                            be already injected in the {@code wayangPlan}
      * @param optimizationContext keeps {@link CardinalityEstimate}s for all {@link Slot}s around;
      *                            it is assumed, that any measured cardinalities are already
      *                            injected in this {@link OptimizationContext} to guarantee that we capture the most
@@ -160,7 +160,7 @@ public class CardinalityRepository {
             File file = new File(this.repositoryPath);
             final File parentFile = file.getParentFile();
             if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
-                throw new RheemException("Could not initialize cardinality repository.");
+                throw new WayangException("Could not initialize cardinality repository.");
             }
             this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
         }

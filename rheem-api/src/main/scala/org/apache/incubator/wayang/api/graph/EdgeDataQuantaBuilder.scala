@@ -1,9 +1,9 @@
-package io.rheem.rheem.api.graph
+package org.apache.incubator.wayang.api.graph
 
-import io.rheem.rheem.api.util.DataQuantaBuilderDecorator
-import io.rheem.rheem.api.{BasicDataQuantaBuilder, DataQuanta, DataQuantaBuilder, JavaPlanBuilder, _}
-import io.rheem.rheem.basic.operators.PageRankOperator
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval
+import org.apache.incubator.wayang.api.util.DataQuantaBuilderDecorator
+import org.apache.incubator.wayang.api.{BasicDataQuantaBuilder, DataQuanta, DataQuantaBuilder, JavaPlanBuilder, _}
+import org.apache.incubator.wayang.basic.operators.PageRankOperator
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval
 
 /**
   * Enriches [[DataQuantaBuilder]] by graph-specific operations.
@@ -31,7 +31,7 @@ class EdgeDataQuantaBuilderDecorator[This <: EdgeDataQuantaBuilderDecorator[This
   extends DataQuantaBuilderDecorator[This, Edge](baseBuilder) with EdgeDataQuantaBuilder[This]
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.MapOperator]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.MapOperator]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
   * @param numIterations   number of PageRank iterations to do

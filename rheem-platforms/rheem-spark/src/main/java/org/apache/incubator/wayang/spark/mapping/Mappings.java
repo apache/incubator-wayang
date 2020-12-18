@@ -1,7 +1,7 @@
-package io.rheem.rheem.spark.mapping;
+package org.apache.incubator.wayang.spark.mapping;
 
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.spark.mapping.graph.PageRankMapping;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.spark.mapping.graph.PageRankMapping;
 
 import java.util.Arrays;
 import java.util.Collection;

@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.optimizer.costs;
+package org.apache.incubator.wayang.core.optimizer.costs;
 
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
 
 /**
  * This (linear) converter turns {@link TimeEstimate}s into cost estimates.

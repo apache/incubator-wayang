@@ -1,20 +1,20 @@
-package io.rheem.rheem.java.execution;
+package org.apache.incubator.wayang.java.execution;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.core.api.RheemContext;
-import io.rheem.rheem.core.function.ExecutionContext;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.RheemArrays;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.java.Java;
-import io.rheem.rheem.java.operators.JavaCollectionSource;
-import io.rheem.rheem.java.operators.JavaDoWhileOperator;
-import io.rheem.rheem.java.operators.JavaLocalCallbackSink;
-import io.rheem.rheem.java.operators.JavaMapOperator;
+import org.apache.incubator.wayang.core.api.WayangContext;
+import org.apache.incubator.wayang.core.function.ExecutionContext;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.WayangArrays;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.java.Java;
+import org.apache.incubator.wayang.java.operators.JavaCollectionSource;
+import org.apache.incubator.wayang.java.operators.JavaDoWhileOperator;
+import org.apache.incubator.wayang.java.operators.JavaLocalCallbackSink;
+import org.apache.incubator.wayang.java.operators.JavaMapOperator;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -36,7 +36,7 @@ public class JavaExecutorTest {
         source1.setName("source1");
 
         JavaCollectionSource<Integer> source2 = new JavaCollectionSource<>(
-                RheemArrays.asList(2, 3, 4),
+                WayangArrays.asList(2, 3, 4),
                 DataSetType.createDefault(Integer.class)
         );
         source2.setName("source2");
@@ -64,7 +64,7 @@ public class JavaExecutorTest {
 
                             @Override
                             public void open(ExecutionContext ctx) {
-                                this.increment = RheemCollections.getSingle(ctx.getBroadcast("inc"));
+                                this.increment = WayangCollections.getSingle(ctx.getBroadcast("inc"));
                             }
                         },
                         Integer.class, Integer.class
@@ -104,10 +104,10 @@ public class JavaExecutorTest {
         loop.endIteration(id1, 0, id2, 0);
         loop.outputConnectTo(sink, 0);
 
-        final RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        rheemContext.execute(new RheemPlan(sink));
+        final WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        wayangContext.execute(new WayangPlan(sink));
 
-        Assert.assertEquals(RheemArrays.asList(6, 7, 8), collector);
+        Assert.assertEquals(WayangArrays.asList(6, 7, 8), collector);
     }
 
 }

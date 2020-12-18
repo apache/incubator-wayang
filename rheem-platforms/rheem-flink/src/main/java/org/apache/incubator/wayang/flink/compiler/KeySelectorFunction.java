@@ -1,9 +1,9 @@
-package io.rheem.rheem.flink.compiler;
+package org.apache.incubator.wayang.flink.compiler;
 
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
-import io.rheem.rheem.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
 
 import java.io.Serializable;
 import java.util.function.Function;

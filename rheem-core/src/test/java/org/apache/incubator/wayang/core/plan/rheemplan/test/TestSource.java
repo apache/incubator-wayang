@@ -1,11 +1,11 @@
-package io.rheem.rheem.core.plan.rheemplan.test;
+package org.apache.incubator.wayang.core.plan.wayangplan.test;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import io.rheem.rheem.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
-import io.rheem.rheem.core.plan.rheemplan.UnarySource;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.types.DataUnitType;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.incubator.wayang.core.optimizer.cardinality.FixedSizeCardinalityEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySource;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.types.DataUnitType;
 
 import java.util.Optional;
 

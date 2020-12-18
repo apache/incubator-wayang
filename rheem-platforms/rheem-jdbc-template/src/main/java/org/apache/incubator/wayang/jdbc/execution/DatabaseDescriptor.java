@@ -1,6 +1,6 @@
-package io.rheem.rheem.jdbc.execution;
+package org.apache.incubator.wayang.jdbc.execution;
 
-import io.rheem.rheem.core.api.exception.RheemException;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -37,13 +37,13 @@ public class DatabaseDescriptor {
         try {
             Class.forName(this.jdbcDriverClassName);
         } catch (Exception e) {
-            throw new RheemException(String.format("Could not load JDBC driver (%s).", this.jdbcDriverClassName), e);
+            throw new WayangException(String.format("Could not load JDBC driver (%s).", this.jdbcDriverClassName), e);
         }
 
         try {
             return DriverManager.getConnection(this.jdbcUrl, this.user, this.password);
         } catch (Throwable e) {
-            throw new RheemException(String.format(
+            throw new WayangException(String.format(
                     "Could not connect to database (%s) as %s with driver %s.", this.jdbcUrl, this.user, this.jdbcDriverClassName
             ), e);
         }

@@ -1,20 +1,20 @@
 platforms:
   include:
-    - io.rheem.rheem.core.test.DummyPlatform.getInstance()
+    - org.apache.incubator.wayang.core.test.DummyPlatform.getInstance()
   exclude:
 
 mappings:
   include:
-    - new io.rheem.rheem.core.mapping.test.TestSinkMapping()
+    - new org.apache.incubator.wayang.core.mapping.test.TestSinkMapping()
   exclude:
 
 conversions:
   include:
   exclude:
-    - io.rheem.rheem.core.plugin.DynamicPluginTest.CHANNEL_CONVERSIONS
+    - org.apache.incubator.wayang.core.plugin.DynamicPluginTest.CHANNEL_CONVERSIONS
 
 properties:
-  io.rheem.rheem.test.float: 51.3
-  io.rheem.rheem.test.string: abcdef
-  io.rheem.rheem.test.long: 1234567890123456789
+  org.apache.incubator.wayang.test.float: 51.3
+  org.apache.incubator.wayang.test.string: abcdef
+  org.apache.incubator.wayang.test.long: 1234567890123456789
 

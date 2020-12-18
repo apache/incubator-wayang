@@ -1,4 +1,4 @@
-package io.rheem.rheem.graphchi.operators;
+package org.apache.incubator.wayang.graphchi.operators;
 
 import edu.cmu.graphchi.ChiFilenames;
 import edu.cmu.graphchi.apps.Pagerank;
@@ -7,25 +7,25 @@ import edu.cmu.graphchi.engine.GraphChiEngine;
 import edu.cmu.graphchi.preprocessing.FastSharder;
 import edu.cmu.graphchi.preprocessing.VertexIdTranslate;
 import edu.cmu.graphchi.vertexdata.VertexAggregator;
-import io.rheem.rheem.basic.channels.FileChannel;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.PageRankOperator;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.ConsumerIteratorAdapter;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.core.util.fs.FileSystem;
-import io.rheem.rheem.core.util.fs.FileSystems;
-import io.rheem.rheem.core.util.fs.LocalFileSystem;
-import io.rheem.rheem.graphchi.platform.GraphChiPlatform;
-import io.rheem.rheem.java.channels.StreamChannel;
+import org.apache.incubator.wayang.basic.channels.FileChannel;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.PageRankOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.ConsumerIteratorAdapter;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.core.util.fs.FileSystem;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.core.util.fs.LocalFileSystem;
+import org.apache.incubator.wayang.graphchi.platform.GraphChiPlatform;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +72,7 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
         try {
             return this.runGraphChi(inputChannelInstance, outputChannelInstance, operatorContext);
         } catch (IOException e) {
-            throw new RheemException(String.format("Running %s failed.", this), e);
+            throw new WayangException(String.format("Running %s failed.", this), e);
         }
     }
 
@@ -87,12 +87,12 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
         final String inputPath = inputFileChannelInstance.getSinglePath();
         final String actualInputPath = FileSystems.findActualSingleInputPath(inputPath);
         final FileSystem inputFs = FileSystems.getFileSystem(inputPath).orElseThrow(
-                () -> new RheemException(String.format("Could not identify filesystem for \"%s\".", inputPath))
+                () -> new WayangException(String.format("Could not identify filesystem for \"%s\".", inputPath))
         );
 
         // Create shards.
         Configuration configuration = operatorContext.getOptimizationContext().getConfiguration();
-        String tempDirPath = configuration.getStringProperty("rheem.graphchi.tempdir");
+        String tempDirPath = configuration.getStringProperty("wayang.graphchi.tempdir");
         Random random = new Random();
         String tempFilePath = String.format("%s%s%04x-%04x-%04x-%04x.tmp", tempDirPath, File.separator,
                 random.nextInt() & 0xFFFF,
@@ -133,7 +133,7 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
                         VertexAggregator.foreach(engine.numVertices(), graphName, new FloatConverter(),
                                 (vertexId, vertexValue) -> consumer.accept(new Tuple2<>((long) trans.backward(vertexId), vertexValue)));
                     } catch (IOException e) {
-                        throw new RheemException(e);
+                        throw new WayangException(e);
                     } finally {
                         consumerIteratorAdapter.declareLastAdd();
                     }
@@ -147,13 +147,13 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
         // Model what has been executed.
         final ExecutionLineageNode mainExecutionLineage = new ExecutionLineageNode(operatorContext);
         mainExecutionLineage.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.graphchi.pagerank.load.main", configuration
+                "wayang.graphchi.pagerank.load.main", configuration
         ));
         mainExecutionLineage.addPredecessor(inputFileChannelInstance.getLineage());
 
         final ExecutionLineageNode outputExecutionLineage = new ExecutionLineageNode(operatorContext);
         outputExecutionLineage.add(LoadProfileEstimators.createFromSpecification(
-                "rheem.graphchi.pagerank.load.output", configuration
+                "wayang.graphchi.pagerank.load.output", configuration
         ));
         outputChannelInstance.getLineage().addPredecessor(outputExecutionLineage);
 
@@ -188,7 +188,7 @@ public class GraphChiPageRankOperator extends PageRankOperator implements GraphC
 
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
-        return Arrays.asList("rheem.graphchi.pagerank.load.main", "rheem.graphchi.pagerank.load.output");
+        return Arrays.asList("wayang.graphchi.pagerank.load.main", "wayang.graphchi.pagerank.load.output");
     }
 
     @Override

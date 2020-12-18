@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.optimizer.cardinality;
+package org.apache.incubator.wayang.core.optimizer.cardinality;
 
-import io.rheem.rheem.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
 
 /**
  * Assumes with a confidence of 50% that the output cardinality will be somewhere between 1 and the product of

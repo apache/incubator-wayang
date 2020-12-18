@@ -1,22 +1,22 @@
-package io.rheem.rheem.spark.execution;
+package org.apache.incubator.wayang.spark.execution;
 
 import org.apache.spark.api.java.JavaSparkContext;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.Executor;
-import io.rheem.rheem.core.platform.PartialExecution;
-import io.rheem.rheem.core.platform.PushExecutorTemplate;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.Formats;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.spark.channels.RddChannel;
-import io.rheem.rheem.spark.compiler.FunctionCompiler;
-import io.rheem.rheem.spark.operators.SparkExecutionOperator;
-import io.rheem.rheem.spark.platform.SparkPlatform;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.Executor;
+import org.apache.incubator.wayang.core.platform.PartialExecution;
+import org.apache.incubator.wayang.core.platform.PushExecutorTemplate;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
+import org.apache.incubator.wayang.spark.compiler.FunctionCompiler;
+import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator;
+import org.apache.incubator.wayang.spark.platform.SparkPlatform;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -69,8 +69,8 @@ public class SparkExecutor extends PushExecutorTemplate {
             this.numDefaultPartitions = 2 * this.sc.getConf().getInt("spark.executor.cores", -1);
         } else {
             this.numDefaultPartitions =
-                    (int) (2 * this.getConfiguration().getLongProperty("rheem.spark.machines")
-                            * this.getConfiguration().getLongProperty("rheem.spark.cores-per-machine"));
+                    (int) (2 * this.getConfiguration().getLongProperty("wayang.spark.machines")
+                            * this.getConfiguration().getLongProperty("wayang.spark.cores-per-machine"));
         }
     }
 
@@ -103,7 +103,7 @@ public class SparkExecutor extends PushExecutorTemplate {
             executionLineageNodes = results.getField0();
             producedChannelInstances = results.getField1();
         } catch (Exception e) {
-            throw new RheemException(String.format("Executing %s failed.", task), e);
+            throw new WayangException(String.format("Executing %s failed.", task), e);
         }
         long endTime = System.currentTimeMillis();
         long executionDuration = endTime - startTime;

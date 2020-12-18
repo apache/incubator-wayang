@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.optimizer.enumeration;
+package org.apache.incubator.wayang.core.optimizer.enumeration;
 
-import io.rheem.rheem.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Configuration;
 
 import java.util.ArrayList;
 
@@ -13,7 +13,7 @@ public class TopKPruningStrategy implements PlanEnumerationPruningStrategy {
 
     @Override
     public void configure(Configuration configuration) {
-        this.k = (int) configuration.getLongProperty("rheem.core.optimizer.pruning.topk", 5);
+        this.k = (int) configuration.getLongProperty("wayang.core.optimizer.pruning.topk", 5);
     }
 
     @Override

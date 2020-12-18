@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.api.configuration;
+package org.apache.incubator.wayang.core.api.configuration;
 
-import io.rheem.rheem.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

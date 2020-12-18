@@ -1,9 +1,9 @@
-package io.rheem.rheem.basic.operators;
+package org.apache.incubator.wayang.basic.operators;
 
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.types.RecordType;
-import io.rheem.rheem.core.plan.rheemplan.UnarySource;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.types.RecordType;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySource;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 /**
  * {@link UnarySource} that provides the tuples from a database table.
@@ -21,7 +21,7 @@ public class TableSource extends UnarySource<Record> {
      *
      * @param tableName   name of the table to be read
      * @param columnNames names of the columns in the tables; can be omitted but allows to inject schema information
-     *                    into Rheem, so as to allow specific optimizations
+     *                    into Wayang, so as to allow specific optimizations
      */
     public TableSource(String tableName, String... columnNames) {
         this(tableName, createOutputDataSetType(columnNames));

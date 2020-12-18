@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.platform;
+package org.apache.incubator.wayang.core.platform;
 
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.executionplan.ExecutionStage;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
 
 import java.util.Arrays;
 import java.util.LinkedList;

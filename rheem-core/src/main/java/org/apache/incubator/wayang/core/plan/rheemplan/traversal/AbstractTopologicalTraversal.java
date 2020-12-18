@@ -1,10 +1,10 @@
-package io.rheem.rheem.core.plan.rheemplan.traversal;
+package org.apache.incubator.wayang.core.plan.wayangplan.traversal;
 
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +13,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * Encapsulates logic to traverse a {@link RheemPlan} in a topological, bottom-up manner.
+ * Encapsulates logic to traverse a {@link WayangPlan} in a topological, bottom-up manner.
  * <p>In a topological traversal, before a node of a DAG is visited, all it predecessors are visited. Moreover,
  * every node is visited only once. Finally, the nodes can propagate information from predecessor to successor.</p>
  */
@@ -144,7 +144,7 @@ public abstract class AbstractTopologicalTraversal<
     /**
      * Declares that the current traversal should be aborted.
      */
-    public static class AbortException extends RheemException {
+    public static class AbortException extends WayangException {
 
         public AbortException(String message) {
             super(message);

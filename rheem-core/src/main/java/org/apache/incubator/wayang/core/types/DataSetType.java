@@ -1,11 +1,11 @@
-package io.rheem.rheem.core.types;
+package org.apache.incubator.wayang.core.types;
 
-import io.rheem.rheem.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
 
 import java.util.Objects;
 
 /**
- * A data set is an abstraction of the Rheem programming model. Although never directly materialized, a data set
+ * A data set is an abstraction of the Wayang programming model. Although never directly materialized, a data set
  * keeps track of type and structure of data units being passed between operators.
  */
 public class DataSetType<T> {

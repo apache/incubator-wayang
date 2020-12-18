@@ -1,8 +1,8 @@
-package io.rheem.rheem.core.mapping;
+package org.apache.incubator.wayang.core.mapping;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.core.test.DummyExecutionOperator;
+import org.apache.incubator.wayang.core.test.DummyExecutionOperator;
 
 /**
  * Tests for {@link OperatorPattern}.

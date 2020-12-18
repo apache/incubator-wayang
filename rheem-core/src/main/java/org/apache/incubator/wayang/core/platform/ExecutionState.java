@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.platform;
+package org.apache.incubator.wayang.core.platform;
 
-import io.rheem.rheem.core.optimizer.enumeration.ExecutionTaskFlow;
-import io.rheem.rheem.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.optimizer.enumeration.ExecutionTaskFlow;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
 
 import java.util.Collection;
 

@@ -1,9 +1,9 @@
-package io.rheem.rheem.core.platform;
+package org.apache.incubator.wayang.core.platform;
 
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.lineage.ChannelLineageNode;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.lineage.ChannelLineageNode;
 
 import java.util.OptionalLong;
 
@@ -40,7 +40,7 @@ public interface ChannelInstance extends ExecutionResource {
 
     /**
      * Provides a {@link ChannelLineageNode} that keeps around (at least) all non-executed predecessor
-     * {@link ChannelInstance}s and {@link io.rheem.rheem.core.optimizer.OptimizationContext.OperatorContext}s.
+     * {@link ChannelInstance}s and {@link org.apache.incubator.wayang.core.optimizer.OptimizationContext.OperatorContext}s.
      *
      * @return the {@link ChannelLineageNode}
      */

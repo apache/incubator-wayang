@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.util;
+package org.apache.incubator.wayang.core.util;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.exception.RheemException;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -236,7 +236,7 @@ public class ReflectionUtils {
                     Class<T> cls = (Class<T>) Class.forName(className);
             return cls.newInstance();
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-            throw new RheemException("Could not instantiate class.", e);
+            throw new WayangException("Could not instantiate class.", e);
         }
     }
 
@@ -250,7 +250,7 @@ public class ReflectionUtils {
         try {
             return cls.newInstance();
         } catch (InstantiationException | IllegalAccessException e) {
-            throw new RheemException("Could not instantiate class.", e);
+            throw new WayangException("Could not instantiate class.", e);
         }
     }
 
@@ -294,10 +294,10 @@ public class ReflectionUtils {
                 }
             }
         } catch (Throwable t) {
-            throw new RheemException(String.format("Could not get constructors for %s.", cls.getSimpleName()));
+            throw new WayangException(String.format("Could not get constructors for %s.", cls.getSimpleName()));
         }
 
-        throw new RheemException(String.format("Could not instantiate %s.", cls.getSimpleName()));
+        throw new WayangException(String.format("Could not instantiate %s.", cls.getSimpleName()));
     }
 
     /**

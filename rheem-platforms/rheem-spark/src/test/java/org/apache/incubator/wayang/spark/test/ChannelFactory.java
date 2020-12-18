@@ -1,13 +1,13 @@
-package io.rheem.rheem.spark.test;
+package org.apache.incubator.wayang.spark.test;
 
 import org.junit.Before;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.spark.channels.RddChannel;
-import io.rheem.rheem.spark.execution.SparkExecutor;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
+import org.apache.incubator.wayang.spark.execution.SparkExecutor;
 
 import java.util.Collection;
 
@@ -39,7 +39,7 @@ public class ChannelFactory {
                                                                SparkExecutor sparkExecutor,
                                                                Configuration configuration) {
         RddChannel.Instance instance = createRddChannelInstance(configuration);
-        instance.accept(sparkExecutor.sc.parallelize(RheemCollections.asList(data)), sparkExecutor);
+        instance.accept(sparkExecutor.sc.parallelize(WayangCollections.asList(data)), sparkExecutor);
         return instance;
     }
 

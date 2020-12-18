@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.util.fs;
+package org.apache.incubator.wayang.core.util.fs;
 
 import org.apache.commons.io.IOUtils;
-import io.rheem.rheem.core.api.exception.RheemException;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class FileUtils {
             Iterator<String> lineIterator = createLineIterator(fileSystem, path);
             return StreamSupport.stream(Spliterators.spliteratorUnknownSize(lineIterator, 0), false);
         } catch (IOException e) {
-            throw new RheemException(String.format("%s failed to read %s.", FileUtils.class, path), e);
+            throw new WayangException(String.format("%s failed to read %s.", FileUtils.class, path), e);
         }
 
     }

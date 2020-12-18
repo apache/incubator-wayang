@@ -1,17 +1,17 @@
-package io.rheem.rheem.core.plugin;
+package org.apache.incubator.wayang.core.plugin;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.test.TestSinkMapping;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.optimizer.channels.DefaultChannelConversion;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.test.DummyPlatform;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.test.TestSinkMapping;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.optimizer.channels.DefaultChannelConversion;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.test.DummyPlatform;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -35,29 +35,29 @@ public class DynamicPluginTest {
         final DynamicPlugin plugin =
                 DynamicPlugin.loadYaml(ReflectionUtils.getResourceURL("test-plugin.yaml").toString());
 
-        Set<Platform> expectedPlatforms = RheemCollections.asSet(DummyPlatform.getInstance());
-        Assert.assertEquals(expectedPlatforms, RheemCollections.asSet(plugin.getRequiredPlatforms()));
+        Set<Platform> expectedPlatforms = WayangCollections.asSet(DummyPlatform.getInstance());
+        Assert.assertEquals(expectedPlatforms, WayangCollections.asSet(plugin.getRequiredPlatforms()));
 
         Set<Platform> expectedExcludedPlatforms = Collections.emptySet();
-        Assert.assertEquals(expectedExcludedPlatforms, RheemCollections.asSet(plugin.getExcludedRequiredPlatforms()));
+        Assert.assertEquals(expectedExcludedPlatforms, WayangCollections.asSet(plugin.getExcludedRequiredPlatforms()));
 
-        Set<Mapping> expectedMappings = RheemCollections.asSet(new TestSinkMapping());
-        Assert.assertEquals(expectedMappings, RheemCollections.asSet(plugin.getMappings()));
+        Set<Mapping> expectedMappings = WayangCollections.asSet(new TestSinkMapping());
+        Assert.assertEquals(expectedMappings, WayangCollections.asSet(plugin.getMappings()));
 
-        Set<Mapping> expectedExcludedMappings = RheemCollections.asSet();
-        Assert.assertEquals(expectedExcludedMappings, RheemCollections.asSet(plugin.getExcludedMappings()));
+        Set<Mapping> expectedExcludedMappings = WayangCollections.asSet();
+        Assert.assertEquals(expectedExcludedMappings, WayangCollections.asSet(plugin.getExcludedMappings()));
 
-        Set<ChannelConversion> expectedConversions = RheemCollections.asSet();
-        Assert.assertEquals(expectedConversions, RheemCollections.asSet(plugin.getChannelConversions()));
+        Set<ChannelConversion> expectedConversions = WayangCollections.asSet();
+        Assert.assertEquals(expectedConversions, WayangCollections.asSet(plugin.getChannelConversions()));
 
-        Set<ChannelConversion> expectedExcludedConversions = RheemCollections.asSet(CHANNEL_CONVERSIONS);
-        Assert.assertEquals(expectedExcludedConversions, RheemCollections.asSet(plugin.getExcludedChannelConversions()));
+        Set<ChannelConversion> expectedExcludedConversions = WayangCollections.asSet(CHANNEL_CONVERSIONS);
+        Assert.assertEquals(expectedExcludedConversions, WayangCollections.asSet(plugin.getExcludedChannelConversions()));
 
         Configuration configuration = new Configuration();
         plugin.setProperties(configuration);
-        Assert.assertEquals(51.3d, configuration.getDoubleProperty("io.rheem.rheem.test.float"), 0.000001);
-        Assert.assertEquals("abcdef", configuration.getStringProperty("io.rheem.rheem.test.string"));
-        Assert.assertEquals(1234567890123456789L, configuration.getLongProperty("io.rheem.rheem.test.long"));
+        Assert.assertEquals(51.3d, configuration.getDoubleProperty("org.apache.incubator.wayang.test.float"), 0.000001);
+        Assert.assertEquals("abcdef", configuration.getStringProperty("org.apache.incubator.wayang.test.string"));
+        Assert.assertEquals(1234567890123456789L, configuration.getLongProperty("org.apache.incubator.wayang.test.long"));
     }
 
     @Test
@@ -65,23 +65,23 @@ public class DynamicPluginTest {
         final DynamicPlugin plugin =
                 DynamicPlugin.loadYaml(ReflectionUtils.getResourceURL("partial-plugin.yaml").toString());
 
-        Set<Platform> expectedPlatforms = RheemCollections.asSet(DummyPlatform.getInstance());
-        Assert.assertEquals(expectedPlatforms, RheemCollections.asSet(plugin.getRequiredPlatforms()));
+        Set<Platform> expectedPlatforms = WayangCollections.asSet(DummyPlatform.getInstance());
+        Assert.assertEquals(expectedPlatforms, WayangCollections.asSet(plugin.getRequiredPlatforms()));
 
         Set<Platform> expectedExcludedPlatforms = Collections.emptySet();
-        Assert.assertEquals(expectedExcludedPlatforms, RheemCollections.asSet(plugin.getExcludedRequiredPlatforms()));
+        Assert.assertEquals(expectedExcludedPlatforms, WayangCollections.asSet(plugin.getExcludedRequiredPlatforms()));
 
-        Set<Mapping> expectedMappings = RheemCollections.asSet();
-        Assert.assertEquals(expectedMappings, RheemCollections.asSet(plugin.getMappings()));
+        Set<Mapping> expectedMappings = WayangCollections.asSet();
+        Assert.assertEquals(expectedMappings, WayangCollections.asSet(plugin.getMappings()));
 
-        Set<Mapping> expectedExcludedMappings = RheemCollections.asSet(new TestSinkMapping());
-        Assert.assertEquals(expectedExcludedMappings, RheemCollections.asSet(plugin.getExcludedMappings()));
+        Set<Mapping> expectedExcludedMappings = WayangCollections.asSet(new TestSinkMapping());
+        Assert.assertEquals(expectedExcludedMappings, WayangCollections.asSet(plugin.getExcludedMappings()));
 
-        Set<ChannelConversion> expectedConversions = RheemCollections.asSet();
-        Assert.assertEquals(expectedConversions, RheemCollections.asSet(plugin.getChannelConversions()));
+        Set<ChannelConversion> expectedConversions = WayangCollections.asSet();
+        Assert.assertEquals(expectedConversions, WayangCollections.asSet(plugin.getChannelConversions()));
 
-        Set<ChannelConversion> expectedExcludedConversions = RheemCollections.asSet();
-        Assert.assertEquals(expectedExcludedConversions, RheemCollections.asSet(plugin.getExcludedChannelConversions()));
+        Set<ChannelConversion> expectedExcludedConversions = WayangCollections.asSet();
+        Assert.assertEquals(expectedExcludedConversions, WayangCollections.asSet(plugin.getExcludedChannelConversions()));
     }
 
     @Test
@@ -90,13 +90,13 @@ public class DynamicPluginTest {
                 DynamicPlugin.loadYaml(ReflectionUtils.getResourceURL("empty-plugin.yaml").toString());
 
         Set<Platform> expectedPlatforms = Collections.emptySet();
-        Assert.assertEquals(expectedPlatforms, RheemCollections.asSet(plugin.getRequiredPlatforms()));
+        Assert.assertEquals(expectedPlatforms, WayangCollections.asSet(plugin.getRequiredPlatforms()));
 
         Set<Mapping> expectedMappings = Collections.emptySet();
-        Assert.assertEquals(expectedMappings, RheemCollections.asSet(plugin.getMappings()));
+        Assert.assertEquals(expectedMappings, WayangCollections.asSet(plugin.getMappings()));
 
         Set<ChannelConversion> expectedConversions = Collections.emptySet();
-        Assert.assertEquals(expectedConversions, RheemCollections.asSet(plugin.getChannelConversions()));
+        Assert.assertEquals(expectedConversions, WayangCollections.asSet(plugin.getChannelConversions()));
     }
 
     @Test
@@ -108,16 +108,16 @@ public class DynamicPluginTest {
         plugin1.addMapping(mapping);
         plugin1.configure(configuration);
         Assert.assertEquals(
-                RheemCollections.asSet(mapping),
-                RheemCollections.asSet(configuration.getMappingProvider().provideAll())
+                WayangCollections.asSet(mapping),
+                WayangCollections.asSet(configuration.getMappingProvider().provideAll())
         );
 
         final DynamicPlugin plugin2 = new DynamicPlugin();
         plugin2.excludeMapping(mapping);
         plugin2.configure(configuration);
         Assert.assertEquals(
-                RheemCollections.asSet(),
-                RheemCollections.asSet(configuration.getMappingProvider().provideAll())
+                WayangCollections.asSet(),
+                WayangCollections.asSet(configuration.getMappingProvider().provideAll())
         );
     }
 }

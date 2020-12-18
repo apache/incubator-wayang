@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.util;
+package org.apache.incubator.wayang.core.util;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,7 +19,7 @@ public class CrossProductIterableTest {
                 Arrays.asList(1, 2 ,3),
                 Arrays.asList(4, 5, 6)
         );
-        final Iterable<List<Integer>> crossProductStream = RheemCollections.streamedCrossProduct(matrix);
+        final Iterable<List<Integer>> crossProductStream = WayangCollections.streamedCrossProduct(matrix);
         final List<List<Integer>> crossProduct =
                 StreamSupport.stream(crossProductStream.spliterator(), false).collect(Collectors.toList());
 
@@ -45,7 +45,7 @@ public class CrossProductIterableTest {
                 Arrays.asList(2, 5),
                 Arrays.asList(3, 6)
         );
-        final Iterable<List<Integer>> crossProductStream = RheemCollections.streamedCrossProduct(matrix);
+        final Iterable<List<Integer>> crossProductStream = WayangCollections.streamedCrossProduct(matrix);
         final List<List<Integer>> crossProduct =
                 StreamSupport.stream(crossProductStream.spliterator(), false).collect(Collectors.toList());
 
@@ -70,7 +70,7 @@ public class CrossProductIterableTest {
                 Arrays.asList(2),
                 Arrays.asList(3)
         );
-        final Iterable<List<Integer>> crossProductStream = RheemCollections.streamedCrossProduct(matrix);
+        final Iterable<List<Integer>> crossProductStream = WayangCollections.streamedCrossProduct(matrix);
         final List<List<Integer>> crossProduct =
                 StreamSupport.stream(crossProductStream.spliterator(), false).collect(Collectors.toList());
 
@@ -86,7 +86,7 @@ public class CrossProductIterableTest {
         List<List<Integer>> matrix = Arrays.asList(
                 Arrays.asList(1, 2, 3)
         );
-        final Iterable<List<Integer>> crossProductStream = RheemCollections.streamedCrossProduct(matrix);
+        final Iterable<List<Integer>> crossProductStream = WayangCollections.streamedCrossProduct(matrix);
         final List<List<Integer>> crossProduct =
                 StreamSupport.stream(crossProductStream.spliterator(), false).collect(Collectors.toList());
 
@@ -104,7 +104,7 @@ public class CrossProductIterableTest {
         List<List<Integer>> matrix = Arrays.asList(
                 Arrays.asList(1)
         );
-        final Iterable<List<Integer>> crossProductStream = RheemCollections.streamedCrossProduct(matrix);
+        final Iterable<List<Integer>> crossProductStream = WayangCollections.streamedCrossProduct(matrix);
         final List<List<Integer>> crossProduct =
                 StreamSupport.stream(crossProductStream.spliterator(), false).collect(Collectors.toList());
 
@@ -119,7 +119,7 @@ public class CrossProductIterableTest {
     public void test0x0() {
         List<List<Integer>> matrix = Arrays.asList(
         );
-        final Iterable<List<Integer>> crossProductStream = RheemCollections.streamedCrossProduct(matrix);
+        final Iterable<List<Integer>> crossProductStream = WayangCollections.streamedCrossProduct(matrix);
         final List<List<Integer>> crossProduct =
                 StreamSupport.stream(crossProductStream.spliterator(), false).collect(Collectors.toList());
 
@@ -135,7 +135,7 @@ public class CrossProductIterableTest {
                 Arrays.asList(1, 2),
                 Arrays.asList()
         );
-        final Iterable<List<Integer>> crossProductStream = RheemCollections.streamedCrossProduct(matrix);
+        final Iterable<List<Integer>> crossProductStream = WayangCollections.streamedCrossProduct(matrix);
         final List<List<Integer>> crossProduct =
                 StreamSupport.stream(crossProductStream.spliterator(), false).collect(Collectors.toList());
 

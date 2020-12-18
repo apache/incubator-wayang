@@ -1,15 +1,15 @@
-package io.rheem.rheem.core.optimizer.cardinality;
+package org.apache.incubator.wayang.core.optimizer.cardinality;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorContainer;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.PlanTraversal;
-import io.rheem.rheem.core.util.OneTimeExecutable;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorContainer;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.PlanTraversal;
+import org.apache.incubator.wayang.core.util.OneTimeExecutable;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -355,7 +355,7 @@ public class CardinalityEstimationTraversal {
          */
         private Builder(Collection<InputSlot<?>> inputSlots, Collection<InputSlot<?>> borderInputSlots, Collection<Operator> sourceOperators, Configuration configuration) {
             this.inputSlots = inputSlots;
-            this.borderInputSlots = RheemCollections.asSet(borderInputSlots);
+            this.borderInputSlots = WayangCollections.asSet(borderInputSlots);
             this.configuration = configuration;
             this.sourceOperators = sourceOperators;
         }

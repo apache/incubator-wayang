@@ -1,8 +1,8 @@
-package io.rheem.rheem.core.plan.rheemplan.test;
+package org.apache.incubator.wayang.core.plan.wayangplan.test;
 
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import io.rheem.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 /**
  * Test operator that exposes map-like behavior. Does not provide a {@link CardinalityEstimator}.

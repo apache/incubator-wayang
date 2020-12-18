@@ -1,13 +1,13 @@
-package io.rheem.rheem.api
+package org.apache.incubator.wayang.api
 
 import de.hpi.isg.profiledb.store.model.Experiment
 import org.apache.commons.lang3.Validate
-import io.rheem.rheem.api
-import io.rheem.rheem.basic.data.Record
-import io.rheem.rheem.basic.operators.{CollectionSource, TableSource, TextFileSource}
-import io.rheem.rheem.core.api.RheemContext
-import io.rheem.rheem.core.plan.rheemplan._
-import io.rheem.rheem.core.util.ReflectionUtils
+import org.apache.incubator.wayang.api
+import org.apache.incubator.wayang.basic.data.Record
+import org.apache.incubator.wayang.basic.operators.{CollectionSource, TableSource, TextFileSource}
+import org.apache.incubator.wayang.core.api.WayangContext
+import org.apache.incubator.wayang.core.plan.wayangplan._
+import org.apache.incubator.wayang.core.util.ReflectionUtils
 
 import scala.collection.JavaConversions
 import scala.collection.mutable.ListBuffer
@@ -15,9 +15,9 @@ import scala.language.implicitConversions
 import scala.reflect._
 
 /**
-  * Utility to build [[RheemPlan]]s.
+  * Utility to build [[WayangPlan]]s.
   */
-class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null) {
+class PlanBuilder(wayangContext: WayangContext, private var jobName: String = null) {
 
   private[api] val sinks = ListBuffer[Operator]()
 
@@ -44,7 +44,7 @@ class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null
   }
 
   /**
-    * Defines the [[Experiment]] that should collects metrics of the [[RheemPlan]].
+    * Defines the [[Experiment]] that should collects metrics of the [[WayangPlan]].
     *
     * @param experiment the [[Experiment]]
     * @return this instance
@@ -56,7 +56,7 @@ class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null
 
 
   /**
-    * Defines the name for the [[RheemPlan]] that is being created.
+    * Defines the name for the [[WayangPlan]] that is being created.
     *
     * @param jobName the name
     * @return this instance
@@ -77,12 +77,12 @@ class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null
 
 
   /**
-    * Build the [[io.rheem.rheem.core.api.Job]] and execute it.
+    * Build the [[org.apache.incubator.wayang.core.api.Job]] and execute it.
     */
   def buildAndExecute(): Unit = {
-    val plan: RheemPlan = new RheemPlan(this.sinks.toArray: _*)
-    if (this.experiment == null) this.rheemContext.execute(jobName, plan, this.udfJars.toArray: _*)
-    else this.rheemContext.execute(jobName, plan, this.experiment, this.udfJars.toArray: _*)
+    val plan: WayangPlan = new WayangPlan(this.sinks.toArray: _*)
+    if (this.experiment == null) this.wayangContext.execute(jobName, plan, this.udfJars.toArray: _*)
+    else this.wayangContext.execute(jobName, plan, this.experiment, this.udfJars.toArray: _*)
   }
 
   /**
@@ -102,7 +102,7 @@ class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null
   def readTable(source: TableSource): DataQuanta[Record] = load(source)
 
   /**
-    * Loads a [[java.util.Collection]] into Rheem and represents them as [[DataQuanta]].
+    * Loads a [[java.util.Collection]] into Wayang and represents them as [[DataQuanta]].
     *
     * @param collection to be loaded
     * @return [[DataQuanta]] the `collection`
@@ -111,7 +111,7 @@ class PlanBuilder(rheemContext: RheemContext, private var jobName: String = null
   load(new CollectionSource[T](collection, dataSetType[T]))
 
   /**
-    * Loads a [[Iterable]] into Rheem and represents it as [[DataQuanta]].
+    * Loads a [[Iterable]] into Wayang and represents it as [[DataQuanta]].
     *
     * @param iterable to be loaded
     * @return [[DataQuanta]] the `iterable`

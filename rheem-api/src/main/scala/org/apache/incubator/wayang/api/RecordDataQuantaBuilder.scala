@@ -1,10 +1,10 @@
-package io.rheem.rheem.api
+package org.apache.incubator.wayang.api
 
-import io.rheem.rheem.api.util.DataQuantaBuilderDecorator
-import io.rheem.rheem.basic.data.Record
-import io.rheem.rheem.basic.function.ProjectionDescriptor
-import io.rheem.rheem.basic.operators.MapOperator
-import io.rheem.rheem.core.optimizer.costs.LoadEstimator
+import org.apache.incubator.wayang.api.util.DataQuantaBuilderDecorator
+import org.apache.incubator.wayang.basic.data.Record
+import org.apache.incubator.wayang.basic.function.ProjectionDescriptor
+import org.apache.incubator.wayang.basic.operators.MapOperator
+import org.apache.incubator.wayang.core.optimizer.costs.LoadEstimator
 
 
 /**
@@ -34,11 +34,11 @@ class RecordDataQuantaBuilderDecorator[This <: RecordDataQuantaBuilder[This]]
   extends DataQuantaBuilderDecorator[This, Record](baseBuilder) with RecordDataQuantaBuilder[This]
 
 /**
-  * [[DataQuantaBuilder]] implementation for [[io.rheem.rheem.basic.operators.MapOperator]]s with
-  * [[io.rheem.rheem.basic.function.ProjectionDescriptor]]s.
+  * [[DataQuantaBuilder]] implementation for [[org.apache.incubator.wayang.basic.operators.MapOperator]]s with
+  * [[org.apache.incubator.wayang.basic.function.ProjectionDescriptor]]s.
   *
   * @param inputDataQuanta [[DataQuantaBuilder]] for the input [[DataQuanta]]
-  * @param fieldNames      field names for the [[io.rheem.rheem.basic.function.ProjectionDescriptor]]
+  * @param fieldNames      field names for the [[org.apache.incubator.wayang.basic.function.ProjectionDescriptor]]
   */
 class ProjectRecordsDataQuantaBuilder(inputDataQuanta: DataQuantaBuilder[_, Record], fieldNames: Array[String])
                                      (implicit javaPlanBuilder: JavaPlanBuilder)

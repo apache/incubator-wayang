@@ -1,8 +1,8 @@
-package io.rheem.rheem.jdbc.test;
+package org.apache.incubator.wayang.jdbc.test;
 
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.jdbc.operators.JdbcFilterOperator;
-import io.rheem.rheem.jdbc.operators.JdbcProjectionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.jdbc.operators.JdbcFilterOperator;
+import org.apache.incubator.wayang.jdbc.operators.JdbcProjectionOperator;
 
 import java.util.List;
 

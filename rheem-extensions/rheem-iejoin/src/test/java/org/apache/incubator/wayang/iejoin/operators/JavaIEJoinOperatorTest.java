@@ -1,13 +1,13 @@
-package io.rheem.rheem.iejoin.operators;
+package org.apache.incubator.wayang.iejoin.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.types.DataUnitType;
-import io.rheem.rheem.java.channels.JavaChannelInstance;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.types.DataUnitType;
+import org.apache.incubator.wayang.java.channels.JavaChannelInstance;
 
 import java.util.Arrays;
 import java.util.List;

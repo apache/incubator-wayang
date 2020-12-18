@@ -1,7 +1,7 @@
-package io.rheem.rheem.java.mapping;
+package org.apache.incubator.wayang.java.mapping;
 
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.java.mapping.graph.PageRankMapping;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.java.mapping.graph.PageRankMapping;
 
 import java.util.Arrays;
 import java.util.Collection;

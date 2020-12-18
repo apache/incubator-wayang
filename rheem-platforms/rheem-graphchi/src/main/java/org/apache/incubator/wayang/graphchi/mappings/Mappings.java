@@ -1,6 +1,6 @@
-package io.rheem.rheem.graphchi.mappings;
+package org.apache.incubator.wayang.graphchi.mappings;
 
-import io.rheem.rheem.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.Mapping;
 
 import java.util.Collection;
 import java.util.Collections;

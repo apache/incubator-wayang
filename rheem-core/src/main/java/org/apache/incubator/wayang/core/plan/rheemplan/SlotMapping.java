@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -217,7 +217,7 @@ public class SlotMapping {
                 if (outerOutputs == null) continue;
 
                 // We cannot have multiple OutputSlots, we could not map them downstream to a single OutputSlot.
-                final OutputSlot<?> newOutput = RheemCollections.getSingleOrNull(
+                final OutputSlot<?> newOutput = WayangCollections.getSingleOrNull(
                         (Collection<OutputSlot<?>>) oldToNewSlotMapping
                                 .getOrCreateDownstreamMapping()
                                 .getOrDefault(oldOutput, Collections.emptySet())

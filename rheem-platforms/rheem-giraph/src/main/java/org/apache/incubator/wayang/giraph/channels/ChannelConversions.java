@@ -1,7 +1,7 @@
-package io.rheem.rheem.giraph.channels;
+package org.apache.incubator.wayang.giraph.channels;
 
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.giraph.platform.GiraphPlatform;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.giraph.platform.GiraphPlatform;
 import java.util.Collection;
 import java.util.Collections;
 

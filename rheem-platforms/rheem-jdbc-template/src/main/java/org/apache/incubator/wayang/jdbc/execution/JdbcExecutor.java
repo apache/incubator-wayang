@@ -1,27 +1,27 @@
-package io.rheem.rheem.jdbc.execution;
+package org.apache.incubator.wayang.jdbc.execution;
 
-import io.rheem.rheem.basic.channels.FileChannel;
-import io.rheem.rheem.basic.operators.TableSource;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionStage;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.platform.ExecutionState;
-import io.rheem.rheem.core.platform.Executor;
-import io.rheem.rheem.core.platform.ExecutorTemplate;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.core.util.fs.FileSystem;
-import io.rheem.rheem.core.util.fs.FileSystems;
-import io.rheem.rheem.jdbc.channels.SqlQueryChannel;
-import io.rheem.rheem.jdbc.compiler.FunctionCompiler;
-import io.rheem.rheem.jdbc.operators.JdbcExecutionOperator;
-import io.rheem.rheem.jdbc.operators.JdbcFilterOperator;
-import io.rheem.rheem.jdbc.operators.JdbcProjectionOperator;
-import io.rheem.rheem.jdbc.platform.JdbcPlatformTemplate;
+import org.apache.incubator.wayang.basic.channels.FileChannel;
+import org.apache.incubator.wayang.basic.operators.TableSource;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.platform.ExecutionState;
+import org.apache.incubator.wayang.core.platform.Executor;
+import org.apache.incubator.wayang.core.platform.ExecutorTemplate;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.core.util.fs.FileSystem;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.jdbc.channels.SqlQueryChannel;
+import org.apache.incubator.wayang.jdbc.compiler.FunctionCompiler;
+import org.apache.incubator.wayang.jdbc.operators.JdbcExecutionOperator;
+import org.apache.incubator.wayang.jdbc.operators.JdbcFilterOperator;
+import org.apache.incubator.wayang.jdbc.operators.JdbcProjectionOperator;
+import org.apache.incubator.wayang.jdbc.platform.JdbcPlatformTemplate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +86,7 @@ public class JdbcExecutor extends ExecutorTemplate {
                 projectionTask = nextTask;
 
             } else {
-                throw new RheemException(String.format("Unsupported JDBC execution task %s", nextTask.toString()));
+                throw new WayangException(String.format("Unsupported JDBC execution task %s", nextTask.toString()));
             }
 
             // Move the tipChannelInstance.
@@ -121,7 +121,7 @@ public class JdbcExecutor extends ExecutorTemplate {
     private ExecutionTask findJdbcExecutionOperatorTaskInStage(ExecutionTask task, ExecutionStage stage) {
         assert task.getNumOuputChannels() == 1;
         final Channel outputChannel = task.getOutputChannel(0);
-        final ExecutionTask consumer = RheemCollections.getSingle(outputChannel.getConsumers());
+        final ExecutionTask consumer = WayangCollections.getSingle(outputChannel.getConsumers());
         return consumer.getStage() == stage && consumer.getOperator() instanceof JdbcExecutionOperator ?
                 consumer :
                 null;

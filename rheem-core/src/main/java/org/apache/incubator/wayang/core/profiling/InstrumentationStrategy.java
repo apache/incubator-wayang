@@ -1,8 +1,8 @@
-package io.rheem.rheem.core.profiling;
+package org.apache.incubator.wayang.core.profiling;
 
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionPlan;
-import io.rheem.rheem.core.plan.executionplan.ExecutionStage;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
 
 /**
  * Determines, which {@link Channel}s in an {@link ExecutionPlan} should be instrumented.

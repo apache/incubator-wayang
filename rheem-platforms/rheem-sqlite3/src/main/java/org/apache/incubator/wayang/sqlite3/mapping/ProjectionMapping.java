@@ -1,15 +1,15 @@
-package io.rheem.rheem.sqlite3.mapping;
+package org.apache.incubator.wayang.sqlite3.mapping;
 
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.function.ProjectionDescriptor;
-import io.rheem.rheem.basic.operators.MapOperator;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.sqlite3.operators.Sqlite3ProjectionOperator;
-import io.rheem.rheem.sqlite3.platform.Sqlite3Platform;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.function.ProjectionDescriptor;
+import org.apache.incubator.wayang.basic.operators.MapOperator;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.sqlite3.operators.Sqlite3ProjectionOperator;
+import org.apache.incubator.wayang.sqlite3.platform.Sqlite3Platform;
 
 import java.util.Collection;
 import java.util.Collections;

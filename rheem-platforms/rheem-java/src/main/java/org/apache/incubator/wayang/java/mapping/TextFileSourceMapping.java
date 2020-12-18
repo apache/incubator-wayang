@@ -1,13 +1,13 @@
-package io.rheem.rheem.java.mapping;
+package org.apache.incubator.wayang.java.mapping;
 
-import io.rheem.rheem.basic.operators.TextFileSource;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.java.operators.JavaTextFileSource;
-import io.rheem.rheem.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.basic.operators.TextFileSource;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.java.operators.JavaTextFileSource;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,7 +28,7 @@ public class TextFileSourceMapping implements Mapping {
 
     private SubplanPattern createSubplanPattern() {
         final OperatorPattern operatorPattern = new OperatorPattern(
-                "source", new io.rheem.rheem.basic.operators.TextFileSource((String) null), false
+                "source", new org.apache.incubator.wayang.basic.operators.TextFileSource((String) null), false
         );
         return SubplanPattern.createSingleton(operatorPattern);
     }

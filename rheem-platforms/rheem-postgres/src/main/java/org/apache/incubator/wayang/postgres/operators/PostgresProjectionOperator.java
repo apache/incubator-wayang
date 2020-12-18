@@ -1,10 +1,10 @@
-package io.rheem.rheem.postgres.operators;
+package org.apache.incubator.wayang.postgres.operators;
 
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.function.ProjectionDescriptor;
-import io.rheem.rheem.basic.operators.FilterOperator;
-import io.rheem.rheem.basic.operators.MapOperator;
-import io.rheem.rheem.jdbc.operators.JdbcProjectionOperator;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.function.ProjectionDescriptor;
+import org.apache.incubator.wayang.basic.operators.FilterOperator;
+import org.apache.incubator.wayang.basic.operators.MapOperator;
+import org.apache.incubator.wayang.jdbc.operators.JdbcProjectionOperator;
 
 /**
  * PostgreSQL implementation of the {@link FilterOperator}.

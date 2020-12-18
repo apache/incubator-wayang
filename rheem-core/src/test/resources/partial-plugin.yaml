@@ -1,7 +1,7 @@
 platforms:
   include:
-  - io.rheem.rheem.core.test.DummyPlatform.getInstance()
+  - org.apache.incubator.wayang.core.test.DummyPlatform.getInstance()
 
 mappings:
   exclude:
-  - new io.rheem.rheem.core.mapping.test.TestSinkMapping()
+  - new org.apache.incubator.wayang.core.mapping.test.TestSinkMapping()

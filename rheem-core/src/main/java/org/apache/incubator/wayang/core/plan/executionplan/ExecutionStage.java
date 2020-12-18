@@ -1,9 +1,9 @@
-package io.rheem.rheem.core.plan.executionplan;
+package org.apache.incubator.wayang.core.plan.executionplan;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.plan.rheemplan.LoopHeadOperator;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,11 +18,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Resides within a {@link PlatformExecution} and represents the minimum execution unit that is controlled by Rheem.
+ * Resides within a {@link PlatformExecution} and represents the minimum execution unit that is controlled by Wayang.
  * <p>The purpose of stages is to allow to do only a part of work that is to be done by a single
  * {@link PlatformExecution} and invoke a further {@link PlatformExecution} to proceed working with the results
  * of this stage. Also, this allows to consume data with a {@link PlatformExecution} only when it is needed, i.e.,
- * at a deferred stage. However, the level of control that can be imposed by Rheem can vary between {@link Platform}s</p>
+ * at a deferred stage. However, the level of control that can be imposed by Wayang can vary between {@link Platform}s</p>
  * <p>Note that this class is immutable, i.e., it does not comprise any execution state.</p>
  */
 public class ExecutionStage {
@@ -143,7 +143,7 @@ public class ExecutionStage {
      */
     public ExecutionTask getLoopHeadTask() {
         assert this.isLoopHead();
-        return RheemCollections.getSingle(this.getAllTasks());
+        return WayangCollections.getSingle(this.getAllTasks());
     }
 
     /**

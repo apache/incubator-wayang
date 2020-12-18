@@ -1,17 +1,17 @@
-package io.rheem.rheem.profiler.java;
+package org.apache.incubator.wayang.profiler.java;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.DefaultOptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.util.RheemArrays;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.java.execution.JavaExecutor;
-import io.rheem.rheem.java.operators.JavaExecutionOperator;
-import io.rheem.rheem.profiler.util.ProfilingUtils;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.util.WayangArrays;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
+import org.apache.incubator.wayang.profiler.util.ProfilingUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,13 +46,13 @@ public abstract class OperatorProfiler {
         this.operatorGenerator = operatorGenerator;
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
         this.executor = ProfilingUtils.fakeJavaExecutor();
-        this.cpuMhz = Integer.parseInt(System.getProperty("rheem.java.cpu.mhz", "2700"));
+        this.cpuMhz = Integer.parseInt(System.getProperty("wayang.java.cpu.mhz", "2700"));
     }
 
 
     public void prepare(long... inputCardinalities) {
         this.operator = this.operatorGenerator.get();
-        this.inputCardinalities = RheemArrays.asList(inputCardinalities);
+        this.inputCardinalities = WayangArrays.asList(inputCardinalities);
     }
 
 
@@ -176,7 +176,7 @@ public abstract class OperatorProfiler {
         }
 
         public String getCsvHeader() {
-            return String.join(",", RheemCollections.map(this.inputCardinalities, (index, card) -> "input_card_" + index)) + "," +
+            return String.join(",", WayangCollections.map(this.inputCardinalities, (index, card) -> "input_card_" + index)) + "," +
                     "output_card," +
                     "disk," +
                     "network," +
@@ -184,7 +184,7 @@ public abstract class OperatorProfiler {
         }
 
         public String toCsvString() {
-            return String.join(",", RheemCollections.map(this.inputCardinalities, Object::toString)) + ","
+            return String.join(",", WayangCollections.map(this.inputCardinalities, Object::toString)) + ","
                     + this.outputCardinality + ","
                     + this.diskBytes + ","
                     + this.networkBytes + ","

@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.api.configuration;
+package org.apache.incubator.wayang.core.api.configuration;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Configuration;
 
 import java.util.HashMap;
 import java.util.Map;

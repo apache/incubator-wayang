@@ -1,17 +1,17 @@
-package io.rheem.rheem.core.optimizer.cardinality;
+package org.apache.incubator.wayang.core.optimizer.cardinality;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationUtils;
-import io.rheem.rheem.core.optimizer.enumeration.LoopImplementation;
-import io.rheem.rheem.core.optimizer.enumeration.PlanImplementation;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.ExecutionState;
-import io.rheem.rheem.core.platform.Junction;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationUtils;
+import org.apache.incubator.wayang.core.optimizer.enumeration.LoopImplementation;
+import org.apache.incubator.wayang.core.optimizer.enumeration.PlanImplementation;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.ExecutionState;
+import org.apache.incubator.wayang.core.platform.Junction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,16 +19,16 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Handles the {@link CardinalityEstimate}s of a {@link RheemPlan}.
+ * Handles the {@link CardinalityEstimate}s of a {@link WayangPlan}.
  */
 public class CardinalityEstimatorManager {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     /**
-     * The {@link RheemPlan} whose cardinalities are being managed.
+     * The {@link WayangPlan} whose cardinalities are being managed.
      */
-    private final RheemPlan rheemPlan;
+    private final WayangPlan wayangPlan;
 
     /**
      * Keeps the {@link CardinalityEstimate}s around.
@@ -42,16 +42,16 @@ public class CardinalityEstimatorManager {
 
     private CardinalityEstimationTraversal planTraversal;
 
-    public CardinalityEstimatorManager(RheemPlan rheemPlan,
+    public CardinalityEstimatorManager(WayangPlan wayangPlan,
                                        OptimizationContext optimizationContext,
                                        Configuration configuration) {
-        this.rheemPlan = rheemPlan;
+        this.wayangPlan = wayangPlan;
         this.optimizationContext = optimizationContext;
         this.configuration = configuration;
     }
 
     /**
-     * Traverse the {@link RheemPlan}, thereby updating {@link CardinalityEstimate}s.
+     * Traverse the {@link WayangPlan}, thereby updating {@link CardinalityEstimate}s.
      *
      * @return whether any {@link CardinalityEstimate}s have been updated
      */
@@ -62,7 +62,7 @@ public class CardinalityEstimatorManager {
     }
 
     /**
-     * Traverse the {@link RheemPlan}, thereby updating {@link CardinalityEstimate}s. Also update conversion
+     * Traverse the {@link WayangPlan}, thereby updating {@link CardinalityEstimate}s. Also update conversion
      * {@link Operator} cardinalities as provided by the {@link PlanImplementation}.
      *
      * @param planImplementation that has conversion {@link Operator}s
@@ -133,7 +133,7 @@ public class CardinalityEstimatorManager {
         if (this.planTraversal == null) {
             this.planTraversal = CardinalityEstimationTraversal.createPushTraversal(
                     Collections.emptyList(),
-                    this.rheemPlan.collectReachableTopLevelSources(),
+                    this.wayangPlan.collectReachableTopLevelSources(),
                     this.configuration
             );
         }
@@ -141,7 +141,7 @@ public class CardinalityEstimatorManager {
     }
 
     /**
-     * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link RheemPlan}
+     * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link WayangPlan}
      * (or its {@link OptimizationContext}, respectively) and then reperforms the cardinality estimation.
      *
      * @return whether any cardinalities have been injected
@@ -153,7 +153,7 @@ public class CardinalityEstimatorManager {
     }
 
     /**
-     * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link RheemPlan}.
+     * Injects the cardinalities of a current {@link ExecutionState} into its associated {@link WayangPlan}.
      *
      * @return whether any cardinalities have been injected
      */
@@ -172,15 +172,15 @@ public class CardinalityEstimatorManager {
         // Obtain cardinality measurement.
         final long cardinality = channelInstance.getMeasuredCardinality().getAsLong();
 
-        // Try to inject into the RheemPlan Operator output.
-        final OutputSlot<?> rheemPlanOutput = OptimizationUtils.findRheemPlanOutputSlotFor(channelInstance.getChannel());
-        int outputIndex = rheemPlanOutput == null ? 0 : rheemPlanOutput.getIndex();
+        // Try to inject into the WayangPlan Operator output.
+        final OutputSlot<?> wayangPlanOutput = OptimizationUtils.findWayangPlanOutputSlotFor(channelInstance.getChannel());
+        int outputIndex = wayangPlanOutput == null ? 0 : wayangPlanOutput.getIndex();
         OptimizationContext optimizationContext = channelInstance.getProducerOperatorContext().getOptimizationContext();
-        final OptimizationContext.OperatorContext rheemPlanOperatorCtx = optimizationContext.getOperatorContext(rheemPlanOutput.getOwner());
-        if (rheemPlanOperatorCtx != null) {
-            this.injectMeasuredCardinality(cardinality, rheemPlanOperatorCtx, outputIndex);
+        final OptimizationContext.OperatorContext wayangPlanOperatorCtx = optimizationContext.getOperatorContext(wayangPlanOutput.getOwner());
+        if (wayangPlanOperatorCtx != null) {
+            this.injectMeasuredCardinality(cardinality, wayangPlanOperatorCtx, outputIndex);
         } else {
-            this.logger.warn("Could not inject cardinality measurement {} for {}.", cardinality, rheemPlanOutput);
+            this.logger.warn("Could not inject cardinality measurement {} for {}.", cardinality, wayangPlanOutput);
         }
     }
 

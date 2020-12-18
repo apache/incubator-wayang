@@ -1,10 +1,10 @@
-package io.rheem.rheem.jdbc.operators;
+package org.apache.incubator.wayang.jdbc.operators;
 
-import io.rheem.rheem.basic.operators.TableSource;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.jdbc.compiler.FunctionCompiler;
-import io.rheem.rheem.jdbc.platform.JdbcPlatformTemplate;
+import org.apache.incubator.wayang.basic.operators.TableSource;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.jdbc.compiler.FunctionCompiler;
+import org.apache.incubator.wayang.jdbc.platform.JdbcPlatformTemplate;
 
 import java.sql.Connection;
 import java.util.Collections;

@@ -1,11 +1,11 @@
-package io.rheem.rheem.basic.operators;
+package org.apache.incubator.wayang.basic.operators;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import io.rheem.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import io.rheem.rheem.core.plan.rheemplan.BinaryToUnaryOperator;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.incubator.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.BinaryToUnaryOperator;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 import java.util.Optional;
 

@@ -1,13 +1,13 @@
-package io.rheem.rheem.core.profiling;
+package org.apache.incubator.wayang.core.profiling;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONObject;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.platform.CrossPlatformExecutor;
-import io.rheem.rheem.core.platform.PartialExecution;
-import io.rheem.rheem.core.util.JsonSerializables;
-import io.rheem.rheem.core.util.JsonSerializer;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.incubator.wayang.core.platform.PartialExecution;
+import org.apache.incubator.wayang.core.util.JsonSerializables;
+import org.apache.incubator.wayang.core.util.JsonSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +59,7 @@ public class ExecutionLog implements AutoCloseable {
      * @return the new instance
      */
     public static ExecutionLog open(Configuration configuration) {
-        return open(configuration, configuration.getStringProperty("rheem.core.log.executions"));
+        return open(configuration, configuration.getStringProperty("wayang.core.log.executions"));
     }
 
 
@@ -129,7 +129,7 @@ public class ExecutionLog implements AutoCloseable {
                     try {
                         return JsonSerializables.deserialize(new JSONObject(line), serializer, PartialExecution.class);
                     } catch (Exception e) {
-                        throw new RheemException(String.format("Could not parse \"%s\".", line), e);
+                        throw new WayangException(String.format("Could not parse \"%s\".", line), e);
                     }
                 });
     }
@@ -148,13 +148,13 @@ public class ExecutionLog implements AutoCloseable {
             File file = new File(this.repositoryPath);
             final File parentFile = file.getParentFile();
             if (!parentFile.exists() && !file.getParentFile().mkdirs()) {
-                throw new RheemException("Could not initialize cardinality repository.");
+                throw new WayangException("Could not initialize cardinality repository.");
             }
             return this.writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
-        } catch (RheemException e) {
+        } catch (WayangException e) {
             throw e;
         } catch (Exception e) {
-            throw new RheemException(String.format("Cannot write to %s.", this.repositoryPath), e);
+            throw new WayangException(String.format("Cannot write to %s.", this.repositoryPath), e);
         }
     }
 

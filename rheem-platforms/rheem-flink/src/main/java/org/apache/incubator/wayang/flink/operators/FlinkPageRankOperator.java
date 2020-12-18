@@ -1,4 +1,4 @@
-package io.rheem.rheem.flink.operators;
+package org.apache.incubator.wayang.flink.operators;
 
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.FlatMapFunction;
@@ -8,15 +8,15 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.operators.IterativeDataSet;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.util.Collector;
-import io.rheem.rheem.basic.operators.PageRankOperator;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.flink.channels.DataSetChannel;
-import io.rheem.rheem.flink.execution.FlinkExecutor;
+import org.apache.incubator.wayang.basic.operators.PageRankOperator;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.flink.channels.DataSetChannel;
+import org.apache.incubator.wayang.flink.execution.FlinkExecutor;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,14 +55,14 @@ public class FlinkPageRankOperator extends PageRankOperator implements FlinkExec
         final DataSetChannel.Instance input = (DataSetChannel.Instance) inputs[0];
         final DataSetChannel.Instance output = (DataSetChannel.Instance) outputs[0];
 
-        MapFunction<io.rheem.rheem.basic.data.Tuple2<Long, Long>, Tuple2<Long,Long>> mapFunction = new MapFunction<io.rheem.rheem.basic.data.Tuple2<Long, Long>, Tuple2<Long, Long>>() {
+        MapFunction<org.apache.incubator.wayang.basic.data.Tuple2<Long, Long>, Tuple2<Long,Long>> mapFunction = new MapFunction<org.apache.incubator.wayang.basic.data.Tuple2<Long, Long>, Tuple2<Long, Long>>() {
             @Override
-            public Tuple2<Long, Long> map(io.rheem.rheem.basic.data.Tuple2<Long, Long> longLongTuple2) throws Exception {
+            public Tuple2<Long, Long> map(org.apache.incubator.wayang.basic.data.Tuple2<Long, Long> longLongTuple2) throws Exception {
                 return new Tuple2<>(longLongTuple2.field0, longLongTuple2.field1);
             }
         };
 
-        final DataSet<io.rheem.rheem.basic.data.Tuple2<Long, Long>> dataSetInput = input.provideDataSet();
+        final DataSet<org.apache.incubator.wayang.basic.data.Tuple2<Long, Long>> dataSetInput = input.provideDataSet();
 
         final DataSet<Tuple2<Long, Long>> dataSetInputReal = dataSetInput.map(mapFunction);
 
@@ -114,11 +114,11 @@ public class FlinkPageRankOperator extends PageRankOperator implements FlinkExec
                         .filter(new EpsilonFilter()));
 
 
-        final DataSet<io.rheem.rheem.basic.data.Tuple2<Long, Float>> dataSetOutput = finalPageRanks.map(
-                new MapFunction<Tuple2<Long, Double>, io.rheem.rheem.basic.data.Tuple2<Long, Float>>() {
+        final DataSet<org.apache.incubator.wayang.basic.data.Tuple2<Long, Float>> dataSetOutput = finalPageRanks.map(
+                new MapFunction<Tuple2<Long, Double>, org.apache.incubator.wayang.basic.data.Tuple2<Long, Float>>() {
                     @Override
-                    public io.rheem.rheem.basic.data.Tuple2<Long, Float> map(Tuple2<Long, Double> longDoubleTuple2) throws Exception {
-                        return new io.rheem.rheem.basic.data.Tuple2<Long, Float>(longDoubleTuple2.f0, longDoubleTuple2.f1.floatValue());
+                    public org.apache.incubator.wayang.basic.data.Tuple2<Long, Float> map(Tuple2<Long, Double> longDoubleTuple2) throws Exception {
+                        return new org.apache.incubator.wayang.basic.data.Tuple2<Long, Float>(longDoubleTuple2.f0, longDoubleTuple2.f1.floatValue());
                     }
                 }
         );
@@ -135,7 +135,7 @@ public class FlinkPageRankOperator extends PageRankOperator implements FlinkExec
 
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
-        return Arrays.asList("rheem.flink.pagerank.load.main", "rheem.flink.pagerank.load.output");
+        return Arrays.asList("wayang.flink.pagerank.load.main", "wayang.flink.pagerank.load.output");
     }
 
     @Override

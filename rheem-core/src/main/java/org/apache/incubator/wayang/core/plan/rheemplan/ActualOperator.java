@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
 /**
  * Operator free of ambiguities.

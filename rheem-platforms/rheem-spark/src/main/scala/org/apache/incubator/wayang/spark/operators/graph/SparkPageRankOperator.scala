@@ -1,4 +1,4 @@
-package io.rheem.rheem.spark.operators.graph
+package org.apache.incubator.wayang.spark.operators.graph
 
 import java.lang.{Long => JavaLong}
 import java.util
@@ -6,15 +6,15 @@ import java.util.Collections
 
 import org.apache.spark.graphx.Graph
 import org.apache.spark.graphx.lib.PageRank
-import io.rheem.rheem.basic.data.{Tuple2 => T2}
-import io.rheem.rheem.basic.operators.PageRankOperator
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators
-import io.rheem.rheem.core.optimizer.{OptimizationContext, ProbabilisticDoubleInterval}
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode
-import io.rheem.rheem.core.platform.{ChannelDescriptor, ChannelInstance}
-import io.rheem.rheem.spark.channels.RddChannel
-import io.rheem.rheem.spark.execution.SparkExecutor
-import io.rheem.rheem.spark.operators.SparkExecutionOperator
+import org.apache.incubator.wayang.basic.data.{Tuple2 => T2}
+import org.apache.incubator.wayang.basic.operators.PageRankOperator
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators
+import org.apache.incubator.wayang.core.optimizer.{OptimizationContext, ProbabilisticDoubleInterval}
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode
+import org.apache.incubator.wayang.core.platform.{ChannelDescriptor, ChannelInstance}
+import org.apache.incubator.wayang.spark.channels.RddChannel
+import org.apache.incubator.wayang.spark.execution.SparkExecutor
+import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator
 
 /**
   * GraphX-based implementation of the [[PageRankOperator]].
@@ -45,13 +45,13 @@ class SparkPageRankOperator(_numIterations: Int,
 
     val mainExecutionLineageNode = new ExecutionLineageNode(operatorContext)
     mainExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
-      "rheem.spark.pagerank.load.main", sparkExecutor.getConfiguration
+      "wayang.spark.pagerank.load.main", sparkExecutor.getConfiguration
     ))
     mainExecutionLineageNode.addPredecessor(input.getLineage)
 
     val outputExecutionLineageNode = new ExecutionLineageNode(operatorContext)
     outputExecutionLineageNode.add(LoadProfileEstimators.createFromSpecification(
-      "rheem.spark.pagerank.load.output", sparkExecutor.getConfiguration
+      "wayang.spark.pagerank.load.output", sparkExecutor.getConfiguration
     ))
     output.getLineage.addPredecessor(outputExecutionLineageNode)
 
@@ -59,7 +59,7 @@ class SparkPageRankOperator(_numIterations: Int,
   }
 
   override def getLoadProfileEstimatorConfigurationKeys: java.util.Collection[String] =
-    java.util.Arrays.asList("rheem.spark.pagerank.load.main", "rheem.spark.pagerank.load.output")
+    java.util.Arrays.asList("wayang.spark.pagerank.load.main", "wayang.spark.pagerank.load.output")
 
   override def getSupportedInputChannels(index: Int): util.List[ChannelDescriptor] = {
     assert(index == 0)

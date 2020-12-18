@@ -1,8 +1,8 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityPusher;
-import io.rheem.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityPusher;
+import org.apache.incubator.wayang.core.optimizer.cardinality.DefaultCardinalityPusher;
 
 import java.util.Collection;
 

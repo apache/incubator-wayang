@@ -1,20 +1,20 @@
-package io.rheem.rheem.spark.operators;
+package org.apache.incubator.wayang.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
-import io.rheem.rheem.basic.operators.CollectionSource;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.java.platform.JavaPlatform;
-import io.rheem.rheem.spark.channels.RddChannel;
-import io.rheem.rheem.spark.execution.SparkExecutor;
+import org.apache.incubator.wayang.basic.operators.CollectionSource;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
+import org.apache.incubator.wayang.spark.execution.SparkExecutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +35,7 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
     }
 
     /**
-     * Create a new instance to use a {@code collection} in a {@link RheemPlan}.
+     * Create a new instance to use a {@code collection} in a {@link WayangPlan}.
      */
     public SparkCollectionSource(Collection<Type> collection, DataSetType<Type> type) {
         super(collection, type);
@@ -67,7 +67,7 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
             collection = input.provideCollection();
             assert collection != null : String.format("Instance of %s is not providing a collection.", input.getChannel());
         }
-        final List<Type> list = RheemCollections.asList(collection);
+        final List<Type> list = WayangCollections.asList(collection);
 
         final RddChannel.Instance output = (RddChannel.Instance) outputs[0];
         final JavaRDD<Type> rdd = sparkExecutor.sc.parallelize(list, sparkExecutor.getNumDefaultPartitions());
@@ -84,7 +84,7 @@ public class SparkCollectionSource<Type> extends CollectionSource<Type> implemen
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.spark.collectionsource.load";
+        return "wayang.spark.collectionsource.load";
     }
 
     public List<ChannelDescriptor> getSupportedInputChannels(int index) {

@@ -1,30 +1,30 @@
-package io.rheem.rheem.basic.mapping;
+package org.apache.incubator.wayang.basic.mapping;
 
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.CountOperator;
-import io.rheem.rheem.basic.operators.DistinctOperator;
-import io.rheem.rheem.basic.operators.FlatMapOperator;
-import io.rheem.rheem.basic.operators.JoinOperator;
-import io.rheem.rheem.basic.operators.MapOperator;
-import io.rheem.rheem.basic.operators.PageRankOperator;
-import io.rheem.rheem.basic.operators.ReduceByOperator;
-import io.rheem.rheem.basic.operators.RepeatOperator;
-import io.rheem.rheem.core.function.ExecutionContext;
-import io.rheem.rheem.core.function.FlatMapDescriptor;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import io.rheem.rheem.core.optimizer.cardinality.DefaultCardinalityEstimator;
-import io.rheem.rheem.core.plan.rheemplan.LoopIsolator;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.Subplan;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.CountOperator;
+import org.apache.incubator.wayang.basic.operators.DistinctOperator;
+import org.apache.incubator.wayang.basic.operators.FlatMapOperator;
+import org.apache.incubator.wayang.basic.operators.JoinOperator;
+import org.apache.incubator.wayang.basic.operators.MapOperator;
+import org.apache.incubator.wayang.basic.operators.PageRankOperator;
+import org.apache.incubator.wayang.basic.operators.ReduceByOperator;
+import org.apache.incubator.wayang.basic.operators.RepeatOperator;
+import org.apache.incubator.wayang.core.function.ExecutionContext;
+import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.incubator.wayang.core.optimizer.cardinality.DefaultCardinalityEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopIsolator;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.Subplan;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -243,7 +243,7 @@ public class PageRankMapping implements Mapping {
 
         @Override
         public void open(ExecutionContext ctx) {
-            long numVertices = RheemCollections.getSingle(ctx.getBroadcast("numVertices"));
+            long numVertices = WayangCollections.getSingle(ctx.getBroadcast("numVertices"));
             this.initialRank = 1f / numVertices;
         }
 
@@ -269,7 +269,7 @@ public class PageRankMapping implements Mapping {
 
         @Override
         public void open(ExecutionContext ctx) {
-            long numVertices = RheemCollections.getSingle(ctx.getBroadcast("numVertices"));
+            long numVertices = WayangCollections.getSingle(ctx.getBroadcast("numVertices"));
             this.minRank = (1 - this.dampingFactor) / numVertices;
         }
 

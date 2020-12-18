@@ -1,4 +1,4 @@
-package io.rheem.rheem.api
+package org.apache.incubator.wayang.api
 
 import java.io.File
 import java.net.URI
@@ -7,32 +7,32 @@ import java.sql.{Connection, Statement}
 import java.util.function.Consumer
 
 import org.junit.{Assert, Test}
-import io.rheem.rheem.basic.RheemBasics
-import io.rheem.rheem.core.api.{Configuration, RheemContext}
-import io.rheem.rheem.core.function.FunctionDescriptor.ExtendedSerializablePredicate
-import io.rheem.rheem.core.function.{ExecutionContext, TransformationDescriptor}
-import io.rheem.rheem.core.util.fs.LocalFileSystem
-import io.rheem.rheem.java.Java
-import io.rheem.rheem.java.operators.JavaMapOperator
-import io.rheem.rheem.spark.Spark
-import io.rheem.rheem.sqlite3.Sqlite3
-import io.rheem.rheem.sqlite3.operators.Sqlite3TableSource
+import org.apache.incubator.wayang.basic.WayangBasics
+import org.apache.incubator.wayang.core.api.{Configuration, WayangContext}
+import org.apache.incubator.wayang.core.function.FunctionDescriptor.ExtendedSerializablePredicate
+import org.apache.incubator.wayang.core.function.{ExecutionContext, TransformationDescriptor}
+import org.apache.incubator.wayang.core.util.fs.LocalFileSystem
+import org.apache.incubator.wayang.java.Java
+import org.apache.incubator.wayang.java.operators.JavaMapOperator
+import org.apache.incubator.wayang.spark.Spark
+import org.apache.incubator.wayang.sqlite3.Sqlite3
+import org.apache.incubator.wayang.sqlite3.operators.Sqlite3TableSource
 
 /**
-  * Tests the Rheem API.
+  * Tests the Wayang API.
   */
 class ApiTest {
 
   @Test
   def testReadMapCollect(): Unit = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = (for (i <- 1 to 10) yield i).toArray
 
-    // Build and execute a Rheem plan.
-    val outputValues = rheem
+    // Build and execute a Wayang plan.
+    val outputValues = wayang
       .loadCollection(inputValues).withName("Load input values")
       .map(_ + 2).withName("Add 2")
       .collect()
@@ -44,17 +44,17 @@ class ApiTest {
 
   @Test
   def testCustomOperator(): Unit = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = (for (i <- 1 to 10) yield i).toArray
 
-    // Build and execute a Rheem plan.
-    val inputDataSet = rheem.loadCollection(inputValues).withName("Load input values")
+    // Build and execute a Wayang plan.
+    val inputDataSet = wayang.loadCollection(inputValues).withName("Load input values")
 
     // Add the custom operator.
-    val IndexedSeq(addedValues) = rheem.customOperator(new JavaMapOperator(
+    val IndexedSeq(addedValues) = wayang.customOperator(new JavaMapOperator(
       dataSetType[Int],
       dataSetType[Int],
       new TransformationDescriptor(
@@ -74,14 +74,14 @@ class ApiTest {
 
   @Test
   def testCustomOperatorShortCut(): Unit = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = (for (i <- 1 to 10) yield i).toArray
 
-    // Build and execute a Rheem plan.
-    val outputValues = rheem
+    // Build and execute a Wayang plan.
+    val outputValues = wayang
       .loadCollection(inputValues).withName("Load input values")
       .customOperator[Int](new JavaMapOperator(
       dataSetType[Int],
@@ -100,14 +100,14 @@ class ApiTest {
 
   @Test
   def testWordCount(): Unit = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array("Big data is big.", "Is data big data?")
 
-    // Build and execute a word count RheemPlan.
-    val wordCounts = rheem
+    // Build and execute a word count WayangPlan.
+    val wordCounts = wayang
       .loadCollection(inputValues).withName("Load input values")
       .flatMap(_.split("\\s+")).withName("Split words")
       .map(_.replaceAll("\\W+", "").toLowerCase).withName("To lowercase")
@@ -122,14 +122,14 @@ class ApiTest {
 
   @Test
   def testWordCountOnSparkAndJava(): Unit = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array("Big data is big.", "Is data big data?")
 
-    // Build and execute a word count RheemPlan.
-    val wordCounts = rheem
+    // Build and execute a word count WayangPlan.
+    val wordCounts = wayang
       .loadCollection(inputValues).withName("Load input values").withTargetPlatforms(Java.platform)
       .flatMap(_.split("\\s+")).withName("Split words").withTargetPlatforms(Java.platform)
       .map(_.replaceAll("\\W+", "").toLowerCase).withName("To lowercase").withTargetPlatforms(Spark.platform)
@@ -144,14 +144,14 @@ class ApiTest {
 
   @Test
   def testSample(): Unit = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = for (i <- 0 until 100) yield i
 
-    // Build and execute the RheemPlan.
-    val sample = rheem
+    // Build and execute the WayangPlan.
+    val sample = wayang
       .loadCollection(inputValues)
       .sample(10)
       .collect()
@@ -163,15 +163,15 @@ class ApiTest {
 
   @Test
   def testDoWhile(): Unit = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array(1, 2)
 
-    // Build and execute a word count RheemPlan.
+    // Build and execute a word count WayangPlan.
 
-    val values = rheem
+    val values = wayang
       .loadCollection(inputValues).withName("Load input values")
       .doWhile[Int](vals => vals.max > 100, {
       start =>
@@ -186,15 +186,15 @@ class ApiTest {
 
   @Test
   def testRepeat(): Unit = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     // Generate some test data.
     val inputValues = Array(1, 2)
 
-    // Build and execute a word count RheemPlan.
+    // Build and execute a word count WayangPlan.
 
-    val values = rheem
+    val values = wayang
       .loadCollection(inputValues).withName("Load input values").withName(inputValues.mkString(","))
       .repeat(3,
         _.reduce(_ * _).withName("Multiply")
@@ -209,9 +209,9 @@ class ApiTest {
 
   @Test
   def testBroadcast() = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
-    val builder = new PlanBuilder(rheem)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    val builder = new PlanBuilder(wayang)
 
     // Generate some test data.
     val inputStrings = Array("Hello", "World", "Hi", "Mars")
@@ -219,7 +219,7 @@ class ApiTest {
 
     val selectorsDataSet = builder.loadCollection(selectors).withName("Load selectors")
 
-    // Build and execute a word count RheemPlan.
+    // Build and execute a word count WayangPlan.
     val values = builder
       .loadCollection(inputStrings).withName("Load input values")
       .filterJava(new ExtendedSerializablePredicate[String] {
@@ -243,12 +243,12 @@ class ApiTest {
 
   @Test
   def testGroupBy() = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
 
-    val result = rheem
+    val result = wayang
       .loadCollection(inputValues)
       .groupByKey(_ % 2).withName("group odd and even")
       .map {
@@ -267,12 +267,12 @@ class ApiTest {
 
   @Test
   def testGroup() = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
 
-    val result = rheem
+    val result = wayang
       .loadCollection(inputValues)
       .group()
       .map {
@@ -291,13 +291,13 @@ class ApiTest {
 
   @Test
   def testJoin() = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues1 = Array(("Water", 0), ("Tonic", 5), ("Juice", 10))
     val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
 
-    val builder = new PlanBuilder(rheem)
+    val builder = new PlanBuilder(wayang)
     val dataQuanta1 = builder.loadCollection(inputValues1)
     val dataQuanta2 = builder.loadCollection(inputValues2)
     val result = dataQuanta1
@@ -311,13 +311,13 @@ class ApiTest {
 
   @Test
   def testJoinAndAssemble() = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues1 = Array(("Water", 0), ("Tonic", 5), ("Juice", 10))
     val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
 
-    val builder = new PlanBuilder(rheem)
+    val builder = new PlanBuilder(wayang)
     val dataQuanta1 = builder.loadCollection(inputValues1)
     val dataQuanta2 = builder.loadCollection(inputValues2)
     val result = dataQuanta1.keyBy(_._1).join(dataQuanta2.keyBy(_._2))
@@ -331,13 +331,13 @@ class ApiTest {
 
   @Test
   def testCoGroup() = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues1 = Array(("Water", 0), ("Cola", 5), ("Juice", 10))
     val inputValues2 = Array(("Apple juice", "Juice"), ("Tap water", "Water"), ("Orange juice", "Juice"))
 
-    val builder = new PlanBuilder(rheem)
+    val builder = new PlanBuilder(wayang)
     val dataQuanta1 = builder.loadCollection(inputValues1)
     val dataQuanta2 = builder.loadCollection(inputValues2)
     val result = dataQuanta1
@@ -356,13 +356,13 @@ class ApiTest {
 
   @Test
   def testIntersect() = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues1 = Array(1, 2, 3, 4, 5, 7, 8, 9, 10)
     val inputValues2 = Array(0, 2, 3, 3, 4, 5, 7, 8, 9, 11)
 
-    val builder = new PlanBuilder(rheem)
+    val builder = new PlanBuilder(wayang)
     val dataQuanta1 = builder.loadCollection(inputValues1)
     val dataQuanta2 = builder.loadCollection(inputValues2)
     val result = dataQuanta1
@@ -376,12 +376,12 @@ class ApiTest {
 
   @Test
   def testSort() = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues1 = Array(3, 4, 5, 2, 1)
 
-    val builder = new PlanBuilder(rheem)
+    val builder = new PlanBuilder(wayang)
     val dataQuanta1 = builder.loadCollection(inputValues1)
     val result = dataQuanta1
       .sort(r=>r)
@@ -394,16 +394,16 @@ class ApiTest {
 
   @Test
   def testPageRank() = {
-    // Set up RheemContext.
-    val rheem = new RheemContext()
+    // Set up WayangContext.
+    val wayang = new WayangContext()
       .withPlugin(Java.graphPlugin)
-      .withPlugin(RheemBasics.graphPlugin)
+      .withPlugin(WayangBasics.graphPlugin)
       .withPlugin(Java.basicPlugin)
-    import io.rheem.rheem.api.graph._
+    import org.apache.incubator.wayang.api.graph._
 
     val edges = Seq((0, 1), (0, 2), (0, 3), (1, 0), (2, 1), (3, 2), (3, 1)).map(t => Edge(t._1, t._2))
 
-    val pageRanks = rheem
+    val pageRanks = wayang
       .loadCollection(edges).withName("Load edges")
       .pageRank(20).withName("PageRank")
       .collect()
@@ -419,12 +419,12 @@ class ApiTest {
 
   @Test
   def testMapPartitions() = {
-    // Set up RheemContext.
-    val rheem = new RheemContext()
+    // Set up WayangContext.
+    val wayang = new WayangContext()
       .withPlugin(Java.basicPlugin())
       .withPlugin(Spark.basicPlugin)
 
-    val typeCounts = rheem
+    val typeCounts = wayang
       .loadCollection(Seq(0, 1, 2, 3, 4, 6, 8))
         .mapPartitions { ints =>
           var (numOdds, numEvens) = (0, 0)
@@ -439,12 +439,12 @@ class ApiTest {
 
   @Test
   def testZipWithId() = {
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin).withPlugin(Spark.basicPlugin)
 
     val inputValues = for (i <- 0 until 100; j <- 0 until 42) yield i
 
-    val result = rheem
+    val result = wayang
       .loadCollection(inputValues)
       .zipWithId
       .groupByKey(_.field1)
@@ -464,12 +464,12 @@ class ApiTest {
     val tempDir = LocalFileSystem.findTempDir
     val targetUrl = LocalFileSystem.toURL(new File(tempDir, "testWriteTextFile.txt"))
 
-    // Set up RheemContext.
-    val rheem = new RheemContext().withPlugin(Java.basicPlugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext().withPlugin(Java.basicPlugin)
 
     val inputValues = for (i <- 0 to 5) yield i * 0.333333333333
 
-    val result = rheem
+    val result = wayang
       .loadCollection(inputValues)
       .writeTextFile(targetUrl, formatterUdf = d => f"${d % .2f}")
 
@@ -486,9 +486,9 @@ class ApiTest {
   def testSqlOnJava() = {
     // Initialize some test data.
     val configuration = new Configuration
-    val sqlite3dbFile = File.createTempFile("rheem-sqlite3", "db")
+    val sqlite3dbFile = File.createTempFile("wayang-sqlite3", "db")
     sqlite3dbFile.deleteOnExit()
-    configuration.setProperty("rheem.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath)
+    configuration.setProperty("wayang.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath)
 
     try {
       val connection: Connection = Sqlite3.platform.createDatabaseDescriptor(configuration).createJdbcConnection
@@ -505,10 +505,10 @@ class ApiTest {
       }
     }
 
-    // Set up RheemContext.
-    val rheem = new RheemContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Sqlite3.plugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Sqlite3.plugin)
 
-    val result = rheem
+    val result = wayang
       .readTable(new Sqlite3TableSource("customer", "name", "age"))
       .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18").withTargetPlatforms(Java.platform)
       .projectRecords(Seq("name"))
@@ -524,9 +524,9 @@ class ApiTest {
   def testSqlOnSqlite3() = {
     // Initialize some test data.
     val configuration = new Configuration
-    val sqlite3dbFile = File.createTempFile("rheem-sqlite3", "db")
+    val sqlite3dbFile = File.createTempFile("wayang-sqlite3", "db")
     sqlite3dbFile.deleteOnExit()
-    configuration.setProperty("rheem.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath)
+    configuration.setProperty("wayang.sqlite3.jdbc.url", "jdbc:sqlite:" + sqlite3dbFile.getAbsolutePath)
 
     try {
       val connection: Connection = Sqlite3.platform.createDatabaseDescriptor(configuration).createJdbcConnection
@@ -543,10 +543,10 @@ class ApiTest {
       }
     }
 
-    // Set up RheemContext.
-    val rheem = new RheemContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Sqlite3.plugin)
+    // Set up WayangContext.
+    val wayang = new WayangContext(configuration).withPlugin(Java.basicPlugin).withPlugin(Sqlite3.plugin)
 
-    val result = rheem
+    val result = wayang
       .readTable(new Sqlite3TableSource("customer", "name", "age"))
       .filter(r => r.getField(1).asInstanceOf[Integer] >= 18, sqlUdf = "age >= 18")
       .projectRecords(Seq("name")).withTargetPlatforms(Sqlite3.platform)

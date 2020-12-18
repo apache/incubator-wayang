@@ -1,10 +1,10 @@
-package io.rheem.rheem.profiler.spark;
+package org.apache.incubator.wayang.profiler.spark;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.util.fs.FileSystem;
-import io.rheem.rheem.core.util.fs.FileSystems;
-import io.rheem.rheem.spark.operators.SparkTextFileSource;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.util.fs.FileSystem;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.spark.operators.SparkTextFileSource;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -20,7 +20,7 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
 
     public SparkTextFileSourceProfiler(Configuration configuration,
                                        Supplier<?> dataQuantumGenerator) {
-        this(configuration.getStringProperty("rheem.profiler.datagen.url"), configuration, dataQuantumGenerator);
+        this(configuration.getStringProperty("wayang.profiler.datagen.url"), configuration, dataQuantumGenerator);
     }
 
     private SparkTextFileSourceProfiler(String fileUrl,
@@ -36,7 +36,7 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
 
         // Obtain access to the file system.
         final FileSystem fileSystem = FileSystems.getFileSystem(this.fileUrl).orElseThrow(
-                () -> new RheemException(String.format("File system of %s not supported.", this.fileUrl))
+                () -> new WayangException(String.format("File system of %s not supported.", this.fileUrl))
         );
 
         // Try to delete any existing file.
@@ -61,7 +61,7 @@ public class SparkTextFileSourceProfiler extends SparkSourceProfiler {
                 writer.write('\n');
             }
         } catch (Exception e) {
-            throw new RheemException(String.format("Could not write test data to %s.", this.fileUrl), e);
+            throw new WayangException(String.format("Could not write test data to %s.", this.fileUrl), e);
         }
     }
 

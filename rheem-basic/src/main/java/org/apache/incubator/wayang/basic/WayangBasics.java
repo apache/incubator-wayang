@@ -1,22 +1,22 @@
-package io.rheem.rheem.basic;
+package org.apache.incubator.wayang.basic;
 
-import io.rheem.rheem.basic.plugin.RheemBasic;
-import io.rheem.rheem.basic.plugin.RheemBasicGraph;
+import org.apache.incubator.wayang.basic.plugin.WayangBasic;
+import org.apache.incubator.wayang.basic.plugin.WayangBasicGraph;
 
 /**
  * Register for plugins in the module.
  */
-public class RheemBasics {
+public class WayangBasics {
 
-    private static final RheemBasic DEFAULT_PLUGIN = new RheemBasic();
+    private static final WayangBasic DEFAULT_PLUGIN = new WayangBasic();
 
-    private static final RheemBasicGraph GRAPH_PLUGIN = new RheemBasicGraph();
+    private static final WayangBasicGraph GRAPH_PLUGIN = new WayangBasicGraph();
 
-    public static RheemBasic defaultPlugin() {
+    public static WayangBasic defaultPlugin() {
         return DEFAULT_PLUGIN;
     }
 
-    public static RheemBasicGraph graphPlugin() {
+    public static WayangBasicGraph graphPlugin() {
         return GRAPH_PLUGIN;
     }
 

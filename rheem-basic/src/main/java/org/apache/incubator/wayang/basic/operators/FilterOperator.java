@@ -1,13 +1,13 @@
-package io.rheem.rheem.basic.operators;
+package org.apache.incubator.wayang.basic.operators;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 import java.util.Optional;
 
@@ -73,7 +73,7 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     }
 
     @Override
-    public Optional<io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator> createCardinalityEstimator(
+    public Optional<org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator> createCardinalityEstimator(
             final int outputIndex,
             final Configuration configuration) {
         Validate.inclusiveBetween(0, this.getNumOutputs() - 1, outputIndex);
@@ -85,9 +85,9 @@ public class FilterOperator<Type> extends UnaryToUnaryOperator<Type, Type> {
     }
 
     /**
-     * Custom {@link io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator} for {@link FilterOperator}s.
+     * Custom {@link org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator} for {@link FilterOperator}s.
      */
-    private class CardinalityEstimator implements io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator {
+    private class CardinalityEstimator implements org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator {
 
         /**
          * The expected selectivity to be applied in this instance.

@@ -1,12 +1,12 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityPusher;
-import io.rheem.rheem.core.optimizer.cardinality.DefaultCardinalityPusher;
-import io.rheem.rheem.core.platform.Platform;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityPusher;
+import org.apache.incubator.wayang.core.optimizer.cardinality.DefaultCardinalityPusher;
+import org.apache.incubator.wayang.core.platform.Platform;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -20,7 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * An operator is any node that within a {@link RheemPlan}.
+ * An operator is any node that within a {@link WayangPlan}.
  * <p>An operator is basically determined by
  * <ul>
  * <li>its type,</li>
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * </ul>
  * The former two aspects are handled by subclassed, the latter two are basic features of every operator.
  * <p>{@link Slot}s are typed input and output declarations of each operator and can be connected to each other
- * to form a full {@link RheemPlan}. Moreover, we distinguish between two kinds of {@link InputSlot}s:
+ * to form a full {@link WayangPlan}. Moreover, we distinguish between two kinds of {@link InputSlot}s:
  * <ol>
  * <li><b>Regular.</b>Each operator will have set up these {@link InputSlot}s already during its creation.
  * They are indexed from 0 to the number of {@link InputSlot}s - 1.</li>
@@ -353,7 +353,7 @@ public interface Operator {
 
     /**
      * Checks whether this instance is not connected to any other instance via its {@link Slot}s. This is a typical
-     * property of instances used for {@link io.rheem.rheem.core.optimizer.channels.ChannelConversion}s.
+     * property of instances used for {@link org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion}s.
      *
      * @return whether this instance is unconnected
      */

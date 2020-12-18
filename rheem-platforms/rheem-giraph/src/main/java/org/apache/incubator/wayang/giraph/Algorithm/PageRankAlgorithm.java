@@ -1,4 +1,4 @@
-package io.rheem.rheem.giraph.Algorithm;
+package org.apache.incubator.wayang.giraph.Algorithm;
 
 import com.google.common.collect.Lists;
 import org.apache.giraph.aggregators.DoubleMaxAggregator;

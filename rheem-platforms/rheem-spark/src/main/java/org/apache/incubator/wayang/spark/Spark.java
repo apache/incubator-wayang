@@ -1,9 +1,9 @@
-package io.rheem.rheem.spark;
+package org.apache.incubator.wayang.spark;
 
-import io.rheem.rheem.spark.platform.SparkPlatform;
-import io.rheem.rheem.spark.plugin.SparkBasicPlugin;
-import io.rheem.rheem.spark.plugin.SparkConversionPlugin;
-import io.rheem.rheem.spark.plugin.SparkGraphPlugin;
+import org.apache.incubator.wayang.spark.platform.SparkPlatform;
+import org.apache.incubator.wayang.spark.plugin.SparkBasicPlugin;
+import org.apache.incubator.wayang.spark.plugin.SparkConversionPlugin;
+import org.apache.incubator.wayang.spark.plugin.SparkGraphPlugin;
 
 /**
  * Register for relevant components of this module.

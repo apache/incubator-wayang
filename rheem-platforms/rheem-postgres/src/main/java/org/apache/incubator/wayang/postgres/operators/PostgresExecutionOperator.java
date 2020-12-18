@@ -1,7 +1,7 @@
-package io.rheem.rheem.postgres.operators;
+package org.apache.incubator.wayang.postgres.operators;
 
-import io.rheem.rheem.jdbc.operators.JdbcExecutionOperator;
-import io.rheem.rheem.postgres.platform.PostgresPlatform;
+import org.apache.incubator.wayang.jdbc.operators.JdbcExecutionOperator;
+import org.apache.incubator.wayang.postgres.platform.PostgresPlatform;
 
 public interface PostgresExecutionOperator extends JdbcExecutionOperator {
 

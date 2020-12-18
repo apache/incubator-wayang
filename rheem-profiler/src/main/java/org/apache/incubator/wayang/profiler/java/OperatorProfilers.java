@@ -1,27 +1,27 @@
-package io.rheem.rheem.profiler.java;
+package org.apache.incubator.wayang.profiler.java;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.function.FlatMapDescriptor;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.core.function.ReduceDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.RheemArrays;
-import io.rheem.rheem.java.operators.JavaCartesianOperator;
-import io.rheem.rheem.java.operators.JavaCountOperator;
-import io.rheem.rheem.java.operators.JavaDistinctOperator;
-import io.rheem.rheem.java.operators.JavaFilterOperator;
-import io.rheem.rheem.java.operators.JavaFlatMapOperator;
-import io.rheem.rheem.java.operators.JavaGlobalReduceOperator;
-import io.rheem.rheem.java.operators.JavaJoinOperator;
-import io.rheem.rheem.java.operators.JavaLocalCallbackSink;
-import io.rheem.rheem.java.operators.JavaMapOperator;
-import io.rheem.rheem.java.operators.JavaMaterializedGroupByOperator;
-import io.rheem.rheem.java.operators.JavaReduceByOperator;
-import io.rheem.rheem.java.operators.JavaSortOperator;
-import io.rheem.rheem.java.operators.JavaUnionAllOperator;
-import io.rheem.rheem.profiler.data.DataGenerators;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.function.ReduceDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.WayangArrays;
+import org.apache.incubator.wayang.java.operators.JavaCartesianOperator;
+import org.apache.incubator.wayang.java.operators.JavaCountOperator;
+import org.apache.incubator.wayang.java.operators.JavaDistinctOperator;
+import org.apache.incubator.wayang.java.operators.JavaFilterOperator;
+import org.apache.incubator.wayang.java.operators.JavaFlatMapOperator;
+import org.apache.incubator.wayang.java.operators.JavaGlobalReduceOperator;
+import org.apache.incubator.wayang.java.operators.JavaJoinOperator;
+import org.apache.incubator.wayang.java.operators.JavaLocalCallbackSink;
+import org.apache.incubator.wayang.java.operators.JavaMapOperator;
+import org.apache.incubator.wayang.java.operators.JavaMaterializedGroupByOperator;
+import org.apache.incubator.wayang.java.operators.JavaReduceByOperator;
+import org.apache.incubator.wayang.java.operators.JavaSortOperator;
+import org.apache.incubator.wayang.java.operators.JavaUnionAllOperator;
+import org.apache.incubator.wayang.profiler.data.DataGenerators;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +39,7 @@ public class OperatorProfilers {
         Configuration configuration = new Configuration();
         return new JavaTextFileSourceProfiler(
                 DataGenerators.createRandomStringSupplier(20, 40, new Random(42)),
-                configuration.getStringProperty("rheem.profiler.datagen.url")
+                configuration.getStringProperty("wayang.profiler.datagen.url")
         );
     }
 
@@ -76,7 +76,7 @@ public class OperatorProfilers {
                         DataSetType.createDefault(Integer.class),
                         DataSetType.createDefault(Integer.class),
                         new FlatMapDescriptor<>(
-                                RheemArrays::asList,
+                                WayangArrays::asList,
                                 Integer.class,
                                 Integer.class
                         )

@@ -1,10 +1,10 @@
-package io.rheem.rheem.core.util.fs;
+package org.apache.incubator.wayang.core.util.fs;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FsUrlStreamHandlerFactory;
 import org.apache.hadoop.fs.Path;
-import io.rheem.rheem.core.api.exception.RheemException;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,7 @@ public class HadoopFileSystem implements FileSystem {
             Configuration conf = new Configuration(true);
             return org.apache.hadoop.fs.FileSystem.get(new URI(uri), conf);
         } catch (IOException | URISyntaxException e) {
-            throw new RheemException(String.format("Could not obtain an HDFS client for %s.", uri), e);
+            throw new WayangException(String.format("Could not obtain an HDFS client for %s.", uri), e);
         }
     }
 
@@ -97,7 +97,7 @@ public class HadoopFileSystem implements FileSystem {
             final FileStatus fileStatus = this.getHdfs(url).getFileStatus(new Path(url));
             return fileStatus.isDirectory();
         } catch (IOException e) {
-            throw new RheemException(String.format("Could not access %s.", url), e);
+            throw new WayangException(String.format("Could not access %s.", url), e);
         }
     }
 
@@ -109,7 +109,7 @@ public class HadoopFileSystem implements FileSystem {
                     .map(status -> status.getPath().toString())
                     .collect(Collectors.toList());
         } catch (IOException e) {
-            throw new RheemException(String.format("Could not access %s.", url), e);
+            throw new WayangException(String.format("Could not access %s.", url), e);
         }
     }
 

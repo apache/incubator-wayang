@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.optimizer;
+package org.apache.incubator.wayang.core.optimizer;
 
 import java.util.Objects;
 
@@ -15,7 +15,7 @@ public class ProbabilisticDoubleInterval {
 
     /**
      * Probability of correctness between in the interval [0, 1]. This helps
-     * Rheem in situations with many estimates to pick the best one.
+     * Wayang in situations with many estimates to pick the best one.
      */
     private final double correctnessProb;
 

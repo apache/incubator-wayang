@@ -1,11 +1,11 @@
-package io.rheem.rheem.flink.plugin;
+package org.apache.incubator.wayang.flink.plugin;
 
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plugin.Plugin;
-import io.rheem.rheem.flink.platform.FlinkPlatform;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plugin.Plugin;
+import org.apache.incubator.wayang.flink.platform.FlinkPlatform;
 
 /**
- * This {@link Plugin} enables to use the basic Rheem {@link Operator}s on the {@link FlinkPlatform}.
+ * This {@link Plugin} enables to use the basic Wayang {@link Operator}s on the {@link FlinkPlatform}.
  */
 public class FlinkGraphPlugin {
 }

@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.optimizer.cardinality;
+package org.apache.incubator.wayang.core.optimizer.cardinality;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
 
 import java.util.ArrayList;
 import java.util.List;

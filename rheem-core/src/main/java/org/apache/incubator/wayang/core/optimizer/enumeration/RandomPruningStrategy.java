@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.optimizer.enumeration;
+package org.apache.incubator.wayang.core.optimizer.enumeration;
 
-import io.rheem.rheem.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Configuration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,8 +18,8 @@ public class RandomPruningStrategy implements PlanEnumerationPruningStrategy {
 
     @Override
     public void configure(Configuration configuration) {
-        this.numRetainedPlans = (int) configuration.getLongProperty("rheem.core.optimizer.pruning.random.retain", 1);
-        long seed = configuration.getLongProperty("rheem.core.optimizer.pruning.random.seed", System.currentTimeMillis());
+        this.numRetainedPlans = (int) configuration.getLongProperty("wayang.core.optimizer.pruning.random.retain", 1);
+        long seed = configuration.getLongProperty("wayang.core.optimizer.pruning.random.seed", System.currentTimeMillis());
         this.random = new Random(seed);
     }
 

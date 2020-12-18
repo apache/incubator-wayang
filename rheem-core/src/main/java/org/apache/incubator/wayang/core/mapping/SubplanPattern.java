@@ -1,14 +1,14 @@
-package io.rheem.rheem.core.mapping;
+package org.apache.incubator.wayang.core.mapping;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorBase;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.PlanTraversal;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plan.rheemplan.TopDownPlanVisitor;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorBase;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.PlanTraversal;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.TopDownPlanVisitor;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * A subplan pattern describes a class of subplans in a {@link RheemPlan}.
+ * A subplan pattern describes a class of subplans in a {@link WayangPlan}.
  * <p><i>NB: Currently, only such patterns are tested and supported that form a chain of operators, i.e., no DAGs
  * are allowed and at most one input and one output operator.</i></p>
  */
@@ -67,7 +67,7 @@ public class SubplanPattern extends OperatorBase {
      * @param minEpoch the (inclusive) minimum epoch value for matched subplans
      * @return all matches
      */
-    public List<SubplanMatch> match(RheemPlan plan, int minEpoch) {
+    public List<SubplanMatch> match(WayangPlan plan, int minEpoch) {
         return new Matcher(minEpoch).match(plan);
     }
 
@@ -120,12 +120,12 @@ public class SubplanPattern extends OperatorBase {
         }
 
         /**
-         * Run this instance over the given {@link RheemPlan}.
+         * Run this instance over the given {@link WayangPlan}.
          *
          * @return a {@link List} of all {@link SubplanMatch}es established by the run
          */
-        public List<SubplanMatch> match(RheemPlan plan) {
-            // Start an attempt to match from each operator that is upstream-reachable from one of the RheemPlan sinks.
+        public List<SubplanMatch> match(WayangPlan plan) {
+            // Start an attempt to match from each operator that is upstream-reachable from one of the WayangPlan sinks.
             PlanTraversal.upstream().traversingHierarchically()
                     .withCallback(this::attemptMatchFrom)
                     .traverse(plan.getSinks());
@@ -164,7 +164,7 @@ public class SubplanPattern extends OperatorBase {
                             .map(InputSlot::getOccupant)
                             .filter(Objects::nonNull)
                             .count() > 1) {
-                throw new RheemException("Cannot match pattern: Operator with more than one occupied input not supported, yet.");
+                throw new WayangException("Cannot match pattern: Operator with more than one occupied input not supported, yet.");
             }
 
 

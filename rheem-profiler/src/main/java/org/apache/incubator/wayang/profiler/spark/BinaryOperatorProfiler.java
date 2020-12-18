@@ -1,11 +1,11 @@
-package io.rheem.rheem.profiler.spark;
+package org.apache.incubator.wayang.profiler.spark;
 
 import org.apache.spark.api.java.JavaRDD;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.profiler.util.ProfilingUtils;
-import io.rheem.rheem.spark.channels.RddChannel;
-import io.rheem.rheem.spark.operators.SparkExecutionOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.profiler.util.ProfilingUtils;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
+import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator;
 
 import java.util.function.Supplier;
 

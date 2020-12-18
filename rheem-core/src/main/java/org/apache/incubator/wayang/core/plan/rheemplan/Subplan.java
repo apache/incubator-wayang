@@ -1,10 +1,10 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityPusher;
-import io.rheem.rheem.core.optimizer.cardinality.SubplanCardinalityPusher;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityPusher;
+import org.apache.incubator.wayang.core.optimizer.cardinality.SubplanCardinalityPusher;
 
 import java.util.Arrays;
 import java.util.Collection;

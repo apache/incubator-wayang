@@ -1,10 +1,10 @@
-package io.rheem.rheem.sqlite3.operators;
+package org.apache.incubator.wayang.sqlite3.operators;
 
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.operators.FilterOperator;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.jdbc.operators.JdbcFilterOperator;
-import io.rheem.rheem.sqlite3.platform.Sqlite3Platform;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.operators.FilterOperator;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.jdbc.operators.JdbcFilterOperator;
+import org.apache.incubator.wayang.sqlite3.platform.Sqlite3Platform;
 
 /**
  * Implementation of the {@link FilterOperator} for the {@link Sqlite3Platform}.

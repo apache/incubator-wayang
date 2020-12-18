@@ -1,18 +1,18 @@
-package io.rheem.rheem.flink.operators;
+package org.apache.incubator.wayang.flink.operators;
 
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.utils.DataSetUtils;
-import io.rheem.rheem.basic.operators.SampleOperator;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.flink.channels.DataSetChannel;
-import io.rheem.rheem.flink.execution.FlinkExecutor;
+import org.apache.incubator.wayang.basic.operators.SampleOperator;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.flink.channels.DataSetChannel;
+import org.apache.incubator.wayang.flink.execution.FlinkExecutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -70,7 +70,7 @@ public class FlinkSampleOperator<Type>
       /*  try {
             size = dataSetInput.count();
         } catch (Exception e) {
-            throw new RheemException(e);
+            throw new WayangException(e);
         }*/
         DataSet<Type> dataSetOutput;
 
@@ -96,7 +96,7 @@ public class FlinkSampleOperator<Type>
                     dataSetOutput = DataSetUtils.sampleWithSize(dataSetInput, true, sampleSize, seed);
                     break;
                 default:
-                    throw new RheemException("The option is not valid");
+                    throw new WayangException("The option is not valid");
             }
         }
 
@@ -123,7 +123,7 @@ public class FlinkSampleOperator<Type>
     }
 
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.flink.sample.load";
+        return "wayang.flink.sample.load";
     }
 
 

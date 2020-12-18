@@ -1,6 +1,6 @@
-package io.rheem.rheem.flink.mapping;
+package org.apache.incubator.wayang.flink.mapping;
 
-import io.rheem.rheem.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.Mapping;
 
 import java.util.Arrays;
 import java.util.Collection;

@@ -1,12 +1,12 @@
-package io.rheem.rheem.spark.compiler;
+package org.apache.incubator.wayang.spark.compiler;
 
 import org.apache.spark.api.java.function.Function;
-import io.rheem.rheem.core.function.ExecutionContext;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.spark.execution.SparkExecutionContext;
+import org.apache.incubator.wayang.core.function.ExecutionContext;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.spark.execution.SparkExecutionContext;
 
 /**
- * Implements a {@link Function} that calls {@link io.rheem.rheem.core.function.ExtendedFunction#open(ExecutionContext)}
+ * Implements a {@link Function} that calls {@link org.apache.incubator.wayang.core.function.ExtendedFunction#open(ExecutionContext)}
  * of its implementation before delegating the very first {@link Function#call(Object)}.
  */
 public class ExtendedMapFunctionAdapter<InputType, OutputType> implements Function<InputType, OutputType> {

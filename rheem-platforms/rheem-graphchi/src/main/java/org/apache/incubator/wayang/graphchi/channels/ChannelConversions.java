@@ -1,7 +1,7 @@
-package io.rheem.rheem.graphchi.channels;
+package org.apache.incubator.wayang.graphchi.channels;
 
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.graphchi.platform.GraphChiPlatform;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.graphchi.platform.GraphChiPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

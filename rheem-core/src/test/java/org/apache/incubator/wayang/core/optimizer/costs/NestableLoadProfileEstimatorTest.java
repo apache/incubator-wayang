@@ -1,16 +1,16 @@
-package io.rheem.rheem.core.optimizer.costs;
+package org.apache.incubator.wayang.core.optimizer.costs;
 
 import gnu.trove.map.TObjectDoubleMap;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.core.optimizer.OptimizationUtils;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.core.optimizer.OptimizationUtils;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 import java.util.List;
 
@@ -29,7 +29,7 @@ public class NestableLoadProfileEstimatorTest {
                 "\"cpu\":\"${3*in0 + 2*in1 + 7*out0}\"," +
                 "\"ram\":\"${6*in0 + 4*in1 + 14*out0}\"," +
                 "\"overhead\":143," +
-                "\"ru\":\"${rheem:logGrowth(0.1, 0.1, 10000, in0+in1)}\"" +
+                "\"ru\":\"${wayang:logGrowth(0.1, 0.1, 10000, in0+in1)}\"" +
                 "}";
         final NestableLoadProfileEstimator estimator =
                 LoadProfileEstimators.createFromSpecification(null, specification);
@@ -95,7 +95,7 @@ public class NestableLoadProfileEstimatorTest {
                 "\"cpu\":\"${(3*in0 + 2*in1 + 7*out0) * numIterations}\"," +
                 "\"ram\":\"${6*in0 + 4*in1 + 14*out0}\"," +
                 "\"overhead\":143," +
-                "\"ru\":\"${rheem:logGrowth(0.1, 0.1, 10000, in0+in1)}\"" +
+                "\"ru\":\"${wayang:logGrowth(0.1, 0.1, 10000, in0+in1)}\"" +
                 "}";
         final NestableLoadProfileEstimator estimator =
                 LoadProfileEstimators.createFromSpecification(null, specification);

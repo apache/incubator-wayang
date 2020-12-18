@@ -1,20 +1,20 @@
-package io.rheem.rheem.core.platform;
+package org.apache.incubator.wayang.core.platform;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionPlan;
-import io.rheem.rheem.core.plan.executionplan.ExecutionStage;
-import io.rheem.rheem.core.plan.executionplan.ExecutionStageLoop;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.LoopHeadOperator;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.profiling.InstrumentationStrategy;
-import io.rheem.rheem.core.util.AbstractReferenceCountable;
-import io.rheem.rheem.core.util.Formats;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStage;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionStageLoop;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopHeadOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.profiling.InstrumentationStrategy;
+import org.apache.incubator.wayang.core.util.AbstractReferenceCountable;
+import org.apache.incubator.wayang.core.util.Formats;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -293,7 +293,7 @@ public class CrossPlatformExecutor implements ExecutionState {
             while (!this.activatedStageActivators.isEmpty()) {
                 // Check if there is multiple activated stages to start parallelization
                 if (this.activatedStageActivators.size() > 1 &&
-                        this.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")) {
+                        this.getConfiguration().getBooleanProperty("wayang.core.optimizer.enumeration.parallel-tasks")) {
                     // Run multiple threads for each independant stage
                     this.runParallelExecution(isBreakpointsDisabled);
                 } else {

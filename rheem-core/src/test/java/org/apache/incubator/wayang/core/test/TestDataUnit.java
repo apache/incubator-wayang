@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.test;
+package org.apache.incubator.wayang.core.test;
 
 /**
  * A data unit type for test purposes.

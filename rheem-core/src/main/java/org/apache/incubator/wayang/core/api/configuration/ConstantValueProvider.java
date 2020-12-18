@@ -1,6 +1,6 @@
-package io.rheem.rheem.core.api.configuration;
+package org.apache.incubator.wayang.core.api.configuration;
 
-import io.rheem.rheem.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Configuration;
 
 /**
  * Used by {@link Configuration}s to provide some value.

@@ -1,23 +1,23 @@
-package io.rheem.rheem.spark.operators;
+package org.apache.incubator.wayang.spark.operators;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function2;
-import io.rheem.rheem.basic.operators.GlobalReduceOperator;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.function.ReduceDescriptor;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.spark.channels.BroadcastChannel;
-import io.rheem.rheem.spark.channels.RddChannel;
-import io.rheem.rheem.spark.execution.SparkExecutor;
+import org.apache.incubator.wayang.basic.operators.GlobalReduceOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.function.ReduceDescriptor;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.spark.channels.BroadcastChannel;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
+import org.apache.incubator.wayang.spark.execution.SparkExecutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -83,7 +83,7 @@ public class SparkGlobalReduceOperator<Type>
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.spark.globalreduce.load";
+        return "wayang.spark.globalreduce.load";
     }
 
     @Override

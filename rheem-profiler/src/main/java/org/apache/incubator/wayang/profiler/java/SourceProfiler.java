@@ -1,8 +1,8 @@
-package io.rheem.rheem.profiler.java;
+package org.apache.incubator.wayang.profiler.java;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.java.channels.JavaChannelInstance;
-import io.rheem.rheem.java.operators.JavaExecutionOperator;
+import org.apache.incubator.wayang.java.channels.JavaChannelInstance;
+import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
 import org.slf4j.LoggerFactory;
 
 import java.util.function.Supplier;

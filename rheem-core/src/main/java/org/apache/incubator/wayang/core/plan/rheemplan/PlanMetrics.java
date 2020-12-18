@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
 import de.hpi.isg.profiledb.store.model.Measurement;
 import de.hpi.isg.profiledb.store.model.Type;
@@ -6,21 +6,21 @@ import de.hpi.isg.profiledb.store.model.Type;
 import java.util.Collection;
 
 /**
- * This class collects metrics for {@link RheemPlan}s.
+ * This class collects metrics for {@link WayangPlan}s.
  */
 @Type("planmetrics")
 public class PlanMetrics extends Measurement {
 
     /**
-     * Creates a new instance and collects metrics from the given {@link RheemPlan}.
+     * Creates a new instance and collects metrics from the given {@link WayangPlan}.
      *
-     * @param rheemPlan the {@link RheemPlan}
+     * @param wayangPlan the {@link WayangPlan}
      * @param id        for the new instance
      * @return the new instance
      */
-    public static PlanMetrics createFor(RheemPlan rheemPlan, String id) {
+    public static PlanMetrics createFor(WayangPlan wayangPlan, String id) {
         PlanMetrics planMetrics = new PlanMetrics(id);
-        planMetrics.collectFrom(rheemPlan);
+        planMetrics.collectFrom(wayangPlan);
         return planMetrics;
     }
 
@@ -30,7 +30,7 @@ public class PlanMetrics extends Measurement {
     private int numVirtualOperators, numExecutionOperators, numAlternatives;
 
     /**
-     * Number of possible combinations of {@link ExecutionOperator}s in the {@link RheemPlan}.
+     * Number of possible combinations of {@link ExecutionOperator}s in the {@link WayangPlan}.
      */
     private long numCombinations;
 
@@ -52,10 +52,10 @@ public class PlanMetrics extends Measurement {
     /**
      * Collects metrics.
      *
-     * @param rheemPlan on which the metrics should be collected
+     * @param wayangPlan on which the metrics should be collected
      */
-    private void collectFrom(RheemPlan rheemPlan) {
-        final Collection<Operator> operators = PlanTraversal.upstream().traverse(rheemPlan.getSinks()).getTraversedNodes();
+    private void collectFrom(WayangPlan wayangPlan) {
+        final Collection<Operator> operators = PlanTraversal.upstream().traverse(wayangPlan.getSinks()).getTraversedNodes();
         this.numCombinations = this.collectFrom(operators);
     }
 
@@ -103,7 +103,7 @@ public class PlanMetrics extends Measurement {
     }
 
     /**
-     * Provide the number of virtual {@link Operator}s in the {@link RheemPlan}.
+     * Provide the number of virtual {@link Operator}s in the {@link WayangPlan}.
      *
      * @return the number of virtual {@link Operator}s
      */
@@ -112,7 +112,7 @@ public class PlanMetrics extends Measurement {
     }
 
     /**
-     * Provide the number of {@link ExecutionOperator}s in the {@link RheemPlan}.
+     * Provide the number of {@link ExecutionOperator}s in the {@link WayangPlan}.
      *
      * @return the number of {@link ExecutionOperator}s
      */
@@ -121,7 +121,7 @@ public class PlanMetrics extends Measurement {
     }
 
     /**
-     * Provide the number of {@link OperatorAlternative}s in the {@link RheemPlan}.
+     * Provide the number of {@link OperatorAlternative}s in the {@link WayangPlan}.
      *
      * @return the number of {@link OperatorAlternative}s
      */

@@ -1,9 +1,9 @@
-package io.rheem.rheem.postgres;
+package org.apache.incubator.wayang.postgres;
 
 
-import io.rheem.rheem.postgres.platform.PostgresPlatform;
-import io.rheem.rheem.postgres.plugin.PostgresConversionsPlugin;
-import io.rheem.rheem.postgres.plugin.PostgresPlugin;
+import org.apache.incubator.wayang.postgres.platform.PostgresPlatform;
+import org.apache.incubator.wayang.postgres.plugin.PostgresConversionsPlugin;
+import org.apache.incubator.wayang.postgres.plugin.PostgresPlugin;
 
 /**
  * Register for relevant components of this module.

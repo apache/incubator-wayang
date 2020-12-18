@@ -1,7 +1,7 @@
-package io.rheem.rheem.iejoin.operators.java_helpers;
+package org.apache.incubator.wayang.iejoin.operators.java_helpers;
 
-import io.rheem.rheem.iejoin.data.Data;
-import io.rheem.rheem.iejoin.operators.IEJoinMasterOperator;
+import org.apache.incubator.wayang.iejoin.data.Data;
+import org.apache.incubator.wayang.iejoin.operators.IEJoinMasterOperator;
 import scala.Tuple2;
 
 import java.util.ArrayList;

@@ -1,21 +1,21 @@
-package io.rheem.rheem.core.optimizer.enumeration;
+package org.apache.incubator.wayang.core.optimizer.enumeration;
 
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversionGraph;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorAlternative;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.platform.Junction;
-import io.rheem.rheem.core.util.MultiMap;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.core.util.Tuple;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversionGraph;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.platform.Junction;
+import org.apache.incubator.wayang.core.util.MultiMap;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,10 +32,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Represents a collection of {@link PlanImplementation}s that all implement the same section of a {@link RheemPlan} (which
+ * Represents a collection of {@link PlanImplementation}s that all implement the same section of a {@link WayangPlan} (which
  * is assumed to contain {@link OperatorAlternative}s in general).
  * <p>Instances can be mutated and combined in algebraic manner. In particular, instances can be unioned if they implement
- * the same part of the {@link RheemPlan}, concatenated if there are contact points, and pruned.</p>
+ * the same part of the {@link WayangPlan}, concatenated if there are contact points, and pruned.</p>
  */
 public class PlanEnumeration {
 
@@ -160,7 +160,7 @@ public class PlanEnumeration {
     }
 
     /**
-     * Asserts that two given instances enumerate the same part of a {@link RheemPlan}.
+     * Asserts that two given instances enumerate the same part of a {@link WayangPlan}.
      */
     private static void assertMatchingInterface(PlanEnumeration instance1, PlanEnumeration instance2) {
         if (!instance1.requestedInputSlots.equals(instance2.requestedInputSlots)) {
@@ -326,7 +326,7 @@ public class PlanEnumeration {
 
         // Handle cases where this instance is not a target enumeration.
         if (!targetEnumerationGroups.containsKey(this)) {
-            List<InputSlot<?>> emptyGroupInputs = RheemCollections.createNullFilledArrayList(inputs.size());
+            List<InputSlot<?>> emptyGroupInputs = WayangCollections.createNullFilledArrayList(inputs.size());
             for (PlanImplementation planImplementation : this.getPlanImplementations()) {
                 PlanImplementation.ConcatenationDescriptor concatDescriptor =
                         planImplementation.createConcatenationDescriptor(openOutputSlot, emptyGroupInputs);
@@ -352,12 +352,12 @@ public class PlanEnumeration {
         for (PlanEnumeration enumeration : orderedEnumerations) {
             orderedConcatGroups.add(enum2concatGroup.get(enumeration));
         }
-        for (List<PlanImplementation.ConcatenationGroupDescriptor> concatGroupCombo : RheemCollections.streamedCrossProduct(orderedConcatGroups)) {
+        for (List<PlanImplementation.ConcatenationGroupDescriptor> concatGroupCombo : WayangCollections.streamedCrossProduct(orderedConcatGroups)) {
             // Determine the execution output along with its OptimizationContext.
             PlanImplementation.ConcatenationGroupDescriptor baseConcatGroup = concatGroupCombo.get(0);
             final OutputSlot<?> execOutput = baseConcatGroup.execOutput;
             Set<PlanImplementation.ConcatenationDescriptor> baseConcatDescriptors = concatGroup2concatDescriptor.get(baseConcatGroup);
-            final PlanImplementation innerPlanImplementation = RheemCollections.getAny(baseConcatDescriptors).execOutputPlanImplementation;
+            final PlanImplementation innerPlanImplementation = WayangCollections.getAny(baseConcatDescriptors).execOutputPlanImplementation;
             // The output should reside in the same OptimizationContext in all PlanImplementations.
             assert baseConcatDescriptors.stream()
                     .map(cd -> cd.execOutputPlanImplementation)
@@ -393,7 +393,7 @@ public class PlanEnumeration {
             if (junction == null) continue;
 
             // If we found a junction, then we can enumerate all PlanImplementation combinations.
-            final List<Set<PlanImplementation>> groupPlans = RheemCollections.map(
+            final List<Set<PlanImplementation>> groupPlans = WayangCollections.map(
                     concatGroupCombo,
                     concatGroup -> {
                         Set<PlanImplementation.ConcatenationDescriptor> concatDescriptors = concatGroup2concatDescriptor.get(concatGroup);
@@ -404,7 +404,7 @@ public class PlanEnumeration {
                         return planImplementations;
                     });
 
-            for (List<PlanImplementation> planCombo : RheemCollections.streamedCrossProduct(groupPlans)) {
+            for (List<PlanImplementation> planCombo : WayangCollections.streamedCrossProduct(groupPlans)) {
                 PlanImplementation basePlan = planCombo.get(0);
                 List<PlanImplementation> targetPlans = planCombo.subList(0, planCombo.size());
                 PlanImplementation concatenatedPlan = basePlan.concatenate(targetPlans, junction, basePlan, concatenationEnumeration);
@@ -435,7 +435,7 @@ public class PlanEnumeration {
             final Collection<Tuple<OutputSlot<?>, PlanImplementation>> execOpOutputsWithContext =
                     basePlanImplementation.findExecutionOperatorOutputWithContext(output);
             final Tuple<OutputSlot<?>, PlanImplementation> execOpOutputWithCtx =
-                    RheemCollections.getSingleOrNull(execOpOutputsWithContext);
+                    WayangCollections.getSingleOrNull(execOpOutputsWithContext);
             assert execOpOutputsWithContext != null && !execOpOutputsWithContext.isEmpty()
                     : String.format("No outputs found for %s.", output);
 
@@ -472,7 +472,7 @@ public class PlanEnumeration {
             MultiMap<Set<InputSlot<?>>, PlanImplementation> targetPlanGroups = new MultiMap<>();
             for (PlanImplementation planImpl : targetEnumeration.getPlanImplementations()) {
                 final Collection<InputSlot<?>> openInput = planImpl.findExecutionOperatorInputs(requestedInput);
-                targetPlanGroups.putSingle(RheemCollections.asSet(openInput), planImpl);
+                targetPlanGroups.putSingle(WayangCollections.asSet(openInput), planImpl);
             }
             targetPlanGroupList.add(targetPlanGroups);
         }

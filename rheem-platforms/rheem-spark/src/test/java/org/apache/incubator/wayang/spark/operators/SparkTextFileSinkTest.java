@@ -1,9 +1,9 @@
-package io.rheem.rheem.spark.operators;
+package org.apache.incubator.wayang.spark.operators;
 
 import org.junit.Test;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.spark.channels.RddChannel;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,7 +18,7 @@ public class SparkTextFileSinkTest extends SparkOperatorTestBase {
     @Test
     public void testWritingDoesNotFail() throws IOException {
         // Prepare the sink.
-        Path tempDir = Files.createTempDirectory("rheem-spark");
+        Path tempDir = Files.createTempDirectory("wayang-spark");
         tempDir.toFile().deleteOnExit();
         Path targetFile = tempDir.resolve("testWritingDoesNotFail");
         RddChannel.Instance input = this.createRddChannelInstance(Arrays.asList(1.123f, -0.1f, 3f));

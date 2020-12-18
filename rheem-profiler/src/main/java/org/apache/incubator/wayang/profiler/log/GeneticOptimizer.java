@@ -1,16 +1,16 @@
-package io.rheem.rheem.profiler.log;
+package org.apache.incubator.wayang.profiler.log;
 
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.platform.AtomicExecution;
-import io.rheem.rheem.core.platform.AtomicExecutionGroup;
-import io.rheem.rheem.core.platform.PartialExecution;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.util.Bitmask;
-import io.rheem.rheem.profiler.log.sampling.Sampler;
-import io.rheem.rheem.profiler.log.sampling.TournamentSampler;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.platform.AtomicExecution;
+import org.apache.incubator.wayang.core.platform.AtomicExecutionGroup;
+import org.apache.incubator.wayang.core.platform.PartialExecution;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.util.Bitmask;
+import org.apache.incubator.wayang.profiler.log.sampling.Sampler;
+import org.apache.incubator.wayang.profiler.log.sampling.TournamentSampler;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -123,13 +123,13 @@ public class GeneticOptimizer {
             }
         }
 
-        this.populationSize = ((int) this.configuration.getLongProperty("rheem.profiler.ga.population.size", 10));
-        this.eliteSize = ((int) this.configuration.getLongProperty("rheem.profiler.ga.population.elite", 1));
-        this.selectionRatio = this.configuration.getDoubleProperty("rheem.profiler.ga.selection.ratio", 0.5d);
-        this.mutationRatio = this.configuration.getDoubleProperty("rheem.profiler.ga.mutation.ratio", 0.5d);
-        this.mutationAlterationRatio = this.configuration.getDoubleProperty("rheem.profiler.ga.mutation.alteration", 0.5d);
-        this.mutationResetRatio = this.configuration.getDoubleProperty("rheem.profiler.ga.mutation.reset", 0.01d);
-        switch (this.configuration.getStringProperty("rheem.profiler.ga.fitness.type", "relative")) {
+        this.populationSize = ((int) this.configuration.getLongProperty("wayang.profiler.ga.population.size", 10));
+        this.eliteSize = ((int) this.configuration.getLongProperty("wayang.profiler.ga.population.elite", 1));
+        this.selectionRatio = this.configuration.getDoubleProperty("wayang.profiler.ga.selection.ratio", 0.5d);
+        this.mutationRatio = this.configuration.getDoubleProperty("wayang.profiler.ga.mutation.ratio", 0.5d);
+        this.mutationAlterationRatio = this.configuration.getDoubleProperty("wayang.profiler.ga.mutation.alteration", 0.5d);
+        this.mutationResetRatio = this.configuration.getDoubleProperty("wayang.profiler.ga.mutation.reset", 0.01d);
+        switch (this.configuration.getStringProperty("wayang.profiler.ga.fitness.type", "relative")) {
             case "relative":
                 this.fitnessFunction = individual -> individual.calculateRelativeFitness(this);
                 break;
@@ -141,7 +141,7 @@ public class GeneticOptimizer {
 //                break;
             default:
                 throw new IllegalStateException(
-                        "Unknown fitness function: " + this.configuration.getStringProperty("rheem.profiler.ga.fitness.type")
+                        "Unknown fitness function: " + this.configuration.getStringProperty("wayang.profiler.ga.fitness.type")
                 );
         }
 

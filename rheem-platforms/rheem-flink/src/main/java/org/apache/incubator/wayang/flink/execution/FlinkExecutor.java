@@ -1,22 +1,22 @@
-package io.rheem.rheem.flink.execution;
+package org.apache.incubator.wayang.flink.execution;
 
 import org.apache.flink.api.java.ExecutionEnvironment;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.Executor;
-import io.rheem.rheem.core.platform.PartialExecution;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.platform.PushExecutorTemplate;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.Formats;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.flink.compiler.FunctionCompiler;
-import io.rheem.rheem.flink.operators.FlinkExecutionOperator;
-import io.rheem.rheem.flink.platform.FlinkPlatform;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.Executor;
+import org.apache.incubator.wayang.core.platform.PartialExecution;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.platform.PushExecutorTemplate;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.flink.compiler.FunctionCompiler;
+import org.apache.incubator.wayang.flink.operators.FlinkExecutionOperator;
+import org.apache.incubator.wayang.flink.platform.FlinkPlatform;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -58,7 +58,7 @@ public class FlinkExecutor extends PushExecutorTemplate {
         this.platform = flinkPlatform;
         this.flinkContextReference = this.platform.getFlinkContext(job);
         this.fee = this.flinkContextReference.get();
-        this.numDefaultPartitions = (int)this.getConfiguration().getLongProperty("rheem.flink.paralelism");
+        this.numDefaultPartitions = (int)this.getConfiguration().getLongProperty("wayang.flink.paralelism");
         this.fee.setParallelism(this.numDefaultPartitions);
         this.flinkContextReference.noteObtainedReference();
     }
@@ -92,7 +92,7 @@ public class FlinkExecutor extends PushExecutorTemplate {
             executionLineageNodes = results.getField0();
             producedChannelInstances = results.getField1();
         } catch (Exception e) {
-            throw new RheemException(String.format("Executing %s failed.", task), e);
+            throw new WayangException(String.format("Executing %s failed.", task), e);
         }
         long endTime = System.currentTimeMillis();
         long executionDuration = endTime - startTime;
@@ -117,7 +117,7 @@ public class FlinkExecutor extends PushExecutorTemplate {
                     //TODO validate the execute in different contexts
                     //this.fee.execute();
                 } catch (Exception e) {
-                    throw new RheemException(e);
+                    throw new WayangException(e);
                 }
             }
         }

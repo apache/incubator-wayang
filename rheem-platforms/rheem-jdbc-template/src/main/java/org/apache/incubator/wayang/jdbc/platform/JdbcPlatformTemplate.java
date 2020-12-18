@@ -1,16 +1,16 @@
-package io.rheem.rheem.jdbc.platform;
+package org.apache.incubator.wayang.jdbc.platform;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.LoadToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.TimeToCostConverter;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.Executor;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.jdbc.channels.SqlQueryChannel;
-import io.rheem.rheem.jdbc.execution.DatabaseDescriptor;
-import io.rheem.rheem.jdbc.execution.JdbcExecutor;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.Executor;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.jdbc.channels.SqlQueryChannel;
+import org.apache.incubator.wayang.jdbc.execution.DatabaseDescriptor;
+import org.apache.incubator.wayang.jdbc.execution.JdbcExecutor;
 
 import java.sql.Connection;
 
@@ -19,18 +19,18 @@ import java.sql.Connection;
  */
 public abstract class JdbcPlatformTemplate extends Platform {
 
-    public final String cpuMhzProperty = String.format("rheem.%s.cpu.mhz", this.getPlatformId());
+    public final String cpuMhzProperty = String.format("wayang.%s.cpu.mhz", this.getPlatformId());
 
-    public final String coresProperty = String.format("rheem.%s.cores", this.getPlatformId());
+    public final String coresProperty = String.format("wayang.%s.cores", this.getPlatformId());
 
-    public final String jdbcUrlProperty = String.format("rheem.%s.jdbc.url", this.getPlatformId());
+    public final String jdbcUrlProperty = String.format("wayang.%s.jdbc.url", this.getPlatformId());
 
-    public final String jdbcUserProperty = String.format("rheem.%s.jdbc.user", this.getPlatformId());
+    public final String jdbcUserProperty = String.format("wayang.%s.jdbc.user", this.getPlatformId());
 
-    public final String jdbcPasswordProperty = String.format("rheem.%s.jdbc.password", this.getPlatformId());
+    public final String jdbcPasswordProperty = String.format("wayang.%s.jdbc.password", this.getPlatformId());
 
     private String getDefaultConfigurationFile() {
-        return String.format("rheem-%s-defaults.properties", this.getPlatformId());
+        return String.format("wayang-%s-defaults.properties", this.getPlatformId());
     }
 
     /**
@@ -73,8 +73,8 @@ public abstract class JdbcPlatformTemplate extends Platform {
     @Override
     public TimeToCostConverter createTimeToCostConverter(Configuration configuration) {
         return new TimeToCostConverter(
-                configuration.getDoubleProperty(String.format("rheem.%s.costs.fix", this.getPlatformId())),
-                configuration.getDoubleProperty(String.format("rheem.%s.costs.per-ms", this.getPlatformId()))
+                configuration.getDoubleProperty(String.format("wayang.%s.costs.fix", this.getPlatformId())),
+                configuration.getDoubleProperty(String.format("wayang.%s.costs.per-ms", this.getPlatformId()))
         );
     }
 

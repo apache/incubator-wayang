@@ -1,4 +1,4 @@
-package io.rheem.rheem.spark.compiler;
+package org.apache.incubator.wayang.spark.compiler;
 
 import org.apache.spark.api.java.function.Function2;
 

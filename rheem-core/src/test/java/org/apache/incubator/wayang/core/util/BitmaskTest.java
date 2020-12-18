@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.util;
+package org.apache.incubator.wayang.core.util;
 
 import org.junit.Assert;
 import org.junit.Test;

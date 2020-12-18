@@ -1,15 +1,15 @@
-package io.rheem.rheem.profiler.java;
+package org.apache.incubator.wayang.profiler.java;
 
 import de.hpi.isg.profiledb.instrumentation.StopWatch;
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.Subject;
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.java.operators.JavaExecutionOperator;
-import io.rheem.rheem.profiler.data.DataGenerators;
-import io.rheem.rheem.profiler.util.ProfilingUtils;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
+import org.apache.incubator.wayang.profiler.data.DataGenerators;
+import org.apache.incubator.wayang.profiler.util.ProfilingUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -152,12 +152,12 @@ public class Profiler {
         }
 
         System.out.println();
-        System.out.println(RheemCollections.getAny(results).getCsvHeader());
+        System.out.println(WayangCollections.getAny(results).getCsvHeader());
         results.forEach(result -> System.out.println(result.toCsvString()));
     }
 
     private static StopWatch createStopWatch() {
-        Experiment experiment = new Experiment("rheem-profiler", new Subject("Rheem", "0.1"));
+        Experiment experiment = new Experiment("wayang-profiler", new Subject("Wayang", "0.1"));
         return new StopWatch(experiment);
     }
 

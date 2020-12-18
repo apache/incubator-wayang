@@ -1,22 +1,22 @@
-package io.rheem.rheem.java.operators.graph;
+package org.apache.incubator.wayang.java.operators.graph;
 
 import gnu.trove.iterator.TLongFloatIterator;
 import gnu.trove.map.TLongFloatMap;
 import gnu.trove.map.TLongIntMap;
 import gnu.trove.map.hash.TLongFloatHashMap;
 import gnu.trove.map.hash.TLongIntHashMap;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.PageRankOperator;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.java.channels.StreamChannel;
-import io.rheem.rheem.java.execution.JavaExecutor;
-import io.rheem.rheem.java.operators.JavaExecutionOperator;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.PageRankOperator;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -126,7 +126,7 @@ public class JavaPageRankOperator extends PageRankOperator implements JavaExecut
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.java.pagerank.load";
+        return "wayang.java.pagerank.load";
     }
 
     @Override

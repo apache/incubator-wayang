@@ -17,16 +17,16 @@
         <external.platforms.scope>provided</external.platforms.scope>
     </properties>
 
-    <groupId>io.rheem.rheem</groupId>
-    <artifactId>rheem</artifactId>
+    <groupId>org.apache.incubator.wayang</groupId>
+    <artifactId>wayang</artifactId>
     <packaging>pom</packaging>
     <version>1.0.0-SNAPSHOT</version>
 
-    <name>Rheem</name>
-    <description>Rheem is a tool to build platform-agnostic data processing apps and have them both optimized for and
+    <name>Wayang</name>
+    <description>Wayang is a tool to build platform-agnostic data processing apps and have them both optimized for and
         executed on multiple different execution platforms, such as Java Streams and Apache Spark.
     </description>
-    <url>http://rheem.io</url>
+    <url>http://wayang.io</url>
 
     <licenses>
         <license>
@@ -64,9 +64,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/rheem-ecosystem/rheem</connection>
-        <developerConnection>scm:git:https://github.com/rheem-ecosystem/rheem</developerConnection>
-        <url>https://github.com/rheem-ecosystem/rheem</url>
+        <connection>scm:git:git://github.com/wayang-ecosystem/wayang</connection>
+        <developerConnection>scm:git:https://github.com/wayang-ecosystem/wayang</developerConnection>
+        <url>https://github.com/wayang-ecosystem/wayang</url>
     </scm>
 
     <distributionManagement>
@@ -92,11 +92,11 @@
             <!-- Build the distribution. -->
             <id>distro</id>
             <modules>
-                <module>rheem-distro</module>
+                <module>wayang-distro</module>
             </modules>
         </profile>
         <profile>
-            <!-- Perform steps to deploy Rheem. -->
+            <!-- Perform steps to deploy Wayang. -->
             <id>deployment</id>
             <build>
                 <plugins>
@@ -116,7 +116,7 @@
             </build>
         </profile>
         <profile>
-            <!-- Perform steps to deploy Rheem. -->
+            <!-- Perform steps to deploy Wayang. -->
             <id>deployment-dryrun</id>
             <build>
                 <plugins>
@@ -604,12 +604,12 @@
     </dependencyManagement>
 
     <modules>
-        <module>rheem-core</module>
-        <module>rheem-basic</module>
-        <module>rheem-platforms</module>
-        <module>rheem-tests</module>
-        <module>rheem-api</module>
-        <module>rheem-profiler</module>
-        <module>rheem-extensions</module>
+        <module>wayang-core</module>
+        <module>wayang-basic</module>
+        <module>wayang-platforms</module>
+        <module>wayang-tests</module>
+        <module>wayang-api</module>
+        <module>wayang-profiler</module>
+        <module>wayang-extensions</module>
     </modules>
 </project>

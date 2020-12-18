@@ -1,11 +1,11 @@
-package io.rheem.rheem.flink.compiler;
+package org.apache.incubator.wayang.flink.compiler;
 
 import org.apache.flink.api.common.functions.CoGroupFunction;
 import org.apache.flink.util.Collector;
-import io.rheem.rheem.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.data.Tuple2;
 
 /**
- * Wrapper of {@Link CoGroupFunction} of Flink for use in Rheem
+ * Wrapper of {@Link CoGroupFunction} of Flink for use in Wayang
  */
 public class FlinkCoGroupFunction<InputType0, InputType1, OutputType> implements CoGroupFunction<InputType0, InputType1, OutputType> {
 

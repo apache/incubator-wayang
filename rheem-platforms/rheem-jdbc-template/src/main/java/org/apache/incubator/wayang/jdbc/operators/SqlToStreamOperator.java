@@ -1,25 +1,25 @@
-package io.rheem.rheem.jdbc.operators;
+package org.apache.incubator.wayang.jdbc.operators;
 
 import org.json.JSONObject;
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.types.RecordType;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimators;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.UnaryToUnaryOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.JsonSerializable;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.java.channels.StreamChannel;
-import io.rheem.rheem.java.execution.JavaExecutor;
-import io.rheem.rheem.java.operators.JavaExecutionOperator;
-import io.rheem.rheem.jdbc.channels.SqlQueryChannel;
-import io.rheem.rheem.jdbc.platform.JdbcPlatformTemplate;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.types.RecordType;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimators;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnaryToUnaryOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.JsonSerializable;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.incubator.wayang.java.execution.JavaExecutor;
+import org.apache.incubator.wayang.java.operators.JavaExecutionOperator;
+import org.apache.incubator.wayang.jdbc.channels.SqlQueryChannel;
+import org.apache.incubator.wayang.jdbc.platform.JdbcPlatformTemplate;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
@@ -91,13 +91,13 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
 
         ExecutionLineageNode queryLineageNode = new ExecutionLineageNode(operatorContext);
         queryLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                String.format("rheem.%s.sqltostream.load.query", this.jdbcPlatform.getPlatformId()),
+                String.format("wayang.%s.sqltostream.load.query", this.jdbcPlatform.getPlatformId()),
                         executor.getConfiguration()
                 ));
         queryLineageNode.addPredecessor(input.getLineage());
         ExecutionLineageNode outputLineageNode = new ExecutionLineageNode(operatorContext);
         outputLineageNode.add(LoadProfileEstimators.createFromSpecification(
-                String.format("rheem.%s.sqltostream.load.output", this.jdbcPlatform.getPlatformId()),
+                String.format("wayang.%s.sqltostream.load.output", this.jdbcPlatform.getPlatformId()),
                 executor.getConfiguration()
         ));
         output.getLineage().addPredecessor(outputLineageNode);
@@ -118,8 +118,8 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
     @Override
     public Collection<String> getLoadProfileEstimatorConfigurationKeys() {
         return Arrays.asList(
-                String.format("rheem.%s.sqltostream.load.query", this.jdbcPlatform.getPlatformId()),
-                String.format("rheem.%s.sqltostream.load.output", this.jdbcPlatform.getPlatformId())
+                String.format("wayang.%s.sqltostream.load.query", this.jdbcPlatform.getPlatformId()),
+                String.format("wayang.%s.sqltostream.load.output", this.jdbcPlatform.getPlatformId())
         );
     }
 
@@ -152,7 +152,7 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
                 this.resultSet = st.executeQuery(sqlQuery);
             } catch (SQLException e) {
                 this.close();
-                throw new RheemException("Could not execute SQL.", e);
+                throw new WayangException("Could not execute SQL.", e);
             }
             this.moveToNext();
         }
@@ -176,7 +176,7 @@ public class SqlToStreamOperator extends UnaryToUnaryOperator<Record, Record> im
             } catch (SQLException e) {
                 this.next = null;
                 this.close();
-                throw new RheemException("Exception while iterating the result set.", e);
+                throw new WayangException("Exception while iterating the result set.", e);
             }
         }
 

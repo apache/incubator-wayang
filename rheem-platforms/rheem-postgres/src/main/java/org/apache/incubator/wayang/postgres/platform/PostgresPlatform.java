@@ -1,7 +1,7 @@
-package io.rheem.rheem.postgres.platform;
+package org.apache.incubator.wayang.postgres.platform;
 
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.jdbc.platform.JdbcPlatformTemplate;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.jdbc.platform.JdbcPlatformTemplate;
 
 /**
  * {@link Platform} implementation for SQLite3.

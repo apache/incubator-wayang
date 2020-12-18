@@ -1,20 +1,20 @@
-package io.rheem.rheem.core.platform;
+package org.apache.incubator.wayang.core.platform;
 
 import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.configuration.KeyValueProvider;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.test.DummyExecutionOperator;
-import io.rheem.rheem.core.test.DummyPlatform;
-import io.rheem.rheem.core.test.SerializableDummyExecutionOperator;
-import io.rheem.rheem.core.util.JsonSerializables;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.configuration.KeyValueProvider;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.test.DummyExecutionOperator;
+import org.apache.incubator.wayang.core.test.DummyPlatform;
+import org.apache.incubator.wayang.core.test.SerializableDummyExecutionOperator;
+import org.apache.incubator.wayang.core.util.JsonSerializables;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 
 import java.util.Arrays;
 
@@ -61,7 +61,7 @@ public class PartialExecutionTest {
         Assert.assertEquals(original.getMeasuredExecutionTime(), loaded.getMeasuredExecutionTime());
         Assert.assertEquals(2, loaded.getAtomicExecutionGroups().size());
         Assert.assertEquals(1, loaded.getInitializedPlatforms().size());
-        Assert.assertSame(DummyPlatform.getInstance(), RheemCollections.getAny(loaded.getInitializedPlatforms()));
+        Assert.assertSame(DummyPlatform.getInstance(), WayangCollections.getAny(loaded.getInitializedPlatforms()));
     }
 
 }

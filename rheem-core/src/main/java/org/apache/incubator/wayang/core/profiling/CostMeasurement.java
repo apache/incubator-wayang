@@ -1,10 +1,10 @@
-package io.rheem.rheem.core.profiling;
+package org.apache.incubator.wayang.core.profiling;
 
 import de.hpi.isg.profiledb.store.model.Measurement;
 import de.hpi.isg.profiledb.store.model.Type;
 
 /**
- * This measurement captures execution costs w.r.t. to Rheem's cost model.
+ * This measurement captures execution costs w.r.t. to Wayang's cost model.
  */
 @Type("cost")
 public class CostMeasurement extends Measurement {

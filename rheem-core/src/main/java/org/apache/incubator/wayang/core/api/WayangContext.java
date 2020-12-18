@@ -1,21 +1,21 @@
-package io.rheem.rheem.core.api;
+package org.apache.incubator.wayang.core.api;
 
 import de.hpi.isg.profiledb.store.model.Experiment;
 import de.hpi.isg.profiledb.store.model.Subject;
-import io.rheem.rheem.core.monitor.Monitor;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import io.rheem.rheem.core.plan.executionplan.ExecutionPlan;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plugin.Plugin;
-import io.rheem.rheem.core.profiling.CardinalityRepository;
-import io.rheem.rheem.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.monitor.Monitor;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plugin.Plugin;
+import org.apache.incubator.wayang.core.profiling.CardinalityRepository;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This is the entry point for users to work with Rheem.
+ * This is the entry point for users to work with Wayang.
  */
-public class RheemContext {
+public class WayangContext {
 
     @SuppressWarnings("unused")
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -27,12 +27,12 @@ public class RheemContext {
 
     private final Configuration configuration;
 
-    public RheemContext() {
+    public WayangContext() {
         this(new Configuration());
     }
 
-    public RheemContext(Configuration configuration) {
-        this.configuration = configuration.fork(String.format("RheemContext(%s)", configuration.getName()));
+    public WayangContext(Configuration configuration) {
+        this.configuration = configuration.fork(String.format("WayangContext(%s)", configuration.getName()));
     }
 
     /**
@@ -41,7 +41,7 @@ public class RheemContext {
      * @param plugin the {@link Plugin} to register
      * @return this instance
      */
-    public RheemContext with(Plugin plugin) {
+    public WayangContext with(Plugin plugin) {
         this.register(plugin);
         return this;
     }
@@ -52,7 +52,7 @@ public class RheemContext {
      * @param plugin the {@link Plugin} to register
      * @return this instance
      */
-    public RheemContext withPlugin(Plugin plugin) {
+    public WayangContext withPlugin(Plugin plugin) {
         this.register(plugin);
         return this;
     }
@@ -70,89 +70,89 @@ public class RheemContext {
     /**
      * Execute a plan.
      *
-     * @param rheemPlan the plan to execute
+     * @param wayangPlan the plan to execute
      * @param udfJars   JARs that declare the code for the UDFs
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
-    public void execute(RheemPlan rheemPlan, String... udfJars) {
-        this.execute(null, rheemPlan, udfJars);
+    public void execute(WayangPlan wayangPlan, String... udfJars) {
+        this.execute(null, wayangPlan, udfJars);
     }
 
     /**
      * Execute a plan.
      *
      * @param jobName   name of the {@link Job} or {@code null}
-     * @param rheemPlan the plan to execute
+     * @param wayangPlan the plan to execute
      * @param udfJars   JARs that declare the code for the UDFs
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
-    public void execute(String jobName, RheemPlan rheemPlan, String... udfJars) {
-        this.execute(jobName, null, rheemPlan, udfJars);
+    public void execute(String jobName, WayangPlan wayangPlan, String... udfJars) {
+        this.execute(jobName, null, wayangPlan, udfJars);
     }
 
     /**
      * Execute a plan.
      *
      * @param jobName   name of the {@link Job} or {@code null}
-     * @param rheemPlan the plan to execute
+     * @param wayangPlan the plan to execute
      * @param udfJars   JARs that declare the code for the UDFs
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
-    public void execute(String jobName, Monitor monitor, RheemPlan rheemPlan, String... udfJars) {
-        this.createJob(jobName, monitor, rheemPlan, udfJars).execute();
+    public void execute(String jobName, Monitor monitor, WayangPlan wayangPlan, String... udfJars) {
+        this.createJob(jobName, monitor, wayangPlan, udfJars).execute();
     }
 
     /**
      * Execute a plan.
      *
      * @param jobName    name of the {@link Job} or {@code null}
-     * @param rheemPlan  the plan to execute
+     * @param wayangPlan  the plan to execute
      * @param experiment {@link Experiment} for that profiling entries will be created
      * @param udfJars    JARs that declare the code for the UDFs
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
-    public void execute(String jobName, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
-        this.createJob(jobName, rheemPlan, experiment, udfJars).execute();
+    public void execute(String jobName, WayangPlan wayangPlan, Experiment experiment, String... udfJars) {
+        this.createJob(jobName, wayangPlan, experiment, udfJars).execute();
     }
 
 
     /**
      * Build an execution plan.
      *
-     * @param rheemPlan the plan to translate
+     * @param wayangPlan the plan to translate
      * @param udfJars   JARs that declare the code for the UDFs
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
-    public ExecutionPlan buildInitialExecutionPlan(String jobName, RheemPlan rheemPlan, String... udfJars) {
-        return this.createJob(jobName, null, rheemPlan, udfJars).buildInitialExecutionPlan();
+    public ExecutionPlan buildInitialExecutionPlan(String jobName, WayangPlan wayangPlan, String... udfJars) {
+        return this.createJob(jobName, null, wayangPlan, udfJars).buildInitialExecutionPlan();
     }
 
     /**
-     * Create a new {@link Job} that should execute the given {@link RheemPlan} eventually.
+     * Create a new {@link Job} that should execute the given {@link WayangPlan} eventually.
      *
      * @param experiment {@link Experiment} for that profiling entries will be created
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
-    public Job createJob(String jobName, RheemPlan rheemPlan, Experiment experiment, String... udfJars) {
-        return new Job(this, jobName, null, rheemPlan, experiment, udfJars);
+    public Job createJob(String jobName, WayangPlan wayangPlan, Experiment experiment, String... udfJars) {
+        return new Job(this, jobName, null, wayangPlan, experiment, udfJars);
     }
 
     /**
-     * Create a new {@link Job} that should execute the given {@link RheemPlan} eventually.
+     * Create a new {@link Job} that should execute the given {@link WayangPlan} eventually.
      *
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
-    public Job createJob(String jobName, RheemPlan rheemPlan, String... udfJars) {
-        return this.createJob(jobName, null, rheemPlan, udfJars);
+    public Job createJob(String jobName, WayangPlan wayangPlan, String... udfJars) {
+        return this.createJob(jobName, null, wayangPlan, udfJars);
     }
 
     /**
-     * Create a new {@link Job} that should execute the given {@link RheemPlan} eventually.
+     * Create a new {@link Job} that should execute the given {@link WayangPlan} eventually.
      *
      * @see ReflectionUtils#getDeclaringJar(Class)
      */
-    public Job createJob(String jobName, Monitor monitor, RheemPlan rheemPlan, String... udfJars) {
-        return new Job(this, jobName, monitor, rheemPlan, new Experiment("unknown", new Subject("unknown", "unknown")), udfJars);
+    public Job createJob(String jobName, Monitor monitor, WayangPlan wayangPlan, String... udfJars) {
+        return new Job(this, jobName, monitor, wayangPlan, new Experiment("unknown", new Subject("unknown", "unknown")), udfJars);
     }
 
     public Configuration getConfiguration() {

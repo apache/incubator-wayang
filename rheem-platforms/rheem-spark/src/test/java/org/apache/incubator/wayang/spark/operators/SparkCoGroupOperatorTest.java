@@ -1,15 +1,15 @@
-package io.rheem.rheem.spark.operators;
+package org.apache.incubator.wayang.spark.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.function.ProjectionDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.types.DataUnitType;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.spark.channels.RddChannel;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.function.ProjectionDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.types.DataUnitType;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -103,7 +103,7 @@ public class SparkCoGroupOperatorTest extends SparkOperatorTestBase {
         if (expected == null) return actual == null;
         if (actual == null) return false;
 
-        return RheemCollections.asSet(expected).equals(RheemCollections.asSet(actual));
+        return WayangCollections.asSet(expected).equals(WayangCollections.asSet(actual));
     }
 
 }

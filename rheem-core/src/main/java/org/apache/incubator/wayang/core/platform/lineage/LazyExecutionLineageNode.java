@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.platform.lineage;
+package org.apache.incubator.wayang.core.platform.lineage;
 
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.util.Tuple;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.util.Tuple;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;

@@ -1,11 +1,11 @@
-package io.rheem.rheem.giraph.mappings;
+package org.apache.incubator.wayang.giraph.mappings;
 
-import io.rheem.rheem.basic.operators.PageRankOperator;
-import io.rheem.rheem.core.mapping.*;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.Subplan;
-import io.rheem.rheem.giraph.operators.GiraphPageRankOperator;
-import io.rheem.rheem.giraph.platform.GiraphPlatform;
+import org.apache.incubator.wayang.basic.operators.PageRankOperator;
+import org.apache.incubator.wayang.core.mapping.*;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.Subplan;
+import org.apache.incubator.wayang.giraph.operators.GiraphPageRankOperator;
+import org.apache.incubator.wayang.giraph.platform.GiraphPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

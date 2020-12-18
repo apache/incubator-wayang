@@ -1,20 +1,20 @@
-package io.rheem.rheem.profiler.spark;
+package org.apache.incubator.wayang.profiler.spark;
 
 import org.apache.spark.api.java.JavaRDD;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.DefaultOptimizationContext;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.RheemArrays;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.profiler.util.ProfilingUtils;
-import io.rheem.rheem.profiler.util.RrdAccessor;
-import io.rheem.rheem.spark.channels.RddChannel;
-import io.rheem.rheem.spark.compiler.FunctionCompiler;
-import io.rheem.rheem.spark.execution.SparkExecutor;
-import io.rheem.rheem.spark.operators.SparkExecutionOperator;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.DefaultOptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.WayangArrays;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.profiler.util.ProfilingUtils;
+import org.apache.incubator.wayang.profiler.util.RrdAccessor;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
+import org.apache.incubator.wayang.spark.compiler.FunctionCompiler;
+import org.apache.incubator.wayang.spark.execution.SparkExecutor;
+import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator;
 import org.rrd4j.ConsolFun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,17 +65,17 @@ public abstract class SparkOperatorProfiler {
         this.operatorGenerator = operatorGenerator;
         this.dataQuantumGenerators = Arrays.asList(dataQuantumGenerators);
 
-        this.cpuMhz = (int) configuration.getLongProperty("rheem.spark.cpu.mhz", 2700);
-        this.numMachines = (int) configuration.getLongProperty("rheem.spark.machines", 1);
-        this.numCoresPerMachine = (int) configuration.getLongProperty("rheem.spark.cores-per-machine", 1);
-        this.numPartitions = (int) configuration.getLongProperty("rheem.spark.partitions", -1);
+        this.cpuMhz = (int) configuration.getLongProperty("wayang.spark.cpu.mhz", 2700);
+        this.numMachines = (int) configuration.getLongProperty("wayang.spark.machines", 1);
+        this.numCoresPerMachine = (int) configuration.getLongProperty("wayang.spark.cores-per-machine", 1);
+        this.numPartitions = (int) configuration.getLongProperty("wayang.spark.partitions", -1);
 
-        this.gangliaRrdsDir = configuration.getStringProperty("rheem.ganglia.rrds", "/var/lib/ganglia/rrds");
-        this.gangliaClusterName = configuration.getStringProperty("rheem.ganglia.cluster", "cluster");
+        this.gangliaRrdsDir = configuration.getStringProperty("wayang.ganglia.rrds", "/var/lib/ganglia/rrds");
+        this.gangliaClusterName = configuration.getStringProperty("wayang.ganglia.cluster", "cluster");
 
-        this.dataQuantumGeneratorBatchSize = (int) configuration.getLongProperty("rheem.profiler.datagen.batchsize", 5000000);
-        this.dataQuantumGeneratorLocation = configuration.getStringProperty("rheem.profiler.datagen.location", "worker");
-        this.executionPaddingTime = configuration.getLongProperty("rheem.profiler.execute.padding", 5000);
+        this.dataQuantumGeneratorBatchSize = (int) configuration.getLongProperty("wayang.profiler.datagen.batchsize", 5000000);
+        this.dataQuantumGeneratorLocation = configuration.getStringProperty("wayang.profiler.datagen.location", "worker");
+        this.executionPaddingTime = configuration.getLongProperty("wayang.profiler.execute.padding", 5000);
     }
 
     /**
@@ -85,7 +85,7 @@ public abstract class SparkOperatorProfiler {
      */
     public void prepare(long... inputCardinalities) {
         this.operator = this.operatorGenerator.get();
-        this.inputCardinalities = RheemArrays.asList(inputCardinalities);
+        this.inputCardinalities = WayangArrays.asList(inputCardinalities);
         this.sparkExecutor = ProfilingUtils.fakeSparkExecutor(ReflectionUtils.getDeclaringJar(SparkOperatorProfiler.class));
         for (int inputIndex = 0; inputIndex < inputCardinalities.length; inputIndex++) {
             long inputCardinality = inputCardinalities[inputIndex];
@@ -97,7 +97,7 @@ public abstract class SparkOperatorProfiler {
 
     /**
      * Helper method to generate data quanta and provide them as a cached {@link JavaRDD}. Uses an implementation
-     * based on the {@code rheem.profiler.datagen.location} property.
+     * based on the {@code wayang.profiler.datagen.location} property.
      */
     protected <T> JavaRDD<T> prepareInputRdd(long cardinality, int inputIndex) {
         switch (this.dataQuantumGeneratorLocation) {
@@ -377,7 +377,7 @@ public abstract class SparkOperatorProfiler {
         }
 
         public String getCsvHeader() {
-            return String.join(",", RheemCollections.map(this.inputCardinalities, (index, card) -> "input_card_" + index)) + "," +
+            return String.join(",", WayangCollections.map(this.inputCardinalities, (index, card) -> "input_card_" + index)) + "," +
                     "output_card," +
                     "wallclock," +
                     "disk," +
@@ -388,7 +388,7 @@ public abstract class SparkOperatorProfiler {
         }
 
         public String toCsvString() {
-            return String.join(",", RheemCollections.map(this.inputCardinalities, Object::toString)) + ","
+            return String.join(",", WayangCollections.map(this.inputCardinalities, Object::toString)) + ","
                     + this.outputCardinality + ","
                     + this.wallclockMillis + ","
                     + this.diskBytes + ","

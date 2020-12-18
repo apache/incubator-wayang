@@ -1,24 +1,24 @@
-package io.rheem.rheem.spark.operators;
+package org.apache.incubator.wayang.spark.operators;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFunction;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.CoGroupOperator;
-import io.rheem.rheem.basic.operators.JoinOperator;
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.spark.channels.RddChannel;
-import io.rheem.rheem.spark.compiler.FunctionCompiler;
-import io.rheem.rheem.spark.execution.SparkExecutor;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.CoGroupOperator;
+import org.apache.incubator.wayang.basic.operators.JoinOperator;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
+import org.apache.incubator.wayang.spark.compiler.FunctionCompiler;
+import org.apache.incubator.wayang.spark.execution.SparkExecutor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -92,7 +92,7 @@ public class SparkCoGroupOperator<In0, In1, Key> extends CoGroupOperator<In0, In
                 pairRdd0.cogroup(pairRdd1, sparkExecutor.getNumDefaultPartitions());
         this.name(outputPair);
 
-        // Map the output to what Rheem expects.
+        // Map the output to what Wayang expects.
         final JavaRDD<Tuple2<Iterable<In0>, Iterable<In1>>> outputRdd = outputPair.map(new TupleConverter<>());
         this.name(outputRdd);
 
@@ -108,7 +108,7 @@ public class SparkCoGroupOperator<In0, In1, Key> extends CoGroupOperator<In0, In
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return "rheem.spark.cogroup.load";
+        return "wayang.spark.cogroup.load";
     }
 
     @Override
@@ -129,7 +129,7 @@ public class SparkCoGroupOperator<In0, In1, Key> extends CoGroupOperator<In0, In
     }
 
     /**
-     * Converts the output of {@link JavaPairRDD#cogroup(JavaPairRDD, int)} to what Rheem expects.
+     * Converts the output of {@link JavaPairRDD#cogroup(JavaPairRDD, int)} to what Wayang expects.
      * <p><i>TODO: See, if we can somehow dodge all this conversion, which is likely to happen a lot.</i></p>
      */
     private static class TupleConverter<InputType0, InputType1, KeyType>

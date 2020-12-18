@@ -1,10 +1,10 @@
-package io.rheem.rheem.java.operators;
+package org.apache.incubator.wayang.java.operators;
 
 import org.apache.commons.lang3.Validate;
 import org.junit.Test;
-import io.rheem.rheem.basic.channels.FileChannel;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.types.DataSetType;
+import org.apache.incubator.wayang.basic.channels.FileChannel;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.types.DataSetType;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,7 +21,7 @@ public class JavaObjectFileSinkTest extends JavaExecutionOperatorTestBase {
     @Test
     public void testWritingDoesNotFail() throws IOException {
         // Prepare the sink.
-        Path tempDir = Files.createTempDirectory("rheem-java");
+        Path tempDir = Files.createTempDirectory("wayang-java");
         tempDir.toFile().deleteOnExit();
         Path targetFile = tempDir.resolve("testWritingDoesNotFail");
         final Stream<Integer> integerStream = enumerateRange(10000).stream();

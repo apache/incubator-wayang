@@ -1,10 +1,10 @@
-package io.rheem.rheem.spark.operators;
+package org.apache.incubator.wayang.spark.operators;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.core.function.MapPartitionsDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.spark.channels.RddChannel;
+import org.apache.incubator.wayang.core.function.MapPartitionsDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
 
 import java.util.Arrays;
 import java.util.Collection;

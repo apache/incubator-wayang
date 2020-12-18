@@ -1,8 +1,8 @@
-package io.rheem.rheem.spark.execution;
+package org.apache.incubator.wayang.spark.execution;
 
 import org.apache.spark.api.java.JavaSparkContext;
-import io.rheem.rheem.core.platform.CrossPlatformExecutor;
-import io.rheem.rheem.core.platform.ExecutionResourceTemplate;
+import org.apache.incubator.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.incubator.wayang.core.platform.ExecutionResourceTemplate;
 
 /**
  * Wraps and manages a {@link JavaSparkContext} to avoid steady re-creation.

@@ -1,24 +1,24 @@
-package io.rheem.rheem.spark.platform;
+package org.apache.incubator.wayang.spark.platform;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
-import io.rheem.rheem.basic.plugin.RheemBasic;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.RheemContext;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.LoadToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.TimeToCostConverter;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.platform.Executor;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Formats;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.spark.execution.SparkContextReference;
-import io.rheem.rheem.spark.execution.SparkExecutor;
-import io.rheem.rheem.spark.operators.SparkCollectionSource;
-import io.rheem.rheem.spark.operators.SparkLocalCallbackSink;
+import org.apache.incubator.wayang.basic.plugin.WayangBasic;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.WayangContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.platform.Executor;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.spark.execution.SparkContextReference;
+import org.apache.incubator.wayang.spark.execution.SparkExecutor;
+import org.apache.incubator.wayang.spark.operators.SparkCollectionSource;
+import org.apache.incubator.wayang.spark.operators.SparkLocalCallbackSink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +34,9 @@ public class SparkPlatform extends Platform {
 
     private static final String CONFIG_NAME = "spark";
 
-    private static final String DEFAULT_CONFIG_FILE = "rheem-spark-defaults.properties";
+    private static final String DEFAULT_CONFIG_FILE = "wayang-spark-defaults.properties";
 
-    public static final String INITIALIZATION_MS_CONFIG_KEY = "rheem.spark.init.ms";
+    public static final String INITIALIZATION_MS_CONFIG_KEY = "wayang.spark.init.ms";
 
     private static SparkPlatform instance = null;
 
@@ -127,10 +127,10 @@ public class SparkPlatform extends Platform {
         // Set up the JAR files.
         //sparkContext.clearJars();
         if (!sparkContext.isLocal()) {
-            // Add Rheem JAR files.
-            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // rheem-spark
-            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemBasic.class)); // rheem-basic
-            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(RheemContext.class)); // rheem-core
+            // Add Wayang JAR files.
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(SparkPlatform.class)); // wayang-spark
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(WayangBasic.class)); // wayang-basic
+            this.registerJarIfNotNull(ReflectionUtils.getDeclaringJar(WayangContext.class)); // wayang-core
             final Set<String> udfJarPaths = job.getUdfJarPaths();
             if (udfJarPaths.isEmpty()) {
                 this.logger.warn("Non-local SparkContext but not UDF JARs have been declared.");
@@ -153,12 +153,12 @@ public class SparkPlatform extends Platform {
 
     @Override
     public LoadProfileToTimeConverter createLoadProfileToTimeConverter(Configuration configuration) {
-        int cpuMhz = (int) configuration.getLongProperty("rheem.spark.cpu.mhz");
-        int numMachines = (int) configuration.getLongProperty("rheem.spark.machines");
-        int numCores = (int) (numMachines * configuration.getLongProperty("rheem.spark.cores-per-machine"));
-        double hdfsMsPerMb = configuration.getDoubleProperty("rheem.spark.hdfs.ms-per-mb");
-        double networkMsPerMb = configuration.getDoubleProperty("rheem.spark.network.ms-per-mb");
-        double stretch = configuration.getDoubleProperty("rheem.spark.stretch");
+        int cpuMhz = (int) configuration.getLongProperty("wayang.spark.cpu.mhz");
+        int numMachines = (int) configuration.getLongProperty("wayang.spark.machines");
+        int numCores = (int) (numMachines * configuration.getLongProperty("wayang.spark.cores-per-machine"));
+        double hdfsMsPerMb = configuration.getDoubleProperty("wayang.spark.hdfs.ms-per-mb");
+        double networkMsPerMb = configuration.getDoubleProperty("wayang.spark.network.ms-per-mb");
+        double stretch = configuration.getDoubleProperty("wayang.spark.stretch");
         return LoadProfileToTimeConverter.createTopLevelStretching(
                 LoadToTimeConverter.createLinearCoverter(1 / (numCores * cpuMhz * 1000d)),
                 LoadToTimeConverter.createLinearCoverter(hdfsMsPerMb / 1000000d),
@@ -171,8 +171,8 @@ public class SparkPlatform extends Platform {
     @Override
     public TimeToCostConverter createTimeToCostConverter(Configuration configuration) {
         return new TimeToCostConverter(
-                configuration.getDoubleProperty("rheem.spark.costs.fix"),
-                configuration.getDoubleProperty("rheem.spark.costs.per-ms")
+                configuration.getDoubleProperty("wayang.spark.costs.fix"),
+                configuration.getDoubleProperty("wayang.spark.costs.per-ms")
         );
     }
 
@@ -188,7 +188,7 @@ public class SparkPlatform extends Platform {
         // Run a most simple Spark job.
         this.logger.info("Running warm-up Spark job...");
         long startTime = System.currentTimeMillis();
-        final RheemContext rheemCtx = new RheemContext(configuration);
+        final WayangContext wayangCtx = new WayangContext(configuration);
         SparkCollectionSource<Integer> source = new SparkCollectionSource<>(
                 Collections.singleton(0), DataSetType.createDefault(Integer.class)
         );
@@ -198,9 +198,9 @@ public class SparkPlatform extends Platform {
                 DataSetType.createDefault(Integer.class)
         );
         source.connectTo(0, sink, 0);
-        final Job job = rheemCtx.createJob("Warm up", new RheemPlan(sink));
+        final Job job = wayangCtx.createJob("Warm up", new WayangPlan(sink));
         // Make sure not to have the warm-up jobs bloat the execution logs.
-        job.getConfiguration().setProperty("rheem.core.log.enabled", "false");
+        job.getConfiguration().setProperty("wayang.core.log.enabled", "false");
         job.execute();
         long stopTime = System.currentTimeMillis();
         this.logger.info("Spark warm-up finished in {}.", Formats.formatDuration(stopTime - startTime, true));

@@ -1,6 +1,6 @@
-package io.rheem.rheem.iejoin.operators;
+package org.apache.incubator.wayang.iejoin.operators;
 
-import io.rheem.rheem.basic.data.Tuple5;
+import org.apache.incubator.wayang.basic.data.Tuple5;
 
 /**
  * This operator decides the correct sorting orders for IEJoin

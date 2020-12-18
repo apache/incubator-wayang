@@ -1,9 +1,9 @@
-package io.rheem.rheem.core.plan.rheemplan;
+package org.apache.incubator.wayang.core.plan.wayangplan;
 
 import java.util.Optional;
 
 /**
- * Visitor (as in the Visitor Pattern) for {@link RheemPlan}s.
+ * Visitor (as in the Visitor Pattern) for {@link WayangPlan}s.
  */
 public abstract class TopDownPlanVisitor<Payload, Return> {
 

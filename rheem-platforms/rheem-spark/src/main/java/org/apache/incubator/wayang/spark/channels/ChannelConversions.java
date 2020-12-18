@@ -1,20 +1,20 @@
-package io.rheem.rheem.spark.channels;
+package org.apache.incubator.wayang.spark.channels;
 
-import io.rheem.rheem.basic.channels.FileChannel;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.optimizer.channels.DefaultChannelConversion;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.java.channels.CollectionChannel;
-import io.rheem.rheem.java.platform.JavaPlatform;
-import io.rheem.rheem.spark.operators.SparkBroadcastOperator;
-import io.rheem.rheem.spark.operators.SparkCacheOperator;
-import io.rheem.rheem.spark.operators.SparkCollectOperator;
-import io.rheem.rheem.spark.operators.SparkCollectionSource;
-import io.rheem.rheem.spark.operators.SparkObjectFileSink;
-import io.rheem.rheem.spark.operators.SparkObjectFileSource;
-import io.rheem.rheem.spark.operators.SparkTsvFileSink;
-import io.rheem.rheem.spark.operators.SparkTsvFileSource;
+import org.apache.incubator.wayang.basic.channels.FileChannel;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.optimizer.channels.DefaultChannelConversion;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.java.channels.CollectionChannel;
+import org.apache.incubator.wayang.java.platform.JavaPlatform;
+import org.apache.incubator.wayang.spark.operators.SparkBroadcastOperator;
+import org.apache.incubator.wayang.spark.operators.SparkCacheOperator;
+import org.apache.incubator.wayang.spark.operators.SparkCollectOperator;
+import org.apache.incubator.wayang.spark.operators.SparkCollectionSource;
+import org.apache.incubator.wayang.spark.operators.SparkObjectFileSink;
+import org.apache.incubator.wayang.spark.operators.SparkObjectFileSource;
+import org.apache.incubator.wayang.spark.operators.SparkTsvFileSink;
+import org.apache.incubator.wayang.spark.operators.SparkTsvFileSource;
 
 import java.util.Arrays;
 import java.util.Collection;

@@ -1,11 +1,11 @@
-package io.rheem.rheem.flink.execution;
+package org.apache.incubator.wayang.flink.execution;
 
 import org.apache.flink.api.common.ExecutionMode;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.utils.ParameterTool;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.platform.CrossPlatformExecutor;
-import io.rheem.rheem.core.platform.ExecutionResourceTemplate;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.platform.CrossPlatformExecutor;
+import org.apache.incubator.wayang.core.platform.ExecutionResourceTemplate;
 
 /**
  * Wraps and manages a Flink {@link ExecutionEnvironment} to avoid steady re-creation.
@@ -55,7 +55,7 @@ public class FlinkContextReference extends ExecutionResourceTemplate {
         this.flinkEnviroment.getConfig().setGlobalJobParameters(tools);
         this.flinkEnviroment.setParallelism(parallelism);
 
-        ExecutionMode mode = getExecutionMode(conf.getStringProperty("rheem.flink.mode.execution"));
+        ExecutionMode mode = getExecutionMode(conf.getStringProperty("wayang.flink.mode.execution"));
 
         this.flinkEnviroment.getConfig().setExecutionMode(mode);
     }

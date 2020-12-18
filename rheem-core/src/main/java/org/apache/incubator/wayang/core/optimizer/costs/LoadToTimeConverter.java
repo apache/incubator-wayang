@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.optimizer.costs;
+package org.apache.incubator.wayang.core.optimizer.costs;
 
 /**
  * Converts a {@link LoadEstimate} into a time estimate.

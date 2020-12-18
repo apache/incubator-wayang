@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.api.configuration;
+package org.apache.incubator.wayang.core.api.configuration;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +12,7 @@ import java.util.Optional;
  */
 public abstract class ValueProvider<Value> {
 
-    public static class NotAvailableException extends RheemException {
+    public static class NotAvailableException extends WayangException {
         public NotAvailableException(String message) {
             super(message);
         }

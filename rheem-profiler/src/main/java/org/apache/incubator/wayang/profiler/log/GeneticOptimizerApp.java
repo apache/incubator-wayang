@@ -1,25 +1,25 @@
-package io.rheem.rheem.profiler.log;
+package org.apache.incubator.wayang.profiler.log;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.optimizer.costs.EstimationContext;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.AtomicExecution;
-import io.rheem.rheem.core.platform.AtomicExecutionGroup;
-import io.rheem.rheem.core.platform.PartialExecution;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.profiling.ExecutionLog;
-import io.rheem.rheem.core.util.Bitmask;
-import io.rheem.rheem.core.util.Formats;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.graphchi.GraphChi;
-import io.rheem.rheem.java.Java;
-import io.rheem.rheem.postgres.Postgres;
-import io.rheem.rheem.spark.Spark;
-import io.rheem.rheem.sqlite3.Sqlite3;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.optimizer.costs.EstimationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.AtomicExecution;
+import org.apache.incubator.wayang.core.platform.AtomicExecutionGroup;
+import org.apache.incubator.wayang.core.platform.PartialExecution;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.profiling.ExecutionLog;
+import org.apache.incubator.wayang.core.util.Bitmask;
+import org.apache.incubator.wayang.core.util.Formats;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.graphchi.GraphChi;
+import org.apache.incubator.wayang.java.Java;
+import org.apache.incubator.wayang.postgres.Postgres;
+import org.apache.incubator.wayang.spark.Spark;
+import org.apache.incubator.wayang.sqlite3.Sqlite3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,10 +95,10 @@ public class GeneticOptimizerApp {
         GraphChi.platform();
 
         // Load the ExecutionLog.
-        double samplingFactor = this.configuration.getDoubleProperty("rheem.profiler.ga.sampling", 1d);
-        double maxCardinalitySpread = this.configuration.getDoubleProperty("rheem.profiler.ga.max-cardinality-spread", 1d);
-        double minCardinalityConfidence = this.configuration.getDoubleProperty("rheem.profiler.ga.min-cardinality-confidence", 1d);
-        long minExecutionTime = this.configuration.getLongProperty("rheem.profiler.ga.min-exec-time", 1);
+        double samplingFactor = this.configuration.getDoubleProperty("wayang.profiler.ga.sampling", 1d);
+        double maxCardinalitySpread = this.configuration.getDoubleProperty("wayang.profiler.ga.max-cardinality-spread", 1d);
+        double minCardinalityConfidence = this.configuration.getDoubleProperty("wayang.profiler.ga.min-cardinality-confidence", 1d);
+        long minExecutionTime = this.configuration.getLongProperty("wayang.profiler.ga.min-exec-time", 1);
         try (ExecutionLog executionLog = ExecutionLog.open(configuration)) {
             this.partialExecutions = executionLog.stream().collect(Collectors.toList());
 
@@ -132,7 +132,7 @@ public class GeneticOptimizerApp {
             newSize = this.partialExecutions.size();
             System.out.printf("Removed %d executions due to sampling.\n", lastSize - newSize);
         } catch (Exception e) {
-            throw new RheemException("Could not evaluate execution log.", e);
+            throw new WayangException("Could not evaluate execution log.", e);
         }
 
         // Group the PartialExecutions.
@@ -142,7 +142,7 @@ public class GeneticOptimizerApp {
                 .collect(Collectors.toList());
 
         // Apply binning if requested.
-        double binningStretch = this.configuration.getDoubleProperty("rheem.profiler.ga.binning", 1.1d);
+        double binningStretch = this.configuration.getDoubleProperty("wayang.profiler.ga.binning", 1.1d);
         if (binningStretch > 1d) {
             System.out.print("Applying binning... ");
             int numOriginalPartialExecutions = this.partialExecutions.size();
@@ -308,15 +308,15 @@ public class GeneticOptimizerApp {
         }
 
         // Initialize form the configuration.
-        long timeLimit = this.configuration.getLongProperty("rheem.profiler.ga.timelimit.ms", -1);
+        long timeLimit = this.configuration.getLongProperty("wayang.profiler.ga.timelimit.ms", -1);
         long stopMillis = timeLimit > 0 ? System.currentTimeMillis() + timeLimit : -1L;
-        int maxGen = (int) this.configuration.getLongProperty("rheem.profiler.ga.maxgenerations", 5000);
-        int maxStableGen = (int) this.configuration.getLongProperty("rheem.profiler.ga.maxstablegenerations", 2000);
-        double minFitness = this.configuration.getDoubleProperty("rheem.profiler.ga.minfitness", .0d);
-        int superOptimizations = (int) this.configuration.getLongProperty("rheem.profiler.ga.superoptimizations", 3);
-        boolean isBlocking = this.configuration.getBooleanProperty("rheem.profiler.ga.blocking", false);
-        long maxPartialExecutionRemovals = this.configuration.getLongProperty("rheem.profiler.ga.noise-filter.max", 3);
-        double partialExecutionRemovalThreshold = this.configuration.getDoubleProperty("rheem.profiler.ga.noise-filter.threshold", 2);
+        int maxGen = (int) this.configuration.getLongProperty("wayang.profiler.ga.maxgenerations", 5000);
+        int maxStableGen = (int) this.configuration.getLongProperty("wayang.profiler.ga.maxstablegenerations", 2000);
+        double minFitness = this.configuration.getDoubleProperty("wayang.profiler.ga.minfitness", .0d);
+        int superOptimizations = (int) this.configuration.getLongProperty("wayang.profiler.ga.superoptimizations", 3);
+        boolean isBlocking = this.configuration.getBooleanProperty("wayang.profiler.ga.blocking", false);
+        long maxPartialExecutionRemovals = this.configuration.getLongProperty("wayang.profiler.ga.noise-filter.max", 3);
+        double partialExecutionRemovalThreshold = this.configuration.getDoubleProperty("wayang.profiler.ga.noise-filter.threshold", 2);
 
         // Create the root optimizer and an initial population.
         GeneticOptimizer generalOptimizer = this.createOptimizer(this.partialExecutions);
@@ -326,7 +326,7 @@ public class GeneticOptimizerApp {
         // Optimize on blocks.
         if (isBlocking) {
             for (List<PartialExecution> group : this.partialExecutionGroups) {
-                final PartialExecution representative = RheemCollections.getAny(group);
+                final PartialExecution representative = WayangCollections.getAny(group);
                 final Set<String> templateKeys = this.getLoadProfileEstimatorTemplateKeys(representative);
                 if (group.size() < 2) {
                     System.out.printf("Few measurement points for %s\n", templateKeys);
@@ -410,7 +410,7 @@ public class GeneticOptimizerApp {
             }
         }
 
-        String outputFile = this.configuration.getStringProperty("rheem.profiler.ga.output-file", null);
+        String outputFile = this.configuration.getStringProperty("wayang.profiler.ga.output-file", null);
         if (outputFile != null) {
             Individual fittestIndividual = population.get(0);
             try (PrintStream printStream = new PrintStream(new FileOutputStream(outputFile))) {
@@ -461,7 +461,7 @@ public class GeneticOptimizerApp {
             final Variable overhead = entry.getValue();
             if (!optimizedVariables.contains(overhead)) continue;
 
-            out.printf("rheem.%s.init.ms = %d\n",
+            out.printf("wayang.%s.init.ms = %d\n",
                     platform.getConfigurationName(),
                     Math.round(overhead.getValue(individual))
             );
@@ -541,11 +541,11 @@ public class GeneticOptimizerApp {
             return new Tuple<>(currentGeneration, individuals);
         }
 
-        int updateFrequency = (int) this.configuration.getLongProperty("rheem.profiler.ga.intermediateupdate", 10000);
+        int updateFrequency = (int) this.configuration.getLongProperty("wayang.profiler.ga.intermediateupdate", 10000);
         System.out.printf("Optimizing %d variables on %d partial executions (e.g., %s).\n",
                 optimizer.getActivatedGenes().cardinality(),
                 optimizer.getData().size(),
-                RheemCollections.getAny(optimizer.getData()).getAtomicExecutionGroups()
+                WayangCollections.getAny(optimizer.getData()).getAtomicExecutionGroups()
         );
 
         optimizer.updateFitness(individuals);
@@ -654,7 +654,7 @@ public class GeneticOptimizerApp {
     public static void main(String[] args) {
         Configuration configuration = args.length == 0 ? new Configuration() : new Configuration(args[0]);
         if (args.length >= 2) {
-            configuration.setProperty("rheem.core.log.executions", args[1]);
+            configuration.setProperty("wayang.core.log.executions", args[1]);
         }
         new GeneticOptimizerApp(configuration).run();
     }

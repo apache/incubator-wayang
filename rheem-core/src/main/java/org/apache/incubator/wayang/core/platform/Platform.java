@@ -1,18 +1,18 @@
-package io.rheem.rheem.core.platform;
+package org.apache.incubator.wayang.core.platform;
 
 import org.json.JSONObject;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.TimeToCostConverter;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.executionplan.PlatformExecution;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.util.JsonSerializables;
-import io.rheem.rheem.core.util.JsonSerializer;
-import io.rheem.rheem.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.executionplan.PlatformExecution;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.util.JsonSerializables;
+import org.apache.incubator.wayang.core.util.JsonSerializer;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
 
 /**
  * A platform describes an execution engine that executes {@link ExecutionOperator}s.
@@ -32,7 +32,7 @@ public abstract class Platform {
         try {
             return ReflectionUtils.executeStaticArglessMethod(platformClassName, "getInstance");
         } catch (Exception e) {
-            throw new RheemException("Could not load platform: " + platformClassName, e);
+            throw new WayangException("Could not load platform: " + platformClassName, e);
         }
     }
 

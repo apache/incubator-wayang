@@ -1,32 +1,32 @@
-package io.rheem.rheem.tests;
+package org.apache.incubator.wayang.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.operators.FlatMapOperator;
-import io.rheem.rheem.basic.operators.LocalCallbackSink;
-import io.rheem.rheem.basic.operators.MapOperator;
-import io.rheem.rheem.basic.operators.ReduceByOperator;
-import io.rheem.rheem.basic.operators.TextFileSource;
-import io.rheem.rheem.core.api.Job;
-import io.rheem.rheem.core.api.RheemContext;
-import io.rheem.rheem.core.function.FlatMapDescriptor;
-import io.rheem.rheem.core.function.ReduceDescriptor;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.optimizer.costs.DefaultLoadEstimator;
-import io.rheem.rheem.core.optimizer.costs.LoadEstimator;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.types.DataUnitType;
-import io.rheem.rheem.core.util.Counter;
-import io.rheem.rheem.java.Java;
-import io.rheem.rheem.java.operators.JavaLocalCallbackSink;
-import io.rheem.rheem.java.operators.JavaReduceByOperator;
-import io.rheem.rheem.spark.Spark;
-import io.rheem.rheem.spark.operators.SparkFlatMapOperator;
-import io.rheem.rheem.spark.operators.SparkMapOperator;
-import io.rheem.rheem.spark.operators.SparkTextFileSource;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.operators.FlatMapOperator;
+import org.apache.incubator.wayang.basic.operators.LocalCallbackSink;
+import org.apache.incubator.wayang.basic.operators.MapOperator;
+import org.apache.incubator.wayang.basic.operators.ReduceByOperator;
+import org.apache.incubator.wayang.basic.operators.TextFileSource;
+import org.apache.incubator.wayang.core.api.Job;
+import org.apache.incubator.wayang.core.api.WayangContext;
+import org.apache.incubator.wayang.core.function.FlatMapDescriptor;
+import org.apache.incubator.wayang.core.function.ReduceDescriptor;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.optimizer.costs.DefaultLoadEstimator;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadEstimator;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.types.DataUnitType;
+import org.apache.incubator.wayang.core.util.Counter;
+import org.apache.incubator.wayang.java.Java;
+import org.apache.incubator.wayang.java.operators.JavaLocalCallbackSink;
+import org.apache.incubator.wayang.java.operators.JavaReduceByOperator;
+import org.apache.incubator.wayang.spark.Spark;
+import org.apache.incubator.wayang.spark.operators.SparkFlatMapOperator;
+import org.apache.incubator.wayang.spark.operators.SparkMapOperator;
+import org.apache.incubator.wayang.spark.operators.SparkTextFileSource;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -47,11 +47,11 @@ public class WordCountIT {
 
     @Test
     public void testOnJava() throws URISyntaxException, IOException {
-        // Assignment mode: RheemContext.
+        // Assignment mode: WayangContext.
 
-        // Instantiate Rheem and activate the backend.
-        RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
-        TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
+        // Instantiate Wayang and activate the backend.
+        WayangContext wayangContext = new WayangContext().with(Java.basicPlugin());
+        TextFileSource textFileSource = new TextFileSource(WayangPlans.FILE_SOME_LINES_TXT.toString());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
@@ -106,19 +106,19 @@ public class WordCountIT {
         List<Tuple2> results = new ArrayList<>();
         LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
 
-        // Build Rheem plan by connecting operators
+        // Build Wayang plan by connecting operators
         textFileSource.connectTo(0, flatMapOperator, 0);
         flatMapOperator.connectTo(0, mapOperator, 0);
         mapOperator.connectTo(0, reduceByOperator, 0);
         reduceByOperator.connectTo(0, sink, 0);
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(new RheemPlan(sink));
+        // Have Wayang execute the plan.
+        wayangContext.execute(new WayangPlan(sink));
 
         // Verify the plan result.
         Counter<String> counter = new Counter<>();
         List<Tuple2> correctResults = new ArrayList<>();
-        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
         lines.stream()
                 .flatMap(line -> Arrays.stream(line.split("\\s+")))
                 .map(String::toLowerCase)
@@ -134,7 +134,7 @@ public class WordCountIT {
     public void testOnSpark() throws URISyntaxException, IOException {
         // Assignment mode: Job.
 
-        TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
+        TextFileSource textFileSource = new TextFileSource(WayangPlans.FILE_SOME_LINES_TXT.toString());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new FlatMapOperator<>(
@@ -173,23 +173,23 @@ public class WordCountIT {
         List<Tuple2> results = new ArrayList<>();
         LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
 
-        // Build Rheem plan by connecting operators
+        // Build Wayang plan by connecting operators
         textFileSource.connectTo(0, flatMapOperator, 0);
         flatMapOperator.connectTo(0, mapOperator, 0);
         mapOperator.connectTo(0, reduceByOperator, 0);
         reduceByOperator.connectTo(0, sink, 0);
-        RheemPlan rheemPlan = new RheemPlan(sink);
+        WayangPlan wayangPlan = new WayangPlan(sink);
 
-        // Have Rheem execute the plan.
-        RheemContext rheemContext = new RheemContext();
-        final Job job = rheemContext.createJob(null, rheemPlan);
+        // Have Wayang execute the plan.
+        WayangContext wayangContext = new WayangContext();
+        final Job job = wayangContext.createJob(null, wayangPlan);
         Spark.basicPlugin().configure(job.getConfiguration());
         job.execute();
 
         // Verify the plan result.
         Counter<String> counter = new Counter<>();
         List<Tuple2> correctResults = new ArrayList<>();
-        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
         lines.stream()
                 .flatMap(line -> Arrays.stream(line.split("\\s+")))
                 .map(String::toLowerCase)
@@ -205,12 +205,12 @@ public class WordCountIT {
     public void testOnSparkToJava() throws URISyntaxException, IOException {
         // Assignment mode: ExecutionOperators.
 
-        // Instantiate Rheem and activate the backend.
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(Spark.basicPlugin());
-        rheemContext.register(Java.basicPlugin());
+        // Instantiate Wayang and activate the backend.
+        WayangContext wayangContext = new WayangContext();
+        wayangContext.register(Spark.basicPlugin());
+        wayangContext.register(Java.basicPlugin());
 
-        TextFileSource textFileSource = new SparkTextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
+        TextFileSource textFileSource = new SparkTextFileSource(WayangPlans.FILE_SOME_LINES_TXT.toString());
 
         // for each line (input) output an iterator of the words
         FlatMapOperator<String, String> flatMapOperator = new SparkFlatMapOperator<>(
@@ -252,20 +252,20 @@ public class WordCountIT {
         List<Tuple2> results = new ArrayList<>();
         LocalCallbackSink<Tuple2> sink = new JavaLocalCallbackSink<>(results::add, DataSetType.createDefault(Tuple2.class));
 
-        // Build Rheem plan by connecting operators
+        // Build Wayang plan by connecting operators
         textFileSource.connectTo(0, flatMapOperator, 0);
         flatMapOperator.connectTo(0, mapOperator, 0);
         mapOperator.connectTo(0, reduceByOperator, 0);
         reduceByOperator.connectTo(0, sink, 0);
-        RheemPlan rheemPlan = new RheemPlan(sink);
+        WayangPlan wayangPlan = new WayangPlan(sink);
 
-        // Have Rheem execute the plan.
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        wayangContext.execute(wayangPlan);
 
         // Verify the plan result.
         Counter<String> counter = new Counter<>();
         List<Tuple2> correctResults = new ArrayList<>();
-        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
         lines.stream()
                 .flatMap(line -> Arrays.stream(line.split("\\s+")))
                 .map(String::toLowerCase)
@@ -281,7 +281,7 @@ public class WordCountIT {
     public void testOnJavaToSpark() throws URISyntaxException, IOException {
         // Assignment mode: Constraints.
 
-        TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
+        TextFileSource textFileSource = new TextFileSource(WayangPlans.FILE_SOME_LINES_TXT.toString());
         textFileSource.addTargetPlatform(Java.platform());
 
         // for each line (input) output an iterator of the words
@@ -328,23 +328,23 @@ public class WordCountIT {
         LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
         sink.addTargetPlatform(Spark.platform());
 
-        // Build Rheem plan by connecting operators
+        // Build Wayang plan by connecting operators
         textFileSource.connectTo(0, flatMapOperator, 0);
         flatMapOperator.connectTo(0, mapOperator, 0);
         mapOperator.connectTo(0, reduceByOperator, 0);
         reduceByOperator.connectTo(0, sink, 0);
-        RheemPlan rheemPlan = new RheemPlan(sink);
+        WayangPlan wayangPlan = new WayangPlan(sink);
 
-        // Have Rheem execute the plan.
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(Java.basicPlugin());
-        rheemContext.register(Spark.basicPlugin());
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        WayangContext wayangContext = new WayangContext();
+        wayangContext.register(Java.basicPlugin());
+        wayangContext.register(Spark.basicPlugin());
+        wayangContext.execute(wayangPlan);
 
         // Verify the plan result.
         Counter<String> counter = new Counter<>();
         List<Tuple2> correctResults = new ArrayList<>();
-        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
         lines.stream()
                 .flatMap(line -> Arrays.stream(line.split("\\s+")))
                 .map(String::toLowerCase)
@@ -360,7 +360,7 @@ public class WordCountIT {
     public void testOnJavaAndSpark() throws URISyntaxException, IOException {
         // Assignment mode: none.
 
-        TextFileSource textFileSource = new TextFileSource(RheemPlans.FILE_SOME_LINES_TXT.toString());
+        TextFileSource textFileSource = new TextFileSource(WayangPlans.FILE_SOME_LINES_TXT.toString());
         textFileSource.addTargetPlatform(Java.platform());
         textFileSource.addTargetPlatform(Spark.platform());
 
@@ -401,23 +401,23 @@ public class WordCountIT {
         List<Tuple2> results = new ArrayList<>();
         LocalCallbackSink<Tuple2> sink = LocalCallbackSink.createCollectingSink(results, DataSetType.createDefault(Tuple2.class));
 
-        // Build Rheem plan by connecting operators
+        // Build Wayang plan by connecting operators
         textFileSource.connectTo(0, flatMapOperator, 0);
         flatMapOperator.connectTo(0, mapOperator, 0);
         mapOperator.connectTo(0, reduceByOperator, 0);
         reduceByOperator.connectTo(0, sink, 0);
-        RheemPlan rheemPlan = new RheemPlan(sink);
+        WayangPlan wayangPlan = new WayangPlan(sink);
 
-        // Have Rheem execute the plan.
-        RheemContext rheemContext = new RheemContext();
-        rheemContext.register(Java.basicPlugin());
-        rheemContext.register(Spark.basicPlugin());
-        rheemContext.execute(rheemPlan);
+        // Have Wayang execute the plan.
+        WayangContext wayangContext = new WayangContext();
+        wayangContext.register(Java.basicPlugin());
+        wayangContext.register(Spark.basicPlugin());
+        wayangContext.execute(wayangPlan);
 
         // Verify the plan result.
         Counter<String> counter = new Counter<>();
         List<Tuple2> correctResults = new ArrayList<>();
-        final List<String> lines = Files.lines(Paths.get(RheemPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
+        final List<String> lines = Files.lines(Paths.get(WayangPlans.FILE_SOME_LINES_TXT)).collect(Collectors.toList());
         lines.stream()
                 .flatMap(line -> Arrays.stream(line.split("\\s+")))
                 .map(String::toLowerCase)

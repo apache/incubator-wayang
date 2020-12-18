@@ -1,10 +1,10 @@
-package io.rheem.rheem.postgres.channels;
+package org.apache.incubator.wayang.postgres.channels;
 
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.optimizer.channels.DefaultChannelConversion;
-import io.rheem.rheem.java.channels.StreamChannel;
-import io.rheem.rheem.jdbc.operators.SqlToStreamOperator;
-import io.rheem.rheem.postgres.platform.PostgresPlatform;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.optimizer.channels.DefaultChannelConversion;
+import org.apache.incubator.wayang.java.channels.StreamChannel;
+import org.apache.incubator.wayang.jdbc.operators.SqlToStreamOperator;
+import org.apache.incubator.wayang.postgres.platform.PostgresPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

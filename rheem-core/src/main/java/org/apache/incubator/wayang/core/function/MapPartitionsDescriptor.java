@@ -1,9 +1,9 @@
-package io.rheem.rheem.core.function;
+package org.apache.incubator.wayang.core.function;
 
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileEstimator;
-import io.rheem.rheem.core.types.BasicDataUnitType;
-import io.rheem.rheem.core.types.DataUnitType;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileEstimator;
+import org.apache.incubator.wayang.core.types.BasicDataUnitType;
+import org.apache.incubator.wayang.core.types.DataUnitType;
 
 import java.util.Optional;
 import java.util.function.Function;

@@ -1,7 +1,7 @@
-package io.rheem.rheem.core.api.configuration;
+package org.apache.incubator.wayang.core.api.configuration;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +12,7 @@ import java.util.Optional;
  */
 public abstract class KeyValueProvider<Key, Value> {
 
-    public static class NoSuchKeyException extends RheemException {
+    public static class NoSuchKeyException extends WayangException {
 
         public NoSuchKeyException(String message) {
             super(message);
@@ -113,7 +113,7 @@ public abstract class KeyValueProvider<Key, Value> {
     }
 
     public void set(Key key, Value value) {
-        throw new RheemException(String.format("Setting values not supported for %s.", this.getClass().getSimpleName()));
+        throw new WayangException(String.format("Setting values not supported for %s.", this.getClass().getSimpleName()));
     }
 
     public Configuration getConfiguration() {

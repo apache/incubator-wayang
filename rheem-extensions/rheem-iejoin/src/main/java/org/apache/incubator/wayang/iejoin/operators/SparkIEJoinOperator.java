@@ -1,27 +1,27 @@
-package io.rheem.rheem.iejoin.operators;
+package org.apache.incubator.wayang.iejoin.operators;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
-import io.rheem.rheem.core.function.TransformationDescriptor;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.core.platform.ChannelInstance;
-import io.rheem.rheem.core.platform.lineage.ExecutionLineageNode;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.util.Copyable;
-import io.rheem.rheem.core.util.Tuple;
-import io.rheem.rheem.iejoin.data.Data;
-import io.rheem.rheem.iejoin.operators.spark_helpers.BitSetJoin;
-import io.rheem.rheem.iejoin.operators.spark_helpers.List2AttributesObjectSkinny;
-import io.rheem.rheem.iejoin.operators.spark_helpers.addUniqueID;
-import io.rheem.rheem.iejoin.operators.spark_helpers.build2ListObject;
-import io.rheem.rheem.iejoin.operators.spark_helpers.extractData;
-import io.rheem.rheem.iejoin.operators.spark_helpers.filterUnwantedBlocks;
-import io.rheem.rheem.spark.channels.RddChannel;
-import io.rheem.rheem.spark.execution.SparkExecutor;
-import io.rheem.rheem.spark.operators.SparkExecutionOperator;
+import org.apache.incubator.wayang.core.function.TransformationDescriptor;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.core.platform.ChannelInstance;
+import org.apache.incubator.wayang.core.platform.lineage.ExecutionLineageNode;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.util.Copyable;
+import org.apache.incubator.wayang.core.util.Tuple;
+import org.apache.incubator.wayang.iejoin.data.Data;
+import org.apache.incubator.wayang.iejoin.operators.spark_helpers.BitSetJoin;
+import org.apache.incubator.wayang.iejoin.operators.spark_helpers.List2AttributesObjectSkinny;
+import org.apache.incubator.wayang.iejoin.operators.spark_helpers.addUniqueID;
+import org.apache.incubator.wayang.iejoin.operators.spark_helpers.build2ListObject;
+import org.apache.incubator.wayang.iejoin.operators.spark_helpers.extractData;
+import org.apache.incubator.wayang.iejoin.operators.spark_helpers.filterUnwantedBlocks;
+import org.apache.incubator.wayang.spark.channels.RddChannel;
+import org.apache.incubator.wayang.spark.execution.SparkExecutor;
+import org.apache.incubator.wayang.spark.operators.SparkExecutionOperator;
 import scala.Tuple2;
 import scala.Tuple5;
 
@@ -73,7 +73,7 @@ public class SparkIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends 
         JavaPairRDD<List2AttributesObjectSkinny<Type0, Type1>, List2AttributesObjectSkinny<Type0, Type1>> listOfListObject = null;
         JavaPairRDD<Long, Tuple2<Long, Input>> r1RowIDS = null;
         JavaPairRDD<Long, Tuple2<Long, Input>> r2RowIDS = null;
-        JavaRDD<io.rheem.rheem.basic.data.Tuple2<Input, Input>> outRDD = null;
+        JavaRDD<org.apache.incubator.wayang.basic.data.Tuple2<Input, Input>> outRDD = null;
 
         //get this from the user (SOMEHOW)
         //ArrayList<String> attSymbols = new ArrayList<String>();
@@ -189,7 +189,7 @@ public class SparkIEJoinOperator<Type0 extends Comparable<Type0>, Type1 extends 
         JavaPairRDD<Long, Input> tmpOut2 = tmpOut1.join(r1RowIDS).mapToPair(
                 in -> new Tuple2<Long, Input>(in._2()._1(), in._2()._2()._2()));
 
-        outRDD = tmpOut2.join(r2RowIDS).map(in -> new io.rheem.rheem.basic.data.Tuple2<Input, Input>(in._2()._1(), in._2()._2()._2()));
+        outRDD = tmpOut2.join(r2RowIDS).map(in -> new org.apache.incubator.wayang.basic.data.Tuple2<Input, Input>(in._2()._1(), in._2()._2()._2()));
 
         output.accept(outRDD, sparkExecutor);
 

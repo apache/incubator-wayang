@@ -1,13 +1,13 @@
-package io.rheem.rheem.graphchi.mappings;
+package org.apache.incubator.wayang.graphchi.mappings;
 
-import io.rheem.rheem.basic.operators.PageRankOperator;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.graphchi.operators.GraphChiPageRankOperator;
-import io.rheem.rheem.graphchi.platform.GraphChiPlatform;
+import org.apache.incubator.wayang.basic.operators.PageRankOperator;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.graphchi.operators.GraphChiPageRankOperator;
+import org.apache.incubator.wayang.graphchi.platform.GraphChiPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

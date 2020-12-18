@@ -1,27 +1,27 @@
-package io.rheem.rheem.basic.plugin;
+package org.apache.incubator.wayang.basic.plugin;
 
-import io.rheem.rheem.basic.mapping.Mappings;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.plugin.Plugin;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.fs.LocalFileSystem;
+import org.apache.incubator.wayang.basic.mapping.Mappings;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.plugin.Plugin;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.fs.LocalFileSystem;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Activator for the basic Rheem package.
+ * Activator for the basic Wayang package.
  */
 @SuppressWarnings("unused") // It's loaded via reflection.
-public class RheemBasic implements Plugin {
+public class WayangBasic implements Plugin {
 
-    public static final String TEMP_DIR_PROPERTY = "rheem.basic.tempdir";
+    public static final String TEMP_DIR_PROPERTY = "wayang.basic.tempdir";
 
-    private static final String RHEEM_BASIC_DEFAULTS_PROPERTIES = "rheem-basic-defaults.properties";
+    private static final String RHEEM_BASIC_DEFAULTS_PROPERTIES = "wayang-basic-defaults.properties";
 
     @Override
     public void setProperties(Configuration configuration) {

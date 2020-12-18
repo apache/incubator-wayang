@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>rheem</artifactId>
-        <groupId>io.rheem.rheem</groupId>
+        <artifactId>wayang</artifactId>
+        <groupId>org.apache.incubator.wayang</groupId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>rheem-platforms</artifactId>
+    <artifactId>wayang-platforms</artifactId>
     <packaging>pom</packaging>
     <modules>
-        <module>rheem-java</module>
-        <module>rheem-spark</module>
-        <module>rheem-postgres</module>
-        <module>rheem-graphchi</module>
-        <module>rheem-jdbc-template</module>
-        <module>rheem-sqlite3</module>
-        <module>rheem-giraph</module>
-        <module>rheem-flink</module>
+        <module>wayang-java</module>
+        <module>wayang-spark</module>
+        <module>wayang-postgres</module>
+        <module>wayang-graphchi</module>
+        <module>wayang-jdbc-template</module>
+        <module>wayang-sqlite3</module>
+        <module>wayang-giraph</module>
+        <module>wayang-flink</module>
     </modules>
 
 

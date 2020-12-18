@@ -1,20 +1,20 @@
-package io.rheem.rheem.basic.plugin;
+package org.apache.incubator.wayang.basic.plugin;
 
-import io.rheem.rheem.basic.mapping.Mappings;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.plugin.Plugin;
+import org.apache.incubator.wayang.basic.mapping.Mappings;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.plugin.Plugin;
 
 import java.util.Collection;
 import java.util.Collections;
 
 /**
- * Activator for graph operations being executed with Rheem's basic operators.
+ * Activator for graph operations being executed with Wayang's basic operators.
  */
 @SuppressWarnings("unused") // It's loaded via reflection.
-public class RheemBasicGraph implements Plugin {
+public class WayangBasicGraph implements Plugin {
 
     @Override
     public void setProperties(Configuration configuration) {

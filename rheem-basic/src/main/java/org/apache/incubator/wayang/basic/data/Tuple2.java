@@ -1,4 +1,4 @@
-package io.rheem.rheem.basic.data;
+package org.apache.incubator.wayang.basic.data;
 
 import java.io.Serializable;
 import java.util.Objects;

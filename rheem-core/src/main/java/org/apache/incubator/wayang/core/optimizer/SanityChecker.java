@@ -1,11 +1,11 @@
-package io.rheem.rheem.core.optimizer;
+package org.apache.incubator.wayang.core.optimizer;
 
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorAlternative;
-import io.rheem.rheem.core.plan.rheemplan.PlanTraversal;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plan.rheemplan.Subplan;
-import io.rheem.rheem.core.util.RheemCollections;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.incubator.wayang.core.plan.wayangplan.PlanTraversal;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Subplan;
+import org.apache.incubator.wayang.core.util.WayangCollections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * This class checks a {@link RheemPlan} for several sanity criteria:
+ * This class checks a {@link WayangPlan} for several sanity criteria:
  * <ol>
  * <li>{@link Subplan}s must only be used as top-level {@link Operator} of {@link OperatorAlternative.Alternative}</li>
  * <li>{@link Subplan}s must contain more than one {@link Operator}</li>
@@ -29,15 +29,15 @@ public class SanityChecker {
     /**
      * Is subject to the sanity checks.
      */
-    private final RheemPlan rheemPlan;
+    private final WayangPlan wayangPlan;
 
     /**
      * Create a new instance
      *
-     * @param rheemPlan is subject to sanity checks
+     * @param wayangPlan is subject to sanity checks
      */
-    public SanityChecker(RheemPlan rheemPlan) {
-        this.rheemPlan = rheemPlan;
+    public SanityChecker(WayangPlan wayangPlan) {
+        this.wayangPlan = wayangPlan;
     }
 
     public boolean checkAllCriteria() {
@@ -56,7 +56,7 @@ public class SanityChecker {
         final AtomicBoolean testOutcome = new AtomicBoolean(true);
         PlanTraversal.upstream()
                 .withCallback(this.getProperSubplanCallback(testOutcome))
-                .traverse(this.rheemPlan.getSinks());
+                .traverse(this.wayangPlan.getSinks());
         return testOutcome.get();
     }
 
@@ -101,7 +101,7 @@ public class SanityChecker {
         AtomicBoolean testOutcome = new AtomicBoolean(true);
         new PlanTraversal(true, false)
                 .withCallback(this.getFlatAlternativeCallback(testOutcome))
-                .traverse(this.rheemPlan.getSinks());
+                .traverse(this.wayangPlan.getSinks());
         return testOutcome.get();
     }
 
@@ -112,7 +112,7 @@ public class SanityChecker {
                 for (OperatorAlternative.Alternative alternative : operatorAlternative.getAlternatives()) {
                     final Collection<Operator> containedOperators = alternative.getContainedOperators();
                     if (containedOperators.size() == 1) {
-                        Operator containedOperator = RheemCollections.getSingle(containedOperators);
+                        Operator containedOperator = WayangCollections.getSingle(containedOperators);
                         if (containedOperator.isAlternative()) {
                             this.logger.warn("Improper alternative {}: contains alternatives.", alternative);
                             testOutcome.set(false);

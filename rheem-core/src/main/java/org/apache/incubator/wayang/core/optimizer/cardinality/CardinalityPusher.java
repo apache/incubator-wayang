@@ -1,10 +1,10 @@
-package io.rheem.rheem.core.optimizer.cardinality;
+package org.apache.incubator.wayang.core.optimizer.cardinality;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.costs.TimeEstimate;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.util.RheemArrays;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.util.WayangArrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +24,7 @@ public abstract class CardinalityPusher {
     protected final int[] relevantOutputIndices;
 
     protected CardinalityPusher(Operator operator) {
-        this(RheemArrays.range(operator.getNumInputs()), RheemArrays.range(operator.getNumOutputs()));
+        this(WayangArrays.range(operator.getNumInputs()), WayangArrays.range(operator.getNumOutputs()));
     }
 
     protected CardinalityPusher(int[] relevantInputIndices, int[] relevantOutputIndices) {

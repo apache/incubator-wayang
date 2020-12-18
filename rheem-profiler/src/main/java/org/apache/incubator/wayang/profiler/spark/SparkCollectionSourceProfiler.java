@@ -1,9 +1,9 @@
-package io.rheem.rheem.profiler.spark;
+package org.apache.incubator.wayang.profiler.spark;
 
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.spark.operators.SparkCollectionSource;
-import io.rheem.rheem.spark.operators.SparkTextFileSource;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.spark.operators.SparkCollectionSource;
+import org.apache.incubator.wayang.spark.operators.SparkTextFileSource;
 
 import java.util.ArrayList;
 import java.util.function.Supplier;

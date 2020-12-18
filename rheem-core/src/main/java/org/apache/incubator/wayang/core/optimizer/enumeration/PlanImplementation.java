@@ -1,27 +1,27 @@
-package io.rheem.rheem.core.optimizer.enumeration;
+package org.apache.incubator.wayang.core.optimizer.enumeration;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval;
-import io.rheem.rheem.core.optimizer.costs.TimeEstimate;
-import io.rheem.rheem.core.optimizer.costs.TimeToCostConverter;
-import io.rheem.rheem.core.plan.executionplan.Channel;
-import io.rheem.rheem.core.plan.executionplan.ExecutionTask;
-import io.rheem.rheem.core.plan.rheemplan.ElementaryOperator;
-import io.rheem.rheem.core.plan.rheemplan.ExecutionOperator;
-import io.rheem.rheem.core.plan.rheemplan.InputSlot;
-import io.rheem.rheem.core.plan.rheemplan.LoopSubplan;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.OperatorAlternative;
-import io.rheem.rheem.core.plan.rheemplan.OutputSlot;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plan.rheemplan.Slot;
-import io.rheem.rheem.core.platform.Junction;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.util.Canonicalizer;
-import io.rheem.rheem.core.util.RheemCollections;
-import io.rheem.rheem.core.util.Tuple;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeEstimate;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.incubator.wayang.core.plan.executionplan.Channel;
+import org.apache.incubator.wayang.core.plan.executionplan.ExecutionTask;
+import org.apache.incubator.wayang.core.plan.wayangplan.ElementaryOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.ExecutionOperator;
+import org.apache.incubator.wayang.core.plan.wayangplan.InputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.LoopSubplan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.OperatorAlternative;
+import org.apache.incubator.wayang.core.plan.wayangplan.OutputSlot;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.Slot;
+import org.apache.incubator.wayang.core.platform.Junction;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.util.Canonicalizer;
+import org.apache.incubator.wayang.core.util.WayangCollections;
+import org.apache.incubator.wayang.core.util.Tuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -167,7 +167,7 @@ public class PlanImplementation {
      * <p>Note that we require that this instance either provides all or no {@link ExecutionOperator}s necessary to
      * implement the {@link InputSlot}.</p>
      *
-     * @param someInput any {@link InputSlot} of the original {@link RheemPlan}
+     * @param someInput any {@link InputSlot} of the original {@link WayangPlan}
      * @return the representing {@link InputSlot}s or {@code null} if this instance has no {@link ExecutionOperator}
      * backing the given {@link InputSlot}
      */
@@ -236,7 +236,7 @@ public class PlanImplementation {
     /**
      * Find the {@link OutputSlot}s of already picked {@link ExecutionOperator}s that represent the given {@link OutputSlot}.
      *
-     * @param someOutput any {@link OutputSlot} of the original {@link RheemPlan}
+     * @param someOutput any {@link OutputSlot} of the original {@link WayangPlan}
      * @return the representing {@link OutputSlot}s
      */
     Collection<OutputSlot<?>> findExecutionOperatorOutput(OutputSlot<?> someOutput) {
@@ -248,7 +248,7 @@ public class PlanImplementation {
     /**
      * Find the {@link OutputSlot}s of already picked {@link ExecutionOperator}s that represent the given {@link OutputSlot}.
      *
-     * @param someOutput any {@link OutputSlot} of the original {@link RheemPlan}
+     * @param someOutput any {@link OutputSlot} of the original {@link WayangPlan}
      * @return the representing {@link OutputSlot}s together with their enclosing {@link PlanImplementation}
      */
     Collection<Tuple<OutputSlot<?>, PlanImplementation>> findExecutionOperatorOutputWithContext(
@@ -591,7 +591,7 @@ public class PlanImplementation {
      */
     public ProbabilisticDoubleInterval getCostEstimate() {
 
-        if (this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")) {
+        if (this.optimizationContext.getConfiguration().getBooleanProperty("wayang.core.optimizer.enumeration.parallel-tasks")) {
             return this.getParallelCostEstimate(true);
         } else {
             return this.getCostEstimate(true);
@@ -636,7 +636,7 @@ public class PlanImplementation {
      */
     public double getSquashedCostEstimate() {
         // Check if the parallel cost calculation is enabled in the configuration file
-        if (this.optimizationContext.getConfiguration().getBooleanProperty("rheem.core.optimizer.enumeration.parallel-tasks")) {
+        if (this.optimizationContext.getConfiguration().getBooleanProperty("wayang.core.optimizer.enumeration.parallel-tasks")) {
             return this.getSquashedParallelCostEstimate(true);
         } else {
             return this.getSquashedCostEstimate(true);
@@ -1023,7 +1023,7 @@ public class PlanImplementation {
                 Collection<Tuple<OutputSlot<?>, PlanImplementation>> execOpOutputsWithContext =
                         PlanImplementation.this.findExecutionOperatorOutputWithContext(output);
                 final Tuple<OutputSlot<?>, PlanImplementation> execOpOutputWithCtx =
-                        RheemCollections.getSingleOrNull(execOpOutputsWithContext);
+                        WayangCollections.getSingleOrNull(execOpOutputsWithContext);
                 assert execOpOutputsWithContext != null : String.format("No outputs found for %s.", output);
                 execOutput = execOpOutputWithCtx.field0;
                 execOutputPlanImplementation = execOpOutputWithCtx.field1;
@@ -1035,7 +1035,7 @@ public class PlanImplementation {
                 if (input == null) {
                     execInputs.add(null);
                 } else {
-                    execInputs.add(RheemCollections.asSet(PlanImplementation.this.findExecutionOperatorInputs(input)));
+                    execInputs.add(WayangCollections.asSet(PlanImplementation.this.findExecutionOperatorInputs(input)));
                 }
             }
 

@@ -1,14 +1,14 @@
-package io.rheem.rheem.tests;
+package org.apache.incubator.wayang.tests;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.api.JavaPlanBuilder;
-import io.rheem.rheem.api.LoadCollectionDataQuantaBuilder;
-import io.rheem.rheem.api.MapDataQuantaBuilder;
-import io.rheem.rheem.core.api.RheemContext;
-import io.rheem.rheem.core.util.RheemArrays;
-import io.rheem.rheem.java.Java;
-import io.rheem.rheem.spark.Spark;
+import org.apache.incubator.wayang.api.JavaPlanBuilder;
+import org.apache.incubator.wayang.api.LoadCollectionDataQuantaBuilder;
+import org.apache.incubator.wayang.api.MapDataQuantaBuilder;
+import org.apache.incubator.wayang.core.api.WayangContext;
+import org.apache.incubator.wayang.core.util.WayangArrays;
+import org.apache.incubator.wayang.java.Java;
+import org.apache.incubator.wayang.spark.Spark;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,12 +20,12 @@ import java.util.Arrays;
 public class RegressionIT {
 
     /**
-     * This plan revealed an issue with the {@link io.rheem.rheem.core.optimizer.channels.ChannelConversionGraph.ShortestTreeSearcher}.
+     * This plan revealed an issue with the {@link org.apache.incubator.wayang.core.optimizer.channels.ChannelConversionGraph.ShortestTreeSearcher}.
      */
     @Test
     public void testCollectionToRddAndBroadcast() {
-        RheemContext rheemContext = new RheemContext().with(Spark.basicPlugin()).with(Java.basicPlugin());
-        JavaPlanBuilder planBuilder = new JavaPlanBuilder(rheemContext, "testCollectionToRddAndBroadcast");
+        WayangContext wayangContext = new WayangContext().with(Spark.basicPlugin()).with(Java.basicPlugin());
+        JavaPlanBuilder planBuilder = new JavaPlanBuilder(wayangContext, "testCollectionToRddAndBroadcast");
 
         LoadCollectionDataQuantaBuilder<String> collection = planBuilder
                 .loadCollection(Arrays.asList("a", "bc", "def"))
@@ -37,7 +37,7 @@ public class RegressionIT {
                 .withTargetPlatform(Spark.platform());
 
         MapDataQuantaBuilder<Integer, Integer> map2 = planBuilder
-                .loadCollection(RheemArrays.asList(-1))
+                .loadCollection(WayangArrays.asList(-1))
 
                 .map(i -> i)
                 .withBroadcast(collection, "broadcast")
@@ -47,7 +47,7 @@ public class RegressionIT {
 
         result.sort(Integer::compareTo);
         Assert.assertEquals(
-                RheemArrays.asList(-1, 1, 2, 3),
+                WayangArrays.asList(-1, 1, 2, 3),
                 result
         );
     }

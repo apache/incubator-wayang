@@ -1,23 +1,23 @@
-package io.rheem.rheem.basic.mapping;
+package org.apache.incubator.wayang.basic.mapping;
 
 import org.junit.Assert;
 import org.junit.Test;
-import io.rheem.rheem.basic.data.Tuple2;
-import io.rheem.rheem.basic.function.ProjectionDescriptor;
-import io.rheem.rheem.basic.operators.GroupByOperator;
-import io.rheem.rheem.basic.operators.ReduceByOperator;
-import io.rheem.rheem.basic.operators.ReduceOperator;
-import io.rheem.rheem.basic.operators.test.TestSink;
-import io.rheem.rheem.basic.operators.test.TestSource;
-import io.rheem.rheem.core.function.ReduceDescriptor;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.plan.rheemplan.RheemPlan;
-import io.rheem.rheem.core.plan.rheemplan.UnarySink;
-import io.rheem.rheem.core.plan.rheemplan.UnarySource;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.core.types.DataUnitType;
+import org.apache.incubator.wayang.basic.data.Tuple2;
+import org.apache.incubator.wayang.basic.function.ProjectionDescriptor;
+import org.apache.incubator.wayang.basic.operators.GroupByOperator;
+import org.apache.incubator.wayang.basic.operators.ReduceByOperator;
+import org.apache.incubator.wayang.basic.operators.ReduceOperator;
+import org.apache.incubator.wayang.basic.operators.test.TestSink;
+import org.apache.incubator.wayang.basic.operators.test.TestSource;
+import org.apache.incubator.wayang.core.function.ReduceDescriptor;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.plan.wayangplan.WayangPlan;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySink;
+import org.apache.incubator.wayang.core.plan.wayangplan.UnarySource;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.core.types.DataUnitType;
 
 /**
  * Test suite for the {@link ReduceByMapping}.
@@ -53,7 +53,7 @@ public class ReduceByMappingTest {
 
         UnarySink<Tuple2<String, Integer>> sink = new TestSink<>(DataSetType.createDefaultUnchecked(Tuple2.class));
         reduce.connectTo(0, sink, 0);
-        RheemPlan plan = new RheemPlan();
+        WayangPlan plan = new WayangPlan();
         plan.addSink(sink);
 
         // Apply our mapping.

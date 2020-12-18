@@ -1,6 +1,6 @@
-package io.rheem.rheem.jdbc.test;
+package org.apache.incubator.wayang.jdbc.test;
 
-import io.rheem.rheem.jdbc.platform.JdbcPlatformTemplate;
+import org.apache.incubator.wayang.jdbc.platform.JdbcPlatformTemplate;
 
 /**
  * {@link JdbcPlatformTemplate} implementation based on HSQLDB for test purposes.

@@ -1,26 +1,26 @@
-package io.rheem.rheem.giraph.platform;
+package org.apache.incubator.wayang.giraph.platform;
 
 import org.apache.giraph.conf.GiraphConfiguration;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.optimizer.costs.LoadProfileToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.LoadToTimeConverter;
-import io.rheem.rheem.core.optimizer.costs.TimeToCostConverter;
-import io.rheem.rheem.core.platform.Executor;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.giraph.execution.GiraphExecutor;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadProfileToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.LoadToTimeConverter;
+import org.apache.incubator.wayang.core.optimizer.costs.TimeToCostConverter;
+import org.apache.incubator.wayang.core.platform.Executor;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.giraph.execution.GiraphExecutor;
 
 /**
- * Giraph {@link Platform} for Rheem.
+ * Giraph {@link Platform} for Wayang.
  */
 public class GiraphPlatform extends Platform{
-    public static final String CPU_MHZ_PROPERTY = "rheem.giraph.cpu.mhz";
+    public static final String CPU_MHZ_PROPERTY = "wayang.giraph.cpu.mhz";
 
-    public static final String CORES_PROPERTY = "rheem.giraph.cores";
+    public static final String CORES_PROPERTY = "wayang.giraph.cores";
 
-    public static final String HDFS_MS_PER_MB_PROPERTY = "rheem.giraph.hdfs.ms-per-mb";
+    public static final String HDFS_MS_PER_MB_PROPERTY = "wayang.giraph.hdfs.ms-per-mb";
 
-    private static final String DEFAULT_CONFIG_FILE = "rheem-giraph-defaults.properties";
+    private static final String DEFAULT_CONFIG_FILE = "wayang-giraph-defaults.properties";
 
     private static GiraphPlatform instance;
 
@@ -71,8 +71,8 @@ public class GiraphPlatform extends Platform{
     @Override
     public TimeToCostConverter createTimeToCostConverter(Configuration configuration) {
         return new TimeToCostConverter(
-                configuration.getDoubleProperty("rheem.giraph.costs.fix"),
-                configuration.getDoubleProperty("rheem.giraph.costs.per-ms")
+                configuration.getDoubleProperty("wayang.giraph.costs.fix"),
+                configuration.getDoubleProperty("wayang.giraph.costs.per-ms")
         );
     }
 }

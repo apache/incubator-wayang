@@ -1,4 +1,4 @@
-package io.rheem.rheem.core.platform;
+package org.apache.incubator.wayang.core.platform;
 
 /**
  * {@link ExecutionResource} that itself contains {@link ExecutionResource}s.

@@ -1,4 +1,4 @@
-package io.rheem.rheem.flink.compiler.criterion;
+package org.apache.incubator.wayang.flink.compiler.criterion;
 
 
 import org.apache.flink.core.memory.DataInputView;
@@ -13,9 +13,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 /**
- * Implementation of {@link Value} of flink for use in Rheem
+ * Implementation of {@link Value} of flink for use in Wayang
  */
-public class RheemValue<T> implements Value {
+public class WayangValue<T> implements Value {
     private static final int HIGH_BIT = 0x1 << 7;
 
     private static final int HIGH_BIT2 = 0x1 << 13;
@@ -24,11 +24,11 @@ public class RheemValue<T> implements Value {
 
     private T data;
 
-    public RheemValue(){
+    public WayangValue(){
         this.data = null;
     }
 
-    public RheemValue(T element){
+    public WayangValue(T element){
         this.data = element;
     }
 

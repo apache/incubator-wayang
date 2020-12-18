@@ -1,14 +1,14 @@
-package io.rheem.rheem.core.plugin;
+package org.apache.incubator.wayang.core.plugin;
 
 import org.apache.commons.lang3.Validate;
-import io.rheem.rheem.core.api.Configuration;
-import io.rheem.rheem.core.api.exception.RheemException;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.optimizer.channels.ChannelConversion;
-import io.rheem.rheem.core.platform.Platform;
-import io.rheem.rheem.core.util.ReflectionUtils;
-import io.rheem.rheem.core.util.fs.FileSystem;
-import io.rheem.rheem.core.util.fs.FileSystems;
+import org.apache.incubator.wayang.core.api.Configuration;
+import org.apache.incubator.wayang.core.api.exception.WayangException;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.optimizer.channels.ChannelConversion;
+import org.apache.incubator.wayang.core.platform.Platform;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.fs.FileSystem;
+import org.apache.incubator.wayang.core.util.fs.FileSystems;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
@@ -78,13 +78,13 @@ public class DynamicPlugin implements Plugin {
     public static DynamicPlugin loadYaml(String yamlUrl) {
         // Load YAML file.
         final FileSystem fileSystem = FileSystems.getFileSystem(yamlUrl).orElseThrow(
-                () -> new RheemException(String.format("No filesystem for %s.", yamlUrl))
+                () -> new WayangException(String.format("No filesystem for %s.", yamlUrl))
         );
         Object yaml;
         try (final InputStream inputStream = fileSystem.open(yamlUrl)) {
             yaml = new Yaml().load(inputStream);
         } catch (IOException e) {
-            throw new RheemException(String.format("Could not load %s.", yamlUrl));
+            throw new WayangException(String.format("Could not load %s.", yamlUrl));
         }
 
         DynamicPlugin plugin = new DynamicPlugin();
@@ -189,7 +189,7 @@ public class DynamicPlugin implements Plugin {
 
             return plugin;
         } catch (Exception e) {
-            throw new RheemException(String.format("Configuration file %s seems to be corrupt.", yamlUrl), e);
+            throw new WayangException(String.format("Configuration file %s seems to be corrupt.", yamlUrl), e);
         }
     }
 

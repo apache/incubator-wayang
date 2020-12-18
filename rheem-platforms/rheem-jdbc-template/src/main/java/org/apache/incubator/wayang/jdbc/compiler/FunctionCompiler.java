@@ -1,7 +1,7 @@
-package io.rheem.rheem.jdbc.compiler;
+package org.apache.incubator.wayang.jdbc.compiler;
 
-import io.rheem.rheem.core.function.FunctionDescriptor;
-import io.rheem.rheem.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.core.function.FunctionDescriptor;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
 
 /**
  * Compiles {@link FunctionDescriptor}s to SQL clauses.

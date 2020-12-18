@@ -1,9 +1,9 @@
-package io.rheem.rheem.api.graph
+package org.apache.incubator.wayang.api.graph
 
-import io.rheem.rheem.api._
-import io.rheem.rheem.basic.data.Record
-import io.rheem.rheem.basic.operators.{MapOperator, PageRankOperator}
-import io.rheem.rheem.core.optimizer.ProbabilisticDoubleInterval
+import org.apache.incubator.wayang.api._
+import org.apache.incubator.wayang.basic.data.Record
+import org.apache.incubator.wayang.basic.operators.{MapOperator, PageRankOperator}
+import org.apache.incubator.wayang.core.optimizer.ProbabilisticDoubleInterval
 
 /**
   * This class enhances the functionality of [[DataQuanta]] with [[Record]]s.

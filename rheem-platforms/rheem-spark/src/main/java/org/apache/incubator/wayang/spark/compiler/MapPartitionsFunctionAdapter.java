@@ -1,7 +1,7 @@
-package io.rheem.rheem.spark.compiler;
+package org.apache.incubator.wayang.spark.compiler;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
-import io.rheem.rheem.core.util.Iterators;
+import org.apache.incubator.wayang.core.util.Iterators;
 
 import java.util.ArrayList;
 import java.util.Iterator;

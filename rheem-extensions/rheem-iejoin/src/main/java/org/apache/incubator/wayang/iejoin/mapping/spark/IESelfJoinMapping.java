@@ -1,18 +1,18 @@
-package io.rheem.rheem.iejoin.mapping.spark;
+package org.apache.incubator.wayang.iejoin.mapping.spark;
 
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.core.mapping.Mapping;
-import io.rheem.rheem.core.mapping.OperatorPattern;
-import io.rheem.rheem.core.mapping.PlanTransformation;
-import io.rheem.rheem.core.mapping.ReplacementSubplanFactory;
-import io.rheem.rheem.core.mapping.SubplanMatch;
-import io.rheem.rheem.core.mapping.SubplanPattern;
-import io.rheem.rheem.core.plan.rheemplan.Operator;
-import io.rheem.rheem.core.types.DataSetType;
-import io.rheem.rheem.iejoin.operators.IEJoinMasterOperator;
-import io.rheem.rheem.iejoin.operators.IESelfJoinOperator;
-import io.rheem.rheem.iejoin.operators.SparkIESelfJoinOperator;
-import io.rheem.rheem.spark.platform.SparkPlatform;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.core.mapping.Mapping;
+import org.apache.incubator.wayang.core.mapping.OperatorPattern;
+import org.apache.incubator.wayang.core.mapping.PlanTransformation;
+import org.apache.incubator.wayang.core.mapping.ReplacementSubplanFactory;
+import org.apache.incubator.wayang.core.mapping.SubplanMatch;
+import org.apache.incubator.wayang.core.mapping.SubplanPattern;
+import org.apache.incubator.wayang.core.plan.wayangplan.Operator;
+import org.apache.incubator.wayang.core.types.DataSetType;
+import org.apache.incubator.wayang.iejoin.operators.IEJoinMasterOperator;
+import org.apache.incubator.wayang.iejoin.operators.IESelfJoinOperator;
+import org.apache.incubator.wayang.iejoin.operators.SparkIESelfJoinOperator;
+import org.apache.incubator.wayang.spark.platform.SparkPlatform;
 
 import java.util.Collection;
 import java.util.Collections;

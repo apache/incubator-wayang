@@ -1,7 +1,7 @@
-package io.rheem.rheem.basic.data;
+package org.apache.incubator.wayang.basic.data;
 
-import io.rheem.rheem.core.util.Copyable;
-import io.rheem.rheem.core.util.ReflectionUtils;
+import org.apache.incubator.wayang.core.util.Copyable;
+import org.apache.incubator.wayang.core.util.ReflectionUtils;
 
 import java.io.Serializable;
 import java.util.Arrays;

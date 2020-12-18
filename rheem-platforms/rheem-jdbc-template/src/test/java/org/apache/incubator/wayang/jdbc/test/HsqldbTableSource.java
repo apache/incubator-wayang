@@ -1,9 +1,9 @@
-package io.rheem.rheem.jdbc.test;
+package org.apache.incubator.wayang.jdbc.test;
 
-import io.rheem.rheem.basic.operators.TableSource;
-import io.rheem.rheem.core.platform.ChannelDescriptor;
-import io.rheem.rheem.jdbc.operators.JdbcFilterOperator;
-import io.rheem.rheem.jdbc.operators.JdbcTableSource;
+import org.apache.incubator.wayang.basic.operators.TableSource;
+import org.apache.incubator.wayang.core.platform.ChannelDescriptor;
+import org.apache.incubator.wayang.jdbc.operators.JdbcFilterOperator;
+import org.apache.incubator.wayang.jdbc.operators.JdbcTableSource;
 
 import java.util.List;
 

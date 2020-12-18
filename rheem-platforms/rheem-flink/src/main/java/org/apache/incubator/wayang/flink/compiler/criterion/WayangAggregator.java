@@ -1,4 +1,4 @@
-package io.rheem.rheem.flink.compiler.criterion;
+package org.apache.incubator.wayang.flink.compiler.criterion;
 
 import org.apache.flink.api.common.aggregators.Aggregator;
 import org.apache.flink.types.ListValue;
@@ -9,26 +9,26 @@ import java.util.List;
 /**
  * Class create a {@Link Aggregator} that generate aggregatorWrapper
  */
-public class RheemAggregator implements Aggregator<ListValue<RheemValue>> {
-    private List<RheemValue> elements;
+public class WayangAggregator implements Aggregator<ListValue<WayangValue>> {
+    private List<WayangValue> elements;
 
-    public RheemAggregator(){
+    public WayangAggregator(){
         this.elements = new ArrayList<>();
     }
 
     @Override
-    public ListValue<RheemValue> getAggregate() {
-        return new RheemListValue(this.elements);
+    public ListValue<WayangValue> getAggregate() {
+        return new WayangListValue(this.elements);
     }
 
     @Override
-    public void aggregate(ListValue rheemValues) {
-        this.elements.addAll(rheemValues);
+    public void aggregate(ListValue wayangValues) {
+        this.elements.addAll(wayangValues);
     }
 
 
     public void aggregate(Object t){
-        this.elements.add(new RheemValue(t));
+        this.elements.add(new WayangValue(t));
     }
 
     @Override

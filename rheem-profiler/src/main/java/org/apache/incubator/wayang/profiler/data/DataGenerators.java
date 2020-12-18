@@ -1,4 +1,4 @@
-package io.rheem.rheem.profiler.data;
+package org.apache.incubator.wayang.profiler.data;
 
 import org.apache.commons.lang3.Validate;
 

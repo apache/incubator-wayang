@@ -1,10 +1,10 @@
-package io.rheem.rheem.api
+package org.apache.incubator.wayang.api
 
-import io.rheem.rheem.basic.data.Record
-import io.rheem.rheem.basic.function.ProjectionDescriptor
-import io.rheem.rheem.basic.operators.MapOperator
-import io.rheem.rheem.basic.types.RecordType
-import io.rheem.rheem.core.optimizer.costs.LoadEstimator
+import org.apache.incubator.wayang.basic.data.Record
+import org.apache.incubator.wayang.basic.function.ProjectionDescriptor
+import org.apache.incubator.wayang.basic.operators.MapOperator
+import org.apache.incubator.wayang.basic.types.RecordType
+import org.apache.incubator.wayang.core.optimizer.costs.LoadEstimator
 
 /**
   * This class enhances the functionality of [[DataQuanta]] with [[Record]]s.

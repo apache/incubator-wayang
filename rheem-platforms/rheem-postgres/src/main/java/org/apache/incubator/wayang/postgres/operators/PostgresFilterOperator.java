@@ -1,9 +1,9 @@
-package io.rheem.rheem.postgres.operators;
+package org.apache.incubator.wayang.postgres.operators;
 
-import io.rheem.rheem.basic.data.Record;
-import io.rheem.rheem.basic.operators.FilterOperator;
-import io.rheem.rheem.core.function.PredicateDescriptor;
-import io.rheem.rheem.jdbc.operators.JdbcFilterOperator;
+import org.apache.incubator.wayang.basic.data.Record;
+import org.apache.incubator.wayang.basic.operators.FilterOperator;
+import org.apache.incubator.wayang.core.function.PredicateDescriptor;
+import org.apache.incubator.wayang.jdbc.operators.JdbcFilterOperator;
 
 
 /**

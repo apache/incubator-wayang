@@ -1,11 +1,11 @@
-package io.rheem.rheem.jdbc.operators;
+package org.apache.incubator.wayang.jdbc.operators;
 
 import de.hpi.isg.profiledb.store.model.TimeMeasurement;
-import io.rheem.rheem.basic.operators.TableSource;
-import io.rheem.rheem.core.optimizer.OptimizationContext;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimate;
-import io.rheem.rheem.core.optimizer.cardinality.CardinalityEstimator;
-import io.rheem.rheem.jdbc.compiler.FunctionCompiler;
+import org.apache.incubator.wayang.basic.operators.TableSource;
+import org.apache.incubator.wayang.core.optimizer.OptimizationContext;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimate;
+import org.apache.incubator.wayang.core.optimizer.cardinality.CardinalityEstimator;
+import org.apache.incubator.wayang.jdbc.compiler.FunctionCompiler;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
@@ -43,7 +43,7 @@ public abstract class JdbcTableSource extends TableSource implements JdbcExecuti
 
     @Override
     public String getLoadProfileEstimatorConfigurationKey() {
-        return String.format("rheem.%s.tablesource.load", this.getPlatform().getPlatformId());
+        return String.format("wayang.%s.tablesource.load", this.getPlatform().getPlatformId());
     }
 
     @Override
